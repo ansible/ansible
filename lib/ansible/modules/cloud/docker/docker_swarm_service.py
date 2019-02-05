@@ -341,7 +341,7 @@ options:
       - Maps docker service C(--restart-window) option.
   update_delay:
     type: int
-    update_delay: 10
+    default: 10
     description:
       - Rolling update delay in nanoseconds.
       - Maps docker service C(--update-delay) option.
