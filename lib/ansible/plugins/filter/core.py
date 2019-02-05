@@ -514,9 +514,9 @@ def probe(data, *args):
     path = 'probed_object'
     for i in args:
         if isinstance(i, int):
-            path += "[{}]".format(str(i))
+            path += "[{0}]".format(str(i))
         else:
-            path += "['{}']".format(str(i))
+            path += "['{0}']".format(str(i))
         try:
             result = result[i]
         except (TypeError, IndexError, KeyError) as e:
