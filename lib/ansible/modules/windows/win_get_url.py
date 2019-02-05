@@ -163,8 +163,8 @@ dest:
     type: str
     sample: C:\Users\RandomUser\earthrise.jpg
 checksum_dest:
-    description: sha1 checksum of the file after copy
-    returned: success
+    description: <algorithm> checksum of the file after copy
+    returned: success and if checksum is defined
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 elapsed:

@@ -23,7 +23,7 @@ $spec = @{
         proxy_username = @{ type='str' }
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
-        checksum = @{ type='str'; required=$true }
+        checksum = @{ type='str' }
     }
     supports_check_mode = $true
 }
@@ -120,6 +120,18 @@ Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeo
     }
 }
 
+Function Parse-Checksum($checksum) {
+    $checksum_parameter_splited = $checksum.split(":", 2)
+    if ($checksum_parameter_splited.Count -ne 2) {
+        throw
+    }
+
+    $checksum_algorithm = $checksum_parameter_splited[0].Trim()
+    $checksum_value = $checksum_parameter_splited[1].Trim()
+
+    return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
+
+}
 
 Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
 
@@ -135,13 +147,10 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
     if ($checksum) {
         Try
         {
-            $checksum_parameter_splited = $checksum.split(":", 2)
-            if ($checksum_parameter_splited.Count -ne 2) {
-                throw
-            }
+            $checksum_parameter_splited = Parse-Checksum -checksum $checksum
 
-            $checksum_algorithm = $checksum_parameter_splited[0].Trim()
-            $checksum_value = $checksum_parameter_splited[1].Trim()
+            $checksum_algorithm = $checksum_parameter_splited.algorithm
+            $checksum_value = $checksum_parameter_splited.checksum
 
             # if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
             #     $checksum_url = $checksum_value
@@ -297,6 +306,15 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
         Download-File -module $module -url $url -dest $dest -credentials $credentials `
                       -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
+    } else {
+        if ($checksum) {
+            Try {
+                $hashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
+                $module.Result.checksum_dest = $hashFromFile.Hash.ToLower()
+            } Catch {
+                $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
+            }
+        }
     }
 }
 
