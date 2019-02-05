@@ -90,6 +90,7 @@ options:
     - the base ACL entries of the owner, group and others are retained.
     type: bool
     default: 'no'
+    version_added: '2.8'
   use_nfsv4_acls:
     description:
     - Use NFSv4 ACLs instead of POSIX ACLs.
