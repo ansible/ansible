@@ -99,7 +99,7 @@ options:
     description:
       - Determines if a runner can pick up jobs from protected branches.
     required: False
-    default:"ref_protected
+    default: ref_protected
     choices: ["ref_protected", "not_protected"]
     type: str
   maximum_timeout:
