@@ -17,12 +17,14 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_user
-short_description: Adds or removes a users (roles) from a PostgreSQL database.
+short_description: Adds or removes a user (role) from a remote PostgreSQL server instance.
 description:
-   - Add or remove PostgreSQL users (roles) from a remote host and, optionally,
-     grant the users access to an existing database or tables.
-   - The fundamental function of the module is to create, or delete, roles from
-     a PostgreSQL cluster. Privilege assignment, or removal, is an optional
+   - Adds or removes a user (role) from a remote PostgreSQL server instance
+     ("cluster" in PostgreSQL terminology) and, optionally,
+     grants the user access to an existing database or tables.
+     A user is a role with login privilege (see U(https://www.postgresql.org/docs/11/role-attributes.html) for more information).
+   - The fundamental function of the module is to create, or delete, users from
+     a PostgreSQL instances. Privilege assignment, or removal, is an optional
      step, which works on one database at a time. This allows for the module to
      be called several times in the same module to modify the permissions on
      different databases, or to grant permissions to already existing users.
@@ -53,10 +55,10 @@ options:
         format, then it is used as-is, regardless of C(encrypted) parameter.
   db:
     description:
-      - Name of database where permissions will be granted.
+      - Name of database to connect to and where user's permissions will be granted.
   fail_on_user:
     description:
-      - If C(yes), fail when user can't be removed. Otherwise just log and
+      - If C(yes), fail when user (role) can't be removed. Otherwise just log and
         continue.
     default: 'yes'
     type: bool
@@ -89,7 +91,7 @@ options:
         C(CONNECT/CREATE/table1:SELECT/table2:INSERT)."
   role_attr_flags:
     description:
-      - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
+      - "PostgreSQL user attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER."
       - Note that '[NO]CREATEUSER' is deprecated.
     choices: ["[NO]SUPERUSER", "[NO]CREATEROLE", "[NO]CREATEDB", "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION", "[NO]BYPASSRLS"]
   session_role:
@@ -144,10 +146,12 @@ options:
     version_added: '2.3'
   conn_limit:
     description:
-      - Specifies the user connection limit.
+      - Specifies the user (role) connection limit.
     version_added: '2.4'
     type: int
 notes:
+   - The module creates a user (role) with login privilege by default.
+     Use NOLOGIN role_attr_flags to change this behaviour.
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
    - This module uses psycopg2, a Python PostgreSQL database adapter. You must
@@ -156,8 +160,8 @@ notes:
      PostgreSQL must also be installed on the remote host. For Ubuntu-based
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
-   - If you specify PUBLIC as the user, then the privilege changes will apply
-     to all users. You may not specify password or role_attr_flags when the
+   - If you specify PUBLIC as the user (role), then the privilege changes will apply
+     to all users (roles). You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
    - The ssl_rootcert parameter requires at least Postgres version 8.4 and
      I(psycopg2) version 2.4.3.
@@ -166,7 +170,7 @@ author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
-# Create django user and grant access to database and products table
+# Connect to acme database, create django user, and grant access to database and products table
 - postgresql_user:
     db: acme
     name: django
@@ -174,14 +178,14 @@ EXAMPLES = '''
     priv: "CONNECT/products:ALL"
     expires: "Jan 31 2020"
 
-# Create rails user, set its password (MD5-hashed) and grant privilege to create other
-# databases and demote rails from super user status
+# Connect to default database, create rails user, set its password (MD5-hashed), and grant privilege to create other
+# databases and demote rails from super user status if user exists
 - postgresql_user:
     name: rails
     password: md59543f1d82624df2b31672ec0f7050460
     role_attr_flags: CREATEDB,NOSUPERUSER
 
-# Remove test user privileges from acme
+# Connect to acme database and remove test user privileges from there
 - postgresql_user:
     db: acme
     name: test
@@ -189,14 +193,14 @@ EXAMPLES = '''
     state: absent
     fail_on_user: no
 
-# Remove test user from test database and the cluster
+# Connect to test database, remove test user from cluster
 - postgresql_user:
     db: test
     name: test
     priv: ALL
     state: absent
 
-# Set user's password with no expire date
+# Connect to acme database and set user's password with no expire date
 - postgresql_user:
     db: acme
     name: django
@@ -207,7 +211,7 @@ EXAMPLES = '''
 # Example privileges string format
 # INSERT,UPDATE/table:SELECT/anothertable:ALL
 
-# Remove an existing user's password
+# Connect to test database and remove an existing user's password
 - postgresql_user:
     db: test
     user: test
