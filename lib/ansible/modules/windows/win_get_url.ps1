@@ -131,22 +131,37 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
         $module.FailJson("The path '$dest_parent' does not exist for destination '$dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
     }
 
-    # Verify and parce 'checksum' parameter, if present
+    # checksum specified, parse for algorithm and checksum
     if ($checksum) {
-        $checksum_parameter_splited = $checksum.split(":")
-        if ($checksum_parameter_splited.Count -ne 2) {
-            $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum>. url for checksum currently not supported.")
-        }
-
-        $checksum_allowed_algorithms_list = 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'MACTripleDES', 'MD5', 'RIPEMD160'
-
-        $checksum_algorithm = $checksum_parameter_splited[0]
-        $checksum_value = $checksum_parameter_splited[1]
-
-        if ( -Not ($checksum_allowed_algorithms_list -match $checksum_algorithm)) 
+        Try
         {
-            $module.FailJson("The checksum algorithm '$checksum_algorithm' is not supported.  Supported algorithms list: '$checksum_allowed_algorithms_list'.")
-        } 
+            $checksum_parameter_splited = $checksum.split(":", 2)
+            if ($checksum_parameter_splited.Count -ne 2) {
+                $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
+            }
+
+            #$checksum_allowed_algorithms_list = 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'MACTripleDES', 'MD5', 'RIPEMD160'
+
+            $checksum_algorithm = $checksum_parameter_splited[0]
+            $checksum_value = $checksum_parameter_splited[1]
+
+            #if ( -Not ($checksum_allowed_algorithms_list -match $checksum_algorithm))
+            #{
+            #    $module.FailJson("The checksum algorithm '$checksum_algorithm' is not supported.  Supported algorithms list: '$checksum_allowed_algorithms_list'.")
+            #}
+            if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or checksum_value.startswith('ftp://', 1)) {
+                $checksum_url = $checksum_value
+                # TBD
+                $web_request = Invoke-WebRequest -Uri $checksum_url
+                $raw_html = $web_request.Content
+                # -replace '\W+', ''
+            }
+
+            $checksum_value = $checksum_value.ToLower()
+        }
+        Catch {
+            module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>")
+        }
         
     }
     # TODO: Replace this with WebRequest
@@ -179,23 +194,28 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
         # FIXME: Single-out catched exceptions with more specific error messages
         Try {
             $extWebClient.DownloadFile($url, $dest)
+
+            # Checksum verification for downloaded file
+            if ($checksum) {
+                # TBD check '$dest' to be full path with name for downloaded file.
+                $hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
+                # Check both hashes are the same
+                if ($hashFromFile.Hash -ne $checksum_value) {
+                    # TBD: add to output variables with both checksums
+                    $module.FailJson("The checksum for %s did not match %s; it was %s." -f $dest, $checksum_value, $hashFromFile)
+                }
+            }
+
         } Catch [System.Net.WebException] {
             $module.Result.status_code = [int] $_.Exception.Response.StatusCode
             $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
+        } Catch [System.Management.Automation.ParameterBindingException] {
+            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+            $module.FailJson("Checksum error for '$dest': $($_.Exception.Message)", $_)
         } Catch {
             $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
             $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
-        }
-        # Checksum verification for downloaded file
-        if ($checksum) {
-            # TBD check '$dest' to be fuul path with name for downloaded file.
-            $hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
-            # Check both hashes are the same
-            if ($hashFromFile.Hash -ne $checksum_value) {
-                # TBD: add to output variables with both checksums
-                $module.FailJson("The checksum of dowloaded file is not matched with: '$checksum_value'.")
-            }
         }
     }
 
@@ -203,6 +223,7 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
     $module.Result.changed = $true
     $module.Result.msg = 'OK'
     $module.Result.dest = $dest
+    $module.Result.checksum_dest = $hashFromFile
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 }

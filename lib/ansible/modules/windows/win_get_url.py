@@ -73,6 +73,20 @@ options:
     type: bool
     default: yes
     version_added: '2.4'
+  checksum:
+    description:
+      - 'If a checksum is passed to this parameter, the digest of the
+        destination file will be calculated after it is downloaded to ensure
+        its integrity and verify that the transfer completed successfully.
+        Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
+        checksum="sha256:http://example.com/path/sha256sum.txt"'
+      - Additionally, if a checksum is passed to this parameter, and the file exist under
+        the C(dest) location, the I(destination_checksum) would be calculated, and if
+        checksum equals I(destination_checksum), the file download would be skipped
+        (unless C(force) is true).
+    type: str
+    default: ''
+    version_added: "2.8"
   proxy_url:
     description:
     - The full URL of the proxy server to download through.
@@ -148,6 +162,11 @@ dest:
     returned: always
     type: str
     sample: C:\Users\RandomUser\earthrise.jpg
+checksum_dest:
+    description: sha1 checksum of the file after copy
+    returned: success
+    type: str
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 elapsed:
     description: The elapsed seconds between the start of poll and the end of the module.
     returned: always
