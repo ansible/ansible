@@ -44,7 +44,7 @@ options:
     - Whether to install (C(present)), or remove (C(absent)) packages.
     - The upgrade (C(latest)) operation will update/install the packages to the latest version available.
     type: str
-    choices: [ absent, latest, present ]
+    choices: [ absent, installed, latest, present, removed ]
     default: present
   update_catalog:
     description:

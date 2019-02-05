@@ -761,7 +761,6 @@ lib/ansible/modules/packaging/os/pacman.py E326
 lib/ansible/modules/packaging/os/pkg5.py E326
 lib/ansible/modules/packaging/os/pkgin.py E322
 lib/ansible/modules/packaging/os/pkgng.py E322
-lib/ansible/modules/packaging/os/pkgutil.py E326
 lib/ansible/modules/packaging/os/portage.py E322
 lib/ansible/modules/packaging/os/portage.py E325
 lib/ansible/modules/packaging/os/portinstall.py E322
