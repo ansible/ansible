@@ -4,6 +4,9 @@
 Network Debug and Troubleshooting Guide
 ***************************************
 
+.. contents::
+   :local:
+
 
 Introduction
 ============
@@ -11,8 +14,6 @@ Introduction
 Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogeneous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
 
 This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
-
-
 
 
 
@@ -442,11 +443,10 @@ of inactivity), simple delete the socket file.
 Timeout issues
 ==============
 
-Timeouts
---------
-Persistent connection idle timeout:
+Persistent connection idle timeout
+----------------------------------
 
-For example:
+By default, ``ANSIBLE_PERSISTENT_CONNECT_TIMEOUT`` is set to 30 (seconds). You may see the following error if this value is too low:
 
 .. code-block:: yaml
 
@@ -467,8 +467,12 @@ To make this a permanent change, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    connect_timeout = 60
 
-Command timeout:
-For example:
+Command timeout
+---------------
+
+By default, ``ANSIBLE_PERSISTENT_COMMAND_TIMEOUT`` is set to 30 (seconds). Prior versions of Ansible had this value set to 10 seconds by default.
+You may see the following error if this value is too low:
+
 
 .. code-block:: yaml
 
@@ -476,53 +480,53 @@ For example:
 
 Suggestions to resolve:
 
-Options 1 (Global command timeout setting):
-Increase value of command timeout in configuration file or by setting environment variable.
+* Option 1 (Global command timeout setting):
+  Increase value of command timeout in configuration file or by setting environment variable.
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-   export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
+     export ANSIBLE_PERSISTENT_COMMAND_TIMEOUT=60
 
-To make this a permanent change, add the following to your ``ansible.cfg`` file:
+  To make this a permanent change, add the following to your ``ansible.cfg`` file:
 
-.. code-block:: ini
+  .. code-block:: ini
 
-   [persistent_connection]
-   command_timeout = 60
+     [persistent_connection]
+     command_timeout = 60
 
-Option 2 (Per task command timeout setting):
-Increase command timeout per task basis. All network modules support a
-timeout value that can be set on a per task basis.
-The timeout value controls the amount of time in seconds before the
-task will fail if the command has not returned.
+* Option 2 (Per task command timeout setting):
+  Increase command timeout per task basis. All network modules support a
+  timeout value that can be set on a per task basis.
+  The timeout value controls the amount of time in seconds before the
+  task will fail if the command has not returned.
 
-For local connection type:
+  For local connection type:
 
-.. FIXME: Detail error here
+  .. FIXME: Detail error here
 
-Suggestions to resolve:
+  Suggestions to resolve:
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-        provider: "{{ cli }}"
-        timeout: 30
+      - name: save running-config
+        ios_command:
+          commands: copy running-config startup-config
+          provider: "{{ cli }}"
+          timeout: 30
 
-For network_cli, netconf connection type (applicable from 2.7 onwards):
+  For network_cli, netconf connection type (applicable from 2.7 onwards):
 
-.. FIXME: Detail error here
+  .. FIXME: Detail error here
 
-Suggestions to resolve:
+  Suggestions to resolve:
 
-.. code-block:: yaml
+  .. code-block:: yaml
 
-    - name: save running-config
-      ios_command:
-        commands: copy running-config startup-config
-      vars:
-        ansible_command_timeout: 60
+      - name: save running-config
+        ios_command:
+          commands: copy running-config startup-config
+        vars:
+          ansible_command_timeout: 60
 
 Some operations take longer than the default 30 seconds to complete.  One good
 example is saving the current running config on IOS devices to startup config.
@@ -530,8 +534,10 @@ In this case, changing the timeout value from the default 30 seconds to 60
 seconds will prevent the task from failing before the command completes
 successfully.
 
-Persistent socket connect timeout:
-For example:
+Persistent connection retry timeout
+-----------------------------------
+
+By default, ``ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT`` is set to 15 (seconds). You may see the following error if this value is too low:
 
 .. code-block:: yaml
 
@@ -696,21 +702,21 @@ Example ssh config file (~/.ssh/config)
     IdentityFile "/path/to/ssh-key.pem"
     Port 22
 
-  # Note: Due to the way that Paramiko reads the SSH Config file, 
+  # Note: Due to the way that Paramiko reads the SSH Config file,
   # you need to specify the NETCONF port that the host uses.
   # i.e. It does not automatically use ansible_port
   # As a result you need either:
-  
+
   Host junos01
     HostName junos01
     ProxyCommand ssh -W %h:22 jumphost
-    
+
   # OR
-  
+
   Host junos01
     HostName junos01
     ProxyCommand ssh -W %h:830 jumphost
-    
+
   # Depending on the netconf port used.
 
 Example Ansible inventory file
