@@ -605,6 +605,8 @@ def get_docker_environment(env, env_files):
             parsed_env_file = parse_env_file(env_file)
             for name, value in parsed_env_file.items():
                 env_dict[name] = str(value)
+    if env and isinstance(env, string_types):
+        env = env.split(',')
     if env and isinstance(env, dict):
         for name, value in env.items():
             if not isinstance(value, string_types):

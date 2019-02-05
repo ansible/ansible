@@ -58,6 +58,7 @@ def test_no_retry_on_general_api_error(mocker, docker_swarm_service):
 def test_get_docker_environment(mocker, docker_swarm_service):
     env_file_result = {'TEST1': 'A', 'TEST2': 'B', 'TEST3': 'C'}
     env_dict = {'TEST3': 'CC', 'TEST4': 'D'}
+    env_string = "TEST3=CC,TEST4=D"
 
     env_list = ['TEST3=CC', 'TEST4=D']
     expected_result = sorted(['TEST1=A', 'TEST2=B', 'TEST3=CC', 'TEST4=D'])
@@ -69,7 +70,7 @@ def test_get_docker_environment(mocker, docker_swarm_service):
         'format_environment',
         side_effect=lambda d: ['{0}={1}'.format(key, value) for key, value in d.items()],
     )
-    # Test with env list and dict
+    # Test with env dict and file
     result = docker_swarm_service.get_docker_environment(
         env_dict, env_files=['dummypath']
     )
@@ -78,5 +79,10 @@ def test_get_docker_environment(mocker, docker_swarm_service):
     result = docker_swarm_service.get_docker_environment(
         env_list,
         env_files=['dummypath']
+    )
+    assert result == expected_result
+    # Test with env string and file
+    result = docker_swarm_service.get_docker_environment(
+        env_string, env_files=['dummypath']
     )
     assert result == expected_result
