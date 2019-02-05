@@ -1,6 +1,9 @@
 Intro to Playbooks
 ==================
 
+.. contents::
+   :local:
+
 .. _about_playbooks:
 
 About Playbooks
@@ -36,6 +39,10 @@ Playbook Language Example
 
 Playbooks are expressed in YAML format (see :ref:`yaml_syntax`) and have a minimum of syntax, which intentionally
 tries to not be a programming language or script, but rather a model of a configuration or a process.
+
+.. note::
+   Some editors have add-ons that can help you write clean YAML syntax in your playbooks. See :ref:`other_tools_and_programs` for details.
+
 
 Each playbook is composed of one or more 'plays' in a list.
 
