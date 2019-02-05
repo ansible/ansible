@@ -211,6 +211,7 @@ def main():
     # Set some default values:
     cursor = False
     db_connection = False
+    ret_dict = {}
 
     try:
         db_connection = psycopg2.connect(**kw)
@@ -228,14 +229,14 @@ def main():
     pg_ping = PgPing(module, cursor)
     if cursor:
         # If connection established:
-        kw["is_available"], kw["server_version"] = pg_ping.do()
+        ret_dict["is_available"], ret_dict["server_version"] = pg_ping.do()
         db_connection.rollback()
     else:
         # Return if PostgreSQL is unavailable:
-        kw["is_available"], kw["server_version"] = (False, "")
+        ret_dict["is_available"], ret_dict["server_version"] = (False, "")
 
-    kw['changed'] = False
-    module.exit_json(**kw)
+    ret_dict['changed'] = False
+    module.exit_json(**ret_dict)
 
 
 if __name__ == '__main__':
