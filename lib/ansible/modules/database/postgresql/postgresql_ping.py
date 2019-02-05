@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_ping
-short_description: Checks remote PostgreSQL server availability.
+short_description: Check remote PostgreSQL server availability
 description:
    - Simple module to check remote PostgreSQL server availability.
 version_added: "2.8"
@@ -54,7 +54,8 @@ options:
   ssl_rootcert:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
+        certificate(s).
+      - If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
 notes:
    - The default authentication assumes that you are either logging in as or
@@ -66,13 +67,16 @@ notes:
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
 requirements: [ psycopg2 ]
-author: "Andrew Klychkov (@Andersson007)"
+author:
+    - Andrew Klychkov (@Andersson007)
 '''
 
 EXAMPLES = '''
 # PostgreSQL ping dbsrv server from the shell:
 # ansible dbsrv -m postgresql_ping
 
+# In the example below you need to generate sertificates previously.
+# See https://www.postgresql.org/docs/current/libpq-ssl.html for more information.
 - name: PostgreSQL ping dbsrv server using not default credentials and ssl
   postgresql_ping:
     db: protected_db
@@ -201,50 +205,36 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
+                             'to user the ssl_rootcert parameter')
 
     # Set some default values:
     cursor = False
+    db_connection = False
 
     try:
         db_connection = psycopg2.connect(**kw)
-
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(
-                msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+            module.fail_json(msg='Postgresql server must be at least '
+                                 'version 8.4 to support sslrootcert')
         module.fail_json(msg="unable to connect to database: %s" % to_native(e),
                          exception=traceback.format_exc())
     except Exception as e:
         module.warn("PostgreSQL server is unavailable: %s" % e)
-        # module.fail_json(msg="unable to connect to database: %s" % to_native(e),
-        #                  exception=traceback.format_exc())
-
-    # Set defaults:
-    changed = False
 
     # Do job:
     pg_ping = PgPing(module, cursor)
     if cursor:
         # If connection established:
         kw["is_available"], kw["server_version"] = pg_ping.do()
+        db_connection.rollback()
     else:
         # Return if PostgreSQL is unavailable:
         kw["is_available"], kw["server_version"] = (False, "")
 
-    # Rollback transaction, if checkmode.
-    # Otherwise, commit transaction:
-    # (Nothing changes by this module, just for the order)
-    if changed:
-        if module.check_mode:
-            db_connection.rollback()
-        else:
-            db_connection.commit()
-
-    kw['changed'] = changed
+    kw['changed'] = False
     module.exit_json(**kw)
 
 

@@ -15,18 +15,6 @@
     that:
       - 'result.is_available == True'
       - 'result.server_version != ""'
-
-- name: "postgresql_ping - test check mode (for order, this module doesn't change anything)"
-  become_user: "{{ pg_user }}"
-  become: True
-  postgresql_ping:
-    db: "{{ db_default }}"
-    login_user: "{{ pg_user }}"
-  register: result
-  ignore_errors: True
-
-- assert:
-    that:
       - 'result.changed == False'
 
 - name: "postgresql_ping - check ping of non-existing database doesn't return anything"
@@ -42,3 +30,4 @@
     that:
       - 'result.is_available == False '
       - 'result.server_version == ""'
+      - 'result.changed == False'
