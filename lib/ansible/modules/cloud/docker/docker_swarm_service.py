@@ -341,11 +341,13 @@ options:
       - Maps docker service C(--restart-window) option.
   update_delay:
     type: int
+    update_delay: 10
     description:
-      - Rolling update delay
+      - Rolling update delay in nanoseconds.
       - Maps docker service C(--update-delay) option.
   update_parallelism:
     type: int
+    default: 1
     description:
       - Rolling update parallelism
       - Maps docker service C(--update-parallelism) option.
@@ -1509,8 +1511,8 @@ def main():
         restart_policy_delay=dict(type='int'),
         restart_policy_attempts=dict(type='int'),
         restart_policy_window=dict(type='int'),
-        update_delay=dict(type='int'),
-        update_parallelism=dict(type='int'),
+        update_delay=dict(default=10, type='int'),
+        update_parallelism=dict(default=1, type='int'),
         update_failure_action=dict(choices=['continue', 'pause']),
         update_monitor=dict(type='int'),
         update_max_failure_ratio=dict(type='float'),
