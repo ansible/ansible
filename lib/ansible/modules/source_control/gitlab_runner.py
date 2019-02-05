@@ -327,7 +327,7 @@ def main():
     )
 
     server_url = module.params['server_url']
-    verify_ssl = module.params['validate_certs']
+    validate_certs = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_token = module.params['login_token']
@@ -345,7 +345,7 @@ def main():
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     try:
-        gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=verify_ssl, email=login_user, password=login_password,
+        gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=validate_certs, email=login_user, password=login_password,
                                         private_token=login_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
