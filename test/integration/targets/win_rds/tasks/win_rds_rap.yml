@@ -1,9 +1,8 @@
 ---
 - name: run tests with cleanup
-  when: rds_available  # defined in setup_win_rds
   block:
   - name: run tests
-    include_tasks: tests.yml
+    include_tasks: win_rds_rap_tests.yml
 
   always:
   - name: delete all RAPs
