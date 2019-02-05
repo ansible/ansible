@@ -136,6 +136,10 @@ if not HAS_SSLCONTEXT and HAS_SSL:
         del libssl
 
 
+# The following makes it easier for us to script updates of the bundled backports.ssl_match_hostname
+# The bundled backports.ssl_match_hostname should really be moved into its own file for processing
+_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.5.0.1"}
+
 LOADED_VERIFY_LOCATIONS = set()
 
 HAS_MATCH_HOSTNAME = True
