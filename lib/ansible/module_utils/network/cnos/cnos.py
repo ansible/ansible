@@ -300,9 +300,9 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
         except Exception:
             # debugOutput(prompt)
             if prompt == "(yes/no)?":
-                retVal = retVal
+                pass
             elif prompt == "Password:":
-                retVal = retVal
+                pass
             else:
                 retVal = retVal + "\n Error-101"
             flag = True
