@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: asa
+short_description: Use asa cliconf to run command on asa platform
+description:
+  - This asa plugin provides low level abstraction apis for
+    sending and receiving CLI commands from asa network devices.
+version_added: 2.4
+"""
+
 import re
 import json
 

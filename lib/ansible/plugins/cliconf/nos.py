@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: nos
+short_description: Use nos cliconf to run command on nos platform
+description:
+  - This nos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from nos network devices.
+version_added: "2.7"
+"""
+
 import re
 import json
 

@@ -25,8 +25,8 @@ author: Ansible Networking Team
 cliconf: frr
 short_description: Use frr cliconf to run command on Free Range Routing platform
 description:
-  - This frr plugin provides low level abstraction api's for
-    sending and receiving CLI commands from devices running frr.
+  - This frr plugin provides low level abstraction apis for
+    sending and receiving CLI commands from frr network devices.
 version_added: "2.8"
 """
 

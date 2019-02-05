@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: routeros
+short_description: Use roteros cliconf to run command on roteros platform
+description:
+  - This routeros plugin provides low level abstraction apis for
+    sending and receiving CLI commands from routeros network devices.
+version_added: "2.7"
+"""
+
 import re
 import json
 
