@@ -1,14 +1,15 @@
 ---
-- name: some checks on the probe() filter
-  some_var:
-    key1: begin
-    key2:
-      - foo
-      - bar
-      - subkey1: v1
-        subkey2: v2
-    key3: end
+- name: Test the probe() filter
   assert:
     that:
       - some_var | probe('key2', 2, 'subkey2') == 'v2'
       - some_var | probe('key2', 4, 'subkey2') | default('N/A') == 'N/A'
+  vars:
+    some_var:
+      key1: begin
+      key2:
+        - foo
+        - bar
+        - subkey1: v1
+          subkey2: v2
+      key3: end
