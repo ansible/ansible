@@ -67,7 +67,7 @@ def test_get_docker_environment(mocker, docker_swarm_service):
     mocker.patch.object(
         docker_swarm_service,
         'format_environment',
-        side_effect=lambda d: ['{}={}'.format(key, value) for key, value in d.items()],
+        side_effect=lambda d: ['{0}={1}'.format(key, value) for key, value in d.items()],
     )
     # Test with env list and dict
     result = docker_swarm_service.get_docker_environment(
