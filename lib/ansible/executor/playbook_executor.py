@@ -56,8 +56,13 @@ class PlaybookExecutor:
                 context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager,
-                                         loader=loader, passwords=self.passwords)
+            self._tqm = TaskQueueManager(
+                inventory=inventory,
+                variable_manager=variable_manager,
+                loader=loader,
+                passwords=self.passwords,
+                forks=context.CLIARGS.get('forks'),
+            )
 
         # Note: We run this here to cache whether the default ansible ssh
         # executable supports control persist.  Sometime in the future we may
