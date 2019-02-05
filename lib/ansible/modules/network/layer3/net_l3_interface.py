@@ -22,6 +22,7 @@ short_description: Manage L3 interfaces on network devices
 description:
   - This module provides declarative management of L3 interfaces
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   name:
     description:

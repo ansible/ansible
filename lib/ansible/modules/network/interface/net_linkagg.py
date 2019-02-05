@@ -22,6 +22,7 @@ short_description: Manage link aggregation groups on network devices
 description:
   - This module provides declarative management of link aggregation groups
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   name:
     description:
