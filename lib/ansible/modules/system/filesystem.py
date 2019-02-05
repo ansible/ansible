@@ -76,6 +76,15 @@ EXAMPLES = '''
     opts: -cc
 '''
 
+RETURN = '''
+uuid:
+  description: the filesystem uuid. May be a empty string if unable to extract uuid
+  returned: always
+  type: str
+  sample: b50ed141-6e77-4982-ba4e-8369c05524fd
+'''
+
+
 from distutils.version import LooseVersion
 import os
 import re
@@ -134,6 +143,17 @@ class Filesystem(object):
         else:
             cmd = "%s %s %s '%s'" % (mkfs, self.MKFS_FORCE_FLAGS, opts, dev)
         self.module.run_command(cmd, check_rc=True)
+
+    def get_uuid(self, dev):
+        """ Fetch the UUID """
+        blkid = self.module.get_bin_path('blkid', required=True)
+        cmd = "{} {} -s UUID -o value".format(blkid, dev)
+        _, out, _ = self.module.run_command(cmd, check_rc=True)
+        match = re.search(r"(\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b)", out)
+        if match:
+            return match.group(0)
+        else:
+            return ""
 
     def grow_cmd(self, dev):
         cmd = self.module.get_bin_path(self.GROW, required=True)
@@ -384,10 +404,13 @@ def main():
 
     same_fs = fs and FILESYSTEMS.get(fs) == FILESYSTEMS[fstype]
     if same_fs and not resizefs and not force:
-        module.exit_json(changed=False)
+        # Fetch the fs UUID
+        uuid = filesystem.get_uuid(dev)
+        module.exit_json(changed=False,  uuid=uuid)
     elif same_fs and resizefs:
+        uuid = filesystem.get_uuid(dev)
         if not filesystem.GROW:
-            module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % fstype)
+            module.fail_json(changed=False, msg="module does not support resizing %s filesystem yet." % fstype, uuid=uuid)
 
         out = filesystem.grow(dev)
         # Sadly there is no easy way to determine if this has changed. For now, just say "true" and move on.
@@ -395,13 +418,17 @@ def main():
         #  thankfully, these are safe operations if no change is made.
         module.exit_json(changed=True, msg=out)
     elif fs and not force:
-        module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite" % (dev, fs), rc=rc, err=err)
+        uuid = filesystem.get_uuid(dev)
+        module.fail_json(msg="'%s' is already used as %s, use force=yes to overwrite" % (dev, fs), rc=rc, err=err, uuid=uuid)
 
     # create fs
     filesystem.create(opts, dev)
     changed = True
 
-    module.exit_json(changed=changed)
+    # Fetch the fs UUID
+    uuid = filesystem.get_uuid(dev)
+
+    module.exit_json(changed=changed, uuid=uuid)
 
 
 if __name__ == '__main__':
