@@ -1090,7 +1090,7 @@ class ModuleValidator(Validator):
             version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
-            if version_added != 'historical':
+            if self._is_new_module() or version_added != 'historical':
                 self.reporter.error(
                     path=self.object_path,
                     code=306,
