@@ -1,0 +1,16 @@
+---
+- name: remove installed RDS feature
+  win_feature:
+    name:
+    - RDS-Gateway
+    - RDS-Licensing
+    - RDS-RD-Server
+    - Web-Server  # not part of the initial feature install but RDS-Gateway requires this and it breaks httptester
+    state: absent
+  listen: remove RDS feature
+  register: rds_uninstall
+
+- name: reboot after feature removal
+  win_reboot:
+  when: rds_uninstall.reboot_required
+  listen: remove RDS feature

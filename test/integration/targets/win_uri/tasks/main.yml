@@ -5,9 +5,7 @@
     state: directory
 
 - block:
-  - debug:
-      msg: abc
-#  - include_tasks: test.yml
+  - include_tasks: test.yml
 
   always:
   - name: cleanup test directory
