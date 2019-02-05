@@ -216,3 +216,6 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             return None
 
         return nodes_list
+
+    def get_node_name_by_id(self, nodeid):
+        return self.get_node_inspect(nodeid)['Description']['Hostname']
