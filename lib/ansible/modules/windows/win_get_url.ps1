@@ -142,27 +142,27 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
 
             #$checksum_allowed_algorithms_list = 'SHA1', 'SHA256', 'SHA384', 'SHA512', 'MACTripleDES', 'MD5', 'RIPEMD160'
 
-            $checksum_algorithm = $checksum_parameter_splited[0]
-            $checksum_value = $checksum_parameter_splited[1]
+            $checksum_algorithm = $checksum_parameter_splited[0].Trim()
+            $checksum_value = $checksum_parameter_splited[1].Trim()
 
             #if ( -Not ($checksum_allowed_algorithms_list -match $checksum_algorithm))
             #{
             #    $module.FailJson("The checksum algorithm '$checksum_algorithm' is not supported.  Supported algorithms list: '$checksum_allowed_algorithms_list'.")
             #}
-            if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
-                $checksum_url = $checksum_value
-                # TBD
-                $web_request = Invoke-WebRequest -Uri $checksum_url
-                $raw_html = $web_request.Content
-                # -replace '\W+', ''
-            }
+            # if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
+            #     $checksum_url = $checksum_value
+            #     # TBD
+            #     $web_request = Invoke-WebRequest -Uri $checksum_url
+            #     $checksum_value = $web_request.Content
+            #     # $checksum_value = $checksum_value -replace '\W+', ''
+            # }
 
             $checksum_value = $checksum_value.ToLower()
         }
         Catch {
             module.fail_json(msg="The checksum parameter has to be in format <algorithm>:<checksum>")
         }
-        
+
     }
     # TODO: Replace this with WebRequest
     $extWebClient = New-Object ExtendedWebClient
@@ -190,6 +190,8 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
         }
     }
 
+    $hashFromFile = None
+
     if (-not $module.CheckMode) {
         # FIXME: Single-out catched exceptions with more specific error messages
         Try {
@@ -202,6 +204,7 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
                 # Check both hashes are the same
                 if ($hashFromFile.Hash -ne $checksum_value) {
                     # TBD: add to output variables with both checksums
+                    Remove-Item -Path $dest
                     $module.FailJson("The checksum for %s did not match %s; it was %s." -f $dest, $checksum_value, $hashFromFile)
                 }
             }
