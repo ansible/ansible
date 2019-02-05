@@ -26,6 +26,10 @@ options:
     type: int
     default: 30
     aliases: [ timeout ]
+  api_version:
+    description:
+    - Version of the API to use
+    default: v1
   query_parameters:
     description:
     - List of parameters passed to the query string.

@@ -1,0 +1,54 @@
+---
+- name: Create load-balancer
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ description }}'
+    tags: '{{ tags }}'
+    wait: true
+
+- name: Get lb informations and register it in a variable
+  scaleway_lb_facts:
+    region: fr-par
+  register: lb_fr_par
+
+- name: Display lb_fr_par1 variable
+  debug:
+    var: lb_fr_par
+
+- name: Ensure retrieval of ips facts is success
+  assert:
+    that:
+      - lb_fr_par is success
+
+- name: Ensure that the name is the one we configured.
+  assert:
+    that:
+      - lb_fr_par.ansible_facts.scaleway_lb_facts[0].name == name
+
+- name: Ensure that the description is the one we configured.
+  assert:
+    that:
+      - lb_fr_par.ansible_facts.scaleway_lb_facts[0].description == description
+
+- name: Ensure that the region is the one we configured.
+  assert:
+    that:
+      - lb_fr_par.ansible_facts.scaleway_lb_facts[0].region == scaleway_region
+
+- name: Ensure that the status is ready
+  assert:
+    that:
+      - lb_fr_par.ansible_facts.scaleway_lb_facts[0].status == "ready"
+
+- name: Delete load balancer
+  scaleway_lb:
+    state: absent
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ description }}'
+    tags: '{{ tags }}'
+    wait: true

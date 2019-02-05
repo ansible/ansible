@@ -1,0 +1,7 @@
+---
+scaleway_region: fr-par
+name: lb_facts_ansible_test
+description: Load-balancer used for testing scaleway_lb_facts ansible module
+tags:
+  - first_tag
+  - second_tag

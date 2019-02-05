@@ -9,11 +9,14 @@ from ansible.module_utils.six.moves.urllib.parse import urlencode
 
 def scaleway_argument_spec():
     return dict(
-        api_token=dict(required=True, fallback=(env_fallback, ['SCW_TOKEN', 'SCW_API_KEY', 'SCW_OAUTH_TOKEN', 'SCW_API_TOKEN']),
+        api_token=dict(required=True,
+                       fallback=(env_fallback, ['SCW_TOKEN', 'SCW_API_KEY', 'SCW_OAUTH_TOKEN', 'SCW_API_TOKEN']),
                        no_log=True, aliases=['oauth_token']),
-        api_url=dict(fallback=(env_fallback, ['SCW_API_URL']), default='https://api.scaleway.com', aliases=['base_url']),
+        api_url=dict(fallback=(env_fallback, ['SCW_API_URL']), default='https://api.scaleway.com',
+                     aliases=['base_url']),
         api_timeout=dict(type='int', default=30, aliases=['timeout']),
         query_parameters=dict(type='dict', default={}),
+        api_version=dict(default="v1"),
         validate_certs=dict(default=True, type='bool'),
     )
 
@@ -168,7 +171,7 @@ SCALEWAY_LOCATION = {
     'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
 }
 
-SCALEWAY_ENDPOINT = "https://api-world.scaleway.com"
+SCALEWAY_ENDPOINT = "https://api.scaleway.com"
 
 SCALEWAY_REGIONS = [
     "fr-par",
@@ -178,4 +181,22 @@ SCALEWAY_REGIONS = [
 SCALEWAY_ZONES = [
     "fr-par-1",
     "nl-ams-1",
+]
+
+SCALEWAY_REGION_FR_PAR = "fr-par"
+SCALEWAY_REGION_NL_AMS = "nl-ams"
+
+SCALEWAY_ALL_REGIONS = [
+    SCALEWAY_REGION_FR_PAR,
+    SCALEWAY_REGION_NL_AMS,
+]
+
+SCALEWAY_ZONE_FR_PAR_1 = "fr-par-1"
+SCALEWAY_ZONE_FR_PAR_2 = "fr-par-2"
+SCALEWAY_ZONE_NL_AMS_1 = "nl-ams-1"
+
+SCALEWAY_ALL_ZONES = [
+    SCALEWAY_ZONE_FR_PAR_1,
+    SCALEWAY_ZONE_FR_PAR_2,
+    SCALEWAY_ZONE_NL_AMS_1,
 ]

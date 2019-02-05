@@ -56,9 +56,6 @@ options:
     description:
     - Scaleway zone
     required: true
-    choices:
-      - nl-ams
-      - fr-par
 
   tags:
     description:
@@ -147,7 +144,7 @@ RETURNS = '''
 import datetime
 import time
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.scaleway import SCALEWAY_REGIONS, SCALEWAY_ENDPOINT, scaleway_argument_spec, Scaleway
+from ansible.module_utils.scaleway import SCALEWAY_ENDPOINT, scaleway_argument_spec, Scaleway
 
 STABLE_STATES = (
     "ready",
@@ -319,8 +316,9 @@ def core(module):
         "organization_id": module.params["organization_id"]
     }
     module.params['api_url'] = SCALEWAY_ENDPOINT
+    api_version = module.params['api_version']
     api = Scaleway(module=module)
-    api.api_path = "lbaas/v1beta1/regions/%s/lbs" % region
+    api.api_path = "lb/%s/regions/%s/lbs" % (api_version, region)
 
     changed, summary = state_strategy[wished_load_balancer["state"]](api=api,
                                                                      wished_lb=wished_load_balancer)
@@ -332,7 +330,7 @@ def main():
     argument_spec.update(dict(
         name=dict(required=True),
         description=dict(required=True),
-        region=dict(required=True, choices=SCALEWAY_REGIONS),
+        region=dict(required=True),
         state=dict(choices=state_strategy.keys(), default='present'),
         tags=dict(type="list", default=[]),
         organization_id=dict(required=True),
