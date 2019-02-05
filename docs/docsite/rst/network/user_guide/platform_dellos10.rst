@@ -27,7 +27,7 @@ Connections Available
 +---------------------------+-----------------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      |
-| |                         | | and ``ansible_become_pass:``                |
+| |                         | | and ``ansible_become_password:``            |
 +---------------------------+-----------------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
@@ -48,7 +48,7 @@ Example CLI ``group_vars/dellos10.yml``
    ansible_password: !vault...
    ansible_become: yes
    ansible_become_method: enable
-   ansible_become_pass: !vault...
+   ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 

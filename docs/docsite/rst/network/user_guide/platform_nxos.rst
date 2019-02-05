@@ -29,7 +29,7 @@ Connections Available
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
-| | supported as of 2.5.3   | | and ``ansible_become_pass:``                | |                                       |
+| | supported as of 2.5.3   | | and ``ansible_become_password:``            | |                                       |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
@@ -50,7 +50,7 @@ Example CLI ``group_vars/nxos.yml``
    ansible_password: !vault...
    ansible_become: yes
    ansible_become_method: enable
-   ansible_become_pass: !vault...
+   ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
