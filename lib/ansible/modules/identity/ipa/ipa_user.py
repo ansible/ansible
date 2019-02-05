@@ -23,6 +23,8 @@ options:
     description: Display name
   givenname:
     description: First name
+  homedirectory:
+    description: Home directory
   krbpasswordexpiration:
     description:
     - Date at which the user password will expire
@@ -145,12 +147,14 @@ class UserIPAClient(IPAClient):
         return self._post_json(method='user_enable', name=name)
 
 
-def get_user_dict(displayname=None, givenname=None, krbpasswordexpiration=None, loginshell=None,
-                  mail=None, nsaccountlock=False, sn=None, sshpubkey=None, telephonenumber=None,
-                  title=None, userpassword=None, gidnumber=None, uidnumber=None):
+def get_user_dict(displayname=None, givenname=None, homedirectory=None, krbpasswordexpiration=None,
+                  loginshell=None, mail=None, nsaccountlock=False, sn=None, sshpubkey=None,
+                  telephonenumber=None, title=None, userpassword=None, gidnumber=None, uidnumber=None):
     user = {}
     if displayname is not None:
         user['displayname'] = displayname
+    if homedirectory is not None:
+        user['homedirectory'] = homedirectory
     if krbpasswordexpiration is not None:
         user['krbpasswordexpiration'] = krbpasswordexpiration + "Z"
     if givenname is not None:
@@ -248,6 +252,7 @@ def ensure(module, client):
     nsaccountlock = state == 'disabled'
 
     module_user = get_user_dict(displayname=module.params.get('displayname'),
+                                homedirectory=module.params.get('homedirectory'),
                                 krbpasswordexpiration=module.params.get('krbpasswordexpiration'),
                                 givenname=module.params.get('givenname'),
                                 loginshell=module.params['loginshell'],
@@ -284,6 +289,7 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(displayname=dict(type='str'),
                          givenname=dict(type='str'),
+                         homedirectory=dict(type='str'),
                          krbpasswordexpiration=dict(type='str'),
                          loginshell=dict(type='str'),
                          mail=dict(type='list'),
