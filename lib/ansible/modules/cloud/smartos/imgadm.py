@@ -53,6 +53,17 @@ options:
         required: false
         description:
           - Image UUID. Can either be a full UUID or C(*) for all images.
+    name:
+        version_added: "2.8"
+        required: false
+        description:
+          - Image name. Cannot be used with UUID.
+    docker:
+        version_added: "2.8"
+        required: false
+        description:
+        - Docker images need this flag enabled.
+        type: bool
 requirements:
     - python >= 2.6
 '''
@@ -63,9 +74,21 @@ EXAMPLES = '''
     uuid: '70e3ae72-96b6-11e6-9056-9737fd4d0764'
     state: imported
 
+- name: Import a Docker image
+  imgadm:
+    name: 'ubuntu:18.04'
+    docker: True
+    state: imported
+
 - name: Delete an image
   imgadm:
     uuid: '70e3ae72-96b6-11e6-9056-9737fd4d0764'
+    state: deleted
+
+- name: Delete a Docker image
+  imgadm:
+    name: 'ubuntu:18.04'
+    docker: True
     state: deleted
 
 - name: Update all images
@@ -113,6 +136,7 @@ state:
     sample: 'present'
 '''
 
+import json
 import re
 
 from ansible.module_utils.basic import AnsibleModule
@@ -130,6 +154,8 @@ class Imgadm(object):
         self.cmd = module.get_bin_path('imgadm', required=True)
         self.changed = False
         self.uuid = module.params['uuid']
+        self.name = module.params['name']
+        self.docker = module.params['docker']
 
         # Since there are a number of (natural) aliases, prevent having to look
         # them up everytime we operate on `state`.
@@ -139,17 +165,21 @@ class Imgadm(object):
             self.present = False
 
         # Perform basic UUID validation upfront.
-        if self.uuid and self.uuid != '*':
+        if self.uuid and self.uuid != '*' and not self.docker:
             if not re.match('^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$', self.uuid, re.IGNORECASE):
                 module.fail_json(msg='Provided value for uuid option is not a valid UUID.')
 
     # Helper method to massage stderr
     def errmsg(self, stderr):
-        match = re.match(r'^imgadm .*?: error \(\w+\): (.*): .*', stderr)
-        if match:
-            return match.groups()[0]
+        if self.docker:
+            # Return raw stderr for now
+            return stderr
         else:
-            return 'Unexpected failure'
+            match = re.match(r'^imgadm .*?: error \(\w+\): (.*): .*', stderr)
+            if match:
+                return match.groups()[0]
+            else:
+                return 'Unexpected failure'
 
     def update_images(self):
         if self.uuid == '*':
@@ -229,7 +259,10 @@ class Imgadm(object):
                 else:
                     self.changed = True
         if self.present:
-            cmd = '{0} import -P {1} -q {2}'.format(self.cmd, pool, self.uuid)
+            if self.docker:
+                cmd = '{0} import -P {1} -q {2}'.format(self.cmd, pool, self.name)
+            else:
+                cmd = '{0} import -P {1} -q {2}'.format(self.cmd, pool, self.uuid)
 
             (rc, stdout, stderr) = self.module.run_command(cmd)
 
@@ -244,10 +277,30 @@ class Imgadm(object):
             if re.match(regex, stderr):
                 self.changed = False
 
+            regex = 'Image .* (docker-layer@.*) is already installed'
+            if re.match(regex, stderr):
+                self.changed = False
+
             regex = 'Imported image {0}.*'.format(self.uuid)
             if re.match(regex, stdout.splitlines()[-1]):
                 self.changed = True
+
+            if self.docker:
+                regex = 'Imported image .*'
+                if re.match(regex, stdout.splitlines()[-1]):
+                    self.changed = True
         else:
+            if self.docker:
+                # Get UUID to delete
+                cmd = '{0} show {1}'.format(self.cmd, self.name)
+                (rc, stdout, stderr) = self.module.run_command(cmd)
+
+                if rc != 0:
+                    # No image by that name
+                    self.module.fail_json(msg='Failed to find image {0}'.format(self.errmsg(stderr)))
+
+                self.uuid = json.loads(str(stdout))['uuid']
+
             cmd = '{0} delete -P {1} {2}'.format(self.cmd, pool, self.uuid)
 
             (rc, stdout, stderr) = self.module.run_command(cmd)
@@ -271,7 +324,9 @@ def main():
             source=dict(default=None),
             state=dict(default=None, required=True, choices=['present', 'absent', 'deleted', 'imported', 'updated', 'vacuumed']),
             type=dict(default='imgapi', choices=['imgapi', 'docker', 'dsapi']),
-            uuid=dict(default=None)
+            uuid=dict(default=None),
+            name=dict(default=None),
+            docker=dict(default=False, type='bool')
         ),
         # This module relies largely on imgadm(1M) to enforce idempotency, which does not
         # provide a "noop" (or equivalent) mode to do a dry-run.
@@ -281,6 +336,8 @@ def main():
     imgadm = Imgadm(module)
 
     uuid = module.params['uuid']
+    name = module.params['name']
+    docker = module.params['docker']
     source = module.params['source']
     state = module.params['state']
 
@@ -293,7 +350,15 @@ def main():
     else:
         result['uuid'] = uuid
 
-        if state == 'updated':
+        if docker and uuid:
+            module.fail_json(msg='Cannot manage Docker images by UUID.')
+
+        if name and uuid:
+            module.fail_json(msg='Cannot use name and UUID together.')
+
+        if state == 'updated' and docker:
+            module.fail_json(msg='Cannot update Docker images. No support by imgadm yet.')
+        elif state == 'updated':
             imgadm.update_images()
         else:
             # Make sure operate on a single image for the following actions
