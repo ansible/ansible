@@ -7,7 +7,8 @@
 - include: check_mode.yml
 - include: clone_d1_c1_f0.yml
 - include: create_d1_c1_f0.yml
-- include: create_d1_ds2_c1_f0.yml
+# VCSIM does not return the path of VMDKs
+#- include: create_d1_ds2_c1_f0.yml
 - include: cdrom_d1_c1_f0.yml
 - include: create_rp_d1_c1_f0.yml
 - include: create_guest_invalid_d1_c1_f0.yml

@@ -50,10 +50,10 @@
         num_cpus: 1
         memory_mb: 512
     disk:
-        - size: 0gb
+        - size: 1gb
           type: thin
           datastore: "{{ dslist['json'][0] | basename }}"
-        - size: 0gb
+        - size: 1gb
           type: thin
           datastore: "{{ dslist['json'][1] | basename }}"
     state: poweredoff
@@ -81,10 +81,10 @@
         num_cpus: 1
         memory_mb: 512
     disk:
-        - size: 0gb
+        - size: 1gb
           type: thin
           datastore: "{{ dslist['json'][0] | basename }}"
-        - size: 0gb
+        - size: 1gb
           type: thin
           datastore: "{{ dslist['json'][1] | basename }}"
     state: poweredoff

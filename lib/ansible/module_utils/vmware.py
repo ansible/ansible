@@ -1280,8 +1280,7 @@ class PyVmomi(object):
                 if f.path == vmdk_filename and file_result.folderPath == target_folder_path:
                     return f
 
-        self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
-
+        return None
     #
     # Conversion to JSON
     #

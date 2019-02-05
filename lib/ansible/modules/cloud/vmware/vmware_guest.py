@@ -1749,6 +1749,8 @@ class PyVmomiHelper(PyVmomi):
         # if this is a new disk, or the disk file names are different
         if (vm_obj and diskspec.device.backing.fileName != filename) or vm_obj is None:
             vmdk_file = self.find_vmdk(expected_disk_spec['filename'])
+            if not vmdk_file:
+                self.module.fail_json(msg="Failed to find existing vmdk using path %s" % expected_disk_spec['filename'])
             diskspec.device.backing.fileName = expected_disk_spec['filename']
             diskspec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](vmdk_file.fileSize / 1024)
             diskspec.device.key = -1
