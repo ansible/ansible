@@ -265,12 +265,12 @@ def main():
     current_rtbsoft, current_rtbhard = quota_report(module, mountpoint, name, quota_type, 'rtb')
 
     result['xfs_quota'] = dict(
-        bsoft = current_bsoft,
-        bhard = current_bhard,
-        isoft = current_isoft,
-        ihard = current_ihard,
-        rtbsoft = current_rtbsoft,
-        rtbhard = current_rtbhard
+        bsoft=current_bsoft,
+        bhard=current_bhard,
+        isoft=current_isoft,
+        ihard=current_ihard,
+        rtbsoft=current_rtbsoft,
+        rtbhard=current_rtbhard
     )
 
     limit = []
