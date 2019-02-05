@@ -1,29 +1,10 @@
 ---
-# Cannot use win_feature to install RDS on Server 2008.
-# Run a brief check and skip hosts that don't support
-# that operation
-- name: check if win_feature will work on test host
-  win_command: powershell.exe "exit (-not (Get-Command -Name Add-WindowsFeature -ErrorAction SilentlyContinue))"
-  register: module_available
-  failed_when: False
-
-# Run actual tests
-- block:
+- name: run tests with cleanup
+  when: rds_available  # defined in setup_win_rds
+  block:
   - name: gather facts
     setup:
       filter: ansible_hostname
-
-  - name: ensure Remote Desktop Gateway services are installed
-    win_feature:
-      name: RDS-Gateway,RDS-Licensing,RDS-RD-Server
-      state: present
-      include_management_tools: True
-    register: rds_install
-
-  - name: reboot server if needed
-    win_reboot:
-      post_reboot_delay: 10
-    when: rds_install.reboot_required
 
   - name: ensure testing folders exists
     win_file:
@@ -65,24 +46,23 @@
     raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN={{ rds_cert_suject }}"})[0].Thumbprint'
     register: rds_cert_thumbprint
 
-  - include_tasks: tests.yml
+#  - name: run tests
+#    include_tasks: tests.yml
 
   always:
-    - name: restore RDS base configuration
-      win_shell: |
-        $ts = Get-WmiObject Win32_TSGatewayServer -namespace root\cimv2\TerminalServices
-        $import_xml = Get-Content {{test_win_rds_settings_path}}\rds_base_cfg.xml
-        $import_result = $ts.Import(45, $import_xml)
-        exit $import_result.ReturnValue
+  - name: restore RDS base configuration
+    win_shell: |
+      $ts = Get-WmiObject Win32_TSGatewayServer -namespace root\cimv2\TerminalServices
+      $import_xml = Get-Content {{test_win_rds_settings_path}}\rds_base_cfg.xml
+      $import_result = $ts.Import(45, $import_xml)
+      exit $import_result.ReturnValue
 
-    - name: remove certificate
-      raw: 'remove-item cert:\localmachine\my\{{ item }} -force -ea silentlycontinue'
-      with_items:
-        - "{{ rds_cert_thumbprint.stdout_lines[0] }}"
+  - name: remove certificate
+    raw: 'remove-item cert:\localmachine\my\{{ item }} -force -ea silentlycontinue'
+    with_items:
+      - "{{ rds_cert_thumbprint.stdout_lines[0] }}"
 
-    - name: cleanup test artifacts
-      win_file:
-        path: '{{test_win_rds_settings_path}}'
-        state: absent
-
-  when: module_available.rc == 0
+  - name: cleanup test artifacts
+    win_file:
+      path: '{{test_win_rds_settings_path}}'
+      state: absent
