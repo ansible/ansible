@@ -3,4 +3,3 @@ skip/osx
 skip/freebsd
 destructive
 skip/rhel8.0
-unstable
