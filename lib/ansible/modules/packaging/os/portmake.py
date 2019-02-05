@@ -49,7 +49,7 @@ options:
         description:
             - override DISABLE_VULNERABILITIES to install Ports regardless of vulnerabilities. Ensure ansible run installs required ports regardless.
         required: false
-        choices: [ 'true', 'false' ]
+        type: bool
         default: false
 author: "Daniel Winter (@planet-winter)"
 '''
@@ -111,7 +111,7 @@ class PortMake(object):
         else:
             rc, out, err = self.module.run_command(
                 "pkg install -y portupgrade")
-            #self.install_packages("ports-mgmt/portupgrade", "","", "")
+            # self.install_packages("ports-mgmt/portupgrade", "","", "")
             self.ports_glob_path = module.get_bin_path('ports_glob', True)
 
     def package_installed(self, package):
@@ -183,7 +183,7 @@ class PortMake(object):
         """
         counts the number of packages found
         """
-        #rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" %(package.split('/')[-1]))
+        # rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" %(package.split('/')[-1]))
 
         rc, out, err = self.module.run_command(
             "%s %s" % (self.ports_glob_path, package))
@@ -195,7 +195,7 @@ class PortMake(object):
                 rc, out, err = self.module.run_command("%s %s" % (
                     self.ports_glob_path, package_without_digits))
                 occurrences = out.count('\n')
-                #rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" % (package_without_digits))
+                # rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" % (package_without_digits))
         return occurrences
 
     def remove_package(self, package):
@@ -354,7 +354,7 @@ class MakeFile():
 
     def remove_port_options(self, package, options_name=None):
         self._read_make_conf()
-        if options_name != None:
+        if options_name is not None:
             options_pattern = "%s" % (options_name)
             lines_remove = []
             for line in self.make_config:
