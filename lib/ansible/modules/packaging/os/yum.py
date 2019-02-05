@@ -215,7 +215,7 @@ notes:
     of packages in a single transaction and yum requires groups to be specified
     in different ways when used in that way.  Package groups are specified as
     "@development-tools" and environment groups are "@^gnome-desktop-environment".
-    Use the "yum group list" command to see which category of group the group
+    Use the "yum group list hidden ids" command to see which category of group the group
     you want to install falls into.'
   - 'The yum module does not support clearing yum cache in an idempotent way, so it
     was decided not to implement it, the only method is to use shell and call the yum
