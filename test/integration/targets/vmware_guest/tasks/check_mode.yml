@@ -33,6 +33,7 @@
 - name: get a guest
   set_fact:
     guest1: "{{ vmlist.json[0] }}"
+    folder: "{{ vmlist.json[0] | dirname }}"
 
 - name: Perform all operation in check mode
   vmware_guest:
@@ -43,6 +44,7 @@
     name: "{{ guest1|basename }}"
     datacenter: "{{ (guest1|basename).split('_')[0] }}"
     state: "{{ item }}"
+    folder: "{{ folder }}"
   with_items:
     - absent
     - present
@@ -72,6 +74,7 @@
     name: non_existent_vm
     datacenter: "{{ (guest1|basename).split('_')[0] }}"
     state: "{{ item }}"
+    folder: "{{ folder }}"
   with_items:
     - present
     - poweredoff
