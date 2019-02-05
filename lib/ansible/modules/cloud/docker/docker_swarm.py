@@ -214,7 +214,6 @@ actions:
 '''
 
 import json
-from distutils.version import LooseVersion
 from time import sleep
 try:
     from docker.errors import APIError
@@ -225,7 +224,6 @@ except ImportError:
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DockerBaseClass,
-    docker_version,
 )
 from ansible.module_utils._text import to_native
 

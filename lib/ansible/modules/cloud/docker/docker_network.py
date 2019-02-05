@@ -275,7 +275,6 @@ from ansible.module_utils.docker.common import (
 
 try:
     from docker import utils
-    from docker.errors import NotFound
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:

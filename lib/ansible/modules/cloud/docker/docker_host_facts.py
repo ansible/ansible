@@ -190,16 +190,12 @@ from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseCl
 from ansible.module_utils._text import to_native
 
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import APIError
 except ImportError:
     # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
-try:
-    from ansible.module_utils.docker.common import docker_version, clean_dict_booleans_for_docker_api
-except Exception as dummy:
-    # missing docker-py handled in ansible.module_utils.docker.common
-    pass
+from ansible.module_utils.docker.common import clean_dict_booleans_for_docker_api
 
 
 class DockerHostManager(DockerBaseClass):

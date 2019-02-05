@@ -1546,7 +1546,7 @@ class TaskParameters(DockerBaseClass):
                     elif key == 'retries':
                         try:
                             result[key] = int(result[key])
-                        except Exception as e:
+                        except Exception as dummy:
                             self.fail('Cannot parse number of retries for healthcheck. '
                                       'Expected an integer, got "{0}".'.format(result[key]))
 
@@ -2555,7 +2555,7 @@ class ContainerManager(DockerBaseClass):
             while True:
                 try:
                     response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-                except NotFound as exc:
+                except NotFound as dummy:
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
