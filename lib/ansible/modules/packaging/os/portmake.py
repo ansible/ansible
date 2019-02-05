@@ -85,6 +85,7 @@ class PortMake(object):
     def __init__(self, module):
         self.module = module
         self.pkgng = None
+        self.makefile = MakeFile()
 
         # if pkg_info not found assume pkgng
         if self.module.get_bin_path('pkg_info', False):
@@ -212,8 +213,8 @@ class PortMake(object):
             self.module.fail_json(
                 msg="failed to remove %s: %s" % (package, out))
         else:
-            mf = MakeFile(self.module)
-            mf.remove_port_options(package)
+            options_name = self.get_options_name(package)
+            self.makefile.remove_port_options(package, options_name)
 
     def remove_packages(self, packages):
         """
@@ -268,11 +269,11 @@ class PortMake(object):
 
                 options_name = self.get_options_name(package)
 
-                mf = MakeFile(self.module)
                 if options_set != []:
-                    mf.set_port_option(options_name, options_set)
+                    self.makefile.set_port_option(options_name, options_set)
                 if options_unset != []:
-                    mf.unset_port_option(options_name, options_unset)
+                    self.makefile.unset_port_option(
+                        options_name, options_unset)
 
                 compile_options = ""
                 if disable_vulnerabilities:
@@ -308,22 +309,20 @@ class PortMake(object):
 
 class MakeFile():
 
-    def __init__(self, module):
-        self.module = module
+    def __init__(self):
         self.make_conf = "/etc/make.conf"
-        self.anchor = "## ansible ports module managed: DO NOT EDIT below! ##"
         # temporary file in the current directory for os.rename to be atomic
         fd, self.tempfile = mkstemp(dir=os.path.dirname(self.make_conf))
-        self.make_config = []
+        self.make_config = self._read_make_conf()
 
     def _read_make_conf(self):
+        make_config = []
         if os.path.isfile(self.make_conf):
             shutil.copy(self.make_conf, self.tempfile)
-
-        self.make_config = []
-        with open(self.tempfile, 'r') as tempfile:
-            for line in tempfile:
-                self.make_config.append(line)
+            with open(self.tempfile, 'r') as tempfile:
+                for line in tempfile:
+                    make_config.append(line)
+        return make_config
 
     def _write_make_conf(self):
         with open(self.tempfile, 'w') as tempfile:
@@ -333,7 +332,7 @@ class MakeFile():
         os.rename(self.tempfile, self.make_conf)
 
     def _port_option_is_set(self, option, value):
-        option_value_pattern = "%s\+=%s" % (option, value)
+        option_value_pattern = r"%s\+=%s" % (option, value)
         for line in self.make_config:
             if bool(re.match(option_value_pattern, line)):
                 return True
@@ -353,21 +352,18 @@ class MakeFile():
                 self.make_config.append("%s+=%s\n" % (option_set, value))
         self._write_make_conf()
 
-    def remove_port_options(self, package):
+    def remove_port_options(self, package, options_name=None):
         self._read_make_conf()
-
-        pm = PortMake(self.module)
-        try:
-            options_name = pm.get_options_name(package)
-            options_pattern = "%s.+SET\+=.*" % (options_name)
+        if options_name != None:
+            options_pattern = "%s" % (options_name)
+            lines_remove = []
             for line in self.make_config:
                 if bool(re.match(options_pattern, line)):
-                    self.make_config.remove(line)
-        except:
-            # we might be trying to remove a package which is not in
-            #  the ports tree anymore, thus failing here
-            pass
-
+                    lines_remove.append(line)
+            for line in lines_remove:
+                self.make_config.remove(line)
+        # we might be trying to remove a package which is not in
+        #  the ports tree anymore, thus having no options_name is valid as well
         self._write_make_conf()
 
 
