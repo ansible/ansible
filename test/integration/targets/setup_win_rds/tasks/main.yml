@@ -1,0 +1,29 @@
+---
+# Cannot use win_feature to install RDS on Server 2008
+- name: check if feature is availble
+  win_shell: if (Get-Command -Name Add-WindowsFeature -ErrorAction SilentlyContinue) { $true } else { $false }
+  changed_when: False
+  register: module_available
+
+- name: set fact when RDS is available
+  set_fact:
+    rds_available: '{{ module_available.stdout | trim | bool }}'
+
+- name: install Remote Desktop Gateway features
+  when: rds_available
+  block:
+  - name: ensure Remote Desktop Gateway services are installed
+    win_feature:
+      name:
+      - RDS-Gateway
+      - RDS-Licensing
+      - RDS-RD-Server
+      state: present
+    register: rds_install
+    notify:
+    - remove RDS feature
+
+  - name: reboot server if needed
+    win_reboot:
+      post_reboot_delay: 10
+    when: rds_install.reboot_required
