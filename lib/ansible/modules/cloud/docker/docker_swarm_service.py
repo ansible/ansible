@@ -542,7 +542,7 @@ try:
     from distutils.version import LooseVersion
     from docker import types
     from docker.utils import parse_repository_tag
-    from docker.errors import DockerException
+    from docker.errors import APIError, DockerException
 except Exception:
     # missing docker-py handled in ansible.module_utils.docker
     pass
@@ -1209,9 +1209,11 @@ class DockerServiceManager():
 
     def __init__(self, client):
         self.client = client
-        self.diff_tracker = DifferenceTracker()
+        self.retries = 2
+        self.diff_tracker = None
 
     def run(self):
+        self.diff_tracker = DifferenceTracker()
         module = self.client.module
 
         image = module.params['image']
@@ -1293,6 +1295,19 @@ class DockerServiceManager():
                 facts = new_service.get_facts()
 
         return msg, changed, rebuilt, differences.get_legacy_docker_diffs(), facts
+
+    def run_safe(self):
+        while True:
+            try:
+                return self.run()
+            except APIError as e:
+                # Sometimes Version.Index will have changed between an inspect and
+                # update. If this is encountered we'll retry the update.
+                if self.retries > 0 and 'update out of sequence' in str(e.explanation):
+                    self.retries -= 1
+                    time.sleep(1)
+                else:
+                    raise
 
 
 def _detect_publish_mode_usage(client):
@@ -1385,7 +1400,7 @@ def main():
     )
 
     dsm = DockerServiceManager(client)
-    msg, changed, rebuilt, changes, facts = dsm.run()
+    msg, changed, rebuilt, changes, facts = dsm.run_safe()
 
     results = dict(
         msg=msg,
