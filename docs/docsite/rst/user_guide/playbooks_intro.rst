@@ -52,7 +52,9 @@ server group, then more commands back on the webservers group, etc.
 to do different things.  It's not as if you were just defining one particular state or model, and you
 can run different plays at different times.
 
-For starters, here's a playbook that contains just one play::
+.. _apache-playbook:
+
+For starters, here's a playbook, ``verify-apache.yml`` that contains just one play::
 
     ---
     - hosts: webservers
@@ -471,24 +473,37 @@ There's also a `clever playbook <https://github.com/ansible/ansible-examples/blo
 
 .. _tips_and_tricks:
 
-Tips and Tricks
-```````````````
+Testing playbooks
+`````````````````
 
-To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
-playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+You can use `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_ to run a detail check of your playbooks before you execute them.
 
-Look at the bottom of the playbook execution for a summary of the nodes that were targeted
-and how they performed.   General failures and fatal "unreachable" communication attempts are
-kept separate in the counts.
+For example, if you run ``ansible-lint`` on the :ref:`verify-apache.yml playbook <apache-playbook>` introduced earlier in this section, you'll get the following results:
 
-If you ever want to see detailed output from successful modules as well as unsuccessful ones,
-use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
+.. code-block:: bash
 
+    $ ansible-lint veryify-apache.yml
+    [403] Package installs should not use latest
+    verify-apache.yml:8
+    Task/Handler: ensure apache is at the latest version
 
-To see what hosts would be affected by a playbook before you run it, you
-can do this::
+The `ansible-lint default rules <https://docs.ansible.com/ansible-lint/rules/default_rules.html>`_ page describes each error. For ``[403]``, the recommended fix is to change ``state: latest`` to ``state: present`` in the playbook.
 
-    ansible-playbook playbook.yml --list-hosts
+See :ref:`validate-playbook-tools` for a detailed list of tools you can use to verify your playbooks. Here are some others that you should consider:
+
+* To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
+  playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+
+* Look at the bottom of the playbook execution for a summary of the nodes that were targeted
+  and how they performed. General failures and fatal "unreachable" communication attempts are kept separate in the counts.
+
+* If you ever want to see detailed output from successful modules as well as unsuccessful ones,
+  use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
+
+* To see what hosts would be affected by a playbook before you run it, you
+  can do this::
+
+      ansible-playbook playbook.yml --list-hosts
 
 .. seealso::
 
