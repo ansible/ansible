@@ -1,0 +1,7 @@
+{
+ "ignore_changes": true,
+ "extensions": [
+    ".py"
+ ],
+ "output": "path-message"
+}
