@@ -515,15 +515,15 @@ General for all connections:
 ansible_host
     The name of the host to connect to, if different from the alias you wish to give to it.
 ansible_port
-    The ssh port number, if not 22
+    The connection port number, if not the default (22 for ssh)
 ansible_user
-    The default ssh user name to use.
+    The user name to use when connecting to the host
+ansible_password
+    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 
 
 Specific to the SSH connection:
 
-ansible_ssh_pass
-    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
