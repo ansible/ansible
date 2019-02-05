@@ -26,7 +26,7 @@ along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.2'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = '''
 ---
@@ -165,7 +165,8 @@ options:
       - vmgroup_name':' the vm group name vms to be added in. It must exist beforehand.
       - role':' vm role in the vm group. It must exist beforehand.
       - vmgroup_id':' alterntative way to specify a vm group than I(vmgroup_name).
-      - vmgroup_uid':' if mulitiple vm groupd have same name, you can select one by group owner uid.
+      - vmgroup_uid':' if mulitiple vm groups have same name, you can select one by group owner uid.
+    version_added: "2.8"
   disk_saveas:
     description:
       - Creates an image from a VM disk.

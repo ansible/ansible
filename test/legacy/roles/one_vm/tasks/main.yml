@@ -43,12 +43,15 @@
   failed_when: not vm_missing is failed
 
 - block:
-    - name: Deploy a VM with networks, memory and cpu
+    - name: Deploy a VM with networks, vm group, memory and cpu
       one_vm:
         template_id: '{{ one_template_id }}'
         networks: '{{ one_networks_good }}'
         memory: '{{ one_memory }}'
         cpu: '{{ one_cpu }}'
+        vm_group:
+          vmgroup_name: '{{ one_vmgroup_name }}'
+          role: '{{ one_vmgroup_role }}'
       register: deployed_vm
 
     - name: Verify deploying of the VM
@@ -63,6 +66,8 @@
           - deployed_vm.instances[0].cpu == "{{ one_cpu }}"
           - deployed_vm.instances[0].state == "ACTIVE"
           - deployed_vm.instances[0].lcm_state == "RUNNING"
+          - deployed_vm.instances[0].vmgroup.vmgroup_name== "{{ one_vmgroup_name }}"
+          - deployed_vm.instances[0].vmgroup.role == "{{ one_vmgroup_role }}"
 
     - name: Delete a VM in check-mode
       one_vm:
