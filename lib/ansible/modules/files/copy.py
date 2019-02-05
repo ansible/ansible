@@ -283,7 +283,7 @@ class AnsibleModuleError(Exception):
 # until then because of the module.run_command() method.  We may need to move it into
 # basic::AnsibleModule() until then but if so, make it a private function so that we don't have to
 # keep it for backwards compatibility later.
-def del_facl(path, acl_tag, acl_qualifier=None):
+def del_facl(path, acl_tag, acl_qualifier=None, ignore_errors=False):
     """
     :arg path: Filepath from which to remove an acl
     :arg acl_tag: acl tag to remove.  POSIX1.e recognizes 'u', 'g', 'o', and 'm'
@@ -309,8 +309,8 @@ def del_facl(path, acl_tag, acl_qualifier=None):
     acl_command = [setfacl, '-x', acl_string, path]
     b_acl_command = [to_bytes(x) for x in acl_command]
     rc, out, err = module.run_command(b_acl_command, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
-    if rc != 0:
-        raise RuntimeError('Error running setfacl: stdout: {0}; stderr: {1}'.format(out, err))
+    if rc != 0 and not ignore_errors:
+        raise RuntimeError('Error running "{0}": stdout: "{1}"; stderr: "{2}"'.format(' '.join(b_acl_command), out, err))
 
 
 def split_pre_existing_dir(dirname):
@@ -677,7 +677,7 @@ def main():
                     # of existing attributes.  Get rid of them
                     try:
                         del_facl(dest, 'u', os.geteuid())
-                        del_facl(dest, 'm')
+                        del_facl(dest, 'm', ignore_errors=True)
                     except ValueError as e:
                         if 'setfacl' in to_native(e):
                             # No setfacl so we're okay.  The controller couldn't have set a facl
@@ -690,11 +690,9 @@ def main():
 
                         # FIXME: separate out the following cases and do the appropriate thing:
                         # * If any of the following raise errors, they can be ignored
-                        #   * If we're running on python2 therefore the facls were not copied
                         #   * If the directory we copied into has a default acl, on python2, the
                         #     file ends up with the directory's default acl.  On python3, if the
                         #     file did not start with any acl, it will end up with the default acl.
-                        #   * A failure to remove 'm' can be ignored.
 
                         # * Treatment of default acls are a related bug.  On Python2, default acls
                         #   are applied to the copied file.  On Python3, the default acls won't
