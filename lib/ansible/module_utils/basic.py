@@ -2870,8 +2870,6 @@ class AnsibleModule(object):
                     if prompt_re.search(stdout) and not data:
                         if encoding:
                             stdout = to_native(stdout, encoding=encoding, errors=errors)
-                        else:
-                            stdout = stdout
                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
