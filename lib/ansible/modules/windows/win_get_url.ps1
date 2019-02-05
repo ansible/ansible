@@ -149,7 +149,7 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
             #{
             #    $module.FailJson("The checksum algorithm '$checksum_algorithm' is not supported.  Supported algorithms list: '$checksum_allowed_algorithms_list'.")
             #}
-            if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or checksum_value.startswith('ftp://', 1)) {
+            if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
                 $checksum_url = $checksum_value
                 # TBD
                 $web_request = Invoke-WebRequest -Uri $checksum_url
