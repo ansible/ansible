@@ -1486,9 +1486,6 @@ class YumModule(YumDnf):
         if not HAS_YUM_PYTHON:
             error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
 
-        if self.disable_excludes and yum.__version_info__ < (3, 4):
-            self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
-
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))
 
