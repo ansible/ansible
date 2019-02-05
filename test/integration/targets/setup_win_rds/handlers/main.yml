@@ -1,0 +1,29 @@
+---
+# Server 2008 R2 requires us to remove this first before the other features
+- name: remove the RDS-Gateway feature
+  win_feature:
+    name: RDS-Gateway
+    state: absent
+  listen: remove RDS feature
+  register: rds_uninstall
+
+- name: reboot after removing RDS-Gateway feature
+  win_reboot:
+  when: rds_uninstall.reboot_required
+  listen: remove RDS feature
+
+# Now remove the remaining features
+- name: remove installed RDS feature
+  win_feature:
+    name:
+    - RDS-Licensing
+    - RDS-RD-Server
+    - Web-Server  # not part of the initial feature install but RDS-Gateway requires this and it breaks httptester
+    state: absent
+  listen: remove RDS feature
+  register: rds_uninstall2
+
+- name: reboot after feature removal
+  win_reboot:
+  when: rds_uninstall2.reboot_required
+  listen: remove RDS feature
