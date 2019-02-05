@@ -335,7 +335,7 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
     r = exec_quota(module, 'report %s %s' % (type_arg, used_arg), mountpoint)
 
     if r['rc'] != 0:
-        module.fail_json(msg='Could not get quota report for %s (%s).' % (used_name, r['stderr']), **result)
+        module.fail_json(msg='Could not get quota report for %s (%s).' % (used_name, r['stderr']))
     else:
         for line in r['stdout']:
             line = line.strip().split()
