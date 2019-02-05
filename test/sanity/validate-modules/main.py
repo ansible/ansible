@@ -1117,7 +1117,7 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
-                msg='version_added should be %r. Currently %r' % (should_be, version_added)
+                msg='version_added should be %r. Currently %r' % (should_be, version_added_raw)
             )
 
     def _validate_ansible_module_call(self, docs):
