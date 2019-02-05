@@ -61,6 +61,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_httpapi_pass
+      - name: ansible_httpapi_password
   use_ssl:
     type: boolean
     description:
