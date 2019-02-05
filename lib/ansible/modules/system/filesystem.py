@@ -147,7 +147,7 @@ class Filesystem(object):
     def get_uuid(self, dev):
         """ Fetch the UUID """
         blkid = self.module.get_bin_path('blkid', required=True)
-        cmd = "{} {} -s UUID -o value".format(blkid, dev)
+        cmd = "{0} {1} -s UUID -o value".format(blkid, dev)
         _, out, _ = self.module.run_command(cmd, check_rc=True)
         match = re.search(r"(\b[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}\b)", out)
         if match:
@@ -406,7 +406,7 @@ def main():
     if same_fs and not resizefs and not force:
         # Fetch the fs UUID
         uuid = filesystem.get_uuid(dev)
-        module.exit_json(changed=False,  uuid=uuid)
+        module.exit_json(changed=False, uuid=uuid)
     elif same_fs and resizefs:
         uuid = filesystem.get_uuid(dev)
         if not filesystem.GROW:
