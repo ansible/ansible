@@ -46,8 +46,8 @@
     raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN={{ rds_cert_suject }}"})[0].Thumbprint'
     register: rds_cert_thumbprint
 
-  - name: run tests
-    include_tasks: tests.yml
+#  - name: run tests
+#    include_tasks: tests.yml
 
   always:
   - name: restore RDS base configuration
