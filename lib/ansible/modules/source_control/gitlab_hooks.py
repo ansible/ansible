@@ -22,8 +22,8 @@ description:
      - Adds, updates and removes project hooks
 version_added: "2.6"
 author:
-  - "Marcus Watkins (@marwatk)"
-  - "Guillaume Martinez (@Lunik)"
+  - Marcus Watkins (@marwatk)
+  - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -33,6 +33,7 @@ options:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     version_added: "2.8"
+    type: str
     aliases:
       - api_url
   validate_certs:
@@ -45,74 +46,80 @@ options:
     description:
       - Gitlab user name.
     version_added: "2.8"
+    type: str
   login_password:
     description:
       - Gitlab password for login_user
     version_added: "2.8"
+    type: str
   login_token:
     description:
       - Gitlab token for logging in.
     version_added: "2.8"
+    type: str
     aliases:
       - private_token
   project:
     description:
       - Id or Full path of the project in the form of group/name
     required: true
+    type: str
   hook_url:
     description:
       - The url that you want GitLab to post to, this is used as the primary key for updates and deletion.
     required: true
+    type: str
   state:
     description:
       - When C(present) the hook will be updated to match the input or created if it doesn't exist. When C(absent) it will be deleted if it exists.
     required: true
-    default: "present"
+    default: present
+    type: str
     choices: [ "present", "absent" ]
   push_events:
     description:
       - Trigger hook on push events
-    type: "bool"
+    type: bool
     default: yes
   issues_events:
     description:
       - Trigger hook on issues events
-    type: "bool"
+    type: bool
     default: no
   merge_requests_events:
     description:
       - Trigger hook on merge requests events
-    type: "bool"
+    type: bool
     default: no
   tag_push_events:
     description:
       - Trigger hook on tag push events
-    type: "bool"
+    type: bool
     default: no
   note_events:
     description:
       - Trigger hook on note events
-    type: "bool"
+    type: bool
     default: no
   job_events:
     description:
       - Trigger hook on job events
-    type: "bool"
+    type: bool
     default: no
   pipeline_events:
     description:
       - Trigger hook on pipeline events
-    type: "bool"
+    type: bool
     default: no
   wiki_page_events:
     description:
       - Trigger hook on wiki events
-    type: "bool"
+    type: bool
     default: no
   enable_ssl_verification:
     description:
       - Whether GitLab will do SSL verification when triggering the hook
-    type: "bool"
+    type: bool
     default: no
   token:
     description:
@@ -120,10 +127,12 @@ options:
       - If this is present it will always result in a change as it cannot be retrieved from GitLab.
       - Will show up in the X-Gitlab-Token HTTP request header
     required: false
+    type: str
 '''
 
 EXAMPLES = '''
-- gitlab_hooks:
+- name: "Adding a project hook"
+  gitlab_hooks:
     server_url: https://gitlab.example.com
     login_token: "{{ access_token }}"
     project: "my_group/my_project"
@@ -133,15 +142,17 @@ EXAMPLES = '''
     tag_push_events: yes
     enable_ssl_verification: no
     token: "my-super-secret-token-that-my-ci-server-will-check"
-# Delete the previous hook
-- gitlab_hooks:
+
+- name: "Delete the previous hook"
+  gitlab_hooks:
     server_url: https://gitlab.example.com
     login_token: "{{ access_token }}"
     project: "my_group/my_project"
     hook_url: "https://my-ci-server.example.com/gitlab-hook"
     state: absent
-# Delete a hook by numeric project id
-- gitlab_hooks:
+
+- name: "Delete a hook by numeric project id"
+  gitlab_hooks:
     server_url: https://gitlab.example.com
     login_token: "{{ access_token }}"
     project: 10

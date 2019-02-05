@@ -31,8 +31,8 @@ notes:
   - Runners need to have unique names.
 version_added: 2.8
 author:
-  - "Samy Coenen (@SamyCoenen)"
-  - "Guillaume Martinez (@Lunik)"
+  - Samy Coenen (@SamyCoenen)
+  - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -59,9 +59,11 @@ options:
   login_user:
     description:
       - Gitlab user name.
+    type: str
   login_password:
     description:
       - Gitlab password for login_user
+    type: str
   description:
     description:
       - The unique name of the runner.
@@ -73,7 +75,7 @@ options:
     description:
       - Make sure that the runner with the same name exists with the same configuration or delete the runner with the same name.
     required: False
-    default: "present"
+    default: present
     choices: ["present", "absent"]
     type: str
   registration_token:
@@ -97,7 +99,7 @@ options:
     description:
       - Determines if a runner can pick up jobs from protected branches.
     required: False
-    default: "ref_protected"
+    default:"ref_protected
     choices: ["ref_protected", "not_protected"]
     type: str
   maximum_timeout:
@@ -120,9 +122,7 @@ options:
 '''
 
 EXAMPLES = '''
-# Register a new runner (if it does not exist)
-
-- name: Register runner
+- name: "Register runner"
   gitlab_runner:
     server_url: "https://gitlab.com/"
     login_token: 5432632464326432632463246
@@ -134,8 +134,7 @@ EXAMPLES = '''
     run_untagged: False
     locked: False
 
-# Delete a runner
-- name: Delete runner
+- name: "Delete runner"
   gitlab_runner:
     server_url: "https://gitlab.com/"
     login_token: 5432632464326432632463246

@@ -22,8 +22,8 @@ description:
   - When changes are made to the project, the project will be updated.
 version_added: "2.1"
 author:
-  - "Werner Dijkerman (@dj-wasabi)"
-  - "Guillaume Martinez (@Lunik)"
+  - Werner Dijkerman (@dj-wasabi)
+  - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -32,6 +32,7 @@ options:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
+    type: str
   validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
@@ -42,26 +43,33 @@ options:
   login_user:
     description:
       - Gitlab user name.
+    type: str
   login_password:
     description:
       - Gitlab password for login_user
+    type: str
   login_token:
     description:
       - Gitlab token for logging in.
+    type: str
   group:
     description:
       - Id or The full path of the group of which this projects belongs to.
+    type: str
   name:
     description:
       - The name of the project
     required: true
+    type: str
   path:
     description:
       - The path of the project you want to create, this will be server_url/<group>/path
       - If not supplied, name will be used.
+    type: str
   description:
     description:
       - An description for the project.
+    type: str
   issues_enabled:
     description:
       - Whether you want to create issues or not.
@@ -91,7 +99,8 @@ options:
       - Private. Project access must be granted explicitly for each user.
       - Internal. The project can be cloned by any logged in user.
       - Public. The project can be cloned without any authentication.
-    default: "private"
+    default: private
+    type: str
     choices: ["private", "internal", "public"]
     aliases:
       - visibility_level
@@ -100,11 +109,13 @@ options:
       - Git repository which will be imported into gitlab.
       - Gitlab server needs read access to this git repository.
     required: false
+    type: str
   state:
     description:
       - create or delete project.
       - Possible values are present and absent.
-    default: "present"
+    default: present
+    type: str
     choices: ["present", "absent"]
 '''
 

@@ -21,8 +21,8 @@ description:
      - Adds, updates and removes project deploy keys
 version_added: "2.6"
 author:
-  - "Marcus Watkins (@marwatk)"
-  - "Guillaume Martinez (@Lunik)"
+  - Marcus Watkins (@marwatk)
+  - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -32,6 +32,7 @@ options:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
     version_added: "2.8"
+    type: str
     aliases:
       - api_url
   validate_certs:
@@ -44,28 +45,34 @@ options:
     description:
       - Gitlab user name.
     version_added: "2.8"
+    type: str
   login_password:
     description:
       - Gitlab password for login_user
     version_added: "2.8"
+    type: str
   login_token:
     description:
       - Gitlab token for logging in.
     version_added: "2.8"
+    type: str
     aliases:
       - private_token
   project:
     description:
       - Id or Full path of project in the form of group/name
     required: true
+    type: str
   title:
     description:
       - Deploy key's title
     required: true
+    type: str
   key:
     description:
       - Deploy key
     required: true
+    type: str
   can_push:
     description:
       - Whether this key can push to the project
@@ -76,13 +83,14 @@ options:
       - When C(present) the deploy key added to the project if it doesn't exist.
       - When C(absent) it will be removed from the project if it exists
     required: true
-    default: "present"
+    default: present
+    type: str
     choices: [ "present", "absent" ]
 '''
 
 EXAMPLES = '''
-# Example adding a project deploy key
-- gitlab_deploy_key:
+- name: "Adding a project deploy key"
+  gitlab_deploy_key:
     server_url: https://gitlab.example.com/api
     login_token: "{{ access_token }}"
     project: "my_group/my_project"
@@ -90,8 +98,8 @@ EXAMPLES = '''
     state: present
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9w..."
 
-# Update the above deploy key to add push access
-- gitlab_deploy_key:
+- name: "Update the above deploy key to add push access"
+  gitlab_deploy_key:
     server_url: https://gitlab.example.com/api
     login_token: "{{ access_token }}"
     project: "my_group/my_project"
@@ -99,8 +107,8 @@ EXAMPLES = '''
     state: present
     can_push: yes
 
-# Remove the previous deploy key from the project
-- gitlab_deploy_key:
+- name: "Remove the previous deploy key from the project"
+  gitlab_deploy_key:
     server_url: https://gitlab.example.com/api
     login_token: "{{ access_token }}"
     project: "my_group/my_project"

@@ -22,8 +22,8 @@ description:
   - When changes are made to user, the user will be updated.
 version_added: "2.1"
 author:
-  - "Werner Dijkerman (@dj-wasabi)"
-  - "Guillaume Martinez (@Lunik)"
+  - Werner Dijkerman (@dj-wasabi)
+  - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
   - python-gitlab python module
@@ -33,6 +33,7 @@ options:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
     required: true
+    type: str
   validate_certs:
     description:
       - When using https if SSL certificate needs to be verified.
@@ -43,39 +44,49 @@ options:
   login_user:
     description:
       - Gitlab user name.
+    type: str
   login_password:
     description:
       - Gitlab password for login_user
+    type: str
   login_token:
     description:
       - Gitlab token for logging in.
+    type: str
   name:
     description:
       - Name of the user you want to create
     required: true
+    type: str
   username:
     description:
       - The username of the user.
     required: true
+    type: str
   password:
     description:
       - The password of the user.
       - GitLab server enforces minimum password length to 8, set this value with 8 or more characters.
     required: true
+    type: str
   email:
     description:
       - The email that belongs to the user.
     required: true
+    type: str
   sshkey_name:
     description:
       - The name of the sshkey
+    type: str
   sshkey_file:
     description:
       - The ssh key itself.
+    type: str
   group:
     description:
       - Id or Full path of parent group in the form of group/name
       - Add user as an member to this group.
+    type: str
   access_level:
     description:
       - The access level to the group. One of the following can be used.
@@ -85,13 +96,15 @@ options:
       - master (alias for maintainer)
       - maintainer
       - owner
-    default: "guest"
+    default: guest
+    type: str
     choices: ["guest", "reporter", "developer", "master", "maintainer", "owner"]
   state:
     description:
       - create or delete group.
       - Possible values are present and absent.
-    default: "present"
+    default: present
+    type: str
     choices: ["present", "absent"]
   confirm:
     description:
@@ -114,7 +127,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Delete Gitlab User
+- name: "Delete Gitlab User"
   gitlab_user:
     server_url: http://gitlab.example.com
     validate_certs: False
@@ -123,7 +136,7 @@ EXAMPLES = '''
     state: absent
   delegate_to: localhost
 
-- name: Create Gitlab User
+- name: "Create Gitlab User"
   gitlab_user:
     server_url: https://gitlab.dj-wasabi.local
     validate_certs: True
