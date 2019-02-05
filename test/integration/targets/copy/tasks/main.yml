@@ -58,10 +58,7 @@
     - import_tasks: tests.yml
       remote_user: '{{ remote_unprivileged_user }}'
 
-    - include: "acls.yml remote_src_toggle={{ item }}"
-      loop:
-        - no
-        - yes
+    - import_tasks: acls.yml
 
   always:
     - name: Cleaning

@@ -1,28 +1,49 @@
 - block:
+  - set_fact:
+      testing_copy_user: testing_copy_user
+
+  - user:
+      name: "{{ testing_copy_user }}"
+      state: present
+
   - block:
     - file:
         path: "{{ remote_dir }}"
         state: directory
 
-    - copy:
+    - command: "setfacl -d -m u:{{ testing_copy_user }}:rw {{ remote_dir }}"
+
+    - name: Testing ACLs
+      copy:
         content: "TEST"
         dest: "{{ remote_dir }}/test.txt"
-        remote_src: "{{ remote_src_toggle | default('no') }}"
 
     - command: "getfacl {{ remote_dir }}/test.txt"
       register: acls
-
+    - debug:
+        var: acls
     become: yes
     become_user: "{{ remote_unprivileged_user }}"
 
-  - assert:
+  - name: Check that there are no ACLs leftovers
+    assert:
       that:
         - "'user:{{ remote_unprivileged_user }}:r-x\t#effective:r--' not in acls.stdout_lines"
 
+  - name: Check that default ACLs are preserved - FIXME decide what we want to do
+    assert:
+      that:
+        - "'user:{{ testing_copy_user }}:rw-' in acls.stdout_lines"
+
   always:
     - name: Clean up
-      file:
-        path: "{{ remote_dir }}/test.txt"
-        state: absent
-      become: yes
-      become_user: "{{ remote_unprivileged_user }}"
+      block:
+       - file:
+           path: "{{ remote_dir }}/test.txt"
+           state: absent
+         become: yes
+         become_user: "{{ remote_unprivileged_user }}"
+
+       - user:
+           name: "{{ testing_copy_user }}"
+           state: absent
