@@ -251,8 +251,6 @@ def main():
         elif not prj_set and module.check_mode:
             result['changed'] = True
 
-    result['changed'] = False
-
     # Set limits
     if state == 'absent':
         bhard = 0
