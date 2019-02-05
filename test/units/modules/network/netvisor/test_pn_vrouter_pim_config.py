@@ -25,7 +25,7 @@ class TestVrouterPimConfigModule(TestNvosModule):
 
     def tearDown(self):
         self.mock_run_nvos_commands.stop()
-        self.run_check_cli.stop()
+        self.mock_run_check_cli.stop()
 
     def run_cli_patch(self, module, cli, state_map):
         if state_map['update'] == 'vrouter-pim-config-modify':
