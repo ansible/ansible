@@ -130,7 +130,6 @@ Function Parse-Checksum($checksum) {
     $checksum_value = $checksum_parameter_splited[1].Trim()
 
     return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
-
 }
 
 Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
@@ -165,7 +164,6 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
         Catch {
             $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
         }
-
     }
     # TODO: Replace this with WebRequest
     $extWebClient = New-Object ExtendedWebClient
