@@ -20,7 +20,7 @@ Once you've reviewed these general guidelines, you can skip to the particular ty
 Writing plugins in Python
 =========================
 
-You must write your plugin in Python so it can be loaded by the ``PluginLoader`` and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_machine_requirements>`.
+You must write your plugin in Python so it can be loaded by the ``PluginLoader`` and returned as a Python object that any module can use. Since your plugin will execute on the controller, you must write it in a :ref:`compatible version of Python <control_node_requirements>`.
 
 Raising errors
 ==============
