@@ -85,7 +85,6 @@ author:
     - "Felix Fontein (@felixfontein)"
 
 requirements:
-    - "python >= 2.6"
     - "docker >= 2.1.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)

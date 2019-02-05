@@ -38,7 +38,6 @@ author:
     - Piotr Wojciechowski (@wojciechowskipiotr)
 
 requirements:
-    - "python >= 2.6"
     - "docker-py >= 1.10.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
