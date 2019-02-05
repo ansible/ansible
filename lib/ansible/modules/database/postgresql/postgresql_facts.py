@@ -295,7 +295,7 @@ ansible_facts:
                     description: Time when this process was started, i.e., when the client connected to this WAL sender.
                     returned: always
                     type: str
-                    sample: 2019-02-03 00:14:33.908593+03
+                    sample: "2019-02-03 00:14:33.908593+03"
                 state:
                     description: Current WAL sender state.
                     returned: always
@@ -315,7 +315,7 @@ ansible_facts:
                     type: str
                     sample: "{postgres=C/postgres,andreyk=C/postgres}"
                 spcoptions:
-                    description: Tablespace-level options, as “keyword=value” strings.
+                    description: Tablespace-level options.
                     returned: always
                     type: list
                     sample: [ "seq_page_cost=1" ]
