@@ -161,11 +161,8 @@ def main():
         rtbsoft = human_to_bytes(rtbsoft)
 
     result = dict(
-        changed = False
+        changed=False
     )
-
-    if os.getuid() != 0:
-        module.fail_json(msg='You need to be root to run this module', **result)
 
     if not os.path.ismount(mountpoint):
         module.fail_json(msg='%s is not a mountpoint' % mountpoint, **result)
@@ -353,6 +350,10 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
 def exec_quota(module, cmd, mountpoint):
     cmd = ['xfs_quota', '-x', '-c'] + [cmd, mountpoint]
     (rc, stdout, stderr) = module.run_command(cmd, use_unsafe_shell=True)
+    if "XFS_GETQUOTA: Operation not permitted" in stderr.split('\n') or \
+            rc == 1 and 'xfs_quota: cannot set limits: Operation not permitted' in stderr.split('\n'):
+        module.fail_json(msg='You need to be root or have CAP_SYS_ADMIN capability to perform this operation')
+
     return {'rc': rc, 'stdout': stdout.split('\n'), 'stderr': stderr.split('\n')}
 
 
