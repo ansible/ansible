@@ -260,33 +260,43 @@ def main():
         rtbhard = 0
         rtbsoft = 0
 
-    if bsoft is not None or bhard is not None:
-        current_bsoft, current_bhard = quota_report(module, mountpoint, name, quota_type, 'b')
+    current_bsoft, current_bhard = quota_report(module, mountpoint, name, quota_type, 'b')
+    current_isoft, current_ihard = quota_report(module, mountpoint, name, quota_type, 'i')
+    current_rtbsoft, current_rtbhard = quota_report(module, mountpoint, name, quota_type, 'rtb')
 
-    if isoft is not None or ihard is not None:
-        current_isoft, current_ihard = quota_report(module, mountpoint, name, quota_type, 'i')
-
-    if rtbsoft is not None or rtbhard is not None:
-        current_rtbsoft, current_rtbhard = quota_report(module, mountpoint, name, quota_type, 'rtb')
+    result['xfs_quota'] = dict(
+        bsoft = current_bsoft,
+        bhard = current_bhard,
+        isoft = current_isoft,
+        ihard = current_ihard,
+        rtbsoft = current_rtbsoft,
+        rtbhard = current_rtbhard
+    )
 
     limit = []
     if bsoft is not None and int(bsoft / 1024) != current_bsoft:
         limit.append('bsoft=%s' % bsoft)
+        result['xfs_quota']['bsoft'] = int(bsoft / 1024)
 
     if bhard is not None and int(bhard / 1024) != current_bhard:
         limit.append('bhard=%s' % bhard)
+        result['xfs_quota']['bhard'] = int(bhard / 1024)
 
     if isoft is not None and isoft != current_isoft:
         limit.append('isoft=%s' % isoft)
+        result['xfs_quota']['isoft'] = isoft
 
     if ihard is not None and ihard != current_ihard:
         limit.append('ihard=%s' % ihard)
+        result['xfs_quota']['ihard'] = ihard
 
     if rtbsoft is not None and int(rtbsoft / 1024) != current_rtbsoft:
         limit.append('rtbsoft=%s' % rtbsoft)
+        result['xfs_quota']['rtbsoft'] = int(rtbsoft / 1024)
 
     if rtbhard is not None and int(rtbhard / 1024) != current_rtbhard:
         limit.append('rtbhard=%s' % rtbhard)
+        result['xfs_quota']['rtbhard'] = int(rtbhard / 1024)
 
     if len(limit) > 0 and not module.check_mode:
         if name == quota_default:
