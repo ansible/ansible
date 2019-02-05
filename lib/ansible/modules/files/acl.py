@@ -146,13 +146,14 @@ EXAMPLES = r'''
     path: /mnt/tank/data/foo.dir
     state: absent
 
-- name: reset all ACLs prior to applying new ones (FreeNAS example)
+- name: NFS4 ACLs/FreeNAS/FreeBSD - reset all ACLs prior to applying new ones
   acl:
     path: /mnt/tank/data/foo2.dir
     etype: user
     entity: foo
-    permissions: full_set:file_inherit/dir_inherit
+    permissions: "full_set:file_inherit/dir_inherit"
     use_nfsv4_acls: true
+    reset: yes
     state: present
 '''
 
@@ -217,7 +218,7 @@ def build_entry(etype, entity, permissions=None, use_nfsv4_acls=False):
 def build_command(module, mode, path, follow, default, recursive, recalculate_mask, reset, entry=''):
     '''Builds and returns a getfacl/setfacl command.'''
     if mode in ('set','rm'):
-        cmd = [module.get_bin_path('setfacl'),True)]
+        cmd = [module.get_bin_path('setfacl',True)]
 
         if recursive:
             '''starting from FreeBSD 12 setfacl supports recursive option (-R)'''
@@ -308,7 +309,7 @@ def main():
             entity=dict(required=False, type='str', default=''),
             etype=dict(
                 required=False,
-                choices=['other', 'user', 'group', 'mask'],
+                choices=['other', 'user', 'group', 'mask', 'owner@', 'group@', 'everyone@'],
                 type='str'
             ),
             permissions=dict(required=False, type='str'),
@@ -363,13 +364,13 @@ def main():
             module.fail_json(msg="'reset' MUST NOT be set when 'state=query'.")
 
     if not entry:
-        if state == 'absent' and permissions:
-            module.fail_json(msg="'permissions' MUST NOT be set when 'state=absent'.")
+        if state == 'absent':
+            if permissions:
+                module.fail_json(msg="'permissions' MUST NOT be set when 'state=absent'.")
+            if reset and etype:
+                module.fail_json(msg="'reset' can not be used together with explicit removal of ACLs")
 
-        if state == 'absent' and not entity:
-            module.fail_json(msg="'entity' MUST be set when 'state=absent'.")
-
-        if state in ['present', 'absent'] and not etype:
+        if state == 'present' and not etype:
             module.fail_json(msg="'etype' MUST be set when 'state=%s'." % state)
 
     if entry:
@@ -412,13 +413,13 @@ def main():
             reset = True
             command = build_command(
                 module, 'rm', path, follow,
-                default, recursive, recalculate_mask, reset, entry
+                default, recursive, recalculate_mask, reset
             )
         else:
             entry = build_entry(etype, entity, use_nfsv4_acls)
             command = build_command(
                 module, 'rm', path, follow,
-                default, recursive, recalculate_mask, entry
+                default, recursive, recalculate_mask, reset, entry
             )
 
         changed = acl_changed(module, command)
