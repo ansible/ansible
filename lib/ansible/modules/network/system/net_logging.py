@@ -22,6 +22,7 @@ short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   dest:
     description:

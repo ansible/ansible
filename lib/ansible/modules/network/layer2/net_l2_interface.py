@@ -21,6 +21,7 @@ short_description: Manage Layer-2 interface on network devices
 description:
   - This module provides declarative management of Layer-2 interface
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   name:
     description:
