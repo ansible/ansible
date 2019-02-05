@@ -529,7 +529,7 @@ EXAMPLES = '''
 import time
 import shlex
 import operator
-from ansible.module_utils.docker.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,
     DockerBaseClass,
@@ -544,7 +544,7 @@ try:
     from docker.utils import parse_repository_tag
     from docker.errors import APIError, DockerException
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 

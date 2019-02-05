@@ -77,12 +77,12 @@ node_facts:
 
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.docker.docker_swarm import AnsibleDockerSwarmClient
+from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 try:
     from docker.errors import APIError, NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 

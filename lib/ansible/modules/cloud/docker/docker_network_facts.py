@@ -110,7 +110,7 @@ docker_network:
     }'
 '''
 
-from ansible.module_utils.docker.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker.common import AnsibleDockerClient
 
 
 def main():

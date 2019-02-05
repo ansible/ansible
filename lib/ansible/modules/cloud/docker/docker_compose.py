@@ -468,7 +468,7 @@ except ImportError as exc:
     HAS_COMPOSE_EXC = str(exc)
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
 
 
 AUTH_PARAM_MAPPING = {

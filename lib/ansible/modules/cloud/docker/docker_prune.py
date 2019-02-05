@@ -173,12 +173,12 @@ builder_cache_space_reclaimed:
 
 from distutils.version import LooseVersion
 
-from ansible.module_utils.docker.docker_common import AnsibleDockerClient
+from ansible.module_utils.docker.common import AnsibleDockerClient
 
 try:
-    from ansible.module_utils.docker.docker_common import docker_version, clean_dict_booleans_for_docker_api
+    from ansible.module_utils.docker.common import docker_version, clean_dict_booleans_for_docker_api
 except Exception as dummy:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 

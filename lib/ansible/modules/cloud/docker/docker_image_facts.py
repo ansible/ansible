@@ -161,10 +161,10 @@ images:
 try:
     from docker import utils
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker.docker_common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
+from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, is_image_name_id
 
 
 class ImageManager(DockerBaseClass):

@@ -186,19 +186,19 @@ docker_disk_usage:
 
 '''
 
-from ansible.module_utils.docker.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
 from ansible.module_utils._text import to_native
 
 try:
     from docker.errors import APIError, NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 try:
-    from ansible.module_utils.docker.docker_common import docker_version, clean_dict_booleans_for_docker_api
+    from ansible.module_utils.docker.common import docker_version, clean_dict_booleans_for_docker_api
 except Exception as dummy:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 
