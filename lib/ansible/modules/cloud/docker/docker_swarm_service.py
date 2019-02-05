@@ -335,14 +335,11 @@ options:
     - Before Ansible 2.8, the default value for this option was C(root).
       The default has been removed so that the user defined in the image is used if no user is specified here.
 extends_documentation_fragment:
-- docker
+  - docker
+  - docker.docker_py_2_documentation
 requirements:
-- "docker-py >= 2.0"
-- "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-   module has been superseded by L(docker,https://pypi.org/project/docker/)
-   (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-   Version 2.1.0 or newer is only available with the C(docker) module."
-- "Docker API >= 1.24"
+  - "docker >= 2.0"
+  - "Docker API >= 1.24"
 notes:
   - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
      When using older versions use C(force_update: true) to trigger the swarm to resolve a new image."

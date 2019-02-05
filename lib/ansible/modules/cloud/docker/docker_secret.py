@@ -68,14 +68,11 @@ options:
       - present
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_2_documentation
 
 requirements:
-  - "docker-py >= 2.1.0"
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
-     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-     Version 2.1.0 or newer is only available with the C(docker) module."
+  - "docker >= 2.1.0"
   - "Docker API >= 1.25"
 
 author:
