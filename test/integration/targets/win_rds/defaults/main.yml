@@ -1,0 +1,9 @@
+# win_rds_cap
+test_win_rds_cap_name: Ansible Test CAP
+
+# win_rds_rap
+test_win_rds_rap_name: Ansible Test RAP
+
+# win_rds_settings
+test_win_rds_settings_path: '{{win_output_dir}}\win_rds_settings'
+rds_cert_suject: rdg.test.com
