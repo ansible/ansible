@@ -1,0 +1,75 @@
+{
+    "cdrom": {
+        "type": "none"
+    },
+    "customization_agent": "custom",
+    "disks": [
+        {
+            "name": "ansible-test-vm-3-root",
+            "name_desc": "/",
+            "os_device": "xvda",
+            "size": 8589934592,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "0"
+        }
+    ],
+    "domid": "-1",
+    "folder": "",
+    "hardware": {
+        "memory_mb": 1024,
+        "num_cpu_cores_per_socket": 1,
+        "num_cpus": 1
+    },
+    "home_server": "",
+    "is_template": false,
+    "name": "ansible-test-vm-3",
+    "name_desc": "Created by Ansible",
+    "networks": [
+        {
+            "gateway": "",
+            "gateway6": "",
+            "ip": "169.254.0.3",
+            "ip6": [],
+            "mac": "72:fb:c7:ac:b9:97",
+            "mtu": "1500",
+            "name": "Host internal management network",
+            "netmask": "",
+            "prefix": "",
+            "prefix6": "",
+            "vif_device": "0"
+        }
+    ],
+    "other_config": {
+        "auto_poweron": "true",
+        "base_template_name": "zatemplate",
+        "import_task": "OpaqueRef:9948fd82-6d79-8882-2f01-4edc8795e361",
+        "install-methods": "cdrom,nfs,http,ftp",
+        "install-repository": "http://mirror.centos.org/centos-6/6.2/os/x86_64/",
+        "instant": "true",
+        "last_shutdown_action": "Destroy",
+        "last_shutdown_initiator": "external",
+        "last_shutdown_reason": "halted",
+        "last_shutdown_time": "20140314T21:16:41Z",
+        "linux_template": "true",
+        "mac_seed": "06e27068-70c2-4c69-614b-7c54b5a4a781",
+        "rhel6": "true"
+    },
+    "platform": {
+        "acpi": "true",
+        "apic": "true",
+        "cores-per-socket": "1",
+        "nx": "false",
+        "pae": "true",
+        "viridian": "true"
+    },
+    "state": "poweredoff",
+    "uuid": "8f5bc97c-42fa-d619-aba4-d25eced735e0",
+    "xenstore_data": {
+        "vm-data": "",
+        "vm-data/networks": "",
+        "vm-data/networks/0": "",
+        "vm-data/networks/0/mac": "72:fb:c7:ac:b9:97",
+        "vm-data/networks/0/name": "Host internal management network"
+    }
+}
