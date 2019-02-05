@@ -72,7 +72,18 @@ EXAMPLES = '''
 
 '''
 
-RETURN = ""
+RETURN = '''
+stdout:
+    description: output from make process
+    returned: success, when needed
+    type: str
+    sample: ""
+stderr:
+    description: error output from make process
+    returned: success, when needed
+    type: str
+    sample: ""
+'''
 
 import os
 import re
