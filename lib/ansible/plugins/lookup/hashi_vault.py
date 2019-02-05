@@ -119,10 +119,10 @@ _raw:
 """
 
 import os
-import requests
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.urls import fetch_url
 from ansible.plugins.lookup import LookupBase
 
 HAS_HVAC = False
@@ -279,15 +279,12 @@ class HashiVault:
 
         audience = ANSIBLE_HASHI_VAULT_ADDR + "/vault/" + role
         headers = {'Metadata-Flavor': 'Google'}
-        format = 'full'
+        fmt = 'full'
 
-        url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience={0}&format={1}'.format(audience, format)
-        try:
-            jwt = requests.get(url, headers=headers).text
-        except requests.exceptions.ConnectionError:
-            raise AnsibleError("hashi_vault lookup failed to connect to http://metadata.google.internal. Make sure you are running from a GCE instance")
+        url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience={0}&format={1}'.format(audience, fmt)
+        rsp, info = fetch_url(module=self.module, url=url, headers=headers, method="GET")
 
-        self.client.auth_gcp(role, jwt, mount_point=mount_point)
+        self.client.auth_gcp(role, rsp.read(), mount_point=mount_point)
 
     def auth_kubernetes(self, **kwargs):
         role = kwargs.get('role', os.environ.get('VAULT_ROLE', None))
@@ -299,8 +296,8 @@ class HashiVault:
             mount_point = 'kubernetes'
 
         try:
-            f = open('/var/run/secrets/kubernetes.io/serviceaccount/token')
-            jwt = f.read()
+            with open('/var/run/secrets/kubernetes.io/serviceaccount/token') as file
+                jwt = file.read()
         except IOError:
             raise AnsibleError("hashi_vault lookup failed to read JWT from file. Make sure you are running from a Kubernetes Pod")
 
