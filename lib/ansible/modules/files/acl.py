@@ -17,7 +17,7 @@ module: acl
 version_added: '1.4'
 short_description: Set and retrieve file ACL information.
 description:
-- Set and retrieve file ACL information.
+  - Set and retrieve file ACL information.
 options:
   path:
     description:
@@ -70,7 +70,7 @@ options:
   recursive:
     description:
     - Recursively sets the specified ACL.
-    - FreeBSD: starting from FreeBSD 12
+    - Available on FreeBSD starting from FreeBSD 1
     - Incompatible with C(state=query).
     type: bool
     default: no
