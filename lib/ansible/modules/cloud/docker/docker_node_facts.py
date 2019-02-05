@@ -82,8 +82,7 @@ RETURN = '''
 nodes_facts:
     description:
       - Facts representing the current state of the nodes. Matches the C(docker node inspect) output.
-      - Will be C(none) if node does not exist.
-      - Will contain multiple entries if more than one node provided in I(name).
+      - Can contain multiple entries if more than one node provided in I(name), or I(name) is not provided.
       - If I(name) contains list of nodes, the output will contain information only about registered nodes.
     returned: always
     type: list
@@ -103,10 +102,7 @@ def get_node_facts(client):
     results = []
 
     if client.module.params['self'] is True:
-        try:
-            self_node_id = client.get_swarm_node_id()
-        except APIError:
-            return None
+        self_node_id = client.get_swarm_node_id()
         node_info = client.get_node_inspect(node_id=self_node_id)
         results.append(node_info)
         return results
