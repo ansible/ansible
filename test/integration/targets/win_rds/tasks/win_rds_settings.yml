@@ -1,6 +1,4 @@
----
 - name: run tests with cleanup
-  when: rds_available  # defined in setup_win_rds
   block:
   - name: gather facts
     setup:
@@ -46,8 +44,8 @@
     raw: '(gci Cert:\LocalMachine\my | ? {$_.subject -eq "CN={{ rds_cert_suject }}"})[0].Thumbprint'
     register: rds_cert_thumbprint
 
-#  - name: run tests
-#    include_tasks: tests.yml
+  - name: run tests
+    include_tasks: win_rds_settings_tests.yml
 
   always:
   - name: restore RDS base configuration
