@@ -20,7 +20,7 @@
     resource_group: '{{ resource_group }}'
     name: af{{ fixed_resource_prefix }}
     storage_account: sa{{ fixed_resource_prefix }}
-    plan: '{{outputsp[id]}}'
+    plan: outputsp.id
   register: output
 
 - name: assert the function was created
