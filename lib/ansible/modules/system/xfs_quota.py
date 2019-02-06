@@ -228,7 +228,7 @@ def main():
         if name != quota_default:
             cmd = 'project %s' % name
             rc, stdout, stderr = exec_quota(module, cmd, mountpoint)
-            if rrc != 0:
+            if rc != 0:
                 result['cmd'] = cmd
                 result['rc'] = rc
                 result['stdout'] = stdout
