@@ -204,7 +204,7 @@ def main():
         try:
             grp.getgrnam(name)
         except KeyError as e:
-            module.fail_json(msg='User %s doesn\'t exist.' % name, **result)
+            module.fail_json(msg="User '%s' does not exist." % name, **result)
 
     elif quota_type == 'project':
         type_arg = '-p'
