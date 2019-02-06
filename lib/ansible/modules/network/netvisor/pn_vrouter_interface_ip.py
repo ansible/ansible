@@ -181,7 +181,7 @@ def main():
         required_if=(
             ["state", "present", ["pn_vrouter_name", "pn_nic", "pn_ip", "pn_netmask"]],
             ["state", "absent", ["pn_vrouter_name", "pn_nic", "pn_ip"]]
-            ),
+        ),
     )
 
     # Accessing the arguments
