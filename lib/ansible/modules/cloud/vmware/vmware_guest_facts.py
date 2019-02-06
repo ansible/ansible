@@ -47,7 +47,7 @@ options:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
      - This is required if name is supplied.
-     - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+     - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
      - 'Examples:'
      - '   folder: /ha-datacenter/vm'
      - '   folder: ha-datacenter/vm'
@@ -58,8 +58,6 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
-     - '   folder: vm/folder2'
-     - '   folder: folder2'
    datacenter:
      description:
      - Destination datacenter for the deploy operation

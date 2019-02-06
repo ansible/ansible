@@ -51,7 +51,18 @@ options:
    folder:
      description:
      - Absolute path to find an existing guest.
-     - This is required parameter, if C(name) is supplied and multiple virtual machines with same name are found.
+     - This is a required parameter, if C(name) is supplied and multiple virtual machines with same name are found.
+     - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+     - 'Examples:'
+     - '   folder: /ha-datacenter/vm'
+     - '   folder: ha-datacenter/vm'
+     - '   folder: /datacenter1/vm'
+     - '   folder: datacenter1/vm'
+     - '   folder: /datacenter1/vm/folder1'
+     - '   folder: datacenter1/vm/folder1'
+     - '   folder: /folder1/datacenter1/vm'
+     - '   folder: folder1/datacenter1/vm'
+     - '   folder: /folder1/datacenter1/vm/folder2'
    datacenter:
      description:
      - Datacenter name where the virtual machine is located in.

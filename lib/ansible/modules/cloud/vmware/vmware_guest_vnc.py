@@ -56,7 +56,18 @@ options:
   folder:
     description:
       - Destination folder, absolute or relative path to find an existing guest.
-      - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+      - This is a required parameter, only if multiple VMs are found with same name.
+      - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+      - 'Examples:'
+      - '   folder: /ha-datacenter/vm'
+      - '   folder: ha-datacenter/vm'
+      - '   folder: /datacenter1/vm'
+      - '   folder: datacenter1/vm'
+      - '   folder: /datacenter1/vm/folder1'
+      - '   folder: datacenter1/vm/folder1'
+      - '   folder: /folder1/datacenter1/vm'
+      - '   folder: folder1/datacenter1/vm'
+      - '   folder: /folder1/datacenter1/vm/folder2'
     required: false
   vnc_ip:
     description:

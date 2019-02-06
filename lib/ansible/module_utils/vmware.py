@@ -861,7 +861,6 @@ class PyVmomi(object):
 
         """
         vm_obj = None
-        user_desired_path = None
 
         if self.params['uuid']:
             # Use UUID to find the VM
@@ -880,67 +879,35 @@ class PyVmomi(object):
                         vms.append(temp_vm_object.obj)
                         continue
 
-            # Get folder path where virtual machine is located
-            # User provided folder where user thinks virtual machine is present
-            user_folder = self.params['folder']
             # User defined datacenter
             user_defined_dc = self.params['datacenter']
             # User defined datacenter's object
             datacenter_obj = find_datacenter_by_name(self.content, self.params['datacenter'])
-            # Get Path for Datacenter
+            # Get Path for datacenter
             dcpath = compile_folder_path_for_object(vobj=datacenter_obj)
 
             # Nested folder does not return trailing /
             if not dcpath.endswith('/'):
                 dcpath += '/'
 
-            if user_folder in [None, '', '/']:
-                # User provided blank value or
-                # User provided only root value, we fail
-                self.module.fail_json(msg="vmware_guest found multiple virtual machines with same "
-                                          "name [%s], please specify folder path other than blank "
-                                          "or '/'" % self.params['name'])
-            elif user_folder.startswith('/vm/'):
-                # User provided nested folder under VMware default vm folder i.e. folder = /vm/india/finance
-                user_desired_path = "%s%s%s" % (dcpath, user_defined_dc, user_folder)
-            else:
-                # User defined datacenter is not nested i.e. dcpath = '/' , or
-                # User defined datacenter is nested i.e. dcpath = '/F0/DC0' or
-                # User provided folder starts with / and datacenter i.e. folder = /ha-datacenter/ or
-                # User defined folder starts with datacenter without '/' i.e.
-                # folder = DC0/vm/india/finance or
-                # folder = DC0/vm
-                user_desired_path = user_folder
+            user_folder = self.params.get('folder') or os.path.join(dcpath, user_defined_dc, 'vm')
 
-            # get_managed_objects_properties may return multiple virtual machine,
-            # following code tries to find user desired one depending upon the folder specified.
+            vm_path = os.path.join(user_folder, self.params['name'])
+            vm_obj = self.content.searchIndex.FindByInventoryPath(vm_path)
+
             if len(vms) > 1:
-                # We have found multiple virtual machines, decide depending upon folder value
-                if self.params['folder'] is None:
-                    self.module.fail_json(msg="Multiple virtual machines with same name [%s] found, "
-                                              "Folder value is a required parameter to find uniqueness "
-                                              "of the virtual machine" % self.params['name'],
-                                          details="Please see documentation of the vmware_guest module "
-                                                  "for folder parameter.")
-
+                # We have multiple VMs
+                # Check if we are able to find the required VM using FindByInventoryPath
                 for vm in vms:
-                    # Check if user has provided same path as virtual machine
                     actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vm)
-                    if not actual_vm_folder_path.startswith("%s%s" % (dcpath, user_defined_dc)):
-                        continue
-                    if user_desired_path in actual_vm_folder_path:
+                    if vm_obj and user_folder in actual_vm_folder_path:
                         vm_obj = vm
                         break
-            elif vms:
-                # Use additional information about the folder from the user to identify the VM
-                # This is necessary, when there are multiple VMs with same name with different folders
-                # See https://github.com/ansible/ansible/issues/51591 for more scenario information
+            else:
+                # We have a unique match
                 actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vms[0])
-                if user_desired_path in actual_vm_folder_path:
+                if vm_obj and user_folder in actual_vm_folder_path:
                     vm_obj = vms[0]
-
-        if vm_obj:
-            self.current_vm_obj = vm_obj
 
         return vm_obj
 

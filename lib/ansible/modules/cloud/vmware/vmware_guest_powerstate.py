@@ -44,8 +44,8 @@ options:
     - This is required if name is not supplied.
   folder:
     description:
-    - Destination folder, absolute or relative path to find an existing guest or create the new guest.
-    - The folder should include the datacenter. ESX's datacenter is ha-datacenter
+    - Destination folder, absolute path to find an existing guest.
+    - The folder should include the datacenter. ESX's datacenter is ha-datacenter.
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
     - '   folder: ha-datacenter/vm'
@@ -56,12 +56,9 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    - '   folder: vm/folder2'
-    - '   folder: folder2'
-    default: /vm
   scheduled_at:
     description:
-    - Date and time in string format at which specificed task needs to be performed.
+    - Date and time in string format at which specified task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
   force:
@@ -139,7 +136,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
         state_change_timeout=dict(type='int', default=0),

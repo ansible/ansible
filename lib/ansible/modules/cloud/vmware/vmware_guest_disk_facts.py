@@ -54,8 +54,6 @@ options:
      - '   folder: /folder1/datacenter1/vm'
      - '   folder: folder1/datacenter1/vm'
      - '   folder: /folder1/datacenter1/vm/folder2'
-     - '   folder: vm/folder2'
-     - '   folder: folder2'
    datacenter:
      description:
      - The datacenter name to which virtual machine belongs to.
