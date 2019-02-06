@@ -63,7 +63,19 @@ Add-CSharpType -AnsibleModule $module -References @'
 '@
 
 
-Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
+Function CheckModified-File($module, $url, $dest, $checksum, $headers, $credentials, $timeout, $use_proxy, $proxy) {
+
+    if ($checksum) {
+        Try {
+            $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
+
+            if ($is_modified_checksum) {
+                return $true
+            }
+        } Catch {
+            $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
+        }
+    }
 
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
     $webLastMod = $null
@@ -132,9 +144,16 @@ Function Parse-Checksum($checksum) {
     return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
 }
 
+Function GetNormalise-Checksum($dest, $checksum) {
+    if($checksum) {
+        $tmpHashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
+        return [string]$tmpHashFromFile.Hash.ToLower()
+    }
+    return $null
+}
+
 Function CheckModifiedChecksum-File($dest, $checksum) {
-    $currentHashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
-    $normaliseHashDest = $currentHashFromFile.Hash.ToLower()
+    $normaliseHashDest = GetNormalise-Checksum -dest $dest -checksum $checksum
 
     return [bool]($normaliseHashDest -ne $(Parse-Checksum -checksum $checksum).checksum)
 }
@@ -303,39 +322,16 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 } else {
 
     $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials `
-                                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+                                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy `
+                                      -checksum $checksum
 
-    if ($is_modified -or $checksum) {
+    if ($is_modified) {
 
-        if ($checksum) {
-            Try {
-                $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
-
-                if ($is_modified_checksum) {
-                    Download-File -module $module -url $url -dest $dest -credentials $credentials `
-                        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
-                }
-                else {
-                    $hashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
-                    $module.Result.checksum_dest = $hashFromFile.Hash.ToLower()
-                }
-            } Catch {
-                    $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
-            }
-        } else {
-            Download-File -module $module -url $url -dest $dest -credentials $credentials `
-                        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
-        }
-
-    } else {
-        if ($checksum) {
-            Try {
-                $hashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
-                $module.Result.checksum_dest = $hashFromFile.Hash.ToLower()
-            } Catch {
-                $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
-            }
-        }
+        Download-File -module $module -url $url -dest $dest -credentials $credentials `
+            -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    }
+    else {
+        $module.Result.checksum_dest = GetNormalise-Checksum -dest $dest -checksum $checksum
     }
 }
 
