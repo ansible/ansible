@@ -198,7 +198,7 @@ def main():
 
         if 'gquota' not in mp['mntopts'] and 'grpquota' not in mp['mntopts'] and 'gqnoenforce' not in mp['mntopts']:
             module.fail_json(
-                msg='%s is not mounted with the gquota/grpquota/gqnoenforce option. (current options: %s)'
+                msg="Path '%s' is not mounted with the gquota/grpquota/gqnoenforce option. (current options: %s)"
                     % (mountpoint, mp['mntopts']), **result
             )
         try:
