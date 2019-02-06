@@ -222,7 +222,6 @@ options:
             options:
                 description:
                     - Configure DLP options.
-                choices:
             replacemsg-group:
                 description:
                     - Replacement message group used by this DLP sensor. Source system.replacemsg-group.name.
