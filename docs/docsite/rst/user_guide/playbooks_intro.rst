@@ -480,7 +480,7 @@ There's also a `clever playbook <https://github.com/ansible/ansible-examples/blo
 
 .. _testing_playbooks:
 
-Testing playbooks
+Linting playbooks
 `````````````````
 
 You can use `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_ to run a detail check of your playbooks before you execute them.
