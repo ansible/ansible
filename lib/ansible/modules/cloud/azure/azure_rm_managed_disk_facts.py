@@ -129,11 +129,11 @@ def managed_disk_to_dict(managed_disk):
         name=managed_disk.name,
         location=managed_disk.location,
         tags=managed_disk.tags,
-        create_option=create_data.create_option.lower(),
+        create_option=create_data.create_option.value.lower(),
         source_uri=create_data.source_uri or create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
-        os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
-        storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
+        os_type=managed_disk.os_type.value.lower() if managed_disk.os_type else None,
+        storage_account_type=managed_disk.sku.name.value if managed_disk.sku else None,
         managed_by=managed_disk.managed_by
     )
 
@@ -175,7 +175,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
 
         self.results['ansible_facts']['azure_managed_disk'] = (
             self.get_item() if self.name
-            else self.list_items()
+            else (self.list_items_by_resource_group() if self.resource_group else self.list_items())
         )
 
         return self.results
@@ -203,6 +203,19 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
             response = self.compute_client.disks.list()
         except CloudError as exc:
             self.fail('Failed to list all items - {}'.format(str(exc)))
+
+        results = []
+        for item in response:
+            if self.has_tags(item.tags, self.tags):
+                results.append(managed_disk_to_dict(item))
+        return results
+
+    def list_items_by_resource_group(self):
+        """Get managed disks in a resource group"""
+        try:
+            response = self.compute_client.disks.list_by_resource_group(resource_group_name=self.resource_group)
+        except CloudError as exc:
+            self.fail('Failed to list items by resource group - {}'.format(str(exc)))
 
         results = []
         for item in response:
