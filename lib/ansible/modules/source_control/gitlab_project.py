@@ -286,25 +286,15 @@ class GitLabProject(object):
 def depreaction_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.warn('This aliases are going to be deprecated: {aliases}'.format(aliases=', '.join(deprecated_aliases)))
-
-    deprecated_params = [
-        {'old': 'server_url', 'new': 'api_url'},
-        {'old': 'login_user', 'new': 'api_username'},
-        {'old': 'login_password', 'new': 'api_password'}
-    ]
-
-    for param in deprecated_params:
-        if module.params[param['old']] is not None:
-            module.warn("{old} is going to be a deprecated parameter. Use {new} instead.".format(**param))
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True),
-        login_user=dict(type='str', no_log=True),
-        login_password=dict(type='str', no_log=True),
+        server_url=dict(type='str', required=True, removed_in_version=2.10),
+        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
+        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
         group=dict(type='str'),
         name=dict(type='str', required=True),

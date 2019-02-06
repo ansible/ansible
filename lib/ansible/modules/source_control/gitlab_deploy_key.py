@@ -237,7 +237,7 @@ class GitLabDeployKey(object):
 def depreaction_warning(module):
     deprecated_aliases = ['private_token', 'access_token']
 
-    module.warn('This aliases are going to be deprecated: {aliases}'.format(aliases=', '.join(deprecated_aliases)))
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():
@@ -280,6 +280,7 @@ def main():
     key_keyfile = module.params['key']
     key_can_push = module.params['can_push']
 
+    module.exit_json(changed=True, msg="Deploy_key should have been deleted.")
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 

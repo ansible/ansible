@@ -286,21 +286,13 @@ class GitLabRunner(object):
 def depreaction_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.warn('This aliases are going to be deprecated: {aliases}'.format(aliases=', '.join(deprecated_aliases)))
-
-    deprecated_params = [
-        {'old': 'url', 'new': 'api_url'}
-    ]
-
-    for param in deprecated_params:
-        if module.params[param['old']] is not None:
-            module.warn("{old} is going to be a deprecated parameter. Use {new} instead.".format(**param))
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', required=True),
+        url=dict(type='str', required=True, removed_in_version=2.10),
         api_token=dict(type='str', no_log=True, aliases=["private_token"]),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),

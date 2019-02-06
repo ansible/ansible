@@ -294,7 +294,7 @@ class GitLabHook(object):
 def depreaction_warning(module):
     deprecated_aliases = ['private_token', 'access_token']
 
-    module.warn('This aliases are going to be deprecated: {aliases}'.format(aliases=', '.join(deprecated_aliases)))
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():
