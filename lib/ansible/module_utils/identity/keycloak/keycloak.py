@@ -46,6 +46,9 @@ URL_CLIENTTEMPLATES = "{url}/admin/realms/{realm}/client-templates"
 URL_GROUPS = "{url}/admin/realms/{realm}/groups"
 URL_GROUP = "{url}/admin/realms/{realm}/groups/{groupid}"
 
+URL_USERS = "{url}/admin/realms/{realm}/users"
+URL_USER = "{url}/admin/realms/{realm}/users/{id}"
+
 
 def keycloak_argument_spec():
     """
@@ -477,3 +480,168 @@ class KeycloakAPI(object):
 
         except Exception as e:
             self.module.fail_json(msg="Unable to delete group %s: %s" % (groupid, str(e)))
+
+    def get_users(self, realm='master', filter=None):
+        """ Obtains user representations for users in a realm
+
+        :param realm: realm to be queried
+        :param filter: if defined, only the user with userid specified in the filter is returned
+        :return: list of dicts of users representations
+        """
+        userlist_url = URL_USERS.format(url=self.baseurl, realm=realm)
+        if filter is not None:
+            userlist_url += '?userId=%s' % filter
+
+        try:
+            user_json = json.load(open_url(userlist_url, method='GET', headers=self.restheaders,
+                                           validate_certs=self.validate_certs))
+            return user_json
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to obtain list of clients for realm %s: %s'
+                                      % (realm, str(e)))
+        except Exception as e:
+            self.module.fail_json(msg='Could not obtain list of clients for realm %s: %s'
+                                      % (realm, str(e)))
+
+    def get_user_by_id(self, id, realm='master'):
+        """ Obtain user representation by id
+
+        :param id: id (not name) of user to be queried
+        :param realm: realm to be queried
+        :return: dict of user representation or None if none matching exists
+        """
+        url = URL_USER.format(url=self.baseurl, id=id, realm=realm)
+
+        try:
+            return json.load(
+                open_url(url, method='GET', headers=self.restheaders, validate_certs=self.validate_certs))
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            else:
+                self.module.fail_json(msg='Could not obtain user %s for realm %s: %s'
+                                          % (id, realm, str(e)))
+        except ValueError as e:
+            self.module.fail_json(
+                msg='API returned incorrect JSON when trying to obtain user %s for realm %s: %s'
+                    % (id, realm, str(e)))
+        except Exception as e:
+            self.module.fail_json(
+                msg='Could not obtain user %s for realm %s: %s'
+                    % (id, realm, str(e)))
+
+    def get_user_id(self, name, realm='master'):
+        """ Obtain user id by name
+
+        :param name: name of user to be queried
+        :param realm: realm to be queried
+        :return: user id (usually a UUID)
+        """
+        result = self.get_user_by_name(name, realm)
+        if isinstance(result, dict) and 'id' in result:
+            return result['id']
+        else:
+            return None
+
+    def get_user_by_name(self, name, realm='master'):
+        """ Obtain user representation by name
+
+        :param name: name of user to be queried
+        :param realm: user from this realm
+        :return: dict of user representation or None if none matching exist
+        """
+        result = self.get_users(realm)
+        if isinstance(result, list):
+            result = [x for x in result if x['username'] == name]
+            if len(result) > 0:
+                return result[0]
+        return None
+
+    def create_user(self, user_representation, realm="master"):
+        """ Create a user in keycloak
+
+        :param user_representation: user representation of user to be created. Must at least contain field userId
+        :param realm: realm for user to be created
+        :return: HTTPResponse object on success
+        """
+        # Keycloak wait username as key for the keycloak user username. For the
+        # keycloak modules, the username is an alias of the auth_username, thus
+        # cannot be used for the users.
+        try:
+            user_name = user_representation.pop('keycloakUsername')
+        except KeyError:
+            self.module.fail_json(
+                msg='User name needs to be specified when creating a new user',
+                user_representation=user_representation
+            )
+        else:
+            user_representation.update({'username': user_name})
+        user_url = URL_USERS.format(url=self.baseurl, realm=realm)
+
+        try:
+            return open_url(user_url, method='POST', headers=self.restheaders,
+                            data=json.dumps(user_representation), validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not create user %s in realm %s: %s'
+                                      % (user_representation['username'], realm, str(e)),
+                                  payload=user_representation)
+
+    def update_user(self, uuid, user_representation, realm="master"):
+        """ Update an existing user
+        :param uuid: id of user to be updated in Keycloak
+        :param user_representation: corresponding (partial/full) user representation with updates
+        :param realm: realm the user is in
+        :return: HTTPResponse object on success
+        """
+        # Keycloak response with an error 409 conflict if a username is send
+        # when updating an user. To avoid this, if the user was designated by
+        # its username, it is deleted.
+        try:
+            user_representation.pop('keycloakUsername')
+        except KeyError:
+            pass
+        try:
+            keycloak_attributes = user_representation.pop('keycloakAttributes')
+        except KeyError:
+            pass
+        else:
+            user_representation.update({'attributes': keycloak_attributes})
+
+        user_url = URL_USER.format(url=self.baseurl, realm=realm, id=uuid)
+
+        try:
+            return open_url(user_url, method='PUT', headers=self.restheaders,
+                            data=json.dumps(user_representation),
+                            validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(
+                msg='Could not update user %s in realm %s: %s' % (uuid, realm, str(e)),
+                user_representation=user_representation,
+                user_url=user_url
+            )
+
+    def delete_user(self, id, realm="master"):
+        """ Delete a user from Keycloak
+
+        :param id: id (not userId) of user to be deleted
+        :param realm: realm of user to be deleted
+        :return: HTTPResponse object on success
+        """
+        user_url = URL_USER.format(url=self.baseurl, realm=realm, id=id)
+
+        try:
+            return open_url(user_url, method='DELETE', headers=self.restheaders,
+                            validate_certs=self.validate_certs)
+        except Exception as e:
+            self.module.fail_json(msg='Could not delete user %s in realm %s: %s'
+                                      % (id, realm, str(e)))
+
+    def get_json_from_url(self, url):
+        try:
+            user_json = json.load(open_url(url, method='GET', headers=self.restheaders,
+                                           validate_certs=self.validate_certs))
+            return user_json
+        except ValueError as e:
+            self.module.fail_json(msg='API returned incorrect JSON when trying to get: %s' % (url))
+        except Exception as e:
+            self.module.fail_json(msg='Could not obtain url: %s' % (url))
