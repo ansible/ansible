@@ -107,15 +107,19 @@ EXAMPLES = '''
   register: cert
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 from os.path import isfile
 from ssl import get_server_certificate
 from socket import setdefaulttimeout
 
+PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
@@ -141,7 +145,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='the python pyOpenSSL module is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
 
     if timeout:
         setdefaulttimeout(timeout)

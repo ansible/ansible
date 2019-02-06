@@ -142,13 +142,15 @@ import time
 import traceback
 from distutils.version import LooseVersion
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_native
 
@@ -156,7 +158,7 @@ from ansible.module_utils._text import to_native
 def check_requests_dep(module):
     """Check if an adequate requests version is available"""
     if not HAS_REQUESTS:
-        module.fail_json(msg='requests is required for this module')
+        module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
     else:
         required_version = '2.0.0' if PY3 else '1.0.0'
         if LooseVersion(requests.__version__) < LooseVersion(required_version):

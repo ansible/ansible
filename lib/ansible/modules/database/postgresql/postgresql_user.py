@@ -223,16 +223,18 @@ import re
 import traceback
 from hashlib import md5
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
     postgresqldb_found = False
 else:
     postgresqldb_found = True
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import pg_quote_identifier, SQLParseError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import iteritems
@@ -785,7 +787,7 @@ def main():
     conn_limit = module.params["conn_limit"]
 
     if not postgresqldb_found:
-        module.fail_json(msg="the python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw

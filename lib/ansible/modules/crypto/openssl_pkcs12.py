@@ -140,15 +140,18 @@ privatekey:
 
 import stat
 import os
+import traceback
 
+PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -311,7 +314,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='The python pyOpenSSL library is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
