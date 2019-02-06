@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: digital_ocean_project
-short_description: Create and remove Digital Ocean projects.
+short_description: Create and remove Digital Ocean projects
 description:
     - Create and remove Digital Ocean projects.
 author: "Kevin Breit (@kbreit)"
@@ -70,10 +70,6 @@ extends_documentation_fragment: digital_ocean.documentation
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN.
     They both refer to the v2 token.
-  - As of Ansible 2.0, Version 2 of the DigitalOcean API is used.
-
-requirements:
-  - "python >= 2.6"
 '''
 
 
@@ -119,20 +115,22 @@ EXAMPLES = '''
 
 RETURN = '''
 data:
-    description: a DigitalOcean Tag resource
+    description: a DigitalOcean Project resource
     returned: success and no resource constraint
     type: dict
-    sample: {
-        "tag": {
-        "name": "awesome",
-        "resources": {
-          "droplets": {
-            "count": 0,
-            "last_tagged": null
-          }
-        }
-      }
+    sample:     {
+      "id": "4e1bfbc3-dc3e-41f2-a18f-1b4d7ba71679",
+      "owner_uuid": "99525febec065ca37b2ffe4f852fd2b2581895e7",
+      "owner_id": 2,
+      "name": "my-web-api",
+      "description": "My website API",
+      "purpose": "Service or API",
+      "environment": "Production",
+      "is_default": false,
+      "created_at": "2018-09-27T20:10:35Z",
+      "updated_at": "2018-09-27T20:10:35Z"
     }
+
 '''
 
 from traceback import format_exc
