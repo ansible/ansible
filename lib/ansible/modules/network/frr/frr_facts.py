@@ -109,9 +109,9 @@ ansible_net_interfaces:
   description: A hash of all interfaces running on the system
   returned: when interfaces is configured
   type: dict
-ansible_net_neighbors:
-  description: The list of LLDP neighbors from the remote device
-  returned: when interfaces is configured
+ansible_net_mpls_ldp_neighbors:
+  description: The list of MPLS LDP neighbors from the remote device
+  returned: when interfaces is configured and LDP daemon is running on the device
   type: dict
 """
 
