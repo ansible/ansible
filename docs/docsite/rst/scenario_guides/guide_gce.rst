@@ -260,10 +260,10 @@ Migration Guides
 
 gce.py -> gcp_compute_instance.py
 `````````````````````````````````
-We’re encouraging everyone to move from the `gce` module to the
+We're encouraging everyone to move from the `gce` module to the
 `gcp_compute_instance` module. The new `gcp_compute_instance` module has better
-support for all of GCP’s features, less dependencies, more flexibility, and
-better supports GCP’s authentication systems.
+support for all of GCP's features, less dependencies, more flexibility, and
+better supports GCP's authentication systems.
 
 The new `gcp_compute_instance` module supports all of the features of the `gce`
 module (and more!). Below is a mapping of `gce` fields over to
@@ -273,7 +273,7 @@ module (and more!). Below is a mapping of `gce` fields over to
  gce.py                        gcp_compute_instance.py                     Notes 
 ============================  ==========================================  ======================
  state                        status                                      State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is on, off, etc.
- image                        disks[].initialize_params.source_image      You’ll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true)
+ image                        disks[].initialize_params.source_image      You'll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true)
  image_family                 disks[].initialize_params.source_image      See above.
  external_projects            disks[].initialize_params.source_image      The name of the source_image will include the name of the project.
  instance_names               Use a loop or multiple tasks.               Using loops is a more Ansible-centric way of creating multiple instances and gives you the most flexibility.
@@ -285,10 +285,10 @@ module (and more!). Below is a mapping of `gce` fields over to
  credentials_file             service_account_file
  project_id                   project
  name                         name                                        This field does not accept an array of names. Use a loop to create multiple instances.
- num_instances                Use a loop                                  For maximum flexibility, we’re encouraging users to use Ansible features to create multiple instances, rather than letting the module do it for you.
+ num_instances                Use a loop                                  For maximum flexibility, we're encouraging users to use Ansible features to create multiple instances, rather than letting the module do it for you.
  network                      network_interfaces[].network
  subnetwork                   network_interfaces[].subnetwork
- persistent_boot_disk         disks[].type = ‘PERSISTENT’
+ persistent_boot_disk         disks[].type = 'PERSISTENT'
  disks                        disks[]
  tags                         tags
  zone                         zone
