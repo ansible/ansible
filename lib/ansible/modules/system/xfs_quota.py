@@ -315,7 +315,6 @@ def main():
 
     module.exit_json(**result)
 
-    return True
 
 
 def quota_report(module, mountpoint, name, quota_type, used_type):
