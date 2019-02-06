@@ -70,7 +70,7 @@ EXAMPLES = """
         hostname: "{{ netapp_hostname }}"
         subnet: 10.10.10.0/24
         name: subnet-adm
-        ip_range: [ '10.10.10.30-10.10.10.40', '10.10.10.51' ]
+        ip_ranges: [ '10.10.10.30-10.10.10.40', '10.10.10.51' ]
         gateway: 10.10.10.254
         ipspace: Default
         broadcast_domain: Default
