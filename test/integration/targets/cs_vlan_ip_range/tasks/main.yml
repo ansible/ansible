@@ -4,7 +4,6 @@
     name: ipr_test_network
     state: absent
     zone: "{{ cs_common_zone_adv }}"
-  ignore_errors: yes
 
 - name: setup create test network
   cs_network:
@@ -92,6 +91,13 @@
     that:
     - ipr is successful
     - ipr is changed
+    - ipr.vlan == "vlan://98"
+    - ipr.start_ip == "10.2.4.10"
+    - ipr.end_ip == "10.2.4.100"
+    - ipr.gateway == "10.2.4.1"
+    - ipr.netmask == "255.255.255.0"
+    - ipr.network == "ipr_test_network"
+    - ipr.for_virtual_network == false
 
 - name: test create a VLAN IP RANGE idempotence
   cs_vlan_ip_range:
@@ -108,11 +114,17 @@
     that:
     - ipr is successful
     - ipr is not changed
+    - ipr.vlan == "vlan://98"
+    - ipr.start_ip == "10.2.4.10"
+    - ipr.end_ip == "10.2.4.100"
+    - ipr.gateway == "10.2.4.1"
+    - ipr.netmask == "255.255.255.0"
+    - ipr.network == "ipr_test_network"
+    - ipr.for_virtual_network == false
 
 - name: test create a second VLAN IP RANGE in check mode
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.101
     end_ip: 10.2.4.150
     gateway: 10.2.4.1
@@ -129,7 +141,6 @@
 - name: test create a second VLAN IP RANGE
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.101
     end_ip: 10.2.4.150
     gateway: 10.2.4.1
@@ -141,11 +152,18 @@
     that:
     - ipr2 is successful
     - ipr2 is changed
+    - ipr2.vlan == "vlan://98"
+    - ipr2.start_ip == "10.2.4.101"
+    - ipr2.end_ip == "10.2.4.150"
+    - ipr2.gateway == "10.2.4.1"
+    - ipr2.netmask == "255.255.255.0"
+    - ipr2.network == "ipr_test_network"
+    - ipr2.for_virtual_network == false
+    - ipr2.id != ipr.id
 
 - name: test create a second VLAN IP RANGE idempotence
   cs_vlan_ip_range:
     network: ipr_test_network
-    vlan: 98
     start_ip: 10.2.4.101
     end_ip: 10.2.4.150
     gateway: 10.2.4.1
@@ -157,6 +175,34 @@
     that:
     - ipr2 is successful
     - ipr2 is not changed
+    - ipr2.vlan == "vlan://98"
+    - ipr2.start_ip == "10.2.4.101"
+    - ipr2.end_ip == "10.2.4.150"
+    - ipr2.gateway == "10.2.4.1"
+    - ipr2.netmask == "255.255.255.0"
+    - ipr2.network == "ipr_test_network"
+    - ipr2.for_virtual_network == false
+
+- name: test create a single IP VLAN IP RANGE
+  cs_vlan_ip_range:
+    network: ipr_test_network
+    start_ip: 10.2.4.200
+    gateway: 10.2.4.1
+    netmask: 255.255.255.0
+    zone: "{{ cs_common_zone_adv }}"
+  register: ipr3
+- name: verify test create single IP VLAN IP RANGE
+  assert:
+    that:
+    - ipr3 is successful
+    - ipr3 is changed
+    - ipr3.vlan == "vlan://98"
+    - ipr3.start_ip == "10.2.4.200"
+    - ipr3.end_ip == "10.2.4.200"
+    - ipr3.gateway == "10.2.4.1"
+    - ipr3.netmask == "255.255.255.0"
+    - ipr3.network == "ipr_test_network"
+    - ipr3.for_virtual_network == false
 
 - name: test cleanup VLAN IP RANGE in check mode
   cs_vlan_ip_range:
@@ -172,6 +218,13 @@
     that:
     - ipr is successful
     - ipr is changed
+    - ipr.vlan == "vlan://98"
+    - ipr.start_ip == "10.2.4.10"
+    - ipr.end_ip == "10.2.4.100"
+    - ipr.gateway == "10.2.4.1"
+    - ipr.netmask == "255.255.255.0"
+    - ipr.network == "ipr_test_network"
+    - ipr.for_virtual_network == false
 
 - name: test cleanup VLAN IP RANGE
   cs_vlan_ip_range:
@@ -186,6 +239,13 @@
     that:
     - ipr is successful
     - ipr is changed
+    - ipr.vlan == "vlan://98"
+    - ipr.start_ip == "10.2.4.10"
+    - ipr.end_ip == "10.2.4.100"
+    - ipr.gateway == "10.2.4.1"
+    - ipr.netmask == "255.255.255.0"
+    - ipr.network == "ipr_test_network"
+    - ipr.for_virtual_network == false
 
 - name: test cleanup VLAN IP RANGE idempotence
   cs_vlan_ip_range:
@@ -201,6 +261,26 @@
     - ipr is successful
     - ipr is not changed
 
+- name: test cleanup single IP VLAN IP RANGE
+  cs_vlan_ip_range:
+    network: ipr_test_network
+    start_ip: 10.2.4.200
+    zone: "{{ cs_common_zone_adv }}"
+    state: absent
+  register: ipr
+- name: verify test cleanup single IP VLAN IP RANGE
+  assert:
+    that:
+    - ipr is successful
+    - ipr is changed
+    - ipr.vlan == "vlan://98"
+    - ipr.start_ip == "10.2.4.200"
+    - ipr.end_ip == "10.2.4.200"
+    - ipr.gateway == "10.2.4.1"
+    - ipr.netmask == "255.255.255.0"
+    - ipr.network == "ipr_test_network"
+    - ipr.for_virtual_network == false
+
 - name: cleanup second VLAN IP RANGE
   cs_vlan_ip_range:
     network: ipr_test_network
@@ -214,6 +294,13 @@
     that:
     - ipr2 is successful
     - ipr2 is changed
+    - ipr2.vlan == "vlan://98"
+    - ipr2.start_ip == "10.2.4.101"
+    - ipr2.end_ip == "10.2.4.150"
+    - ipr2.gateway == "10.2.4.1"
+    - ipr2.netmask == "255.255.255.0"
+    - ipr2.network == "ipr_test_network"
+    - ipr2.for_virtual_network == false
 
 - name: cleanup test network
   cs_network:
