@@ -213,7 +213,7 @@ def main():
             name = quota_default
 
         if 'pquota' not in mp['mntopts'] and 'prjquota' not in mp['mntopts'] and 'pqnoenforce' not in mp['mntopts']:
-            module.fail_json(msg='%s is not mounted with the pquota/prjquota/pqnoenforce option.' % mountpoint, **result)
+            module.fail_json(msg="Path '%s' is not mounted with the pquota/prjquota/pqnoenforce option.' % mountpoint, **result)
 
         if name != quota_default and not os.path.isfile('/etc/projects'):
             module.fail_json(msg="Path '/etc/projects' does not exist.", **result)
