@@ -45,7 +45,7 @@ all: # keys must be unique, i.e. only one 'hosts' per group
             children:
                 group_x:
                     hosts:
-                        test5
+                        test5:
             vars:
                 g2_var2: value3
             hosts:
