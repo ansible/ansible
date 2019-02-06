@@ -133,7 +133,7 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
             type=dict(type='str', required=True, choices=['group', 'project', 'user'])
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     quota_type = module.params['type']
