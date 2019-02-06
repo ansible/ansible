@@ -216,7 +216,7 @@ def main():
             module.fail_json(msg='%s is not mounted with the pquota/prjquota/pqnoenforce option.' % mountpoint, **result)
 
         if name != quota_default and not os.path.isfile('/etc/projects'):
-            module.fail_json(msg='/etc/projects doesn\'t exist.', **result)
+            module.fail_json(msg="Path '/etc/projects' does not exist.", **result)
 
         if name != quota_default and not os.path.isfile('/etc/projid'):
             module.fail_json(msg='/etc/projid doesn\'t exist.', **result)
