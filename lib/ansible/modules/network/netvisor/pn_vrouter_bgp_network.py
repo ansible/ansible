@@ -17,9 +17,9 @@ module: pn_vrouter_bgp_network
 author: "Pluribus Networks (@rajaspachipulusu17)"
 version_added: "2.8"
 short_description: CLI command to add/remove vrouter-bgp-network
-description:.
+description:
   - This module can be used to add Border Gateway Protocol network to a vRouter
-    and remove Border Gateway Protocol network from a vRouter
+    and remove Border Gateway Protocol network from a vRouter.
 options:
   pn_cliswitch:
     description:
