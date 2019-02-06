@@ -277,8 +277,6 @@ module (and more!). Below is a mapping of `gce` fields over to
  image_family                 disks[].initialize_params.source_image      See above.
  external_projects            disks[].initialize_params.source_image      The name of the source_image will include the name of the project.
  instance_names               Use a loop or multiple tasks.               Using loops is a more Ansible-centric way of creating multiple instances and gives you the most flexibility.
- machine_type                 machine_type
- metadata                     metadata
  service_account_email        service_accounts[].email                    This is the service_account email address that you want the instance to be associated with. It is not the service_account email address that is used for the credentials necessary to create the instance.
  service_account_permissions  service_accounts[].scopes                   These are the permissions you want to grant to the instance.
  pem_file                     Not supported.                              We recommend using JSON service account credentials instead of PEM files.
@@ -290,8 +288,6 @@ module (and more!). Below is a mapping of `gce` fields over to
  subnetwork                   network_interfaces[].subnetwork
  persistent_boot_disk         disks[].type = 'PERSISTENT'
  disks                        disks[]
- tags                         tags
- zone                         zone
  ip_forward                   can_ip_forward
  external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with `gcp_compute_address` and place the name/output of the address here. You can also place the string value of the IP address's GCP name or the actual IP address.
  disks_auto_delete            disks[].auto_delete
