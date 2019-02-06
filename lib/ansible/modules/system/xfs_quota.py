@@ -182,7 +182,7 @@ def main():
                 and 'uqnoenforce' not in mp['mntopts'] \
                 and 'qnoenforce' not in mp['mntopts']:
             module.fail_json(
-                msg='%s is not mounted with the uquota/usrquota/quota/uqnoenforce/qnoenforce option.'
+                msg="Path '%s' is not mounted with the uquota/usrquota/quota/uqnoenforce/qnoenforce option."
                     % mountpoint, **result
             )
         try:
