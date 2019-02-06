@@ -204,6 +204,37 @@
     - ipr3.network == "ipr_test_network"
     - ipr3.for_virtual_network == false
 
+- name: test create an IPv4 + IPv6 VLAN IP RANGE
+  cs_vlan_ip_range:
+    network: ipr_test_network
+    vlan: 98
+    start_ip: 10.2.4.151
+    end_ip: 10.2.4.199
+    gateway: 10.2.4.1
+    netmask: 255.255.255.0
+    start_ipv6: 2001:db8::10
+    end_ipv6: 2001:db8::50
+    gateway_ipv6: 2001:db8::1
+    cidr_ipv6: 2001:db8::/64
+    zone: "{{ cs_common_zone_adv }}"
+  register: iprv6
+- name: verify test create an IPv4 + IPv6 VLAN IP RANGE
+  assert:
+    that:
+    - iprv6 is successful
+    - iprv6 is changed
+    - iprv6.vlan == "vlan://98"
+    - iprv6.start_ip == "10.2.4.151"
+    - iprv6.end_ip == "10.2.4.199"
+    - iprv6.gateway == "10.2.4.1"
+    - iprv6.netmask == "255.255.255.0"
+    - iprv6.start_ipv6 == "2001:db8::10"
+    - iprv6.end_ipv6 == "2001:db8::50"
+    - iprv6.gateway_ipv6 == "2001:db8::1"
+    - iprv6.cidr_ipv6 == "2001:db8::/64"
+    - iprv6.network == "ipr_test_network"
+    - iprv6.for_virtual_network == false
+
 - name: test cleanup VLAN IP RANGE in check mode
   cs_vlan_ip_range:
     network: ipr_test_network
@@ -301,6 +332,31 @@
     - ipr2.netmask == "255.255.255.0"
     - ipr2.network == "ipr_test_network"
     - ipr2.for_virtual_network == false
+
+- name: test cleanup IPv4 + IPv6 VLAN IP RANGE
+  cs_vlan_ip_range:
+    network: ipr_test_network
+    start_ip: 10.2.4.151
+    end_ip: 10.2.4.199
+    state: absent
+    zone: "{{ cs_common_zone_adv }}"
+  register: iprv6
+- name: verify test cleanup IPv4 + IPv6 VLAN IP RANGE
+  assert:
+    that:
+    - iprv6 is successful
+    - iprv6 is changed
+    - iprv6.vlan == "vlan://98"
+    - iprv6.start_ip == "10.2.4.151"
+    - iprv6.end_ip == "10.2.4.199"
+    - iprv6.gateway == "10.2.4.1"
+    - iprv6.netmask == "255.255.255.0"
+    - iprv6.start_ipv6 == "2001:db8::10"
+    - iprv6.end_ipv6 == "2001:db8::50"
+    - iprv6.gateway_ipv6 == "2001:db8::1"
+    - iprv6.cidr_ipv6 == "2001:db8::/64"
+    - iprv6.network == "ipr_test_network"
+    - iprv6.for_virtual_network == false
 
 - name: cleanup test network
   cs_network:

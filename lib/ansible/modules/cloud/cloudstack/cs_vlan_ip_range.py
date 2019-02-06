@@ -54,6 +54,9 @@ options:
     description:
       - The gateway of the IPv6 network.
       - Only considered on create.
+  cidr_ipv6:
+    description:
+      - The CIDR of IPv6 network, must be at least /64.
   vlan:
     description:
       - The ID or VID of the network.
@@ -140,6 +143,11 @@ gateway_ipv6:
   returned: success
   type: str
   sample: 2001:db8::1
+cidr_ipv6:
+  description: The CIDR of IPv6 network.
+  returned: success
+  type: str
+  sample: 2001:db8::/64
 zone:
   description: Name of zone.
   returned: success
@@ -199,6 +207,7 @@ class AnsibleCloudStackVlanIpRange(AnsibleCloudStack):
             'gateway': 'gateway',
             'netmask': 'netmask',
             'ip6gateway': 'gateway_ipv6',
+            'ip6cidr': 'cidr_ipv6',
             'startipv6': 'start_ipv6',
             'endipv6': 'end_ipv6',
         }
@@ -255,6 +264,7 @@ class AnsibleCloudStackVlanIpRange(AnsibleCloudStack):
             'startipv6': self.module.params.get('start_ipv6'),
             'endipv6': self.get_or_fallback('end_ipv6', 'start_ipv6'),
             'ip6gateway': self.module.params.get('gateway_ipv6'),
+            'ip6cidr': self.module.params.get('cidr_ipv6'),
             'vlan': self.get_network(key='vlan') if not vlan else vlan,
             'networkid': self.get_network(key='id'),
             'forvirtualnetwork': self.module.params.get('for_virtual_network'),
@@ -295,6 +305,7 @@ def main():
         start_ipv6=dict(type='str'),
         end_ipv6=dict(type='str'),
         gateway_ipv6=dict(type='str'),
+        cidr_ipv6=dict(type='str'),
         vlan=dict(type='str'),
         state=dict(choices=['present', 'absent'], default='present'),
         domain=dict(type='str'),
