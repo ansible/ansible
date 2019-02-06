@@ -293,7 +293,7 @@ module (and more!). Below is a mapping of `gce` fields over to
  tags                         tags
  zone                         zone
  ip_forward                   can_ip_forward
- external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with `gcp_compute_address` and place the name/output of the address here. You can also place the string value of the IP address’s GCP name or the actual IP address.
+ external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with `gcp_compute_address` and place the name/output of the address here. You can also place the string value of the IP address's GCP name or the actual IP address.
  disks_auto_delete            disks[].auto_delete
  preemptible                  scheduling.preemptible
  disk_size                    disks[].initialize_params.disk_size_gb
