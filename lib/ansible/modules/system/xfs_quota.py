@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: xfs_quota
-short_description: Set Quotas on XFS filesystems
+short_description: Manage quotas on XFS filesystems
 description:
   - Configure Quotas on XFS filesystems. /etc/projects and /etc/projid needs to be configured before calling this module when setting project quotas.
 version_added: "2.8"
