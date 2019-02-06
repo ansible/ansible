@@ -109,11 +109,15 @@ class GalaxyCLI(CLI):
         install_parser.set_defaults(func=self.execute_install)
         install_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                     help='Ignore errors and continue with the next specified role.')
-        install_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False, help='Don\'t download roles listed as dependencies')
         install_parser.add_argument('-r', '--role-file', dest='role_file', help='A file containing a list of roles to be imported')
         install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                     default=False, help='Use tar instead of the scm archive option when packaging the role')
         install_parser.add_argument('args', help='Role name, URL or tar file', metavar='role', nargs='*')
+        install_exclusive = install_parser.add_mutually_exclusive_group()
+        install_exclusive.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
+                                       help="Don't download roles listed as dependencies")
+        install_exclusive.add_argument('--force-with-deps', dest='force_with_deps', action='store_true', default=False,
+                                       help="Force overwriting an existing role and it's dependencies")
 
         remove_parser = subparsers.add_parser('remove', help='Delete roles from roles_path.', parents=[common, roles_path])
         remove_parser.set_defaults(func=self.execute_remove)
@@ -323,7 +327,9 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
 
         no_deps = context.CLIARGS['no_deps']
-        force = context.CLIARGS['force']
+        force_deps = context.CLIARGS['force_with_deps']
+
+        force = context.CLIARGS['force'] or force_deps
 
         roles_left = []
         if role_file:
@@ -333,7 +339,9 @@ class GalaxyCLI(CLI):
                     try:
                         required_roles = yaml.safe_load(f.read())
                     except Exception as e:
-                        raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
+                        raise AnsibleError(
+                            "Unable to load data from the requirements file (%s): %s" % (role_file, to_native(e))
+                        )
 
                     if required_roles is None:
                         raise AnsibleError("No roles found in file: %s" % role_file)
@@ -416,16 +424,25 @@ class GalaxyCLI(CLI):
                             continue
                         if dep_role.install_info is None:
                             if dep_role not in roles_left:
-                                display.display('- adding dependency: %s' % str(dep_role))
+                                display.display('- adding dependency: %s' % to_text(dep_role))
                                 roles_left.append(dep_role)
                             else:
                                 display.display('- dependency %s already pending installation.' % dep_role.name)
                         else:
                             if dep_role.install_info['version'] != dep_role.version:
-                                display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
-                                                (str(dep_role), role.name, dep_role.install_info['version']))
+                                if force_deps:
+                                    display.display('- changing dependant role %s from %s to %s' %
+                                                    (dep_role.name, dep_role.install_info['version'], dep_role.version or "unspecified"))
+                                    dep_role.remove()
+                                    roles_left.append(dep_role)
+                                else:
+                                    display.warning('- dependency %s from role %s differs from already installed version (%s), skipping' %
+                                                    (to_text(dep_role), role.name, dep_role.install_info['version']))
                             else:
-                                display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                                if force_deps:
+                                    roles_left.append(dep_role)
+                                else:
+                                    display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
                 display.warning("- %s was NOT installed successfully." % role.name)

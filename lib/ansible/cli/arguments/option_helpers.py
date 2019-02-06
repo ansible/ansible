@@ -15,6 +15,7 @@ import yaml
 
 import ansible
 from ansible import constants as C
+from ansible.module_utils._text import to_native
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
@@ -183,7 +184,7 @@ def create_base_parser(usage="", desc=None, epilog=None):
     )
     version_help = "show program's version number, config file location, configured module search path," \
                    " module location, executable location and exit"
-    parser.add_argument('--version', action='version', version=version("%(prog)s"), help=version_help)
+    parser.add_argument('--version', action='version', version=to_native(version("%(prog)s")), help=version_help)
     add_verbosity_options(parser)
     return parser
 
