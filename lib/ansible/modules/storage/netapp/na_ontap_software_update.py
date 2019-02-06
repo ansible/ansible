@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -27,7 +27,8 @@ options:
   nodes:
     description:
       - List of nodes to be updated, the nodes have to be a part of a HA Pair.
-    version_added: "2.8"
+    aliases:
+      - node
   package_version:
     required: true
     description:
@@ -81,7 +82,7 @@ class NetAppONTAPSoftwareUpdate(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
-            nodes=dict(required=False, type='list'),
+            nodes=dict(required=False, type='list', aliases=["node"]),
             package_version=dict(required=True, type='str'),
             package_url=dict(required=True, type='str'),
             ignore_validation_warning=dict(required=False, type='bool', default=False)
