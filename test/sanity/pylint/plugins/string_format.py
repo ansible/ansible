@@ -13,7 +13,10 @@ from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
 from pylint.checkers import utils
 from pylint.checkers.utils import check_messages
-from pylint.checkers.strings import parse_format_method_string
+try:
+    from pylint.checkers.utils import parse_format_method_string
+except ImportError:
+    from pylint.checkers.strings import parse_format_method_string
 
 _PY3K = sys.version_info[:2] >= (3, 0)
 
