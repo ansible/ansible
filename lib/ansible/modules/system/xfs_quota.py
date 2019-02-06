@@ -219,7 +219,7 @@ def main():
             module.fail_json(msg="Path '/etc/projects' does not exist.", **result)
 
         if name != quota_default and not os.path.isfile('/etc/projid'):
-            module.fail_json(msg='/etc/projid doesn\'t exist.', **result)
+            module.fail_json(msg="Path '/etc/projid' does not exist.", **result)
 
         if name != quota_default and name is not None and get_project_id(name) is None:
             module.fail_json(msg='%s hasn\'t been defined in /etc/projid.' % name, **result)
