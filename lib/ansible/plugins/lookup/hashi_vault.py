@@ -296,7 +296,7 @@ class HashiVault:
             mount_point = 'kubernetes'
 
         try:
-            with open('/var/run/secrets/kubernetes.io/serviceaccount/token') as file
+            with open('/var/run/secrets/kubernetes.io/serviceaccount/token') as file:
                 jwt = file.read()
         except IOError:
             raise AnsibleError("hashi_vault lookup failed to read JWT from file. Make sure you are running from a Kubernetes Pod")
