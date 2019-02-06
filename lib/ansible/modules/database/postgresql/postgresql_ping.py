@@ -97,8 +97,8 @@ is_available:
 server_version:
     description: PostgreSQL server version.
     returned: always
-    type: str
-    sample: '11.1'
+    type: dict
+    sample: { major: 10, minor: 1 }
 '''
 
 
@@ -130,7 +130,7 @@ class PgPing(object):
         self.module = module
         self.cursor = cursor
         self.is_available = False
-        self.version = ""
+        self.version = {}
 
     def do(self):
         self.get_pg_version()
@@ -141,7 +141,11 @@ class PgPing(object):
         raw = self.__exec_sql(query)[0][0]
         if raw:
             self.is_available = True
-            self.version = raw.split()[1]
+            raw = raw.split()[1].split('.')
+            self.version = dict(
+                major=int(raw[0]),
+                minor=int(raw[1]),
+            )
 
     def __exec_sql(self, query):
         try:
@@ -153,9 +157,6 @@ class PgPing(object):
             self.module.fail_json(msg=to_native(e),
                                   exception=traceback.format_exc())
             self.cursor.close()
-        # except psycopg2.ProgrammingError as e:
-        #     self.module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)),
-        #                           exception=traceback.format_exc())
         except Exception as e:
             self.module.warn("PostgreSQL server is unavailable: %s" % e)
 
@@ -233,7 +234,7 @@ def main():
         db_connection.rollback()
     else:
         # Return if PostgreSQL is unavailable:
-        ret_dict["is_available"], ret_dict["server_version"] = (False, "")
+        ret_dict["is_available"], ret_dict["server_version"] = (False, {})
 
     ret_dict['changed'] = False
     module.exit_json(**ret_dict)
