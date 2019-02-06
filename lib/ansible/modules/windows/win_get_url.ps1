@@ -132,6 +132,13 @@ Function Parse-Checksum($checksum) {
     return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
 }
 
+Function CheckModifiedChecksum-File($dest, $checksum) {
+    $currentHashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
+    $normaliseHashDest = $currentHashFromFile.Hash.ToLower()
+
+    return [bool]($normaliseHashDest -ne $(Parse-Checksum -checksum $checksum).checksum)
+}
+
 Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
 
     $module_start = Get-Date
@@ -200,9 +207,8 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
             if ($checksum) {
                 # TBD check '$dest' to be full path with name for downloaded file.
                 $hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
-                # Check both hashes are the same
                 $normaliseHashDest = $hashFromFile.Hash.ToLower()
-
+                # Check both hashes are the same
                 if ($normaliseHashDest -ne $checksum_value) {
                     # TBD: add to output variables with both checksums
                     Remove-Item -Path $dest
@@ -301,8 +307,25 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
     if ($is_modified) {
 
-        Download-File -module $module -url $url -dest $dest -credentials $credentials `
-                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        if ($checksum) {
+            Try {
+                $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
+
+                if ($is_modified_checksum) {
+                    Download-File -module $module -url $url -dest $dest -credentials $credentials `
+                        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+                }
+                else {
+                    $hashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
+                    $module.Result.checksum_dest = $hashFromFile.Hash.ToLower()
+                }
+            } Catch {
+                    $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
+            }
+        } else {
+            Download-File -module $module -url $url -dest $dest -credentials $credentials `
+                        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        }
 
     } else {
         if ($checksum) {
