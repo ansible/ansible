@@ -2,26 +2,26 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: "postgresql_facts - test return values"
+- name: postgresql_facts - test return values
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_facts:
     db: "{{ db_default }}"
     login_user: "{{ pg_user }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.ansible_facts.version != ""'
-      - 'result.ansible_facts.databases.{{ db_default }}.collate'
-      - 'result.ansible_facts.languages'
-      - 'result.ansible_facts.namespaces.information_schema'
-      - 'result.ansible_facts.settings'
+      - result.ansible_facts.version != {}
+      - result.ansible_facts.databases.{{ db_default }}.collate
+      - result.ansible_facts.languages
+      - result.ansible_facts.namespaces.information_schema
+      - result.ansible_facts.settings
 
-- name: "postgresql_facts - check incl_subset param passed by list"
+- name: postgresql_facts - check incl_subset param passed by list
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_facts:
     db: "{{ db_default }}"
     login_user: "{{ pg_user }}"
@@ -29,62 +29,62 @@
       - ver*
       - rol*
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.ansible_facts.version != ""'
-      - 'result.ansible_facts.roles'
-      - 'result.ansible_facts.databases == {}'
-      - 'result.ansible_facts.extensions == {}'
-      - 'result.ansible_facts.namespaces == {}'
-      - 'result.ansible_facts.languages == {}'
-      - 'result.ansible_facts.repl_slots == {}'
-      - 'result.ansible_facts.replications == {}'
-      - 'result.ansible_facts.settings == {}'
-      - 'result.ansible_facts.tablespaces == {}'
+      - result.ansible_facts.version != {}
+      - result.ansible_facts.roles
+      - result.ansible_facts.databases == {}
+      - result.ansible_facts.extensions == {}
+      - result.ansible_facts.namespaces == {}
+      - result.ansible_facts.languages == {}
+      - result.ansible_facts.repl_slots == {}
+      - result.ansible_facts.replications == {}
+      - result.ansible_facts.settings == {}
+      - result.ansible_facts.tablespaces == {}
 
-- name: "postgresql_facts - check incl_subset param passed by string"
+- name: postgresql_facts - check incl_subset param passed by string
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_facts:
     db: "{{ db_default }}"
     incl_subset: ver*,role*
     login_user: "{{ pg_user }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.ansible_facts.version != ""'
-      - 'result.ansible_facts.roles'
-      - 'result.ansible_facts.databases == {}'
-      - 'result.ansible_facts.extensions == {}'
-      - 'result.ansible_facts.namespaces == {}'
-      - 'result.ansible_facts.languages == {}'
-      - 'result.ansible_facts.repl_slots == {}'
-      - 'result.ansible_facts.replications == {}'
-      - 'result.ansible_facts.settings == {}'
-      - 'result.ansible_facts.tablespaces == {}'
+      - result.ansible_facts.version != {}
+      - result.ansible_facts.roles
+      - result.ansible_facts.databases == {}
+      - result.ansible_facts.extensions == {}
+      - result.ansible_facts.namespaces == {}
+      - result.ansible_facts.languages == {}
+      - result.ansible_facts.repl_slots == {}
+      - result.ansible_facts.replications == {}
+      - result.ansible_facts.settings == {}
+      - result.ansible_facts.tablespaces == {}
 
-- name: "postgresql_facts - check excl_subset param passed by string"
+- name: postgresql_facts - check excl_subset param passed by string
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_facts:
     db: "{{ db_default }}"
     excl_subset: ver*
     login_user: "{{ pg_user }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.ansible_facts.version == ""'
-      - 'result.ansible_facts.roles'
+      - result.ansible_facts.version == {}
+      - result.ansible_facts.roles
 
-- name: "postgresql_facts - check excl_subset param passed by list"
+- name: postgresql_facts - check excl_subset param passed by list
   become_user: "{{ pg_user }}"
-  become: True
+  become: yes
   postgresql_facts:
     db: "{{ db_default }}"
     excl_subset:
@@ -92,10 +92,10 @@
       - rol*
     login_user: "{{ pg_user }}"
   register: result
-  ignore_errors: True
+  ignore_errors: yes
 
 - assert:
     that:
-      - 'result.ansible_facts.version == ""'
-      - 'result.ansible_facts.roles == {}'
-      - 'result.ansible_facts.databases'
+      - result.ansible_facts.version == {}
+      - result.ansible_facts.roles == {}
+      - result.ansible_facts.databases

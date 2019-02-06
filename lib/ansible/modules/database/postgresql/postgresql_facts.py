@@ -22,9 +22,9 @@ description:
    - Gathers facts about remote PostgreSQL servers.
 version_added: "2.8"
 options:
-  incl_subset:
+  incl_filter:
     description:
-      - Limit collected subsets by comma separated string.
+      - Limit collected facts by comma separated string or list.
       - Allowable values are C(version),
         C(databases), C(settings), C(tablespaces), C(languages), C(roles), C(namespaces),
         C(replications), C(repl_slots), C(extensions).
@@ -32,33 +32,39 @@ options:
       - You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
     default: "*"
     type: list
-  excl_subset:
+  excl_filter:
     description:
       - Exclude subsets from the collection.
-      - Allowable values are similar as in I(incl_subset).
+      - Allowable values are similar as in I(incl_filter).
       - You can also use shell-style (fnmatch) wildcard.
-      - Mutually exclusive with incl_subset.
+      - Mutually exclusive with incl_filter.
     type: list
   db:
     description:
       - Name of database to connect.
+    type: str
   port:
     description:
       - Database port to connect.
+    type: int
     default: 5432
   login_user:
     description:
       - User (role) used to authenticate with PostgreSQL.
+    type: str
     default: postgres
   login_password:
     description:
       - Password used to authenticate with PostgreSQL.
+    type: str
   login_host:
     description:
       - Host running PostgreSQL.
+    type: str
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
+    type: str
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection
@@ -66,6 +72,7 @@ options:
       - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
         more information on the modes.
       - Default of C(prefer) matches libpq default.
+    type: str
     default: prefer
     choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
   ssl_rootcert:
@@ -74,6 +81,7 @@ options:
         certificate(s).
       - If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
+    type: str
 notes:
    - The default authentication assumes that you are either logging in as or
      sudo'ing to the postgres account on the host.
@@ -93,25 +101,25 @@ EXAMPLES = '''
 # ansible postgres -m postgresql_facts
 
 # Display only databases and roles facts from all hosts using shell-style wildcards:
-# ansible all -m postgresql_facts -a "incl_subset=dat*,rol*"
+# ansible all -m postgresql_facts -a "incl_filter=dat*,rol*"
 
 # Display only replications and repl_slots facts from standby hosts using shell-style wildcards:
-# ansible standby -m postgresql_facts -a "incl_subset=repl*"
+# ansible standby -m postgresql_facts -a "incl_filter=repl*"
 
 # Display all facts from databases hosts except settings:
-# ansible databases -m postgresql_facts -a "excl_subset=settings"
+# ansible databases -m postgresql_facts -a "excl_filter=settings"
 
 - name: Collect PostgreSQL version and extensions
   postgresql_facts:
-    incl_subset: ver*, ext*
+    incl_filter: ver*, ext*
 
 - name: Collect all subsets, excluding settings and roles
   postgresql_facts:
-    excl_subset: settings, roles
+    excl_filter: settings, roles
 
 - name: Collect tablespaces and repl_slots facts
   postgresql_facts:
-    incl_subset:
+    incl_filter:
       - tablespaces
       - repl_s*
 '''
@@ -122,6 +130,21 @@ ansible_facts:
     returned: always
     type: complex
     contains:
+        version:
+            description: Database server version U(https://www.postgresql.org/support/versioning/).
+            returned: always
+            type: dict
+            contains:
+                major:
+                    description: Major server version.
+                    returned: always
+                    type: int
+                    sample: 11
+                minor:
+                    description: Minor server version.
+                    returned: always
+                    type: int
+                    sample: 1
         databases:
             description: Information about databases.
             returned: always
@@ -183,8 +206,18 @@ ansible_facts:
                 extversion:
                     description: Extension description.
                     returned: always
-                    type: str
-                    sample: 1.0
+                    type: dict
+                    contains:
+                        major:
+                            description: Extension major version.
+                            returned: always
+                            type: int
+                            sample: 1
+                        minor:
+                            description: Extension minor version.
+                            returned: always
+                            type: int
+                            sample: 0
                 nspname:
                     description: Namecpase where the extension is.
                     returned: always
@@ -440,7 +473,7 @@ class PgClusterFacts(object):
         self.module = module
         self.cursor = cursor
         self.pg_facts = {
-            "version": "",
+            "version": {},
             "tablespaces": {},
             "databases": {},
             "languages": {},
@@ -519,16 +552,9 @@ class PgClusterFacts(object):
             ts_name = i[0]
             ts_info = {}
             ts_info["spcowner"] = i[1]
-            if i[2]:
-                ts_info["spcacl"] = i[2]
-            else:
-                ts_info["spcacl"] = ""
-
+            ts_info["spcacl"] = i[2] if i[2] else ''
             if opt:
-                if i[3]:
-                    ts_info["spcoptions"] = i[3]
-                else:
-                    ts_info["spcoptions"] = []
+                ts_info["spcoptions"] = i[3] if i[3] else []
 
             ts_dict[ts_name] = ts_info
 
@@ -555,12 +581,16 @@ class PgClusterFacts(object):
         res = self.__exec_sql(query)
         ext_dict = {}
         for i in res:
-            ext_name = i[0]
-            ext_info = {}
-            ext_info["extversion"] = i[1]
-            ext_info["nspname"] = i[2]
-            ext_info["description"] = i[3]
-            ext_dict[ext_name] = ext_info
+            ext_ver = i[1].split('.')
+
+            ext_dict[i[0]] = dict(
+                extversion=dict(
+                    major=int(ext_ver[0]),
+                    minor=int(ext_ver[1]),
+                ),
+                nspname=i[2],
+                description=i[3],
+            )
 
         self.pg_facts["extensions"] = ext_dict
 
@@ -580,22 +610,12 @@ class PgClusterFacts(object):
         res = self.__exec_sql(query)
         rol_dict = {}
         for i in res:
-            rol_name = i[0]
-            rol_info = {}
-            rol_info["superuser"] = i[1]
-            rol_info["canlogin"] = i[2]
-
-            if i[3]:
-                rol_info["valid_until"] = i[3]
-            else:
-                rol_info["valid_until"] = ""
-
-            if i[4]:
-                rol_info["member_of"] = i[4]
-            else:
-                rol_info["member_of"] = []
-
-            rol_dict[rol_name] = rol_info
+            rol_dict[i[0]] = dict(
+                superuser=i[1],
+                canlogin=i[2],
+                valid_until=i[3] if i[3] else '',
+                member_of=i[4] if i[4] else [],
+            )
 
         self.pg_facts["roles"] = rol_dict
 
@@ -620,14 +640,12 @@ class PgClusterFacts(object):
 
         rslot_dict = {}
         for i in res:
-            rslot_name = i[0]
-            rslot_info = {}
-            rslot_info["plugin"] = i[1]
-            rslot_info["slot_type"] = i[2]
-            rslot_info["database"] = i[3]
-            rslot_info["active"] = i[4]
-
-            rslot_dict[rslot_name] = rslot_info
+            rslot_dict[i[0]] = dict(
+                plugin=i[1],
+                slot_type=i[2],
+                database=i[3],
+                active=i[4],
+            )
 
         self.pg_facts["repl_slots"] = rslot_dict
 
@@ -642,38 +660,16 @@ class PgClusterFacts(object):
 
         set_dict = {}
         for i in res:
-            set_name = i[0]
-            set_info = {}
-            set_info["setting"] = i[1]
-
-            if i[2]:
-                set_info["unit"] = i[2]
-            else:
-                set_info["unit"] = ""
-
-            set_info["context"] = i[3]
-            set_info["vartype"] = i[4]
-            if i[5]:
-                set_info["boot_val"] = i[5]
-            else:
-                set_info["boot_val"] = ""
-
-            if i[6]:
-                set_info["min_val"] = i[6]
-            else:
-                set_info["min_val"] = ""
-
-            if i[7]:
-                set_info["max_val"] = i[7]
-            else:
-                set_info["max_val"] = ""
-
-            if i[8]:
-                set_info["sourcefile"] = i[8]
-            else:
-                set_info["sourcefile"] = ""
-
-            set_dict[set_name] = set_info
+            set_dict[i[0]] = dict(
+                setting=i[1],
+                unit=i[2] if i[2] else '',
+                context=i[3],
+                vartype=i[4],
+                boot_val=i[5] if i[5] else '',
+                min_val=i[6] if i[6] else '',
+                max_val=i[7] if i[7] else '',
+                sourcefile=i[8] if i[8] else '',
+            )
 
         self.pg_facts["settings"] = set_dict
 
@@ -693,31 +689,21 @@ class PgClusterFacts(object):
                  "FROM pg_stat_replication AS r "
                  "JOIN pg_authid AS a ON r.usesysid = a.oid")
         res = self.__exec_sql(query)
-        repl_dict = {}
 
         # If there is no replication:
         if not res:
             return True
 
+        repl_dict = {}
         for i in res:
-            repl_pid = i[0]
-            repl_info = {}
-            repl_info["usename"] = i[1]
-            if i[2]:
-                repl_info["app_name"] = i[2]
-            else:
-                repl_info["app_name"] = ""
-
-            repl_info["client_addr"] = i[3]
-            if i[4]:
-                repl_info["client_hostname"] = i[4]
-            else:
-                repl_info["client_hostname"] = ""
-
-            repl_info["backend_start"] = i[5]
-            repl_info["state"] = i[6]
-
-            repl_dict[repl_pid] = repl_info
+            repl_dict[i[0]] = dict(
+                usename=i[1],
+                app_name=i[2] if i[2] else '',
+                client_addr=i[3],
+                client_hostname=i[4] if i[4] else '',
+                backend_start=i[5],
+                state=i[6],
+            )
 
         self.pg_facts["replications"] = repl_dict
 
@@ -731,15 +717,10 @@ class PgClusterFacts(object):
         res = self.__exec_sql(query)
         lang_dict = {}
         for i in res:
-            lang_name = i[0]
-            lang_info = {}
-            lang_info["lanowner"] = i[1]
-            if i[2]:
-                lang_info["lanacl"] = i[2]
-            else:
-                lang_info["lanacl"] = ""
-
-            lang_dict[lang_name] = lang_info
+            lang_dict[i[0]] = dict(
+                lanowner=i[1],
+                lanacl=i[2] if i[2] else '',
+            )
 
         self.pg_facts["languages"] = lang_dict
 
@@ -751,24 +732,24 @@ class PgClusterFacts(object):
                  "FROM pg_catalog.pg_namespace AS n "
                  "JOIN pg_authid AS a ON a.oid = n.nspowner")
         res = self.__exec_sql(query)
+
         nsp_dict = {}
         for i in res:
-            nsp_name = i[0]
-            nsp_info = {}
-            nsp_info["nspowner"] = i[1]
-            if i[2]:
-                nsp_info["nspacl"] = i[2]
-            else:
-                nsp_info["nspacl"] = ""
-
-            nsp_dict[nsp_name] = nsp_info
+            nsp_dict[i[0]] = dict(
+                nspowner=i[1],
+                nspacl=i[2] if i[2] else '',
+            )
 
         self.pg_facts["namespaces"] = nsp_dict
 
     def get_pg_version(self):
         query = "SELECT version()"
         raw = self.__exec_sql(query)[0][0]
-        self.pg_facts["version"] = raw.split()[1]
+        raw = raw.split()[1].split('.')
+        self.pg_facts["version"] = dict(
+            major=int(raw[0]),
+            miror=int(raw[1]),
+        )
 
     def get_db_info(self):
         # Following query returns:
@@ -786,21 +767,17 @@ class PgClusterFacts(object):
                  "FROM pg_catalog.pg_database AS d "
                  "JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid")
         res = self.__exec_sql(query)
+
         db_dict = {}
         for i in res:
-            db_name = i[0]
-            db_info = {}
-            db_info['owner'] = i[1]
-            db_info['encoding'] = i[2]
-            db_info['collate'] = i[3]
-            db_info['ctype'] = i[4]
-            db_info['size'] = i[6]
-            if i[5]:
-                db_info['access_priv'] = i[5]
-            else:
-                db_info['access_priv'] = ''
-
-            db_dict[db_name] = db_info
+            db_dict[i[0]] = dict(
+                owner=i[1],
+                encoding=i[2],
+                collate=i[3],
+                ctype=i[4],
+                access_priv=i[5] if i[5] else '',
+                size=i[6],
+            )
 
         self.pg_facts["databases"] = db_dict
 
@@ -828,12 +805,12 @@ class PgClusterFacts(object):
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
-        db=dict(default='', type=str),
-        incl_subset=dict(default="*", type=str),
-        excl_subset=dict(default="", type=str),
-        ssl_mode=dict(default='prefer', choices=[
+        db=dict(type='str'),
+        incl_filter=dict(type='str', default="*"),
+        excl_filter=dict(type='str'),
+        ssl_mode=dict(type='str', default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None, type=str),
+        ssl_rootcert=dict(type='str'),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -843,12 +820,12 @@ def main():
     if not HAS_PSYCOPG2:
         module.fail_json(msg="The python psycopg2 module is required")
 
-    incl_subsets = module.params["incl_subset"]
-    excl_subsets = module.params["excl_subset"]
+    incl_filters = module.params["incl_filter"]
+    excl_filters = module.params["excl_filter"]
     sslrootcert = module.params["ssl_rootcert"]
 
-    if incl_subsets != "*" and excl_subsets:
-        module.fail_json(msg="incl_subset and excl_subset parameters "
+    if incl_filters != "*" and excl_filters:
+        module.fail_json(msg="incl_filter and excl_filter parameters "
                              "are mutually exclusive")
 
     # To use defaults values, keyword arguments must be absent, so
@@ -871,16 +848,17 @@ def main():
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+    if psycopg2.__version__ < '2.4.3' and sslrootcert:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
+                             'to user the ssl_rootcert parameter')
 
     try:
         db_connection = psycopg2.connect(**kw)
-
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+            module.fail_json(msg='Postgresql server must be at least version 8.4 '
+                                 'to support sslrootcert')
         module.fail_json(msg="unable to connect to database: %s" % to_native(e),
                          exception=traceback.format_exc())
     except Exception as e:
@@ -890,13 +868,13 @@ def main():
     # Do job:
     pg_facts = PgClusterFacts(module, cursor)
 
-    if incl_subsets != "*":
-        incl_subsets = [s.strip(" \'][") for s in incl_subsets.split(',')]
-        kw['ansible_facts'] = pg_facts.collect(include=incl_subsets)
+    if incl_filters != "*":
+        incl_filters = [s.strip(" \'][") for s in incl_filters.split(',')]
+        kw['ansible_facts'] = pg_facts.collect(include=incl_filters)
 
-    elif excl_subsets:
-        excl_subsets = [s.strip(" \'][") for s in excl_subsets.split(',')]
-        kw['ansible_facts'] = pg_facts.collect(exclude=excl_subsets)
+    elif excl_filters:
+        excl_filters = [s.strip(" \'][") for s in excl_filters.split(',')]
+        kw['ansible_facts'] = pg_facts.collect(exclude=excl_filters)
 
     else:
         kw['ansible_facts'] = pg_facts.collect()
