@@ -113,7 +113,6 @@ EXAMPLES = r'''
 RETURN = ''' # '''
 
 import grp
-import json
 import os
 import pwd
 import sys
