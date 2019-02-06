@@ -48,7 +48,7 @@ options:
         - Type of network device network manages.
         - Required when creating a network.
         - As of Ansible 2.8, combined type has moved to the types parameter.
-        choices: [appliance, switch, wireless]
+        choices: [ appliance, switch, wireless ]
         aliases: [net_type]
     types:
         description:
