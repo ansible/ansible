@@ -172,7 +172,7 @@ def main():
         ),
     )
     if not HAS_CRYPTOGRAPHY:
-        module.fail(msg='cryptography >= 1.3 is required for this module.')
+        module.fail_json(msg='cryptography >= 1.3 is required for this module.')
 
     try:
         # Get parameters
