@@ -20,7 +20,8 @@ DOCUMENTATION = '''
 module: xfs_quota
 short_description: Manage quotas on XFS filesystems
 description:
-  - Configure Quotas on XFS filesystems. /etc/projects and /etc/projid needs to be configured before calling this module when setting project quotas.
+  - Configure quotas on XFS filesystems.
+  - Before using this module /etc/projects and /etc/projid need to be configured.
 version_added: "2.8"
 author:
 - William Leemans (@bushvin)
