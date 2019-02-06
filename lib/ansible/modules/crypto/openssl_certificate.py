@@ -418,15 +418,18 @@ filename:
 from random import randint
 import datetime
 import os
+import traceback
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes
 
+PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
@@ -1052,7 +1055,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='The python pyOpenSSL library is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
     if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
         try:
             getattr(crypto.X509Req, 'get_extensions')

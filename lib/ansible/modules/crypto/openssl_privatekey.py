@@ -198,14 +198,18 @@ from distutils.version import LooseVersion
 MINIMAL_PYOPENSSL_VERSION = '0.6'
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.2.3'
 
+PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
     PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     PYOPENSSL_FOUND = False
 else:
     PYOPENSSL_FOUND = True
+
+CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     import cryptography.exceptions
@@ -217,6 +221,7 @@ try:
     import cryptography.hazmat.primitives.asymmetric.utils
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
@@ -233,7 +238,7 @@ else:
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native, to_bytes
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import string_types
 
 
@@ -617,11 +622,11 @@ def main():
                                       MINIMAL_PYOPENSSL_VERSION))
     if backend == 'pyopenssl':
         if not PYOPENSSL_FOUND:
-            module.fail_json(msg='The Python pyOpenSSL library is required')
+            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
         private_key = PrivateKeyPyOpenSSL(module)
     elif backend == 'cryptography':
         if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg='The Python cryptography library is required')
+            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
         private_key = PrivateKeyCryptography(module)
 
     if private_key.state == 'present':

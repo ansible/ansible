@@ -350,7 +350,7 @@ def main():
     )
 
     if not pymongo_found:
-        module.fail_json(msg='the python pymongo module is required')
+        module.fail_json(msg=missing_required_lib('pymongo'))
 
     login_user = module.params['login_user']
     login_password = module.params['login_password']
