@@ -164,7 +164,7 @@ def main():
     )
 
     if not os.path.ismount(mountpoint):
-        module.fail_json(msg='%s is not a mountpoint' % mountpoint, **result)
+        module.fail_json(msg="Path '%s' is not a mount point" % mountpoint, **result)
 
     mp = get_fs_by_mountpoint(mountpoint)
     if mp is None:
