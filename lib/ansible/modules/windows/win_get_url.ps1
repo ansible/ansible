@@ -305,7 +305,7 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
     $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials `
                                       -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
-    if ($is_modified) {
+    if ($is_modified -or $checksum) {
 
         if ($checksum) {
             Try {
