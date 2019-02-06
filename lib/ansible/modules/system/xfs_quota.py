@@ -131,7 +131,7 @@ def main():
             rtbhard=dict(type='str'),
             rtbsoft=dict(type='str'),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            type=dict(type='str', required=True, choices=['user', 'group', 'project'])
+            type=dict(type='str', required=True, choices=['group', 'project', 'user'])
         ),
         supports_check_mode=True
     )
