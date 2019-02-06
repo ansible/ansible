@@ -515,7 +515,7 @@ See :ref:`validate-playbook-tools` for a detailed list of tools you can use to v
 .. seealso::
 
    `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_
-       Learn how to test Ansible Playbooks
+       Learn how to test Ansible Playbooks syntax
    :ref:`yaml_syntax`
        Learn about YAML syntax
    :ref:`playbooks_best_practices`
