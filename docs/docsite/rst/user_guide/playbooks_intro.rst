@@ -478,7 +478,7 @@ Run ``ansible-pull --help`` for details.
 
 There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ``ansible-pull`` via a crontab from push mode.
 
-.. _testing_playbooks:
+.. _linting_playbooks:
 
 Linting playbooks
 `````````````````
