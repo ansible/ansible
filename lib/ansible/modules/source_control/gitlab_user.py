@@ -44,10 +44,12 @@ options:
     description:
       - Gitlab password for login_user
     type: str
-  login_token:
+  api_token:
     description:
       - Gitlab token for logging in.
     type: str
+    aliases:
+      - login_token
   name:
     description:
       - Name of the user you want to create

@@ -43,10 +43,12 @@ options:
     description:
       - Gitlab password for login_user
     type: str
-  login_token:
+  api_token:
     description:
       - Gitlab token for logging in.
     type: str
+    aliases:
+      - login_token
   group:
     description:
       - Id or The full path of the group of which this projects belongs to.
