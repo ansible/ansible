@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: keycloak_scope
+module: keycloak_client_scope
 
 short_description: Allows administration of Keycloak scope mappings via the Keycloak REST API
 
@@ -147,7 +147,7 @@ author:
 EXAMPLES = '''
 - name: Add realm roles to a client scope mapping (using implicit default of acting on a client and setting realm scope mappings)
   local_action:
-    module: keycloak_scope
+    module: keycloak_client_scope
     auth_client_id: admin-cli
     auth_keycloak_url: https://auth.example.com/auth
     auth_realm: master
@@ -163,7 +163,7 @@ EXAMPLES = '''
 
 - name: Add client roles to a client-template scope mapping
   local_action:
-    module: keycloak_scope
+    module: keycloak_client_scope
     auth_client_id: admin-cli
     auth_keycloak_url: https://auth.example.com/auth
     auth_realm: master
@@ -182,7 +182,7 @@ EXAMPLES = '''
 
 - name: Remove client role testrole01 for testclient01 from testclienttemplate
   local_action:
-    module: keycloak_scope
+    module: keycloak_client_scope
     auth_client_id: admin-cli
     auth_keycloak_url: https://auth.example.com/auth
     auth_realm: master
@@ -199,7 +199,7 @@ EXAMPLES = '''
 
 - name: Remove all client roles from testclient01 using exclusive and an empty client role dict
   local_action:
-    module: keycloak_scope
+    module: keycloak_client_scope
     auth_client_id: admin-cli
     auth_keycloak_url: https://auth.example.com/auth
     auth_realm: master
