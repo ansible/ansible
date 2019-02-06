@@ -116,7 +116,7 @@ import grp
 import os
 import pwd
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, human_to_bytes
 from ansible.module_utils.basic import human_to_bytes
 
 
