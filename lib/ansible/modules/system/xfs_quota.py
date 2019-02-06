@@ -188,7 +188,7 @@ def main():
         try:
             pwd.getpwnam(name)
         except KeyError as e:
-            module.fail_json(msg='User %s doesn\'t exist.' % name, **result)
+            module.fail_json(msg="User '%s' does not exist." % name, **result)
 
     if quota_type == 'group':
         type_arg = '-g'
