@@ -115,16 +115,18 @@ import pipes
 import subprocess
 import traceback
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
     HAS_PSYCOPG2 = False
 else:
     HAS_PSYCOPG2 = True
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
@@ -384,7 +386,7 @@ def main():
     )
 
     if not HAS_PSYCOPG2:
-        module.fail_json(msg="the python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     db = module.params["db"]
     owner = module.params["owner"]
