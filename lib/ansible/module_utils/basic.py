@@ -731,7 +731,7 @@ def missing_required_lib(library, reason=None):
     hostname = platform.node()
     msg = "Failed to import the required Python library (%s) on %s's Python %s." % (library, hostname, sys.executable)
     if reason:
-        msg += "This is required %s." % reason
+        msg += " This is required %s." % reason
 
     return msg + " Please read module documentation and install in the appropriate location"
 
