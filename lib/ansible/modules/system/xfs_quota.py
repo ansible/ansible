@@ -249,8 +249,9 @@ def main():
                 result['stdout'] = stdout
                 result['stderr'] = stderr
                 module.fail_json(msg='Could not get quota realtime block report.', **result)
-            else:
-                result['changed'] = True
+
+            result['changed'] = True
+
         elif not prj_set and module.check_mode:
             result['changed'] = True
 
@@ -314,8 +315,8 @@ def main():
             result['stdout'] = stdout
             result['stderr'] = stderr
             module.fail_json(msg='Could not set limits.', **result)
-        else:
-            result['changed'] = True
+
+        result['changed'] = True
 
     elif len(limit) > 0 and module.check_mode:
         result['changed'] = True
@@ -355,13 +356,13 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
                 stderr=stderr,
                 )
         module.fail_json(msg='Could not get quota report for %s.' % used_name,**result)
-    else:
-        for line in stdout.split('\n'):
-            line = line.strip().split()
-            if len(line) > 3 and line[0] == name:
-                soft = int(line[2])
-                hard = int(line[3])
-                break
+
+    for line in stdout.split('\n'):
+        line = line.strip().split()
+        if len(line) > 3 and line[0] == name:
+            soft = int(line[2])
+            hard = int(line[3])
+            break
 
     return soft, hard
 
