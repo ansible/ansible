@@ -286,7 +286,7 @@ class GitLabRunner(object):
 def depreaction_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.warn('This aliases are going to be deprecated: {}'.format(', '.join(deprecated_aliases)))
+    module.warn('This aliases are going to be deprecated: {aliases}'.format(aliases=', '.join(deprecated_aliases)))
 
     deprecated_params = [
         {'old': 'url', 'new': 'api_url'}

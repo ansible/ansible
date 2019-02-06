@@ -237,7 +237,7 @@ class GitLabDeployKey(object):
 def depreaction_warning(module):
     deprecated_aliases = ['private_token', 'access_token']
 
-    module.warn('This aliases are going to be deprecated: {}'.format(', '.join(deprecated_aliases)))
+    module.warn('This aliases are going to be deprecated: {aliases}'.format(aliases=', '.join(deprecated_aliases)))
 
 
 def main():
