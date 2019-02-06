@@ -110,15 +110,17 @@ EXAMPLES = '''
 '''
 import traceback
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
     postgresqldb_found = False
 else:
     postgresqldb_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.database import pg_quote_identifier
@@ -188,7 +190,7 @@ def main():
     )
 
     if not postgresqldb_found:
-        module.fail_json(msg="the python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     db = module.params["db"]
     ext = module.params["ext"]
