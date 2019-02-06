@@ -63,8 +63,8 @@ Add-CSharpType -AnsibleModule $module -References @'
 '@
 
 
-Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
-
+Function CheckModified-File {
+    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
     if ($checksum) {
         Try {
             $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
@@ -132,7 +132,8 @@ Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeo
     }
 }
 
-Function Parse-Checksum($checksum) {
+Function Parse-Checksum {
+    param($checksum)
     $checksum_parameter_splited = $checksum.split(":", 2)
     if ($checksum_parameter_splited.Count -ne 2) {
         throw
@@ -144,7 +145,8 @@ Function Parse-Checksum($checksum) {
     return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
 }
 
-Function GetNormalise-Checksum($dest, $checksum) {
+Function GetNormalise-Checksum {
+    param($dest, $checksum)
     if($checksum) {
         $tmpHashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
         return [string]$tmpHashFromFile.Hash.ToLower()
@@ -152,13 +154,15 @@ Function GetNormalise-Checksum($dest, $checksum) {
     return $null
 }
 
-Function CheckModifiedChecksum-File($dest, $checksum) {
+Function CheckModifiedChecksum-File {
+    param($dest, $checksum)
     $normaliseHashDest = GetNormalise-Checksum -dest $dest -checksum $checksum
 
     return [bool]($normaliseHashDest -ne $(Parse-Checksum -checksum $checksum).checksum)
 }
 
-Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
+Function Download-File {
+    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
 
     $module_start = Get-Date
 
