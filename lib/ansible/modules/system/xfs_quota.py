@@ -168,7 +168,7 @@ def main():
 
     mp = get_fs_by_mountpoint(mountpoint)
     if mp is None:
-        module.fail_json(msg="Path '%s' is not a mount point or not located on an xfs file system.' % mountpoint, **result)
+        module.fail_json(msg="Path '%s' is not a mount point or not located on an xfs file system." % mountpoint, **result)
 
     if quota_type == 'user':
         type_arg = '-u'
