@@ -903,7 +903,7 @@ class PyVmomi(object):
                     if vm_obj and user_folder in actual_vm_folder_path:
                         vm_obj = vm
                         break
-            else:
+            elif vms:
                 # We have a unique match
                 actual_vm_folder_path = self.get_vm_path(content=self.content, vm_name=vms[0])
                 if vm_obj and user_folder in actual_vm_folder_path:
