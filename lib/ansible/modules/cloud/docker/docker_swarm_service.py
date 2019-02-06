@@ -786,35 +786,35 @@ class DockerService(DockerBaseClass):
         force_update = False
         if self.endpoint_mode is not None and self.endpoint_mode != os.endpoint_mode:
             differences.add('endpoint_mode', parameter=self.endpoint_mode, active=os.endpoint_mode)
-        if self.env is not None and self.env != os.env:
+        if self.env is not None and self.env != (os.env or []):
             differences.add('env', parameter=self.env, active=os.env)
         if self.log_driver is not None and self.log_driver != os.log_driver:
             differences.add('log_driver', parameter=self.log_driver, active=os.log_driver)
-        if self.log_driver_options is not None and self.log_driver_options != os.log_driver_options:
+        if self.log_driver_options is not None and self.log_driver_options != (os.log_driver_options or {}):
             differences.add('log_opt', parameter=self.log_driver_options, active=os.log_driver_options)
         if self.mode != os.mode:
             needs_rebuild = True
             differences.add('mode', parameter=self.mode, active=os.mode)
-        if self.mounts is not None and self.mounts != os.mounts:
+        if self.mounts is not None and self.mounts != (os.mounts or []):
             differences.add('mounts', parameter=self.mounts, active=os.mounts)
-        if self.configs is not None and self.configs != os.configs:
+        if self.configs is not None and self.configs != (os.configs or []):
             differences.add('configs', parameter=self.configs, active=os.configs)
-        if self.secrets is not None and self.secrets != os.secrets:
+        if self.secrets is not None and self.secrets != (os.secrets or []):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
-        if self.networks is not None and self.networks != os.networks:
+        if self.networks is not None and self.networks != (os.networks or []):
             differences.add('networks', parameter=self.networks, active=os.networks)
             needs_rebuild = True
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
-        if self.command is not None and self.command != os.command:
+        if self.command is not None and self.command != (os.command or []):
             differences.add('command', parameter=self.command, active=os.command)
-        if self.args is not None and self.args != os.args:
+        if self.args is not None and self.args != (os.args or []):
             differences.add('args', parameter=self.args, active=os.args)
-        if self.constraints is not None and self.constraints != os.constraints:
+        if self.constraints is not None and self.constraints != (os.constraints or []):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
-        if self.placement_preferences is not None and self.placement_preferences != os.placement_preferences:
+        if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
-        if self.labels is not None and self.labels != os.labels:
+        if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
         if self.limit_cpu is not None and self.limit_cpu != os.limit_cpu:
             differences.add('limit_cpu', parameter=self.limit_cpu, active=os.limit_cpu)
@@ -824,7 +824,7 @@ class DockerService(DockerBaseClass):
             differences.add('reserve_cpu', parameter=self.reserve_cpu, active=os.reserve_cpu)
         if self.reserve_memory is not None and self.reserve_memory != os.reserve_memory:
             differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
-        if self.container_labels is not None and self.container_labels != os.container_labels:
+        if self.container_labels is not None and self.container_labels != (os.container_labels or {}):
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
         if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
@@ -853,11 +853,11 @@ class DockerService(DockerBaseClass):
             differences.add('image', parameter=self.image, active=change)
         if self.user and self.user != os.user:
             differences.add('user', parameter=self.user, active=os.user)
-        if self.dns is not None and self.dns != os.dns:
+        if self.dns is not None and self.dns != (os.dns or []):
             differences.add('dns', parameter=self.dns, active=os.dns)
-        if self.dns_search is not None and self.dns_search != os.dns_search:
+        if self.dns_search is not None and self.dns_search != (os.dns_search or []):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
-        if self.dns_options is not None and self.dns_options != os.dns_options:
+        if self.dns_options is not None and self.dns_options != (os.dns_options or []):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
         if self.hostname is not None and self.hostname != os.hostname:
             differences.add('hostname', parameter=self.hostname, active=os.hostname)
