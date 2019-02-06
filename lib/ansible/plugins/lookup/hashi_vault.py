@@ -55,6 +55,8 @@ DOCUMENTATION = """
         - userpass
         - ldap
         - approle
+        - gcp
+        - kubernetes
     mount_point:
       description: vault mount point, only required if you have a custom mount point.
       default: ldap
@@ -105,11 +107,11 @@ EXAMPLES = """
 
 - name: authenticate using GCP auth
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=gcp role=myrole url=http://myvault:8200')}}"
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=gcp role=myrole url=http://myvault:8200')}}"
 
 - name: authenticate using Kubernetes auth
   debug:
-      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=kubernetes role=myrole url=http://myvault:8200')}}"
+    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=kubernetes role=myrole url=http://myvault:8200')}}"
 """
 
 RETURN = """
@@ -144,7 +146,7 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
-        self.avail_auth_method = ['approle', 'userpass', 'ldap']
+        self.avail_auth_method = ['approle', 'userpass', 'ldap', 'gcp', 'kubernetes']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -176,7 +178,11 @@ class HashiVault:
                     self.client = hvac.Client(url=self.url, verify=self.verify)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
-            except AttributeError:
+            except AttributeError as e:
+                # TODO: using fetch_url instead of the requests module is causing the below error
+                #
+                # 'HashiVault' object has no attribute 'module'
+                print(e)
                 raise AnsibleError("Authentication method '%s' not supported."
                                    " Available options are %r" % (self.auth_method, self.avail_auth_method))
         else:
@@ -269,6 +275,7 @@ class HashiVault:
         self.client.auth_approle(role_id, secret_id, mount_point=mount_point)
 
     def auth_gcp(self, **kwargs):
+
         role = kwargs.get('role', os.environ.get('VAULT_ROLE', None))
         if role is None:
             raise AnsibleError("Authentication method gcp requires a role")
