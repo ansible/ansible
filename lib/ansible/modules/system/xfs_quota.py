@@ -311,7 +311,7 @@ def main():
         rc, stdout, stderr = exec_quota(module, cmd, mountpoint)
         if rc != 0:
             result['cmd'] = cmd
-            result['rc'] = rc 
+            result['rc'] = rc
             result['stdout'] = stdout
             result['stderr'] = stderr
             module.fail_json(msg='Could not set limits.', **result)
@@ -322,7 +322,6 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
-
 
 
 def quota_report(module, mountpoint, name, quota_type, used_type):
@@ -350,12 +349,12 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
 
     if rc != 0:
         result = dict(
-                changed=False,
-                rc=rc,
-                stdout=stdout,
-                stderr=stderr,
-                )
-        module.fail_json(msg='Could not get quota report for %s.' % used_name,**result)
+            changed=False,
+            rc=rc,
+            stdout=stdout,
+            stderr=stderr,
+        )
+        module.fail_json(msg='Could not get quota report for %s.' % used_name, **result)
 
     for line in stdout.split('\n'):
         line = line.strip().split()
@@ -375,7 +374,6 @@ def exec_quota(module, cmd, mountpoint):
         module.fail_json(msg='You need to be root or have CAP_SYS_ADMIN capability to perform this operation')
 
     return rc, stdout, stderr
-
 
 
 def get_fs_by_mountpoint(mountpoint):
