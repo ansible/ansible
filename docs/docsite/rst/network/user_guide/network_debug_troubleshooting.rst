@@ -33,8 +33,6 @@ Errors generally fall into one of the following categories:
   * May actually be masking a authentication issue
 :Playbook issues:
   * Use of ``delegate_to``, instead of ``ProxyCommand``. See :ref:`network proxy guide <network_delegate_to_vs_ProxyCommand>` for more information.
-  * Not using ``connection: local``
-
 
 .. warning:: ``unable to open shell``
 
@@ -568,31 +566,6 @@ Playbook issues
 ===============
 
 This section details issues are caused by issues with the Playbook itself.
-
-Error: "invalid connection specified, expected connection=local, got ssh"
--------------------------------------------------------------------------
-
-**Platforms:** Any
-
-Network modules require that the connection is set to ``local``.  Any other
-connection setting will cause the playbook to fail.  Ansible will now detect
-this condition and return an error message:
-
-.. code-block:: console
-
-    fatal: [nxos01]: FAILED! => {
-        "changed": false,
-        "failed": true,
-        "msg": "invalid connection specified, expected connection=local, got ssh"
-    }
-
-
-To fix this issue, set the connection value to ``local`` using one of the
-following methods:
-
-* Set the play to use ``connection: local``
-* Set the task to use ``connection: local``
-* Run ansible-playbook using the ``-c local`` setting
 
 Error: "Unable to enter configuration mode"
 -------------------------------------------
