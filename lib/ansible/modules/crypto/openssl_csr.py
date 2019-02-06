@@ -319,20 +319,23 @@ ocsp_must_staple:
 
 import abc
 import os
+import traceback
 from distutils.version import LooseVersion
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
 
 MINIMAL_PYOPENSSL_VERSION = '0.15'
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
 
+PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
     PYOPENSSL_VERSION = LooseVersion(OpenSSL.__version__)
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     PYOPENSSL_FOUND = False
 else:
     PYOPENSSL_FOUND = True
@@ -345,6 +348,7 @@ else:
         OPENSSL_MUST_STAPLE_NAME = b"1.3.6.1.5.5.7.1.24"
         OPENSSL_MUST_STAPLE_VALUE = b"DER:30:03:02:01:05"
 
+CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     import cryptography.x509
@@ -355,6 +359,7 @@ try:
     import cryptography.hazmat.primitives.hashes
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     CRYPTOGRAPHY_FOUND = False
 else:
     CRYPTOGRAPHY_FOUND = True
@@ -995,7 +1000,7 @@ def main():
                                       MINIMAL_PYOPENSSL_VERSION))
     if backend == 'pyopenssl':
         if not PYOPENSSL_FOUND:
-            module.fail_json(msg='The Python pyOpenSSL library is required')
+            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
         try:
             getattr(crypto.X509Req, 'get_extensions')
         except AttributeError:
@@ -1003,7 +1008,7 @@ def main():
         csr = CertificateSigningRequestPyOpenSSL(module)
     elif backend == 'cryptography':
         if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg='The Python cryptography library is required')
+            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
         csr = CertificateSigningRequestCryptography(module)
 
     if module.params['state'] == 'present':

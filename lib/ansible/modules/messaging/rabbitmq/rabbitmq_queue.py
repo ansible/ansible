@@ -91,14 +91,17 @@ EXAMPLES = '''
 '''
 
 import json
+import traceback
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
 
@@ -132,7 +135,7 @@ def main():
     )
 
     if not HAS_REQUESTS:
-        module.fail_json(msg="requests library is required for this module. To install, use `pip install requests`")
+        module.fail_json(msg=missing_required_lib("requests"), exception=REQUESTS_IMP_ERR)
 
     result = dict(changed=False, name=module.params['name'])
 

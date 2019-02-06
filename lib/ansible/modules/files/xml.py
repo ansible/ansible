@@ -335,13 +335,15 @@ import traceback
 from distutils.version import LooseVersion
 from io import BytesIO
 
+LXML_IMP_ERR = None
 try:
     from lxml import etree, objectify
     HAS_LXML = True
 except ImportError:
+    LXML_IMP_ERR = traceback.format_exc()
     HAS_LXML = False
 
-from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
+from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode, missing_required_lib
 from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import MutableMapping
@@ -876,7 +878,7 @@ def main():
 
     # Check if we have lxml 2.3.0 or newer installed
     if not HAS_LXML:
-        module.fail_json(msg='The xml ansible module requires the lxml python library installed on the managed machine')
+        module.fail_json(msg=missing_required_lib("lxml"), exception=LXML_IMP_ERR)
     elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('2.3.0'):
         module.fail_json(msg='The xml ansible module requires lxml 2.3.0 or newer installed on the managed machine')
     elif LooseVersion('.'.join(to_native(f) for f in etree.LXML_VERSION)) < LooseVersion('3.0.0'):
