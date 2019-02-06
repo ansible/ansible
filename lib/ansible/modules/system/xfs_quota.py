@@ -227,23 +227,27 @@ def main():
         prj_set = True
         if name != quota_default:
             cmd = 'project %s' % name
-            r = exec_quota(module, cmd, mountpoint)
-            if r['rc'] != 0:
+            rc, stdout, stderr = exec_quota(module, cmd, mountpoint)
+            if rrc != 0:
                 result['cmd'] = cmd
-                result['retvar'] = r
+                result['rc'] = rc
+                result['stdout'] = stdout
+                result['stderr'] = stderr
                 module.fail_json(msg='Could not get project state.', **result)
             else:
-                for line in r['stdout']:
+                for line in stdout.split('\n'):
                     if '%s - project identifier is not set' in line:
                         prj_set = False
                         break
 
         if not prj_set and not module.check_mode:
             cmd = 'project -s'
-            r = exec_quota(module, cmd, mountpoint)
-            if r['rc'] != 0:
+            rc, stdout, stderr = exec_quota(module, cmd, mountpoint)
+            if rc != 0:
                 result['cmd'] = cmd
-                result['retvar'] = r
+                result['rc'] = rc
+                result['stdout'] = stdout
+                result['stderr'] = stderr
                 module.fail_json(msg='Could not get quota realtime block report.', **result)
             else:
                 result['changed'] = True
@@ -303,13 +307,16 @@ def main():
         else:
             cmd = 'limit %s %s %s' % (type_arg, ' '.join(limit), name)
 
-        r = exec_quota(module, cmd, mountpoint)
-        if r['rc'] != 0:
+        rc, stdout, stderr = exec_quota(module, cmd, mountpoint)
+        if rc != 0:
             result['cmd'] = cmd
-            result['retvar'] = r
+            result['rc'] = rc 
+            result['stdout'] = stdout
+            result['stderr'] = stderr
             module.fail_json(msg='Could not set limits.', **result)
         else:
             result['changed'] = True
+
     elif len(limit) > 0 and module.check_mode:
         result['changed'] = True
 
@@ -338,12 +345,18 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
         used_arg = '-r'
         used_name = 'realtime blocks'
 
-    r = exec_quota(module, 'report %s %s' % (type_arg, used_arg), mountpoint)
+    rc, stdout, stderr = exec_quota(module, 'report %s %s' % (type_arg, used_arg), mountpoint)
 
-    if r['rc'] != 0:
-        module.fail_json(msg='Could not get quota report for %s (%s).' % (used_name, r['stderr']))
+    if rc != 0:
+        result = dict(
+                changed=False,
+                rc=rc,
+                stdout=stdout,
+                stderr=stderr,
+                )
+        module.fail_json(msg='Could not get quota report for %s.' % used_name,**result)
     else:
-        for line in r['stdout']:
+        for line in stdout.split('\n'):
             line = line.strip().split()
             if len(line) > 3 and line[0] == name:
                 soft = int(line[2])
@@ -360,7 +373,8 @@ def exec_quota(module, cmd, mountpoint):
             rc == 1 and 'xfs_quota: cannot set limits: Operation not permitted' in stderr.split('\n'):
         module.fail_json(msg='You need to be root or have CAP_SYS_ADMIN capability to perform this operation')
 
-    return {'rc': rc, 'stdout': stdout.split('\n'), 'stderr': stderr.split('\n')}
+    return rc, stdout, stderr
+
 
 
 def get_fs_by_mountpoint(mountpoint):
