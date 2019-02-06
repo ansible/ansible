@@ -160,7 +160,7 @@ def main():
         rtbsoft = human_to_bytes(rtbsoft)
 
     result = dict(
-        changed=False
+        changed=False,
     )
 
     if not os.path.ismount(mountpoint):
