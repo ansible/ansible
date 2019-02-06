@@ -100,13 +100,15 @@ class CallbackModule(CallbackBase):
             self._display.display("%s (via handler)... " % self.task_display_name)
 
     def v2_playbook_on_play_start(self, play):
-        name = play.get_name().strip()
-        if name and play.hosts:
-            msg = u"\n- %s on hosts: %s -" % (name, ",".join(play.hosts))
+        if play.get_tasks():
+            name = play.get_name().strip()
+            if name and play.hosts:
+                msg = u"\n- %s on hosts: %s -" % (name, ",".join(play.hosts))
+            else:
+                msg = u"---"
+            self._display.display(msg)
         else:
-            msg = u"---"
-
-        self._display.display(msg)
+            pass
 
     def v2_runner_on_skipped(self, result, ignore_errors=False):
         self._preprocess_result(result)
@@ -192,9 +194,6 @@ class CallbackModule(CallbackBase):
                 colorize(u'ignored', t['ignored'], None)),
                 log_only=True
             )
-
-    def v2_playbook_on_no_hosts_matched(self):
-        self._display.display("  No hosts found!", color=C.COLOR_DEBUG)
 
     def v2_playbook_on_no_hosts_remaining(self):
         self._display.display("  Ran out of hosts!", color=C.COLOR_ERROR)
