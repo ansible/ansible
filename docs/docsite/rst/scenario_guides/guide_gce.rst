@@ -269,64 +269,32 @@ The new `gcp_compute_instance` module supports all of the features of the `gce`
 module (and more!). Below is a mapping of `gce` fields over to
 `gcp_compute_instance` fields.
 
-+-------------+-------------------------+----------------------+
-| gce.py      | gcp_compute_instance.py | Notes                |
-+=============+=========================+======================+
-| state       | status                  |  State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is on, off, etc. |
-+=============+=========================+======================+
-| image       | disks[].initialize_params.source_image | You’ll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true) |
-+=============+=========================+======================+
-| image_family| disks[].initialize_params.source_image | See above. |
-+=============+=========================+======================+
-| external_projects | disks[].initialize_params.source_image | The name of the source_image will include the name of the project. |
-+=============+=========================+======================+
-| instance_names | Use a loop or multiple tasks. | Using loops is a more Ansible-centric way of creating multiple instances and gives you the most flexibility. |
-+=============+=========================+======================+
-| machine_type| machine_type            |                      |
-+=============+=========================+======================+
-| metadata    | metadata                |                      |
-+=============+=========================+======================+
-| service_account_email | service_accounts[].email | This is the service_account email address that you want the instance to be associated with. It is not the service_account email address that is used for the credentials necessary to create the instance. |
-+=============+=========================+======================+
-| service_account_permissions | service_accounts[].scopes | These are the permissions you want to grant to the instance. |
-+=============+=========================+======================+
-| pem_file    | Not supported.          | We recommend using JSON service account credentials instead of PEM files. |
-+=============+=========================+======================+
-| credentials_file | service_account_file |                    |
-+=============+=========================+======================+
-| project_id  | project                 |                      |
-+=============+=========================+======================+
-| name        | name                    | This field does not accept an array of names. Use a loop to create multiple instances. |
-+=============+=========================+======================+
-| num_instances | Use a loop            | For maximum flexibility, we’re encouraging users to use Ansible features to create multiple instances, rather than letting the module do it for you. |
-+=============+=========================+======================+
-| network     | network_interfaces[].network |                 |
-+=============+=========================+======================+
-| subnetwork  | network_interfaces[].subnetwork |              |
-+=============+=========================+======================+
-| persistent_boot_disk | disks[].type = ‘PERSISTENT’ |         |
-+=============+=========================+======================+
-| disks       | disks[]                 |                      |
-+=============+=========================+======================+
-| tags        | tags                    |                      |
-+=============+=========================+======================+
-| zone        | zone                    |                      |
-+=============+=========================+======================+
-| ip_forward  | can_ip_forward          |                      |
-+=============+=========================+======================+
-| external_ip | network_interfaces[].access_configs.nat_ip | This field takes multiple types of values. You can create an IP address with `gcp_compute_address` and place the name/output of the address here. You can also place the string value of the IP address’s GCP name or the actual IP address. |
-+=============+=========================+======================+
-| disks_auto_delete | disks[].auto_delete |                    |
-+=============+=========================+======================+
-| preemptible | scheduling.preemptible  |                      |
-+=============+=========================+======================+
-| disk_size   | disks[].initialize_params.disk_size_gb |       |
-+=============+=========================+======================+
-
-
-
-
-
-
-
-
+============================  ==========================================  ======================
+ gce.py                        gcp_compute_instance.py                     Notes 
+============================  ==========================================  ======================
+ state                        status                                      State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is on, off, etc.
+ image                        disks[].initialize_params.source_image      You’ll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true)
+ image_family                 disks[].initialize_params.source_image      See above.
+ external_projects            disks[].initialize_params.source_image      The name of the source_image will include the name of the project.
+ instance_names               Use a loop or multiple tasks.               Using loops is a more Ansible-centric way of creating multiple instances and gives you the most flexibility.
+ machine_type                 machine_type
+ metadata                     metadata
+ service_account_email        service_accounts[].email                    This is the service_account email address that you want the instance to be associated with. It is not the service_account email address that is used for the credentials necessary to create the instance.
+ service_account_permissions  service_accounts[].scopes                   These are the permissions you want to grant to the instance.
+ pem_file                     Not supported.                              We recommend using JSON service account credentials instead of PEM files.
+ credentials_file             service_account_file
+ project_id                   project
+ name                         name                                        This field does not accept an array of names. Use a loop to create multiple instances.
+ num_instances                Use a loop                                  For maximum flexibility, we’re encouraging users to use Ansible features to create multiple instances, rather than letting the module do it for you.
+ network                      network_interfaces[].network
+ subnetwork                   network_interfaces[].subnetwork
+ persistent_boot_disk         disks[].type = ‘PERSISTENT’
+ disks                        disks[]
+ tags                         tags
+ zone                         zone
+ ip_forward                   can_ip_forward
+ external_ip                  network_interfaces[].access_configs.nat_ip  This field takes multiple types of values. You can create an IP address with `gcp_compute_address` and place the name/output of the address here. You can also place the string value of the IP address’s GCP name or the actual IP address.
+ disks_auto_delete            disks[].auto_delete
+ preemptible                  scheduling.preemptible
+ disk_size                    disks[].initialize_params.disk_size_gb
+============================  ==========================================  ======================
