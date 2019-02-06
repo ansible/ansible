@@ -23,7 +23,7 @@ $spec = @{
         proxy_username = @{ type='str' }
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
-        checksum = @{ type='str' }
+        checksum = @{ type='str'; default=$null }
     }
     supports_check_mode = $true
 }
@@ -63,7 +63,7 @@ Add-CSharpType -AnsibleModule $module -References @'
 '@
 
 
-Function CheckModified-File($module, $url, $dest, $checksum, $headers, $credentials, $timeout, $use_proxy, $proxy) {
+Function CheckModified-File($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy) {
 
     if ($checksum) {
         Try {
@@ -224,12 +224,10 @@ Function Download-File($module, $url, $dest, $headers, $credentials, $timeout, $
 
             # Checksum verification for downloaded file
             if ($checksum) {
-                # TBD check '$dest' to be full path with name for downloaded file.
                 $hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
                 $normaliseHashDest = $hashFromFile.Hash.ToLower()
                 # Check both hashes are the same
                 if ($normaliseHashDest -ne $checksum_value) {
-                    # TBD: add to output variables with both checksums
                     Remove-Item -Path $dest
                     throw [string]("The checksum for {0} did not match {1}; it was {2}." -f $dest, $checksum_value, $normaliseHashDest)
                 }
@@ -323,15 +321,19 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
     $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials `
                                       -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy `
-                                      -checksum $checksum
 
     if ($is_modified) {
 
         Download-File -module $module -url $url -dest $dest -credentials $credentials `
-            -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
     }
     else {
-        $module.Result.checksum_dest = GetNormalise-Checksum -dest $dest -checksum $checksum
+        Try {
+            $module.Result.checksum_dest = GetNormalise-Checksum -dest $dest -checksum $checksum
+
+        } Catch {
+            $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
+        }
     }
 }
 
