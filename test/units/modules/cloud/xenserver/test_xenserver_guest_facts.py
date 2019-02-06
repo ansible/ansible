@@ -9,9 +9,8 @@ __metaclass__ = type
 
 import json
 import pytest
-import XenAPI
 
-from ansible.modules.cloud.xenserver.xenserver_guest_facts import main
+from .common import fake_xenapi_ref
 
 pytestmark = pytest.mark.usefixtures('patch_ansible_module')
 
@@ -47,7 +46,7 @@ testcase_module_params = {
 
 
 @pytest.mark.parametrize('patch_ansible_module', testcase_module_params['params'], ids=testcase_module_params['ids'], indirect=True)
-def test_xenserver_guest_facts(mocker, capfd):
+def test_xenserver_guest_facts(mocker, capfd, XenAPI, xenserver_guest_facts):
     """
     Tests regular module invocation including parsing and propagation of
     module params and module output.
@@ -61,16 +60,16 @@ def test_xenserver_guest_facts(mocker, capfd):
     mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
 
     mocked_returns = {
-        "pool.get_all.return_value": ["OpaqueRef:fake-xenapi-pool-ref"],
-        "pool.get_default_SR.return_value": "OpaqueRef:fake-xenapi-sr-ref",
-        "session.get_this_host.return_value": "OpaqueRef:fake-xenapi-host-ref",
+        "pool.get_all.return_value": [fake_xenapi_ref('pool')],
+        "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
+        "session.get_this_host.return_value": fake_xenapi_ref('host'),
         "host.get_software_version.return_value": {"product_version_text_short": "7.2"},
     }
 
     mocked_xenapi.configure_mock(**mocked_returns)
 
     with pytest.raises(SystemExit):
-        main()
+        xenserver_guest_facts.main()
 
     out, err = capfd.readouterr()
     result = json.loads(out)
