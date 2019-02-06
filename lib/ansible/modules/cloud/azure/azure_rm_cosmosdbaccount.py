@@ -475,7 +475,7 @@ def default_compare(new, old, path, result):
             return False
         elif len(old) == 0:
             return True
-        elif if isinstance(old[0], dict):
+        elif isinstance(old[0], dict):
             key = None
             if 'id' in old[0] and 'id' in new[0]:
                 key = 'id'
