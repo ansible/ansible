@@ -378,6 +378,10 @@ To get a random MAC address from a string prefix starting with '52:54:00'::
 
 Note that if anything is wrong with the prefix string, the filter will issue an error.
 
+As of Ansible version 2.9, it's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
+
+    "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
+
 .. _random_filter:
 
 Random Number Filter
