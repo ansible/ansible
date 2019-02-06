@@ -1,0 +1,2 @@
+bugfixes:
+- "acme_challenge_cert_helper - the module no longer crashes when the required ``cryptography`` library cannot be found."
