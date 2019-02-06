@@ -1,0 +1,2 @@
+bugfixes:
+- psrp - do not display bootstrap wrapper for each module exec run
