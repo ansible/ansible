@@ -496,6 +496,9 @@ For example, if you run ``ansible-lint`` on the :ref:`verify-apache.yml playbook
 
 The `ansible-lint default rules <https://docs.ansible.com/ansible-lint/rules/default_rules.html>`_ page describes each error. For ``[403]``, the recommended fix is to change ``state: latest`` to ``state: present`` in the playbook.
 
+
+Other playbook verification options
+```````````````````````````````````
 See :ref:`validate-playbook-tools` for a detailed list of tools you can use to verify your playbooks. Here are some others that you should consider:
 
 * To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
