@@ -171,7 +171,7 @@ class BE(object):
         if '@' in self.name:
             for line in out.splitlines():
                 if self.is_freebsd:
-                    check = re.match(r'.+/({})\s+\-'.format(self.name), line)
+                    check = re.match(r'.+/({0})\s+\-'.format(self.name), line)
                     if check:
                         return check
                 else:
