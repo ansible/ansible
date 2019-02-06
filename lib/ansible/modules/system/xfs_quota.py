@@ -222,7 +222,7 @@ def main():
             module.fail_json(msg="Path '/etc/projid' does not exist.", **result)
 
         if name != quota_default and name is not None and get_project_id(name) is None:
-            module.fail_json(msg='%s hasn\'t been defined in /etc/projid.' % name, **result)
+            module.fail_json(msg="Entry '%s' has not been defined in /etc/projid." % name, **result)
 
         prj_set = True
         if name != quota_default:
