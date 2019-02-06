@@ -61,6 +61,73 @@ Add-CSharpType -AnsibleModule $module -References @'
         }
     }
 '@
+Function Get-Checksum-From-Url {
+    param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy)
+    if ($checksum) {
+        Try {
+            $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
+
+            if ($is_modified_checksum) {
+                return $true
+            }
+        } Catch {
+            $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
+        }
+    }
+
+    $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
+    $webLastMod = $null
+
+    $webRequest = [System.Net.WebRequest]::Create($url)
+
+    foreach ($header in $headers.GetEnumerator()) {
+        $webRequest.Headers.Add($header.Name, $header.Value)
+    }
+
+    if ($timeout) {
+        $webRequest.Timeout = $timeout * 1000
+    }
+
+    if (-not $use_proxy) {
+        # Ignore the system proxy settings
+        $webRequest.Proxy = $null
+    } elseif ($proxy) {
+        $webRequest.Proxy = $proxy
+    }
+
+    if ($credentials) {
+        if ($force_basic_auth) {
+            $webRequest.Headers.Add("Authorization", "Basic $credentials")
+        } else {
+            $webRequest.Credentials = $credentials
+        }
+    }
+
+    if ($webRequest -is [System.Net.FtpWebRequest]) {
+        $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::DownloadFile
+    } else {
+        $webRequest.Method = [System.Net.WebRequestMethods+Http]::Get
+    }
+
+    # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
+    Try {
+         # TBD implement case for FTP
+         $webResponse = $webRequest.GetResponse()      
+         $requestStream = $webResponse.GetResponseStream()
+         $readStream = New-Object System.IO.StreamReader $requestStream
+         $web_checksum=$readStream.ReadToEnd()
+    } Catch [System.Net.WebException] {
+        $module.Result.status_code = [int] $_.Exception.Response.StatusCode
+        $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
+    } Catch {
+        $module.FailJson("Error get HASH data file from '$url'. $($_.Exception.Message)", $_)
+    }
+    $module.Result.status_code = [int] $webResponse.StatusCode
+    $module.Result.msg = [string] $webResponse.StatusDescription
+    $webResponse.Close()
+
+    return $web_checksum
+}
 
 
 Function CheckModified-File {
@@ -315,6 +382,18 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
     $security_protocols = $security_protocols -bor [Net.SecurityProtocolType]::Tls12
 }
 [Net.ServicePointManager]::SecurityProtocol = $security_protocols
+
+# Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
+if ($checksum) {
+    $checksum_value = $(Parse-Checksum -checksum $checksum).checksum
+
+    if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
+        
+        $checksum = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
+        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    }
+}
+
 
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
