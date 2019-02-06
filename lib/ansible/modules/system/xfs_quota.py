@@ -41,7 +41,7 @@ options:
     type: str
   mountpoint:
     description:
-      - the mountpoint on which to apply the quotas
+      - The mount point on which to apply the quotas.
     type: str
     required: true
   bhard:
