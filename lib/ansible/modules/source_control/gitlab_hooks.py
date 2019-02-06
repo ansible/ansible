@@ -27,38 +27,17 @@ author:
 requirements:
   - python >= 2.7
   - python-gitlab python module
+extends_documentation_fragment:
+    - auth_basic
 options:
-  server_url:
-    description:
-      - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
-    version_added: "2.8"
-    type: str
-    aliases:
-      - api_url
-  validate_certs:
-    description:
-      - When using https if SSL certificate needs to be verified.
-    type: bool
-    default: yes
-    version_added: "2.8"
-  login_user:
-    description:
-      - Gitlab user name.
-    version_added: "2.8"
-    type: str
-  login_password:
-    description:
-      - Gitlab password for login_user
-    version_added: "2.8"
-    type: str
-  login_token:
+  api_token:
     description:
       - Gitlab token for logging in.
     version_added: "2.8"
     type: str
     aliases:
       - private_token
+      - access_token
   project:
     description:
       - Id or Full path of the project in the form of group/name
@@ -193,6 +172,7 @@ try:
 except Exception:
     HAS_GITLAB_PACKAGE = False
 
+from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -261,7 +241,7 @@ class GitLabHook(object):
     '''
     def createHook(self, project, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Hook should have been created.")
+            self._module.exit_json(changed=True, msg="Hook should have been created.")
 
         hook = project.hooks.create(arguments)
 
@@ -306,51 +286,59 @@ class GitLabHook(object):
 
     def deleteHook(self):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Hook should have been deleted.")
+            self._module.exit_json(changed=True, msg="Hook should have been deleted.")
 
         return self.hookObject.delete()
 
 
+def depreaction_warning(module):
+    deprecated_aliases = ['private_token', 'access_token']
+
+    module.warn('This aliases are going to be deprecated: {}'.format(', '.join(deprecated_aliases)))
+
+
 def main():
+    argument_spec = basic_auth_argument_spec()
+    argument_spec.update(dict(
+        api_token=dict(type='str', no_log=True, aliases=["private_token", "access_token"]),
+        state=dict(type='str', default="present", choices=["absent", "present"]),
+        project=dict(type='str', required=True),
+        hook_url=dict(type='str', required=True),
+        push_events=dict(type='bool', default=True),
+        issues_events=dict(type='bool', default=False),
+        merge_requests_events=dict(type='bool', default=False),
+        tag_push_events=dict(type='bool', default=False),
+        note_events=dict(type='bool', default=False),
+        job_events=dict(type='bool', default=False),
+        pipeline_events=dict(type='bool', default=False),
+        wiki_page_events=dict(type='bool', default=False),
+        enable_ssl_verification=dict(type='bool', default=False),
+        token=dict(type='str', no_log=True),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            server_url=dict(type='str', required=True, aliases=["api_url"]),
-            validate_certs=dict(type='bool', default=True),
-            login_user=dict(type='str', no_log=True),
-            login_password=dict(type='str', no_log=True),
-            login_token=dict(type='str', no_log=True, aliases=["private_token"]),
-            state=dict(type='str', default="present", choices=["absent", "present"]),
-            project=dict(type='str', required=True),
-            hook_url=dict(type='str', required=True),
-            push_events=dict(type='bool', default=True),
-            issues_events=dict(type='bool', default=False),
-            merge_requests_events=dict(type='bool', default=False),
-            tag_push_events=dict(type='bool', default=False),
-            note_events=dict(type='bool', default=False),
-            job_events=dict(type='bool', default=False),
-            pipeline_events=dict(type='bool', default=False),
-            wiki_page_events=dict(type='bool', default=False),
-            enable_ssl_verification=dict(type='bool', default=False),
-            token=dict(type='str', no_log=True),
-        ),
+        argument_spec=argument_spec,
         mutually_exclusive=[
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
+            ['api_username', 'api_token'],
+            ['api_password', 'api_token']
         ],
         required_together=[
-            ['login_user', 'login_password']
+            ['api_username', 'api_password']
         ],
         required_one_of=[
-            ['login_user', 'login_token']
+            ['api_username', 'api_token']
         ],
         supports_check_mode=True,
     )
 
-    server_url = re.sub('/api.*', '', module.params['server_url'])
+    depreaction_warning(module)
+
+    gitlab_url = re.sub('/api.*', '', module.params['api_url'])
     validate_certs = module.params['validate_certs']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_token = module.params['login_token']
+    gitlab_user = module.params['api_username']
+    gitlab_password = module.params['api_password']
+    gitlab_token = module.params['api_token']
+
     state = module.params['state']
     project_identifier = module.params['project']
     hook_url = module.params['hook_url']
@@ -369,8 +357,8 @@ def main():
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     try:
-        gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=validate_certs, email=login_user, password=login_password,
-                                        private_token=login_token, api_version=4)
+        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
+                                        private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))

@@ -36,34 +36,21 @@ author:
 requirements:
   - python >= 2.7
   - python-gitlab python module
+extends_documentation_fragment:
+    - auth_basic
 options:
-  server_url:
+  url:
     description:
       - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: False
+    required: true
     type: str
-    aliases:
-      - url
-  login_token:
+  api_token:
     description:
       - Your private token to interact with the GitLab API.
     required: True
     type: str
     aliases:
       - private_token
-  validate_certs:
-    description:
-      - When using https if SSL certificate needs to be verified.
-    type: bool
-    default: yes
-  login_user:
-    description:
-      - Gitlab user name.
-    type: str
-  login_password:
-    description:
-      - Gitlab password for login_user
-    type: str
   description:
     description:
       - The unique name of the runner.
@@ -167,6 +154,7 @@ runner:
 '''
 
 import os
+import re
 
 try:
     import gitlab
@@ -174,6 +162,7 @@ try:
 except Exception:
     HAS_GITLAB_PACKAGE = False
 
+from ansible.module_utils.api import basic_auth_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
@@ -231,7 +220,7 @@ class GitLabRunner(object):
     '''
     def createRunner(self, arguments):
         if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Runner should have been created.")
+            self._module.exit_json(changed=True, msg="Runner should have been created.")
 
         try:
             runner = self._gitlab.runners.create(arguments)
@@ -294,42 +283,65 @@ class GitLabRunner(object):
         return runner.delete()
 
 
+def depreaction_warning(module):
+    deprecated_aliases = ['login_token']
+
+    module.warn('This aliases are going to be deprecated: {}'.format(', '.join(deprecated_aliases)))
+
+    deprecated_params = [
+        {'old': 'url', 'new': 'api_url'}
+    ]
+
+    for param in deprecated_params:
+        if module.params[param['old']] is not None:
+            module.warn("{old} is going to be a deprecated parameter. Use {new} instead.".format(**param))
+
+
 def main():
+    argument_spec = basic_auth_argument_spec()
+    argument_spec.update(dict(
+        url=dict(type='str', required=True),
+        api_token=dict(type='str', no_log=True, aliases=["private_token"]),
+        description=dict(type='str', required=True, aliases=["name"]),
+        active=dict(type='bool', default=True),
+        tag_list=dict(type='list', default=[]),
+        run_untagged=dict(type='bool', default=True),
+        locked=dict(type='bool', default=False),
+        access_level=dict(type='str', default='ref_protected', choices=["not_protected", "ref_protected"]),
+        maximum_timeout=dict(type='int', default=3600),
+        registration_token=dict(type='str', required=True),
+        state=dict(type='str', default="present", choices=["absent", "present"]),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            server_url=dict(type='str', required=True, aliases=["url"]),
-            validate_certs=dict(type='bool', default=True),
-            login_user=dict(type='str', no_log=True),
-            login_password=dict(type='str', no_log=True),
-            login_token=dict(type='str', no_log=True, aliases=["private_token"]),
-            description=dict(type='str', required=True, aliases=["name"]),
-            active=dict(type='bool', default=True),
-            tag_list=dict(type='list', default=[]),
-            run_untagged=dict(type='bool', default=True),
-            locked=dict(type='bool', default=False),
-            access_level=dict(type='str', default='ref_protected', choices=["not_protected", "ref_protected"]),
-            maximum_timeout=dict(type='int', default=3600),
-            registration_token=dict(type='str', required=True),
-            state=dict(type='str', default="present", choices=["absent", "present"]),
-        ),
+        argument_spec=argument_spec,
         mutually_exclusive=[
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
+            ['api_url', 'url'],
+            ['api_username', 'api_token'],
+            ['api_password', 'api_token'],
         ],
         required_together=[
-            ['login_user', 'login_password']
+            ['api_username', 'api_password'],
+            ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['login_user', 'login_token']
+            ['api_username', 'api_token']
         ],
         supports_check_mode=True,
     )
 
-    server_url = module.params['server_url']
+    depreaction_warning(module)
+
+    url = re.sub('/api.*', '', module.params['url'])
+
+    api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_token = module.params['login_token']
+
+    gitlab_url = url if api_url is None else api_url
+    gitlab_user = module.params['api_username']
+    gitlab_password = module.params['api_password']
+    gitlab_token = module.params['api_token']
+
     state = module.params['state']
     runner_description = module.params['description']
     runner_active = module.params['active']
@@ -344,8 +356,8 @@ def main():
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
     try:
-        gitlab_instance = gitlab.Gitlab(url=server_url, ssl_verify=validate_certs, email=login_user, password=login_password,
-                                        private_token=login_token, api_version=4)
+        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
+                                        private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
         module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
