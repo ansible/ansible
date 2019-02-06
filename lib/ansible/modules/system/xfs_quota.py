@@ -115,7 +115,6 @@ RETURN = ''' # '''
 import grp
 import os
 import pwd
-import sys
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import human_to_bytes
