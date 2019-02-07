@@ -372,7 +372,7 @@ class Connection(object):
         query = """SELECT relname
                    FROM pg_catalog.pg_class c
                    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                   WHERE nspname = %s AND relkind in ('r', 'v')"""
+                   WHERE nspname = %s AND relkind in ('r', 'v', 'm')"""
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
 
