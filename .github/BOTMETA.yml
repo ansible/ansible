@@ -782,10 +782,13 @@ files:
   $module_utils/vmware: *vmware
   $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
-    maintainers: bvitnik
+      maintainers: bvitnik
   $module_utils/storage/hpe3par/hpe3par.py: &hpe3par
     maintainers: farhan7500 gautamphegde
     support: community
+
+###############################
+# playbook
   lib/ansible/playbook/handler.py:
     keywords:
       - handlers
