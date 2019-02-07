@@ -48,16 +48,16 @@ options:
   vrf:
     description:
       - VRF of the static route.
-    version_added: "2.7"
+    version_added: "2.8"
   interface:
     description:
       - Interface of the static route.
-    version_added: "2.7"
+    version_added: "2.8"
   name:
     description:
       - Name of the static route
     aliases: ['description']
-    version_added: "2.7"
+    version_added: "2.8"
   admin_distance:
     description:
       - Admin distance of the static route.
@@ -65,11 +65,11 @@ options:
   tag:
     description:
       - Set tag of the static route.
-    version_added: "2.7"
+    version_added: "2.8"
   track:
     description:
       - Tracked item to depend on for the static route.
-    version_added: "2.7"
+    version_added: "2.8"
   aggregate:
     description: List of static route definitions.
   state:
