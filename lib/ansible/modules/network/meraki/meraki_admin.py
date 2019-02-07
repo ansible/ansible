@@ -39,12 +39,29 @@ options:
         - Tags the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         - If C(none) is specified, C(network) or C(tags) must be specified.
+        suboptions:
+            tag:
+                description:
+                - Object tag which privileges should be assigned.
+                type: str
+            access:
+                description:
+                - The privilege of the dashboard administrator for the tag.
+                type: str
     networks:
         description:
         - List of networks the administrator has privileges on.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
-        - C(id) is the network ID.
-        - C(access) is the access level to be assigned for the network ID.
+        suboptions:
+            id:
+                description:
+                - Network ID for which administrator should have privileges assigned.
+                type: str
+            access:
+                description:
+                - The privilege of the dashboard administrator on the network
+                - Valid options are C(full), C(read-only), or C(none)
+                type: str
     state:
         description:
         - Create or modify an organization
@@ -120,7 +137,7 @@ EXAMPLES = r'''
     state: absent
     email: jane@doe.com
 
-- name: Create a new administrator with full access to a tag
+- name: Create a new administrator with full access to two tags
   meraki_admin:
     auth_key: abc12345
     org_name: YourOrg
@@ -129,7 +146,8 @@ EXAMPLES = r'''
     orgAccess: read-only
     email: jane@doe.com
     tags:
-        - {"tag": "tenant", "access": "full"}
+        - { "tag": "tenant", "access": "full" }
+        - { "tag": "corporate", "access": "read-only" }
 
 - name: Create a new administrator with full access to a network
   meraki_admin:
@@ -140,7 +158,7 @@ EXAMPLES = r'''
     orgAccess: read-only
     email: jane@doe.com
     networks:
-        - {"id": "N_12345", "access": "full"}
+        - { "id": "N_12345", "access": "full" }
 '''
 
 RETURN = r'''
