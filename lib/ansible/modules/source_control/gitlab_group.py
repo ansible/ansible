@@ -87,37 +87,34 @@ options:
 
 EXAMPLES = '''
 - name: "Delete Gitlab Group"
-  local_action:
-    gitlab_group:
-        server_url: "http://gitlab.dj-wasabi.local"
-        validate_certs: False
-        login_token: WnUzDsxjy8230-Dy_k
-        name: my_first_group
-        state: absent
+  gitlab_group:
+    server_url: "http://gitlab.dj-wasabi.local"
+    validate_certs: False
+    login_token: WnUzDsxjy8230-Dy_k
+    name: my_first_group
+    state: absent
 
 - name: "Create Gitlab Group"
-  local_action:
-    gitlab_group:
-        server_url: "https://gitlab.dj-wasabi.local"
-        validate_certs: True
-        login_user: dj-wasabi
-        login_password: "MySecretPassword"
-        name: my_first_group
-        path: my_first_group
-        state: present
+  gitlab_group:
+    server_url: "https://gitlab.dj-wasabi.local"
+    validate_certs: True
+    login_user: dj-wasabi
+    login_password: "MySecretPassword"
+    name: my_first_group
+    path: my_first_group
+    state: present
 
 # The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
 - name: "Create Gitlab SubGroup"
-  local_action:
-    gitlab_group:
-        server_url: "https://gitlab.dj-wasabi.local"
-        validate_certs: True
-        login_user: dj-wasabi
-        login_password: "MySecretPassword"
-        name: my_first_group
-        path: my_first_group
-        state: present
-        parent_path: "super_parent/parent"
+  gitlab_group:
+    server_url: "https://gitlab.dj-wasabi.local"
+    validate_certs: True
+    login_user: dj-wasabi
+    login_password: "MySecretPassword"
+    name: my_first_group
+    path: my_first_group
+    state: present
+    parent_path: "super_parent/parent"
 '''
 
 RETURN = '''
