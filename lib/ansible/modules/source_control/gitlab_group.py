@@ -142,15 +142,18 @@ group:
 '''
 
 import os
+import traceback
 
+GITLAB_IMP_ERR = None
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
 except Exception:
+    GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
 from ansible.module_utils.api import basic_auth_argument_spec
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.gitlab import findGroup
@@ -329,7 +332,7 @@ def main():
     group_visibility = module.params['visibility']
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
+        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     try:
         gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
