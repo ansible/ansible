@@ -390,7 +390,7 @@ if ($checksum) {
     if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
         
         $checksum = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
-        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+                                          -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
     }
 }
 
