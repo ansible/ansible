@@ -61,6 +61,8 @@ class PkgMgrFactCollector(BaseFactCollector):
 
     def _check_rh_versions(self, pkg_mgr_name, collected_facts):
         if collected_facts['ansible_distribution'] == 'Fedora':
+            if os.path.exists('/run/ostree-booted'):
+                return "atomic_container"
             try:
                 if int(collected_facts['ansible_distribution_major_version']) < 23:
                     for yum in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'yum']:
