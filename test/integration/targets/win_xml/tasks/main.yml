@@ -33,6 +33,20 @@
     that:
     - element_add_result is changed
 
+- name: add another element that only has a text child node (test backup)
+  win_xml:
+    path: "{{ win_output_dir }}\\config.xml"
+    fragment: '<string key="foo">bar</string>'
+    xpath: '/config'
+    backup: yes
+  register: element_add_result_backup
+
+- name: check element add result (test backup)
+  assert:
+    that:
+    - element_add_result_backup is changed
+    - element_add_result_backup.backup_file is not none
+
 - name: try to add the  element that only has a text child node again
   win_xml:
     path: "{{ win_output_dir }}\\config.xml"

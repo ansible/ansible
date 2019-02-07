@@ -48,7 +48,7 @@
     that:
     - "result.changed == true"
     - "result.msg == 'line added'"
-    - "result.backup != ''"
+    - "result.backup_file is not none"
 
 - name: stat the backup file
   win_stat: path={{result.backup}}

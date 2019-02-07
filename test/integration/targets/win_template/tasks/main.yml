@@ -119,6 +119,35 @@
     that:
         - '"FC: no differences encountered" in diff_result.stdout'
 
+# TEST BACKUP
+- name: test backup (check_mode)
+  win_template:
+    src: foo.j2
+    dest: '{{ win_output_dir }}/foo.unix.templated'
+    backup: yes
+  register: cm_backup_result
+  check_mode: yes
+
+- name: verify that a backup_file was returned
+  assert:
+    that:
+      - cm_backup_result is changed
+      - cm_backup_result.backup_file is not none
+
+- name: test backup (normal mode)
+  win_template:
+    src: foo.j2
+    dest: '{{ win_output_dir }}/foo.unix.templated'
+    backup: yes
+  register: nm_backup_result
+
+- name: verify that a backup_file was returned
+  assert:
+    that:
+      - nm_backup_result is changed
+      - nm_backup_result.backup_file is not none
+
+
 - name: create template dest directory
   win_file:
     path: '{{win_output_dir}}\directory'
