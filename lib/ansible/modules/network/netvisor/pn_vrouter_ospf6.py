@@ -116,8 +116,7 @@ def check_cli(module, cli):
 
     if nic_str:
         # Check for nic
-        show = cli + ' vrouter-ospf6-show vrouter-name %s ' % vrouter_name
-        show += ' format nic no-show-headers'
+        show = cli + ' vrouter-ospf6-show vrouter-name %s format nic no-show-headers' % vrouter_name
         out = module.run_command(show, use_unsafe_shell=True)[1]
 
         NIC_EXISTS = True if nic_str in out else False
@@ -146,7 +145,7 @@ def main():
             ["state", "present", ["pn_vrouter_name", "pn_nic",
                                   "pn_ospf6_area"]],
             ["state", "absent", ["pn_vrouter_name", "pn_nic"]]
-            ),
+        ),
     )
 
     # Accessing the arguments
@@ -163,14 +162,15 @@ def main():
 
     VROUTER_EXISTS, NIC_EXISTS = check_cli(module, cli)
 
+    if VROUTER_EXISTS is False:
+        module.fail_json(
+            failed=True,
+            msg='vRouter %s does not exist' % vrouter_name
+        )
+
     cli += ' %s vrouter-name %s ' % (command, vrouter_name)
 
     if command == 'vrouter-ospf6-add':
-        if VROUTER_EXISTS is False:
-            module.fail_json(
-                failed=True,
-                msg='vRouter %s does not exist' % vrouter_name
-            )
         if NIC_EXISTS is True:
             module.exit_json(
                 skipped=True,
@@ -182,11 +182,6 @@ def main():
             cli += ' ospf6-area %s ' % ospf6_area
 
     if command == 'vrouter-ospf6-remove':
-        if VROUTER_EXISTS is False:
-            module.fail_json(
-                failed=True,
-                msg='vRouter %s does not exist' % vrouter_name
-            )
         if NIC_EXISTS is False:
             module.exit_json(
                 skipped=True,
