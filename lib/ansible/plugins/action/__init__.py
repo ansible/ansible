@@ -851,6 +851,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             if self._is_pipelining_enabled(module_style):
                 in_data = module_data
+                display.vvv("Pipelining is enabled.")
             else:
                 cmd = remote_module_path
 
