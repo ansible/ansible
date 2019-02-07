@@ -1,12 +1,12 @@
 # Copyright (c): 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
-Function Backup-File($path, $obj=@{}) {
+Function Backup-File($path) {
 <#
     .SYNOPSIS
     Helper function to make a backup of a file.
     .EXAMPLE
-    Backup-File -path $path -obj $result
+    Backup-File -path $path -WhatIf:$check_mode
 #>
     [CmdletBinding(SupportsShouldProcess=$true)]
 
@@ -14,7 +14,8 @@ Function Backup-File($path, $obj=@{}) {
     if (Test-Path -LiteralPath $path) {
         $backup_path = "$path.$pid." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss") + ".bak";
         Try {
-            Copy-Item -LiteralPath $path -Destination $backup_path
+            Copy-Item -LiteralPath $path -Destination $backup_path -WhatIf:$WhatIfPreference
+
         } Catch {
             throw "Failed to create backup file '$backup_path' from '$path'. ($($_.Exception.Message))"
         }

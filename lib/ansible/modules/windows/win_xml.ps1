@@ -170,7 +170,7 @@ if ($type -eq "element") {
 
     if ($changed) {
         if ($backup) {
-            $result.backup_file = Backup-File -path $dest -obj $result -WhatIf:$check_mode
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
             # Ensure backward compatibility (deprecate in future)
             $result.backup = $result.backup_file
         }
@@ -186,7 +186,7 @@ if ($type -eq "element") {
     [bool]$add = ($node.get_InnerText() -ne $fragment)
     if ($add) {
         if ($backup) {
-            $result.backup_file = Backup-File -path $dest -obj $result -WhatIf:$check_mode
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
             # Ensure backward compatibility (deprecate in future)
             $result.backup = $result.backup_file
         }
@@ -204,7 +204,7 @@ if ($type -eq "element") {
     [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
     if ($add -And ($state -eq "present")) {
         if ($backup) {
-            $result.backup_file = Backup-File -path $dest -obj $result -WhatIf:$check_mode
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
             # Ensure backward compatibility (deprecate in future)
             $result.backup = $result.backup_file
         }
@@ -219,7 +219,7 @@ if ($type -eq "element") {
         $result.msg = "text changed"
     } elseif (!$add -And ($state -eq "absent")) {
         if ($backup) {
-            $result.backup_file = Backup-File -path $dest -obj $result -WhatIf:$check_mode
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
             # Ensure backward compatibility (deprecate in future)
             $result.backup = $result.backup_file
         }

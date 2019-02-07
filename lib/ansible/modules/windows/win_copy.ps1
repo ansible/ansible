@@ -77,7 +77,7 @@ Function Copy-File($source, $dest) {
         }
 
         if ($backup) {
-            $result.backup_file = Backup-File -path $dest -obj $result -WhatIf:$check_mode
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
@@ -397,7 +397,7 @@ if ($copy_mode -eq "query") {
     }
 
     if ($backup) {
-        $result.backup_file = Backup-File -path $remote_dest -obj $result -WhatIf:$check_mode
+        $result.backup_file = Backup-File -path $remote_dest -WhatIf:$check_mode
     }
 
     Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null
