@@ -25,9 +25,14 @@ options:
   slot_type:
     description:
       - slots come in two distinct flavors, physical and logical
-    required: false
+    required: False
     default: physical
     choices: [ "physical", "logical" ]
+  immediately_reserve:
+    description: Optional parameter the when True specifies that the LSN for this replication slot be reserved immediately, otherwise the default, False, specifies that the LSN is reserved on the first connection from a streaming replication client.
+    required: False
+    default: False
+    choices: [ "True", "False" ]
   db:
     description:
       - Name of the database where you're connecting in order to add or remove only the logical slot to/from
@@ -52,6 +57,27 @@ options:
     description:
       - Database port to connect to.
     default: 5432
+  login_unix_socket:
+    description:
+      - Specifies the directory of the Unix-domain socket(s) on which the server is to listen for connections from client applications.
+    default: None
+  ssl_mode:
+    description:
+      - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+      - See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+      - Default of C(prefer) matches libpq default.
+    default: prefer
+    choices: ["disable", "allow", "prefer", "require", verify-ca", "verify-full"]
+    version added: '2.3'
+  ssl-rootcert:
+    description:
+      - Specifies the name of a file containing the SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+    default: None
+    version_added: '2.3'
+  session_role:
+    description: Switch to session role after connecting. The specified session_role must be a role that the current login_user is a member. Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    default: None
+    version_added: '2.8'
   state:
     description:
       - The slot state. Whether you wish the slot to be present in the system or to not be present there.
@@ -82,6 +108,16 @@ EXAMPLES = '''
     slot_type: logical
     state: present
     output_plugin: custom_decoder_one
+    
+- postgresql_slot:
+    slot_name: physical_slot_two
+    slot_type: physical
+    login_host: mydatabase.example.org
+    port: 5433
+    login_user: ourSuperuser
+    login_password: thePassword
+    ssl_mode: require
+    state: present
 '''
 
 RETURN = '''
@@ -129,18 +165,18 @@ def slot_delete(cursor, slot):
         return False
 
 
-def slot_create_physical(cursor, slot):
+def slot_create_physical(cursor, slot, immediately_reserve):
     if not slot_exists(cursor, slot):
-        query = "SELECT pg_create_physical_replication_slot('%s')" % slot
+        query = "SELECT pg_create_physical_replication_slot('%s', %s, False)" % (slot, immediately_reserve)
         cursor.execute(query)
         return True
     else:
         return False
 
 
-def slot_create_logical(cursor, slot, decoder):
+def slot_create_logical(cursor, slot, output_plugin):
     if not slot_exists(cursor, slot):
-        query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (slot, decoder)
+        query = "SELECT pg_create_logical_replication_slot('%s', '%s')" % (slot, output_plugin)
         cursor.execute(query)
         return True
     else:
@@ -157,10 +193,15 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
             login_host=dict(default="localhost"),
+            login_unix_socket=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=False),
+            ssl_mode=dict(default='prefer', choices['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_rootcert=dict(default=None),
             slot_name=dict(required=True),
             slot_type=dict(default="physical", choices=["physical", "logical"]),
+            immediately_reserve=dict(default=False),
+            session_role=dict(required=False),
             output_plugin=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
@@ -173,8 +214,11 @@ def main():
     db = module.params["db"]
     slot = module.params["slot_name"]
     slot_type = module.params["slot_type"]
+    immediately_reserve = module.params["immediately_reserve"]
     state = module.params["state"]
-    decoder = module.params["output_plugin"]
+    ssl_mode = module.params["ssl_mode"]
+    sslrootcert = module.params["ssl_rootcert"]
+    output_plugin = module.params["output_plugin"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -184,10 +228,22 @@ def main():
         "login_host": "host",
         "login_user": "user",
         "login_password": "password",
-        "port": "port"
+        "port": "port",
+        "sslmode": "ssl_mode",
+        "ssl_rootcert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '')
+    
+    # if a login_unix_socket is specified, incorporate it here
+    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+    if is_localhost and module.params["login_unix_socket"] != "":
+        kw["host"] = module.params["login_unix_socket"]
+
+    if psycopg2.__version__ < '2.4.3' and ssl_rootcert is not None:
+      module.fail_json(
+        msg='psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
+
     try:
         db_connection = psycopg2.connect(database=db, **kw)
         # Enable autocommit so we can create databases
@@ -196,6 +252,12 @@ def main():
 
         cursor = db_connection.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
+    
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='PostgreSQL server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="Unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
@@ -210,9 +272,9 @@ def main():
                 changed = slot_delete(cursor, slot)
             elif state == "present":
                 if slot_type == "physical":
-                    changed = slot_create_physical(cursor, slot)
+                    changed = slot_create_physical(cursor, slot, immediately_reserve)
                 else:
-                    changed = slot_create_logical(cursor, slot, decoder)
+                    changed = slot_create_logical(cursor, slot, output_plugin)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:
