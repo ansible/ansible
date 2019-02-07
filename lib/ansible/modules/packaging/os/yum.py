@@ -41,6 +41,7 @@ options:
       - You can also pass a url or a local path to a rpm file (using state=present).
         To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages.
     aliases: [ pkg ]
+    required: true
   exclude:
     description:
       - Package name(s) to exclude when state=present, or latest
