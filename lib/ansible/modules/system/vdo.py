@@ -290,13 +290,16 @@ EXAMPLES = r'''
 
 RETURN = r'''#  '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 import re
+import traceback
 
+YAML_IMP_ERR = None
 try:
     import yaml
     HAS_YAML = True
 except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
     HAS_YAML = False
 
 
@@ -490,7 +493,7 @@ def run_module():
     )
 
     if not HAS_YAML:
-        module.fail_json(msg='PyYAML is required for this module.')
+        module.fail_json(msg=missing_required_lib('PyYAML'), exception=YAML_IMP_ERR)
 
     vdocmd = module.get_bin_path("vdo", required=True)
     if not vdocmd:

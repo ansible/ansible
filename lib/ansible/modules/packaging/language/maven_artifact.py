@@ -161,20 +161,25 @@ import posixpath
 import shutil
 import io
 import tempfile
+import traceback
 
+LXML_ETREE_IMP_ERR = None
 try:
     from lxml import etree
     HAS_LXML_ETREE = True
 except ImportError:
+    LXML_ETREE_IMP_ERR = traceback.format_exc()
     HAS_LXML_ETREE = False
 
+BOTO_IMP_ERR = None
 try:
     import boto3
     HAS_BOTO = True
 except ImportError:
+    BOTO_IMP_ERR = traceback.format_exc()
     HAS_BOTO = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -463,7 +468,7 @@ def main():
     )
 
     if not HAS_LXML_ETREE:
-        module.fail_json(msg='module requires the lxml python library installed on the managed machine')
+        module.fail_json(msg=missing_required_lib('lxml'), exception=LXML_ETREE_IMP_ERR)
 
     repository_url = module.params["repository_url"]
     if not repository_url:
@@ -476,7 +481,8 @@ def main():
     local = parsed_url.scheme == "file"
 
     if parsed_url.scheme == 's3' and not HAS_BOTO:
-        module.fail_json(msg='boto3 required for this module, when using s3:// repository URLs')
+        module.fail_json(msg=missing_required_lib('boto3', reason='when using s3:// repository URLs'),
+                         exception=BOTO_IMP_ERR)
 
     group_id = module.params["group_id"]
     artifact_id = module.params["artifact_id"]

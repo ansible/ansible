@@ -161,15 +161,19 @@ RETURN = r'''
 #
 '''
 
+import traceback
+
+IMPORT_IMP_ERR = None
 try:
     from importlib import import_module
     HAS_IMPORT_MODULE = True
 except Exception:
+    IMPORT_IMP_ERR = traceback.format_exc()
     HAS_IMPORT_MODULE = False
 
 from copy import deepcopy
 import json
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.remote_management.ucs import UCSModule, ucs_argument_spec
 
 
@@ -241,7 +245,7 @@ def main():
     )
 
     if not HAS_IMPORT_MODULE:
-        module.fail_json(msg='import_module is required for this module')
+        module.fail_json(msg=missing_required_lib('importlib'), exception=IMPORT_IMP_ERR)
     ucs = UCSModule(module)
 
     ucs.result['err'] = False

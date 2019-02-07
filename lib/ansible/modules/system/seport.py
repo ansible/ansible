@@ -92,19 +92,23 @@ EXAMPLES = '''
 
 import traceback
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
     HAVE_SELINUX = True
 except ImportError:
+    SELINUX_IMP_ERR = traceback.format_exc()
     HAVE_SELINUX = False
 
+SEOBJECT_IMP_ERR = None
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
+    SEOBJECT_IMP_ERR = traceback.format_exc()
     HAVE_SEOBJECT = False
 
-from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -261,10 +265,10 @@ def main():
     )
 
     if not HAVE_SELINUX:
-        module.fail_json(msg="This module requires libselinux-python")
+        module.fail_json(msg=missing_required_lib("libselinux-python"), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEOBJECT:
-        module.fail_json(msg="This module requires policycoreutils-python")
+        module.fail_json(msg=missing_required_lib("policycoreutils-python"), exception=SEOBJECT_IMP_ERR)
 
     ignore_selinux_state = module.params['ignore_selinux_state']
 
