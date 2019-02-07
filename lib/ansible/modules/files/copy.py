@@ -269,12 +269,31 @@ import tempfile
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils._text import to_bytes, to_native
+
+
+# The AnsibleModule object
+module = None
 
 
 class AnsibleModuleError(Exception):
     def __init__(self, results):
         self.results = results
+
+
+# Once we get run_command moved into common, we can move this into a common/files module.  We can't
+# until then because of the module.run_command() method.  We may need to move it into
+# basic::AnsibleModule() until then but if so, make it a private function so that we don't have to
+# keep it for backwards compatibility later.
+def clear_facls(path):
+    setfacl = get_bin_path('setfacl', True)
+    # FIXME "setfacl -b" is available on Linux and FreeBSD. There is "setfacl -D e" on z/OS. Others?
+    acl_command = [setfacl, '-b', path]
+    b_acl_command = [to_bytes(x) for x in acl_command]
+    rc, out, err = module.run_command(b_acl_command, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+    if rc != 0:
+        raise RuntimeError('Error running "{0}": stdout: "{1}"; stderr: "{2}"'.format(' '.join(b_acl_command), out, err))
 
 
 def split_pre_existing_dir(dirname):
@@ -467,6 +486,8 @@ def copy_common_dirs(src, dest, module):
 
 def main():
 
+    global module
+
     module = AnsibleModule(
         # not checking because of daisy chain to file module
         argument_spec=dict(
@@ -632,6 +653,28 @@ def main():
                         else:
                             raise
                 module.atomic_move(b_mysrc, dest, unsafe_writes=module.params['unsafe_writes'])
+
+                if not remote_src:
+                    # If not remote_src, then the file was copied from the controller.  In that
+                    # case, any filesystem acls are artifacts of the copy rather than preservation
+                    # of existing attributes.  Get rid of them
+                    try:
+                        clear_facls(dest)
+                    except ValueError as e:
+                        if 'setfacl' in to_native(e):
+                            # No setfacl so we're okay.  The controller couldn't have set a facl
+                            # without the setfacl command
+                            pass
+                        else:
+                            raise
+                    except RuntimeError as e:
+                        # setfacl failed.
+                        if 'Operation not supported' in to_native(e):
+                            # The file system does not support ACLs.
+                            pass
+                        else:
+                            raise
+
             except (IOError, OSError):
                 module.fail_json(msg="failed to copy: %s to %s" % (src, dest), traceback=traceback.format_exc())
         changed = True
