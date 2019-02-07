@@ -5,6 +5,52 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.7
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-02-07
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Allow check_mode with supports_generate_diff capability in cli_config. (https://github.com/ansible/ansible/pull/51417)
+- Fixed typo in vmware documentation fragment. Changed "supported added" to "support added".
+
+Bugfixes
+--------
+
+- All K8S_AUTH_* environment variables are now properly loaded by the k8s lookup plugin
+- Change backup file globbing for network _config modules so backing up one host's config will not delete the backed up config of any host whose hostname is a subset of the first host's hostname (e.g., switch1 and switch11)
+- Fixes bug where nios_a_record wasn't getting deleted if an uppercase named a_record was being passed. (https://github.com/ansible/ansible/pull/51539)
+- aci_aaa_user - Fix setting user description (https://github.com/ansible/ansible/issues/51406)
+- apt_repository - fixed failure under Python 3.7 (https://github.com/ansible/ansible/pull/47219)
+- archive - Fix check if archive is created in path to be removed
+- azure_rm inventory plugin - fix azure batch request (https://github.com/ansible/ansible/pull/50006)
+- cnos_backup - fixed syntax error (https://github.com/ansible/ansible/pull/47219)
+- cnos_image - fixed syntax error (https://github.com/ansible/ansible/pull/47219)
+- consul_kv - minor error-handling bugfix under Python 3.7 (https://github.com/ansible/ansible/pull/47219)
+- copy - align invocation in return value between check and normal mode
+- delegate_facts - fix to work properly under block and include_role (https://github.com/ansible/ansible/pull/51553)
+- docker_swarm_service - fix ``endpoint_mode`` and ``publish`` idempotency.
+- ec2_instance - Correctly adds description when adding a single ENI to the instance
+- ensure we have a XDG_RUNTIME_DIR, as it is not handled correctly by some privilege escalation configurations
+- file - Allow state=touch on file the user does not own https://github.com/ansible/ansible/issues/50943
+- fix ansible-pull hanlding of extra args, complex quoting is needed for inline JSON
+- fix ansible_connect_timeout variable in network_cli,netconf,httpapi and nxos_install_os timeout check
+- netapp_e_storagepool - fixed failure under Python 3.7 (https://github.com/ansible/ansible/pull/47219)
+- onepassword_facts - Fix an issue looking up some 1Password items which have a 'password' attribute alongside the 'fields' attribute, not inside it.
+- prevent import_role from inserting dupe into `roles:` execution when duplicate signature role already exists in the section.
+- reboot - Fix bug where the connection timeout was not reset in the same task after rebooting
+- ssh connection - do not retry with invalid credentials to prevent account lockout (https://github.com/ansible/ansible/issues/48422)
+- systemd - warn when exeuting in a chroot environment rather than failing (https://github.com/ansible/ansible/pull/43904)
+- win_chocolatey - Fix hang when used with proxy for the first time - https://github.com/ansible/ansible/issues/47669
+- win_power_plan - Fix issue where win_power_plan failed on newer Windows 10 builds - https://github.com/ansible/ansible/issues/43827
+
 v2.7.6
 ======
 

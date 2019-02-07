@@ -757,3 +757,32 @@ releases:
     - windows_setup_memtotal.yml
     - yumdnf-better-uri-handling.yaml
     release_date: '2019-01-17'
+  2.7.7:
+    codename: In the Light
+    fragments:
+    - 24633-copy-coherency-between-check-normal-mode.yaml
+    - 47213-onepassword_facts_fix_password_lookup.yaml
+    - 49444_fix_check_if_archive_is_created_in_path_to_be_removed.yml
+    - 50006-azure_rm_inventory_batchrequest_fix.yaml
+    - 50248-fix-coonfig-backup-glob.yaml
+    - 51232-docker_swarm_service-endpoint_mode.yaml
+    - 51406-aci_aaa_user-description.yaml
+    - 51495-k8s-load-envvars.yaml
+    - 51602-ec2_instance_single_iface_description.yaml
+    - cli_config_diff_fix.yaml
+    - delegate_facts_fix.yaml
+    - file-touch-non-owner.yaml
+    - fix_ansible_connect_timeout.yaml
+    - fix_ir_dupes.yml
+    - fix_pull_extra.yml
+    - nios_a_record_delete_failure_with_uppercase_name.yaml
+    - py37_misc_module_backports.yaml
+    - reboot-conn-timeout-reset.yaml
+    - ssh_connection_invalid_password.yaml
+    - systemd-warn-on-chroot.yaml
+    - v2.7.7_summary.yaml
+    - vmware_guest-documentation_fix.yaml
+    - win_chocolatey.yaml
+    - win_power_plan-windows10.yaml
+    - xdg_systemd_fix.yml
+    release_date: '2019-02-07'
