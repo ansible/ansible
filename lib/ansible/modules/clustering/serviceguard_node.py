@@ -41,9 +41,6 @@ options:
         required: false
         default: false
         
-
-
-
 author:
     - Christian Sandrini (@sandrich)
 '''
@@ -81,10 +78,11 @@ def start_node(module):
 
     node = module.params['name']
     node_status = state['nodes'][node]['status']
+    cmd_params = [module.params['path'] + '/cmrunnode', node]
 
     # Start if system is halted and started is requested
     if node_status == 'down':
-        (rc, out, err) = module.run_command([module.params['path'] + '/cmrunnode', node])
+        (rc, out, err) = module.run_command(cmd_params)
 
         if rc != 0:
             module.fail_json(msg="Node could not be started: %s%s" % (out, err))
@@ -96,17 +94,17 @@ def stop_node(module):
     state = parse_cluster_state(module)
 
     node = module.params['name']
-    node_status = state['nodes'][node]['status']
-    options = ""
+    node_state = state['nodes'][node]['state']
+    cmd_params = [module.params['path'] + '/cmhaltnode', node]
 
     if module.params['force']:
-        options = "-f"
+        cmd_params.append('-f')
 
-    if node_status == 'running':
-        (rc, out, err) = module.run_command([module.params['path'] + '/cmhaltnode', options, node])
+    if node_state == 'running':
+        (rc, out, err) = module.run_command(cmd_params)
 
         if rc != 0:
-            module.fail_json(msg="Node could not be stopped: %s%s" % (out, err))
+            module.fail_json(msg="Node %s could not be stopped: %s%s" % (node, out, err))
 
     return True
 
@@ -115,7 +113,8 @@ def main():
     module_args = dict(
         name=dict(type='str', required=True),
         state=dict(type='str', required=True, choices=['started', 'stopped']),
-        path=dict(type='str', required=False, default='/usr/local/cmcluster/bin')
+        path=dict(type='str', required=False, default='/usr/local/cmcluster/bin'),
+        force=(dict(type='bool', required=False, default=False))
     )
 
     module = AnsibleModule(
