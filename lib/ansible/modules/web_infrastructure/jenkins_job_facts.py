@@ -172,8 +172,10 @@ def get_jenkins_connection(module):
 
 def test_dependencies(module):
     if not HAS_JENKINS:
-        module.fail_json(msg=missing_required_lib("python-jenkins"),
-                         exception=JENKINS_IMP_ERR)
+        module.fail_json(
+            msg=missing_required_lib("python-jenkins",
+                                     url="https://python-jenkins.readthedocs.io/en/latest/install.html"),
+            exception=JENKINS_IMP_ERR)
 
 
 def get_jobs(module):

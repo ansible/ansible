@@ -329,10 +329,15 @@ class JenkinsJob:
 
 def test_dependencies(module):
     if not python_jenkins_installed:
-        module.fail_json(msg=missing_required_lib("python-jenkins"), exception=JENKINS_IMP_ERR)
+        module.fail_json(
+            msg=missing_required_lib("python-jenkins",
+                                     url="https://python-jenkins.readthedocs.io/en/latest/install.html"),
+            exception=JENKINS_IMP_ERR)
 
     if not python_lxml_installed:
-        module.fail_json(msg=missing_required_lib("lxml"), exception=LXML_IMP_ERR)
+        module.fail_json(
+            msg=missing_required_lib("lxml", url="https://lxml.de/installation.html"),
+            exception=LXML_IMP_ERR)
 
 
 def job_config_to_string(xml_str):
