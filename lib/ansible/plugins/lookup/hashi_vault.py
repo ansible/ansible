@@ -42,7 +42,7 @@ DOCUMENTATION = """
       env:
         - name: VAULT_SECRET_ID
     role:
-      description: Role name for vault GCP auth and Kubernetes auth
+      description: Role name for vault Kubernetes auth
       env:
         - name: VAULT_ROLE
     auth_method:
@@ -55,7 +55,6 @@ DOCUMENTATION = """
         - userpass
         - ldap
         - approle
-        - gcp
         - kubernetes
     mount_point:
       description: vault mount point, only required if you have a custom mount point.
@@ -105,10 +104,6 @@ EXAMPLES = """
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200 namespace=teama/admins')}}"
 
-- name: authenticate using GCP auth
-  debug:
-    msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=gcp role=myrole url=http://myvault:8200')}}"
-
 - name: authenticate using Kubernetes auth
   debug:
     msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=kubernetes role=myrole url=http://myvault:8200')}}"
@@ -124,7 +119,6 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.urls import fetch_url
 from ansible.plugins.lookup import LookupBase
 
 HAS_HVAC = False
@@ -146,7 +140,7 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
-        self.avail_auth_method = ['approle', 'userpass', 'ldap', 'gcp', 'kubernetes']
+        self.avail_auth_method = ['approle', 'userpass', 'ldap', 'kubernetes']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -179,10 +173,6 @@ class HashiVault:
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError as e:
-                # TODO: using fetch_url instead of the requests module is causing the below error
-                #
-                # 'HashiVault' object has no attribute 'module'
-                print(e)
                 raise AnsibleError("Authentication method '%s' not supported."
                                    " Available options are %r" % (self.auth_method, self.avail_auth_method))
         else:
@@ -273,25 +263,6 @@ class HashiVault:
             mount_point = 'approle'
 
         self.client.auth_approle(role_id, secret_id, mount_point=mount_point)
-
-    def auth_gcp(self, **kwargs):
-
-        role = kwargs.get('role', os.environ.get('VAULT_ROLE', None))
-        if role is None:
-            raise AnsibleError("Authentication method gcp requires a role")
-
-        mount_point = kwargs.get('mount_point')
-        if mount_point is None:
-            mount_point = 'gcp'
-
-        audience = ANSIBLE_HASHI_VAULT_ADDR + "/vault/" + role
-        headers = {'Metadata-Flavor': 'Google'}
-        fmt = 'full'
-
-        url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience={0}&format={1}'.format(audience, fmt)
-        rsp, info = fetch_url(module=self.module, url=url, headers=headers, method="GET")
-
-        self.client.auth_gcp(role, rsp.read(), mount_point=mount_point)
 
     def auth_kubernetes(self, **kwargs):
         role = kwargs.get('role', os.environ.get('VAULT_ROLE', None))
