@@ -1,0 +1,92 @@
+# Test code for the postgresql_set module
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: postgresql_set - set work_mem (restart is not required)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    name: work_mem
+    value: 12MB
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.name == 'work_mem'
+      - result.changed
+      - result.cur_val == '12MB'
+      - result.cur_val != result.prev_val
+      - result.restart_required == false
+
+- name: postgresql_set - reset work_mem (restart is not required)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    name: work_mem
+    reset: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.name == 'work_mem'
+      - result.changed
+      - result.cur_val != result.prev_val
+      - result.restart_required == false
+
+- name: postgresql_set - reset work_mem again to check that nothing changed (restart is not required)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    name: work_mem
+    reset: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.name == 'work_mem'
+      - result.changed == false
+      - result.cur_val == result.prev_val
+      - result.restart_required == false
+
+- name: postgresql_set - preparation to the next step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    name: work_mem
+    value: 12MB
+  register: result
+  ignore_errors: yes
+
+- name: postgresql_set - set work_mem to initial state (restart is not required)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    name: work_mem
+    value: default
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.name == 'work_mem'
+      - result.changed
+      - result.cur_val != result.prev_val
+      - result.restart_required == false
+
+- name: postgresql_set - set shared_buffers (restart is required)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    name: shared_buffers
+    value: 111MB
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.name == 'shared_buffers'
+      - result.changed
+      - result.restart_required == true
