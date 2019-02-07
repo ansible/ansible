@@ -17,12 +17,16 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: postgresql_set
-short_description: Change a PostgreSQL server configuration parameter.
+short_description: Change a PostgreSQL server configuration parameter
 description:
-   - Allows to change a PostgreSQL server configuration parameter
-     using ALTER SYSTEM command and apply it by reload server configuration.
-   - Changed value is stored in PGDATA/postgresql.auto.conf.
-   - Allows to reset parameter to boot_val (cluster initial value) or remove parameter
+   - Allows to change a PostgreSQL server configuration parameter.
+   - The module uses ALTER SYSTEM command U(https://www.postgresql.org/docs/current/sql-altersystem.html)
+     and apply changes by reload server configuration.
+   - ALTER SYSTEM is used for changing server configuration parameters across the entire database cluster.
+   - It can be more convenient than the traditional method of manually editing the postgresql.conf file.
+   - ALTER SYSTEM writes the given parameter setting to the $PGDATA/postgresql.auto.conf file,
+     which is read in addition to postgresql.conf U(https://www.postgresql.org/docs/current/sql-altersystem.html).
+   - The module allows to reset parameter to boot_val (cluster initial value) or remove parameter
      string from postgresql.auto.conf and reload.
    - After change you can see in ansible output the previous and
      the new parameter value and other information using returned values and M(debug) module.
@@ -32,39 +36,50 @@ options:
     description:
       - Name of PostgreSQL server parameter.
     required: true
+    type: str
   value:
     description:
-      - Parameter value to set. To remove parameter string from postgresql.auto.conf and reload the server you must pass I(value=default).
-  show:
-    description:
-      - Show parameter value. Mutually exclusive with I(reset) and I(value).
-    default: false
-    type: bool
+      - Parameter value to set. To remove parameter string from postgresql.auto.conf and
+        reload the server configuration you must pass I(value=default).
+    required: true
+    type: str
   reset:
     description:
-      - Restore parameter to initial state (boot_val). Mutually exclusive with I(show) and I(value).
+      - Restore parameter to initial state (boot_val). Mutually exclusive with I(value).
     default: false
     type: bool
+  session_role:
+    description:
+      - Switch to session_role after connecting. The specified session_role must
+        be a role that the current login_user is a member of.
+      - Permissions checking for SQL commands is carried out as though
+        the session_role were the one that had logged in originally.
   db:
     description:
       - Name of database to connect.
+    type: str
   port:
     description:
       - Database port to connect.
     default: 5432
+    type: int
   login_user:
     description:
       - User (role) used to authenticate with PostgreSQL.
     default: postgres
+    type: str
   login_password:
     description:
       - Password used to authenticate with PostgreSQL.
+    type: str
   login_host:
     description:
       - Host running PostgreSQL.
+    type: str
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
+    type: str
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection
@@ -74,14 +89,17 @@ options:
       - Default of C(prefer) matches libpq default.
     default: prefer
     choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+    type: str
   ssl_rootcert:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s). If the file exists, the server's certificate will be
+        certificate(s).
+      - If the file exists, the server's certificate will be
         verified to be signed by one of these authorities.
+    type: str
 notes:
-   - Check_mode is not supported because ALTER SYSTEM cannot be run inside a transaction block.
-     You can use "show" parameter to know desired setting will be changed or not.
+   - Check_mode is not supported because ALTER SYSTEM can't be run inside a transaction block
+     U(https://www.postgresql.org/docs/current/sql-altersystem.html).
    - Supported version of PostgreSQL is 9.4 and later.
    - For some parameters restart of PostgreSQL server is required.
      See official documentation U(https://www.postgresql.org/).
@@ -94,34 +112,29 @@ notes:
      systems, install the postgresql, libpq-dev, and python-psycopg2 packages
      on the remote host before using this module.
 requirements: [ psycopg2 ]
-author: "Andrew Klychkov (@Andersson007)"
+author:
+   - Andrew Klychkov (@Andersson007)
 '''
 
 EXAMPLES = '''
-# Show current value of wal_keep_segments parameter
-- postgresql_set:
-    name: wal_keep_segments
-    show: yes
-  register: show_value
-
-- debug:
-    msg: "{{ show_value.info }}"
-
 # Restore wal_keep_segments parameter to initial state
 - postgresql_set:
     name: wal_keep_segments
     reset: yes
 
 # Set work_mem parameter to 32MB and show what's been changed and restart is required or not
-# (output example: "msg": "pg_test.lan work_mem 64MB => 32MB, restart_required: False")
+# (output example: "msg": "work_mem 4MB >> 64MB restart_req: False")
 - postgresql_set:
     name: work_mem
     value: 32mb
     register: set_value
 
 - debug:
-    msg: "{{ inventory_hostname }} {{ set_value.name }} {{ set_value.result }}, restart_required: {{ set_value.restart_required }}"
+    msg: "{{ set_value.name }} {{ set_value.prev_val }} >> {{ set_value.cur_value }} restart_req: {{ set_value.restart_required }}"
   when: set_value.changed
+# Ensure that the restart of PostgreSQL serever must be required for some parameters.
+# In this situation you see the same parameter in prev_val and cur_value, but 'changed=True'
+# (Of course, if you passed the value that was different from the current server setting).
 
 # Set log_min_duration_statement parameter to 1 second
 - postgresql_set:
@@ -140,22 +153,24 @@ name:
     returned: always
     type: str
     sample: 'shared_buffers'
-info:
-    description: Information about parameter current state.
-    returned: always
-    type: str
-    sample: 'name: log_min_duration_statement, setting: 1s, context: superuser, boot_val: -1, unit: ms'
 restart_required:
     description: Information about parameter current state.
     returned: always
     type: bool
-    sample: True
-result:
-    description: Information what has been changed.
+    sample: true
+prev_val:
+    description: Information about previous state of the parameter.
     returned: always
     type: str
-    sample: '128MB => 254MB'
+    sample: '4MB'
+cur_val:
+    description: Information about current state of the parameter.
+    returned: always
+    type: str
+    sample: '64MB'
 '''
+
+PG_REQ_VER = 9.4
 
 
 import traceback
@@ -170,7 +185,7 @@ else:
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -185,8 +200,8 @@ POSSIBLE_SIZE_UNITS = ("mb", "gb", "tb")
 
 
 def param_get(cursor, module, name):
-    query = "SELECT name, setting, unit, context, boot_val "\
-            "FROM pg_settings WHERE name = '%s'" % name
+    query = ("SELECT name, setting, unit, context, boot_val "
+             "FROM pg_settings WHERE name = '%s'" % name)
     try:
         cursor.execute(query)
         info = cursor.fetchall()
@@ -224,15 +239,18 @@ def param_set(cursor, module, name, value):
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        db=dict(default=''),
-        ssl_mode=dict(default='prefer', choices=[
+        name=dict(type='str', required=True),
+        db=dict(type='str'),
+        ssl_mode=dict(type='str', default='prefer', choices=[
             'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None),
-        value=dict(default=None),
-        show=dict(type=bool, default=False),
-        reset=dict(type=bool, default=False)
+        ssl_rootcert=dict(type='str'),
+        value=dict(type='str'),
+        reset=dict(type='bool'),
+        session_role=dict(type='str'),
     ))
+    # This module doesn't support check mode
+    # because ALTER SYSTEM SET command can't be used
+    # in transactions https://www.postgresql.org/docs/current/sql-altersystem.html.
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=False
@@ -240,26 +258,22 @@ def main():
 
     name = module.params["name"]
     value = module.params["value"]
-    show = module.params["show"]
     reset = module.params["reset"]
     sslrootcert = module.params["ssl_rootcert"]
+    session_role = module.params["session_role"]
 
     # Allow to pass values like 1mb instead of 1MB, etc:
-    if value is not None:
+    if value:
         for unit in POSSIBLE_SIZE_UNITS:
             if unit in value:
                 value = value.upper()
 
-    if value is not None and reset:
+    if value and reset:
         module.fail_json(msg="%s: value and reset params are mutually "
                              "exclusive" % name)
 
-    if (value is not None and show) or (reset and show):
-        module.fail_json(msg="%s: param value and reset are mutually "
-                             "exclusive with show" % name)
-
-    if value is None and not reset and not show:
-        module.fail_json(msg="%s: at least one of value, show, or "
+    if not value and not reset:
+        module.fail_json(msg="%s: at least one of value or "
                              "reset param must be specified" % name)
 
     if not postgresqldb_found:
@@ -278,23 +292,21 @@ def main():
         "ssl_rootcert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v is not None)
+              if k in params_map and v != "" and v)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
-    if psycopg2.__version__ < '2.4.3' and sslrootcert is not None:
-        module.fail_json(
-            msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
+    if psycopg2.__version__ < '2.4.3' and sslrootcert:
+        module.fail_json(msg='psycopg2 must be at least 2.4.3 '
+                             'in order to user the ssl_rootcert parameter')
 
     try:
         db_connection = psycopg2.connect(**kw)
         db_connection.set_session(autocommit=True)
-
-        cursor = db_connection.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
             module.fail_json(
@@ -304,6 +316,30 @@ def main():
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e),
                          exception=traceback.format_exc())
+
+    # Check server version (needs 9.4 or later):
+    cursor.execute('SELECT version()')
+    ver = cursor.fetchone()[0].split()[1]
+    print('VERSION ', ver)
+    if PG_REQ_VER > float(ver):
+        module.warn("PostgreSQL is %s version but %s "
+                    "or later is required %s" % (ver, PG_REQ_VER))
+        kw = dict(
+            changed=False,
+            name=name,
+            restart_required=False,
+            cur_val="",
+            prev_val="",
+        )
+        module.exit_json(**kw)
+
+    # Switch role, if specified:
+    if session_role:
+        try:
+            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+        except Exception as e:
+            module.fail_json(msg="Could not switch role: %s" % to_native(e),
+                             exception=traceback.format_exc())
 
     # Set default returned values:
     restart_required = False
@@ -322,14 +358,9 @@ def main():
     boot_val = res[1][0][4]
     context = res[1][0][3]
 
-    kw['info'] = "name: %s, setting: %s, context: %s, "\
-                 "boot_val: %s, unit: %s" % (name, current_value, context,
-                                             boot_val, unit)
-    # Do job
-    # Show param:
-    if show:
-        module.exit_json(**kw)
+    kw['prev_val'], kw['cur_val'] = current_value, current_value
 
+    # Do job
     if context == "internal":
         module.fail_json(msg="%s: cannot be changed (internal context). "
                              "See documentation" % name)
@@ -340,7 +371,8 @@ def main():
     # Set param:
     if value is not None and value != current_value:
         changed = param_set(cursor, module, name, value)
-        kw['result'] = '%s => %s' % (current_value, value)
+        kw['prev_val'] = current_value
+        kw['cur_val'] = value
     # Reset param:
     elif reset:
         if raw_val == boot_val:
@@ -348,18 +380,14 @@ def main():
             module.exit_json(**kw)
         changed = param_set(cursor, module, name, boot_val)
 
-        if unit:
-            kw['result'] = '%s => %s (unit: %s)' % (current_value, boot_val, unit)
-        else:
-            kw['result'] = '%s => %s' % (current_value, boot_val)
+        kw['prev_val'] = current_value
+        kw['cur_val'] = boot_val
 
     if changed:
         if not restart_required:
             new_value = param_get(cursor, module, name)[0][0]
-            kw['result'] = '%s => %s' % (current_value, new_value)
-            kw['info'] = "name: %s, setting: %s, context: %s, "\
-                         "boot_val: %s, unit: %s" % (name, new_value, context,
-                                                     boot_val, unit)
+            kw['prev_val'] = current_value
+            kw['cur_val'] = new_value
 
     kw['changed'] = changed
     kw['restart_required'] = restart_required
