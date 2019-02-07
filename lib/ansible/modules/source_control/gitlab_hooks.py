@@ -225,12 +225,12 @@ class GitLabHook(object):
         self.hookObject = hook
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Hook should have been updated.")
+                self._module.exit_json(changed=True, msg="Hook has been updated.")
 
             try:
                 hook.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to update a hook: %s " % e)
+                self._module.fail_json(msg="Failed to update hook: %s " % e)
             return True
         else:
             return False
@@ -241,7 +241,7 @@ class GitLabHook(object):
     '''
     def createHook(self, project, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Hook should have been created.")
+            self._module.exit_json(changed=True, msg="Hook has been created.")
 
         hook = project.hooks.create(arguments)
 
@@ -286,7 +286,7 @@ class GitLabHook(object):
 
     def deleteHook(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Hook should have been deleted.")
+            self._module.exit_json(changed=True, msg="Hook hash been deleted.")
 
         return self.hookObject.delete()
 

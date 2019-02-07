@@ -221,12 +221,12 @@ class GitLabProject(object):
         self.projectObject = project
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Project should have been updated.")
+                self._module.exit_json(changed=True, msg="Project has been updated.")
 
             try:
                 project.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed update a project: %s " % e)
+                self._module.fail_json(msg="Failed update project: %s " % e)
             return True
         else:
             return False
@@ -237,13 +237,13 @@ class GitLabProject(object):
     '''
     def createProject(self, namespace, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Project should have been created.")
+            self._module.exit_json(changed=True, msg="Project has been created.")
 
         arguments['namespace_id'] = namespace.id
         try:
             project = self._gitlab.projects.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
-            self._module.fail_json(msg="Failed to create a project: %s " % to_native(e))
+            self._module.fail_json(msg="Failed to create project: %s " % to_native(e))
 
         return project
 
@@ -264,7 +264,7 @@ class GitLabProject(object):
 
     def deleteProject(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Project should have been deleted.")
+            self._module.exit_json(changed=True, msg="Project has been deleted.")
 
         project = self.projectObject
 

@@ -166,12 +166,12 @@ class GitLabDeployKey(object):
         self.deployKeyObject = deployKey
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Deploy_key should have been updated.")
+                self._module.exit_json(changed=True, msg="Deploy key has been updated.")
 
             try:
                 deployKey.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to update a deploy_key: %s " % e)
+                self._module.fail_json(msg="Failed to update deploy key: %s " % e)
             return True
         else:
             return False
@@ -182,11 +182,11 @@ class GitLabDeployKey(object):
     '''
     def createDeployKey(self, project, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Deploy_key should have been created.")
+            self._module.exit_json(changed=True, msg="Deploy key has been created.")
         try:
             deployKey = project.keys.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
-            self._module.fail_json(msg="Failed to create a deploy_key: %s " % to_native(e))
+            self._module.fail_json(msg="Failed to create deploy key: %s " % to_native(e))
 
         return deployKey
 
@@ -229,7 +229,7 @@ class GitLabDeployKey(object):
 
     def deleteDeployKey(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Deploy_key should have been deleted.")
+            self._module.exit_json(changed=True, msg="Deploy key has been deleted.")
 
         return self.deployKeyObject.delete()
 
@@ -280,7 +280,6 @@ def main():
     key_keyfile = module.params['key']
     key_can_push = module.params['can_push']
 
-    module.exit_json(changed=True, msg="Deploy_key should have been deleted.")
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
@@ -299,24 +298,24 @@ def main():
     project = findProject(gitlab_instance, project_identifier)
 
     if project is None:
-        module.fail_json(msg="Failed to create deploy_key: project %s doesn't exists" % project_identifier)
+        module.fail_json(msg="Failed to create deploy key: project %s doesn't exists" % project_identifier)
 
     deployKey_exists = gitlab_deploy_key.existsDeployKey(project, key_title)
 
     if state == 'absent':
         if deployKey_exists:
             gitlab_deploy_key.deleteDeployKey()
-            module.exit_json(changed=True, msg="Successfully deleted deploy_key %s" % key_title)
+            module.exit_json(changed=True, msg="Successfully deleted deploy key %s" % key_title)
         else:
-            module.exit_json(changed=False, msg="Deploy_key deleted or does not exists")
+            module.exit_json(changed=False, msg="Deploy key deleted or does not exists")
 
     if state == 'present':
         if gitlab_deploy_key.createOrUpdateDeployKey(project, key_title, key_keyfile, {'can_push': key_can_push}):
 
-            module.exit_json(changed=True, msg="Successfully created or updated the deploy_key %s" % key_title,
+            module.exit_json(changed=True, msg="Successfully created or updated the deploy key %s" % key_title,
                              deploy_key=gitlab_deploy_key.deployKeyObject._attrs)
         else:
-            module.exit_json(changed=False, msg="No need to update the deploy_key %s" % key_title,
+            module.exit_json(changed=False, msg="No need to update the deploy key %s" % key_title,
                              deploy_key=gitlab_deploy_key.deployKeyObject._attrs)
 
 

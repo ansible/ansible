@@ -196,12 +196,12 @@ class GitLabGroup(object):
         self.groupObject = group
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Group should have been updated.")
+                self._module.exit_json(changed=True, msg="Group has been updated.")
 
             try:
                 group.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to update a group: %s " % e)
+                self._module.fail_json(msg="Failed to update group: %s " % e)
             return True
         else:
             return False
@@ -211,12 +211,12 @@ class GitLabGroup(object):
     '''
     def createGroup(self, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Group should have been created.")
+            self._module.exit_json(changed=True, msg="Group has been created.")
 
         try:
             group = self._gitlab.groups.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
-            self._module.fail_json(msg="Failed to create a group: %s " % to_native(e))
+            self._module.fail_json(msg="Failed to create group: %s " % to_native(e))
 
         return group
 
@@ -243,12 +243,12 @@ class GitLabGroup(object):
                 msg="There are still projects in this group. These needs to be moved or deleted before this group can be removed.")
         else:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Group should have been deleted.")
+                self._module.exit_json(changed=True, msg="Group has been deleted.")
 
             try:
                 group.delete()
             except Exception as e:
-                self._module.fail_json(msg="Failed to delete a group: %s " % to_native(e))
+                self._module.fail_json(msg="Failed to delete group: %s " % to_native(e))
 
     '''
     @param name Name of the groupe

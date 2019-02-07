@@ -242,12 +242,12 @@ class GitLabUser(object):
         self.userObject = user
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="User should have beenupdated.")
+                self._module.exit_json(changed=True, msg="User has been updated.")
 
             try:
                 user.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to update a user: %s " % to_native(e))
+                self._module.fail_json(msg="Failed to update user: %s " % to_native(e))
             return True
         else:
             return False
@@ -367,12 +367,12 @@ class GitLabUser(object):
     '''
     def createUser(self, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="User should have been created.")
+            self._module.exit_json(changed=True, msg="User has been created.")
 
         try:
             user = self._gitlab.users.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
-            self._module.fail_json(msg="Failed to create a user: %s " % to_native(e))
+            self._module.fail_json(msg="Failed to create user: %s " % to_native(e))
 
         return user
 
@@ -398,7 +398,7 @@ class GitLabUser(object):
 
     def deleteUser(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="User should have been deleted.")
+            self._module.exit_json(changed=True, msg="User has been deleted.")
 
         user = self.userObject
 

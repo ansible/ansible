@@ -205,12 +205,12 @@ class GitLabRunner(object):
         self.runnerObject = runner
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Runner should have been updated.")
+                self._module.exit_json(changed=True, msg="Runner has been updated.")
 
             try:
                 runner.save()
             except Exception as e:
-                self._module.fail_json(msg="Failed to update a runner: %s " % to_native(e))
+                self._module.fail_json(msg="Failed to update runner: %s " % to_native(e))
             return True
         else:
             return False
@@ -220,12 +220,12 @@ class GitLabRunner(object):
     '''
     def createRunner(self, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Runner should have been created.")
+            self._module.exit_json(changed=True, msg="Runner has been created.")
 
         try:
             runner = self._gitlab.runners.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
-            self._module.fail_json(msg="Failed to create a runner: %s " % to_native(e))
+            self._module.fail_json(msg="Failed to create runner: %s " % to_native(e))
 
         return runner
 
