@@ -18,91 +18,96 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
 module: gcp_compute_subnetwork
 description:
-    - A VPC network is a virtual version of the traditional physical networks that exist
-      within and between physical data centers. A VPC network provides connectivity for
-      your Compute Engine virtual machine (VM) instances, Container Engine containers,
-      App Engine Flex services, and other network-related resources.
-    - Each GCP project contains one or more VPC networks. Each VPC network is a global
-      entity spanning all GCP regions. This global VPC network allows VM instances and
-      other resources to communicate with each other via internal, private IP addresses.
-    - Each VPC network is subdivided into subnets, and each subnet is contained within
-      a single region. You can have more than one subnet in a region for a given VPC network.
-      Each subnet has a contiguous private RFC1918 IP space. You create instances, containers,
-      and the like in these subnets.
-    - When you create an instance, you must create it in a subnet, and the instance draws
-      its internal IP address from that subnet.
-    - Virtual machine (VM) instances in a VPC network can communicate with instances in
-      all other subnets of the same VPC network, regardless of region, using their RFC1918
-      private IP addresses. You can isolate portions of the network, even entire subnets,
-      using firewall rules.
+- A VPC network is a virtual version of the traditional physical networks that exist
+  within and between physical data centers. A VPC network provides connectivity for
+  your Compute Engine virtual machine (VM) instances, Container Engine containers,
+  App Engine Flex services, and other network-related resources.
+- Each GCP project contains one or more VPC networks. Each VPC network is a global
+  entity spanning all GCP regions. This global VPC network allows VM instances and
+  other resources to communicate with each other via internal, private IP addresses.
+- Each VPC network is subdivided into subnets, and each subnet is contained within
+  a single region. You can have more than one subnet in a region for a given VPC network.
+  Each subnet has a contiguous private RFC1918 IP space. You create instances, containers,
+  and the like in these subnets.
+- When you create an instance, you must create it in a subnet, and the instance draws
+  its internal IP address from that subnet.
+- Virtual machine (VM) instances in a VPC network can communicate with instances in
+  all other subnets of the same VPC network, regardless of region, using their RFC1918
+  private IP addresses. You can isolate portions of the network, even entire subnets,
+  using firewall rules.
 short_description: Creates a GCP Subnetwork
 version_added: 2.6
 author: Google Inc. (@googlecloudplatform)
 requirements:
-    - python >= 2.6
-    - requests >= 2.18.4
-    - google-auth >= 1.3.0
+- python >= 2.6
+- requests >= 2.18.4
+- google-auth >= 1.3.0
 options:
-    state:
-        description:
-            - Whether the given object should exist in GCP
-        choices: ['present', 'absent']
-        default: 'present'
+  state:
     description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource. This field can be set only at resource creation time.
-        required: false
-    ip_cidr_range:
-        description:
-            - The range of internal addresses that are owned by this subnetwork.
-            - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
-              192.168.0.0/16. Ranges must be unique and non-overlapping within a network. Only
-              IPv4 is supported.
-        required: true
-    name:
-        description:
-            - The name of the resource, provided by the client when initially creating the resource.
-              The name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-              name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        required: true
-    network:
-        description:
-            - The network this subnet belongs to.
-            - Only networks that are in the distributed mode can have subnetworks.
-        required: true
-    private_ip_google_access:
-        description:
-            - Whether the VMs in this subnet can access Google services without assigned external
-              IP addresses.
-        required: false
-        type: bool
-    region:
-        description:
-            - URL of the GCP region for this subnetwork.
-        required: true
+    - Whether the given object should exist in GCP
+    choices:
+    - present
+    - absent
+    default: present
+  description:
+    description:
+    - An optional description of this resource. Provide this property when you create
+      the resource. This field can be set only at resource creation time.
+    required: false
+  ip_cidr_range:
+    description:
+    - The range of internal addresses that are owned by this subnetwork.
+    - Provide this property when you create the subnetwork. For example, 10.0.0.0/8
+      or 192.168.0.0/16. Ranges must be unique and non-overlapping within a network.
+      Only IPv4 is supported.
+    required: true
+  name:
+    description:
+    - The name of the resource, provided by the client when initially creating the
+      resource. The name must be 1-63 characters long, and comply with RFC1035. Specifically,
+      the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+      which means the first character must be a lowercase letter, and all following
+      characters must be a dash, lowercase letter, or digit, except the last character,
+      which cannot be a dash.
+    required: true
+  network:
+    description:
+    - The network this subnet belongs to.
+    - Only networks that are in the distributed mode can have subnetworks.
+    - 'This field represents a link to a Network resource in GCP. It can be specified
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
+    required: true
+  private_ip_google_access:
+    description:
+    - Whether the VMs in this subnet can access Google services without assigned external
+      IP addresses.
+    required: false
+    type: bool
+  region:
+    description:
+    - URL of the GCP region for this subnetwork.
+    required: true
 extends_documentation_fragment: gcp
 notes:
-    - "API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)"
-    - "Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)"
-    - "Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)"
+- 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)'
+- 'Private Google Access: U(https://cloud.google.com/vpc/docs/configure-private-google-access)'
+- 'Cloud Networking: U(https://cloud.google.com/vpc/docs/using-vpc)'
 '''
 
 EXAMPLES = '''
@@ -123,69 +128,75 @@ EXAMPLES = '''
       network: "{{ network }}"
       ip_cidr_range: 172.16.0.0/16
       project: "test_project"
-      auth_kind: "service_account"
+      auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
       state: present
 '''
 
 RETURN = '''
-    creation_timestamp:
-        description:
-            - Creation timestamp in RFC3339 text format.
-        returned: success
-        type: str
-    description:
-        description:
-            - An optional description of this resource. Provide this property when you create
-              the resource. This field can be set only at resource creation time.
-        returned: success
-        type: str
-    gateway_address:
-        description:
-            - The gateway address for default routes to reach destination addresses outside this
-              subnetwork.
-        returned: success
-        type: str
-    id:
-        description:
-            - The unique identifier for the resource.
-        returned: success
-        type: int
-    ip_cidr_range:
-        description:
-            - The range of internal addresses that are owned by this subnetwork.
-            - Provide this property when you create the subnetwork. For example, 10.0.0.0/8 or
-              192.168.0.0/16. Ranges must be unique and non-overlapping within a network. Only
-              IPv4 is supported.
-        returned: success
-        type: str
-    name:
-        description:
-            - The name of the resource, provided by the client when initially creating the resource.
-              The name must be 1-63 characters long, and comply with RFC1035. Specifically, the
-              name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
-              which means the first character must be a lowercase letter, and all following characters
-              must be a dash, lowercase letter, or digit, except the last character, which cannot
-              be a dash.
-        returned: success
-        type: str
-    network:
-        description:
-            - The network this subnet belongs to.
-            - Only networks that are in the distributed mode can have subnetworks.
-        returned: success
-        type: dict
-    private_ip_google_access:
-        description:
-            - Whether the VMs in this subnet can access Google services without assigned external
-              IP addresses.
-        returned: success
-        type: bool
-    region:
-        description:
-            - URL of the GCP region for this subnetwork.
-        returned: success
-        type: str
+creationTimestamp:
+  description:
+  - Creation timestamp in RFC3339 text format.
+  returned: success
+  type: str
+description:
+  description:
+  - An optional description of this resource. Provide this property when you create
+    the resource. This field can be set only at resource creation time.
+  returned: success
+  type: str
+gatewayAddress:
+  description:
+  - The gateway address for default routes to reach destination addresses outside
+    this subnetwork.
+  returned: success
+  type: str
+id:
+  description:
+  - The unique identifier for the resource.
+  returned: success
+  type: int
+ipCidrRange:
+  description:
+  - The range of internal addresses that are owned by this subnetwork.
+  - Provide this property when you create the subnetwork. For example, 10.0.0.0/8
+    or 192.168.0.0/16. Ranges must be unique and non-overlapping within a network.
+    Only IPv4 is supported.
+  returned: success
+  type: str
+name:
+  description:
+  - The name of the resource, provided by the client when initially creating the resource.
+    The name must be 1-63 characters long, and comply with RFC1035. Specifically,
+    the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]*[a-z0-9])?`
+    which means the first character must be a lowercase letter, and all following
+    characters must be a dash, lowercase letter, or digit, except the last character,
+    which cannot be a dash.
+  returned: success
+  type: str
+network:
+  description:
+  - The network this subnet belongs to.
+  - Only networks that are in the distributed mode can have subnetworks.
+  returned: success
+  type: str
+fingerprint:
+  description:
+  - Fingerprint of this resource. This field is used internally during updates of
+    this resource.
+  returned: success
+  type: str
+privateIpGoogleAccess:
+  description:
+  - Whether the VMs in this subnet can access Google services without assigned external
+    IP addresses.
+  returned: success
+  type: bool
+region:
+  description:
+  - URL of the GCP region for this subnetwork.
+  returned: success
+  type: str
 '''
 
 ################################################################################
@@ -210,9 +221,9 @@ def main():
             description=dict(type='str'),
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(required=True),
             private_ip_google_access=dict(type='bool'),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -228,7 +239,8 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                fetch = update(module, self_link(module), kind)
+                update(module, self_link(module), kind, fetch)
+                fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
             delete(module, self_link(module), kind)
@@ -251,9 +263,42 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind):
+def update(module, link, kind, fetch):
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
+    return fetch_resource(module, self_link(module), kind)
+
+
+def update_fields(module, request, response):
+    if response.get('ipCidrRange') != request.get('ipCidrRange'):
+        ip_cidr_range_update(module, request, response)
+    if response.get('privateIpGoogleAccess') != request.get('privateIpGoogleAccess'):
+        private_ip_google_access_update(module, request, response)
+
+
+def ip_cidr_range_update(module, request, response):
     auth = GcpSession(module, 'compute')
-    return wait_for_operation(module, auth.put(link, resource_to_request(module)))
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}/expandIpCidrRange"]).format(**module.params),
+        {u'ipCidrRange': module.params.get('ip_cidr_range')},
+    )
+
+
+def fingerprint_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.patch(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}"]).format(**module.params),
+        {u'fingerprint': response.get('fingerprint')},
+    )
+
+
+def private_ip_google_access_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/regions/{region}/subnetworks/{name}/setPrivateIpGoogleAccess"]).format(
+            **module.params
+        ),
+        {u'privateIpGoogleAccess': module.params.get('private_ip_google_access')},
+    )
 
 
 def delete(module, link, kind):
@@ -269,19 +314,19 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'privateIpGoogleAccess': module.params.get('private_ip_google_access'),
-        u'region': module.params.get('region')
+        u'region': module.params.get('region'),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
 
 
-def fetch_resource(module, link, kind):
+def fetch_resource(module, link, kind, allow_not_found=True):
     auth = GcpSession(module, 'compute')
-    return return_if_object(module, auth.get(link), kind)
+    return return_if_object(module, auth.get(link), kind, allow_not_found)
 
 
 def self_link(module):
@@ -292,9 +337,9 @@ def collection(module):
     return "https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/subnetworks".format(**module.params)
 
 
-def return_if_object(module, response, kind):
+def return_if_object(module, response, kind, allow_not_found=False):
     # If not found, return nothing.
-    if response.status_code == 404:
+    if allow_not_found and response.status_code == 404:
         return None
 
     # If no content, return nothing.
@@ -304,13 +349,11 @@ def return_if_object(module, response, kind):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
-    if result['kind'] != kind:
-        module.fail_json(msg="Incorrect result: {kind}".format(**result))
 
     return result
 
@@ -344,8 +387,9 @@ def response_to_hash(module, response):
         u'ipCidrRange': response.get(u'ipCidrRange'),
         u'name': response.get(u'name'),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
+        u'fingerprint': response.get(u'fingerprint'),
         u'privateIpGoogleAccess': response.get(u'privateIpGoogleAccess'),
-        u'region': module.params.get('region')
+        u'region': module.params.get('region'),
     }
 
 
@@ -371,11 +415,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        if status not in ['PENDING', 'RUNNING', 'DONE']:
-            module.fail_json(msg="Invalid result %s" % status)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

@@ -39,13 +39,18 @@
       - result.changed == true
       - "result.kind == 'dns#managedZone'"
 - name: verify that managed_zone was created
-  shell: |
-    gcloud dns managed-zones describe  --project="{{ gcp_project }}"  "{{ resource_name }}"
+  gcp_dns_managed_zone_facts:
+      dns_name: test.somewild2.example.com.
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
   register: results
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 0
+      - results['items'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a managed zone that already exists
   gcp_dns_managed_zone:
@@ -79,15 +84,18 @@
       - result.changed == true
       - result.has_key('kind') == False
 - name: verify that managed_zone was deleted
-  shell: |
-    gcloud dns managed-zones describe  --project="{{ gcp_project }}"  "{{ resource_name }}"
+  gcp_dns_managed_zone_facts:
+      dns_name: test.somewild2.example.com.
+      project: "{{ gcp_project }}"
+      auth_kind: "{{ gcp_cred_kind }}"
+      service_account_file: "{{ gcp_cred_file }}"
+      scopes:
+        - https://www.googleapis.com/auth/ndev.clouddns.readwrite
   register: results
-  failed_when: results.rc == 0
 - name: verify that command succeeded
   assert:
     that:
-      - results.rc == 1
-      - "\"{{ resource_name }} was not found.\" in results.stderr"
+      - results['items'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a managed zone that does not exist
   gcp_dns_managed_zone:
