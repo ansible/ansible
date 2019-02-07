@@ -69,6 +69,12 @@ options:
       - restarted
       - stopped
 
+  terminate:
+    description:
+      - Terminate and trash a server with its volumes instead of deleting it
+    default: false
+    type: bool
+
   tags:
     description:
     - List of tags to apply to the instance (5 max)
@@ -338,6 +344,8 @@ def restart_server(compute_api, server):
 def stop_server(compute_api, server):
     return perform_action(compute_api=compute_api, server=server, action="poweroff")
 
+def terminate_server(compute_api, server):
+    return perform_action(compute_api=compute_api, server=server, action="terminate")
 
 def start_server(compute_api, server):
     return perform_action(compute_api=compute_api, server=server, action="poweron")
@@ -393,8 +401,8 @@ def present_strategy(compute_api, wished_server):
     return changed, target_server
 
 
-def absent_strategy(compute_api, wished_server):
-    compute_api.module.debug("Starting absent strategy")
+def absent_strategy_delete(compute_api, wished_server):
+    compute_api.module.debug("Starting absent strategy using delete")
     changed = False
     target_server = None
     query_results = find(compute_api=compute_api, wished_server=wished_server, per_page=1)
@@ -428,6 +436,44 @@ def absent_strategy(compute_api, wished_server):
         compute_api.module.fail_json(msg=err_msg)
 
     return changed, {"status": "Server %s deleted" % target_server["id"]}
+
+
+def absent_strategy_terminate(compute_api, wished_server):
+    compute_api.module.debug("Starting absent strategy using terminate")
+    changed = False
+    target_server = None
+    query_results = find(compute_api=compute_api, wished_server=wished_server, per_page=1)
+
+    if not query_results:
+        return changed, {"status": "Server already absent."}
+    else:
+        target_server = query_results[0]
+
+    changed = True
+
+    if compute_api.module.check_mode:
+        return changed, {"status": "Server %s would be made absent." % target_server["id"]}
+
+    # Even running server can be terminated
+    while fetch_state(compute_api=compute_api, server=target_server) != "stopped":
+        wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
+        response = terminate_server(compute_api=compute_api, server=target_server)
+
+        if not response.ok:
+            err_msg = 'Error while terminating a server [{0}: {1}]'.format(response.status_code,
+                                                                                           response.json)
+            compute_api.module.fail_json(msg=err_msg)
+
+        wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
+
+    return changed, {"status": "Server %s terminated" % target_server["id"]}
+
+
+def absent_strategy(compute_api, wished_server):
+    if not wished_server['terminate']:
+        return absent_strategy_delete(compute_api=compute_api, wished_server=wished_server)
+    else:
+        return absent_strategy_terminate(compute_api=compute_api, wished_server=wished_server)
 
 
 def running_strategy(compute_api, wished_server):
@@ -661,6 +707,7 @@ def core(module):
     region = module.params["region"]
     wished_server = {
         "state": module.params["state"],
+        "terminate": module.params["terminate"],
         "image": module.params["image"],
         "name": module.params["name"],
         "commercial_type": module.params["commercial_type"],
@@ -693,6 +740,7 @@ def main():
         enable_ipv6=dict(default=False, type="bool"),
         public_ip=dict(default="absent"),
         state=dict(choices=state_strategy.keys(), default='present'),
+        terminate=dict(default=False, type="bool"),
         tags=dict(type="list", default=[]),
         organization=dict(required=True),
         wait=dict(type="bool", default=False),
