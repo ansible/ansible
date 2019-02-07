@@ -301,7 +301,7 @@ EXAMPLES = '''
 RETURN = '''
 instances:
     description: a list of ec2 instances
-    returned: always
+    returned: when wait == true
     type: complex
     contains:
         ami_launch_index:
@@ -1532,6 +1532,12 @@ def ensure_present(existing_matches, changed, ec2, state):
                 except botocore.exceptions.ClientError as e:
                     module.fail_json_aws(e, msg="Could not apply change {0} to new instance.".format(str(c)))
 
+        if not module.params.get('wait'):
+            module.exit_json(
+                changed=True,
+                instance_ids=instance_ids,
+                spec=instance_spec,
+            )
         await_instances(instance_ids)
         instances = ec2.get_paginator('describe_instances').paginate(
             InstanceIds=instance_ids
