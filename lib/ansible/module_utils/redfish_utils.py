@@ -593,26 +593,25 @@ class RedfishUtils(object):
         if 'Boot' not in data or 'BootOrder' not in data['Boot']:
             return {'ret': False, 'msg': "Key BootOrder not found"}
 
-        if 'Boot' not in data or 'BootOptions' not in data['Boot']:
-            return {'ret': False, 'msg': "Key BootOptions not found"}
+        boot = data['Boot']
+        boot_order = boot['BootOrder']
 
-        if '@odata.id' not in data['Boot']['BootOptions']:
-            return {'ret': False, 'msg': "@odata.id not found in BootOptions"}
+        # Retrieve BootOptions if present
+        if 'BootOptions' in boot and '@odata.id' in boot['BootOptions']:
+            boot_options_uri = boot['BootOptions']["@odata.id"]
+            # Get BootOptions resource
+            response = self.get_request(self.root_uri + boot_options_uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
 
-        boot_options_uri = data['Boot']['BootOptions']["@odata.id"]
-        boot_order = data['Boot']['BootOrder']
-
-        # Get BootOptions resource
-        response = self.get_request(self.root_uri + boot_options_uri)
-        if response['ret'] is False:
-            return response
-        data = response['data']
-
-        # Retrieve Members array
-        if 'Members' not in data:
-            return {'ret': False,
-                    'msg': "Members not found in BootOptionsCollection"}
-        members = data['Members']
+            # Retrieve Members array
+            if 'Members' not in data:
+                return {'ret': False,
+                        'msg': "Members not found in BootOptionsCollection"}
+            members = data['Members']
+        else:
+            members = []
 
         # Build dict of BootOptions keyed by BootOptionReference
         boot_options_dict = {}
@@ -641,7 +640,8 @@ class RedfishUtils(object):
         # Build boot device list
         boot_device_list = []
         for ref in boot_order:
-            boot_device_list.append(boot_options_dict.get(ref))
+            boot_device_list.append(
+                boot_options_dict.get(ref, {'BootOptionReference': ref}))
 
         result["entries"] = boot_device_list
         return result
