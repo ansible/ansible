@@ -75,53 +75,46 @@ RETURN = '''
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.serviceguard import parse_cluster_state
 
+
 def start_node(module):
     state = parse_cluster_state(module)
 
-    module.fail_json(msg=state)
-
     node = module.params['name']
-    node_state = state['nodes'][node].state
+    node_status = state['nodes'][node]['status']
 
     # Start if system is halted and started is requested
-    if node_state == 'halted':
-        (rc, out) = module.run_command([module.params['path'] + '/cmrunnode', node])
+    if node_status == 'down':
+        (rc, out, err) = module.run_command([module.params['path'] + '/cmrunnode', node])
 
         if rc != 0:
-            module.fail_json(msg="Node could not be started: %s" % out)
-    
-    state = parse_cluster_state(module)
-    state['changed'] = True
+            module.fail_json(msg="Node could not be started: %s%s" % (out, err))
 
-    return state
+    return True
 
 
 def stop_node(module):
     state = parse_cluster_state(module)
 
     node = module.params['name']
-    node_state = state['nodes'][node].state
-    options = []
+    node_status = state['nodes'][node]['status']
+    options = ""
 
     if module.params['force']:
-        options.append('-f')
+        options = "-f"
 
-    if node_state == 'running':
-        (rc, out) = module.run_command([module.params['path'] + '/cmhaltnode', options, node])
+    if node_status == 'running':
+        (rc, out, err) = module.run_command([module.params['path'] + '/cmhaltnode', options, node])
 
         if rc != 0:
-            module.fail_json(msg="Node could not be stopped: %s" % out)
-    
-    state = parse_cluster_state(module)
-    state['changed'] = True
+            module.fail_json(msg="Node could not be stopped: %s%s" % (out, err))
 
-    return state
+    return True
 
 
 def main():
     module_args = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', required=True, choices=['started','stopped']),
+        state=dict(type='str', required=True, choices=['started', 'stopped']),
         path=dict(type='str', required=False, default='/usr/local/cmcluster/bin')
     )
 
@@ -130,12 +123,22 @@ def main():
         supports_check_mode=True
     )
 
+    state = parse_cluster_state(module)
+
     if module.params['state'] == 'started':
-        result = start_node(module)
+        start_node(module)
     elif module.params['state'] == 'stopped':
-        result = stop_node(module) 
+        stop_node(module)
+
+    result = parse_cluster_state(module)
+
+    if state == result:
+        result['changed'] = False
+    else:
+        result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
