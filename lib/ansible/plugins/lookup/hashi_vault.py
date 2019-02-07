@@ -172,7 +172,7 @@ class HashiVault:
                     self.client = hvac.Client(url=self.url, verify=self.verify)
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
-            except AttributeError as e:
+            except AttributeError:
                 raise AnsibleError("Authentication method '%s' not supported."
                                    " Available options are %r" % (self.auth_method, self.avail_auth_method))
         else:
