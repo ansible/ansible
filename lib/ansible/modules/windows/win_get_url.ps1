@@ -63,20 +63,6 @@ Add-CSharpType -AnsibleModule $module -References @'
 '@
 Function Get-Checksum-From-Url {
     param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy, $src_file_url)
-    if ($checksum) {
-        Try {
-            $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
-
-            if ($is_modified_checksum) {
-                return $true
-            }
-        } Catch {
-            $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
-        }
-    }
-
-    $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
-    $webLastMod = $null
 
     $webRequest = [System.Net.WebRequest]::Create($url)
 
@@ -132,8 +118,13 @@ Function Get-Checksum-From-Url {
     } Catch {
         $module.FailJson("Error get HASH data file from '$url'. $($_.Exception.Message)", $_)
     }
-    $module.Result.status_code = [int] $webResponse.StatusCode
-    $module.Result.msg = [string] $webResponse.StatusDescription
+    if ( [bool]([System.Uri]$url).isFile ) {
+        $module.Result.status_code = 200
+        $module.Result.msg = 'OK'
+    } else {
+        $module.Result.status_code = [int] $webResponse.StatusCode
+        $module.Result.msg = [string] $webResponse.StatusDescription
+    }
     $webResponse.Close()
 
     return $hash_from_file
@@ -404,10 +395,10 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 if ($checksum) {
     $checksum_value = $(Parse-Checksum -checksum $checksum).checksum
 
-    if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
+    if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_value).isFile) {
         
         $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
-        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy -src_file_url $url
+                                                -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy -src_file_url $url
         $checksum = $(Parse-Checksum -checksum $checksum).algorithm + ":" + $hash_from_file
     }
 }
