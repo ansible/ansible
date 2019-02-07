@@ -294,7 +294,7 @@ class GitLabHook(object):
         return self.hookObject.delete()
 
 
-def depreaction_warning(module):
+def deprecation_warning(module):
     deprecated_aliases = ['private_token', 'access_token']
 
     module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
@@ -334,7 +334,7 @@ def main():
         supports_check_mode=True,
     )
 
-    depreaction_warning(module)
+    deprecation_warning(module)
 
     gitlab_url = re.sub('/api.*', '', module.params['api_url'])
     validate_certs = module.params['validate_certs']
