@@ -201,23 +201,25 @@ def main():
 
     VROUTER_EXISTS, INTERFACE_EXISTS, NIC_EXISTS = check_cli(module, cli)
 
+    if VROUTER_EXISTS is False:
+        module.fail_json(
+            failed=True,
+            msg='vRouter %s does not exist' % vrouter_name
+        )
+
+    if NIC_EXISTS is False:
+        module.fail_json(
+            failed=True,
+            msg='vRouter with nic %s does not exist' % nic
+        )
+
     cli += ' %s vrouter-name %s ' % (command, vrouter_name)
 
     if command == 'vrouter-interface-ip-add':
-        if VROUTER_EXISTS is False:
-            module.fail_json(
-                failed=True,
-                msg='vRouter %s does not exist' % vrouter_name
-            )
-        if NIC_EXISTS is False:
-            module.fail_json(
-                failed=True,
-                msg='vRouter with nic %s does not exist' % nic
-            )
         if INTERFACE_EXISTS is True:
             module.exit_json(
                 skipped=True,
-                msg='vrouter with interface %s exist' % ip
+                msg='vRouter with interface %s exist' % ip
             )
         cli += ' nic %s ip %s ' % (nic, ip)
 
@@ -229,20 +231,10 @@ def main():
             cli += ' vnet ' + vnet
 
     if command == 'vrouter-interface-ip-remove':
-        if VROUTER_EXISTS is False:
-            module.fail_json(
-                failed=True,
-                msg='vRouter %s does not exist' % vrouter_name
-            )
-        if NIC_EXISTS is False:
-            module.fail_json(
-                failed=True,
-                msg='vRouter with nic %s does not exist' % nic
-            )
         if INTERFACE_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg='vrouter with interface %s doesnt exist' % ip
+                msg='vRouter with interface %s does not exist' % ip
             )
         if nic:
             cli += ' nic %s ' % nic
