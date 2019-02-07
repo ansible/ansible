@@ -100,20 +100,14 @@ def check_cli(module, cli):
     """
     name = module.params['pn_vrouter_name']
     network = module.params['pn_network']
-    VROUTER_EXISTS = ''
 
     show = cli
-    cli += ' vrouter-show name %s ' % name
-    cli += 'format name no-show-headers'
+    cli += ' vrouter-show name %s format name no-show-headers' % name
     rc, out, err = module.run_command(cli, use_unsafe_shell=True)
-    if out:
-        pass
-    else:
-        VROUTER_EXISTS = None
+    VROUTER_EXISTS = '' if out else None
 
     cli = show
-    cli += ' vrouter-bgp-network-show vrouter-name %s ' % name
-    cli += 'network %s format network no-show-headers' % network
+    cli += ' vrouter-bgp-network-show vrouter-name %s network %s format network no-show-headers' % (name, network)
     out = module.run_command(cli, use_unsafe_shell=True)[1]
 
     NETWORK_EXISTS = True if network in out else False
@@ -158,12 +152,13 @@ def main():
 
     NETWORK_EXISTS, VROUTER_EXISTS = check_cli(module, cli)
 
+    if VROUTER_EXISTS is None:
+        module.fail_json(
+            failed=True,
+            msg='vRouter %s does not exists' % vrouter_name
+        )
+
     if command == 'vrouter-bgp-network-add':
-        if VROUTER_EXISTS is None:
-            module.fail_json(
-                failed=True,
-                msg='Vrouter does not exists'
-            )
         if NETWORK_EXISTS is True:
             module.exit_json(
                 skipped=True,
@@ -171,11 +166,6 @@ def main():
             )
 
     if command == 'vrouter-bgp-network-remove':
-        if VROUTER_EXISTS is None:
-            module.fail_json(
-                failed=True,
-                msg='Vrouter does not exists'
-            )
         if NETWORK_EXISTS is False:
             module.exit_json(
                 skipped=True,
