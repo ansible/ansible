@@ -126,19 +126,19 @@ options:
 EXAMPLES = '''
 - name: "Delete Gitlab User"
   gitlab_user:
-    server_url: http://gitlab.example.com
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     validate_certs: False
-    login_token: WnUzDsxjy8230-Dy_k
     username: myusername
     state: absent
   delegate_to: localhost
 
 - name: "Create Gitlab User"
   gitlab_user:
-    server_url: https://gitlab.dj-wasabi.local
+    api_url: https://gitlab.example.com/
     validate_certs: True
-    login_user: dj-wasabi
-    login_password: MySecretPassword
+    api_username: dj-wasabi
+    api_password: "MySecretPassword"
     name: My Name
     username: myusername
     password: mysecretpassword

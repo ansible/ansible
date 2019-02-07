@@ -70,8 +70,8 @@ options:
 EXAMPLES = '''
 - name: "Adding a project deploy key"
   gitlab_deploy_key:
-    server_url: https://gitlab.example.com/api
-    login_token: "{{ access_token }}"
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     project: "my_group/my_project"
     title: "Jenkins CI"
     state: present
@@ -79,8 +79,8 @@ EXAMPLES = '''
 
 - name: "Update the above deploy key to add push access"
   gitlab_deploy_key:
-    server_url: https://gitlab.example.com/api
-    login_token: "{{ access_token }}"
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     project: "my_group/my_project"
     title: "Jenkins CI"
     state: present
@@ -88,8 +88,8 @@ EXAMPLES = '''
 
 - name: "Remove the previous deploy key from the project"
   gitlab_deploy_key:
-    server_url: https://gitlab.example.com/api
-    login_token: "{{ access_token }}"
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     project: "my_group/my_project"
     state: absent
     key: "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9w..."

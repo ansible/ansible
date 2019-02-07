@@ -119,19 +119,19 @@ options:
 EXAMPLES = '''
 - name: Delete Gitlab Project
   gitlab_project:
-    server_url: http://gitlab.example.com
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     validate_certs: False
-    login_token: WnUzDsxjy8230-Dy_k
     name: my_first_project
     state: absent
   delegate_to: localhost
 
 - name: Create Gitlab Project in group Ansible
   gitlab_project:
-    server_url: https://gitlab.example.com
+    api_url: https://gitlab.example.com/
     validate_certs: True
-    login_user: dj-wasabi
-    login_password: MySecretPassword
+    api_username: dj-wasabi
+    api_password: "MySecretPassword"
     name: my_first_project
     group: ansible
     issues_enabled: False

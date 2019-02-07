@@ -111,8 +111,8 @@ options:
 EXAMPLES = '''
 - name: "Register runner"
   gitlab_runner:
-    server_url: "https://gitlab.com/"
-    login_token: 5432632464326432632463246
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     registration_token: 4gfdsg345
     description: Docker Machine t1
     state: present
@@ -123,8 +123,8 @@ EXAMPLES = '''
 
 - name: "Delete runner"
   gitlab_runner:
-    server_url: "https://gitlab.com/"
-    login_token: 5432632464326432632463246
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     description: Docker Machine t1
     state: absent
 '''

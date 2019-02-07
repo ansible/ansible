@@ -112,8 +112,8 @@ options:
 EXAMPLES = '''
 - name: "Adding a project hook"
   gitlab_hooks:
-    server_url: https://gitlab.example.com
-    login_token: "{{ access_token }}"
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     project: "my_group/my_project"
     hook_url: "https://my-ci-server.example.com/gitlab-hook"
     state: present
@@ -124,16 +124,16 @@ EXAMPLES = '''
 
 - name: "Delete the previous hook"
   gitlab_hooks:
-    server_url: https://gitlab.example.com
-    login_token: "{{ access_token }}"
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     project: "my_group/my_project"
     hook_url: "https://my-ci-server.example.com/gitlab-hook"
     state: absent
 
 - name: "Delete a hook by numeric project id"
   gitlab_hooks:
-    server_url: https://gitlab.example.com
-    login_token: "{{ access_token }}"
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     project: 10
     hook_url: "https://my-ci-server.example.com/gitlab-hook"
     state: absent
