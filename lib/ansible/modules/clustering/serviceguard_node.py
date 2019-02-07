@@ -31,6 +31,13 @@ options:
 	choices: ["running","halted"]
         required: false
 	default: running
+    path:
+        description:
+            - Path of the cm* binaries
+        required: false
+        default: /usr/local/cmcluster/bin
+        
+
 
 
 author:
@@ -60,7 +67,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module_args = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, default='started', choices=['started','stopped'])
+        state=dict(type='str', required=False, default='started', choices=['started','stopped']),
+        path=dict(type='str', required=False, default='/usr/local/cmcluster/bin')
     )
 
     module = AnsibleModule(
