@@ -62,7 +62,7 @@ Add-CSharpType -AnsibleModule $module -References @'
     }
 '@
 Function Get-Checksum-From-Url {
-    param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy)
+    param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy, $src_file_url)
     if ($checksum) {
         Try {
             $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
@@ -116,6 +116,16 @@ Function Get-Checksum-From-Url {
          $requestStream = $webResponse.GetResponseStream()
          $readStream = New-Object System.IO.StreamReader $requestStream
          $web_checksum=$readStream.ReadToEnd()
+
+         $basename = Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf
+         $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+" + $basename + "\s*$")
+        
+         if (-not $web_checksum_str) { 
+             throw "Checksum record not found for file name '$basename' in file from url: '$url'" 
+         }
+
+        $web_checksum_str_splitted = $web_checksum_str[0].ToString().split(" ", 2)
+        $hash_from_file = $web_checksum_str_splitted[0].Trim()
     } Catch [System.Net.WebException] {
         $module.Result.status_code = [int] $_.Exception.Response.StatusCode
         $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
@@ -126,7 +136,7 @@ Function Get-Checksum-From-Url {
     $module.Result.msg = [string] $webResponse.StatusDescription
     $webResponse.Close()
 
-    return $web_checksum
+    return $hash_from_file
 }
 
 Function CheckModified-File {
@@ -396,8 +406,9 @@ if ($checksum) {
 
     if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
         
-        $checksum = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
-                                          -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
+        -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy -src_file_url $url
+        $checksum = $(Parse-Checksum -checksum $checksum).algorithm + ":" + $hash_from_file
     }
 }
 
