@@ -378,6 +378,17 @@ releases:
     - win_copy-empty-dir.yaml
     - win_lineinfile-output.yaml
     release_date: '2019-01-17'
+  2.6.13:
+    codename: Heartbreaker
+    fragments:
+    - fix_pull_extra.yml
+    - junos_commit_error_fix.yaml
+    - ssh_connection_invalid_password.yaml
+    - systemd-warn-on-chroot.yaml
+    - v2.6.13_summary.yaml
+    - vmware_guest-documentation_fix.yaml
+    - win_power_plan-windows10.yaml
+    release_date: '2019-02-07'
   2.6.2:
     codename: Heartbreaker
     fragments:

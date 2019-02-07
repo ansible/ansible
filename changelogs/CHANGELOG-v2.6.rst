@@ -2,6 +2,30 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.13
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-02-07
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fixed typo in vmware documentation fragment. Changed "supported added" to "support added".
+
+Bugfixes
+--------
+
+- Fix mandatory statement error for junos modules (https://github.com/ansible/ansible/pull/50138)
+- fix ansible-pull hanlding of extra args, complex quoting is needed for inline JSON
+- ssh connection - do not retry with invalid credentials to prevent account lockout (https://github.com/ansible/ansible/issues/48422)
+- systemd - warn when exeuting in a chroot environment rather than failing (https://github.com/ansible/ansible/pull/43904)
+- win_power_plan - Fix issue where win_power_plan failed on newer Windows 10 builds - https://github.com/ansible/ansible/issues/43827
+
 v2.6.12
 =======
 
