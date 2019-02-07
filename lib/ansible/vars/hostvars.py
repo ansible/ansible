@@ -21,7 +21,6 @@ __metaclass__ = type
 
 from jinja2.runtime import Undefined
 
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.template import Templar
 
@@ -44,11 +43,6 @@ STATIC_VARS = [
     'ungrouped',
 ]
 
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
-
 __all__ = ['HostVars', 'HostVarsVars']
 
 
@@ -62,7 +56,6 @@ class HostVars(Mapping):
         self._loader = loader
         self._variable_manager = variable_manager
         variable_manager._hostvars = self
-        self._cached_result = dict()
 
     def set_variable_manager(self, variable_manager):
         self._variable_manager = variable_manager
