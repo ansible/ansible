@@ -35,6 +35,11 @@ options:
             - Path of the cm* binaries
         required: false
         default: /usr/local/cmcluster/bin
+    force:
+        description:
+            - Forces the shutdown of the node, even if packages are running on it
+        required: false
+        default: false
         
 
 
@@ -56,6 +61,12 @@ EXAMPLES = '''
     name: node01
     state: stopped
 
+# Stops the node forcefully
+- name: Stops node01
+  serviceguard_node:
+    name: node01
+    state: stopped
+    force: true
 '''
 
 RETURN = '''
@@ -66,6 +77,8 @@ from ansible.module_utils.serviceguard import parse_cluster_state
 
 def start_node(module):
     state = parse_cluster_state(module)
+
+    module.fail_json(msg=state)
 
     node = module.params['name']
     node_state = state['nodes'][node].state
@@ -78,7 +91,7 @@ def start_node(module):
             module.fail_json(msg="Node could not be started: %s" % out)
     
     state = parse_cluster_state(module)
-    state.changed = True
+    state['changed'] = True
 
     return state
 
@@ -88,15 +101,19 @@ def stop_node(module):
 
     node = module.params['name']
     node_state = state['nodes'][node].state
+    options = []
+
+    if module.params['force']:
+        options.append('-f')
 
     if node_state == 'running':
-        (rc, out) = module.run_command([module.params['path'] + '/cmhaltnode', node])
+        (rc, out) = module.run_command([module.params['path'] + '/cmhaltnode', options, node])
 
         if rc != 0:
             module.fail_json(msg="Node could not be stopped: %s" % out)
     
     state = parse_cluster_state(module)
-    state.changed = True
+    state['changed'] = True
 
     return state
 

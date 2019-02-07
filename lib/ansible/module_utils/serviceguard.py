@@ -12,11 +12,10 @@ def parse_cluster_state(module):
   if rc != 0:
     module.fail_json(msg = "Failure %d running cmviewcl: %s" % (rc, err))
  
- 
   for line in out.split('\n'):
  
     normExec = re.search(r'(^[0-9a-z_]+)=([0-9a-zA-Z_]+)$', line)
-    subExec = re.search(r'(\w+):(\w+)\|(.*\|)*([0-9a-zA-Z_]+)=(.+)$', line)
+    subExec = re.search(r'(\w+):([0-9a-z-_]+)\|(.*\|)*([0-9a-zA-Z_]+)=(.+)$', line)
  
     if normExec is not None:
       retval[normExec.group(1)] = normExec.group(2)
