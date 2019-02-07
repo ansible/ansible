@@ -323,7 +323,7 @@ def main():
     print('VERSION ', ver)
     if PG_REQ_VER > float(ver):
         module.warn("PostgreSQL is %s version but %s "
-                    "or later is required %s" % (ver, PG_REQ_VER))
+                    "or later is required" % (ver, PG_REQ_VER))
         kw = dict(
             changed=False,
             name=name,
