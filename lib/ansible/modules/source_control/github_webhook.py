@@ -135,13 +135,15 @@ hook_id:
 
 import traceback
 
+GITHUB_IMP_ERR = None
 try:
     import github
     HAS_GITHUB = True
 except ImportError:
+    GITHUB_IMP_ERR = traceback.format_exc()
     HAS_GITHUB = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -219,7 +221,8 @@ def main():
     )
 
     if not HAS_GITHUB:
-        module.fail_json(msg="PyGithub required for this module")
+        module.fail_json(msg=missing_required_lib('PyGithub'),
+                         exception=GITHUB_IMP_ERR)
 
     try:
         github_conn = github.Github(
