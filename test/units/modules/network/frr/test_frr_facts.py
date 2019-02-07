@@ -50,6 +50,7 @@ class TestFrrFactsModule(TestFrrModule):
     def tearDown(self):
         super(TestFrrFactsModule, self).tearDown()
         self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
         def load_from_file(*args, **kwargs):

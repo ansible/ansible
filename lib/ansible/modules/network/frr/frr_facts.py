@@ -130,6 +130,7 @@ class FactsBase(object):
         self.module = module
         self.facts = dict()
         self.responses = None
+        self._capabilities = get_capabilities(self.module)
 
     def populate(self):
         self.responses = run_commands(self.module, commands=self.COMMANDS, check_rc=False)
@@ -149,7 +150,7 @@ class Default(FactsBase):
     def platform_facts(self):
         platform_facts = {}
 
-        resp = get_capabilities(self.module)
+        resp = self._capabilities
         device_info = resp['device_info']
 
         platform_facts['system'] = device_info['network_os']
@@ -256,7 +257,7 @@ class Interfaces(FactsBase):
     COMMANDS = ['show interface']
 
     def populate(self):
-        ldp_supported = get_capabilities(self.module)['supported_protocols']['ldp']
+        ldp_supported = self._capabilities['supported_protocols']['ldp']
 
         if ldp_supported:
             self.COMMANDS.append('show mpls ldp discovery')
@@ -382,15 +383,12 @@ class Interfaces(FactsBase):
         for x in entries:
             if x.startswith('AF'):
                 continue
-            match = re.search(r'(\S+)(?:\s*)(\S+)(?:\s*)(\S+)(?:\s*)(\S+)(?:\s*)(\S+)', x, re.M)
-            if match:
-                source = match.group(4)
-                neighbor = match.group(2)
-                facts[source] = []
-                ldp = {}
-                ldp['neighbor'] = neighbor
-                ldp['source'] = source
-                facts[source].append(ldp)
+            ldp = {}
+            ldp['neighbor'] = x.split()[1]
+            ldp['source'] = x.split()[3]
+            facts[ldp['source']] = []
+            facts[ldp['source']].append(ldp)
+
         return facts
 
 
