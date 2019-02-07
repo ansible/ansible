@@ -384,11 +384,12 @@ class Interfaces(FactsBase):
             if x.startswith('AF'):
                 continue
             x = x.split()
-            ldp = {}
-            ldp['neighbor'] = x[1]
-            ldp['source'] = x[3]
-            facts[ldp['source']] = []
-            facts[ldp['source']].append(ldp)
+            if len(x) > 0:
+                ldp = {}
+                ldp['neighbor'] = x[1]
+                ldp['source'] = x[3]
+                facts[ldp['source']] = []
+                facts[ldp['source']].append(ldp)
 
         return facts
 
