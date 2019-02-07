@@ -228,10 +228,11 @@ class DistributionFiles:
     def parse_distribution_file_Amazon(self, name, data, path, collected_facts):
         amazon_facts = {}
         if 'Amazon' not in data:
-            # return False  # TODO: remove   # huh?
-            return False, amazon_facts  # TODO: remove
+            return False, amazon_facts
         amazon_facts['distribution'] = 'Amazon'
-        amazon_facts['distribution_version'] = data.split()[-1]
+        version = [n for n in data.split() if n.isdigit()]
+        version = version[0] if version else 'NA'
+        amazon_facts['distribution_version'] = version
         return True, amazon_facts
 
     def parse_distribution_file_OpenWrt(self, name, data, path, collected_facts):
