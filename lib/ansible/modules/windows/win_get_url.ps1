@@ -220,18 +220,18 @@ Function Parse-Checksum {
     return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
 }
 
-Function GetNormalise-Checksum {
-    param($dest, $checksum, $hashAlgorithm = "SHA256")
+Function Get-NormaliseChecksum {
+    param($dest, $checksum = $null, $hashAlgorithm = "SHA256")
     if($checksum) {
         $hashAlgorithm = $(Parse-Checksum -checksum $checksum).algorithm
     }
-    $tmpHashFromFile = Get-FileHash -Path $dest -Algorithm $hashAlgorithm
-    return [string]$tmpHashFromFile.Hash.ToLower()
+    $destHashFile = Get-FileHash -Path $dest -Algorithm $hashAlgorithm
+    return [string]$destHashFile.Hash.ToLower()
 }
 
 Function CheckModifiedChecksum-File {
     param($dest, $checksum)
-    $normaliseHashDest = GetNormalise-Checksum -dest $dest -checksum $checksum
+    $normaliseHashDest = Get-NormaliseChecksum -dest $dest -checksum $checksum
     $ChecksumSrc = $(Parse-Checksum -checksum $checksum).checksum
     return [bool]($normaliseHashDest -ne $ChecksumSrc)
 }
@@ -254,17 +254,7 @@ Function Download-File {
             $checksum_parameter_splited = Parse-Checksum -checksum $checksum
 
             $checksum_algorithm = $checksum_parameter_splited.algorithm
-            $checksum_value = $checksum_parameter_splited.checksum
-
-            # if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1)) {
-            #     $checksum_url = $checksum_value
-            #     # TBD
-            #     $web_request = Invoke-WebRequest -Uri $checksum_url
-            #     $checksum_value = $web_request.Content
-            #     # $checksum_value = $checksum_value -replace '\W+', ''
-            # }
-
-            $checksum_value = $checksum_value.ToLower()
+            $checksum_value = $checksum_parameter_splited.checksum.ToLower()
         }
         Catch {
             $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
@@ -303,8 +293,9 @@ Function Download-File {
 
             # Checksum verification for downloaded file
             if ($checksum) {
-                $hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
-                $normaliseHashDest = $hashFromFile.Hash.ToLower()
+                #$hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
+                #$normaliseHashDest = $hashFromFile.Hash.ToLower()
+                $normaliseHashDest = Get-NormaliseChecksum -dest $dest -hashAlgorithm $checksum_algorithm
                 # Check both hashes are the same
                 if ($normaliseHashDest -ne $checksum_value) {
                     Remove-Item -Path $dest
@@ -395,7 +386,8 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 if ($checksum) {
     $checksum_value = $(Parse-Checksum -checksum $checksum).checksum
 
-    if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or $checksum_value.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_value).isFile) {
+    if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or `
+        $checksum_value.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_value).isFile) {
         
         $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
                                                 -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy -src_file_url $url
@@ -423,7 +415,7 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
 Try {
     if(-not $module.Result.checksum_dest) {
-        $module.Result.checksum_dest = GetNormalise-Checksum -dest $dest -checksum $checksum
+        $module.Result.checksum_dest = Get-NormaliseChecksum -dest $dest -checksum $checksum
     }
 } Catch {
     $module.Result.checksum_dest = $null
