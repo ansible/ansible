@@ -1,0 +1,3 @@
+---
+bugfixes:
+    - ansible.module_utils.basic - fix handling of md5 in algorithms tuple for FIPS compatibility (https://github.com/ansible/ansible/issues/51355)
