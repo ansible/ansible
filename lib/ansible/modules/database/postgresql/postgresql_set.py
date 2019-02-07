@@ -71,7 +71,6 @@ options:
   login_password:
     description:
       - Password used to authenticate with PostgreSQL.
-    type: str
   login_host:
     description:
       - Host running PostgreSQL.
@@ -250,7 +249,7 @@ def main():
     ))
     # This module doesn't support check mode
     # because ALTER SYSTEM SET command can't be used
-    # in transactions https://www.postgresql.org/docs/current/sql-altersystem.html.
+    # in transaction mode https://www.postgresql.org/docs/current/sql-altersystem.html.
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=False
@@ -292,7 +291,7 @@ def main():
         "ssl_rootcert": "sslrootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
-              if k in params_map and v != "" and v)
+              if k in params_map and v != '' and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
@@ -346,16 +345,12 @@ def main():
     restart_required = False
     changed = False
     kw['name'] = name
-    kw['restart_required'] = restart_required
-    kw['result'] = 'nothing to change'
+    kw['restart_required'] = False
 
     # Get info about param state:
     res = param_get(cursor, module, name)
     current_value = res[0][0]
     raw_val = res[1][0][1]
-    unit = res[1][0][2]
-    if unit is None:
-        unit = ''
     boot_val = res[1][0][4]
     context = res[1][0][3]
 
@@ -370,7 +365,7 @@ def main():
         restart_required = True
 
     # Set param:
-    if value is not None and value != current_value:
+    if value and value != current_value:
         changed = param_set(cursor, module, name, value)
         kw['prev_val'] = current_value
         kw['cur_val'] = value

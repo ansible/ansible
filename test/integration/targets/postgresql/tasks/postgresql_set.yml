@@ -56,8 +56,7 @@
   become: yes
   postgresql_set:
     name: work_mem
-    value: 12MB
-  register: result
+    value: 14MB
   ignore_errors: yes
 
 - name: postgresql_set - set work_mem to initial state (restart is not required)
