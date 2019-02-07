@@ -170,10 +170,10 @@ files:
   $modules/commands/raw.py: $team_ansible
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
-  $modules/crypto/:
-    maintainers: Spredzy
-    notified: felixfontein
-  $modules/crypto/acme/: resmo felixfontein
+  $modules/crypto/: &crypto
+    keywords: [ letsencrypt, lets encrypt ]
+    labels: crypto
+    maintainers: $team_crypto
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
@@ -576,9 +576,7 @@ files:
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
-  $module_utils/crypto.py:
-    maintainers: Spredzy
-    notified: felixfontein
+  $module_utils/crypto.py: *crypto
   $module_utils/csharp: &windows_core
     labels: windows
     maintainers: $team_windows_core
@@ -1335,6 +1333,7 @@ macros:
   team_bsd: AMDmi3 bcoca dagwieers jasperla JoergFiedler mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
+  team_crypto: felixfontein resmo spredzy
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_digital_ocean: aluvenko, BondAnthony, mgregson
