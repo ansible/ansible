@@ -129,16 +129,12 @@ Function Get-Checksum-From-Url {
     return $web_checksum
 }
 
-
 Function CheckModified-File {
     param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
     if ($checksum) {
         Try {
             $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
-
-            if ($is_modified_checksum) {
-                return $true
-            }
+            return $is_modified_checksum
         } Catch {
             $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
         }
@@ -147,52 +143,63 @@ Function CheckModified-File {
     $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
     $webLastMod = $null
 
-    $webRequest = [System.Net.WebRequest]::Create($url)
+    $srcUri = [System.Uri]$url
 
-    foreach ($header in $headers.GetEnumerator()) {
-        $webRequest.Headers.Add($header.Name, $header.Value)
-    }
+    if([bool]$srcUri.isFile) {
+        $webLastMod = ([System.IO.FileInfo]($srcUri.AbsolutePath)).LastWriteTimeUtc;
 
-    if ($timeout) {
-        $webRequest.Timeout = $timeout * 1000
-    }
-
-    if (-not $use_proxy) {
-        # Ignore the system proxy settings
-        $webRequest.Proxy = $null
-    } elseif ($proxy) {
-        $webRequest.Proxy = $proxy
-    }
-
-    if ($credentials) {
-        if ($force_basic_auth) {
-            $webRequest.Headers.Add("Authorization", "Basic $credentials")
-        } else {
-            $webRequest.Credentials = $credentials
-        }
-    }
-
-    if ($webRequest -is [System.Net.FtpWebRequest]) {
-        $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+        $module.Result.status_code = 200
+        $module.Result.msg = 'OK'
     } else {
-        $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
+
+        $webRequest = [System.Net.WebRequest]::Create($url)
+
+        foreach ($header in $headers.GetEnumerator()) {
+            $webRequest.Headers.Add($header.Name, $header.Value)
+        }
+
+        if ($timeout) {
+            $webRequest.Timeout = $timeout * 1000
+        }
+
+        if (-not $use_proxy) {
+            # Ignore the system proxy settings
+            $webRequest.Proxy = $null
+        } elseif ($proxy) {
+            $webRequest.Proxy = $proxy
+        }
+
+        if ($credentials) {
+            if ($force_basic_auth) {
+                $webRequest.Headers.Add("Authorization", "Basic $credentials")
+            } else {
+                $webRequest.Credentials = $credentials
+            }
+        }
+
+        if ($webRequest -is [System.Net.FtpWebRequest]) {
+            $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+        } else {
+            $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
+        }
+
+        # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
+        Try {
+            $webResponse = $webRequest.GetResponse()
+            $webLastMod = $webResponse.LastModified
+        } Catch [System.Net.WebException] {
+            $module.Result.status_code = [int] $_.Exception.Response.StatusCode
+            $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
+        } Catch {
+            $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
+        }
+        $module.Result.status_code = [int] $webResponse.StatusCode
+        $module.Result.msg = [string] $webResponse.StatusDescription
+        $webResponse.Close()
     }
 
-    # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
-    Try {
-        $webResponse = $webRequest.GetResponse()
-        $webLastMod = $webResponse.LastModified
-    } Catch [System.Net.WebException] {
-        $module.Result.status_code = [int] $_.Exception.Response.StatusCode
-        $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
-    } Catch {
-        $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
-    }
-    $module.Result.status_code = [int] $webResponse.StatusCode
-    $module.Result.msg = [string] $webResponse.StatusDescription
-    $webResponse.Close()
-
-    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -lt $fileLastMod)) {
+    #$module.Warn(("DEBUG: dst={0} src={1}" -f $fileLastMod, $webLastMod))
+    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
         return $false
     } else {
         return $true
@@ -213,19 +220,19 @@ Function Parse-Checksum {
 }
 
 Function GetNormalise-Checksum {
-    param($dest, $checksum)
+    param($dest, $checksum, $hashAlgorithm = "SHA256")
     if($checksum) {
-        $tmpHashFromFile = Get-FileHash -Path $dest -Algorithm $(Parse-Checksum -checksum $checksum).algorithm
-        return [string]$tmpHashFromFile.Hash.ToLower()
+        $hashAlgorithm = $(Parse-Checksum -checksum $checksum).algorithm
     }
-    return $null
+    $tmpHashFromFile = Get-FileHash -Path $dest -Algorithm $hashAlgorithm
+    return [string]$tmpHashFromFile.Hash.ToLower()
 }
 
 Function CheckModifiedChecksum-File {
     param($dest, $checksum)
     $normaliseHashDest = GetNormalise-Checksum -dest $dest -checksum $checksum
-
-    return [bool]($normaliseHashDest -ne $(Parse-Checksum -checksum $checksum).checksum)
+    $ChecksumSrc = $(Parse-Checksum -checksum $checksum).checksum
+    return [bool]($normaliseHashDest -ne $ChecksumSrc)
 }
 
 Function Download-File {
@@ -410,14 +417,15 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
         Download-File -module $module -url $url -dest $dest -credentials $credentials `
                       -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
     }
-    else {
-        Try {
-            $module.Result.checksum_dest = GetNormalise-Checksum -dest $dest -checksum $checksum
+}
 
-        } Catch {
-            $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
-        }
+Try {
+    if(-not $module.Result.checksum_dest) {
+        $module.Result.checksum_dest = GetNormalise-Checksum -dest $dest -checksum $checksum
     }
+} Catch {
+    $module.Result.checksum_dest = $null
+    $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
 }
 
 $module.ExitJson()
