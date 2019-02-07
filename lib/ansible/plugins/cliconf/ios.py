@@ -23,7 +23,7 @@ DOCUMENTATION = """
 ---
 author: Ansible Networking Team
 cliconf: ios
-short_description: Use ios cliconf to run command on ios platform
+short_description: Use ios cliconf to run command on Cisco IOS platform
 description:
   - This ios plugin provides low level abstraction apis for
     sending and receiving CLI commands from Cisco IOS network devices.

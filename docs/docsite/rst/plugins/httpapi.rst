@@ -7,7 +7,7 @@ Httpapi Plugins
    :local:
    :depth: 2
 
-Httpapi plugins inform Ansible how to interact with a remote device's HTTP-based API and execute tasks on the
+Httpapi plugins tell Ansible how to interact with a remote device's HTTP-based API and execute tasks on the
 device.
 
 Each plugin represents a particular dialect of API. Some are platform-specific (Arista eAPI, Cisco NXAPI), while
@@ -25,7 +25,7 @@ You can extend Ansible to support other APIs by dropping a custom plugin into th
 Using httpapi plugins
 ------------------------
 
-The httpapi plugin to use is determined automatically from the ansible_network_os variable.
+The httpapi plugin to use is determined automatically from the ``ansible_network_os`` variable.
 
 Most httpapi plugins can operate without configuration. Additional options may be defined by each plugin.
 

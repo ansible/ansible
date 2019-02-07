@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: voss
-short_description: Use voss cliconf to run command on voss platform
+short_description: Use voss cliconf to run command on Extreme VOSS platform
 description:
   - This voss plugin provides low level abstraction apis for
-    sending and receiving CLI commands from voss network devices.
+    sending and receiving CLI commands from Extreme VOSS network devices.
 version_added: "2.7"
 """
 

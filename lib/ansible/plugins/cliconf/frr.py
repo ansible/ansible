@@ -26,7 +26,7 @@ cliconf: frr
 short_description: Use frr cliconf to run command on Free Range Routing platform
 description:
   - This frr plugin provides low level abstraction apis for
-    sending and receiving CLI commands from frr network devices.
+    sending and receiving CLI commands from FRR network devices.
 version_added: "2.8"
 """
 

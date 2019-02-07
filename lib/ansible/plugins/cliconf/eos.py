@@ -23,7 +23,7 @@ DOCUMENTATION = """
 ---
 author: Ansible Networking Team
 cliconf: eos
-short_description: Use eos cliconf to run command on eos platform
+short_description: Use eos cliconf to run command on Arista EOS platform
 description:
   - This eos plugin provides low level abstraction apis for
     sending and receiving CLI commands from Arista EOS network devices.

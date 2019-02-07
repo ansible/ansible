@@ -23,7 +23,7 @@ DOCUMENTATION = """
 ---
 author: Ansible Networking Team
 cliconf: nxos
-short_description: Use nxos cliconf to run command on nxos platform
+short_description: Use nxos cliconf to run command on Cisco NX-OS platform
 description:
   - This nxos plugin provides low level abstraction apis for
     sending and receiving CLI commands from Cicso NX-OS network devices.

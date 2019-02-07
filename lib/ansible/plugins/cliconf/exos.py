@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: exos
-short_description: Use exos cliconf to run command on exos platform
+short_description: Use exos cliconf to run command on Extreme EXOS platform
 description:
   - This exos plugin provides low level abstraction apis for
-    sending and receiving CLI commands from exos network devices.
+    sending and receiving CLI commands from Extreme EXOS network devices.
 version_added: "2.6"
 """
 

@@ -8,7 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: edgeos
-short_description: Use edgeos cliconf to run command on edgeos platform
+short_description: Use edgeos cliconf to run command on EdgeOS platform
 description:
   - This edgeos plugin provides low level abstraction apis for
     sending and receiving CLI commands from Ubiquiti EdgeOS network devices.

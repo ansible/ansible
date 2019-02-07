@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: nos
-short_description: Use nos cliconf to run command on nos platform
+short_description: Use nos cliconf to run command on Extreme NOS platform
 description:
   - This nos plugin provides low level abstraction apis for
-    sending and receiving CLI commands from nos network devices.
+    sending and receiving CLI commands from Extreme NOS network devices.
 version_added: "2.7"
 """
 

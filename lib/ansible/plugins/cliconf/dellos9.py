@@ -24,10 +24,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: dellos9
-short_description: Use dellos9 cliconf to run command on dellos9 platform
+short_description: Use dellos9 cliconf to run command on Dell OS9 platform
 description:
   - This dellos9 plugin provides low level abstraction apis for
-    sending and receiving CLI commands from dellos9 network devices.
+    sending and receiving CLI commands from Dell OS9 network devices.
 version_added: 2.5
 """
 

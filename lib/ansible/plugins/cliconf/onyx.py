@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: onyx
-short_description: Use onyx cliconf to run command on onyx platform
+short_description: Use onyx cliconf to run command on Mellanox ONYX platform
 description:
   - This onyx plugin provides low level abstraction apis for
-    sending and receiving CLI commands from onyx network devices.
+    sending and receiving CLI commands from Mellanox ONYX network devices.
 version_added: "2.5"
 """
 

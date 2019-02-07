@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: ironware
-short_description: Use ironware cliconf to run command on ironware platform
+short_description: Use ironware cliconf to run command on Extreme Ironware platform
 description:
   - This ironware plugin provides low level abstraction apis for
-    sending and receiving CLI commands from ironware network devices.
+    sending and receiving CLI commands from Extreme Ironware network devices.
 version_added: "2.5"
 """
 

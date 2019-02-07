@@ -7,11 +7,11 @@ Cliconf Plugins
    :local:
    :depth: 2
 
-Cliconf plugins are abstactions over the cli interface to network devices. They provide a standard interface
-for Ansible to execute tasks on them.
+Cliconf plugins are abstactions over the CLI interface to network devices. They provide a standard interface
+for Ansible to execute tasks on those network devices.
 
 These plugins generally correspond one-to-one to network device platforms. The appropriate cliconf plugin will
-thus be automatically loaded from the network_os variable.
+thus be automatically loaded based on the ``ansible_network_os`` variable.
 
 .. _enabling_cliconf:
 
@@ -25,10 +25,10 @@ You can extend Ansible to support other network devices by dropping a custom plu
 Using cliconf plugins
 ------------------------
 
-The cliconf plugin to use is determined automatically from the ansible_network_os variable. There should be no reason to override this functionality
+The cliconf plugin to use is determined automatically from the ``ansible_network_os`` variable. There should be no reason to override this functionality.
 
-Most cliconf plugins can operate without configuration. A few have additional options that can be set to imact how
-tasks are translated into cli commands.
+Most cliconf plugins can operate without configuration. A few have additional options that can be set to impact how
+tasks are translated into CLI commands.
 
 Plugins are self-documenting. Each plugin should document its configuration options.
 

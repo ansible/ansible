@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: aruba
-short_description: Use aruba cliconf to run command on aruba platform
+short_description: Use aruba cliconf to run command on Aruba platform
 description:
   - This aruba plugin provides low level abstraction apis for
-    sending and receiving CLI commands from aruba network devices.
+    sending and receiving CLI commands from Aruba network devices.
 version_added: 2.4
 """
 

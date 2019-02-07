@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: routeros
-short_description: Use roteros cliconf to run command on roteros platform
+short_description: Use routeros cliconf to run command on MikroTik RouterOS platform
 description:
   - This routeros plugin provides low level abstraction apis for
-    sending and receiving CLI commands from routeros network devices.
+    sending and receiving CLI commands from MikroTik RouterOS network devices.
 version_added: "2.7"
 """
 

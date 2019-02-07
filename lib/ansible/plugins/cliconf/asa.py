@@ -22,10 +22,10 @@ __metaclass__ = type
 DOCUMENTATION = """
 ---
 cliconf: asa
-short_description: Use asa cliconf to run command on asa platform
+short_description: Use asa cliconf to run command on Cisco ASA platform
 description:
   - This asa plugin provides low level abstraction apis for
-    sending and receiving CLI commands from asa network devices.
+    sending and receiving CLI commands from Cisco ASA network devices.
 version_added: 2.4
 """
 
