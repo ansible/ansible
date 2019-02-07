@@ -1252,9 +1252,40 @@ TESTSETS = [
         "neon"
     ],
     "input": {
-        "/etc/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.14\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.14\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",
-        "/usr/lib/os-release": "NAME=\"KDE neon\"\nVERSION=\"5.14\"\nID=neon\nID_LIKE=\"ubuntu debian\"\nPRETTY_NAME=\"KDE neon User Edition 5.14\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"http://neon.kde.org/\"\nSUPPORT_URL=\"http://neon.kde.org/\"\nBUG_REPORT_URL=\"http://bugs.kde.org/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",
-        "/etc/lsb-release": "DISTRIB_ID=neon\nDISTRIB_RELEASE=18.04\nDISTRIB_CODENAME=bionic\nDISTRIB_DESCRIPTION=\"KDE neon User Edition 5.14\"\n"
+        "/etc/os-release": '''
+NAME="KDE neon"
+VERSION="5.14"
+ID=neon
+ID_LIKE="ubuntu debian"
+PRETTY_NAME="KDE neon User Edition 5.14"
+VERSION_ID="18.04"
+HOME_URL="http://neon.kde.org/"
+SUPPORT_URL="http://neon.kde.org/"
+BUG_REPORT_URL="http://bugs.kde.org/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=bionic
+UBUNTU_CODENAME=bionic
+''',
+        "/usr/lib/os-release": '''
+NAME="KDE neon"
+VERSION="5.14"
+ID=neon
+ID_LIKE="ubuntu debian"
+PRETTY_NAME="KDE neon User Edition 5.14"
+VERSION_ID="18.04"
+HOME_URL="http://neon.kde.org/"
+SUPPORT_URL="http://neon.kde.org/"
+BUG_REPORT_URL="http://bugs.kde.org/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=bionic
+UBUNTU_CODENAME=bionic
+''',
+        "/etc/lsb-release": '''
+DISTRIB_ID=neon
+DISTRIB_RELEASE=18.04
+DISTRIB_CODENAME=bionic
+DISTRIB_DESCRIPTION="KDE neon User Edition 5.14"
+'''
     },
     "name": "KDE neon",
     "result": {
