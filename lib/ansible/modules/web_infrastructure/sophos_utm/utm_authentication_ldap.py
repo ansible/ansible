@@ -36,12 +36,6 @@ options:
     backend:
         description:
             - The backend to use
-        choices:
-            - 'edirectory'
-            - 'adirectory'
-            - 'ldap'
-            - 'radius'
-            - 'tacacs'
         required: False
         type: str
     base_dn:
@@ -219,7 +213,7 @@ def main():
     module = UTMModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
-            backend=dict(type='str', required=False, default="", choices=['edirectory', 'adirectory', 'ldap', 'radius', 'tacacs']),
+            backend=dict(type='str', required=False, default=""),
             base_dn=dict(type='str', required=True),
             bind_dn=dict(type='str', required=True),
             bind_pw=dict(type='str', required=True),
