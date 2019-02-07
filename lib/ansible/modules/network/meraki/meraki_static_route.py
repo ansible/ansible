@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
+# Copyright: (c) 2018, 2019 Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,44 +24,85 @@ description:
 options:
     auth_key:
         description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        - Authentication key provided by the dashboard.
+        - Required if environmental variable MERAKI_KEY is not set.
+        type: str
     state:
         description:
         - Create or modify an organization.
-        choices: [absent, present, query]
+        choices: [ absent, query, present ]
         default: present
+        type: str
     net_name:
         description:
         - Name of a network.
+        type: str
     net_id:
         description:
         - ID number of a network.
+        type: str
     org_name:
         description:
         - Name of organization associated to a network.
+        type: str
     org_id:
         description:
         - ID of organization associated to a network.
+        type: str
     name:
         description:
         - Descriptive name of the static route.
+        type: str
     subnet:
         description:
         - CIDR notation based subnet for static route.
+        type: str
     gateway_ip:
         description:
         - IP address of the gateway for the subnet.
+        type: str
     route_id:
         description:
         - Unique ID of static route.
+        type: str
     fixed_ip_assignments:
         description:
-        - List of fixed IP assignments for DHCP.
+        - List of fixed MAC to IP bindings for DHCP.
         type: list
+        suboptions:
+            mac:
+                description:
+                - MAC address of endpoint.
+                type: str
+            ip:
+                description:
+                - IP address of endpoint.
+                type: str
+            name:
+                description:
+                - Hostname of endpoint.
+                type: str
     reserved_ip_ranges:
         description:
         - List of IP ranges reserved for static IP assignments.
         type: list
+        suboptions:
+            start:
+                description:
+                - First IP address of reserved range.
+                type: str
+            end:
+                description:
+                - Last IP address of reserved range.
+                type: str
+            comment:
+                description:
+                - Human readable description of reservation range.
+                type: str
+    enabled:
+        description:
+        - Indicates whether static route is enabled within a network.
+        type: bool
 
 
 author:
@@ -70,49 +111,124 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
-- name: List all networks associated to the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-  delegate_to: localhost
-- name: Query network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
-    org_name: YourOrg
-    net_name: MyNet
-  delegate_to: localhost
-- name: Create network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
+- name: Create static_route
+  meraki_static_route:
+    auth_key: abc123
     state: present
     org_name: YourOrg
-    net_name: MyNet
-    type: switch
-    timezone: America/Chicago
-    tags: production, chicago
+    net_name: YourNet
+    name: Test Route
+    subnet: 192.0.1.0/24
+    gateway_ip: 192.168.128.1
+  delegate_to: localhost
+
+- name: Update static route with fixed IP assignment
+  meraki_static_route:
+    auth_key: abc123
+    state: present
+    org_name: YourOrg
+    net_name: YourNet
+    route_id: d6fa4821-1234-4dfa-af6b-ae8b16c20c39
+    fixed_ip_assignments:
+      - aa:bb:cc:dd:ee:ff:
+          ip: 192.0.1.11
+          comment: Server
+  delegate_to: localhost
+
+- name: Query static routes
+  meraki_static_route:
+    auth_key: abc123
+    state: query
+    org_name: YourOrg
+    net_name: YourNet
+  delegate_to: localhost
+
+- name: Delete static routes
+  meraki_static_route:
+    auth_key: abc123
+    state: absent
+    org_name: YourOrg
+    net_name: YourNet
+    route_id: '{{item}}'
   delegate_to: localhost
 '''
 
 RETURN = r'''
 data:
-    description: Information about the created or manipulated object.
-    returned: info
-    type: complex
-    contains:
-      net_id:
-        description: Identification string of network.
-        returned: success
-        type: string
-        sample: N_12345
-      net_name:
-        description: Written name of network.
-        returned: success
-        type: string
-        sample: YourNet
-      name:
-        description: Name of static route.
+  description: Information about the created or manipulated object.
+  returned: info
+  type: complex
+  contains:
+    id:
+      description: Unique identification string assigned to each static route.
+      returned: success
+      type: string
+      sample: d6fa4821-1234-4dfa-af6b-ae8b16c20c39
+    net_id:
+      description: Identification string of network.
+      returned: query or update
+      type: string
+      sample: N_12345
+    name:
+      description: Name of static route.
+      returned: success
+      type: string
+      sample: Data Center static route
+    subnet:
+      description: CIDR notation subnet for static route.
+      returned: success
+      type: string
+      sample: 192.0.1.0/24
+    gatewayIp:
+      description: Next hop IP address.
+      returned: success
+      type: string
+      sample: 192.1.1.1
+    enabled:
+      description: Enabled state of static route.
+      returned: query or update
+      type: bool
+      sample: True
+    reservedIpRanges:
+      description: List of IP address ranges which are reserved for static assignment.
+      returned: query or update
+      type: complex
+      contains:
+        start:
+          description: First address in reservation range, inclusive.
+          returned: query or update
+          type: string
+          sample: 192.0.1.2
+        end:
+          description: Last address in reservation range, inclusive.
+          returned: query or update
+          type: string
+          sample: 192.0.1.10
+        comment:
+          description: Human readable description of range.
+          returned: query or update
+          type: string
+          sample: Server range
+    fixedIpAssignments:
+      description: List of static MAC to IP address bindings.
+      returned: query or update
+      type: complex
+      contains:
+        mac:
+          description: Key is MAC address of endpoint.
+          returned: query or update
+          type: complex
+          contains:
+            ip:
+              description: IP address to be bound to the endpoint.
+              returned: query or update
+              type: string
+              sample: 192.0.1.11
+            name:
+              description: Hostname given to the endpoint.
+              returned: query or update
+              type: string
+              sample: JimLaptop
 '''
 
 import os
@@ -120,6 +236,13 @@ from ansible.module_utils.basic import AnsibleModule, json, env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils._text import to_native
 from ansible.module_utils.network.meraki.meraki import MerakiModule, meraki_argument_spec
+
+
+def fixed_ip_factory(meraki, data):
+    fixed_ips = dict()
+    for item in data:
+        fixed_ips[item['mac']] = {'ip': item['ip'], 'name': item['name']}
+    return fixed_ips
 
 
 def get_static_routes(meraki, net_id):
@@ -139,6 +262,16 @@ def main():
     # define the available arguments/parameters that a user can pass to
     # the module
 
+    fixed_ip_arg_spec = dict(mac=dict(type='str'),
+                             ip=dict(type='str'),
+                             name=dict(type='str'),
+                             )
+
+    reserved_ip_arg_spec = dict(start=dict(type='str'),
+                                end=dict(type='str'),
+                                comment=dict(type='str'),
+                                )
+
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
@@ -146,10 +279,11 @@ def main():
         name=dict(type='str'),
         subnet=dict(type='str'),
         gateway_ip=dict(type='str'),
-        state=dict(type='str', choices=['absent', 'query', 'present'], default='present'),
-        fixed_ip_assignments=dict(type='list'),
-        reserved_ip_ranges=dict(type='list'),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        fixed_ip_assignments=dict(type='list', default=None, elements='dict', options=fixed_ip_arg_spec),
+        reserved_ip_ranges=dict(type='list', default=None, elements='dict', options=reserved_ip_arg_spec),
         route_id=dict(type='str'),
+        enabled=dict(type='bool'),
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -157,7 +291,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
 
     meraki = MerakiModule(module, function='static_route')
@@ -176,17 +310,11 @@ def main():
     meraki.url_catalog['delete'] = delete_urls
 
     if not meraki.params['org_name'] and not meraki.params['org_id']:
-        meraki.fail_json(msg='org_name or org_id parameters are required')
+        meraki.fail_json(msg="Parameters 'org_name' or 'org_id' parameters are required")
     if not meraki.params['net_name'] and not meraki.params['net_id']:
-        meraki.fail_json(msg='net_name or net_id parameters are required')
+        meraki.fail_json(msg="Parameters 'net_name' or 'net_id' parameters are required")
     if meraki.params['net_name'] and meraki.params['net_id']:
-        meraki.fail_json(msg='net_name and net_id are mutually exclusive')
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return meraki.result
+        meraki.fail_json(msg="'net_name' and 'net_id' are mutually exclusive")
 
     # Construct payload
     if meraki.params['state'] == 'present':
@@ -211,25 +339,40 @@ def main():
         else:
             meraki.result['data'] = get_static_routes(meraki, net_id)
     elif meraki.params['state'] == 'present':
-        payload = dict()
-        payload['name'] = meraki.params['name']
-        payload['subnet'] = meraki.params['subnet']
-        payload['gatewayIp'] = meraki.params['gateway_ip']
+        payload = {'name': meraki.params['name'],
+                   'subnet': meraki.params['subnet'],
+                   'gatewayIp': meraki.params['gateway_ip'],
+                   }
         if meraki.params['fixed_ip_assignments'] is not None:
-            payload['fixedIpAssignments'] = meraki.params['fixed_ip_assignments']
+            payload['fixedIpAssignments'] = fixed_ip_factory(meraki,
+                                                             meraki.params['fixed_ip_assignments'])
         if meraki.params['reserved_ip_ranges'] is not None:
-            payload['reserved_ip_ranges'] = meraki.params['reserved_ip_ranges']
+            payload['reservedIpRanges'] = meraki.params['reserved_ip_ranges']
+            # meraki.fail_json(msg="payload", payload=payload)
+        if meraki.params['enabled'] is not None:
+            payload['enabled'] = meraki.params['enabled']
         if meraki.params['route_id']:
             existing_route = get_static_route(meraki, net_id, meraki.params['route_id'])
-            if meraki.is_update_required(existing_route, payload, optional_ignore=['id']):
+            proposed = existing_route.copy()
+            proposed.update(payload)
+            if module.check_mode:
+                meraki.result['data'] = proposed
+                meraki.result['data'].update(payload)
+                meraki.exit_json(**meraki.result)
+            if meraki.is_update_required(existing_route, proposed, optional_ignore=['id']):
                 path = meraki.construct_path('update', net_id=net_id, custom={'route_id': meraki.params['route_id']})
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
                 meraki.result['changed'] = True
         else:
+                if module.check_mode:
+                    meraki.result['data'] = payload
+                    meraki.exit_json(**meraki.result)
                 path = meraki.construct_path('create', net_id=net_id)
                 meraki.result['data'] = meraki.request(path, method="POST", payload=json.dumps(payload))
                 meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
+        if module.check_mode:
+            meraki.exit_json(**meraki.result)
         path = meraki.construct_path('delete', net_id=net_id, custom={'route_id': meraki.params['route_id']})
         meraki.result['data'] = meraki.request(path, method='DELETE')
         meraki.result['changed'] = True

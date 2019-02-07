@@ -65,6 +65,7 @@
       net_name: IntTestNetwork
       route_id: '{{create_route.data.id}}'
       subnet: 192.0.3.0/24
+      enabled: yes
     delegate_to: localhost
     register: update
 
@@ -94,15 +95,44 @@
       state: present
       org_name: '{{test_org_name}}'
       net_name: IntTestNetwork
-      # route_id: '{{create_route.data.id}}'
-      route_id: 83347111-0d6c-48d3-a3f4-02e3ed8bc42f
+      route_id: '{{create_route.data.id}}'
+      name: Test Route
+      gateway_ip: 192.168.128.1
       subnet: 192.0.3.0/24
+      enabled: yes
     delegate_to: localhost
     register: update_idempotent
 
   - assert:
       that:
         - update_idempotent.changed == False
+
+  - name: Update static route with fixed IP assignment and reservation
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{create_route.data.id}}'
+      fixed_ip_assignments:
+        - mac: aa:bb:cc:dd:ee:ff
+          ip: 192.0.3.11
+          name: WebServer
+      reserved_ip_ranges:
+        - start: 192.168.3.2
+          end: 192.168.3.10
+          comment: Printers
+    delegate_to: localhost
+    register: fixed_ip
+
+  - debug:
+      var: fixed_ip
+
+  - assert:
+      that:
+        - fixed_ip.data.fixedIpAssignments | length == 1
+        - fixed_ip.data.reservedIpRanges | length == 1
+
 
   - name: Query single static route
     meraki_static_route:
