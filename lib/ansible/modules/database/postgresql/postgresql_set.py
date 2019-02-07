@@ -185,7 +185,7 @@ else:
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError, pg_quote_identifier
+from ansible.module_utils.database import SQLParseError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -320,6 +320,7 @@ def main():
     # Check server version (needs 9.4 or later):
     cursor.execute('SELECT version()')
     ver = cursor.fetchone()[0].split()[1]
+    ver = '.'.join(ver.split('.')[:1])
     print('VERSION ', ver)
     if PG_REQ_VER > float(ver):
         module.warn("PostgreSQL is %s version but %s "
@@ -336,7 +337,7 @@ def main():
     # Switch role, if specified:
     if session_role:
         try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+            cursor.execute('SET ROLE %s' % session_role)
         except Exception as e:
             module.fail_json(msg="Could not switch role: %s" % to_native(e),
                              exception=traceback.format_exc())
