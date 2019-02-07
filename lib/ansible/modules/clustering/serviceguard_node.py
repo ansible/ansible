@@ -40,6 +40,10 @@ options:
             - Forces the shutdown of the node, even if packages are running on it
         required: false
         default: false
+    get_facts:
+        description:
+            - Returns cluster facts
+        required: false
         
 author:
     - Christian Sandrini (@sandrich)
@@ -114,7 +118,8 @@ def main():
         name=dict(type='str', required=True),
         state=dict(type='str', required=True, choices=['started', 'stopped']),
         path=dict(type='str', required=False, default='/usr/local/cmcluster/bin'),
-        force=(dict(type='bool', required=False, default=False))
+        force=(dict(type='bool', required=False, default=False)),
+        get_facts=(dict(type='bool', required=False))
     )
 
     module = AnsibleModule(
@@ -123,6 +128,10 @@ def main():
     )
 
     state = parse_cluster_state(module)
+
+    if module.params['get_facts']:
+        state['changed'] = False
+        module.exit_json(**state)
 
     if module.params['state'] == 'started':
         start_node(module)

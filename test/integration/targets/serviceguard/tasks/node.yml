@@ -1,0 +1,54 @@
+---
+#
+# Test cases:
+#   Prerequisites: 1 node cluster with tetsnode1 running, testpkg1 running
+# 
+# 001 - Stop testnode1 (This should fail without force)
+# 002 - Stop testnode1 forcefully
+# 003 - Start testnode1
+
+- serviceguard_node:
+    name: testnode1
+    state: started
+    get_facts: true
+  register: state
+
+- name: Make sure environment is setup coorectly before testing
+  assert:
+    that:
+      - state.nodes[testnode1].state == "running"
+    fail_msg: Node {{ testnode1 }} seems to be stopped. Please start it
+
+- name: 001 - Stop testnode1 (This should fail without force)
+  serviceguard_node:
+    name: "{{ testnode1 }}"
+    state: stopped
+  ignore_errors: true
+  register: state
+
+- assert:
+    that:
+      - state.failed
+
+- name: 002 - Stop testnode1 forcefully
+  serviceguard_node:
+    name: "{{ testnode1 }}"
+    state: stopped
+    force: true
+  register: state
+
+- assert:
+    that:
+      - state.changed
+      - state.nodes[testnode1].status == "down"
+
+- name: 003 - Start testnode1
+  serviceguard_node:
+    name: "{{ testnode1 }}"
+    state: started
+  register: state
+
+- assert:
+    that:
+      - state.changed
+      - state.nodes[testnode1].state == "running"
