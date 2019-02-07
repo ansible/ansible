@@ -48,8 +48,8 @@ options:
             - 'deallocated'
     state:
         description:
-            - Assert the state of the SQL server. Use 'present' to create or update a server and
-              'absent' to delete a server.
+            - Assert the state of the VMSS instance. Use 'present' to update a instance and
+              'absent' to delete instance.
         default: present
         choices:
             - absent
