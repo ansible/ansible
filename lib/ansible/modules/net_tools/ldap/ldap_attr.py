@@ -151,15 +151,17 @@ modlist:
 
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
 
+LDAP_IMP_ERR = None
 try:
     import ldap
 
     HAS_LDAP = True
 except ImportError:
+    LDAP_IMP_ERR = traceback.format_exc()
     HAS_LDAP = False
 
 
@@ -246,8 +248,8 @@ def main():
     )
 
     if not HAS_LDAP:
-        module.fail_json(
-            msg="Missing required 'ldap' module (pip install python-ldap)")
+        module.fail_json(msg=missing_required_lib('python-ldap'),
+                         exception=LDAP_IMP_ERR)
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):
