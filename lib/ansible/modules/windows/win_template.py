@@ -132,7 +132,7 @@ EXAMPLES = r'''
 RETURN = r'''
 backup_file:
     description: Name of the backup file that was created
-    returned: changed and if backup=yes
+    returned: if backup=yes
     type: str
     sample: C:\Path\To\File.txt.20150212-220915.bak
 '''

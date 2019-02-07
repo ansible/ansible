@@ -10,12 +10,16 @@ Function Backup-File($path, $obj=@{}) {
 #>
     [CmdletBinding(SupportsShouldProcess=$true)]
 
-    $backup_path = "$path.$pid." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss") + ".bak";
-    Try {
-        Copy-Item -LiteralPath $path -Destination $backup_path
-    } Catch {
-        throw "Failed to create backup file '$backup_path' from '$path'. ($($_.Exception.Message))"
+    $backup_path = $null
+    if (Test-Path -LiteralPath $path) {
+        $backup_path = "$path.$pid." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss") + ".bak";
+        Try {
+            Copy-Item -LiteralPath $path -Destination $backup_path
+        } Catch {
+            throw "Failed to create backup file '$backup_path' from '$path'. ($($_.Exception.Message))"
+        }
     }
+
     return $backup_path
 }
 

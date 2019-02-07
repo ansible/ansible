@@ -23,7 +23,7 @@ $copy_mode = Get-AnsibleParam -obj $params -name "_copy_mode" -type "str" -defau
 # used in explode, remote and single mode
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($copy_mode -in @("explode","process","single"))
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
-$backup = Get-AnsibleParam -obj $params -name "backup" -type "bool"
+$backup = Get-AnsibleParam -obj $params -name "backup" -type "bool" -default $false
 
 # used in single mode
 $original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
@@ -76,8 +76,8 @@ Function Copy-File($source, $dest) {
             $diff += "+$file_dir\`n"
         }
 
-        if ((Test-Path -Path $dest) -and ($check_mode -eq $false)) {
-            $result.backup_file = Backup-File -path $dest -obj $result
+        if ($backup) {
+            $result.backup_file = Backup-File -path $dest -obj $result -WhatIf:$check_mode
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
@@ -396,8 +396,8 @@ if ($copy_mode -eq "query") {
         }
     }
 
-    if ((Test-Path -Path $remote_dest) -and ($check_mode -eq $false)) {
-        $result.backup_file = Backup-File -path $remote_dest -obj $result
+    if ($backup) {
+        $result.backup_file = Backup-File -path $remote_dest -obj $result -WhatIf:$check_mode
     }
 
     Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null

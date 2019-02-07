@@ -185,8 +185,8 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 	If ($result.changed) {
 
 		# Write backup file if backup == "yes"
-		If ($backup -and -not $check_mode) {
-			$result.backup_file = Backup-File -path $path -obj $result
+		If ($backup) {
+			$result.backup_file = Backup-File -path $path -obj $result -WhatIf:$check_mode
 			# Ensure backward compatibility (deprecate in future)
 			$result.backup = $result.backup_file
 		}
@@ -267,8 +267,8 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 	If ($result.changed) {
 
 		# Write backup file if backup == "yes"
-		If ($backup -and -not $check_mode) {
-			$result.backup_file = Backup-File -path $path -obj $result
+		If ($backup) {
+			$result.backup_file = Backup-File -path $path -obj $result -WhatIf:$check_mode
 			# Ensure backward compatibility (deprecate in future)
 			$result.backup = $result.backup_file
 		}
