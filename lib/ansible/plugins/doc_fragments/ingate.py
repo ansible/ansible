@@ -63,6 +63,10 @@ notes:
   - This module requires that the Ingate Python SDK is installed on the
     host. To install the SDK use the pip command from your shell
     C(pip install ingatesdk).
+  - You can use the utility cli2python to generate an Ansible Playbook from an
+    Ingate CLI backup file (see U(https://github.com/ingatesystems/ingatesdk)).
+  - For more information and examples see
+    U(https://account.ingate.com/manuals/latest/reference_guide.html#_ansible).
 requirements:
-  - ingatesdk >= 1.0.6
+  - ingatesdk >= 1.0.12
 '''
