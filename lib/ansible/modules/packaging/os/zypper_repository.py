@@ -3,6 +3,7 @@
 
 # (c) 2013, Matthias Vogelgesang <matthias.vogelgesang@gmail.com>
 # (c) 2014, Justin Lecher <jlec@gentoo.org>
+# Copyright: (c) 2019, Gustavo Martinez <gustavo.martinez.bernal@intel.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -52,6 +53,14 @@ options:
         type: bool
         default: 'yes'
         aliases: [ "refresh" ]
+    extra_args_precommand:
+       description:
+         - Add additional global target options to C(zypper).
+         - This is most useful for options modifying paths like C(--root) or the C(--directory) flags.\
+           For features like gpg auto import please use the existing option.
+         - Options should be supplied in a single line as if given in the command line.
+       type: str
+       version_added: '2.8'
     priority:
         description:
             - Set priority of repository. Packages will always be installed
@@ -107,6 +116,13 @@ EXAMPLES = '''
     repo: 'ftp://download.nvidia.com/opensuse/12.2'
     state: absent
 
+- name: Add NVIDIA repository for graphics drivers with additional arguments
+  zypper_repository:
+    name: nvidia-repo
+    repo: https://download.nvidia.com/opensuse/leap/15.0
+    state: present
+    extra_args_precommand: --root /opt/ohpc/admin/vnfs
+
 # Add python development repository
 - zypper_repository:
     repo: 'http://download.opensuse.org/repositories/devel:/languages:/python/SLE_11_SP3/devel:languages:python.repo'
@@ -137,9 +153,12 @@ from ansible.module_utils.basic import AnsibleModule
 REPO_OPTS = ['alias', 'name', 'priority', 'enabled', 'autorefresh', 'gpgcheck']
 
 
-def _get_cmd(*args):
+def _get_cmd(m, *args):
     """Combines the non-interactive zypper command with arguments/subcommands"""
     cmd = ['/usr/bin/zypper', '--quiet', '--non-interactive']
+    if m.params['extra_args_precommand']:
+        args_list = m.params['extra_args_precommand'].split()
+        cmd.extend(args_list)
     cmd.extend(args)
 
     return cmd
@@ -147,7 +166,7 @@ def _get_cmd(*args):
 
 def _parse_repos(module):
     """parses the output of zypper --xmlout repos and return a parse repo dictionary"""
-    cmd = _get_cmd('--xmlout', 'repos')
+    cmd = _get_cmd(module, '--xmlout', 'repos')
 
     from xml.dom.minidom import parseString as parseXML
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
@@ -225,7 +244,7 @@ def repo_exists(module, repodata, overwrite_multiple):
 def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
     "Adds the repo, removes old repos before, that would conflict."
     repo = repodata['url']
-    cmd = _get_cmd('addrepo', '--check')
+    cmd = _get_cmd(module, 'addrepo', '--check')
     if repodata['name']:
         cmd.extend(['--name', repodata['name']])
 
@@ -269,7 +288,7 @@ def addmodify_repo(module, repodata, old_repos, zypper_version, warnings):
 
 def remove_repo(module, repo):
     "Removes the repo."
-    cmd = _get_cmd('removerepo', repo)
+    cmd = _get_cmd(module, 'removerepo', repo)
 
     rc, stdout, stderr = module.run_command(cmd, check_rc=True)
     return rc, stdout, stderr
@@ -285,9 +304,9 @@ def get_zypper_version(module):
 def runrefreshrepo(module, auto_import_keys=False, shortname=None):
     "Forces zypper to refresh repo metadata."
     if auto_import_keys:
-        cmd = _get_cmd('--gpg-auto-import-keys', 'refresh', '--force')
+        cmd = _get_cmd(module, '--gpg-auto-import-keys', 'refresh', '--force')
     else:
-        cmd = _get_cmd('refresh', '--force')
+        cmd = _get_cmd(module, 'refresh', '--force')
     if shortname is not None:
         cmd.extend(['-r', shortname])
 
@@ -301,6 +320,7 @@ def main():
             name=dict(required=False),
             repo=dict(required=False),
             state=dict(choices=['present', 'absent'], default='present'),
+            extra_args_precommand=dict(type='str'),
             runrefresh=dict(required=False, default='no', type='bool'),
             description=dict(required=False),
             disable_gpg_check=dict(required=False, default=False, type='bool'),

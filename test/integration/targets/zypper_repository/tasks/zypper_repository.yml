@@ -125,3 +125,25 @@
     priority: 100
     auto_import_keys: true
     state: "present"
+
+- name: add docker repo with params
+  zypper_repository:
+    name: docker
+    repo: http://download.opensuse.org/repositories/Virtualization:/containers/SLE_12_SP3/
+    state: present
+    extra_args_precommand: --root {{ output_dir | expanduser }}/testdir/
+
+- name: add docker repo with params again for checking idempotence
+  zypper_repository:
+    name: docker
+    repo: http://download.opensuse.org/repositories/Virtualization:/containers/SLE_12_SP3/
+    state: present
+    extra_args_precommand: --root {{ output_dir | expanduser }}/testdir/
+
+- name: check listrepo from custom root
+  command: zypper --root {{ output_dir | expanduser }}/testdir/ lr docker
+  register: zypper_result
+
+- assert:
+    that:
+      - '"docker" in zypper_result.stdout'
