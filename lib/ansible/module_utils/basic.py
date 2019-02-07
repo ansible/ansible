@@ -1365,7 +1365,7 @@ class AnsibleModule(object):
         new_mode = stat.S_IMODE(path_stat.st_mode)
 
         # Now parse all symbolic modes
-        for mode in symbolic_mode.split(','):
+        for mode in re.split('[,\s]+', symbolic_mode):
             # Per single mode. This always contains a '+', '-' or '='
             # Split it on that
             permlist = MODE_OPERATOR_RE.split(mode)
