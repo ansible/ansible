@@ -67,3 +67,22 @@ def ingate_create_client_noauth(**kwargs):
 def is_ingatesdk_installed(module):
     if not HAS_INGATESDK:
         module.fail_json(msg="The Ingate Python SDK module is required for this module.")
+
+
+def exit_empty_response(module):
+    module.fail_json(msg='Got empty response')
+
+
+def exit_unknown_response(module, response):
+    module.fail_json(msg='Got unknown response (%s)' % response)
+
+
+def get_current_version(api_client):
+    response = api_client.unit_information()
+    try:
+        info = response[0]['unit-information']
+    except Exception:
+        return None
+    if info:
+        return info.get('version')
+    return None
