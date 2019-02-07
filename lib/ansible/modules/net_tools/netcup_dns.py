@@ -161,14 +161,18 @@ records:
             sample: 12345
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
 
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+
+NCDNSAPI_IMP_ERR = None
 try:
     import nc_dnsapi
     from nc_dnsapi import DNSRecord
 
     HAS_NCDNSAPI = True
 except ImportError:
+    NCDNSAPI_IMP_ERR = traceback.format_exc()
     HAS_NCDNSAPI = False
 
 
@@ -192,7 +196,7 @@ def main():
     )
 
     if not HAS_NCDNSAPI:
-        module.fail_json(msg="nc-dnsapi is required for this module")
+        module.fail_json(msg=missing_required_lib('nc-dnsapi'), exception=NCDNSAPI_IMP_ERR)
 
     api_key = module.params.get('api_key')
     api_password = module.params.get('api_password')

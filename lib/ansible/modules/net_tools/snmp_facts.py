@@ -164,15 +164,18 @@ ansible_interfaces:
 '''
 
 import binascii
+import traceback
 from collections import defaultdict
 
+PYSNMP_IMP_ERR = None
 try:
     from pysnmp.entity.rfc3413.oneliner import cmdgen
     has_pysnmp = True
 except Exception:
+    PYSNMP_IMP_ERR = traceback.format_exc()
     has_pysnmp = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_text
 
 
@@ -275,7 +278,7 @@ def main():
     m_args = module.params
 
     if not has_pysnmp:
-        module.fail_json(msg='Missing required pysnmp module (check docs)')
+        module.fail_json(msg=missing_required_lib('pysnmp'), exception=PYSNMP_IMP_ERR)
 
     cmdGen = cmdgen.CommandGenerator()
 

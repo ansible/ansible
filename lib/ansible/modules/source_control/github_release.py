@@ -127,14 +127,18 @@ latest_release:
     sample: 1.1.0
 '''
 
+import traceback
+
+GITHUB_IMP_ERR = None
 try:
     import github3
 
     HAS_GITHUB_API = True
 except ImportError:
+    GITHUB_IMP_ERR = traceback.format_exc()
     HAS_GITHUB_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -161,8 +165,8 @@ def main():
     )
 
     if not HAS_GITHUB_API:
-        module.fail_json(msg='Missing required github3 module (check docs or '
-                             'install with: pip install github3.py==1.0.0a4)')
+        module.fail_json(msg=missing_required_lib('github3.py >= 1.0.0a3'),
+                         exception=GITHUB_IMP_ERR)
 
     repo = module.params['repo']
     user = module.params['user']

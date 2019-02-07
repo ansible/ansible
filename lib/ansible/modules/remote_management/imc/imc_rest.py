@@ -262,20 +262,25 @@ import atexit
 import datetime
 import itertools
 import os
+import traceback
 
+LXML_ETREE_IMP_ERR = None
 try:
     import lxml.etree
     HAS_LXML_ETREE = True
 except ImportError:
+    LXML_ETREE_IMP_ERR = traceback.format_exc()
     HAS_LXML_ETREE = False
 
+XMLJSON_COBRA_IMP_ERR = None
 try:
     from xmljson import cobra
     HAS_XMLJSON_COBRA = True
 except ImportError:
+    XMLJSON_COBRA_IMP_ERR = traceback.format_exc()
     HAS_XMLJSON_COBRA = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.urls import fetch_url
 
 
@@ -334,10 +339,10 @@ def main():
     )
 
     if not HAS_LXML_ETREE:
-        module.fail_json(msg='module requires the lxml Python library installed on the managed host')
+        module.fail_json(msg=missing_required_lib('lxml'), exception=LXML_ETREE_IMP_ERR)
 
     if not HAS_XMLJSON_COBRA:
-        module.fail_json(msg='module requires the xmljson (>= 0.1.8) Python library installed on the managed host')
+        module.fail_json(msg=missing_required_lib('xmljson >= 0.1.8'), exception=XMLJSON_COBRA_IMP_ERR)
 
     hostname = module.params['hostname']
     username = module.params['username']
