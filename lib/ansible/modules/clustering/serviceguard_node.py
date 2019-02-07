@@ -27,10 +27,9 @@ options:
         required: true
     state:
         description:
-	    - Desired state of the node
-	choices: ["running","halted"]
-        required: false
-	default: running
+	        - Desired state of the node
+	    choices: ["running","halted"]
+        required: true
     path:
         description:
             - Path of the cm* binaries
@@ -63,11 +62,49 @@ RETURN = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.serviceguard import parse_cluster_state
+
+def start_node(module):
+    state = parse_cluster_state(module)
+
+    node = module.params['name']
+    node_state = state['nodes'][node].state
+
+    # Start if system is halted and started is requested
+    if node_state == 'halted':
+        (rc, out) = module.run_command([module.params['path'] + '/cmrunnode', node])
+
+        if rc != 0:
+            module.fail_json(msg="Node could not be started: %s" % out)
+    
+    state = parse_cluster_state(module)
+    state.changed = True
+
+    return state
+
+
+def stop_node(module):
+    state = parse_cluster_state(module)
+
+    node = module.params['name']
+    node_state = state['nodes'][node].state
+
+    if node_state == 'running':
+        (rc, out) = module.run_command([module.params['path'] + '/cmhaltnode', node])
+
+        if rc != 0:
+            module.fail_json(msg="Node could not be stopped: %s" % out)
+    
+    state = parse_cluster_state(module)
+    state.changed = True
+
+    return state
+
 
 def main():
     module_args = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', required=False, default='started', choices=['started','stopped']),
+        state=dict(type='str', required=True, choices=['started','stopped']),
         path=dict(type='str', required=False, default='/usr/local/cmcluster/bin')
     )
 
@@ -76,7 +113,10 @@ def main():
         supports_check_mode=True
     )
 
-    result = dict(changed=False)
+    if module.params['state'] == 'started':
+        result = start_node(module)
+    elif module.params['state'] == 'stopped':
+        result = stop_node(module) 
 
     module.exit_json(**result)
 
