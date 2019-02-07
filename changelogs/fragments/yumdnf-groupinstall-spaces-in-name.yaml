@@ -1,0 +1,3 @@
+bugfixes:
+  - yum - handle group names with spaces in them for long form groups, warn against this as it can be error prone
+  - dnf - handle group names with spaces in them for long form groups, warn against this as it can be error prone
