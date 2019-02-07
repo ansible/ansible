@@ -105,13 +105,15 @@ Function Get-Checksum-From-Url {
 
          $basename = Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf
          $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+" + $basename + "\s*$")
-        
+         #$module.Warn(("DEBUG: dst={0} src={1}" -f $web_checksum_str, $basename))
          if (-not $web_checksum_str) { 
              throw "Checksum record not found for file name '$basename' in file from url: '$url'" 
          }
 
         $web_checksum_str_splitted = $web_checksum_str[0].ToString().split(" ", 2)
         $hash_from_file = $web_checksum_str_splitted[0].Trim()
+        # Remove any non-alphanumeric characters
+        $hash_from_file = $hash_from_file -replace '\W+', ''
     } Catch [System.Net.WebException] {
         $module.Result.status_code = [int] $_.Exception.Response.StatusCode
         $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
@@ -299,7 +301,7 @@ Function Download-File {
                 # Check both hashes are the same
                 if ($normaliseHashDest -ne $checksum_value) {
                     Remove-Item -Path $dest
-                    throw [string]("The checksum for {0} did not match {1}; it was {2}." -f $dest, $checksum_value, $normaliseHashDest)
+                    throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum_value, $normaliseHashDest)
                 }
             }
 
@@ -390,7 +392,8 @@ if ($checksum) {
         $checksum_value.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_value).isFile) {
         
         $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
-                                                -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy -src_file_url $url
+                                                -headers $headers -timeout $timeout -use_proxy $use_proxy `
+                                                -proxy $proxy -src_file_url $url
         $checksum = $(Parse-Checksum -checksum $checksum).algorithm + ":" + $hash_from_file
     }
 }
@@ -418,7 +421,6 @@ Try {
         $module.Result.checksum_dest = Get-NormaliseChecksum -dest $dest -checksum $checksum
     }
 } Catch {
-    $module.Result.checksum_dest = $null
     $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
 }
 
