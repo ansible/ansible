@@ -199,7 +199,7 @@ class GitLabGroup(object):
         self.groupObject = group
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Group has been updated.")
+                self._module.exit_json(changed=True, msg="Successfully created or updated the group %s" % name)
 
             try:
                 group.save()
@@ -214,7 +214,7 @@ class GitLabGroup(object):
     '''
     def createGroup(self, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Group has been created.")
+            return True
 
         try:
             group = self._gitlab.groups.create(arguments)
@@ -246,7 +246,7 @@ class GitLabGroup(object):
                 msg="There are still projects in this group. These needs to be moved or deleted before this group can be removed.")
         else:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Group has been deleted.")
+                return True
 
             try:
                 group.delete()

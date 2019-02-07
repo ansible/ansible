@@ -228,7 +228,7 @@ class GitLabHook(object):
         self.hookObject = hook
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Hook has been updated.")
+                self._module.exit_json(changed=True, msg="Successfully created or updated the hook %s" % hook_url)
 
             try:
                 hook.save()
@@ -244,7 +244,7 @@ class GitLabHook(object):
     '''
     def createHook(self, project, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Hook has been created.")
+            return True
 
         hook = project.hooks.create(arguments)
 
@@ -289,7 +289,7 @@ class GitLabHook(object):
 
     def deleteHook(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Hook hash been deleted.")
+            return True
 
         return self.hookObject.delete()
 

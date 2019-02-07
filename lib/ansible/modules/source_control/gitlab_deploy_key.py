@@ -169,7 +169,7 @@ class GitLabDeployKey(object):
         self.deployKeyObject = deployKey
         if changed:
             if self._module.check_mode:
-                self._module.exit_json(changed=True, msg="Deploy key has been updated.")
+                self._module.exit_json(changed=True, msg="Successfully created or updated the deploy key %s" % key_title)
 
             try:
                 deployKey.save()
@@ -185,7 +185,8 @@ class GitLabDeployKey(object):
     '''
     def createDeployKey(self, project, arguments):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Deploy key has been created.")
+            return True
+
         try:
             deployKey = project.keys.create(arguments)
         except (gitlab.exceptions.GitlabCreateError) as e:
@@ -232,7 +233,7 @@ class GitLabDeployKey(object):
 
     def deleteDeployKey(self):
         if self._module.check_mode:
-            self._module.exit_json(changed=True, msg="Deploy key has been deleted.")
+            return True
 
         return self.deployKeyObject.delete()
 
