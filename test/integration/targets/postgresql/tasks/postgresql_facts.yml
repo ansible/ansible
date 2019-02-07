@@ -18,14 +18,16 @@
       - result.ansible_facts.languages
       - result.ansible_facts.namespaces.information_schema
       - result.ansible_facts.settings
+      - result.ansible_facts.tablespaces
+      - result.ansible_facts.roles
 
-- name: postgresql_facts - check incl_subset param passed by list
+- name: postgresql_facts - check filter param passed by list
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_facts:
     db: "{{ db_default }}"
     login_user: "{{ pg_user }}"
-    incl_subset:
+    filter:
       - ver*
       - rol*
   register: result
@@ -44,12 +46,12 @@
       - result.ansible_facts.settings == {}
       - result.ansible_facts.tablespaces == {}
 
-- name: postgresql_facts - check incl_subset param passed by string
+- name: postgresql_facts - check filter param passed by string
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_facts:
     db: "{{ db_default }}"
-    incl_subset: ver*,role*
+    filter: ver*,role*
     login_user: "{{ pg_user }}"
   register: result
   ignore_errors: yes
@@ -67,29 +69,29 @@
       - result.ansible_facts.settings == {}
       - result.ansible_facts.tablespaces == {}
 
-- name: postgresql_facts - check excl_subset param passed by string
+- name: postgresql_facts - check filter param passed by string
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_facts:
     db: "{{ db_default }}"
-    excl_subset: ver*
+    filter: ver*
     login_user: "{{ pg_user }}"
   register: result
   ignore_errors: yes
 
 - assert:
     that:
-      - result.ansible_facts.version == {}
-      - result.ansible_facts.roles
+      - result.ansible_facts.version
+      - result.ansible_facts.roles == {}
 
-- name: postgresql_facts - check excl_subset param passed by list
+- name: postgresql_facts - check excluding filter param passed by list
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_facts:
     db: "{{ db_default }}"
-    excl_subset:
-      - ver*
-      - rol*
+    filter:
+      - "!ver*"
+      - "!rol*"
     login_user: "{{ pg_user }}"
   register: result
   ignore_errors: yes
