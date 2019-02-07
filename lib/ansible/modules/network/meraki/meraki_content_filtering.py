@@ -25,24 +25,30 @@ options:
     auth_key:
         description:
         - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        type: str
     net_name:
         description:
         - Name of a network.
-        aliases: [network]
+        aliases: [ network ]
+        type: str
     net_id:
         description:
         - ID number of a network.
+        type: str
     org_name:
         description:
         - Name of organization associated to a network.
+        type: str
     org_id:
         description:
         - ID of organization associated to a network.
+        type: str
     state:
         description:
         - States that a policy should be created or modified.
         choices: [present]
         default: present
+        type: str
     allowed_urls:
         description:
         - List of URL patterns which should be allowed.
@@ -59,7 +65,8 @@ options:
     category_list_size:
         description:
         - Determines whether a network filters fo rall URLs in a category or only the list of top blocked sites.
-        choices: [top sites, full list]
+        choices: [ top sites, full list ]
+        type: str
 
 author:
     - Kevin Breit (@kbreit)
@@ -92,10 +99,8 @@ EXAMPLES = r'''
       net_name: YourMXNet
       state: present
       category_list_size: full list
-      allowed_urls:
-        -
-      blocked_urls:
-        -
+      allowed_urls: []
+      blocked_urls: []
 '''
 
 RETURN = r'''
@@ -134,7 +139,7 @@ def main():
     argument_spec.update(
         net_id=dict(type='str'),
         net_name=dict(type='str', aliases=['network']),
-        state=dict(type='str', choices=['present'], default='present'),
+        state=dict(type='str', default='present', choices=['present']),
         allowed_urls=dict(type='list'),
         blocked_urls=dict(type='list'),
         blocked_categories=dict(type='list'),
@@ -146,7 +151,7 @@ def main():
     # args/params passed to the execution, as well as if the module
     # supports check mode
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
+                           supports_check_mode=True,
                            )
 
     meraki = MerakiModule(module, function='content_filtering')
@@ -160,12 +165,6 @@ def main():
 
     if meraki.params['net_name'] and meraki.params['net_id']:
         meraki.fail_json(msg='net_name and net_id are mutually exclusive')
-
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        return meraki.result
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
@@ -204,6 +203,11 @@ def main():
                 payload['urlCategoryListSize'] = "fullList"
         path = meraki.construct_path('policy', net_id=net_id)
         current = meraki.request(path, method='GET')
+        proposed = current.copy()
+        proposed.update(payload)
+        if module.check_mode:
+            meraki.result['data'] = payload
+            meraki.exit_json(**meraki.result)
         if meraki.is_update_required(current, payload):
             response = meraki.request(path, method='PUT', payload=json.dumps(payload))
             meraki.result['data'] = response
