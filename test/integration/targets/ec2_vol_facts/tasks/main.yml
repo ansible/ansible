@@ -49,6 +49,17 @@
         delete_on_termination: yes
       register: volume
 
+    - name: Gather volume info without any filters
+      ec2_vol_facts:
+          <<: *aws_connection_info
+      register: volume_facts_wo_filters
+      check_mode: no
+
+    - name: Check if facts are returned without filters
+      assert:
+        that:
+          - "volume_facts_wo_filters.volumes is defined"
+
     - name: Gather volume info
       ec2_vol_facts:
           <<: *aws_connection_info
