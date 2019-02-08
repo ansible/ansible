@@ -196,7 +196,7 @@ def main():
             login_unix_socket=dict(default=""),
             port=dict(default="5432"),
             db=dict(required=False),
-            ssl_mode=dict(default='prefer', choices['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+            ssl_mode=dict(default="prefer", choices=["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]),
             ssl_rootcert=dict(default=None),
             slot_name=dict(required=True),
             slot_type=dict(default="physical", choices=["physical", "logical"]),
