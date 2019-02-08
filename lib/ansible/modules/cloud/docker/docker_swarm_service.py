@@ -22,7 +22,8 @@ options:
     required: true
     type: str
     description:
-      - Service name
+      - Service name.
+      - Corresponds to the C(--name) option of C(docker service create).
   image:
     required: true
     type: str
@@ -47,75 +48,77 @@ options:
   args:
     description:
       - List arguments to be passed to the container.
+      - Corresponds to the C(ARG) parameter of C(docker service create).
   command:
     description:
       - Command to execute when the container starts.
       - A command may be either a string or a list or a list of strings.
+      - Corresponds to the C(COMMAND) parameter of C(docker service create).
     version_added: 2.8
   constraints:
     type: list
     description:
       - List of the service constraints.
-      - Corresponds to the C(--constraint) parameter of C(docker service create).
+      - Corresponds to the C(--constraint) option of C(docker service create).
   placement_preferences:
     type: list
     description:
       - List of the placement preferences as key value pairs.
-      - Maps docker service C(--placement-pref) option.
+      - Corresponds to the C(--placement-pref) option of C(docker service create).
       - Requires API version >= 1.27.
     version_added: 2.8
   hostname:
     type: str
     description:
       - Container hostname.
-      - Maps docker service C(--hostname) option.
+      - Corresponds to the C(--hostname) option of C(docker service create).
       - Requires API version >= 1.25.
   tty:
     type: bool
     description:
       - Allocate a pseudo-TTY.
-      - Maps docker service C(--tty) option.
+      - Corresponds to the C(--tty) option of C(docker service create).
       - Requires API version >= 1.25.
   dns:
     type: list
     description:
       - List of custom DNS servers.
-      - Maps docker service C(--dns) option.
+      - Corresponds to the C(--dns) option of C(docker service create).
       - Requires API version >= 1.25.
   dns_search:
     type: list
     description:
       - List of custom DNS search domains.
-      - Maps docker service C(--dns-search) option.
+      - Corresponds to the C(--dns-search) option of C(docker service create).
       - Requires API version >= 1.25.
   dns_options:
     type: list
     description:
       - List of custom DNS options.
-      - Maps docker service C(--dns-option) option.
+      - Corresponds to the C(--dns-option) option of C(docker service create).
       - Requires API version >= 1.25.
   force_update:
     type: bool
     default: false
     description:
       - Force update even if no changes require it.
-      - Maps to docker service update C(--force) option.
+      - Corresponds to the C(--force) option of C(docker service update).
       - Requires API version >= 1.25.
   labels:
     type: dict
     description:
       - Dictionary of key value pairs.
-      - Maps docker service C(--label) option.
+      - Corresponds to the C(--label) option of C(docker service create).
   container_labels:
     type: dict
     description:
       - Dictionary of key value pairs.
-      - Maps docker service C(--container-label) option.
+      - Corresponds to the C(--container-label) option of C(docker service create).
   endpoint_mode:
     type: str
     description:
       - Service endpoint mode.
-      - Maps docker service C(--endpoint-mode) option.
+      - Corresponds to the C(--endpoint-mode) option of C(docker service create).
       - Requires API version >= 1.25.
     choices:
       - vip
@@ -124,25 +127,27 @@ options:
     type: list
     description:
       - List of the service environment variables.
-      - Maps docker service --env option.
+      - Corresponds to the C(--env) option of C(docker service create).
   log_driver:
     type: str
     description:
       - Configure the logging driver for a service.
+      - Corresponds to the C(--log-driver) option of C(docker service create).
   log_driver_options:
     type: dict
     description:
       - Options for service logging driver.
+      - Corresponds to the C(--log-opt) option of C(docker service create).
   limit_cpu:
     type: float
     description:
       - Service CPU limit. C(0) equals no limit.
-      - Maps docker service C(--limit-cpu) option.
+      - Corresponds to the C(--limit-cpu) option of C(docker service create).
   reserve_cpu:
     type: float
     description:
       - Service CPU reservation. C(0) equals no reservation.
-      - Maps docker service --reserve-cpu option.
+      - Corresponds to the C(--reserve-cpu) option of C(docker service create).
   limit_memory:
     type: str
     description:
@@ -151,7 +156,7 @@ options:
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no limit.
       - Omitting the unit defaults to bytes.
-      - Maps docker service C(--limit-memory) option.
+      - Corresponds to the C(--limit-memory) option of C(docker service create).
   reserve_memory:
     type: str
     description:
@@ -160,18 +165,18 @@ options:
         C(T) (tebibyte), or C(P) (pebibyte)."
       - C(0) equals no reservation.
       - Omitting the unit defaults to bytes.
-      - Maps docker service C(--reserve-memory) option.
+      - Corresponds to the C(--reserve-memory) option of C(docker service create).
   mode:
     type: str
     default: replicated
     description:
       - Service replication mode.
-      - Maps docker service C(--mode) option.
+      - Corresponds to the C(--mode) option of C(docker service create).
   mounts:
     type: list
     description:
       - List of dictionaries describing the service mounts.
-      - Maps docker service C(--mount) option.
+      - Corresponds to the C(--mount) option of C(docker service create).
     suboptions:
       source:
         type: str
@@ -201,7 +206,7 @@ options:
     type: list
     description:
       - List of dictionaries describing the service secrets.
-      - Maps docker service C(--secret) option.
+      - Corresponds to the C(--secret) option of C(docker service create).
       - Requires API version >= 1.25.
     suboptions:
       secret_id:
@@ -237,7 +242,7 @@ options:
     type: list
     description:
       - List of dictionaries describing the service configs.
-      - Maps docker service C(--config) option.
+      - Corresponds to the C(--config) option of C(docker service create).
       - Requires API version >= 1.30.
     suboptions:
       config_id:
@@ -274,11 +279,12 @@ options:
     type: list
     description:
       - List of the service networks names.
-      - Maps docker service C(--network) option.
+      - Corresponds to the C(--network) option of C(docker service create).
   publish:
     type: list
     description:
       - List of dictionaries describing the service published ports.
+      - Corresponds to the C(--publish) option of C(docker service create).
       - Requires API version >= 1.25.
     suboptions:
       published_port:
@@ -314,12 +320,12 @@ options:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
       - If set to C(-1), and service is not present, service replicas will be set to C(1).
       - If set to C(-1), and service is present, service replicas will be unchanged.
-      - Maps docker service C(--replicas) option.
+      - Corresponds to the C(--replicas) option of C(docker service create).
   restart_policy:
     type: str
     description:
       - Restart condition of the service.
-      - Maps docker service C(--restart-condition) option.
+      - Corresponds to the C(--restart-condition) option of C(docker service create).
     choices:
       - none
       - on-failure
@@ -328,34 +334,34 @@ options:
     type: int
     description:
       - Maximum number of service restarts.
-      - Maps docker service C(--restart-max-attempts) option.
+      - Corresponds to the C(--restart-condition) option of C(docker service create).
   restart_policy_delay:
     type: int
     description:
       - Delay between restarts.
-      - Maps docker service C(--restart-delay) option.
+      - Corresponds to the C(--restart-delay) option of C(docker service create).
   restart_policy_window:
     type: int
     description:
       - Restart policy evaluation window.
-      - Maps docker service C(--restart-window) option.
+      - Corresponds to the C(--restart-window) option of C(docker service create).
   update_delay:
     type: int
     default: 10
     description:
       - Rolling update delay in nanoseconds.
-      - Maps docker service C(--update-delay) option.
+      - Corresponds to the C(--update-delay) option of C(docker service create).
   update_parallelism:
     type: int
     default: 1
     description:
-      - Rolling update parallelism
-      - Maps docker service C(--update-parallelism) option.
+      - Rolling update parallelism.
+      - Corresponds to the C(--update-parallelism) option of C(docker service create).
   update_failure_action:
     type: int
     description:
       - Action to take in case of container failure.
-      - Maps to docker service C(--update-failure-action) option.
+      - Corresponds to the C(--update-failure-action) option of C(docker service create).
     choices:
       - continue
       - pause
@@ -363,19 +369,19 @@ options:
     type: int
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
-      - Maps to docker service C(--update-monitor option).
+      - Corresponds to the C(--update-monitor) option of C(docker service create).
       - Requires API version >= 1.25.
   update_max_failure_ratio:
     type: float
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
-      - Maps to docker service C(--update-max-failure-ratio).
+      - Corresponds to the C(--update-max-failure-ratio) option of C(docker service create).
       - Requires API version >= 1.25.
   update_order:
     type: str
     description:
       - Specifies the order of operations when rolling out an updated task.
-      - Maps to docker service C(--update-order).
+      - Corresponds to the C(--update-order) option of C(docker service create).
       - Requires API version >= 1.29.
   user:
     type: str
@@ -383,6 +389,7 @@ options:
       - Sets the username or UID used for the specified command.
       - Before Ansible 2.8, the default value for this option was C(root).
       - The default has been removed so that the user defined in the image is used if no user is specified here.
+      - Corresponds to the C(--user) option of C(docker service create).
 extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
