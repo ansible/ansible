@@ -151,8 +151,9 @@ files:
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/:
-    maintainers: $team_vmware
     ignored: cigamit jcpowermac mtnbikenc
+    labels: [ esx, vcenter, vcsa, vsphere ]
+    maintainers: $team_vmware
   $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vmware/_vsphere_guest.py: dagwieers
