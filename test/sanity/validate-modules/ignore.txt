@@ -377,7 +377,6 @@ lib/ansible/modules/database/mongodb/mongodb_parameter.py E317
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E323
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E326
 lib/ansible/modules/database/mongodb/mongodb_user.py E322
-lib/ansible/modules/database/mongodb/mongodb_user.py E324
 lib/ansible/modules/database/mysql/mysql_replication.py E325
 lib/ansible/modules/database/mysql/mysql_replication.py E326
 lib/ansible/modules/database/mysql/mysql_user.py E322
@@ -616,7 +615,6 @@ lib/ansible/modules/network/ironware/ironware_command.py E323
 lib/ansible/modules/network/ironware/ironware_config.py E323
 lib/ansible/modules/network/ironware/ironware_facts.py E323
 lib/ansible/modules/network/junos/junos_command.py E324
-lib/ansible/modules/network/junos/junos_config.py E326
 lib/ansible/modules/network/junos/junos_interface.py E324
 lib/ansible/modules/network/junos/junos_linkagg.py E324
 lib/ansible/modules/network/junos/junos_logging.py E322
@@ -791,7 +789,6 @@ lib/ansible/modules/packaging/os/yum_repository.py E324
 lib/ansible/modules/packaging/os/zypper.py E326
 lib/ansible/modules/remote_management/foreman/foreman.py E322
 lib/ansible/modules/remote_management/foreman/foreman.py E325
-lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E324
 lib/ansible/modules/remote_management/hpilo/hpilo_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_boot.py E326
 lib/ansible/modules/remote_management/ipmi/ipmi_power.py E326
@@ -825,9 +822,6 @@ lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E323
 lib/ansible/modules/source_control/github_issue.py E324
 lib/ansible/modules/source_control/github_issue.py E326
-lib/ansible/modules/source_control/gitlab_project.py E324
-lib/ansible/modules/source_control/gitlab_project.py E326
-lib/ansible/modules/source_control/gitlab_user.py E326
 lib/ansible/modules/source_control/subversion.py E322
 lib/ansible/modules/storage/infinidat/infini_export.py E323
 lib/ansible/modules/storage/infinidat/infini_export.py E324
@@ -909,7 +903,6 @@ lib/ansible/modules/web_infrastructure/ansible_tower/tower_credential.py E326
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_group.py E324
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_launch.py E323
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_template.py E322
-lib/ansible/modules/web_infrastructure/ansible_tower/tower_job_template.py E325
 lib/ansible/modules/web_infrastructure/ansible_tower/tower_team.py E322
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py E317
 lib/ansible/modules/web_infrastructure/apache2_mod_proxy.py E326

@@ -39,7 +39,7 @@ notes:
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
-    - Use SCSI disks instead of IDE when you want to resize online disks by specifing a SCSI controller
+    - Use SCSI disks instead of IDE when you want to expand online disks by specifing a SCSI controller
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
@@ -169,7 +169,7 @@ options:
     description:
     - A list of disks to add.
     - This parameter is case sensitive.
-    - Resizing disks is not supported.
+    - Shrinking disks is not supported.
     - Removing existing disks of the virtual machine is not supported.
     - 'Valid attributes are:'
     - ' - C(size_[tb,gb,mb,kb]) (integer): Disk storage size in specified unit.'
@@ -178,6 +178,8 @@ options:
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
@@ -295,13 +297,15 @@ options:
     version_added: '2.3'
   customization:
     description:
-    - Parameters for OS customization when cloning from the template or the virtual machine.
+    - Parameters for OS customization when cloning from the template or the virtual machine, or apply to the existing virtual machine directly.
     - Not all operating systems are supported for customization with respective vCenter version,
       please check VMware documentation for respective OS customization.
     - For supported customization operating system matrix, (see U(http://partnerweb.vmware.com/programs/guestOS/guest-os-customization-matrix.pdf))
     - All parameters and VMware object names are case sensitive.
     - Linux based OSes requires Perl package to be installed for OS customizations.
     - 'Common parameters (Linux/Windows):'
+    - ' - C(existing_vm) (bool): If set to C(True), do OS customization on the specified virtual machine directly.
+          If set to C(False) or not specified, do OS customization when cloning from the template or the virtual machine. version_added: 2.8'
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
@@ -561,10 +565,11 @@ instance:
 
 import re
 import time
+import string
 
 HAS_PYVMOMI = False
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim, vmodl, VmomiSupport
     HAS_PYVMOMI = True
 except ImportError:
     pass
@@ -575,7 +580,8 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
                                          vmware_argument_spec, set_vm_power_state, PyVmomi,
-                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip)
+                                         find_dvs_by_name, find_dvspg_by_name, wait_for_vm_ip,
+                                         wait_for_task, TaskError)
 
 
 class PyVmomiDeviceHelper(object):
@@ -661,7 +667,6 @@ class PyVmomiDeviceHelper(object):
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
         diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
         diskspec.device.controllerKey = scsi_ctl.device.key
@@ -1582,7 +1587,9 @@ class PyVmomiHelper(PyVmomi):
 
             # Setting hostName, orgName and fullName is mandatory, so we set some default when missing
             ident.userData.computerName = vim.vm.customization.FixedName()
-            ident.userData.computerName.name = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
+            # computer name will be truncated to 15 characters if using VM name
+            default_name = self.params['name'].translate(None, string.punctuation)
+            ident.userData.computerName.name = str(self.params['customization'].get('hostname', default_name[0:15]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
 
@@ -1708,6 +1715,38 @@ class PyVmomiHelper(PyVmomi):
         self.module.fail_json(
             msg="No size, size_kb, size_mb, size_gb or size_tb attribute found into disk configuration")
 
+    def find_vmdk(self, vmdk_path):
+        """
+        Takes a vsphere datastore path in the format
+
+            [datastore_name] path/to/file.vmdk
+
+        Returns vsphere file object or raises RuntimeError
+        """
+        datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder = self.vmdk_disk_path_split(vmdk_path)
+
+        datastore = self.cache.find_obj(self.content, [vim.Datastore], datastore_name)
+
+        if datastore is None:
+            self.module.fail_json(msg="Failed to find the datastore %s" % datastore_name)
+
+        return self.find_vmdk_file(datastore, vmdk_fullpath, vmdk_filename, vmdk_folder)
+
+    def add_existing_vmdk(self, vm_obj, expected_disk_spec, diskspec, scsi_ctl):
+        """
+        Adds vmdk file described by expected_disk_spec['filename'], retrieves the file
+        information and adds the correct spec to self.configspec.deviceChange.
+        """
+        filename = expected_disk_spec['filename']
+        # if this is a new disk, or the disk file names are different
+        if (vm_obj and diskspec.device.backing.fileName != filename) or vm_obj is None:
+            vmdk_file = self.find_vmdk(expected_disk_spec['filename'])
+            diskspec.device.backing.fileName = expected_disk_spec['filename']
+            diskspec.device.capacityInKB = VmomiSupport.vmodlTypes['long'](vmdk_file.fileSize / 1024)
+            diskspec.device.key = -1
+            self.change_detected = True
+            self.configspec.deviceChange.append(diskspec)
+
     def configure_disks(self, vm_obj):
         # Ignore empty disk list, this permits to keep disks when deploying a template/cloning a VM
         if len(self.params['disk']) == 0:
@@ -1741,6 +1780,12 @@ class PyVmomiHelper(PyVmomi):
                 diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
                 disk_modified = True
 
+            # increment index for next disk search
+            disk_index += 1
+            # index 7 is reserved to SCSI controller
+            if disk_index == 7:
+                disk_index += 1
+
             if 'disk_mode' in expected_disk_spec:
                 disk_mode = expected_disk_spec.get('disk_mode', 'persistent').lower()
                 valid_disk_mode = ['persistent', 'independent_persistent', 'independent_nonpersistent']
@@ -1762,18 +1807,18 @@ class PyVmomiHelper(PyVmomi):
                 elif disk_type == 'eagerzeroedthick':
                     diskspec.device.backing.eagerlyScrub = True
 
+            if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
+                self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
+                continue
+            else:
+                diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+
             # which datastore?
             if expected_disk_spec.get('datastore'):
                 # TODO: This is already handled by the relocation spec,
                 # but it needs to eventually be handled for all the
                 # other disks defined
                 pass
-
-            # increment index for next disk search
-            disk_index += 1
-            # index 7 is reserved to SCSI controller
-            if disk_index == 7:
-                disk_index += 1
 
             kb = self.get_configured_disk_size(expected_disk_spec)
             # VMWare doesn't allow to reduce disk sizes
@@ -2106,7 +2151,7 @@ class PyVmomiHelper(PyVmomi):
                     network_changes = True
                     break
 
-        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec'):
+        if len(self.params['customization']) > 0 or network_changes or self.params.get('customization_spec') is not None:
             self.customize_vm(vm_obj=vm_obj)
 
         clonespec = None
@@ -2354,8 +2399,50 @@ class PyVmomiHelper(PyVmomi):
 
             self.change_detected = True
 
+        # add customize existing VM after VM re-configure
+        if 'existing_vm' in self.params['customization'] and self.params['customization']['existing_vm']:
+            if self.current_vm_obj.config.template:
+                self.module.fail_json(msg="VM is template, not support guest OS customization.")
+            if self.current_vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
+                self.module.fail_json(msg="VM is not in poweroff state, can not do guest OS customization.")
+            cus_result = self.customize_exist_vm()
+            if cus_result['failed']:
+                return cus_result
+
         vm_facts = self.gather_facts(self.current_vm_obj)
         return {'changed': self.change_applied, 'failed': False, 'instance': vm_facts}
+
+    def customize_exist_vm(self):
+        task = None
+        # Find if we need network customizations (find keys in dictionary that requires customizations)
+        network_changes = False
+        for nw in self.params['networks']:
+            for key in nw:
+                # We don't need customizations for these keys
+                if key not in ('device_type', 'mac', 'name', 'vlan', 'type', 'start_connected'):
+                    network_changes = True
+                    break
+        if len(self.params['customization']) > 1 or network_changes or self.params.get('customization_spec'):
+            self.customize_vm(vm_obj=self.current_vm_obj)
+        try:
+            task = self.current_vm_obj.CustomizeVM_Task(self.customspec)
+        except vim.fault.CustomizationFault as e:
+            self.module.fail_json(msg="Failed to customization virtual machine due to CustomizationFault: %s" % to_native(e.msg))
+        except vim.fault.RuntimeFault as e:
+            self.module.fail_json(msg="failed to customization virtual machine due to RuntimeFault: %s" % to_native(e.msg))
+        except Exception as e:
+            self.module.fail_json(msg="failed to customization virtual machine due to fault: %s" % to_native(e.msg))
+        self.wait_for_task(task)
+        if task.info.state == 'error':
+            return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'customize_exist'}
+
+        if self.params['wait_for_customization']:
+            set_vm_power_state(self.content, self.current_vm_obj, 'poweredon', force=False)
+            is_customization_ok = self.wait_for_customization(self.current_vm_obj)
+            if not is_customization_ok:
+                return {'changed': self.change_applied, 'failed': True, 'op': 'wait_for_customize_exist'}
+
+        return {'changed': self.change_applied, 'failed': False}
 
     def wait_for_task(self, task, poll_interval=1):
         """
@@ -2390,9 +2477,8 @@ class PyVmomiHelper(PyVmomi):
 
         return facts
 
-    def get_vm_events(self, eventTypeIdList):
-        newvm = self.get_vm()
-        byEntity = vim.event.EventFilterSpec.ByEntity(entity=newvm, recursion="self")
+    def get_vm_events(self, vm, eventTypeIdList):
+        byEntity = vim.event.EventFilterSpec.ByEntity(entity=vm, recursion="self")
         filterSpec = vim.event.EventFilterSpec(entity=byEntity, eventTypeId=eventTypeIdList)
         eventManager = self.content.eventManager
         return eventManager.QueryEvent(filterSpec)
@@ -2400,11 +2486,11 @@ class PyVmomiHelper(PyVmomi):
     def wait_for_customization(self, vm, poll=10000, sleep=10):
         thispoll = 0
         while thispoll <= poll:
-            eventStarted = self.get_vm_events(['CustomizationStartedEvent'])
+            eventStarted = self.get_vm_events(vm, ['CustomizationStartedEvent'])
             if len(eventStarted):
                 thispoll = 0
                 while thispoll <= poll:
-                    eventsFinishedResult = self.get_vm_events(['CustomizationSucceeded', 'CustomizationFailed'])
+                    eventsFinishedResult = self.get_vm_events(vm, ['CustomizationSucceeded', 'CustomizationFailed'])
                     if len(eventsFinishedResult):
                         if not isinstance(eventsFinishedResult[0], vim.event.CustomizationSucceeded):
                             self.module.fail_json(msg='Customization failed with error {0}:\n{1}'.format(

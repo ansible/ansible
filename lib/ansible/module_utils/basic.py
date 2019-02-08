@@ -128,10 +128,12 @@ try:
     for attribute in ('available_algorithms', 'algorithms'):
         algorithms = getattr(hashlib, attribute, None)
         if algorithms:
+            # convert algorithms to list instead of immutable tuple so md5 can be removed if not available
+            algorithms = list(algorithms)
             break
     if algorithms is None:
         # python 2.5+
-        algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
+        algorithms = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
     for algorithm in algorithms:
         AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
 
@@ -139,7 +141,7 @@ try:
     try:
         hashlib.md5()
     except ValueError:
-        algorithms.pop('md5', None)
+        algorithms.remove('md5')
 except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
@@ -727,10 +729,15 @@ def jsonify(data, **kwargs):
     raise UnicodeError('Invalid unicode encoding encountered')
 
 
-def missing_required_lib(library):
+def missing_required_lib(library, reason=None, url=None):
     hostname = platform.node()
-    return "Failed to import the required Python library (%s) on %s's Python %s. Please read module documentation " \
-           "and install in the appropriate location." % (library, hostname, sys.executable)
+    msg = "Failed to import the required Python library (%s) on %s's Python %s." % (library, hostname, sys.executable)
+    if reason:
+        msg += " This is required %s." % reason
+    if url:
+        msg += " See %s for more info." % url
+
+    return msg + " Please read module documentation and install in the appropriate location"
 
 
 class AnsibleFallbackNotFound(Exception):

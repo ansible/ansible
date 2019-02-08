@@ -151,14 +151,17 @@ state:
 '''
 
 import os
+import traceback
 
+IPADDRESS_IMP_ERR = None
 try:
     from ipaddress import ip_network
     HAS_IPADDRESS = True
 except ImportError:
+    IPADDRESS_IMP_ERR = traceback.format_exc()
     HAS_IPADDRESS = False
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
 
 
@@ -249,7 +252,7 @@ def main():
     )
 
     if not HAS_IPADDRESS:
-        module.fail_json(msg='Could not import the python library ipaddress required by this module')
+        module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMP_ERR)
 
     target_state = module.params['state']
     target_server = module.params['server']

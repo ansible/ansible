@@ -1,0 +1,51 @@
+---
+- block:
+  - name: Test API key is provided.
+    fail:
+      msg: do_api_key should be defined in integration_config.yml
+    when: do_api_key is not defined
+
+  - name: Create a new tag
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: present
+    register: create_tag
+
+  - name: Create a new tag for idempotency
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: present
+    register: create_tag_idempotent
+
+  - debug:
+      var: create_tag
+
+  - assert:
+      that:
+        - create_tag.changed == True
+        - create_tag_idempotent.changed == False
+        - create_tag.data.tag.name == "integration-test"
+
+  always:
+  - name: Delete tag
+    digital_ocean_tag:
+      oauth_token: '{{do_api_key}}'
+      name: integration-test
+      state: absent
+    register: delete_tag
+
+# FIXME: Deleting a tag isn't idempotent
+#  - name: Delete tag with idempotency
+#    digital_ocean_tag:
+#      oauth_token: '{{do_api_key}}'
+#      name: integration-test
+#      state: absent
+#    register: delete_tag_idempotent
+
+  - assert:
+      that:
+        - delete_tag.changed == True
+# FIXME: Deleting a tag isn't idempotent
+#        - delete_tag_idempotent.changed == False

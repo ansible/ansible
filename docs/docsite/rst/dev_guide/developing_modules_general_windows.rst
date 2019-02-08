@@ -55,7 +55,7 @@ This will download the Vagrant box from Vagrant Cloud and add it to the local
 boxes on your host and then start up that instance in VirtualBox. When starting
 for the first time, the Windows VM will run through the sysprep process and
 then create a HTTP and HTTPS WinRM listener automatically. Vagrant will finish
-its process once the listeners are onlinem, after which the VM can be used by Ansible.
+its process once the listeners are online, after which the VM can be used by Ansible.
 
 Create an Ansible inventory
 ===========================
@@ -508,6 +508,7 @@ tests for win_stat:
 - Run the command ``source ./hacking/env-setup`` to prepare environment.
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
+- :ref:`Install the required Python modules <windows_winrm>` to support WinRM and a configured authentication method.
 - To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
 
 This will execute all the tests currently defined for that role. You can set

@@ -89,14 +89,17 @@ reboot_required:
 import os
 import re
 import tempfile
+import traceback
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
     HAS_SELINUX = True
 except ImportError:
+    SELINUX_IMP_ERR = traceback.format_exc()
     HAS_SELINUX = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.facts.utils import get_file_lines
 
 
@@ -176,7 +179,7 @@ def main():
     )
 
     if not HAS_SELINUX:
-        module.fail_json(msg='libselinux-python required for this module')
+        module.fail_json(msg=missing_required_lib('libselinux-python'), exception=SELINUX_IMP_ERR)
 
     # global vars
     changed = False

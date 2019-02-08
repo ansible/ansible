@@ -160,6 +160,10 @@ Noteworthy module changes
 * The ``digital_ocean`` module has been deprecated in favor of modules that do not require external dependencies.
   This allows for more flexibility and better module support.
 
+* The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
+
+* The ``docker_swarm_service`` module no longer sets a default for the ``user`` option. Before, the default was ``root``.
+
 Plugins
 =======
 
@@ -213,4 +217,9 @@ import and instantiate ``ansible.utils.display.Display`` on its own.
 Networking
 ==========
 
-No notable changes.
+* The ``eos_config``, ``ios_config``, and ``nxos_config`` modules have removed the deprecated
+  ``save`` and ``force`` parameters, use the ``save_when`` parameter to replicate their
+  functionality.
+
+* The ``nxos_vrf_af`` module has removed the ``safi`` paramter. This parameter was deprecated
+  in Ansible 2.4 and has had no impact on the module since then.

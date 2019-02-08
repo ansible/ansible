@@ -37,7 +37,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'dellos10'
-        reply = self.get(b'show version')
+        reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'OS Version (\S+)', data)
@@ -48,7 +48,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        reply = self.get(b'show running-configuration | grep hostname')
+        reply = self.get('show running-configuration | grep hostname')
         data = to_text(reply, errors='surrogate_or_strict').strip()
         match = re.search(r'^hostname (.+)', data, re.M)
         if match:
@@ -57,13 +57,13 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
-            cmd = b'show running-config all'
+            cmd = 'show running-config all'
         else:
-            cmd = b'show startup-config'
+            cmd = 'show startup-config'
         return self.send_command(cmd)
 
     @enable_mode
@@ -75,8 +75,5 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)

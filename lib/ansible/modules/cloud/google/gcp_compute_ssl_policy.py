@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -212,7 +211,7 @@ def main():
             name=dict(required=True, type='str'),
             profile=dict(type='str', choices=['COMPATIBLE', 'MODERN', 'RESTRICTED', 'CUSTOM']),
             min_tls_version=dict(type='str', choices=['TLS_1_0', 'TLS_1_1', 'TLS_1_2']),
-            custom_features=dict(type='list', elements='str')
+            custom_features=dict(type='list', elements='str'),
         )
     )
 
@@ -269,7 +268,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'profile': module.params.get('profile'),
         u'minTlsVersion': module.params.get('min_tls_version'),
-        u'customFeatures': module.params.get('custom_features')
+        u'customFeatures': module.params.get('custom_features'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -304,8 +303,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -344,7 +343,7 @@ def response_to_hash(module, response):
         u'enabledFeatures': response.get(u'enabledFeatures'),
         u'customFeatures': response.get(u'customFeatures'),
         u'fingerprint': response.get(u'fingerprint'),
-        u'warnings': SslPolicyWarningsArray(response.get(u'warnings', []), module).from_response()
+        u'warnings': SslPolicyWarningsArray(response.get(u'warnings', []), module).from_response(),
     }
 
 
@@ -370,9 +369,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -404,16 +403,10 @@ class SslPolicyWarningsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'code': item.get('code'),
-            u'message': item.get('message')
-        })
+        return remove_nones_from_dict({u'code': item.get('code'), u'message': item.get('message')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'code': item.get(u'code'),
-            u'message': item.get(u'message')
-        })
+        return remove_nones_from_dict({u'code': item.get(u'code'), u'message': item.get(u'message')})
 
 
 if __name__ == '__main__':

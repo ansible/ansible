@@ -23,7 +23,9 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
-extends_documentation_fragment: netconf
+extends_documentation_fragment:
+    - netconf
+    - network_agnostic
 options:
   content:
     description:
@@ -108,10 +110,10 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.7"
@@ -143,6 +145,28 @@ options:
       to load. The path to the source file can either be the full path on the Ansible control host or
       a relative path from the playbook or role root directory. This argument is mutually exclusive with I(xml).
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 requirements:
   - "ncclient"
 notes:
@@ -193,6 +217,13 @@ EXAMPLES = '''
   register: backup_junos_location
   vars:
     ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
+
+- name: configurable backup path
+  netconf_config:
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 '''
 
 RETURN = '''
@@ -225,6 +256,10 @@ from ansible.module_utils.network.netconf.netconf import get_capabilities, get_c
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         content=dict(aliases=['xml']),
         target=dict(choices=['auto', 'candidate', 'running'], default='auto', aliases=['datastore']),
@@ -236,6 +271,7 @@ def main():
         confirm_commit=dict(type='bool', default=False),
         error_option=dict(choices=['stop-on-error', 'continue-on-error', 'rollback-on-error'], default='stop-on-error'),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
         delete=dict(type='bool', default=False),
         commit=dict(type='bool', default=True),

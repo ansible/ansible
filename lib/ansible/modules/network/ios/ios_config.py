@@ -88,7 +88,7 @@ options:
   replace:
     description:
       - Instructs the module on the way to perform the configuration
-        on the device.  If the replace argument is set to I(line) then
+        on the device. If the replace argument is set to I(line) then
         the modified lines are pushed to the device in configuration
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
@@ -103,25 +103,14 @@ options:
         configuration action.
     default: "@"
     version_added: "2.3"
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.6.
-    type: bool
-    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -129,7 +118,7 @@ options:
     description:
       - The module, by default, will connect to the remote device and
         retrieve the current running-config to use as a base for comparing
-        against the contents of source.  There are times when it is not
+        against the contents of source. There are times when it is not
         desirable to have the task get the current running-config for
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
@@ -142,16 +131,6 @@ options:
         when getting the remote device running config.  When enabled,
         the module will get the current config by issuing the command
         C(show running-config all).
-    type: bool
-    default: 'no'
-    version_added: "2.2"
-  save:
-    description:
-      - The C(save) argument instructs the module to save the running-
-        config to the startup-config at the conclusion of the module
-        running.  If check mode is specified, this argument is ignored.
-      - This option is deprecated as of Ansible 2.4 and will be removed
-        in Ansible 2.8, use C(save_when) instead.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -197,12 +176,34 @@ options:
     description:
       - The C(intended_config) provides the master configuration that
         the node should conform to and is used to check the final
-        running-config against.   This argument will not modify any settings
+        running-config against. This argument will not modify any settings
         on the remote device and is strictly used to check the compliance
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -287,6 +288,14 @@ EXAMPLES = """
   ios_config:
     backup: yes
     src: ios_template.j2
+
+- name: configurable backup path
+  ios_config:
+    src: ios_template.j2
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -305,6 +314,26 @@ backup_path:
   returned: when backup is yes
   type: str
   sample: /playbooks/ansible/backup/ios_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: ios_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/ios_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 import json
 
@@ -371,6 +400,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -389,24 +422,17 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
-
+        backup_options=dict(type='dict', options=backup_spec),
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
         diff_against=dict(choices=['startup', 'intended', 'running']),
         diff_ignore_lines=dict(type='list'),
-
-        # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.8'),
-
-        # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(ios_argument_spec)
 
     mutually_exclusive = [('lines', 'src'),
-                          ('parents', 'src'),
-                          ('save', 'save_when')]
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -478,7 +504,7 @@ def main():
     running_config = module.params['running_config']
     startup_config = None
 
-    if module.params['save_when'] == 'always' or module.params['save']:
+    if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
         output = run_commands(module, ['show running-config', 'show startup-config'])

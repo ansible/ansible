@@ -87,3 +87,8 @@ class TestIosxrUserModule(TestIosxrModule):
         set_module_args(dict(name='ansible', configured_password='test', update_password='always'))
         result = self.execute_module(changed=True)
         self.assertEqual(result['commands'], ['username ansible secret test'])
+
+    def test_iosxr_user_admin_mode(self):
+        set_module_args(dict(name='ansible-2', configured_password='test-2', admin=True))
+        result = self.execute_module(changed=True)
+        self.assertEqual(result['commands'], ['username ansible-2', 'username ansible-2 secret test-2'])

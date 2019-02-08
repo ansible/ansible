@@ -141,7 +141,12 @@ from distutils.version import LooseVersion
 from binascii import hexlify
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import (
+    AnsibleAuthenticationFailure,
+    AnsibleConnectionFailure,
+    AnsibleError,
+    AnsibleFileNotFound,
+)
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
@@ -163,13 +168,14 @@ SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO = False
+PARAMIKO_IMP_ERR = None
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         import paramiko
         HAVE_PARAMIKO = True
-    except ImportError:
-        pass
+    except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+        PARAMIKO_IMP_ERR = err
 
 
 class MyAddPolicy(object):
@@ -300,7 +306,7 @@ class Connection(ConnectionBase):
         ''' activates the connection object '''
 
         if not HAVE_PARAMIKO:
-            raise AnsibleError("paramiko is not installed")
+            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMP_ERR))
 
         port = self._play_context.port or 22
         display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
@@ -355,6 +361,9 @@ class Connection(ConnectionBase):
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
+        except paramiko.ssh_exception.AuthenticationException as e:
+            msg = 'Invalid/incorrect username/password. {0}'.format(to_text(e))
+            raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = to_text(e)
             if u"PID check failed" in msg:

@@ -501,12 +501,17 @@ EXAMPLES = '''
 RETURN = r"""#
 """
 
+import traceback
+
+DBUS_IMP_ERR = None
 try:
     import dbus
     HAVE_DBUS = True
 except ImportError:
+    DBUS_IMP_ERR = traceback.format_exc()
     HAVE_DBUS = False
 
+NM_CLIENT_IMP_ERR = None
 try:
     import gi
     gi.require_version('NMClient', '1.0')
@@ -515,9 +520,10 @@ try:
     from gi.repository import NetworkManager, NMClient
     HAVE_NM_CLIENT = True
 except (ImportError, ValueError):
+    NM_CLIENT_IMP_ERR = traceback.format_exc()
     HAVE_NM_CLIENT = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -1435,10 +1441,10 @@ def main():
     )
 
     if not HAVE_DBUS:
-        module.fail_json(msg="This module requires dbus python bindings")
+        module.fail_json(msg=missing_required_lib('dbus'), exception=DBUS_IMP_ERR)
 
     if not HAVE_NM_CLIENT:
-        module.fail_json(msg="This module requires NetworkManager glib API")
+        module.fail_json(msg=missing_required_lib('NetworkManager glib API'), exception=NM_CLIENT_IMP_ERR)
 
     nmcli = Nmcli(module)
 

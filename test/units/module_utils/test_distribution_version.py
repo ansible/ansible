@@ -844,10 +844,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 10",
         "uname_v": "Generic_141445-09",
+        "uname_r": "5.10",
         "result": {
             "distribution_release": "Solaris 10 10/09 s10x_u8wos_08a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         },
         "platform.dist": [
@@ -865,10 +867,12 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     {
         "name": "Solaris 11",
         "uname_v": "11.0",
+        "uname_r": "5.11",
         "result": {
             "distribution_release": "Oracle Solaris 11 11/11 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11"
         },
         "platform.dist": [
@@ -884,6 +888,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
     },
     {
         "name": "Solaris 11.3",
+        "uname_r": "5.11",
         "platform.dist": [
             "",
             "",
@@ -891,8 +896,8 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
         ],
         "input": {
             "/etc/release": (
-                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2015, Oracle and/or its affiliates.  "
-                "All rights reserved.\n                            Assembled 06 October 2015\n"
+                "                             Oracle Solaris 11.3 X86\n  Copyright (c) 1983, 2018, Oracle and/or its affiliates.  "
+                "All rights reserved.\n                              Assembled 09 May 2018\n"
             )
         },
         "platform.system": "SunOS",
@@ -900,11 +905,36 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 11.3 X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "11",
             "distribution_version": "11.3"
         }
     },
     {
+        "name": "Solaris 11.4",
+        "uname_r": "5.11",
+        "platform.dist": [
+            "",
+            "",
+            ""
+        ],
+        "input": {
+            "/etc/release": (
+                "                            Oracle Solaris 11.4 SPARC\n    Copyright (c) 1983, 2018, Oracle and/or its affiliates."
+                "  All rights reserved.\n                           Assembled 14 September 2018\n"
+            )
+        },
+        "platform.system": "SunOS",
+        "result": {
+            "distribution_release": "Oracle Solaris 11.4 SPARC",
+            "distribution": "Solaris",
+            "os_family": "Solaris",
+            "distribution_major_version": "11",
+            "distribution_version": "11.4"
+        }
+    },
+    {
         "name": "Solaris 10",
+        "uname_r": "5.10",
         "platform.dist": [
             "",
             "",
@@ -919,6 +949,7 @@ DISTRIB_DESCRIPTION="CoreOS 976.0.0 (Coeur Rouge)"
             "distribution_release": "Oracle Solaris 10 1/13 s10x_u11wos_24a X86",
             "distribution": "Solaris",
             "os_family": "Solaris",
+            "distribution_major_version": "10",
             "distribution_version": "10"
         }
     },
@@ -1109,8 +1140,13 @@ def test_distribution_version(am, mocker, testcase):
             data = data.strip()
         return data
 
-    def mock_get_uname_version(am):
-        return testcase.get('uname_v', None)
+    def mock_get_uname(am, flags):
+        if '-v' in flags:
+            return testcase.get('uname_v', None)
+        elif '-r' in flags:
+            return testcase.get('uname_r', None)
+        else:
+            return None
 
     def mock_file_exists(fname, allow_empty=False):
         if fname not in testcase['input']:
@@ -1152,7 +1188,7 @@ def test_distribution_version(am, mocker, testcase):
         return False
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
-    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname_version', mock_get_uname_version)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
     mocker.patch('ansible.module_utils.distro.id', mock_distro_name)

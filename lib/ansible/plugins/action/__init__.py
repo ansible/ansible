@@ -509,7 +509,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             path=path,
             follow=follow,
             get_checksum=checksum,
-            checksum_algo='sha1',
+            checksum_algorithm='sha1',
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars,
                                       wrap_async=False)

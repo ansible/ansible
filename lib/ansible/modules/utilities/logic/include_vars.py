@@ -122,6 +122,12 @@ EXAMPLES = """
     dir: vars
     ignore_files: [bastion.yaml]
     extensions: [yaml]
+
+- name: Ignore warnings raised for files with unknown extensions while loading (2.7)
+  include_vars:
+    dir: vars
+    ignore_unknown_extensions: True
+    extensions: ['', 'yaml', 'yml', 'json']
 """
 
 RETURN = '''
