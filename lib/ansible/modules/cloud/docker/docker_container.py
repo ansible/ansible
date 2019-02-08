@@ -586,30 +586,22 @@ options:
       - Path to the working directory.
     version_added: "2.4"
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - "Cove Schneider (@cove)"
-    - "Joshua Conner (@joshuaconner)"
-    - "Pavel Antonov (@softzilla)"
-    - "Thomas Steinbach (@ThomasSteinbach)"
-    - "Philippe Jandot (@zfil)"
-    - "Daan Oosterveld (@dusdanig)"
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Kassian Sun (@kassiansun)"
+  - "Cove Schneider (@cove)"
+  - "Joshua Conner (@joshuaconner)"
+  - "Pavel Antonov (@softzilla)"
+  - "Thomas Steinbach (@ThomasSteinbach)"
+  - "Philippe Jandot (@zfil)"
+  - "Daan Oosterveld (@dusdanig)"
+  - "Chris Houseknecht (@chouseknecht)"
+  - "Kassian Sun (@kassiansun)"
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.8.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "Docker API >= 1.20"
+  - "docker-py >= 1.8.0"
+  - "Docker API >= 1.20"
 '''
 
 EXAMPLES = '''
@@ -875,7 +867,7 @@ from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DockerBaseClass, sanitize_result, is_image_name_id,
     compare_generic, DifferenceTracker,
@@ -884,14 +876,14 @@ from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    from ansible.module_utils.docker_common import docker_version
+    from ansible.module_utils.docker.common import docker_version
     if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 
@@ -1546,7 +1538,7 @@ class TaskParameters(DockerBaseClass):
                     elif key == 'retries':
                         try:
                             result[key] = int(result[key])
-                        except Exception as e:
+                        except Exception as dummy:
                             self.fail('Cannot parse number of retries for healthcheck. '
                                       'Expected an integer, got "{0}".'.format(result[key]))
 
@@ -2555,7 +2547,7 @@ class ContainerManager(DockerBaseClass):
             while True:
                 try:
                     response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-                except NotFound as exc:
+                except NotFound as dummy:
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:

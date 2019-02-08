@@ -91,14 +91,42 @@ options:
         default: false
 
 notes:
-    - Connect to the Docker daemon by providing parameters with each task or by defining environment variables.
-      You can define C(DOCKER_HOST), C(DOCKER_TLS_HOSTNAME), C(DOCKER_API_VERSION), C(DOCKER_CERT_PATH), C(DOCKER_SSL_VERSION),
-      C(DOCKER_TLS), C(DOCKER_TLS_VERIFY) and C(DOCKER_TIMEOUT). If you are using docker machine, run the script shipped
-      with the product that sets up the environment. It will set these variables for you. See
-      U(https://docker-py.readthedocs.io/en/stable/machine/) for more details.
-    - When connecting to Docker daemon with TLS, you might need to install additional Python packages.
-      For the Docker SDK for Python, version 2.4 or newer, this can be done by installing C(docker[tls]) with M(pip).
-    - Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions.
-      In general, it will use C($HOME/docker/config.json) if the C(DOCKER_CONFIG) environment variable is not specified,
-      and use C($DOCKER_CONFIG/config.json) otherwise.
+  - Connect to the Docker daemon by providing parameters with each task or by defining environment variables.
+    You can define C(DOCKER_HOST), C(DOCKER_TLS_HOSTNAME), C(DOCKER_API_VERSION), C(DOCKER_CERT_PATH), C(DOCKER_SSL_VERSION),
+    C(DOCKER_TLS), C(DOCKER_TLS_VERIFY) and C(DOCKER_TIMEOUT). If you are using docker machine, run the script shipped
+    with the product that sets up the environment. It will set these variables for you. See
+    U(https://docker-py.readthedocs.io/en/stable/machine/) for more details.
+  - When connecting to Docker daemon with TLS, you might need to install additional Python packages.
+    For the Docker SDK for Python, version 2.4 or newer, this can be done by installing C(docker[tls]) with M(pip).
+  - Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions.
+    In general, it will use C($HOME/docker/config.json) if the C(DOCKER_CONFIG) environment variable is not specified,
+    and use C($DOCKER_CONFIG/config.json) otherwise.
+'''
+
+    # Additional, more specific stuff for minimal docker-py version < 2.0
+
+    DOCKER_PY_1_DOCUMENTATION = r'''
+options: {}
+requirements:
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+     install the C(docker) Python module. Note that both modules should I(not)
+     be installed at the same time. Also note that when both modules are installed
+     and one of them is uninstalled, the other might no longer function and a
+     reinstall of it is required."
+'''
+
+    # Additional, more specific stuff for minimal docker-py version >= 2.0.
+    # Note that docker-py >= 2.0 requires Python 2.7 or newer.
+
+    DOCKER_PY_2_DOCUMENTATION = r'''
+options: {}
+requirements:
+  - "Python >= 2.7"
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     This module does I(not) work with docker-py."
 '''

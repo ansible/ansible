@@ -1,6 +1,6 @@
 import pytest
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     compare_dict_allow_more_present,
     compare_generic,
 )

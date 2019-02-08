@@ -32,23 +32,15 @@ options:
       - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID.
     required: true
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - Piotr Wojciechowski (@wojciechowskipiotr)
+  - Piotr Wojciechowski (@wojciechowskipiotr)
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.10.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "Docker API >= 1.24"
+  - "docker-py >= 1.10.0"
+  - "Docker API >= 1.24"
 '''
 
 EXAMPLES = '''
@@ -77,12 +69,12 @@ node_facts:
 
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
+from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
 try:
     from docker.errors import APIError, NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 

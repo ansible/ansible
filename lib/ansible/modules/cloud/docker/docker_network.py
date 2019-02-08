@@ -161,25 +161,17 @@ options:
     required: false
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - "Ben Keith (@keitwb)"
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Dave Bendit (@DBendit)"
+  - "Ben Keith (@keitwb)"
+  - "Chris Houseknecht (@chouseknecht)"
+  - "Dave Bendit (@DBendit)"
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.10.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "The docker server >= 1.10.0"
+  - "docker-py >= 1.10.0"
+  - "The docker server >= 1.10.0"
 '''
 
 EXAMPLES = '''
@@ -265,7 +257,7 @@ import re
 
 from distutils.version import LooseVersion
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DockerBaseClass,
     docker_version,
@@ -275,11 +267,10 @@ from ansible.module_utils.docker_common import (
 
 try:
     from docker import utils
-    from docker.errors import NotFound
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 
