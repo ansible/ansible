@@ -65,3 +65,6 @@ EXAMPLES = r'''
     state: absent
     zone: amer.example.com
 '''
+
+RETURN = r'''
+'''
