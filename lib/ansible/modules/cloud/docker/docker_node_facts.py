@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: docker_node_facts
@@ -83,9 +82,9 @@ nodes_facts:
     description:
       - Facts representing the current state of the nodes. Matches the C(docker node inspect) output.
       - Can contain multiple entries if more than one node provided in I(name), or I(name) is not provided.
-      - If I(name) contains a list of nodes, the output will contain information on all nodes registered at the swarm,
-        including nodes that left the swarm but hasn't been removed from the cluster on swarm managers and nodes that
-        are unreachable.
+      - If I(name) contains a list of nodes, the output will provide information on all nodes registered
+        at the swarm, including nodes that left the swarm but haven't been removed from the cluster on swarm
+        managers and nodes that are unreachable.
     returned: always
     type: list
 '''
