@@ -113,14 +113,17 @@ cloudstack_user_data:
 '''
 
 import os
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.facts import ansible_collector, default_collectors
 
+YAML_IMP_ERR = None
 try:
     import yaml
     HAS_LIB_YAML = True
 except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
     HAS_LIB_YAML = False
 
 CS_METADATA_BASE_URL = "http://%s/latest/meta-data"
@@ -231,7 +234,7 @@ def main():
     )
 
     if not HAS_LIB_YAML:
-        module.fail_json(msg="missing python library: yaml")
+        module.fail_json(msg=missing_required_lib("PyYAML"), exception=YAML_IMP_ERR)
 
     cs_facts = CloudStackFacts().run()
     cs_facts_result = dict(changed=False, ansible_facts=cs_facts)
