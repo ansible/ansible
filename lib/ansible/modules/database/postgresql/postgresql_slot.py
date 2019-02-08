@@ -35,7 +35,7 @@ options:
       - from a streaming replication client.
     required: False
     default: False
-    choices: [ "True", "False" ]
+    choices: [ True, False ]
   db:
     description:
       - Name of the database where you're connecting in order to add or remove only the logical slot to/from
@@ -72,7 +72,7 @@ options:
     default: prefer
     choices: ["disable", "allow", "prefer", "require", verify-ca", "verify-full"]
     version added: '2.3'
-  ssl-rootcert:
+  ssl_rootcert:
     description:
       - Specifies the name of a file containing the SSL certificate authority (CA) certificate(s).
       - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
@@ -201,7 +201,7 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
             login_host=dict(default="localhost"),
-            login_unix_socket=dict(default=""),
+            login_unix_socket=dict(default=None),
             port=dict(default="5432"),
             db=dict(required=False),
             ssl_mode=dict(default="prefer", choices=["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]),
@@ -209,7 +209,7 @@ def main():
             slot_name=dict(required=True),
             slot_type=dict(default="physical", choices=["physical", "logical"]),
             immediately_reserve=dict(default=False),
-            session_role=dict(required=False),
+            session_role=dict(required=False, default=None),
             output_plugin=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
