@@ -174,6 +174,10 @@ class OnePasswordFacts(object):
         self.terms = self.parse_search_terms(terms)
 
     def _run(self, args, expected_rc=0, command_input=None, ignore_errors=False):
+        if self.token:
+            # Adds the session token to all commands if we're logged in.
+            args += [to_bytes('--session=') + self.token]
+
         command = [self.cli_path] + args
         p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(input=command_input)
@@ -242,8 +246,6 @@ class OnePasswordFacts(object):
             args = ["get", "item", item_id]
             if vault is not None:
                 args += ['--vault={0}'.format(vault)]
-            if not self.logged_in:
-                args += [to_bytes('--session=') + self.token]
             rc, output, dummy = self._run(args)
             return output
 
