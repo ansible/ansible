@@ -18,7 +18,7 @@ short_description: NetApp ONTAP Job Schedule
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create/Delete/Modify job-schedules on ONTAP
 options:
@@ -83,9 +83,9 @@ EXAMPLES = """
         state: present
         name: jobName
         job_minutes: 30
-        job_hour: 23
-        job_day_of_month: 10
-        job_month: -1
+        job_hours: 23
+        job_days_of_month: 10
+        job_months: -1
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -181,7 +181,7 @@ class NetAppONTAPJob(object):
             for item_key, zapi_key in self.na_helper.zapi_string_keys.items():
                 job_details[item_key] = job_info[zapi_key]
             for item_key, zapi_key in self.na_helper.zapi_list_keys.items():
-                parent, _ = zapi_key
+                parent, dummy = zapi_key
                 job_details[item_key] = self.na_helper.get_value_for_list(from_zapi=True,
                                                                           zapi_parent=job_info.get_child_by_name(parent)
                                                                           )
