@@ -71,6 +71,7 @@ options:
   login_password:
     description:
       - Password used to authenticate with PostgreSQL.
+    type: str
   login_host:
     description:
       - Host running PostgreSQL.
@@ -187,6 +188,7 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
+from copy import deepcopy
 
 
 # To allow to set value like 1mb instead of 1MB, etc:
@@ -319,8 +321,7 @@ def main():
     # Check server version (needs 9.4 or later):
     cursor.execute('SELECT version()')
     ver = cursor.fetchone()[0].split()[1]
-    ver = '.'.join(ver.split('.')[:1])
-    print('VERSION ', ver)
+    ver = '.'.join(ver.split('.')[:2])
     if PG_REQ_VER > float(ver):
         module.warn("PostgreSQL is %s version but %s "
                     "or later is required" % (ver, PG_REQ_VER))
@@ -331,6 +332,7 @@ def main():
             cur_val="",
             prev_val="",
         )
+        db_connection.close()
         module.exit_json(**kw)
 
     # Switch role, if specified:
@@ -354,7 +356,8 @@ def main():
     boot_val = res[1][0][4]
     context = res[1][0][3]
 
-    kw['prev_val'], kw['cur_val'] = current_value, current_value
+    kw['prev_val'] = current_value
+    kw['cur_val'] = deepcopy(kw['prev_val'])
 
     # Do job
     if context == "internal":
