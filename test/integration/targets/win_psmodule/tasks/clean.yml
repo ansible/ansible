@@ -6,13 +6,12 @@
 
 ---
 - name: uninstall any versions of modules used for tests
-  win_shell: 'Uninstall-Module {{ item }} -AllVersions -Force -ErrorAction Ignore'
+  win_shell: |
+    $ModulesToUninstall = @('powershell-yaml', 'Pester', 'PowerShellCookbook', 'xActiveDirectory')
+    ForEach ( $ModuleToUninstall in $ModulesToUninstall ) {
+      Uninstall-Module $ModuleToUninstall -AllVersions -Force -ErrorAction Ignore
+    }
   changed_when: false
-  with_items:
-    - "powershell-yaml"
-    - "Pester"
-    - "PowerShellCookbook"
-    - "xActiveDirectory"
 
 - name: unregister the custom repo
   win_psrepository:
