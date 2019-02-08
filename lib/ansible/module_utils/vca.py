@@ -15,14 +15,17 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import traceback
 
+PYVCLOUD_IMP_ERR = None
 try:
     from pyvcloud.vcloudair import VCA
     HAS_PYVCLOUD = True
 except ImportError:
+    PYVCLOUD_IMP_ERR = traceback.format_exc()
     HAS_PYVCLOUD = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 SERVICE_MAP = {'vca': 'ondemand', 'vchs': 'subscription', 'vcd': 'vcd'}
 LOGIN_HOST = {'vca': 'vca.vmware.com', 'vchs': 'vchs.vmware.com'}
@@ -64,7 +67,8 @@ class VcaAnsibleModule(AnsibleModule):
         super(VcaAnsibleModule, self).__init__(*args, **kwargs)
 
         if not HAS_PYVCLOUD:
-            self.fail("python module pyvcloud is required for this module")
+            self.fail(missing_required_lib('pyvcloud'),
+                      exception=PYVCLOUD_IMP_ERR)
 
         self._vca = self.create_instance()
         self.login()
@@ -212,7 +216,8 @@ VCD_REQ_ARGS = []
 
 def _validate_module(module):
     if not HAS_PYVCLOUD:
-        module.fail_json(msg="python module pyvcloud is needed for this module")
+        module.fail_json(msg=missing_required_lib("pyvcloud"),
+                         exception=PYVCLOUD_IMP_ERR)
 
     service_type = module.params.get('service_type', DEFAULT_SERVICE_TYPE)
 

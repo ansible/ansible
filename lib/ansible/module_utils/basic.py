@@ -729,11 +729,13 @@ def jsonify(data, **kwargs):
     raise UnicodeError('Invalid unicode encoding encountered')
 
 
-def missing_required_lib(library, reason=None):
+def missing_required_lib(library, reason=None, url=None):
     hostname = platform.node()
     msg = "Failed to import the required Python library (%s) on %s's Python %s." % (library, hostname, sys.executable)
     if reason:
         msg += " This is required %s." % reason
+    if url:
+        msg += " See %s for more info." % url
 
     return msg + " Please read module documentation and install in the appropriate location"
 

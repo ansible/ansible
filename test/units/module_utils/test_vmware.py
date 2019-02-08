@@ -98,7 +98,7 @@ def test_pyvmomi_lib_exists(mocker, fake_ansible_module):
     with pytest.raises(FailJson) as exec_info:
         PyVmomi(fake_ansible_module)
 
-    assert 'PyVmomi Python module required. Install using "pip install PyVmomi"' == exec_info.value.kwargs['msg']
+    assert 'Failed to import the required Python library (PyVmomi) on' in exec_info.value.kwargs['msg']
 
 
 def test_requests_lib_exists(mocker, fake_ansible_module):
@@ -107,8 +107,7 @@ def test_requests_lib_exists(mocker, fake_ansible_module):
     with pytest.raises(FailJson) as exec_info:
         PyVmomi(fake_ansible_module)
 
-    msg = "Unable to find 'requests' Python library which is required. Please install using 'pip install requests'"
-    assert msg == exec_info.value.kwargs['msg']
+    assert 'Failed to import the required Python library (requests) on' in exec_info.value.kwargs['msg']
 
 
 @pytest.mark.skipif(sys.version_info < (2, 7), reason="requires python2.7 and greater")
