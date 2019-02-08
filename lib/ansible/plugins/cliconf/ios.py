@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: ios
+short_description: Use ios cliconf to run command on Cisco IOS platform
+description:
+  - This ios plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Cisco IOS network devices.
+version_added: "2.4"
+"""
+
 import re
 import time
 import json

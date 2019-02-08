@@ -21,6 +21,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: dellos6
+short_description: Use dellos6 cliconf to run command on Dell OS6 platform
+description:
+  - This dellos6 plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Dell OS6 network devices.
+version_added: 2.5
+"""
+
 import re
 import json
 
