@@ -327,11 +327,11 @@ def main():
                     "or later is required" % (ver, PG_REQ_VER))
         kw = dict(
             changed=False,
-            name=name,
             restart_required=False,
             cur_val="",
             prev_val="",
         )
+        kw['name'] = name
         db_connection.close()
         module.exit_json(**kw)
 
