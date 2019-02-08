@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: iosxr
+short_description: Use iosxr cliconf to run command on Cisco IOS XR platform
+description:
+  - This iosxr plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Cisco IOS XR network devices.
+version_added: "2.4"
+"""
+
 import re
 import json
 

@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: onyx
+short_description: Use onyx cliconf to run command on Mellanox ONYX platform
+description:
+  - This onyx plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Mellanox ONYX network devices.
+version_added: "2.5"
+"""
+
 import json
 
 from itertools import chain

@@ -16,6 +16,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: cnos
+short_description: Use cnos cliconf to run command on Lenovo CNOS platform
+description:
+  - This cnos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Lenovo CNOS network devices.
+version_added: 2.6
+"""
+
 import re
 import json
 
