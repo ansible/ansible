@@ -264,7 +264,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
-        # TODO: use 'current user runnign ansible' as fallback when moving away from play_context
+        # TODO: use 'current user running ansible' as fallback when moving away from play_context
         # pwd.getpwuid(os.getuid()).pw_name
         remote_user = None
         try:
