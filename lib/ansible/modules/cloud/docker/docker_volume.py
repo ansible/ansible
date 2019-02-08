@@ -83,23 +83,15 @@ options:
       - present
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - Alex Grönholm (@agronholm)
+  - Alex Grönholm (@agronholm)
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.10.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "The docker server >= 1.9.0"
+  - "docker-py >= 1.10.0"
+  - "The docker server >= 1.9.0"
 '''
 
 EXAMPLES = '''
@@ -131,10 +123,10 @@ facts:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     DockerBaseClass,
     AnsibleDockerClient,
     DifferenceTracker,
