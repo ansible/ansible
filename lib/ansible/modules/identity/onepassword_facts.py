@@ -192,7 +192,7 @@ class OnePasswordFacts(object):
         if ('documentAttributes' in data['details']):
             # This is actually a document, let's fetch the document data instead!
             document = self._run(["get", "document", data['overview']['title']])
-            return {'document': document[0].strip()}
+            return {'document': document[1].strip()}
 
         else:
             # This is not a document, let's try to find the requested field
