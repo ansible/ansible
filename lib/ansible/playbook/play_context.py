@@ -123,14 +123,6 @@ class PlayContext(Base):
     _become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
     _prompt = FieldAttribute(isa='string')
 
-    # DEPRECATED: backwards compatibility fields for sudo/su
-    _sudo_exe = FieldAttribute(isa='string')
-    _sudo_flags = FieldAttribute(isa='string')
-    _sudo_pass = FieldAttribute(isa='string')
-    _su_exe = FieldAttribute(isa='string')
-    _su_flags = FieldAttribute(isa='string')
-    _su_pass = FieldAttribute(isa='string')
-
     # general flags
     _verbosity = FieldAttribute(isa='int', default=0)
     _only_tags = FieldAttribute(isa='set', default=set)
@@ -138,12 +130,6 @@ class PlayContext(Base):
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
-
-    # Fact gathering settings
-    # ## DEPRECATED ##  use 'play'
-    _gather_subset = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_SUBSET)
-    _gather_timeout = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
-    _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
@@ -311,13 +297,6 @@ class PlayContext(Base):
                     attrs_considered.append(attr)
                 # no else, as no other vars should be considered
 
-        # become legacy updates -- from commandline
-        if not new_info.become_pass:
-            if new_info.become_method == 'sudo' and new_info.sudo_pass:
-                new_info.become_pass = new_info.sudo_pass
-            elif new_info.become_method == 'su' and new_info.su_pass:
-                new_info.become_pass = new_info.su_pass
-
         # become legacy updates -- from inventory file (inventory overrides
         # commandline)
         for become_pass_name in C.MAGIC_VARIABLE_MAPPING.get('become_pass'):
@@ -397,8 +376,8 @@ class PlayContext(Base):
 
         if plugin:
             options = {
-                'become_exe': self.become_exe or getattr(self, '%s_exe' % become_method, become_method) or become_method,
-                'become_flags': self.become_flags or getattr(self, '%s_flags' % become_method, '') or '',
+                'become_exe': self.become_exe or become_method,
+                'become_flags': self.become_flags or '',
                 'become_user': self.become_user,
                 'become_pass': self.become_pass
             }
