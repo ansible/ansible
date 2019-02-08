@@ -29,7 +29,10 @@ options:
     default: physical
     choices: [ "physical", "logical" ]
   immediately_reserve:
-    description: Optional parameter the when True specifies that the LSN for this replication slot be reserved immediately, otherwise the default, False, specifies that the LSN is reserved on the first connection from a streaming replication client.
+    description:
+      - Optional parameter the when True specifies that the LSN for this replication slot be reserved
+      - immediately, otherwise the default, False, specifies that the LSN is reserved on the first connection
+      - from a streaming replication client.
     required: False
     default: False
     choices: [ "True", "False" ]
@@ -71,11 +74,16 @@ options:
     version added: '2.3'
   ssl-rootcert:
     description:
-      - Specifies the name of a file containing the SSL certificate authority (CA) certificate(s). If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+      - Specifies the name of a file containing the SSL certificate authority (CA) certificate(s).
+      - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
     default: None
     version_added: '2.3'
   session_role:
-    description: Switch to session role after connecting. The specified session_role must be a role that the current login_user is a member. Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+    description:
+      - Switch to session role after connecting.
+      - The specified session_role must be a role that the current login_user is a member.
+      - Permissions checking for SQL commands is carried out as though the session_role were the one
+      - that had logged in originally.
     default: None
     version_added: '2.8'
   state:
@@ -108,7 +116,7 @@ EXAMPLES = '''
     slot_type: logical
     state: present
     output_plugin: custom_decoder_one
-    
+  
 - postgresql_slot:
     slot_name: physical_slot_two
     slot_type: physical
@@ -234,7 +242,7 @@ def main():
     }
     kw = dict((params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '')
-    
+
     # if a login_unix_socket is specified, incorporate it here
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
@@ -252,7 +260,7 @@ def main():
 
         cursor = db_connection.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
-    
+
     except TypeError as e:
         if 'sslrootcert' in e.args[0]:
             module.fail_json(msg='PostgreSQL server must be at least version 8.4 to support sslrootcert')
