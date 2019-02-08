@@ -165,8 +165,7 @@ class DockerSwarmManager(DockerBaseClass):
 
         listed_objects = ['tasks', 'services', 'nodes']
 
-        if not self.client.check_if_swarm_manager():
-            self.client.fail(msg="Error running docker swarm module: must run on swarm manager node")
+        self.client.fail_task_if_not_swarm_manager()
 
         self.results['docker_swarm_facts'] = self.get_docker_swarm_facts()
 
