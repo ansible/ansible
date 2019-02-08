@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
 # (c) 2019 Piotr Wojciechowski <piotr@it-playground.pl>
-# (c) Thierry Bouvet (@tbouvet)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -22,7 +21,7 @@ description:
   - Retrieves facts about a Docker Swarm.
   - Returns lists of swarm objects names for the services - nodes, services, tasks.
   - The output differs depending on API version available on docker host.
-  - Must be run on Swarm Manager node.
+  - Must be run on Swarm Manager node otherwise module fails with error message.
 
 version_added: "2.8"
 
@@ -70,25 +69,17 @@ options:
     description:
       - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes)
         then output will contain verbose information about objects matching the full output of API method.
-        For details see the documentation of your version of Docker API at L(https://docs.docker.com/engine/api/).
+        For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
       - The verbose output in this module contains only subset of information returned by I(_facts) module
         for each type of the objects.
     type: bool
     default: no
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 requirements:
-    - "python >= 2.6"
     - "docker-py >= 1.10.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
     - "Docker API >= 1.24"
 '''
 
@@ -150,8 +141,6 @@ docker_tasks_list:
 
 '''
 
-import json
-
 try:
     from docker.errors import APIError, NotFound
 except ImportError:
@@ -160,8 +149,8 @@ except ImportError:
 
 from ansible.module_utils._text import to_native
 
-from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
-from ansible.module_utils.docker_common import DockerBaseClass, clean_dict_booleans_for_docker_api
+from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
+from ansible.module_utils.docker.common import DockerBaseClass, clean_dict_booleans_for_docker_api
 
 
 class DockerSwarmManager(DockerBaseClass):
@@ -175,6 +164,9 @@ class DockerSwarmManager(DockerBaseClass):
         self.verbose_output = self.client.module.params['verbose_output']
 
         listed_objects = ['tasks', 'services', 'nodes']
+
+        if not self.client.check_if_swarm_manager():
+            self.client.fail(msg="Error running docker swarm module: must run on swarm manager node")
 
         self.results['docker_swarm_facts'] = self.get_docker_swarm_facts()
 
@@ -302,7 +294,7 @@ def main():
 
     results = dict(
         changed=False,
-        docker_swarm_facts=[]
+        docker_swarm_facts=[],
     )
 
     DockerSwarmManager(client, results)
