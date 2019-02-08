@@ -24,25 +24,10 @@ description:
 author: "Raphaël Droz (@drzraf)"
 requirements:
   - python-gitlab
+extends_documentation_fragment:
+  - auth_basic
 options:
-  server_url:
-    description:
-      - Url of GitLab server, with protocol (http or https).
-    required: true
-  validate_certs:
-    description:
-      - When using https if SSL certificate needs to be verified.
-    type: bool
-    default: 'yes'
-  login_user:
-    description:
-      - GitLab user name
-    default: null
-  login_password:
-    description:
-      - GitLab password for login_user
-    default: null
-  login_token:
+  api_token:
     description:
       - GitLab personal token for logging in (preferred method)
     default: null
@@ -90,8 +75,8 @@ EXAMPLES = '''
 # Deletes a GitLab webhook specifying only its url
 - name: delete GitLab webhook
   gitlab_webhook:
-    server_url: https://gitlab.com
-    login_token: foobar
+    api_url: https://gitlab.com
+    api_token: foobar
     project: 123456
     url: http://dev.newapp.st/hook.php
     state: absent
@@ -100,8 +85,8 @@ EXAMPLES = '''
 # Deletes a GitLab webhook specifying its hook_id (URL can be omitted)
 - name: delete GitLab webhook
   gitlab_webhook:
-    server_url: https://gitlab.com
-    login_token: foobar
+    api_url: https://gitlab.com
+    api_token: foobar
     project: my/proj
     hook_id: 1547318
     state: absent
@@ -111,9 +96,9 @@ EXAMPLES = '''
 # for https://hook.me/app.php
 - name: webhook for hook.me
   gitlab_webhook:
-    server_url: https://gitorious.org
-    login_user: foo
-    login_password: bar
+    api_url: https://gitorious.org
+    api_username: foo
+    api_password: bar
     project: my/app
     url: https://hook.me/app.php
     events: ['push', 'issues']
@@ -124,9 +109,9 @@ EXAMPLES = '''
 # Setting token implies tasks is always marked changed
 - name: Create/edit webhook
   gitlab_webhook:
-    server_url: https://git.sf.net
-    login_user: foo
-    login_password: bar
+    api_url: https://git.sf.net
+    api_username: foo
+    api_password: bar
     project: my/app
     url: https://hook.me/auth/app.php
     events: ['push', 'issues']
@@ -294,11 +279,11 @@ class GitLabWebhook(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            server_url=dict(required=True),
+            api_url=dict(required=True),
             validate_certs=dict(required=False, default=True, type='bool'),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
+            api_username=dict(required=False, no_log=True),
+            api_password=dict(required=False, no_log=True),
+            api_token=dict(required=False, no_log=True),
             hook_id=dict(required=False, type='int'),
             solo=dict(required=False, default=True, type='bool'),
             project=dict(required=True),
@@ -310,17 +295,17 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
         ),
         mutually_exclusive=[
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
+            ['api_username', 'api_token'],
+            ['api_password', 'api_token']
         ],
         required_together=[
-            ['login_user', 'login_password']
+            ['api_username', 'api_password']
         ],
         required_one_of=[
-            ['login_user', 'login_token']
+            ['api_username', 'api_token']
         ],
         required_if=[
-            ["state", "present", ["events"]]
+            ['state', 'present', ['events']]
         ],
         supports_check_mode=True
     )
@@ -328,11 +313,11 @@ def main():
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
 
-    server_url = module.params['server_url']
+    api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_token = module.params['login_token']
+    api_username = module.params['api_username']
+    api_password = module.params['api_password']
+    api_token = module.params['api_token']
     hook_id = module.params['hook_id']
     solo = module.params['solo']
     project = module.params['project']
@@ -346,7 +331,7 @@ def main():
         module.fail_json(msg="url is required (except for removal via hook_id)")
 
     try:
-        git = Gitlab(url=server_url, ssl_verify=validate_certs, email=login_user, password=login_password, private_token=login_token, api_version=4)
+        git = Gitlab(url=api_url, ssl_verify=validate_certs, email=api_username, password=api_password, private_token=api_token, api_version=4)
         # git.enable_debug() ?
         git.auth()
         project = git.projects.get(project)
