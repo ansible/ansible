@@ -162,14 +162,17 @@ instance:
   }
 """
 
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
 from ansible.module_utils.linode import get_user_agent
 
+LINODE_IMP_ERR = None
 try:
     from linode_api4 import Instance, LinodeClient
     HAS_LINODE_DEPENDENCY = True
 except ImportError:
+    LINODE_IMP_ERR = traceback.format_exc()
     HAS_LINODE_DEPENDENCY = False
 
 
@@ -257,7 +260,7 @@ def main():
     module = initialise_module()
 
     if not HAS_LINODE_DEPENDENCY:
-        module.fail_json(msg='The linode_v4 module requires the linode_api4 package')
+        module.fail_json(msg=missing_required_lib('linode-api4'), exception=LINODE_IMP_ERR)
 
     client = build_client(module)
     instance = maybe_instance_from_label(module, client)

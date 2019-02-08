@@ -104,13 +104,17 @@ private_key:
   sample: "-----BEGIN RSA PRIVATE KEY-----\nMII...8tO\n-----END RSA PRIVATE KEY-----\n"
 '''
 
+import traceback
+
+SSHPUBKEYS_IMP_ERR = None
 try:
     import sshpubkeys
     HAS_LIB_SSHPUBKEYS = True
 except ImportError:
+    SSHPUBKEYS_IMP_ERR = traceback.format_exc()
     HAS_LIB_SSHPUBKEYS = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
@@ -246,7 +250,7 @@ def main():
     )
 
     if not HAS_LIB_SSHPUBKEYS:
-        module.fail_json(msg="python library sshpubkeys required: pip install sshpubkeys")
+        module.fail_json(msg=missing_required_lib("sshpubkeys"), exception=SSHPUBKEYS_IMP_ERR)
 
     acs_sshkey = AnsibleCloudStackSshKey(module)
     state = module.params.get('state')

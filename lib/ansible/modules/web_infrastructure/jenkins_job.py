@@ -148,19 +148,23 @@ url:
 
 import traceback
 
+JENKINS_IMP_ERR = None
 try:
     import jenkins
     python_jenkins_installed = True
 except ImportError:
+    JENKINS_IMP_ERR = traceback.format_exc()
     python_jenkins_installed = False
 
+LXML_IMP_ERR = None
 try:
     from lxml import etree as ET
     python_lxml_installed = True
 except ImportError:
+    LXML_IMP_ERR = traceback.format_exc()
     python_lxml_installed = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -325,12 +329,15 @@ class JenkinsJob:
 
 def test_dependencies(module):
     if not python_jenkins_installed:
-        module.fail_json(msg="python-jenkins required for this module. "
-                         "see http://python-jenkins.readthedocs.io/en/latest/install.html")
+        module.fail_json(
+            msg=missing_required_lib("python-jenkins",
+                                     url="https://python-jenkins.readthedocs.io/en/latest/install.html"),
+            exception=JENKINS_IMP_ERR)
 
     if not python_lxml_installed:
-        module.fail_json(msg="lxml required for this module. "
-                         "see http://lxml.de/installation.html")
+        module.fail_json(
+            msg=missing_required_lib("lxml", url="https://lxml.de/installation.html"),
+            exception=LXML_IMP_ERR)
 
 
 def job_config_to_string(xml_str):

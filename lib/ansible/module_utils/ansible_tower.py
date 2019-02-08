@@ -27,7 +27,9 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import traceback
 
+TOWER_CLI_IMP_ERR = None
 try:
     import tower_cli.utils.exceptions as exc
     from tower_cli.utils import parser
@@ -35,9 +37,10 @@ try:
 
     HAS_TOWER_CLI = True
 except ImportError:
+    TOWER_CLI_IMP_ERR = traceback.format_exc()
     HAS_TOWER_CLI = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def tower_auth_config(module):
@@ -105,4 +108,5 @@ class TowerModule(AnsibleModule):
         super(TowerModule, self).__init__(argument_spec=args, **kwargs)
 
         if not HAS_TOWER_CLI:
-            self.fail_json(msg='ansible-tower-cli required for this module')
+            self.fail_json(msg=missing_required_lib('ansible-tower-cli'),
+                           exception=TOWER_CLI_IMP_ERR)

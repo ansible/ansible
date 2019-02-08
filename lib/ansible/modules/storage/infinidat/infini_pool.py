@@ -79,14 +79,17 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
+import traceback
 
+CAPACITY_IMP_ERR = None
 try:
     from capacity import KiB, Capacity
     HAS_CAPACITY = True
 except ImportError:
+    CAPACITY_IMP_ERR = traceback.format_exc()
     HAS_CAPACITY = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
 
 
@@ -178,9 +181,9 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     if not HAS_INFINISDK:
-        module.fail_json(msg='infinisdk is required for this module')
+        module.fail_json(msg=missing_required_lib('infinisdk'))
     if not HAS_CAPACITY:
-        module.fail_json(msg='The capacity python library is required for this module')
+        module.fail_json(msg=missing_required_lib('capacity'), exception=CAPACITY_IMP_ERR)
 
     if module.params['size']:
         try:
