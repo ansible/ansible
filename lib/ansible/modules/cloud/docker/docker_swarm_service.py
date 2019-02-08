@@ -28,7 +28,7 @@ options:
     type: str
     description:
       - Service image path and tag.
-      - Maps docker service C(IMAGE) parameter.
+      - Corresponds to the C(IMAGE) parameter of C(docker service create).
   resolve_image:
     type: bool
     default: true
