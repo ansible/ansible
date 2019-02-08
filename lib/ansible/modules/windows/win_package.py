@@ -134,7 +134,7 @@ options:
     description:
     - Full path of log file.
     - This file will be kept regardless of overall success or failure
-    type: path
+    type: path.  This is only valid for MSI files, use arguments for other packages.
     version_added: '2.8'
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
@@ -177,7 +177,7 @@ EXAMPLES = r'''
     - /install
     - /passive
     - /norestart
-    log_path: "D:\\logs\\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log"
+    log_path: D:\logs\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log
 
 - name: Install Remote Desktop Connection Manager from msi
   win_package:

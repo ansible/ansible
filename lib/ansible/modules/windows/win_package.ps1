@@ -328,10 +328,10 @@ if ($state -eq "absent") {
             if ($program_metadata.msi -eq $true) {
                 # we are uninstalling an msi
                 if ( -Not $log_path ) { 
-                  $temp_path = [System.IO.Path]::GetTempPath()
-                  $log_file = [System.IO.Path]::GetRandomFileName()
-                  $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                  $cleanup_artifacts += $log_path
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
                 }
 
                 if ($program_metadata.product_id -ne $null) {
@@ -422,10 +422,10 @@ if ($state -eq "absent") {
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
                 if ( -Not $log_path ) { 
-                  $temp_path = [System.IO.Path]::GetTempPath()
-                  $log_file = [System.IO.Path]::GetRandomFileName()
-                  $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                  $cleanup_artifacts += $log_path
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
                 }
 
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
