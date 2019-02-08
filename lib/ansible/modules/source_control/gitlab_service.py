@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Raphaël Droz <raphael@droz.eu>
+# Copyright: (c) 2018-2019, Raphaël Droz <raphael@droz.eu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -15,34 +15,34 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gitlab_service
-short_description: Creates, updates or deletes Gitlab services
-version_added: "2.6"
+short_description: Creates, updates or deletes GitLab services
+version_added: "2.8"
 description:
-  - Setup or delete Gitlab integration services.
+  - Setup or delete GitLab integration services.
 author: "Raphaël Droz (@drzraf)"
 requirements:
   - python-gitlab
 options:
   server_url:
     description:
-      - Url of Gitlab server, with protocol (http or https).
+      - URL of GitLab server, with protocol (http or https).
     required: true
   validate_certs:
     description:
-      - When using https if SSL certificate needs to be verified.
+      - Verify SSL certificate when HTTPS is used.
     type: bool
     default: 'yes'
   login_user:
     description:
-      - Gitlab user name
+      - GitLab user name
     default: null
   login_password:
     description:
-      - Gitlab password for login_user
+      - GitLab password for login_user
     default: null
   login_token:
     description:
-      - Gitlab personal token for logging in (preferred method)
+      - GitLab personal token for logging in (preferred method)
     default: null
   project:
     description:
@@ -131,7 +131,7 @@ EXAMPLES = '''
       server: https://packagist.org
   delegate_to: localhost
 
-- Idempotency is only partially provided since Gitlab does
+- Idempotency is only partially provided since GitLab does
   not expose secret params like tokens or password.
   See U(https://gitlab.com/gitlab-org/gitlab-ce/issues/46313)
 '''
@@ -139,7 +139,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 service:
-  description: A dict containing key/value pairs representing Gitlab service
+  description: A dict containing key/value pairs representing GitLab service
   returned: success
   type: dictionary
   sample:
@@ -250,7 +250,7 @@ class GitLabServices(object):
         for k, v in params.items():
             if k not in self.credentialParams:
                 setattr(filtered_params, k, v)
-        # ToDo: this is not (yet?) supported by Gitlab
+        # ToDo: this is not (yet?) supported by GitLab
         # if prev_attr['active'] != active:
         # return False
         if self.hasCredentials(params):
@@ -327,7 +327,7 @@ def main():
         git.auth()
         project = git.projects.get(project)
     except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError, gitlab.GitlabGetError) as e:
-        module.fail_json(msg='Failed to connect to Gitlab server: %s' % to_native(e))
+        module.fail_json(msg='Failed to connect to GitLab server: %s' % to_native(e))
 
     try:
         remote_service = project.services.get(service)

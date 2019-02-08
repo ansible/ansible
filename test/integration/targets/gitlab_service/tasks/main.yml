@@ -1,0 +1,73 @@
+- name: Install required libs
+  pip:
+    name: python-gitlab
+    state: present
+
+- name: Create {{ gitlab_project_name }}
+  gitlab_project:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: False
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    state: present
+
+- name: Cleanup Gitlab service
+  gitlab_service:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    service: emails-on-push
+    state: present
+
+- name: Create Gitlab Emails-On-Push service
+  gitlab_service:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    service: emails-on-push
+    params:
+      recipients: foo@example.com
+      disable_diffs: true
+    state: present
+  register: gitlab_service_state
+
+- name: Test group created
+  assert:
+    that:
+      - gitlab_service_state is changed
+
+
+- name: Create Gitlab service ( Idempotency test )
+  gitlab_service:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    service: emails-on-push
+    params:
+      recipients: foo@example.com
+      disable_diffs: true
+    state: present
+  register: gitlab_service_state_again
+
+- name: Test module is idempotent
+  assert:
+    that:
+      - gitlab_service_state_again is not changed
+
+- name: Remove Gitlab service
+  gitlab_service:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: false
+    login_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    service: emails-on-push
+    state: absent
+  register: gitlab_service_state_absent
+
+- name: Assert service has been removed
+  assert:
+    that:
+      - gitlab_service_state_absent is changed
