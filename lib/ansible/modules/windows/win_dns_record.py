@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_dns
+module: win_dns_record
 version_added: "2.8"
 short_description: Manage Windows Server DNS records
 description:
@@ -52,14 +52,14 @@ options:
 
 EXAMPLES = r'''
 - name: Create database server alias
-  win_dns:
+  win_dns_record:
     name: db1
     type: CNAME
     value: cgyl1404p.amer.example.com
     zone: amer.example.com
 
 - name: Remove static record
-  win_dns:
+  win_dns_record:
     name: db1
     type: A
     state: absent
