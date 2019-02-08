@@ -1106,7 +1106,7 @@ def build_top_level_options(params):
 
     if params.get('launch_template') is not None:
         spec['LaunchTemplate'] = {}
-        if not params.get('launch_template').get('id') or params.get('launch_template').get('name'):
+        if not params.get('launch_template').get('id') and not params.get('launch_template').get('name'):
             module.fail_json(msg="Could not create instance with launch template. Either launch_template.name or launch_template.id parameters are required")
 
         if params.get('launch_template').get('id') is not None:
