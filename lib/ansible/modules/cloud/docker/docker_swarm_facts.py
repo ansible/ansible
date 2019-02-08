@@ -158,16 +158,10 @@ except ImportError:
     # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-try:
-    from ansible.module_utils.docker_common import docker_version, clean_dict_booleans_for_docker_api
-except Exception as dummy:
-    # missing docker-py handled in ansible.module_utils.docker
-    pass
-
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.docker_swarm import AnsibleDockerSwarmClient
-from ansible.module_utils.docker_common import DockerBaseClass
+from ansible.module_utils.docker_common import DockerBaseClass, clean_dict_booleans_for_docker_api
 
 
 class DockerSwarmManager(DockerBaseClass):
