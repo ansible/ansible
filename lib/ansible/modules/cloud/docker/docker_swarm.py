@@ -133,15 +133,11 @@ options:
         type: bool
         default: 'no'
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_2_documentation
 requirements:
-    - python >= 2.7
-    - "docker >= 2.6.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       Version 2.1.0 or newer is only available with the C(docker) module."
-    - Docker API >= 1.25
+  - "docker >= 2.6.0"
+  - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
 '''
@@ -214,18 +210,16 @@ actions:
 '''
 
 import json
-from distutils.version import LooseVersion
 from time import sleep
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DockerBaseClass,
-    docker_version,
 )
 from ansible.module_utils._text import to_native
 
