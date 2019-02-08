@@ -331,7 +331,7 @@ class MockResponse(object):
         return self.body
 
 
-def mock_call(calls, url, timeout, data=None, headers=None, method=None):
+def mock_call(calls, url, timeout, validate_certs, data=None, headers=None, method=None):
     result = calls[0]
     del calls[0]
 
