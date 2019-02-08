@@ -357,7 +357,7 @@ def parse_password_type(data):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['| section username'])
+    data = get_config(module, flags=['| include username'])
 
     match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
