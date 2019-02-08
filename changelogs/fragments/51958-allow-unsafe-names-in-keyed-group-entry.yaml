@@ -1,0 +1,2 @@
+minor_changes:
+- add keyed_groups option to use unsafe group names on a per-entry basis

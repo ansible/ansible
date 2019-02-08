@@ -78,6 +78,26 @@ def test_keyed_group_separator(inventory_module):
         assert group.hosts == [host]
 
 
+def test_keyed_group_unsafe_names(inventory_module):
+    inventory_module.inventory.add_host('foohost')
+    inventory_module.inventory.set_variable('foohost', 'region', 'japan-south-3')
+    host = inventory_module.inventory.get_host('foohost')
+    keyed_groups = [
+        {
+            'prefix': 'region',
+            'separator': '-',
+            'key': 'region',
+            'unsafe': True
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=False
+    )
+    assert 'region-japan-south-3' in inventory_module.inventory.groups
+    group = inventory_module.inventory.groups['region-japan-south-3']
+    assert group.hosts == [host]
+
+
 def test_keyed_parent_groups(inventory_module):
     inventory_module.inventory.add_host('web1')
     inventory_module.inventory.add_host('web2')

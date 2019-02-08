@@ -63,6 +63,13 @@ EXAMPLES = r'''
           separator: ""
           key: ec2_region
 
+        # this creates a group per ec2 region and preserves the original syntax like "us-west-1"
+        # only works if setting TRANSFORM_INVALID_GROUP_CHARS is false
+        - prefix: ""
+          separator: ""
+          key: ec2_region
+          unsafe: true
+
         # this creates a common parent group for all ec2 availability zones
         - key: ec2_placement
           parent_group: all_ec2_zones

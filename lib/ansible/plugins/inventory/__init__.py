@@ -399,6 +399,7 @@ class Constructable(object):
                     if key:
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
+                        unsafe = keyed.get('unsafe', False)
                         raw_parent_name = keyed.get('parent_group', None)
 
                         new_raw_group_names = []
@@ -415,12 +416,18 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
-                            gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
+                            if unsafe:
+                                gname = '%s%s%s' % (prefix, sep, bare_name)
+                            else:
+                                gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
                             self.inventory.add_group(gname)
                             self.inventory.add_child(gname, host)
 
                             if raw_parent_name:
-                                parent_name = to_safe_group_name(raw_parent_name)
+                                if unsafe:
+                                    parent_name = raw_parent_name
+                                else:
+                                    parent_name = to_safe_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, gname)
 
