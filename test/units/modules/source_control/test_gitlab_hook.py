@@ -5,7 +5,7 @@
 
 from __future__ import absolute_import
 
-from ansible.modules.source_control.gitlab_hooks import GitLabHook
+from ansible.modules.source_control.gitlab_hook import GitLabHook
 
 from .gitlab import (GitlabModuleTestCase,
                      python_version_match_requirement,
