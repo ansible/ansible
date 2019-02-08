@@ -133,8 +133,9 @@ options:
   log_path:
     description:
     - Full path of log file.
-    - This file will be kept regardless of overall success or failure
-    type: path.  This is only valid for MSI files, use arguments for other packages.
+    - This file will be kept regardless of overall success or failure.
+    - This is only valid for MSI files, use arguments for other packages.
+    type: path
     version_added: '2.8'
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
