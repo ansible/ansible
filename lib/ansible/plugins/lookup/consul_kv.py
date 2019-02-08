@@ -127,8 +127,8 @@ class LookupModule(LookupBase):
                 params = self.parse_params(term)
                 try:
                     url = os.environ['ANSIBLE_CONSUL_URL']
-                    validate_certs = os.environ['ANSIBLE_CONSUL_VALIDATE_CERTS'] or True
-                    client_cert = os.environ['ANSIBLE_CONSUL_CLIENT_CERT'] or None
+                    validate_certs = os.environ.get('ANSIBLE_CONSUL_VALIDATE_CERTS', True)
+                    client_cert = os.environ.get('ANSIBLE_CONSUL_CLIENT_CERT', None)
                     u = urlparse(url)
                     consul_api = consul.Consul(host=u.hostname, port=u.port, scheme=u.scheme, verify=validate_certs,
                                                cert=client_cert)
