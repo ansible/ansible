@@ -66,8 +66,7 @@ class JsonRpc(object):
     def login(self, user, passwd):
         payload = {
             'method': 'login',
-            'params': {'user': user,
-                       'passwd': passwd}
+            'params': {'user': user, 'passwd': passwd}
         }
         resp, resp_json = self._call(payload)
         self._headers['Cookie'] = resp.headers['set-cookie']
@@ -638,9 +637,10 @@ class ValueBuilder(object):
 
 
 def connect(params):
-    client = JsonRpc(params['url'], params['timeout'], params['validate_certs'])
-    client.login(params['username'],
-                 params['password'])
+    client = JsonRpc(params['url'],
+                     params['timeout'],
+                     params['validate_certs'])
+    client.login(params['username'], params['password'])
     return client
 
 
