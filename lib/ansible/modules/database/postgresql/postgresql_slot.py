@@ -116,7 +116,7 @@ EXAMPLES = '''
     slot_type: logical
     state: present
     output_plugin: custom_decoder_one
-  
+
 - postgresql_slot:
     slot_name: physical_slot_two
     slot_type: physical
@@ -225,7 +225,7 @@ def main():
     immediately_reserve = module.params["immediately_reserve"]
     state = module.params["state"]
     ssl_mode = module.params["ssl_mode"]
-    sslrootcert = module.params["ssl_rootcert"]
+    ssl_rootcert = module.params["ssl_rootcert"]
     output_plugin = module.params["output_plugin"]
     changed = False
 
@@ -238,7 +238,7 @@ def main():
         "login_password": "password",
         "port": "port",
         "sslmode": "ssl_mode",
-        "ssl_rootcert": "sslrootcert"
+        "ssl_rootcert": "ssl_rootcert"
     }
     kw = dict((params_map[k], v) for (k, v) in module.params.items()
               if k in params_map and v != '')
@@ -249,8 +249,8 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     if psycopg2.__version__ < '2.4.3' and ssl_rootcert is not None:
-      module.fail_json(
-        msg='psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
+        module.fail_json(
+            msg='psycopg2 must be at least 2.4.3 in order to use the ssl_rootcert parameter')
 
     try:
         db_connection = psycopg2.connect(database=db, **kw)
@@ -262,7 +262,7 @@ def main():
             cursor_factory=psycopg2.extras.DictCursor)
 
     except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
+        if 'ssl_rootcert' in e.args[0]:
             module.fail_json(msg='PostgreSQL server must be at least version 8.4 to support sslrootcert')
         module.fail_json(msg="Unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
