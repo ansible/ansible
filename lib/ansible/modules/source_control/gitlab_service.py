@@ -21,26 +21,12 @@ description:
   - Setup or delete GitLab integration services.
 author: "Raphaël Droz (@drzraf)"
 requirements:
+  - python >= 2.7
   - python-gitlab
+extends_documentation_fragment:
+  - auth_basic
 options:
-  server_url:
-    description:
-      - URL of GitLab server, with protocol (http or https).
-    required: true
-  validate_certs:
-    description:
-      - Verify SSL certificate when HTTPS is used.
-    type: bool
-    default: 'yes'
-  login_user:
-    description:
-      - GitLab user name
-    default: null
-  login_password:
-    description:
-      - GitLab password for login_user
-    default: null
-  login_token:
+  api_token:
     description:
       - GitLab personal token for logging in (preferred method)
     default: null
@@ -107,8 +93,8 @@ EXAMPLES = '''
 # Setup email on push for this project
 - name: emails me on push
   gitlab_service:
-    server_url: https://gitlab.com
-    login_token: foobar
+    api_url: https://gitlab.com
+    api_token: foobar
     project: 123456
     service: emails-on-push
     params:
@@ -120,8 +106,8 @@ EXAMPLES = '''
 # This will always be set to change because a non-null token is mandatory
 - name: trigger packagist update on push events (only)
   gitlab_service:
-    server_url: https://gitlab.com
-    login_token: foobar
+    api_url: https://gitlab.com
+    api_token: foobar
     project: foo/proj
     service: packagist
     events: ["push"]
@@ -269,11 +255,11 @@ def main():
 
     base_specs = dict(
         argument_spec=dict(
-            server_url=dict(required=True),
+            api_url=dict(required=True),
             validate_certs=dict(required=False, default=True, type='bool'),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
+            api_username=dict(required=False, no_log=True),
+            api_password=dict(required=False, no_log=True),
+            api_token=dict(required=False, no_log=True),
             project=dict(required=True),
             service=dict(required=False, type='str', choices=list(definitions.keys())),
             active=dict(required=False, default=True, type='bool'),
@@ -282,14 +268,14 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
         ),
         mutually_exclusive=[
-            ['login_user', 'login_token'],
-            ['login_password', 'login_token']
+            ['api_username', 'api_token'],
+            ['api_password', 'api_token']
         ],
         required_together=[
-            ['login_user', 'login_password']
+            ['api_username', 'api_password']
         ],
         required_one_of=[
-            ['login_user', 'login_token']
+            ['api_username', 'api_token']
         ],
         required_if=[
             ['state', 'present', ['params']]
@@ -310,11 +296,11 @@ def main():
     if not HAS_GITLAB_PACKAGE:
         module.fail_json(msg='Missing required gitlab module (check docs or install with: pip install python-gitlab')
 
-    server_url = module.params['server_url']
+    api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
-    login_user = module.params['login_user']
-    login_password = module.params['login_password']
-    login_token = module.params['login_token']
+    api_username = module.params['api_username']
+    api_password = module.params['api_password']
+    api_token = module.params['api_token']
     project = module.params['project']
     active = True
     # active = module.params['active']
@@ -322,7 +308,7 @@ def main():
     events = module.params['events']
 
     try:
-        git = Gitlab(url=server_url, ssl_verify=validate_certs, email=login_user, password=login_password, private_token=login_token, api_version=4)
+        git = Gitlab(url=api_url, ssl_verify=validate_certs, email=api_username, password=api_password, private_token=api_token, api_version=4)
         # git.enable_debug() ?
         git.auth()
         project = git.projects.get(project)
