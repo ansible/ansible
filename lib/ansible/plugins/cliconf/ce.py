@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: ce
+short_description: Use ce cliconf to run command on HUAWEI CloudEngine platform
+description:
+  - This ce plugin provides low level abstraction apis for
+    sending and receiving CLI commands from HUAWEI CloudEngine network devices.
+version_added: 2.7
+"""
+
 import re
 import json
 

@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: exos
+short_description: Use exos cliconf to run command on Extreme EXOS platform
+description:
+  - This exos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Extreme EXOS network devices.
+version_added: "2.6"
+"""
+
 import re
 import json
 
