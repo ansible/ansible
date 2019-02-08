@@ -56,7 +56,7 @@ options:
     type: list
     description:
       - List of the service constraints.
-      - Maps docker service C(--constraint) option.
+      - Corresponds to the C(--constraint) parameter of C(docker service create).
   placement_preferences:
     type: list
     description:
