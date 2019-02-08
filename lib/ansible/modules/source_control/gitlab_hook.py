@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gitlab_hooks
+module: gitlab_hook
 short_description: Manages GitLab project hooks.
 description:
      - Adds, updates and removes project hooks
