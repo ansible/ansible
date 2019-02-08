@@ -83,10 +83,8 @@ options:
   managed_zone:
     description:
     - Identifies the managed zone addressed by this request.
-    - Can be the managed zone name or id.
-    - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
+    - 'This field represents a link to a ManagedZone resource in GCP.
+      You can add `register: name-of-resource` to a gcp_dns_managed_zone
       task and then set this managed_zone field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
@@ -358,13 +356,11 @@ class SOAForwardable(object):
 
 
 def prefetch_soa_resource(module):
-    name = module.params['name'].split('.')[1:]
-
     resource = SOAForwardable(
         {
             'type': 'SOA',
             'managed_zone': module.params['managed_zone'],
-            'name': '.'.join(name),
+            'name': replace_resource_dict(module.params['managed_zone'], 'dnsName'),
             'project': module.params['project'],
             'scopes': module.params['scopes'],
             'service_account_file': module.params['service_account_file'],
