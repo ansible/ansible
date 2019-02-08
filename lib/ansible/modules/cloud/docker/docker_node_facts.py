@@ -76,7 +76,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-nodes_facts:
+nodes:
     description:
       - Facts representing the current state of the nodes. Matches the C(docker node inspect) output.
       - Can contain multiple entries if more than one node provided in I(name), or I(name) is not provided.
@@ -136,11 +136,11 @@ def main():
 
     client.fail_task_if_not_swarm_manager()
 
-    node = get_node_facts(client)
+    nodes = get_node_facts(client)
 
     client.module.exit_json(
         changed=False,
-        nodes_facts=node,
+        nodes=nodes,
     )
 
 
