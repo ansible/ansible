@@ -85,7 +85,7 @@ options:
         checksum equals I(destination_checksum), the file download would be skipped
         (unless C(force) is C(true)).
     type: str
-    version_added: "2.7"
+    version_added: "2.8"
   proxy_url:
     description:
     - The full URL of the proxy server to download through.

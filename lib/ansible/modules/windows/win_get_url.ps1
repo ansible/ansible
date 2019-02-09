@@ -119,6 +119,9 @@ Function Get-Checksum-From-Url {
     } Catch {
         $module.FailJson("Error get HASH data file from '$url'. $($_.Exception.Message)", $_)
     }
+    Finally {
+        $webResponse.Close()
+    }
     if ( [bool]([System.Uri]$url).isFile ) {
         $module.Result.status_code = 200
         $module.Result.msg = 'OK'
@@ -126,8 +129,6 @@ Function Get-Checksum-From-Url {
         $module.Result.status_code = [int] $webResponse.StatusCode
         $module.Result.msg = [string] $webResponse.StatusDescription
     }
-    $webResponse.Close()
-
     return $hash_from_file
 }
 
@@ -202,7 +203,6 @@ Function CheckModified-File {
         $module.Result.msg = [string] $webResponse.StatusDescription
     }
 
-    #$module.Warn(("DEBUG: dst={0} src={1}" -f $fileLastMod, $webLastMod))
     if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
         return $false
     } else {
@@ -220,7 +220,7 @@ Function Parse-Checksum {
     $checksum_algorithm = $checksum_parameter_splited[0].Trim()
     $checksum_value = $checksum_parameter_splited[1].Trim()
 
-    return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
+    return @{algorithm = $checksum_algorithm; hash = $checksum_value}
 }
 
 Function Get-FileChecksum {
@@ -267,7 +267,7 @@ Function Get-NormaliseChecksum {
 Function CheckModifiedChecksum-File {
     param($dest, $checksum)
     $normaliseHashDest = Get-NormaliseChecksum -dest $dest -checksum $checksum
-    $ChecksumSrc = $(Parse-Checksum -checksum $checksum).checksum
+    $ChecksumSrc = $(Parse-Checksum -checksum $checksum).hash
     return [bool]($normaliseHashDest -ne $ChecksumSrc)
 }
 
@@ -289,7 +289,7 @@ Function Download-File {
             $checksum_parameter_splited = Parse-Checksum -checksum $checksum
 
             $checksum_algorithm = $checksum_parameter_splited.algorithm
-            $checksum_value = $checksum_parameter_splited.checksum.ToLower()
+            $checksum_value = $checksum_parameter_splited.hash.ToLower()
         }
         Catch {
             $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
@@ -328,11 +328,9 @@ Function Download-File {
 
             # Checksum verification for downloaded file
             if ($checksum) {
-                #$hashFromFile = Get-FileHash -Path $dest -Algorithm $checksum_algorithm
-                #$normaliseHashDest = $hashFromFile.Hash.ToLower()
-                $normaliseHashDest = Get-NormaliseChecksum -dest $dest -hashAlgorithm $checksum_algorithm
+                $hashDest = Get-NormaliseChecksum -dest $dest -hashAlgorithm $checksum_algorithm
                 # Check both hashes are the same
-                if ($normaliseHashDest -ne $checksum_value) {
+                if ($hashDest -ne $checksum_value) {
                     Remove-Item -Path $dest
                     throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum_value, $normaliseHashDest)
                 }
@@ -344,7 +342,7 @@ Function Download-File {
             $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
         } Catch {
             $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            $module.Result.checksum_dest = $normaliseHashDest
+            $module.Result.checksum_dest = $hashDest
             $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
         }
     }
@@ -353,7 +351,7 @@ Function Download-File {
     $module.Result.changed = $true
     $module.Result.msg = 'OK'
     $module.Result.dest = $dest
-    $module.Result.checksum_dest = $normaliseHashDest
+    $module.Result.checksum_dest = $hashDest
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 }
@@ -419,7 +417,7 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 
 # Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
 if ($checksum) {
-    $checksum_value = $(Parse-Checksum -checksum $checksum).checksum
+    $checksum_value = $(Parse-Checksum -checksum $checksum).hash
 
     if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or `
         $checksum_value.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_value).isFile) {
