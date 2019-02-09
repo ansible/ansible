@@ -94,6 +94,7 @@ _ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_W
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def _ansiballz_main():
+%(rlimit)s
     import os
     import os.path
     import sys
@@ -348,6 +349,12 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         atexit.register(atexit_coverage)
 
         cov.start()
+'''
+
+ANSIBALLZ_RLIMIT_TEMPLATE = '''
+    import resource
+
+    resource.setrlimit(resource.RLIMIT_NOFILE, (%(rlimit_nofile)d, %(rlimit_nofile)d))
 '''
 
 
@@ -764,6 +771,15 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         interpreter_parts = interpreter.split(u' ')
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
+        rlimit_nofile = int(os.environ.get('_ANSIBLE_RLIMIT_NOFILE', '0'))
+
+        if rlimit_nofile:
+            rlimit = ANSIBALLZ_RLIMIT_TEMPLATE % dict(
+                rlimit_nofile=rlimit_nofile,
+            )
+        else:
+            rlimit = ''
+
         coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
 
         if coverage_config:
@@ -791,6 +807,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             minute=now.minute,
             second=now.second,
             coverage=coverage,
+            rlimit=rlimit,
         )))
         b_module_data = output.getvalue()
 
