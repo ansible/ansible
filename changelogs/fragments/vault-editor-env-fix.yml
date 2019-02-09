@@ -1,0 +1,2 @@
+minor_changes:
+- vault - edit command reads editor from VISUAL env variable before EDITOR, finally defaulting to `vi' (https://github.com/ansible/ansible/pull/51991)

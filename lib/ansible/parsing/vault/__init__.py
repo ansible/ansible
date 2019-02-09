@@ -1094,7 +1094,9 @@ class VaultEditor:
             os.chown(dest, prev.st_uid, prev.st_gid)
 
     def _editor_shell_command(self, filename):
-        env_editor = os.environ.get('EDITOR', 'vi')
+        env_editor = os.environ.get('VISUAL')
+        if not env_editor:
+            env_editor = os.environ.get('EDITOR', 'vi')
         editor = shlex.split(env_editor)
         editor.append(filename)
 
