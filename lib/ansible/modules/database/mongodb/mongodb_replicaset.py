@@ -35,7 +35,7 @@ options:
         default: "admin"
     login_host:
         description:
-            - The MongoDB hostname to login to.
+            - The MongoDB hostname.
         required: false
         default: "localhost"
     login_port:
