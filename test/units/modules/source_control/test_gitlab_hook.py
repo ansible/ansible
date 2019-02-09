@@ -31,11 +31,11 @@ class TestGitlabHook(GitlabModuleTestCase):
     def test_hook_exist(self):
         project = self.gitlab_instance.projects.get(1)
 
-        rvalue = self.moduleUtil.existsHooks(project, "http://example.com/hook")
+        rvalue = self.moduleUtil.existsHook(project, "http://example.com/hook")
 
         self.assertEqual(rvalue, True)
 
-        rvalue = self.moduleUtil.existsHooks(project, "http://gitlab.com/hook")
+        rvalue = self.moduleUtil.existsHook(project, "http://gitlab.com/hook")
 
         self.assertEqual(rvalue, False)
 
@@ -72,7 +72,7 @@ class TestGitlabHook(GitlabModuleTestCase):
     def test_delete_hook(self):
         project = self.gitlab_instance.projects.get(1)
 
-        self.moduleUtil.existsHooks(project, "http://example.com/hook")
+        self.moduleUtil.existsHook(project, "http://example.com/hook")
 
         rvalue = self.moduleUtil.deleteHook()
 
