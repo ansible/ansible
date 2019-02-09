@@ -146,8 +146,6 @@ instance:
     }
 '''
 
-import re
-
 HAS_XENAPI = False
 try:
     import XenAPI
@@ -156,8 +154,6 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils import six
 from ansible.module_utils.xenserver import (xenserver_common_argument_spec, XAPI, XenServerObject, get_object_ref,
                                             gather_vm_params, gather_vm_facts)
 
@@ -175,7 +171,7 @@ class XenServerVM(XenServerObject):
         """Inits XenServerVM using module parameters.
 
         Args:
-            module: Reference to Ansible module object.
+            module: Reference to AnsibleModule object.
         """
         super(XenServerVM, self).__init__(module)
 
