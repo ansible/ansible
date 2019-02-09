@@ -1,16 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Raphaël Droz (raphael@droz.eu)
+# (c) 2018-2019, Raphaël Droz (raphael@droz.eu)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -23,6 +24,7 @@ description:
   - When changes are made to the webhook, the webhook will be updated.
 author: "Raphaël Droz (@drzraf)"
 requirements:
+  - python >= 2.7
   - python-gitlab
 extends_documentation_fragment:
   - auth_basic
@@ -150,7 +152,7 @@ RETURN = '''
 webhook:
   description: A dict containing key/value pairs representing GitLab webhook
   returned: success
-  type: dictionary
+  type: dict
   sample:
     id: 298159
     url: https://foo.bar/hook.php
@@ -171,19 +173,22 @@ webhook:
 state:
   description: A string indicating whether the hook was "created" or "changed"
   returned: success
-  type: string
+  type: str
   sample: created
 '''
 
+import traceback
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_native
+
+GITLAB_IMP_ERR = None
 try:
     import gitlab
     from gitlab import Gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except ImportError:
+    GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 
 
 class GitLabWebhook(object):
@@ -311,7 +316,7 @@ def main():
     )
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or install with: pip install python-gitlab")
+        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
