@@ -164,7 +164,11 @@ class AnsibleDockerClient(Client):
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
                  required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
                  min_docker_api_version=None, option_minimal_versions=None,
-                 option_minimal_versions_ignore_params=None):
+                 option_minimal_versions_ignore_params=None, fail_results=None):
+
+        # Modules can put information in here which will always be returned
+        # in case client.fail() is called.
+        self.fail_results = fail_results or {}
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -250,7 +254,8 @@ class AnsibleDockerClient(Client):
         #         log_file.write(msg + u'\n')
 
     def fail(self, msg, **kwargs):
-        self.module.fail_json(msg=msg, **sanitize_result(kwargs))
+        self.fail_results.update(kwargs)
+        self.module.fail_json(msg=msg, **sanitize_result(self.fail_results))
 
     @staticmethod
     def _get_value(param_name, param_value, env_variable, default_value):
