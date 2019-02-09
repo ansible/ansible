@@ -3,10 +3,12 @@
 # Copyright: (c) 2015, Paul Durivage <paul.durivage@rackspace.com>
 # Copyright: (c) 2015, Tal Auslander <tal@cloudshare.com>
 # Copyright: (c) 2017, Dag Wieers <dag@wieers.com>
+# Copyright: (c) 2019, Viktor Utkin <viktor_utkin@epam.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.AddType
+#Requires -Module Ansible.ModuleUtils.FileUtil
 
 $spec = @{
     options = @{
@@ -143,13 +145,13 @@ Function CheckModified-File {
         }
     }
 
-    $fileLastMod = ([System.IO.FileInfo]$dest).LastWriteTimeUtc
+    $fileLastMod = (Get-AnsibleItem -Path $dest).LastWriteTimeUtc
     $webLastMod = $null
 
     $srcUri = [System.Uri]$url
 
     if([bool]$srcUri.isFile) {
-        $webLastMod = ([System.IO.FileInfo]($srcUri.AbsolutePath)).LastWriteTimeUtc;
+        $webLastMod = (Get-AnsibleItem -Path $srcUri.AbsolutePath).LastWriteTimeUtc;
 
         $module.Result.status_code = 200
         $module.Result.msg = 'OK'
@@ -242,12 +244,13 @@ Function Get-FileChecksum {
     } finally {
         $fp.Dispose()
     }
+    $module.Warn("Your host uses legacy powershell. Please update.")
     return @{Algorithm = $algorithm; Hash = $hash; Path = $dest}
 }
 
 Function Get-FileHash-Wrapper {
     param($path, $algorithm)
-    $command = 'Get-FileHash1'
+    $command = 'Get-FileHash'
     if([bool](Get-Command $command -ea 0)) {
         return (Get-FileHash -Path $dest -Algorithm $algorithm)
     } else {
@@ -255,7 +258,7 @@ Function Get-FileHash-Wrapper {
     }
 }
 
-Function Get-NormaliseChecksum {
+Function Get-NormaliseHash {
     param($dest, $checksum = $null, $hashAlgorithm = "SHA256")
     if($checksum) {
         $hashAlgorithm = $(Parse-Checksum -checksum $checksum).algorithm
@@ -266,7 +269,7 @@ Function Get-NormaliseChecksum {
 
 Function CheckModifiedChecksum-File {
     param($dest, $checksum)
-    $normaliseHashDest = Get-NormaliseChecksum -dest $dest -checksum $checksum
+    $normaliseHashDest = Get-NormaliseHash -dest $dest -checksum $checksum
     $ChecksumSrc = $(Parse-Checksum -checksum $checksum).hash
     return [bool]($normaliseHashDest -ne $ChecksumSrc)
 }
@@ -328,7 +331,7 @@ Function Download-File {
 
             # Checksum verification for downloaded file
             if ($checksum) {
-                $hashDest = Get-NormaliseChecksum -dest $dest -hashAlgorithm $checksum_algorithm
+                $hashDest = Get-NormaliseHash -dest $dest -hashAlgorithm $checksum_algorithm
                 # Check both hashes are the same
                 if ($hashDest -ne $checksum_value) {
                     Remove-Item -Path $dest
@@ -444,12 +447,16 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
         Download-File -module $module -url $url -dest $dest -credentials $credentials `
                       -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    } else {
+        $module.Result.msg = 'file already exists'
     }
 }
 
+$module.Result.size = (Get-AnsibleItem -Path $dest).Length
+
 Try {
-    if(-not $module.Result.checksum_dest) {
-        $module.Result.checksum_dest = Get-NormaliseChecksum -dest $dest -checksum $checksum
+    if(-not $module.Result.checksum_dest -and (-not $module.CheckMode)) {
+        $module.Result.checksum_dest = Get-NormaliseHash -dest $dest -checksum $checksum
     }
 } Catch {
     $module.Result.checksum_dest = $null

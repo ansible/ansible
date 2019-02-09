@@ -171,6 +171,11 @@ elapsed:
     returned: always
     type: float
     sample: 2.1406487
+size:
+    description: size of the target
+    returned: success
+    type: int
+    sample: 1220
 url:
     description: requested url
     returned: always
