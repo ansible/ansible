@@ -93,121 +93,121 @@ accounts:
                 - Consistency policy.
             returned: always
             type: complex
-                contains:
-                    default_consistency_level:
-                        description:
-                            - Default consistency level.
-                        returned: always
-                        type: str
-                        sample: session
-                    max_interval_in_seconds:
-                        description:
-                            - Maximum interval in seconds.
-                        returned: always
-                        type: int
-                        sample: 5
-                    max_staleness_prefix:
-                        description:
-                            - Maximum staleness prefix.
-                        returned: always
-                        type: int
-                        sample: 100
+            contains:
+                default_consistency_level:
+                    description:
+                        - Default consistency level.
+                    returned: always
+                    type: str
+                    sample: session
+                max_interval_in_seconds:
+                    description:
+                        - Maximum interval in seconds.
+                    returned: always
+                    type: int
+                    sample: 5
+                max_staleness_prefix:
+                    description:
+                        - Maximum staleness prefix.
+                    returned: always
+                    type: int
+                    sample: 100
         failover_policies:
             description:
                 - Read locations
             returned: always
             type: complex
-                contains:
-                    name:
-                        description:
-                            - Location name.
-                        returned: always
-                        type: str
-                        sample: eastus
-                    failover_priority:
-                        description:
-                            - Failover priority.
-                        returned: always
-                        type: int
-                        sample: 0
-                    id:
-                        description:
-                            - Read location ID.
-                        returned: always
-                        type: str
-                        sample: cosmosdbaccounxx-eastus
+            contains:
+                name:
+                    description:
+                        - Location name.
+                    returned: always
+                    type: str
+                    sample: eastus
+                failover_priority:
+                    description:
+                        - Failover priority.
+                    returned: always
+                    type: int
+                    sample: 0
+                id:
+                    description:
+                        - Read location ID.
+                    returned: always
+                    type: str
+                    sample: cosmosdbaccounxx-eastus
         read_locations:
             description:
                 - Read locations
             returned: always
             type: complex
-                contains:
-                    name:
-                        description:
-                            - Location name.
-                        returned: always
-                        type: str
-                        sample: eastus
-                    failover_priority:
-                        description:
-                            - Failover priority.
-                        returned: always
-                        type: int
-                        sample: 0
-                    id:
-                        description:
-                            - Read location ID.
-                        returned: always
-                        type: str
-                        sample: cosmosdbaccounxx-eastus
-                    document_endpoint:
-                        description:
-                            - Document endpoint.
-                        returned: always
-                        type: str
-                        sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
-                    provisioning_state:
-                        description:
-                            - Provisioning state.
-                        returned: always
-                        type: str
-                        sample: Succeeded
+            contains:
+                name:
+                    description:
+                        - Location name.
+                    returned: always
+                    type: str
+                    sample: eastus
+                failover_priority:
+                    description:
+                        - Failover priority.
+                    returned: always
+                    type: int
+                    sample: 0
+                id:
+                    description:
+                        - Read location ID.
+                    returned: always
+                    type: str
+                    sample: cosmosdbaccounxx-eastus
+                document_endpoint:
+                    description:
+                        - Document endpoint.
+                    returned: always
+                    type: str
+                    sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
+                provisioning_state:
+                    description:
+                        - Provisioning state.
+                    returned: always
+                    type: str
+                    sample: Succeeded
         write_locations:
             description:
                 - Write locations
             returned: always
             type: complex
-                contains:
-                    name:
-                        description:
-                            - Location name.
-                        returned: always
-                        type: str
-                        sample: eastus
-                    failover_priority:
-                        description:
-                            - Failover priority.
-                        returned: always
-                        type: int
-                        sample: 0
-                    id:
-                        description:
-                            - Read location ID.
-                        returned: always
-                        type: str
-                        sample: cosmosdbaccounxx-eastus
-                    document_endpoint:
-                        description:
-                            - Document endpoint.
-                        returned: always
-                        type: str
-                        sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
-                    provisioning_state:
-                        description:
-                            - Provisioning state.
-                        returned: always
-                        type: str
-                        sample: Succeeded
+            contains:
+                name:
+                    description:
+                        - Location name.
+                    returned: always
+                    type: str
+                    sample: eastus
+                failover_priority:
+                    description:
+                        - Failover priority.
+                    returned: always
+                    type: int
+                    sample: 0
+                id:
+                    description:
+                        - Read location ID.
+                    returned: always
+                    type: str
+                    sample: cosmosdbaccounxx-eastus
+                document_endpoint:
+                    description:
+                        - Document endpoint.
+                    returned: always
+                    type: str
+                    sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
+                provisioning_state:
+                    description:
+                        - Provisioning state.
+                    returned: always
+                    type: str
+                    sample: Succeeded
         database_account_offer_type:
             description:
                 - Offer type.
