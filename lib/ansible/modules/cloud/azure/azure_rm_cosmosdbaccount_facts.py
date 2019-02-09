@@ -93,37 +93,121 @@ accounts:
                 - Consistency policy.
             returned: always
             type: complex
-                default_consistency_level:
-                max_interval_in_seconds:
-                max_staleness_prefix:
+                contains:
+                    default_consistency_level:
+                        description:
+                            - Default consistency level.
+                        returned: always
+                        type: str
+                        sample: session
+                    max_interval_in_seconds:
+                        description:
+                            - Maximum interval in seconds.
+                        returned: always
+                        type: int
+                        sample: 5
+                    max_staleness_prefix:
+                        description: 
+                            - Maximum staleness prefix.
+                        returned: always
+                        type: int
+                        sample: 100
         failover_policies:
             description:
-                - Failover policies.
+                - Read locations
             returned: always
             type: complex
-                name:
-                failover_priority:
-                id:
+                contains:
+                    name:
+                        description:
+                            - Location name.
+                        returned: always
+                        type: str
+                        sample: eastus
+                    failover_priority:
+                        description:
+                            - Failover priority.
+                        returned: always
+                        type: int
+                        sample: 0
+                    id:
+                        description: 
+                            - Read location ID.
+                        returned: always
+                        type: str
+                        sample: cosmosdbaccounxx-eastus
         read_locations:
             description:
                 - Read locations
             returned: always
             type: complex
-                name:
-                failover_priority:
-                id:
-                document_endpoint:
-                provisioning_state:
+                contains:
+                    name:
+                        description:
+                            - Location name.
+                        returned: always
+                        type: str
+                        sample: eastus
+                    failover_priority:
+                        description:
+                            - Failover priority.
+                        returned: always
+                        type: int
+                        sample: 0
+                    id:
+                        description: 
+                            - Read location ID.
+                        returned: always
+                        type: str
+                        sample: cosmosdbaccounxx-eastus
+                    document_endpoint:
+                        description:
+                            - Document endpoint.
+                        returned: always
+                        type: str
+                        sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
+                    provisioning_state:
+                        description:
+                            - Provisioning state.
+                        returned: always
+                        type: str
+                        sample: Succeeded
         write_locations:
             description:
                 - Write locations
             returned: always
             type: complex
-                name:
-                failover_priority:
-                id:
-                document_endpoint:
-                provisioning_state:
+                contains:
+                    name:
+                        description:
+                            - Location name.
+                        returned: always
+                        type: str
+                        sample: eastus
+                    failover_priority:
+                        description:
+                            - Failover priority.
+                        returned: always
+                        type: int
+                        sample: 0
+                    id:
+                        description: 
+                            - Read location ID.
+                        returned: always
+                        type: str
+                        sample: cosmosdbaccounxx-eastus
+                    document_endpoint:
+                        description:
+                            - Document endpoint.
+                        returned: always
+                        type: str
+                        sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
+                    provisioning_state:
+                        description:
+                            - Provisioning state.
+                        returned: always
+                        type: str
+                        sample: Succeeded
         database_account_offer_type:
             description:
                 - Offer type.
@@ -132,37 +216,37 @@ accounts:
             sample: Standard
         ip_range_filter:
             description:
-                -
+                - Enable IP range filter.
             returned: always
             type: str
             sample: 10.10.10.10
         is_virtual_network_filter_enabled:
             description:
-                -
+                - Enable virtual network filter.
             returned: always
             type: bool
             sample: true
         enable_automatic_failover:
             description:
-                -
+                - Enable automatic failover.
             returned: always
             type: bool
             sample: true
         enable_cassandra:
             description:
-                -
+                - Enable Cassandra
             returned: always
             type: bool
             sample: true
         enable_table:
             description:
-                -
+                - Enable Table.
             returned: always
             type: bool
             sample: true
         enable_gremlin:
             description:
-                -
+                - Enable Gremlin.
             returned: always
             type: bool
             sample: true
@@ -182,7 +266,7 @@ accounts:
             sample: Succeeded
         tags:
             description:
-                -
+                - Tags
             returned: always
             type: complex
             sample: {}
@@ -241,7 +325,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.accounts.get(resource_group_name=self.resource_group,
+            response = self.mgmt_client.database_accounts.get(resource_group_name=self.resource_group,
                                                               account_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
@@ -256,7 +340,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.accounts.list_by_resource_group(resource_group_name=self.resource_group)
+            response = self.mgmt_client.database_accounts.list_by_resource_group(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Database Account.')
