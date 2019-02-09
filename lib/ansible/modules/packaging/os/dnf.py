@@ -806,7 +806,7 @@ class DnfModule(YumDnf):
                 filenames.append(name)
             elif name.startswith("@") or (' ' in name.strip()) or ('/' in name):
                 # like "dnf install /usr/bin/vi"
-                if '/' in name and (not name.startswith("@"):
+                if '/' in name and (not name.startswith("@")):
                     pkg_spec = self._whatprovides(name)
                     if pkg_spec:
                         pkg_specs.append(pkg_spec)
