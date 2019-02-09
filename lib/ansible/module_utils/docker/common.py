@@ -249,8 +249,8 @@ class AnsibleDockerClient(Client):
         #     else:
         #         log_file.write(msg + u'\n')
 
-    def fail(self, msg):
-        self.module.fail_json(msg=msg)
+    def fail(self, msg, **kwargs):
+        self.module.fail_json(msg=msg, **sanitize_result(kwargs))
 
     @staticmethod
     def _get_value(param_name, param_value, env_variable, default_value):
