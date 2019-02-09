@@ -451,16 +451,16 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
         $module.Result.msg = 'file already exists'
     }
 }
-
-$module.Result.size = (Get-AnsibleItem -Path $dest).Length
-
-Try {
-    if(-not $module.Result.checksum_dest -and (-not $module.CheckMode)) {
-        $module.Result.checksum_dest = Get-NormaliseHash -dest $dest -checksum $checksum
+if(-not $module.CheckMode) {
+    $module.Result.size = (Get-AnsibleItem -Path $dest).Length
+    Try {
+        if(-not $module.Result.checksum_dest) {
+            $module.Result.checksum_dest = Get-NormaliseHash -dest $dest -checksum $checksum
+        }
+    } Catch {
+        $module.Result.checksum_dest = $null
+        $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
     }
-} Catch {
-    $module.Result.checksum_dest = $null
-    $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
 }
 
 $module.ExitJson()
