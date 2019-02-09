@@ -58,7 +58,7 @@
       - output.changed
 
 - name: Get DevTest Lab facts
-  azure_rm_devtestlab:
+  azure_rm_devtestlab_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ lab_name }}"
   register: output
