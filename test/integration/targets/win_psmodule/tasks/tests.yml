@@ -720,7 +720,7 @@
 
 # I don't know why Publish-Module doesn't work correctly under Ansible and PowerShell 3.0
 - name: check operations related to the custom repository
-  when: powershell_major_version.stdout | int == 5
+  when: powershell_major_version.stdout | int >= 4
   block:
     - name: "check sample module is uninstalled - check mode: false"
       win_psmodule:
@@ -735,10 +735,9 @@
 
     - name: "copy some module to custom repo - check mode: false"
       win_shell: |
-        $modName = "{{powershell_module}}"
-        $temp = $env:Temp
+        $ErrorActionPreference = "Stop"
 
-        Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null
+        Save-Module -Name "{{powershell_module}}" -Repository PSGallery -Path $env:Temp | Out-Null
 
         $repoName = "{{custom_repo_name}}"
         $repoPath = "{{custom_repo_path}}"
@@ -749,7 +748,7 @@
 
         Start-Sleep -Seconds 15
 
-        Get-ChildItem -Path $repoPath\* -include *.nupkg | Where-Object { $_.Name -match $modName } | ForEach-Object { $_.Name }
+        Get-ChildItem -Path $repoPath\* -include *.nupkg | Where-Object { $_.Name -match "{{powershell_module}}" } | ForEach-Object { $_.Name }
 
       register: saved_package
 

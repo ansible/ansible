@@ -395,10 +395,7 @@ if ( ($allow_clobber -or $allow_prerelease -or $skip_publisher_check -or
     Install-PrereqModule -CheckMode $check_mode
 }
 
-if ( $PSVersionTable.PSVersion.Major -lt 5 ) {
-    Import-Module -Name PackageManagement
-    Import-Module -Name PowerShellGet
-}
+Import-Module -Name PackageManagement, PowerShellGet
 
 if ($state -eq "present") {
     if (($repo) -and ($url)) {
