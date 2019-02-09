@@ -254,17 +254,15 @@ def build_plan(command, project_path, variables_args, state_file, targets, state
 
     rc, out, err = module.run_command(plan_command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
-    if state == 'planned': command = plan_command 
-
     if rc == 0:
         # no changes
-        return plan_path, False, out, err, command
+        return plan_path, False, out, err, plan_command if state == 'planned' else command
     elif rc == 1:
         # failure to plan
         module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {0}\r\n\r\nSTDERR: {1}'.format(out, err))
     elif rc == 2:
         # changes, but successful
-        return plan_path, True, out, err, command
+        return plan_path, True, out, err, plan_command if state == 'planned' else command
 
     module.fail_json(msg='Terraform plan failed with unexpected exit code {0}. \r\nSTDOUT: {1}\r\n\r\nSTDERR: {2}'.format(rc, out, err))
 
@@ -352,9 +350,13 @@ def main():
     if state == 'absent':
         command.extend(variables_args)
     elif state == 'present' and plan_file:
-        command.append(plan_file) if os.path.exists(project_path + "/" + plan_file) else module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
+        if os.path.exists(project_path + "/" + plan_file):
+            command.append(plan_file)
+        else:
+            module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file, module.params.get('targets'), state, plan_file)
+        plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file, 
+                                                                     module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
     if needs_application and not module.check_mode and not state == 'planned':
