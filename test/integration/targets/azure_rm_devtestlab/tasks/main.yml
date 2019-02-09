@@ -81,7 +81,7 @@
       - output.labs[0]['tags'] != None
 
 - name: List DevTest Lab in a resource group
-  azure_rm_devtestlab:
+  azure_rm_devtestlab_facts:
     resource_group: "{{ resource_group }}"
   register: output
 - name: Assert that facts are returned

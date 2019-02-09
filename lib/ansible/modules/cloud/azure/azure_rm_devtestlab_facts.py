@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlab_facts
-version_added: "2.8"
+version_added: "2.8" 
 short_description: Get Azure DevTest Lab facts.
 description:
     - Get facts of Azure DevTest Lab.
