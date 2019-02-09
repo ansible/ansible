@@ -297,7 +297,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
             'is_virtual_network_filter_enabled': d.get('is_virtual_network_filter_enabled'),
             'enable_automatic_failover': d.get('enable_automatic_failover'),
             'enable_cassandra': 'EnableCassandra' in d.get('capabilities', []),
-            'enable_table':  'EnableCassandra' in d.get('capabilities', []),
+            'enable_table':  'EnableTable' in d.get('capabilities', []),
             'enable_gremlin': 'EnableGremlin' in d.get('capabilities', []),
             'virtual_network_rules': d.get('virtual_network_rules'),
             'enable_multiple_write_locations': d.get('enable_multiple_write_locations'),
