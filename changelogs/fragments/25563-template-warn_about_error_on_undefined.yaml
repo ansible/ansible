@@ -1,0 +1,3 @@
+minor_changes:
+- While templating user is warned about 'error_on_undefined_errors' set to False in order
+  to avoid unexpected behaviours (https://github.com/ansible/ansible/issues/25563)

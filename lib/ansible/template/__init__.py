@@ -399,6 +399,11 @@ class Templar:
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
+        if not fail_on_undefined:
+            display.warning(msg="Raising an error on undefined variables is set to False."
+                                " This may result in unexpected behaviors while templating."
+                                " Please see documentation for 'error_on_undefined_vars'.")
+
         try:
             if convert_bare:
                 variable = self._convert_bare_variable(variable)
@@ -652,6 +657,11 @@ class Templar:
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
+
+        if not fail_on_undefined:
+            display.warning(msg="Raising an error on undefined variables is set to False."
+                                " This may result in unexpected behaviors while templating."
+                                " Please see documentation for 'error_on_undefined_vars'.")
 
         try:
             # allows template header overrides to change jinja2 options.
