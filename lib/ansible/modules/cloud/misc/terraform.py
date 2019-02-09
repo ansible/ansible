@@ -355,7 +355,7 @@ def main():
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file, 
+        plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file,
                                                                      module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
