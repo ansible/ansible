@@ -5,12 +5,13 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
+
 
 DOCUMENTATION = '''
 ---
@@ -118,7 +119,7 @@ EXAMPLES = '''
   delegate_to: localhost
 
 - Idempotency is only partially provided since GitLab does
-  not expose secret params like tokens or password.
+  not expose secret parameters like tokens or passwords.
   See U(https://gitlab.com/gitlab-org/gitlab-ce/issues/46313)
 '''
 
@@ -127,7 +128,7 @@ RETURN = '''
 service:
   description: A dict containing key/value pairs representing GitLab service
   returned: success
-  type: dictionary
+  type: dict
   sample:
     id: 40812345
     push_events: true
@@ -155,20 +156,23 @@ service:
 state:
   description: A string indicating whether the service was "created" or "changed"
   returned: success
-  type: string
+  type: str
   sample: created
 '''
 
+import json
+import traceback
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_native
+
+GITLAB_IMP_ERR = None
 try:
     import gitlab
     from gitlab import Gitlab
     HAS_GITLAB_PACKAGE = True
 except ImportError:
+    GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
-
-import json
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 
 # auto-generated 2018/05/12 from https://gitlab.com/gitlab-org/gitlab-ee/blob/f850b1bdb74de78875a49126e0401cc975fda32a/lib/api/services.rb
 RAW_SERVICES_DEFINITIONS = '''
@@ -294,7 +298,7 @@ def main():
         module = stub_init
 
     if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg='Missing required gitlab module (check docs or install with: pip install python-gitlab')
+        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
     api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
@@ -323,16 +327,16 @@ def main():
     ServicesHelper = GitLabServices(module, git)
     if state == 'absent':
         if not remote_service or not remote_service.created_at:
-            module.exit_json(changed=False, msg='Service not found', details='Service %s not found' % service)
+            module.exit_json(changed=False, service={}, msg='Service not found', details='Service %s not found' % service)
         else:
             if module.check_mode:
-                module.exit_json(changed=True)
+                module.exit_json(changed=True, service=remote_service.attributes)
             try:
                 remote_service.delete()
             except (gitlab.GitlabHttpError, gitlab.GitlabDeleteError) as e:
                 module.fail_json(msg='Failed to remove service %s' % service, exception=to_native(e))
             else:
-                module.exit_json(changed=True, result='Successfully deleted service %s' % service)
+                module.exit_json(changed=True, service=remote_service.attributes, result='Successfully deleted service %s' % service)
 
     else:
         if remote_service.created_at:
