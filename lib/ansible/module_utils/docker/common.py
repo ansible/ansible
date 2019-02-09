@@ -20,7 +20,7 @@ import os
 import re
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, jsonify
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
@@ -511,7 +511,7 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting container Id %s" % result['Id'])
                 result = self.inspect_container(container=result['Id'])
                 self.log("Completed container inspection")
-            except NotFound as exc:
+            except NotFound as dummy:
                 return None
             except Exception as exc:
                 self.fail("Error inspecting container: %s" % exc)
@@ -550,7 +550,7 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting network Id %s" % id)
                 result = self.inspect_network(id)
                 self.log("Completed network inspection")
-            except NotFound as exc:
+            except NotFound as dummy:
                 return None
             except Exception as exc:
                 self.fail("Error inspecting network: %s" % exc)
