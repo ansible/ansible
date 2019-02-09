@@ -23,7 +23,7 @@ $spec = @{
         proxy_username = @{ type='str' }
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
-        checksum = @{ type='str'; default=$null }
+        checksum = @{ type='str' }
     }
     supports_check_mode = $true
 }
@@ -105,7 +105,6 @@ Function Get-Checksum-From-Url {
 
          $basename = Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf
          $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+" + $basename + "\s*$")
-         #$module.Warn(("DEBUG: dst={0} src={1}" -f $web_checksum_str, $basename))
          if (-not $web_checksum_str) { 
              throw "Checksum record not found for file name '$basename' in file from url: '$url'" 
          }
@@ -196,9 +195,11 @@ Function CheckModified-File {
         } Catch {
             $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
         }
+        Finally {
+            $webResponse.Close()
+        }
         $module.Result.status_code = [int] $webResponse.StatusCode
         $module.Result.msg = [string] $webResponse.StatusDescription
-        $webResponse.Close()
     }
 
     #$module.Warn(("DEBUG: dst={0} src={1}" -f $fileLastMod, $webLastMod))
@@ -222,12 +223,44 @@ Function Parse-Checksum {
     return @{algorithm = $checksum_algorithm; checksum = $checksum_value}
 }
 
+Function Get-FileChecksum {
+    param($path, $algorithm)
+    switch ($algorithm) {
+        'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+        'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+        'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+        'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+        'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+        default {
+            $module.FailJson("Unsupported hash algorithm supplied '$algorithm'")
+        }
+    }
+
+    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "")
+    } finally {
+        $fp.Dispose()
+    }
+    return @{Algorithm = $algorithm; Hash = $hash; Path = $dest}
+}
+
+Function Get-FileHash-Wrapper {
+    param($path, $algorithm)
+    $command = 'Get-FileHash1'
+    if([bool](Get-Command $command -ea 0)) {
+        return (Get-FileHash -Path $dest -Algorithm $algorithm)
+    } else {
+        return (Get-FileChecksum -Path $dest -Algorithm $algorithm)
+    }
+}
+
 Function Get-NormaliseChecksum {
     param($dest, $checksum = $null, $hashAlgorithm = "SHA256")
     if($checksum) {
         $hashAlgorithm = $(Parse-Checksum -checksum $checksum).algorithm
     }
-    $destHashFile = Get-FileHash -Path $dest -Algorithm $hashAlgorithm
+    $destHashFile = Get-FileHash-Wrapper -Path $dest -Algorithm $hashAlgorithm
     return [string]$destHashFile.Hash.ToLower()
 }
 
@@ -421,6 +454,7 @@ Try {
         $module.Result.checksum_dest = Get-NormaliseChecksum -dest $dest -checksum $checksum
     }
 } Catch {
+    $module.Result.checksum_dest = $null
     $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
 }
 
