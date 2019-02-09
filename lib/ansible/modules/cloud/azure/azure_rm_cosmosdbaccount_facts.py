@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2018 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cosmosdbaccount_facts
 version_added: "2.8"
-short_description: Get Azure Database Account facts.
+short_description: Get Azure Cosmos DB Account facts.
 description:
-    - Get facts of Azure Database Account.
+    - Get facts of Azure Cosmos DB Account.
 
 options:
     resource_group:
@@ -107,7 +107,7 @@ accounts:
                         type: int
                         sample: 5
                     max_staleness_prefix:
-                        description: 
+                        description:
                             - Maximum staleness prefix.
                         returned: always
                         type: int
@@ -131,7 +131,7 @@ accounts:
                         type: int
                         sample: 0
                     id:
-                        description: 
+                        description:
                             - Read location ID.
                         returned: always
                         type: str
@@ -155,7 +155,7 @@ accounts:
                         type: int
                         sample: 0
                     id:
-                        description: 
+                        description:
                             - Read location ID.
                         returned: always
                         type: str
@@ -191,7 +191,7 @@ accounts:
                         type: int
                         sample: 0
                     id:
-                        description: 
+                        description:
                             - Read location ID.
                         returned: always
                         type: str
@@ -381,7 +381,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
             'is_virtual_network_filter_enabled': d.get('is_virtual_network_filter_enabled'),
             'enable_automatic_failover': d.get('enable_automatic_failover'),
             'enable_cassandra': 'EnableCassandra' in d.get('capabilities', []),
-            'enable_table':  'EnableTable' in d.get('capabilities', []),
+            'enable_table': 'EnableTable' in d.get('capabilities', []),
             'enable_gremlin': 'EnableGremlin' in d.get('capabilities', []),
             'virtual_network_rules': d.get('virtual_network_rules'),
             'enable_multiple_write_locations': d.get('enable_multiple_write_locations'),
