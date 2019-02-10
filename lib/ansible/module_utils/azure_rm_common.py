@@ -16,8 +16,8 @@ from os.path import expanduser
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 try:
     from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
-except:
-    ANSIBLE_VERSION='unknown'
+except Exception:
+    ANSIBLE_VERSION = 'unknown'
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
