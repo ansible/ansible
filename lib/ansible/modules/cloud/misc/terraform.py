@@ -361,14 +361,14 @@ def main():
 
     if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
-        if state == 'absent' and 'Resources: 0' in out:
-            changed = False
+        # checks out to decide if changes were made during execution
+        if not '0 added, 0 changed' in out or not '0 destroyed' in out:
+            changed = True
         if rc != 0:
             module.fail_json(
                 msg="Failure when executing Terraform command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err),
                 command=' '.join(command)
             )
-        changed = True
 
     outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
