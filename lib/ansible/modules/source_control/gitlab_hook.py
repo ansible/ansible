@@ -16,10 +16,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: gitlab_hooks
+module: gitlab_hook
 short_description: Manages GitLab project hooks.
 description:
-     - Adds, updates and removes project hooks
+     - Adds, updates and removes project hook
 version_added: "2.6"
 author:
   - Marcus Watkins (@marwatk)
@@ -111,7 +111,7 @@ options:
 
 EXAMPLES = '''
 - name: "Adding a project hook"
-  gitlab_hooks:
+  gitlab_hook:
     api_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
     project: "my_group/my_project"
@@ -123,7 +123,7 @@ EXAMPLES = '''
     token: "my-super-secret-token-that-my-ci-server-will-check"
 
 - name: "Delete the previous hook"
-  gitlab_hooks:
+  gitlab_hook:
     api_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
     project: "my_group/my_project"
@@ -131,7 +131,7 @@ EXAMPLES = '''
     state: absent
 
 - name: "Delete a hook by numeric project id"
-  gitlab_hooks:
+  gitlab_hook:
     api_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
     project: 10
@@ -279,7 +279,7 @@ class GitLabHook(object):
     @param project Project object
     @param hook_url Url to call on event
     '''
-    def existsHooks(self, project, hook_url):
+    def existsHook(self, project, hook_url):
         # When project exists, object will be stored in self.projectObject.
         hook = self.findHook(project, hook_url)
         if hook:
@@ -376,7 +376,7 @@ def main():
     if project is None:
         module.fail_json(msg="Failed to create hook: project %s doesn't exists" % project_identifier)
 
-    hook_exists = gitlab_hook.existsHooks(project, hook_url)
+    hook_exists = gitlab_hook.existsHook(project, hook_url)
 
     if state == 'absent':
         if hook_exists:
