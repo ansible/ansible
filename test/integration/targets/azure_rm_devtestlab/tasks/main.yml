@@ -78,7 +78,6 @@
       - output.labs[0]['default_storage_account'] != None
       - output.labs[0]['premium_data_disk_storage_account'] != None
       - output.labs[0]['vault_name'] != None
-      - output.labs[0]['tags'] != None
 
 - name: List DevTest Lab in a resource group
   azure_rm_devtestlab_facts:
@@ -100,7 +99,6 @@
       - output.labs[0]['default_storage_account'] != None
       - output.labs[0]['premium_data_disk_storage_account'] != None
       - output.labs[0]['vault_name'] != None
-      - output.labs[0]['tags'] != None
 
 - name: Create instance of DebTest Labs virtual network
   azure_rm_devtestlabvirtualnetwork:
