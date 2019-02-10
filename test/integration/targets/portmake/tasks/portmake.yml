@@ -1,10 +1,8 @@
 ####
 # setup ports
 
-- name: portsnap noninteractive fetch (cron) and  extract
-  shell: portsnap cron  extract
-  args:
-    creates: /usr/ports/Makefile
+- name: portsnap interactive fetch forced in nnon login shell session and extract or update
+  shell: portsnap --interactive auto
 
 ###
 # check ports setup
