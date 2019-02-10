@@ -173,8 +173,10 @@ class ActionModule(ActionBase):
         # if the module failed to run at all then changed won't be populated
         # so we just return the result as is
         # https://github.com/ansible/ansible/issues/38232
+        # but continue if reboot is requested
         failed = result.get('failed', False)
-        if ("updates" not in result.keys() and self._task.async_val == 0) or failed:
+        if ("updates" not in result.keys() and self._task.async_val == 0) or \
+            (failed and not (reboot and result.get('reboot_required', False))):
             result['failed'] = True
             return result
 
