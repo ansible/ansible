@@ -94,6 +94,20 @@
       - "3400"
   register: args_3
 
+- name: args (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    args: []
+  register: args_4
+
+- name: args (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    args: []
+  register: args_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -105,6 +119,8 @@
       - args_1 is changed
       - args_2 is not changed
       - args_3 is changed
+      - args_4 is changed
+      - args_5 is not changed
 
 ####################################################################
 ## configs #########################################################
@@ -154,6 +170,14 @@
     configs: []
   register: configs_4
 
+- name: configs (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    configs: []
+  register: configs_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -166,6 +190,7 @@
     - configs_2 is not changed
     - configs_3 is changed
     - configs_4 is changed
+    - configs_5 is not changed
   when: docker_api_version is version('1.30', '>=')
 - assert:
     that:
@@ -195,7 +220,7 @@
       - "node.role == manager"
   register: constraints_2
 
-- name: constraints (idempotency)
+- name: constraints (change)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
@@ -203,6 +228,22 @@
     constraints:
       - "node.role == worker"
   register: constraints_3
+
+- name: constraints (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    constraints: []
+  register: constraints_4
+
+- name: constraints (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    constraints: []
+  register: constraints_5
 
 - name: cleanup
   docker_swarm_service:
@@ -215,6 +256,8 @@
       - constraints_1 is changed
       - constraints_2 is not changed
       - constraints_3 is changed
+      - constraints_4 is changed
+      - constraints_5 is not changed
 
 ####################################################################
 ## command #########################################################
@@ -251,12 +294,26 @@
       - "sleep 10m"
   register: command_4
 
+- name: command (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: []
+  register: command_5
+
+- name: command (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: []
+  register: command_6
+
 - name: command (string failure)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     command: yes
-  register: command_5
+  register: command_7
   ignore_errors: yes
 
 - name: command (list failure)
@@ -266,7 +323,7 @@
     command:
       - "/bin/sh"
       - yes
-  register: command_6
+  register: command_8
   ignore_errors: yes
 
 - name: cleanup
@@ -281,8 +338,10 @@
       - command_2 is not changed
       - command_3 is changed
       - command_4 is not changed
-      - command_5 is failed
-      - command_6 is failed
+      - command_5 is changed
+      - command_6 is not changed
+      - command_7 is failed
+      - command_8 is failed
 
 ####################################################################
 ## container_labels ################################################
@@ -318,6 +377,22 @@
       test_2: "3"
   register: container_labels_3
 
+- name: container_labels (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    container_labels: {}
+  register: container_labels_4
+
+- name: container_labels (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    container_labels: {}
+  register: container_labels_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -329,6 +404,8 @@
       - container_labels_1 is changed
       - container_labels_2 is not changed
       - container_labels_3 is changed
+      - container_labels_4 is changed
+      - container_labels_5 is not changed
 
 ####################################################################
 ## dns #############################################################
@@ -374,6 +451,22 @@
       - 9.9.9.9
   register: dns_4
 
+- name: dns_servers (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns: []
+  register: dns_5
+
+- name: dns_servers (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns: []
+  register: dns_6
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -386,6 +479,8 @@
       - dns_2 is not changed
       - dns_3 is changed
       - dns_4 is changed
+      - dns_5 is changed
+      - dns_6 is not changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
@@ -430,6 +525,24 @@
   register: dns_options_3
   ignore_errors: yes
 
+- name: dns_options (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns_options: []
+  register: dns_options_4
+  ignore_errors: yes
+
+- name: dns_options (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns_options: []
+  register: dns_options_5
+  ignore_errors: yes
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -441,6 +554,8 @@
       - dns_options_1 is changed
       - dns_options_2 is not changed
       - dns_options_3 is changed
+      - dns_options_4 is changed
+      - dns_options_5 is not changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
@@ -492,6 +607,22 @@
       - example.com
   register: dns_search_4
 
+- name: dns_search (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns_search: []
+  register: dns_search_5
+
+- name: dns_search (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    dns_search: []
+  register: dns_search_6
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -504,6 +635,8 @@
       - dns_search_2 is not changed
       - dns_search_3 is changed
       - dns_search_4 is changed
+      - dns_search_5 is changed
+      - dns_search_6 is not changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
@@ -585,6 +718,22 @@
       - "TEST2=val3"
   register: env_3
 
+- name: env (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    env: []
+  register: env_4
+
+- name: env (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    env: []
+  register: env_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -596,6 +745,8 @@
       - env_1 is changed
       - env_2 is not changed
       - env_3 is changed
+      - env_4 is changed
+      - env_5 is not changed
 
 ###################################################################
 ## force_update ###################################################
@@ -757,6 +908,22 @@
       test_3: "3"
   register: labels_3
 
+- name: labels (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    labels: {}
+  register: labels_4
+
+- name: labels (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    labels: {}
+  register: labels_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -768,6 +935,8 @@
       - labels_1 is changed
       - labels_2 is not changed
       - labels_3 is changed
+      - labels_4 is changed
+      - labels_5 is not changed
 
 ###################################################################
 ## limit_cpu ######################################################
@@ -927,6 +1096,24 @@
       max-file: "1"
   register: log_driver_options_3
 
+- name: log_driver_options (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    log_driver: json-file
+    log_driver_options: {}
+  register: log_driver_options_4
+
+- name: log_driver_options (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    log_driver: json-file
+    log_driver_options: {}
+  register: log_driver_options_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -938,6 +1125,8 @@
       - log_driver_options_1 is changed
       - log_driver_options_2 is not changed
       - log_driver_options_3 is changed
+      - log_driver_options_4 is changed
+      - log_driver_options_5 is not changed
 
 ###################################################################
 ## mode ###########################################################
@@ -1030,6 +1219,14 @@
     mounts: []
   register: mounts_4
 
+- name: mounts (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    mounts: []
+  register: mounts_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1042,6 +1239,7 @@
       - mounts_2 is not changed
       - mounts_3 is changed
       - mounts_4 is changed
+      - mounts_5 is not changed
 
 ####################################################################
 ## networks ########################################################
@@ -1073,6 +1271,14 @@
     networks: []
   register: networks_3
 
+- name: networks (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks: []
+  register: networks_4
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1084,6 +1290,7 @@
       - networks_1 is changed
       - networks_2 is not changed
       - networks_3 is changed
+      - networks_4 is not changed
 
 ####################################################################
 ## placement_preferences ###########################################
@@ -1116,6 +1323,22 @@
       - spread: "node.labels.test2"
   register: placement_preferences_3
 
+- name: placement_preferences (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement_preferences: []
+  register: placement_preferences_4
+
+- name: placement_preferences (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement_preferences: []
+  register: placement_preferences_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1127,6 +1350,8 @@
       - placement_preferences_1 is changed
       - placement_preferences_2 is not changed
       - placement_preferences_3 is changed
+      - placement_preferences_4 is changed
+      - placement_preferences_5 is not changed
 
 ####################################################################
 ## publish #########################################################
@@ -1205,6 +1430,22 @@
         mode: host
   register: publish_5
 
+- name: publish (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    publish: []
+  register: publish_6
+
+- name: publish (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    publish: []
+  register: publish_7
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1218,6 +1459,8 @@
       - publish_3 is changed
       - publish_4 is changed
       - publish_5 is not changed
+      - publish_6 is changed
+      - publish_7 is not changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
@@ -1593,6 +1836,14 @@
     secrets: []
   register: secrets_4
 
+- name: secrets (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    secrets: []
+  register: secrets_5
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -1605,6 +1856,7 @@
       - secrets_2 is not changed
       - secrets_3 is changed
       - secrets_4 is changed
+      - secrets_5 is not changed
   when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
