@@ -1,0 +1,241 @@
+####
+# setup ports
+
+- name: portsnap fetch extract
+  shell: portsnap fetch extract
+  args:
+    creates: /usr/ports/Makefile
+
+###
+# check ports setup
+- name: check for existence of screen directory
+  stat:
+    path: /usr/ports/sysutils/screen
+  register: dir_sysutils_screen
+  
+- fail:
+    msg: "could not find directory /usr/ports/sysutils/screen"
+  when: dir_sysutils_screen.stat.exists == True
+
+- name: check for existence of sudo directory
+  stat:
+    path: /usr/ports/sysutils/screen
+  register: dir_security_sudo
+  
+- fail:
+    msg: "could not find directory /usr/ports/security/sudo"
+  when: dir_security_sudo.stat.exists == True
+
+
+####
+# test manual compilation and installation of packages
+
+- name: test make install screen
+  shell: make install clean
+  args:
+    chdir: /usr/ports/sysutils/screen
+    creates: /usr/local/bin/screen  
+
+- name: test make install sudo
+  shell: make install clean
+  args:
+    chdir: /usr/ports/security/sudo
+    creates: /usr/local/bin/sudo
+   
+- name: pkg remove screen
+  shell: pkg remove screen
+  args:
+    deletes: /usr/local/bin/screen  
+
+- name: pkg remove sudo
+  shell: pkg remove sudo
+  args:
+    deletes: /usr/local/bin/sudo
+
+
+####
+# test portmake absent
+
+#
+# using disable_vulnerabilities: true to allow build with current vulnerabilities after porsnap
+# testing its function seperately below
+# 
+
+- name: check absence of package screen
+  shell: pkg info screen
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc == 0
+
+- name: test removal of package screen  not installed
+  portmake:
+    name: "sysutils/screen"
+    state: "absent"
+    
+- name: test removal of package screen not installed with unneded options
+  portmake:
+    name: "sysutils/screen"
+    state: "absent"
+    options_set: "XTERM_256"
+
+####
+# test portmake present
+ 
+- name: test installation of package screen
+  portmake:
+    name: "sysutils/screen"
+    state: "present"
+    disable_vulnerabilities: true
+    
+- name: check for presence of package screen
+  shell: pkg info screen
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc != 0
+
+- name: test installation of package screen if already installed
+  portmake:
+    name: sysutils/screen
+    state: "present"
+    disable_vulnerabilities: true
+    
+- name: check for presence of package screen - still installed?
+  shell: pkg info screen
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc != 0
+ 
+- name: test installation of package screen if already installed - with new params
+  portmake:
+    name: sysutils/screen
+    state: "present"
+    options_set: "XTERM_256"
+    disable_vulnerabilities: true
+    
+- name: check for added compile paramter of package screen
+  shell: "pkg info screen | grep XTERM_256"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: test installation of same package with an aditional option - previous option saved in /etc/make.conf
+  portmake:
+    name: sysutils/screen
+    state: "present"
+    options_set: "SHOWENC"
+    disable_vulnerabilities: true
+    
+- name: check old compile paramter of package
+  shell: "pkg info screen | grep 'XTERM_256'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: check new compile paramter of package
+  shell: "pkg info screen | grep 'SHOWENC'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: test installation of same package with an additional unset options
+  portmake:
+    name: sysutils/screen
+    state: "present"
+    options_unset: "SHOWENC NETHACK"
+
+- name: check old compile parameter of package
+  shell: "pkg info screen | grep 'XTERM_256'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: check previously set compile option is absent
+  shell: "pkg info screen | grep 'SHOWENC'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("off") == -1
+
+- name: check compile option is absent
+  shell: "pkg info screen | grep 'NETHACK'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("off") == -1
+
+  
+# test installation of several ports
+
+- name: test installation of two pkgs
+  portmake:
+    name: sysutils/screen, security/sudo
+    state: "present"
+
+- name: check for presence of package
+  shell: pkg info screen
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc != 0
+
+- name: check for presence of package
+  shell: pkg info sudo
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc != 0
+
+# clean up - remove several packages
+
+- name: test removal of two pkgs
+  portmake:
+    name: sysutils/screen, security/sudo
+    state: "absent"
+
+- name: check for absence of package
+  shell: pkg info screen
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc == 0
+
+- name: check for absence of package
+  shell: pkg info sudo
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc == 0
+
+  
+####
+# tests portmake absent removing pkg and make.conf lines
+
+- name: remove an possibly existing make.conf file to test creation
+  shell: rm -f /etc/make.conf
+  args:
+    deletes: /etc/make.conf
+  ignore_errors: true
+
+- name: install a port with options - screen
+  portmake:
+    name: sysutils/screen
+    options_set: "XTERM_256"
+    options_unset: "SHOWENC NETHACK"
+    state: "present"
+
+- name: uninstall a port with options - screen
+  portmake:
+    name: sysutils/screen
+    options_set: "XTERM_256"
+    options_unset: "SHOWENC NETHACK"
+    state: "present"
+
+- name: check all options in make.conf are removed for screen
+  shell: "grep 'sysutils_screen_' /etc/make.conf"
+  register: grep_makeconf_out
+  failed_when: grep_makeconf_out.rc == 0
+
+- name: remove and write a test line to make.conf file to test it is not overwritten
+  shell: rm -f /etc/make.conf; echo "TEST_VARIABLE=nonsense" > /etc/make.conf
+  ignore_errors: true
+
+- name: install a port with options - screen
+  portmake:
+    name: sysutils/screen
+    options_set: "XTERM_256"
+    options_unset: "SHOWENC NETHACK"
+    state: "present"
+
+- name: check test line in make.conf still exists
+  shell: "grep 'TEST_VARIABLE=nonsense' /etc/make.conf"
+  register: grep_makeconf_out
+  failed_when: grep_makeconf_out.rc != 0
+
+- name: check port options in make.conf are here as well
+  shell: "grep 'sysutils_screen_' /etc/make.conf"
+  register: grep_makeconf_out
+  failed_when: grep_makeconf_out.rc != 0
+
+
+
