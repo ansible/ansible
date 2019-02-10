@@ -1,8 +1,8 @@
 ####
 # setup ports
 
-- name: portsnap fetch extract
-  shell: portsnap fetch extract
+- name: portsnap noninteractive fetch (cron) and  extract
+  shell: portsnap cron  extract
   args:
     creates: /usr/ports/Makefile
 
@@ -25,7 +25,6 @@
 - fail:
     msg: "could not find directory /usr/ports/security/sudo"
   when: dir_security_sudo.stat.exists == True
-
 
 ####
 # test manual compilation and installation of packages
@@ -186,7 +185,6 @@
   shell: pkg info sudo
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
-
   
 ####
 # tests portmake absent removing pkg and make.conf lines
@@ -236,6 +234,3 @@
   shell: "grep 'sysutils_screen_' /etc/make.conf"
   register: grep_makeconf_out
   failed_when: grep_makeconf_out.rc != 0
-
-
-

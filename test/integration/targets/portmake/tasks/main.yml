@@ -1,4 +1,3 @@
-
 - name: include tests if OS is a FreeBSD
   include_tasks: portmake.yml
   when: ansible_distribution == 'FreeBSD'
