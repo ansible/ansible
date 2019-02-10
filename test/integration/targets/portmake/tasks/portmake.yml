@@ -13,7 +13,7 @@
   
 - fail:
     msg: "could not find directory /usr/ports/sysutils/screen"
-  when: dir_sysutils_screen.stat.exists == True
+  when: dir_sysutils_screen.stat.exists == False
 
 - name: check for existence of sudo directory
   stat:
@@ -22,10 +22,22 @@
   
 - fail:
     msg: "could not find directory /usr/ports/security/sudo"
-  when: dir_security_sudo.stat.exists == True
+  when: dir_security_sudo.stat.exists == False
 
 ####
 # test manual compilation and installation of packages
+
+- name: pkg remove screen
+  shell: pkg remove screen
+  args:
+    deletes: /usr/local/bin/screen  
+  ignore_errors: true
+  
+- name: pkg remove sudo
+  shell: pkg remove sudo
+  args:
+    deletes: /usr/local/bin/sudo
+  ignore_errors: true
 
 - name: test make install screen
   shell: make install clean
@@ -39,13 +51,13 @@
     chdir: /usr/ports/security/sudo
     creates: /usr/local/bin/sudo
    
-- name: pkg remove screen
-  shell: pkg remove screen
+- name: pkg delete screen
+  shell: pkg delete screen
   args:
     deletes: /usr/local/bin/screen  
 
-- name: pkg remove sudo
-  shell: pkg remove sudo
+- name: pkg delete sudo
+  shell: pkg delete sudo
   args:
     deletes: /usr/local/bin/sudo
 
@@ -75,8 +87,20 @@
     options_set: "XTERM_256"
 
 ####
+# test portmake present without disable_vulnerabilities not continuosly testable
+
+- name: test installation of package screen without disable_vulnerabilities - may fail
+  portmake:
+    name: "sysutils/screen"
+    state: "present"
+  ignore_errors: true
+
+- name: delete possibly installed pkg
+  shell: pkg delete screen
+  ignore_errors: true
+
 # test portmake present
- 
+
 - name: test installation of package screen
   portmake:
     name: "sysutils/screen"
@@ -199,14 +223,16 @@
     options_set: "XTERM_256"
     options_unset: "SHOWENC NETHACK"
     state: "present"
-
+    disable_vulnerabilities: true
+    
 - name: uninstall a port with options - screen
   portmake:
     name: sysutils/screen
     options_set: "XTERM_256"
     options_unset: "SHOWENC NETHACK"
     state: "present"
-
+    disable_vulnerabilities: true
+    
 - name: check all options in make.conf are removed for screen
   shell: "grep 'sysutils_screen_' /etc/make.conf"
   register: grep_makeconf_out
@@ -222,6 +248,7 @@
     options_set: "XTERM_256"
     options_unset: "SHOWENC NETHACK"
     state: "present"
+    disable_vulnerabilities: true
 
 - name: check test line in make.conf still exists
   shell: "grep 'TEST_VARIABLE=nonsense' /etc/make.conf"
