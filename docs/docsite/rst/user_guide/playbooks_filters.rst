@@ -69,9 +69,9 @@ for example::
   tasks:
     - shell: cat /some/path/to/multidoc-file.yaml
       register: result
-   - debug:
-       msg: '{{ item }}'
-    loop: '{{ result.stdout | from_yaml_all | list }}'
+    - debug:
+        msg: '{{ item }}'
+      loop: '{{ result.stdout | from_yaml_all | list }}'
 
 
 .. _forcing_variables_to_be_defined:
