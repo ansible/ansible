@@ -84,12 +84,13 @@ if ($records -ne $null)
     # items as each is processed, whatever remains at the end is missing
     # content (that needs to be added).
     $required_values = @{}
-    $values | ForEach-Object {
+    foreach ($value in $values)
+    {
         if ($record_object_types.Contains($type))
         {
-            [System.Management.Automation.LanguagePrimitives]::ConvertTo($_, $record_object_types[$type])
+            $value = [System.Management.Automation.LanguagePrimitives]::ConvertTo($value, $record_object_types[$type])
         }
-        $required_values[$_] = $null
+        $required_values[$value] = $null
     }
 
     foreach ($record in $records)
