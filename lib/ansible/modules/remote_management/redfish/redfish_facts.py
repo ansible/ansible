@@ -122,7 +122,7 @@ from ansible.module_utils.redfish_utils import RedfishUtils
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
                 "GetNicInventory", "GetStorageControllerInventory",
-                "GetDiskInventory", "GetBiosAttributes", "GetBiosBootOrder"],
+                "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
@@ -214,8 +214,8 @@ def main():
                     result["disk"] = rf_utils.get_disk_inventory()
                 elif command == "GetBiosAttributes":
                     result["bios_attribute"] = rf_utils.get_bios_attributes()
-                elif command == "GetBiosBootOrder":
-                    result["bios_boot_order"] = rf_utils.get_bios_boot_order()
+                elif command == "GetBootOrder":
+                    result["boot_order"] = rf_utils.get_boot_order()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
