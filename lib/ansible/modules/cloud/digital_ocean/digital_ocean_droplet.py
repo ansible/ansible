@@ -23,18 +23,21 @@ author: "Gurchet Rai (@gurch101)"
 options:
   state:
     description:
-     - Indicate desired state of the target.
+     - Ensure droplet is C(present) or C(absent). If C(present) and exists and I(rebuild=True), then rebuild it.
     default: present
+    type: str
     choices: ['present', 'absent']
   id:
     description:
-     - Numeric, the droplet id you want to operate on.
-     - If I(id) and I(name) both are present and a droplet with that I(id) exists, I(name) will be ignored.
+     - Numeric I(id) of the Droplet you want to check, delete or rebuild.
+     - If both I(id) and I(name) are present and a droplet with that I(id) exists, I(name) will be ignored.
+    type: int
     aliases: ['droplet_id']
   name:
     description:
      - Droplet name, must be a valid hostname or a FQDN in your domain.
      - Required when I(state=present) and the droplet does not yet exist.
+    type: str
   unique_name:
     description:
      - Deprecated and ignored parameter. Consider it always True.
@@ -43,11 +46,13 @@ options:
      - Droplet configuration slug, e.g. C(s-1vcpu-1gb), C(2gb), C(c-32vcpu-64gb), or C(s-32vcpu-192gb).
      - If you forget to supply that, the module will build the cheapest droplet C(s-1vcpu-1gb).
      - If you need to grow your droplet you may do that later.
+    type: str
     aliases: ['size_id']
   image:
     description:
      - Image slug or ID for new or rebuilt droplet e.g. C(ubuntu-16-04-x64) or C(42251561).
      - Required when I(state=present) and the droplet does not yet exist.
+    type: str
     aliases: ['image_id']
   region:
     description:
@@ -55,10 +60,12 @@ options:
      - Required when I(state=present) and the droplet does not yet exist.
      - "New DO users be aware: due to limited capacity, NYC2, AMS2, and SFO1 are
       currently available only to resource owners in respective datacenters."
+    type: str
     aliases: ['region_id']
   ssh_keys:
     description:
      - List of SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation.
+    type: list
   private_networking:
     description:
      - Add an additional, private network interface to the newly created droplet.
@@ -70,10 +77,11 @@ options:
   user_data:
     description:
      - string data >64KB, e.g. a 'cloud-config' file or a Bash script to configure the Droplet on first boot.
+    type: str
     required: False
   ipv6:
     description:
-     - enable IPv6 for new droplet.
+     - Enable IPv6 for new droplet if C(True).
     default: False
     type: bool
   wait:
@@ -84,6 +92,7 @@ options:
   wait_timeout:
     description:
      - How long before wait gives up, in seconds, when creating a droplet.
+    type: int
     default: 120
   backups:
     description:
@@ -92,19 +101,23 @@ options:
     type: bool
   monitoring:
     description:
-     - indicates whether to install the DigitalOcean agent for monitoring.
+     - Install DigitalOcean monitoring agent on a new Droplet if C(True).
     default: False
     type: bool
   tags:
     description:
-     - List, A list of tag names as strings to apply to the Droplet after it is created. A tag can be existing or new.
+     - A list of strings to tag the Droplet with on creation. A tag can be existing or new.
+    type: list
   volumes:
     description:
-     - List, A list including the unique string identifier for each Block Storage volume to be attached to the Droplet.
+     - A list of Block Storage volume identifiers to attach to new Droplet.
+     - "Note: a volume can only be attached to a single Droplet."
+    type: list
     required: False
   oauth_token:
     description:
-     - DigitalOcean OAuth token. Can be specified in C(DO_API_KEY), C(DO_API_TOKEN), or C(DO_OAUTH_TOKEN) environment variables
+     - DigitalOcean OAuth token. Can be specified in C(DO_API_KEY), C(DO_API_TOKEN), or C(DO_OAUTH_TOKEN) environment variables.
+    type: str
     aliases: ['API_TOKEN']
     required: True
   rebuild:
@@ -198,8 +211,10 @@ data:
           type: complex
           contains:
             id:
+              type: int
               sample: 43130763
             slug:
+              type: str
               sample: "debian-9-x64"
         volume_ids:
           type: list
