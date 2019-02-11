@@ -301,6 +301,8 @@ def main():
         cmd = [[ufw_bin], [module.check_mode, '--dry-run']]
 
         if command == 'state':
+            if value == 'reset' and module.check_mode:
+                continue
             states = {'enabled': 'enable', 'disabled': 'disable',
                       'reloaded': 'reload', 'reset': 'reset'}
             execute(cmd + [['-f'], [states[value]]])

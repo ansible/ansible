@@ -1,0 +1,2 @@
+bugfixes:
+- "ufw - when using ``state: reset`` in check mode, ``ufw --dry-run reset`` was executed, which causes a loss of firewall rules. The ``ufw`` module was adjusted to no longer run ``ufw --dry-run reset`` to prevent this from happening."
