@@ -24,7 +24,6 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 
 
-
 class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
