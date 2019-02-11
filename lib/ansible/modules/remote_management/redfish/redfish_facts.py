@@ -135,7 +135,7 @@ CATEGORY_COMMANDS_ALL = {
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
-    "Manager": ["GetManagerAttributes", "GetManagerNicInventory", "GetLogs"],
+    "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -143,7 +143,7 @@ CATEGORY_COMMANDS_DEFAULT = {
     "Chassis": "GetFanInventory",
     "Accounts": "ListUsers",
     "Update": "GetFirmwareInventory",
-    "Manager": "GetManagerAttributes"
+    "Manager": "GetManagerNicInventory"
 }
 
 
@@ -263,9 +263,7 @@ def main():
                 module.fail_json(msg=resource['msg'])
 
             for command in command_list:
-                if command == "GetManagerAttributes":
-                    result["manager_attributes"] = rf_utils.get_manager_attributes()
-                elif command == "GetManagerNicInventory":
+                if command == "GetManagerNicInventory":
                     result["manager_nics"] = rf_utils.get_nic_inventory(resource_type=category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
