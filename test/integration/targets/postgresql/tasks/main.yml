@@ -762,6 +762,9 @@
     that:
       - "result.stdout_lines[-1] == '(0 rows)'"
 
+# postgresql_table module tests
+- include: postgresql_table.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql
