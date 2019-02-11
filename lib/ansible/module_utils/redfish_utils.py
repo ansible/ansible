@@ -515,25 +515,6 @@ class RedfishUtils(object):
             result['entries'].append(firmware)
         return result
 
-    def get_manager_attributes(self):
-        result = {}
-        manager_attributes = {}
-        key = "Attributes"
-
-        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
-
-        for attribute in data[key].items():
-            manager_attributes[attribute[0]] = attribute[1]
-        result["entries"] = manager_attributes
-        return result
-
     def get_bios_attributes(self):
         result = {}
         bios_attributes = {}
@@ -666,22 +647,6 @@ class RedfishUtils(object):
             payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
 
         response = self.patch_request(self.root_uri + self.systems_uri, payload, HEADERS)
-        if response['ret'] is False:
-            return response
-        return {'ret': True}
-
-    def set_manager_attributes(self, attr):
-        attributes = "Attributes"
-
-        # Example: manager_attr = {\"name\":\"value\"}
-        # Check if value is a number. If so, convert to int.
-        if attr['mgr_attr_value'].isdigit():
-            manager_attr = "{\"%s\": %i}" % (attr['mgr_attr_name'], int(attr['mgr_attr_value']))
-        else:
-            manager_attr = "{\"%s\": \"%s\"}" % (attr['mgr_attr_name'], attr['mgr_attr_value'])
-
-        payload = {"Attributes": json.loads(manager_attr)}
-        response = self.patch_request(self.root_uri + self.manager_uri + "/" + attributes, payload, HEADERS)
         if response['ret'] is False:
             return response
         return {'ret': True}
