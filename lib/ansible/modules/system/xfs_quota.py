@@ -278,13 +278,13 @@ def main():
     )
 
     limit = []
-    if bsoft is not None and int(bsoft / 1024) != current_bsoft:
+    if bsoft is not None and int(bsoft) != current_bsoft:
         limit.append('bsoft=%s' % bsoft)
-        result['xfs_quota']['bsoft'] = int(bsoft / 1024)
+        result['xfs_quota']['bsoft'] = int(bsoft)
 
-    if bhard is not None and int(bhard / 1024) != current_bhard:
+    if bhard is not None and int(bhard) != current_bhard:
         limit.append('bhard=%s' % bhard)
-        result['xfs_quota']['bhard'] = int(bhard / 1024)
+        result['xfs_quota']['bhard'] = int(bhard)
 
     if isoft is not None and isoft != current_isoft:
         limit.append('isoft=%s' % isoft)
@@ -294,13 +294,13 @@ def main():
         limit.append('ihard=%s' % ihard)
         result['xfs_quota']['ihard'] = ihard
 
-    if rtbsoft is not None and int(rtbsoft / 1024) != current_rtbsoft:
+    if rtbsoft is not None and int(rtbsoft) != current_rtbsoft:
         limit.append('rtbsoft=%s' % rtbsoft)
-        result['xfs_quota']['rtbsoft'] = int(rtbsoft / 1024)
+        result['xfs_quota']['rtbsoft'] = int(rtbsoft)
 
-    if rtbhard is not None and int(rtbhard / 1024) != current_rtbhard:
+    if rtbhard is not None and int(rtbhard) != current_rtbhard:
         limit.append('rtbhard=%s' % rtbhard)
-        result['xfs_quota']['rtbhard'] = int(rtbhard / 1024)
+        result['xfs_quota']['rtbhard'] = int(rtbhard)
 
     if len(limit) > 0 and not module.check_mode:
         if name == quota_default:
@@ -338,12 +338,15 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
     if used_type == 'b':
         used_arg = '-b'
         used_name = 'blocks'
+        factor = 1024
     elif used_type == 'i':
         used_arg = '-i'
         used_name = 'inodes'
+        factor = 1
     elif used_type == 'rtb':
         used_arg = '-r'
         used_name = 'realtime blocks'
+        factor = 1024
 
     rc, stdout, stderr = exec_quota(module, 'report %s %s' % (type_arg, used_arg), mountpoint)
 
@@ -359,8 +362,8 @@ def quota_report(module, mountpoint, name, quota_type, used_type):
     for line in stdout.split('\n'):
         line = line.strip().split()
         if len(line) > 3 and line[0] == name:
-            soft = int(line[2])
-            hard = int(line[3])
+            soft = int(line[2]) * factor
+            hard = int(line[3]) * factor
             break
 
     return soft, hard
