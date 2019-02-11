@@ -117,7 +117,7 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if self.options.all_plugins:
-            self.args = self.get_all_plugins_of_type(plugin_type, loader)
+            self.args = self.get_all_plugins_of_type(plugin_type)
 
         # dump plugin metadata as JSON
         if self.options.json_dump:
