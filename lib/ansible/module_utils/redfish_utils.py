@@ -558,52 +558,73 @@ class RedfishUtils(object):
         result["entries"] = bios_attributes
         return result
 
-    def get_bios_boot_order(self):
+    def get_boot_order(self):
         result = {}
-        boot_device_list = []
-        boot_device_details = []
-        key = "Bios"
-        bootsources = "BootSources"
-        # Get these entries, but does not fail if not found
-        properties = ['Index', 'Id', 'Name', 'Enabled']
+        # Get these entries from BootOption, if present
+        properties = ['DisplayName', 'BootOptionReference']
 
-        # Search for 'key' entry and extract URI from it
+        # Retrieve System resource
         response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
-        if key not in data:
-            return {'ret': False, 'msg': "Key %s not found" % key}
+        # Confirm needed Boot properties are present
+        if 'Boot' not in data or 'BootOrder' not in data['Boot']:
+            return {'ret': False, 'msg': "Key BootOrder not found"}
 
-        bios_uri = data[key]["@odata.id"]
+        boot = data['Boot']
+        boot_order = boot['BootOrder']
 
-        # Get boot mode first as it will determine what attribute to read
-        response = self.get_request(self.root_uri + bios_uri)
-        if response['ret'] is False:
-            return response
-        data = response['data']
-        boot_mode = data[u'Attributes']["BootMode"]
-        if boot_mode == "Uefi":
-            boot_seq = "UefiBootSeq"
+        # Retrieve BootOptions if present
+        if 'BootOptions' in boot and '@odata.id' in boot['BootOptions']:
+            boot_options_uri = boot['BootOptions']["@odata.id"]
+            # Get BootOptions resource
+            response = self.get_request(self.root_uri + boot_options_uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+
+            # Retrieve Members array
+            if 'Members' not in data:
+                return {'ret': False,
+                        'msg': "Members not found in BootOptionsCollection"}
+            members = data['Members']
         else:
-            boot_seq = "BootSeq"
+            members = []
 
-        response = self.get_request(self.root_uri + self.systems_uri + "/" + bootsources)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
+        # Build dict of BootOptions keyed by BootOptionReference
+        boot_options_dict = {}
+        for member in members:
+            if '@odata.id' not in member:
+                return {'ret': False,
+                        'msg': "@odata.id not found in BootOptions"}
+            boot_option_uri = member['@odata.id']
+            response = self.get_request(self.root_uri + boot_option_uri)
+            if response['ret'] is False:
+                return response
+            data = response['data']
+            if 'BootOptionReference' not in data:
+                return {'ret': False,
+                        'msg': "BootOptionReference not found in BootOption"}
+            boot_option_ref = data['BootOptionReference']
 
-        boot_device_list = data[u'Attributes'][boot_seq]
-        for b in boot_device_list:
-            boot_device = {}
-            for property in properties:
-                if property in b:
-                    boot_device[property] = b[property]
-            boot_device_details.append(boot_device)
-        result["entries"] = boot_device_details
+            # fetch the props to display for this boot device
+            boot_props = {}
+            for prop in properties:
+                if prop in data:
+                    boot_props[prop] = data[prop]
+
+            boot_options_dict[boot_option_ref] = boot_props
+
+        # Build boot device list
+        boot_device_list = []
+        for ref in boot_order:
+            boot_device_list.append(
+                boot_options_dict.get(ref, {'BootOptionReference': ref}))
+
+        result["entries"] = boot_device_list
         return result
 
     def set_bios_default_settings(self):
