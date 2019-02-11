@@ -104,7 +104,13 @@ def get_defaults_flag(module):
 
 
 def get_config(module, flags=None):
-    flag_str = ' '.join(to_list(flags))
+    flags = to_list(flags)
+
+    section_filter = False
+    if flags and 'section' in flags[-1]:
+        section_filter = True
+
+    flag_str = ' '.join(flags)
 
     try:
         return _DEVICE_CONFIGS[flag_str]
@@ -113,7 +119,11 @@ def get_config(module, flags=None):
         try:
             out = connection.get_config(flags=flags)
         except ConnectionError as exc:
-            module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+            if section_filter:
+                # Some ios devices don't understand `| section foo`
+                out = get_config(module, flags=flags[:-1])
+            else:
+                module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         cfg = to_text(out, errors='surrogate_then_replace').strip()
         _DEVICE_CONFIGS[flag_str] = cfg
         return cfg

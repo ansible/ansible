@@ -1,0 +1,2 @@
+bugfixes:
+- If an ios module uses a section filter on a device which does not support it, retry the command without the filter.
