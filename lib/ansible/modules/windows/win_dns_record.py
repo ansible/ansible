@@ -31,8 +31,10 @@ options:
     default: present
   ttl:
     description:
-    - The "time to live" of the record, in seconds. Must be at least 900
-      (ie 15 minutes).
+    - The "time to live" of the record, in seconds. Ignored when
+      `state=absent`.
+    - Note that an Active Directory forest can specify a minimum TTL, and will
+      dynamically "round up" other values to that minimum.
     default: 3600
   type:
     description:
