@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_csr - fixes idempotence problem with PyOpenSSL backend when no Subject Alternative Names were specified."
