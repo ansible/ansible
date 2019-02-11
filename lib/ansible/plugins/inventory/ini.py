@@ -15,7 +15,7 @@ DOCUMENTATION = '''
         - The C(vars) modifier indicates that the section contains variables assigned to members of the group.
         - Anything found outside a section is considered an 'ungrouped' host.
         - Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared within your inventory.
-        - When declared inline with the host, INI values are are processed by Python's ast.literal_eval function
+        - When declared inline with the host, INI values are processed by Python's ast.literal_eval function
           (U(https://docs.python.org/2/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures
           (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple C(key=value) parameters per line.
           Therefore they need a way to indicate that a space is part of a value rather than a separator.
