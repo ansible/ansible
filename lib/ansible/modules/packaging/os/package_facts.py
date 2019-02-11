@@ -25,9 +25,9 @@ options:
     required: False
 version_added: "2.5"
 author:
-  - Matthew Jones
-  - Brian Coca
-  - Adam Miller
+  - Matthew Jones (@matburt)
+  - Brian Coca (@bcoca)
+  - Adam Miller (@maxamillion)
 '''
 
 EXAMPLES = '''
@@ -192,7 +192,7 @@ def apt_package_list():
 # FIXME: add more listing methods
 def main():
     global module
-    module = AnsibleModule(argument_spec=dict(manager=dict()))
+    module = AnsibleModule(argument_spec=dict(manager=dict()), supports_check_mode=True)
     manager = module.params['manager']
     packages = {}
     results = {}

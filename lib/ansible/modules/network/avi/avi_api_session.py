@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_api_session
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Avi API Module
 description:
@@ -45,6 +45,7 @@ options:
     timeout:
         description:
             - Timeout (in seconds) for Avi API calls.
+        default: 60
 extends_documentation_fragment:
     - avi
 '''

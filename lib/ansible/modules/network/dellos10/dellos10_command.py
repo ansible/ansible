@@ -1,7 +1,8 @@
 #!/usr/bin/python
-#
-# (c) 2015 Peter Sprygada, <psprygada@ansible.com>
-# Copyright (c) 2017 Dell Inc.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Peter Sprygada <psprygada@ansible.com>
+# Copyright: (c) 2017, Dell Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -20,12 +21,12 @@ version_added: "2.2"
 author: "Senthil Kumar Ganesan (@skg-net)"
 short_description: Run commands on remote devices running Dell OS10
 description:
-  - Sends arbitrary commands to a Dell OS10 node and returns the results
+  - Sends arbitrary commands to a Dell EMC OS10 node and returns the results
     read from the device. This module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
   - This module does not support running commands in configuration mode.
-    Please use M(dellos10_config) to configure Dell OS10 devices.
+    Please use M(dellos10_config) to configure Dell EMC OS10 devices.
 extends_documentation_fragment: dellos10
 options:
   commands:
@@ -35,6 +36,7 @@ options:
         is returned. If the I(wait_for) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retries has expired.
+    type: list
     required: true
   wait_for:
     description:
@@ -43,8 +45,7 @@ options:
         before moving forward. If the conditional is not true
         within the configured number of I(retries), the task fails.
         See examples.
-    required: false
-    default: null
+    type: list
     version_added: "2.2"
   match:
     description:
@@ -54,9 +55,9 @@ options:
         then all conditionals in the wait_for must be satisfied.  If
         the value is set to C(any) then only one of the values must be
         satisfied.
-    required: false
+    type: str
     default: all
-    choices: ['any', 'all']
+    choices: [ all, any ]
     version_added: "2.5"
   retries:
     description:
@@ -64,7 +65,7 @@ options:
         before it is considered failed. The command is run on the
         target device every retry and evaluated against the
         I(wait_for) conditions.
-    required: false
+    type: int
     default: 10
   interval:
     description:
@@ -72,7 +73,7 @@ options:
         of the command. If the command does not pass the specified
         conditions, the interval indicates how long to wait before
         trying the command again.
-    required: false
+    type: int
     default: 1
 """
 
@@ -214,7 +215,7 @@ def main():
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
-        msg = 'One or more conditional statements have not be satisfied'
+        msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
     result.update({

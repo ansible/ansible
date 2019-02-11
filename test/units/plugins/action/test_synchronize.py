@@ -19,7 +19,7 @@ import yaml
 from pprint import pprint
 
 import ansible.plugins
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 from ansible.plugins.action.synchronize import ActionModule
 
 
@@ -40,6 +40,10 @@ import json
 with open('task_vars.json', 'wb') as f:
     f.write(json.dumps(safe_vars, indent=2))
 '''
+
+
+class BreakPoint(Exception):
+    pass
 
 
 class TaskMock(object):
@@ -63,10 +67,13 @@ class ConnectionMock(object):
     transport = None
     _new_stdin = StdinMock()
 
+    get_option = MagicMock(return_value='root')
+
     # my shell
     _shell = MagicMock()
     _shell.mkdtemp.return_value = 'mkdir command'
     _shell.join_path.side_effect = os.path.join
+    _shell.get_option = MagicMock(return_value=['root', 'toor'])
 
 
 class PlayContextMock(object):
@@ -246,3 +253,15 @@ class TestSynchronizeAction(unittest.TestCase):
         # delegate to other remote host with su enabled
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_su'))
+
+    @patch.object(ActionModule, '_low_level_execute_command', side_effect=BreakPoint)
+    @patch.object(ActionModule, '_remote_expand_user', side_effect=ActionModule._remote_expand_user, autospec=True)
+    def test_remote_user_not_in_local_tmpdir(self, spy_remote_expand_user, ll_ec):
+        x = SynchronizeTester()
+        SAM = ActionModule(x.task, x.connection, x._play_context,
+                           x.loader, x.templar, x.shared_loader_obj)
+        try:
+            SAM.run(task_vars={'hostvars': {'foo': {}, 'localhost': {}}, 'inventory_hostname': 'foo'})
+        except BreakPoint:
+            pass
+        self.assertEqual(spy_remote_expand_user.call_count, 0)

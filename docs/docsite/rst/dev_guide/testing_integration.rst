@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_integration:
+
 *****************
 Integration tests
 *****************
@@ -145,7 +149,7 @@ Legacy Cloud Tests
 ==================
 
 Some of the cloud tests run as normal integration tests, and others run as legacy tests; see the
-:doc:`testing_integration_legacy` page for more information.
+:ref:`testing_integration_legacy` page for more information.
 
 
 Other configuration for Cloud Tests
@@ -195,7 +199,7 @@ For guidance on writing network test see the `adding tests for Network modules g
 Running network integration tests locally
 -----------------------------------------
 
-Ansible uses Shippable to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR. 
+Ansible uses Shippable to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR.
 
 To run the network integration tests, use a command in the form::
 
@@ -219,6 +223,20 @@ To run integration tests for a specific module::
 
     ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan
 
+To run a single test case on a specific module::
+
+    # Only run vyos_vlan/tests/cli/basic.yaml
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan --testcase basic
+
+To run integration tests for a specific transport::
+
+    # Only run nxapi test
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --tags="nxapi" nxos_.*
+
+    # Skip any cli tests
+    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --skip-tags="cli" nxos_.*
+
+See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible/ansible/blob/devel/test/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
 
 For more options::
 

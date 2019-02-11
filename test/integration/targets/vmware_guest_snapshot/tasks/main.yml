@@ -1,236 +1,230 @@
-# - name: make sure pyvmomi is installed
-#   pip:
-#     name: pyvmomi
-#     state: latest
-#   when: ansible_user_id == 'root'
-# 
-# - name: store the vcenter container ip
-#   set_fact:
-#     vcsim: "{{ lookup('env', 'vcenter_host') }}"
-# - debug: var=vcsim
-# 
-# - name: Wait for Flask controller to come up online
-#   wait_for:
-#     host: "{{ vcsim }}"
-#     port: 5000
-#     state: started
-# 
-# - name: kill vcsim
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-# - name: start vcsim with no folders
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
-#   register: vcsim_instance
-# 
-# - name: Wait for Flask controller to come up online
-#   wait_for:
-#     host: "{{ vcsim }}"
-#     port: 443
-#     state: started
-# 
-# - name: get a list of VMS from vcsim   
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
-#   register: vmlist
-# 
-# - set_fact:
-#     vm1: "{{ vmlist['json'][0] }}"
-# 
-# - name: get a list of datacenters from vcsim
-#   uri:
-#     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
-#   register: datacenters
-# 
-# - set_fact:
-#     dc1: "{{ datacenters['json'][0] }}"
-# 
-# - debug: var=vcsim_instance
-# - debug: var=vmlist
-# - debug: var=vm1
-# - debug: var=dc1
-# 
-# # Test0001: Try to delete the non-existent snapshot
-# - name: 0001 - Delete non-existent snapshot
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: absent
-#     snapshot_name: snap_a
-# 
-# # Test0002: Create two snapshots
-# - name: 0002 - Create snapshot
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: "snap_{{item}}"
-#     description: "snap named {{item}}"
-#   with_items:
-#     - a
-#     - b
-# 
-# # Test0003: Reanme a to c
-# - name: 0003 - Rename snapshot
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: snap_a
-#     new_snapshot_name: snap_c
-# 
-# # Test0004: Create snap_a again
-# - name: 0004 - Re-create snapshot a
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: snap_a
-#     description: "snap named a"
-# 
-# # Test0005: Change description of snap_c
-# - name: 0005 - Change description of snap_c
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: snap_c
-#     new_description: "renamed to snap_c from snap_a"
-# 
-# # Test0006: Delete snap_b with child remove
-# - name: 0006 - Delete snap_b with child remove
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: absent
-#     snapshot_name: snap_b
-#     remove_children: True
-# 
-# # Test0007: Delete all snapshots
-# - name: 0007 - Delete all snapshots
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: remove_all
-# 
-# # Test0008: Create snap_a again and revert to it
-# - name: 0008 - Re-create snapshot a
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: snap_a
-#     description: "snap named a"
-# 
-# - name: 0008 - Revert to snap_a
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: revert
-#     snapshot_name: snap_a
-# 
-# # Test0009: Create snap_a and check in result
-# - name: 0009 - create snapshot a
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     folder: "{{ vm1 | dirname }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: snap_a
-#     description: "snap named a"
-#   register: snapshot_details
-# 
-# - name: Check if snapshot details available or not
-#   assert:
-#     that:
-#         - "snapshot_details.results['current_snapshot']['name'] == 'snap_a'"
-# 
-# # Test0010: Failure sceanrios
-# - name: 0010 - Folder is missing
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     name: "{{ vm1 | basename }}"
-#     state: present
-#     snapshot_name: snap_a
-#     description: "snap named a"
-#   register: snapshot_failure_details
-#   ignore_errors: yes
-# 
-# - name: Check if error is shown
-#   assert:
-#     that:
-#         - "'parameters are required together: name, folder' in snapshot_failure_details['msg']"
-#         - "snapshot_failure_details.changed == false"
-# 
-# # Test0011: Failure sceanrios - when name and UUID is not specified
-# - name: 0011 - name and UUID is missing
-#   vmware_guest_snapshot:
-#     validate_certs: False
-#     hostname: "{{ vcsim }}"
-#     username: "{{ vcsim_instance['json']['username'] }}"
-#     password: "{{ vcsim_instance['json']['password'] }}"
-#     datacenter: "{{ dc1 | basename }}"
-#     state: present
-#     snapshot_name: snap_a
-#     description: "snap named a"
-#   register: snapshot_failure_details
-#   ignore_errors: yes
-# 
-# - name: Check if error is shown
-#   assert:
-#     that:
-#         - "'one of the following is required: name, uuid' in snapshot_failure_details['msg']"
-#         - "snapshot_failure_details.changed == false"
+ - name: store the vcenter container ip
+   set_fact:
+     vcsim: "{{ lookup('env', 'vcenter_host') }}"
+ - debug: var=vcsim
+
+ - name: Wait for Flask controller to come up online
+   wait_for:
+     host: "{{ vcsim }}"
+     port: 5000
+     state: started
+
+ - name: kill vcsim
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+ - name: start vcsim with no folders
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1' }}"
+   register: vcsim_instance
+
+ - name: Wait for Flask controller to come up online
+   wait_for:
+     host: "{{ vcsim }}"
+     port: 443
+     state: started
+
+ - name: get a list of VMS from vcsim
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=VM' }}"
+   register: vmlist
+
+ - set_fact:
+     vm1: "{{ vmlist['json'][0] }}"
+
+ - name: get a list of datacenters from vcsim
+   uri:
+     url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=DC' }}"
+   register: datacenters
+
+ - set_fact:
+     dc1: "{{ datacenters['json'][0] }}"
+
+ - debug: var=vcsim_instance
+ - debug: var=vmlist
+ - debug: var=vm1
+ - debug: var=dc1
+
+ # Test0001: Try to delete the non-existent snapshot
+ - name: 0001 - Delete non-existent snapshot
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: absent
+     snapshot_name: snap_a
+
+ # Test0002: Create two snapshots
+ - name: 0002 - Create snapshot
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: "snap_{{item}}"
+     description: "snap named {{item}}"
+   with_items:
+     - a
+     - b
+
+ # Test0003: Reanme a to c
+ - name: 0003 - Rename snapshot
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: snap_a
+     new_snapshot_name: snap_c
+
+ # Test0004: Create snap_a again
+ - name: 0004 - Re-create snapshot a
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: snap_a
+     description: "snap named a"
+
+ # Test0005: Change description of snap_c
+ - name: 0005 - Change description of snap_c
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: snap_c
+     new_description: "renamed to snap_c from snap_a"
+
+ # Test0006: Delete snap_b with child remove
+ - name: 0006 - Delete snap_b with child remove
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: absent
+     snapshot_name: snap_b
+     remove_children: True
+
+ # Test0007: Delete all snapshots
+ - name: 0007 - Delete all snapshots
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: remove_all
+
+ # Test0008: Create snap_a again and revert to it
+ - name: 0008 - Re-create snapshot a
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: snap_a
+     description: "snap named a"
+
+ - name: 0008 - Revert to snap_a
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: revert
+     snapshot_name: snap_a
+
+ # Test0009: Create snap_a and check in result
+ - name: 0009 - create snapshot a
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     folder: "{{ vm1 | dirname }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: snap_a
+     description: "snap named a"
+   register: snapshot_details
+
+ - name: Check if snapshot details available or not
+   assert:
+     that:
+         - "snapshot_details.results['current_snapshot']['name'] == 'snap_a'"
+
+ # Test0010: Failure sceanrios
+ - name: 0010 - Folder is missing
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     name: "{{ vm1 | basename }}"
+     state: present
+     snapshot_name: snap_a
+     description: "snap named a"
+   register: snapshot_failure_details
+   ignore_errors: yes
+
+ - name: Check if error is shown
+   assert:
+     that:
+         - "'parameters are required together: name, folder' in snapshot_failure_details['msg']"
+         - "snapshot_failure_details.changed == false"
+
+ # Test0011: Failure sceanrios - when name and UUID is not specified
+ - name: 0011 - name and UUID is missing
+   vmware_guest_snapshot:
+     validate_certs: False
+     hostname: "{{ vcsim }}"
+     username: "{{ vcsim_instance['json']['username'] }}"
+     password: "{{ vcsim_instance['json']['password'] }}"
+     datacenter: "{{ dc1 | basename }}"
+     state: present
+     snapshot_name: snap_a
+     description: "snap named a"
+   register: snapshot_failure_details
+   ignore_errors: yes
+
+ - name: Check if error is shown
+   assert:
+     that:
+         - "'one of the following is required: name, uuid' in snapshot_failure_details['msg']"
+         - "snapshot_failure_details.changed == false"

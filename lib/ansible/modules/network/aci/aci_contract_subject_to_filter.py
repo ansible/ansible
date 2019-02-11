@@ -8,69 +8,118 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_contract_subject_to_filter
-short_description: Bind Contract Subjects to Filters on Cisco ACI fabrics (vz:RsSubjFiltAtt)
+short_description: Bind Contract Subjects to Filters (vz:RsSubjFiltAtt)
 description:
 - Bind Contract Subjects to Filters on Cisco ACI fabrics.
-- More information from the internal APIC class I(vz:RsSubjFiltAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+notes:
+- The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
+  The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
+seealso:
+- module: aci_tenant
+- module: aci_contract
+- module: aci_contract_subject
+- module: aci_filter
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:RsSubjFiltAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
-requirements:
-- ACI Fabric 1.0(3f)+
-notes:
-- The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
-- The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
 options:
   contract:
     description:
     - The name of the contract.
+    type: str
     aliases: [ contract_name ]
   filter:
     description:
     - The name of the Filter to bind to the Subject.
+    type: str
     aliases: [ filter_name ]
   log:
     description:
     - Determines if the binding should be set to log.
-    - The APIC defaults new Subject to Filter bindings to C(none).
+    - The APIC defaults to C(none) when unset during creation.
+    type: str
     choices: [ log, none ]
     aliases: [ directive ]
-    default: none
   subject:
     description:
     - The name of the Contract Subject.
+    type: str
     aliases: [ contract_subject, subject_name ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the tenant.
+    type: str
     required: yes
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''
 
-# FIXME: Add more, better examples
 EXAMPLES = r'''
-- aci_subject_filter_binding:
-    host: '{{ inventory_hostname }}'
-    username: '{{ username }}'
-    password: '{{ password }}'
-    tenant: '{{ tenant }}'
-    contract: '{{ contract }}'
-    subject: '{{ subject }}'
+- name: Add a new contract subject to filer binding
+  aci_contract_subject_to_filter:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
     filter: '{{ filter }}'
     log: '{{ log }}'
+    state: present
+  delegate_to: localhost
+
+- name: Remove an existing contract subject to filter binding
+  aci_contract_subject_to_filter:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
+    filter: '{{ filter }}'
+    log: '{{ log }}'
+    state: present
+  delegate_to: localhost
+
+- name: Query a specific contract subject to filter binding
+  aci_contract_subject_to_filter:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
+    filter: '{{ filter }}'
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all contract subject to filter bindings
+  aci_contract_subject_to_filter:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: production
+    contract: web_to_db
+    subject: test
+    state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -105,7 +154,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -154,17 +203,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -174,7 +223,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -185,14 +234,12 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        contract=dict(type='str', aliases=['contract_name']),
-        filter=dict(type='str', aliases=['filter_name']),
+        contract=dict(type='str', aliases=['contract_name']),  # Not required for querying all objects
+        filter=dict(type='str', aliases=['filter_name']),  # Not required for querying all objects
         log=dict(tyep='str', choices=['log', 'none'], aliases=['directive']),
-        subject=dict(type='str', aliases=['contract_subject', 'subject_name']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        subject=dict(type='str', aliases=['contract_subject', 'subject_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -223,33 +270,32 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='vzBrCP',
             aci_rn='brc-{0}'.format(contract),
-            filter_target='eq(vzBrCP.name, "{0}")'.format(contract),
             module_object=contract,
+            target_filter={'name': contract},
         ),
         subclass_2=dict(
             aci_class='vzSubj',
             aci_rn='subj-{0}'.format(subject),
-            filter_target='eq(vzSubj.name, "{0}")'.format(subject),
             module_object=subject,
+            target_filter={'name': subject},
         ),
         subclass_3=dict(
             aci_class='vzRsSubjFiltAtt',
             aci_rn='rssubjFiltAtt-{0}'.format(filter_name),
-            filter_target='eq(vzRsSubjFiltAtt.tnVzFilterName, "{0}")'.format(filter_name),
             module_object=filter_name,
+            target_filter={'tnVzFilterName': filter_name},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='vzRsSubjFiltAtt',
             class_config=dict(
@@ -258,10 +304,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzRsSubjFiltAtt')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

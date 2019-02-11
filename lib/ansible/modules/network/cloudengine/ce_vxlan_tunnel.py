@@ -29,50 +29,35 @@ description:
     - This module offers the ability to set the VNI and mapped to the BD,
       and configure an ingress replication list on HUAWEI CloudEngine devices.
 author:
-    - Li Yanfeng (@CloudEngine-Ansible)
+    - Li Yanfeng (@QijunPan)
 options:
     bridge_domain_id:
         description:
             - Specifies a bridge domain ID. The value is an integer ranging from 1 to 16777215.
-        required: false
-        default: null
     vni_id:
         description:
             - Specifies a VXLAN network identifier (VNI) ID. The value is an integer ranging from 1 to 16000000.
-        required: false
-        default: null
     nve_name:
         description:
             - Specifies the number of an NVE interface. The value ranges from 1 to 2.
-        required: false
-        default: null
     nve_mode:
         description:
             - Specifies the working mode of an NVE interface.
-        required: false
-        default: null
         choices: ['mode-l2','mode-l3']
     peer_list_ip:
         description:
             - Specifies the IP address of a remote VXLAN tunnel endpoints (VTEP).
               The value is in dotted decimal notation.
-        required: false
-        default: null
     protocol_type:
         description:
             - The operation type of routing protocol.
-        required: false
-        default: null
         choices: ['bgp','null']
     source_ip:
         description:
             - Specifies an IP address for a source VTEP. The value is in dotted decimal notation.
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -122,7 +107,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 end_state:
     description: k/v pairs of configuration after module execution
@@ -157,7 +142,6 @@ CE_NC_GET_NVE_INFO = """
       </nvo3Nve>
     </nvo3Nves>
   </nvo3>
-</filter>
 </filter>
 """
 

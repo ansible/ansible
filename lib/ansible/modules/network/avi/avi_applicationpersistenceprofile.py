@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_applicationpersistenceprofile
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of ApplicationPersistenceProfile Avi RESTful Object
 description:
@@ -65,6 +65,7 @@ options:
             - Field introduced in 17.1.3.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.4"
+        type: bool
     name:
         description:
             - A user-friendly name for the persistence profile.
@@ -161,6 +162,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'applicationpersistenceprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

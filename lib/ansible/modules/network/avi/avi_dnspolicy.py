@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_dnspolicy
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of DnsPolicy Avi RESTful Object
 description:
@@ -53,6 +53,7 @@ options:
         description:
             - Name of the dns policy.
             - Field introduced in 17.1.1.
+        required: true
     rule:
         description:
             - Dns rules.
@@ -106,7 +107,7 @@ def main():
         avi_api_patch_op=dict(choices=['add', 'replace', 'delete']),
         created_by=dict(type='str',),
         description=dict(type='str',),
-        name=dict(type='str',),
+        name=dict(type='str', required=True),
         rule=dict(type='list',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
@@ -121,6 +122,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'dnspolicy',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

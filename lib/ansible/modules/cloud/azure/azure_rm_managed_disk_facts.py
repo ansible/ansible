@@ -38,21 +38,16 @@ options:
     name:
         description:
             - Limit results to a specific managed disk
-        required: false
-        default: null
     resource_group:
         description:
             - Limit results to a specific resource group
-        required: false
-        default: null
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
-        required: false
-        default: null
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Bruno Medina (@brusMX)"
@@ -78,29 +73,67 @@ azure_managed_disk:
     description: List of managed disk dicts.
     returned: always
     type: list
+    contains:
+        id:
+            description:
+                - Resource id.
+        name:
+            description:
+                - Name of the managed disk.
+        location:
+            description:
+                - Valid Azure location.
+        storage_account_type:
+            description:
+                - Type of storage for the managed disk
+            sample: Standard_LRS
+            type: str
+        create_option:
+            description:
+                - Create option of the disk
+            sample: copy
+            type: str
+        source_uri:
+            description:
+                - URI to a valid VHD file to be used or the resource ID of the managed disk to copy.
+        os_type:
+            description:
+                - "Type of Operating System: C(linux) or C(windows)."
+        disk_size_gb:
+            description:
+                - Size in GB of the managed disk to be created.
+        managed_by:
+            description:
+                - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
+        tags:
+            description:
+                - Tags to assign to the managed disk.
+            sample: { "tag": "value" }
+            type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-except:
+except Exception:
     # handled in azure_rm_common
     pass
 
 
+# duplicated in azure_rm_managed_disk
 def managed_disk_to_dict(managed_disk):
-    os_type = None
-    if managed_disk.os_type:
-        os_type = managed_disk.os_type.name
+    create_data = managed_disk.creation_data
     return dict(
         id=managed_disk.id,
         name=managed_disk.name,
         location=managed_disk.location,
         tags=managed_disk.tags,
+        create_option=create_data.create_option.lower(),
+        source_uri=create_data.source_uri or create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
-        os_type=os_type,
-        storage_account_type=managed_disk.sku.name.value,
+        os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
+        storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
         managed_by=managed_disk.managed_by
     )
 
@@ -111,44 +144,13 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             name=dict(
-                type='str',
-                required=False
-            ),
-            state=dict(
-                type='str',
-                required=False,
-                default='present',
-                choices=['present', 'absent']
-            ),
-            location=dict(
-                type='str',
-                required=False
-            ),
-            storage_account_type=dict(
-                type='str',
-                required=False,
-                choices=['Standard_LRS', 'Premium_LRS']
-            ),
-            os_type=dict(
-                type='str',
-                required=False,
-                choices=['linux', 'windows']
-            ),
-            disk_size_gb=dict(
-                type='int',
-                required=False
-            ),
-            managed_by=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             tags=dict(
-                type='str',
-                required=False
+                type='str'
             ),
         )
         self.results = dict(
@@ -158,13 +160,9 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.name = None
-        self.location = None
-        self.storage_account_type = None
         self.create_option = None
         self.source_uri = None
         self.source_resource_uri = None
-        self.os_type = None
-        self.disk_size_gb = None
         self.tags = None
         super(AzureRMManagedDiskFacts, self).__init__(
             derived_arg_spec=self.module_arg_spec,
@@ -217,6 +215,7 @@ def main():
     """Main module execution code path"""
 
     AzureRMManagedDiskFacts()
+
 
 if __name__ == '__main__':
     main()

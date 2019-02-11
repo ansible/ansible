@@ -1,0 +1,5 @@
+- debug:
+    msg: private
+
+- set_fact:
+    private_tasks_var: private_tasks

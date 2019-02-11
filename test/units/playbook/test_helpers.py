@@ -21,8 +21,8 @@ __metaclass__ = type
 
 import os
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import MagicMock
+from units.compat import unittest
+from units.compat.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible import errors
@@ -272,7 +272,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIsInstance(res[0], Handler)
 
         # default for Handler
-        self.assertEquals(res[0].listen, None)
+        self.assertEquals(res[0].listen, [])
 
     # TODO/FIXME: this doesn't seen right
     #  figure out how to get the non-static errors to be raised, this seems to just ignore everything

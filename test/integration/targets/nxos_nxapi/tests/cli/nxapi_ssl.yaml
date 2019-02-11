@@ -1,0 +1,246 @@
+---
+- block:
+  - debug: msg="START cli/nxapi_ssl.yaml"
+
+  - name: Configure NXAPI HTTPs w/weak ciphers
+    nxos_nxapi: &configure_https_weak_ciphers
+      enable_https: yes 
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      ssl_strong_ciphers: no
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc ciphers
+    register: result
+
+  - name: Assert weak ciphers configuration
+    assert: &weak_ciphers
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl ciphers weak'
+
+  - name: Configure NXAPI HTTP w/weak ciphers again
+    nxos_nxapi: *configure_https_weak_ciphers
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: &assert_false
+      that:
+        - result.changed == false
+
+  - name: Configure NXAPI HTTPs w/strong ciphers
+    nxos_nxapi: &configure_https_strong_ciphers
+      enable_https: yes 
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      ssl_strong_ciphers: yes
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc ciphers
+    register: result
+
+  - name: Assert strong ciphers configuration
+    assert: &strong_ciphers
+      that:
+         - result.stdout_lines[0][0] == 'no nxapi ssl ciphers weak'
+
+  - name: Configure NXAPI HTTPs w/strong ciphers again
+    nxos_nxapi: *configure_https_strong_ciphers
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs w/default TLSv1
+    nxos_nxapi: &configure_https_default
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/default TLSv1 configuration
+    assert: &default_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1'
+
+  - name: Configure NXAPI HTTPs w/default again
+    nxos_nxapi: *configure_https_default
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs TLSv1.1 -default TLSv1
+    nxos_nxapi: &configure_https_tlsv1_1
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      tlsv1_1: yes
+      tlsv1_0: no
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/TLSv1.1 configuration
+    assert: &tlsv1_1_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1.1'
+
+  - name: Configure NXAPI HTTPs w/TLSv1.1 -default TLSv1 again
+    nxos_nxapi: *configure_https_tlsv1_1
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs TLSv1.2 -default TLSv1
+    nxos_nxapi: &configure_https_tlsv1_2
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      tlsv1_2: yes
+      tlsv1_0: no
+    register: result
+  
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/TLSv1.2 configuration
+    assert: &tlsv1_2_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1.2'
+
+  - name: Configure NXAPI HTTPs w/TLSv1.2 -default TLSv1 again
+    nxos_nxapi: *configure_https_tlsv1_2
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 +default TLSv1
+    nxos_nxapi: &configure_https_tlsv1_2_default
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      ssl_strong_ciphers: yes
+      tlsv1_2: yes
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/TLS1.2 +default TLSv1 configuration
+    assert: &tlsv1_2_default_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1 TLSv1.2'
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 again
+    nxos_nxapi: *configure_https_tlsv1_2_default
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 TLS1.1 -default TLSv1
+    nxos_nxapi: &configure_https_tlsv1_2_tlsv1_1
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      ssl_strong_ciphers: yes
+      tlsv1_0: no
+      tlsv1_1: yes
+      tlsv1_2: yes
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/TLS1.2 TLS1.2 -default TLSv1 configuration
+    assert: &tlsv1_2_tlsv1_1_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1.1 TLSv1.2'
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 TLS1.1 -default TLSv1 again
+    nxos_nxapi: *configure_https_tlsv1_2_tlsv1_1
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 TLS1.1 +default TLSv1
+    nxos_nxapi: &configure_https_tlsv1_2_tlsv1_1_default
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      ssl_strong_ciphers: yes
+      tlsv1_1: yes
+      tlsv1_2: yes
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/TLS1.2 TLS1.1 +default TLSv1 configuration
+    assert: &tlsv1_2_tlsv1_1_default_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1 TLSv1.1 TLSv1.2'
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 TLS1.1 +default TLSv1 again
+    nxos_nxapi: *configure_https_tlsv1_2_tlsv1_1_default
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  - name: Configure NXAPI HTTPs with explicit TLS1.2 TLS1.1 TLSv1
+    nxos_nxapi: &configure_https_tlsv1_2_tlsv1_1_tlsv1_0
+      enable_https: yes
+      enable_sandbox: "{{nxapi_sandbox_option|default(omit)}}"
+      ssl_strong_ciphers: yes
+      tlsv1_0: yes
+      tlsv1_1: yes
+      tlsv1_2: yes
+    register: result
+
+  - nxos_command:
+      commands:
+        - show run all | inc nxapi | inc protocols
+    register: result
+
+  - name: Assert NXAPI HTTPs w/TLS1.2 TLS1.2 TLSv1 configuration
+    assert: &tlsv1_2_tlsv1_1_tlsv1_0_configuration
+      that:
+         - result.stdout_lines[0][0] == 'nxapi ssl protocols TLSv1 TLSv1.1 TLSv1.2'
+
+  - name: Configure NXAPI HTTPs w/TLS1.2 TLS1.1 TLSv1 again
+    nxos_nxapi: *configure_https_tlsv1_2_tlsv1_1_tlsv1_0
+    register: result
+
+  - name: Assert configuration is idempotent
+    assert: *assert_false
+
+  always:
+  - name: Cleanup - Disable NXAPI
+    nxos_nxapi:
+      state: absent
+    register: result
+
+  - name: Cleanup - Re-enable NXAPI
+    nxos_nxapi:
+      state: present
+    register: result
+
+  - debug: msg="END cli/nxapi_ssl.yaml"
+
+  when: (platform is match("N9K") or platform is match("N3K") or platform is match("N9K-F") or platform is match("N35") or platform is match("N3L")) and major_version is version('9.2', '>=')

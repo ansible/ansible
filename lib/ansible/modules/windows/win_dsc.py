@@ -1,12 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-
-# (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
-# Copyright (c) 2017 Ansible Project
+# Copyright: (c) 2015, Trond Hindenes <trond@hindenes.com>, and others
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -22,13 +19,14 @@ description:
 - Requires PowerShell version 5.0 or newer.
 - Most of the options for this module are dynamic and will vary depending on
   the DSC Resource specified in I(resource_name).
-- See :doc:`windows_dsc` for more information on how to use this module.
+- See :doc:`/user_guide/windows_dsc` for more information on how to use this module.
 options:
   resource_name:
     description:
     - The name of the DSC Resource to use.
     - Must be accessible to PowerShell using any of the default paths.
-    required: true
+    type: str
+    required: yes
   module_version:
     description:
     - Can be used to configure the exact version of the DSC resource to be
@@ -37,6 +35,7 @@ options:
       containing the DSC resource.
     - If not specified, the module will follow standard PowerShell convention
       and use the highest version available.
+    type: str
     default: latest
   free_form:
     description:
@@ -55,6 +54,7 @@ options:
       provided but a comma separated string also work. Use a list where
       possible as no escaping is required and it works with more complex types
       list C(CimInstance[]).
+    type: str
     required: true
 notes:
 - By default there are a few builtin resources that come with PowerShell 5.0,
@@ -138,17 +138,17 @@ RETURN = r'''
 module_version:
     description: The version of the dsc resource/module used.
     returned: success
-    type: string
+    type: str
     sample: "1.0.1"
 reboot_required:
     description: Flag returned from the DSC engine indicating whether or not
       the machine requires a reboot for the invoked changes to take effect.
     returned: always
-    type: boolean
-    sample: True
+    type: bool
+    sample: true
 message:
-    description: any error message from invoking the DSC resource
+    description: Any error message from invoking the DSC resource.
     returned: error
-    type: string
+    type: str
     sample: Multiple DSC modules found with resource name xyz
 '''

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_volume_copy
-short_description: Create volume copy pairs
+short_description: NetApp E-Series create volume copy pairs
 description:
     - Create and delete snapshots images on volume groups for NetApp E-series storage arrays.
 version_added: '2.2'
@@ -65,7 +65,7 @@ options:
         description:
             - Defines if a copy pair will be created if it does not exist.
             - If set to True destination_volume_id and source_volume_id are required.
-        choices: [True, False]
+        type: bool
         default: True
     start_stop_copy:
         description:
@@ -84,14 +84,14 @@ EXAMPLES = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Json facts for the volume copy that was created.
 """
 RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: Created Volume Copy Pair with ID
 """
 

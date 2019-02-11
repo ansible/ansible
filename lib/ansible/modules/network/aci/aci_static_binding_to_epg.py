@@ -9,97 +9,122 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_static_binding_to_epg
-short_description: Bind static paths to EPGs on Cisco ACI fabrics (fv:RsPathAtt)
+short_description: Bind static paths to EPGs (fv:RsPathAtt)
 description:
 - Bind static paths to EPGs on Cisco ACI fabrics.
-- More information from the internal APIC classes I(fv:RsPathAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Bruno Calogero (@brunocalogero)
-version_added: '2.5'
 notes:
 - The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- module: aci_epg
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:RsPathAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
+version_added: '2.5'
 options:
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     aliases: [ app_profile, app_profile_name ]
   epg:
     description:
     - The name of the end point group.
+    type: str
     aliases: [ epg_name ]
+  description:
+    description:
+    - Description for the static path to EPG binding.
+    type: str
+    aliases: [ descr ]
+    version_added: '2.7'
   encap_id:
     description:
     - The encapsulation ID associating the C(epg) with the interface path.
     - This acts as the secondary C(encap_id) when using micro-segmentation.
+    - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ vlan, vlan_id ]
-    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   primary_encap_id:
     description:
     - Determines the primary encapsulation ID associating the C(epg)
       with the interface path when using micro-segmentation.
+    - Accepted values are any valid encap ID for specified encap, currently ranges between C(1) and C(4096).
+    type: int
     aliases: [ primary_vlan, primary_vlan_id ]
-    choices: [ Valid encap IDs for specified encap, currently 1 to 4096 ]
   deploy_immediacy:
     description:
     - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
-    - The APIC defaults the Deployement Immediacy to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
+    type: str
     choices: [ immediate, lazy ]
-    default: lazy
   interface_mode:
     description:
     - Determines how layer 2 tags will be read from and added to frames.
-    - The APIC defaults the mode to C(trunk).
-    choices: [ access, trunk, 802.1p ]
-    default: trunk
-    aliases: [ mode, interface_mode_name ]
+    - Values C(802.1p) and C(native) are identical.
+    - Values C(access) and C(untagged) are identical.
+    - Values C(regular), C(tagged) and C(trunk) are identical.
+    - The APIC defaults to C(trunk) when unset during creation.
+    type: str
+    choices: [ 802.1p, access, native, regular, tagged, trunk, untagged ]
+    aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
     - The type of interface for the static EPG deployement.
-    - The APIC defaults the C(interface_type) to C(switch_port).
-    choices: [ switch_port, vpc, port_channel, fex ]
+    type: str
+    choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port
-  pod:
+  pod_id:
     description:
     - The pod number part of the tDn.
-    - C(pod) is usually an integer below 10.
-    aliases: [ pod_number ]
+    - C(pod_id) is usually an integer below C(10).
+    type: int
+    aliases: [ pod, pod_number ]
   leafs:
     description:
     - The switch ID(s) that the C(interface) belongs to.
     - When C(interface_type) is C(switch_port), C(port_channel), or C(fex), then C(leafs) is a string of the leaf ID.
     - When C(interface_type) is C(vpc), then C(leafs) is a list with both leaf IDs.
-    aliases: [ paths, leaves, nodes, switches ]
+    - The C(leafs) value is usually something like '101' or '101-102' depending on C(connection_type).
+    type: list
+    aliases: [ leaves, nodes, paths, switches ]
   interface:
     description:
     - The C(interface) string value part of the tDn.
-    - Usually a policy group like "test-IntPolGrp" or an interface of the following format "1/7" depending on C(interface_type).
+    - Usually a policy group like C(test-IntPolGrp) or an interface of the following format C(1/7) depending on C(interface_type).
+    type: str
   extpaths:
     description:
     - The C(extpaths) integer value part of the tDn.
     - C(extpaths) is only used if C(interface_type) is C(fex).
-    - Usually something like '1011'.
+    - Usually something like C(1011).
+    type: int
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Deploy Static Path for EPG
+- name: Deploy Static Path binding for given EPG
   aci_static_binding_to_epg:
     host: apic
     username: admin
@@ -109,16 +134,149 @@ EXAMPLES = r'''
     epg: accessport_epg1
     encap_id: 222
     deploy_immediacy: lazy
-    interface_mode: access
+    interface_mode: untagged
+    interface_type: switch_port
+    pod_id: 1
+    leafs: 101
+    interface: '1/7'
+    state: present
+  delegate_to: localhost
+
+- name: Remove Static Path binding for given EPG
+  aci_static_binding_to_epg:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: accessport-code-cert
+    ap: accessport_code_app
+    epg: accessport_epg1
     interface_type: switch_port
     pod: 1
     leafs: 101
     interface: '1/7'
-    state: present
+    state: absent
+  delegate_to: localhost
+
+- name: Get specific Static Path binding for given EPG
+  aci_static_binding_to_epg:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: accessport-code-cert
+    ap: accessport_code_app
+    epg: accessport_epg1
+    interface_type: switch_port
+    pod: 1
+    leafs: 101
+    interface: '1/7'
+    state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
-#
+current:
+  description: The existing configuration from the APIC after the module has finished
+  returned: success
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production environment",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+error:
+  description: The error information as returned from the APIC
+  returned: failure
+  type: dict
+  sample:
+    {
+        "code": "122",
+        "text": "unknown managed object class foo"
+    }
+raw:
+  description: The raw output returned by the APIC REST API (xml or json)
+  returned: parse error
+  type: str
+  sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
+sent:
+  description: The actual/minimal configuration pushed to the APIC
+  returned: info
+  type: list
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment"
+            }
+        }
+    }
+previous:
+  description: The original configuration from the APIC before the module has started
+  returned: info
+  type: list
+  sample:
+    [
+        {
+            "fvTenant": {
+                "attributes": {
+                    "descr": "Production",
+                    "dn": "uni/tn-production",
+                    "name": "production",
+                    "nameAlias": "",
+                    "ownerKey": "",
+                    "ownerTag": ""
+                }
+            }
+        }
+    ]
+proposed:
+  description: The assembled configuration from the user-provided parameters
+  returned: info
+  type: dict
+  sample:
+    {
+        "fvTenant": {
+            "attributes": {
+                "descr": "Production environment",
+                "name": "production"
+            }
+        }
+    }
+filter_string:
+  description: The filter string used for the request
+  returned: failure or debug
+  type: str
+  sample: ?rsp-prop-include=config-only
+method:
+  description: The HTTP method used for the request to the APIC
+  returned: failure or debug
+  type: str
+  sample: POST
+response:
+  description: The HTTP response from the APIC
+  returned: failure or debug
+  type: str
+  sample: OK (30 bytes)
+status:
+  description: The HTTP status from the APIC
+  returned: failure or debug
+  type: int
+  sample: 200
+url:
+  description: The HTTP url used for the request to the APIC
+  returned: failure or debug
+  type: str
+  sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
@@ -130,21 +288,19 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        epg=dict(type='str', aliases=['epg_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
+        description=dict(type='str', aliases=['descr']),
         encap_id=dict(type='int', aliases=['vlan', 'vlan_id']),
         primary_encap_id=dict(type='int', aliases=['primary_vlan', 'primary_vlan_id']),
         deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
-        interface_mode=dict(type='str', choices=['access', 'tagged', '802.1p'], aliases=['mode', 'interface_mode_name']),
-        interface_type=dict(type='str', choices=['switch_port', 'vpc', 'port_channel', 'fex'], required=True),
-        # NOTE: C(pod) is usually an integer below 10.
-        pod=dict(type='int', aliases=['pod_number']),
-        # NOTE: C(leafs) is usually something like '101' or '101-102' depending on C(connection_type).
-        leafs=dict(type='list', aliases=['paths', 'leaves', 'nodes', 'switches']),
-        # NOTE: C(interface) is usually a policy group like: "test-IntPolGrp" or an interface of the following format: "1/7" depending on C(interface_type).
+        interface_mode=dict(type='str', choices=['802.1p', 'access', 'native', 'regular', 'tagged', 'trunk', 'untagged'],
+                            aliases=['interface_mode_name', 'mode']),
+        interface_type=dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
+        pod_id=dict(type='int', aliases=['pod', 'pod_number']),  # Not required for querying all objects
+        leafs=dict(type='list', aliases=['leaves', 'nodes', 'paths', 'switches']),
         interface=dict(type='str'),
-        # NOTE: C(extpaths) is only used if C(interface_type) is C(fex), it is usually something like '1011'(int)
         extpaths=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -153,24 +309,29 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['tenant', 'ap', 'epg', 'interface_type', 'pod', 'leafs', 'interface']],
-            ['state', 'present', ['tenant', 'ap', 'epg', 'encap_id', 'interface_type', 'pod', 'leafs', 'interface']],
             ['interface_type', 'fex', ['extpaths']],
+            ['state', 'absent', ['ap', 'epg', 'interface', 'leafs', 'pod_id', 'tenant']],
+            ['state', 'present', ['ap', 'encap_id', 'epg', 'interface', 'leafs', 'pod_id', 'tenant']],
         ],
     )
 
     tenant = module.params['tenant']
     ap = module.params['ap']
     epg = module.params['epg']
+    description = module.params['description']
     encap_id = module.params['encap_id']
     primary_encap_id = module.params['primary_encap_id']
     deploy_immediacy = module.params['deploy_immediacy']
     interface_mode = module.params['interface_mode']
     interface_type = module.params['interface_type']
-    pod = module.params['pod']
-    # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
-    leafs = [str(leaf) for leaf in module.params['leafs']]
+    pod_id = module.params['pod_id']
+    leafs = module.params['leafs']
     if leafs is not None:
+        # Process leafs, and support dash-delimited leafs
+        leafs = []
+        for leaf in module.params['leafs']:
+            # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
+            leafs.extend(str(leaf).split('-'))
         if len(leafs) == 1:
             if interface_type != 'vpc':
                 leafs = leafs[0]
@@ -201,54 +362,67 @@ def main():
         else:
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
 
+    INTERFACE_MODE_MAPPING = {
+        '802.1p': 'native',
+        'access': 'untagged',
+        'native': 'native',
+        'regular': 'regular',
+        'tagged': 'regular',
+        'trunk': 'regular',
+        'untagged': 'untagged',
+    }
+
     INTERFACE_TYPE_MAPPING = dict(
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
-        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp' or of following format: '1/7', C(leafs) can only be something like '101'
-        port_channel='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be a policy group like: 'test-IntPolGrp', C(leafs) can be something like '101-102'
-        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod, leafs, interface),
-        # NOTE: C(interface) can be of the following format: '1/7', C(leafs) can only be like '101', C(extpaths) can only be like '1011'
-        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod, leafs, extpaths, interface),
+        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod_id, leafs, extpaths, interface),
+        port_channel='topology/pod-{0}/paths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
+        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
+        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
     )
 
     static_path = INTERFACE_TYPE_MAPPING[interface_type]
+
+    path_target_filter = {}
+    if pod_id is not None and leafs is not None and interface is not None and (interface_type != 'fex' or extpaths is not None):
+        path_target_filter = {'tDn': static_path}
+
+    if interface_mode is not None:
+        interface_mode = INTERFACE_MODE_MAPPING[interface_mode]
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class='fvRsPathAtt',
             aci_rn='rspathAtt-[{0}]'.format(static_path),
-            filter_target='eq(fvRsPathAtt.tDn, "{0}"'.format(static_path),
             module_object=static_path,
+            target_filter=path_target_filter,
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvRsPathAtt',
             class_config=dict(
+                descr=description,
                 encap=encap_id,
                 primaryEncap=primary_encap_id,
                 instrImedcy=deploy_immediacy,
@@ -257,16 +431,14 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsPathAtt')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
         aci.delete_config()
 
-    module.exit_json(**aci.result)
+    aci.exit_json()
 
 
 if __name__ == "__main__":

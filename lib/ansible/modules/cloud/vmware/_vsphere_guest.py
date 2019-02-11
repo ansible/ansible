@@ -1,16 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright: Ansible Project
+
+# Copyright: (c) 2013, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['deprecated'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -28,8 +27,6 @@ options:
     description:
       - The hostname of the vcenter server the module will connect to, to create the guest.
     required: true
-    default: null
-    aliases: []
   validate_certs:
     description:
       - Validate SSL certs.  Note, if running on python without SSLContext
@@ -37,9 +34,8 @@ options:
         as pysphere does not support validating certificates on older python.
         Prior to 2.1, this module would always validate on python >= 2.7.9 and
         never validate on python <= 2.7.8.
-    required: false
-    default: yes
-    choices: ['yes', 'no']
+    type: bool
+    default: 'yes'
     version_added: 2.1
   guest:
     description:
@@ -49,100 +45,79 @@ options:
     description:
       - Username to connect to vcenter as.
     required: true
-    default: null
   password:
     description:
       - Password of the user to connect to vcenter as.
     required: true
-    default: null
   resource_pool:
     description:
       - The name of the resource_pool to create the VM in.
-    required: false
-    default: None
   cluster:
     description:
       - The name of the cluster to create the VM in. By default this is derived from the host you tell the module to build the guest on.
-    required: false
-    default: None
   esxi:
     description:
       - Dictionary which includes datacenter and hostname on which the VM should be created. For standalone ESXi hosts, ha-datacenter should be used as the
         datacenter name
-    required: false
-    default: null
   state:
     description:
       - Indicate desired state of the vm. 'reconfigured' only applies changes to 'vm_cdrom', 'memory_mb', and 'num_cpus' in vm_hardware parameter.
         The 'memory_mb' and 'num_cpus' changes are applied to powered-on vms when hot-plugging is enabled for the guest.
     default: present
-    choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
+    choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured', 'reboot_guest', 'poweroff_guest']
   from_template:
     version_added: "1.9"
     description:
       - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware
         such as CPU, RAM, NICs or Disks can be applied when launching from template.
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   template_src:
     version_added: "1.9"
     description:
       - Name of the source template to deploy from
-    default: None
   snapshot_to_clone:
     description:
         - A string that when specified, will create a linked clone copy of the VM. Snapshot must already be taken in vCenter.
     version_added: "2.0"
-    required: false
-    default: none
   power_on_after_clone:
     description:
       - Specifies if the VM should be powered on after the clone.
-    required: false
-    default: yes
-    choices: ['yes', 'no']
+    type: bool
+    default: 'yes'
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
-    required: false
-    default: null
   vm_hardware:
     description:
       - A key, value list of VM config settings. Must include ['memory_mb', 'num_cpus', 'osid', 'scsi'].
-    required: false
-    default: null
   vm_nic:
     description:
       - A key, value list of nics, their types and what network to put them on.
-    required: false
-    default: null
+      - Optionaly with their MAC address.
   vm_extra_config:
     description:
       - A key, value pair of any extra values you want set or changed in the vmx file of the VM. Useful to set advanced options on the VM.
-    required: false
-    default: null
   vm_hw_version:
     description:
       - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware
         version of existing vm is not supported.
-    required: false
-    default: null
     version_added: "1.7"
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM
-    required: false
-    default: null
+    type: bool
   force:
     description:
       - Boolean. Allows you to run commands which may alter the running state of a guest. Also used to reconfigure and destroy.
-    default: "no"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'no'
 
 notes:
   - This module should run from a system that can access vSphere directly.
     Either by using local_action, or using delegate_to.
-author: "Richard Hoop (@rhoop) <wrhoop@gmail.com>"
+author:
+- Richard Hoop (@rhoop) <wrhoop@gmail.com>
 requirements:
   - "python >= 2.6"
   - pysphere
@@ -201,6 +176,7 @@ EXAMPLES = '''
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
+  delegate_to: localhost
 
 # Reconfigure the CPU and Memory on the newly created VM
 # Will return the changes made
@@ -233,6 +209,7 @@ EXAMPLES = '''
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
+  delegate_to: localhost
 
 # Deploy a guest from a template
 - vsphere_guest:
@@ -246,15 +223,16 @@ EXAMPLES = '''
     resource_pool: "/Resources"
     vm_extra_config:
       folder: MyFolder
+  delegate_to: localhost
 
 # Task to gather facts from a vSphere cluster only if the system is a VMware guest
-
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser
     password: mypass
     guest: newvm001
     vmware_guest_facts: yes
+  delegate_to: localhost
 
 ---
 # Typical output of a vsphere_facts run on a guest
@@ -298,6 +276,7 @@ EXAMPLES = '''
     guest: newvm001
     state: absent
     force: yes
+  delegate_to: localhost
 '''
 
 import os
@@ -467,7 +446,7 @@ def add_floppy(module, s, config_target, config, devices, default_devs, type="im
     devices.append(floppy_spec)
 
 
-def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
+def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name="VM Network", network_type="standard", mac_address=None):
     # add a NIC
     # Different network card types are: "VirtualE1000",
     # "VirtualE1000e","VirtualPCNet32", "VirtualVmxnet", "VirtualNmxnet2",
@@ -517,7 +496,11 @@ def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name=
             msg="Error adding nic backing to vm spec. No network type of:"
             " %s" % (network_type))
 
-    nic_ctlr.set_element_addressType("generated")
+    if mac_address:
+        nic_ctlr.set_element_addressType('manual')
+        nic_ctlr.set_element_macAddress(mac_address)
+    else:
+        nic_ctlr.set_element_addressType("generated")
     nic_ctlr.set_element_backing(nic_backing)
     nic_ctlr.set_element_key(4)
     nic_spec.set_element_device(nic_ctlr)
@@ -1448,9 +1431,10 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
                 module.fail_json(
                     msg="Error on %s definition. network_type needs to be "
                     " specified." % nic)
+            mac_address = vm_nic[nic]['mac_address'] if 'mac_address' in vm_nic[nic] else None
             # Add the nic to the VM spec.
             add_nic(module, vsphere_client, nfmor, config, devices,
-                    nictype, network, network_type)
+                    nictype, network, network_type, mac_address)
 
     config.set_element_deviceChange(devices)
     create_vm_request.set_element_config(config)
@@ -1557,9 +1541,26 @@ def power_state(vm, state, force):
         try:
             if state == 'powered_off':
                 vm.power_off(sync_run=True)
+            elif state == 'poweroff_guest':
+                if power_status in ('POWERED ON'):
+                    vm.shutdown_guest()
+                elif power_status in ('POWERED OFF'):
+                    return False
+                else:
+                    return "Cannot poweroff_guest VM in the current state %s" \
+                        % power_status
 
             elif state == 'powered_on':
                 vm.power_on(sync_run=True)
+
+            elif state == 'reboot_guest':
+                if power_status in ('POWERED ON'):
+                    vm.reboot_guest()
+                elif power_status in ('POWERED OFF'):
+                    vm.power_on(sync_run=True)
+                else:
+                    return "Cannot reboot_guest VM in the current state %s" \
+                        % power_status
 
             elif state == 'restarted':
                 if power_status in ('POWERED ON', 'POWERING ON', 'RESETTING'):
@@ -1735,7 +1736,9 @@ def main():
                     'present',
                     'absent',
                     'restarted',
-                    'reconfigured'
+                    'reconfigured',
+                    'reboot_guest',
+                    'poweroff_guest'
                 ],
                 default='present'),
             vmware_guest_facts=dict(required=False, type='bool'),
@@ -1804,7 +1807,7 @@ def main():
         module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set '
                              'validate_certs=False on the task')
 
-    if not validate_certs:
+    if not validate_certs and hasattr(ssl, 'SSLContext'):
         ssl._create_default_https_context = ssl._create_unverified_context
 
     try:
@@ -1832,7 +1835,7 @@ def main():
                 module.fail_json(msg="Fact gather failed with exception %s"
                                  % to_native(e), exception=traceback.format_exc())
         # Power Changes
-        elif state in ['powered_on', 'powered_off', 'restarted']:
+        elif state in ['powered_on', 'powered_off', 'restarted', 'reboot_guest', 'poweroff_guest']:
             state_result = power_state(vm, state, force)
 
             # Failure

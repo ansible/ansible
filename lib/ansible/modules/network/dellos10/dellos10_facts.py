@@ -35,8 +35,7 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
-    default: '!config'
+    default: [ '!config' ]
 """
 
 EXAMPLES = """
@@ -352,14 +351,14 @@ class Interfaces(FactsBase):
             try:
                 intf = self.intf_facts[name]
                 intf['mediatype'] = mediatype
-            except:
+            except Exception:
                 # fanout
                 for subport in range(1, 5):
                     name = "ethernet" + sname + ":" + str(subport)
                     try:
                         intf = self.intf_facts[name]
                         intf['mediatype'] = mediatype
-                    except:
+                    except Exception:
                         # valid case to handle 2x50G
                         pass
 

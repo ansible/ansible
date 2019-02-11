@@ -1,0 +1,2 @@
+bugfixes:
+    - tweak inv plugin skip msg to be more precise, also require higher verbosity to view

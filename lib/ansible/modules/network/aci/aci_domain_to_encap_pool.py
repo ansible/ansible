@@ -9,50 +9,60 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_domain_to_encap_pool
-short_description: Bind Domain to Encap Pools on Cisco ACI fabrics (infra:RsVlanNs)
+short_description: Bind Domain to Encap Pools (infra:RsVlanNs)
 description:
 - Bind Domain to Encap Pools on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:RsVlanNs) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
-version_added: '2.5'
 notes:
 - The C(domain) and C(encap_pool) parameters should exist before using this module.
   The M(aci_domain) and M(aci_encap_pool) can be used for these.
+seealso:
+- module: aci_domain
+- module: aci_encap_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsVlanNs).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
+version_added: '2.5'
 options:
   domain:
     description:
     - Name of the domain being associated with the Encap Pool.
+    type: str
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
+    type: str
     choices: [ fc, l2dom, l3dom, phys, vmm ]
   pool:
     description:
     - The name of the pool.
+    type: str
     aliases: [ pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static]
     aliases: [ allocation_mode, mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
-    choices: [ vlan, vsan, vxsan ]
+    choices: [ vlan, vsan, vxlan ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   vm_provider:
@@ -60,11 +70,63 @@ options:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: present
+  delegate_to: localhost
+
+- name: Remove domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    domain_type: phys
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: absent
+  delegate_to: localhost
+
+- name: Query our domain to VLAN pool binding
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain: phys_dom
+    pool: test_pool
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all domain to VLAN pool bindings
+  aci_domain_to_encap_pool:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    domain_type: phys
+    pool_type: vlan
+    pool_allocation_mode: dynamic
+    state: query
+  delegate_to: localhost
+  register: query_result
+'''
 
 RETURN = r'''
 current:
@@ -98,7 +160,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -147,17 +209,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -167,7 +229,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -186,13 +248,16 @@ VM_PROVIDER_MAPPING = dict(
 
 POOL_MAPPING = dict(
     vlan=dict(
-        aci_mo='uni/infra/vlanns-',
+        aci_mo='uni/infra/vlanns-{0}',
+        child_class='infraRsVlanNs',
     ),
     vxlan=dict(
-        aci_mo='uni/infra/vxlanns-',
+        aci_mo='uni/infra/vxlanns-{0}',
+        child_class='vmmRsVxlanNs',
     ),
     vsan=dict(
-        aci_mo='uni/infra/vsanns-',
+        aci_mo='uni/infra/vsanns-{0}',
+        child_class='fcRsVsanNs',
     ),
 )
 
@@ -265,17 +330,22 @@ def main():
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
         domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
 
-    pool_mo = POOL_MAPPING[pool_type]["aci_mo"] + pool_name
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
+
+    pool_mo = POOL_MAPPING[pool_type]['aci_mo'].format(pool_name)
+    child_class = POOL_MAPPING[pool_type]['child_class']
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class=domain_class,
             aci_rn=domain_rn,
-            filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
+            target_filter={'name': domain},
         ),
-        child_classes=['infraRsVlanNs'],
+        child_classes=[child_class],
     )
 
     aci.get_existing()
@@ -286,7 +356,7 @@ def main():
             aci_class=domain_class,
             class_config=dict(name=domain),
             child_configs=[
-                {'infraRsVlanNs': {'attributes': {'tDn': pool_mo}}},
+                {child_class: {'attributes': {'tDn': pool_mo}}},
             ]
         )
 

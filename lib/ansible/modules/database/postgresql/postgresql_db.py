@@ -24,34 +24,28 @@ options:
     description:
       - name of the database to add or remove
     required: true
-    default: null
     aliases: [ db ]
   owner:
     description:
       - Name of the role to set as owner of the database
-    required: false
-    default: null
   template:
     description:
       - Template used to create the database
-    required: false
-    default: null
   encoding:
     description:
       - Encoding of the database
-    required: false
-    default: null
   lc_collate:
     description:
       - Collation order (LC_COLLATE) to use in the database. Must match collation order of template database unless C(template0) is used as template.
-    required: false
-    default: null
   lc_ctype:
     description:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
-    required: false
-    default: null
+  session_role:
+    version_added: "2.8"
+    description: |
+      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   state:
     description: |
         The database state. present implies that the database should be created if necessary.
@@ -61,7 +55,6 @@ options:
         (Added in 2.4) The format of the backup will be detected based on the target name.
         Supported compression formats for dump and restore are: .bz2, .gz, and .xz
         Supported formats for dump and restore are: .sql and .tar
-    required: false
     default: present
     choices: [ "present", "absent", "dump", "restore" ]
   target:
@@ -122,16 +115,18 @@ import pipes
 import subprocess
 import traceback
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
     HAS_PSYCOPG2 = False
 else:
     HAS_PSYCOPG2 = True
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
@@ -382,6 +377,7 @@ def main():
         target=dict(default="", type="path"),
         target_opts=dict(default=""),
         maintenance_db=dict(default="postgres"),
+        session_role=dict(),
     ))
 
     module = AnsibleModule(
@@ -400,6 +396,7 @@ def main():
     state = module.params["state"]
     changed = False
     maintenance_db = module.params['maintenance_db']
+    session_role = module.params["session_role"]
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -427,7 +424,7 @@ def main():
 
     if state not in ["dump", "restore"]:
         if not HAS_PSYCOPG2:
-            module.fail_json(msg="the python psycopg2 module is required KAPOUE")
+            module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
         try:
             pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
             db_connection = psycopg2.connect(database="postgres", **kw)
@@ -451,6 +448,12 @@ def main():
         except Exception as e:
             module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
+    if session_role:
+        try:
+            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+        except Exception as e:
+            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
+
     try:
         if module.check_mode:
             if state == "absent":
@@ -472,6 +475,9 @@ def main():
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state in ("dump", "restore"):
+            if not db_exists(cursor, db) and state == "dump":
+                module.fail_json(
+                    msg="database \"{db}\" does not exist".format(db=db))
             method = state == "dump" and db_dump or db_restore
             try:
                 rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
@@ -491,6 +497,7 @@ def main():
         module.fail_json(msg="Database query failed: %s" % to_native(e), exception=traceback.format_exc())
 
     module.exit_json(changed=changed, db=db)
+
 
 if __name__ == '__main__':
     main()

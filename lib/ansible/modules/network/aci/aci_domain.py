@@ -8,17 +8,19 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_domain
-short_description: Manage physical, virtual, bridged, routed or FC domain profiles (*:DomP)
+short_description: Manage physical, virtual, bridged, routed or FC domain profiles (phys:DomP, vmm:DomP, l2ext:DomP, l3ext:DomP, fc:DomP)
 description:
-- Manage physical, virtual, bridged, routed or FC domain profiles.
-- More information from the internal APIC classes I(phys:DomP),
-  I(vmm:DomP), I(l2ext:DomP), I(l3ext:DomP), I(fc:DomP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- Manage physical, virtual, bridged, routed or FC domain profiles on Cisco ACI fabrics.
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(phys:DomP),
+               B(vmm:DomP), B(l2ext:DomP), B(l3ext:DomP) and B(fc:DomP)
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.5'
@@ -26,6 +28,7 @@ options:
   domain:
     description:
     - Name of the physical, virtual, bridged routed or FC domain profile.
+    type: str
     aliases: [ domain_name, domain_profile, name ]
   domain_type:
     description:
@@ -35,25 +38,30 @@ options:
     - 'C(l3dom): The external routed domain profile is a policy for managing L3 routed infrastructure outside the fabric.'
     - 'C(phys): The physical domain profile stores the physical resources and encap resources that should be used for EPGs associated with this domain.'
     - 'C(vmm): The VMM domain profile is a policy for grouping VM controllers with similar networking policy requirements.'
+    type: str
     choices: [ fc, l2dom, l3dom, phys, vmm ]
     aliases: [ type ]
   dscp:
     description:
     - The target Differentiated Service (DSCP) value.
+    - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
-    default: unspecified
     aliases: [ target ]
   encap_mode:
     description:
     - The layer 2 encapsulation protocol to use with the virtual switch.
+    type: str
     choices: [ unknown, vlan, vxlan ]
   multicast_address:
     description:
     - The muticast IP address to use for the virtual switch.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   vm_provider:
@@ -61,12 +69,14 @@ options:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
   vswitch:
     description:
     - The virtual switch to use for vmm domains.
+    - The APIC defaults to C(default) when unset during creation.
+    type: str
     choices: [ avs, default, dvs, unknown ]
-    default: default
 extends_documentation_fragment: aci
 '''
 
@@ -98,6 +108,7 @@ EXAMPLES = r'''
     domain_type: vmm
     vm_provider: microsoft
     state: present
+  delegate_to: localhost
 
 - name: Remove a VMM domain
   aci_domain:
@@ -108,6 +119,7 @@ EXAMPLES = r'''
     domain_type: vmm
     vm_provider: microsoft
     state: absent
+  delegate_to: localhost
 
 - name: Query a specific physical domain
   aci_domain:
@@ -117,13 +129,18 @@ EXAMPLES = r'''
     domain: phys_dom
     domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all domains
   aci_domain:
     host: apic
     username: admin
     password: SomeSecretPassword
+    domain_type: phys
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -158,7 +175,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -207,17 +224,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -227,7 +244,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -258,8 +275,8 @@ def main():
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),  # Not required for querying all objects
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap_mode=dict(type='str', choices=['unknown', 'vlan', 'vxlan']),
         multicast_address=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -290,13 +307,13 @@ def main():
 
     if domain_type != 'vmm':
         if vm_provider is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have a 'vm_provider'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'vm_provider'".format(domain_type))
         if encap_mode is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have an 'encap_mode'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'encap_mode'".format(domain_type))
         if multicast_address is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have a 'multicast_address'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'multicast_address'".format(domain_type))
         if vswitch is not None:
-            module.fail_json(msg="Domain type '{0}' cannot have a 'vswitch'".format(domain_type))
+            module.fail_json(msg="Domain type '{0}' cannot have parameter 'vswitch'".format(domain_type))
 
     if dscp is not None and domain_type not in ['l2dom', 'l3dom']:
         module.fail_json(msg="DSCP values can only be assigned to 'l2ext and 'l3ext' domains")
@@ -321,22 +338,25 @@ def main():
     elif domain_type == 'vmm':
         domain_class = 'vmmDomP'
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-        domain_rn = 'dom-{0}'.format(domain)
+        domain_rn = 'vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
+
+    # Ensure that querying all objects works when only domain_type is provided
+    if domain is None:
+        domain_mo = None
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class=domain_class,
             aci_rn=domain_rn,
-            filter_target='eq({0}.name, "{1}")'.format(domain_class, domain),
             module_object=domain_mo,
+            target_filter={'name': domain},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class=domain_class,
             class_config=dict(
@@ -348,10 +368,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=domain_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

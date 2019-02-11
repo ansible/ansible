@@ -1,0 +1,286 @@
+# Test code for the ACI modules
+# Copyright: (c) 2018, Dag Wieers (dagwieers) <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
+# CLEAN ENVIRONMENT
+- name: Remove taboo contract
+  aci_taboo_contract: &taboo_contract_absent
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+    state: absent
+
+- name: Add tenant
+  aci_tenant:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: ansible_test
+    state: present
+
+
+# ADD TABOO CONTRACT
+- name: Add taboo contract (check_mode)
+  aci_taboo_contract: &taboo_contract_present
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+    state: present
+  check_mode: yes
+  register: cm_add_taboo_contract
+
+- name: Add taboo contract (normal mode)
+  aci_taboo_contract: *taboo_contract_present
+  register: nm_add_taboo_contract
+
+- name: Verify add_taboo_contract
+  assert:
+    that:
+    - cm_add_taboo_contract is changed
+    - nm_add_taboo_contract is changed
+    - 'cm_add_taboo_contract.sent == nm_add_taboo_contract.sent == {"vzTaboo": {"attributes": {"name": "taboo_contract_test"}}}'
+    - 'cm_add_taboo_contract.proposed == nm_add_taboo_contract.proposed == {"vzTaboo": {"attributes": {"name": "taboo_contract_test"}}}'
+    - cm_add_taboo_contract.previous == nm_add_taboo_contract.previous == []
+    # NOTE: We cannot fix this easily
+    - cm_add_taboo_contract.current == []
+    - nm_add_taboo_contract.current.0.vzTaboo.attributes.descr == ''
+    - nm_add_taboo_contract.current.0.vzTaboo.attributes.dn == 'uni/tn-ansible_test/taboo-taboo_contract_test'
+    - nm_add_taboo_contract.current.0.vzTaboo.attributes.name == 'taboo_contract_test'
+
+- name: Add taboo_contract again (check_mode)
+  aci_taboo_contract: *taboo_contract_present
+  check_mode: yes
+  register: cm_add_taboo_contract_again
+
+- name: Add taboo contract again (normal mode)
+  aci_taboo_contract: *taboo_contract_present
+  register: nm_add_taboo_contract_again
+
+- name: Verify add_taboo_contract_again
+  assert:
+    that:
+    - cm_add_taboo_contract_again is not changed
+    - nm_add_taboo_contract_again is not changed
+    - cm_add_taboo_contract_again.current == nm_add_taboo_contract_again.current == nm_add_taboo_contract.current
+
+
+# CHANGE TABOO CONTRACT
+- name: Change description of taboo contract (check_mode)
+  aci_taboo_contract:
+    <<: *taboo_contract_present
+    description: Ansible test taboo contract
+  check_mode: yes
+  register: cm_add_taboo_contract_descr
+
+- name: Change description of taboo contract (normal mode)
+  aci_taboo_contract:
+    <<: *taboo_contract_present
+    description: Ansible test taboo contract
+  register: nm_add_taboo_contract_descr
+
+- name: Verify add_taboo_contract_descr
+  assert:
+    that:
+    - cm_add_taboo_contract_descr is changed
+    - nm_add_taboo_contract_descr is changed
+    - 'cm_add_taboo_contract_descr.sent == nm_add_taboo_contract_descr.sent == {"vzTaboo": {"attributes": {"descr": "Ansible test taboo contract"}}}'
+    - 'cm_add_taboo_contract_descr.proposed == nm_add_taboo_contract_descr.proposed == {"vzTaboo": {"attributes": {"descr": "Ansible test taboo contract", "name": "taboo_contract_test"}}}'
+    - cm_add_taboo_contract_descr.previous == nm_add_taboo_contract_descr.previous == cm_add_taboo_contract_descr.current == nm_add_taboo_contract.current
+    - nm_add_taboo_contract_descr.current.0.vzTaboo.attributes.descr == 'Ansible test taboo contract'
+    - nm_add_taboo_contract_descr.current.0.vzTaboo.attributes.dn == 'uni/tn-ansible_test/taboo-taboo_contract_test'
+    - nm_add_taboo_contract_descr.current.0.vzTaboo.attributes.name == 'taboo_contract_test'
+
+- name: Change description of taboo contract again (check_mode)
+  aci_taboo_contract:
+    <<: *taboo_contract_present
+    description: Ansible test taboo contract
+  check_mode: yes
+  register: cm_add_taboo_contract_descr_again
+
+- name: Change description of taboo contract again (normal mode)
+  aci_taboo_contract:
+    <<: *taboo_contract_present
+    description: Ansible test taboo contract
+  register: nm_add_taboo_contract_descr_again
+
+- name: Verify add_taboo_contract_descr_again
+  assert:
+    that:
+    - cm_add_taboo_contract_descr_again is not changed
+    - nm_add_taboo_contract_descr_again is not changed
+    - cm_add_taboo_contract_descr_again.current == nm_add_taboo_contract_descr_again.current == nm_add_taboo_contract_descr.current
+
+
+# ADD TABOO CONTRACT AGAIN
+- name: Add taboo contract again with no description (check_mode)
+  aci_taboo_contract: *taboo_contract_present
+  check_mode: yes
+  register: cm_add_taboo_contract_again_no_descr
+
+- name: Add taboo contract again with no description (normal mode)
+  aci_taboo_contract: *taboo_contract_present
+  register: nm_add_taboo_contract_again_no_descr
+
+- name: Verify add_taboo_contract_again_no_descr
+  assert:
+    that:
+    - cm_add_taboo_contract_again_no_descr is not changed
+    - nm_add_taboo_contract_again_no_descr is not changed
+    - cm_add_taboo_contract_again_no_descr.current == nm_add_taboo_contract_again_no_descr.current == nm_add_taboo_contract_descr.current
+
+
+# QUERY ALL TABOO CONTRACTS
+- name: Query all taboo contracts (check_mode)
+  aci_taboo_contract: &taboo_contract_query
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: query
+  check_mode: yes
+  register: cm_query_all_taboo_contracts
+
+- name: Query all taboo contracts (normal mode)
+  aci_taboo_contract: *taboo_contract_query
+  register: nm_query_all_taboo_contracts
+
+- name: Verify query_all_taboo_contracts
+  assert:
+    that:
+    - cm_query_all_taboo_contracts is not changed
+    - nm_query_all_taboo_contracts is not changed
+    - cm_query_all_taboo_contracts == nm_query_all_taboo_contracts
+    - cm_query_all_taboo_contracts.current|length >= 1
+
+
+# QUERY A TABOO CONTRACT
+- name: Query our taboo contract
+  aci_taboo_contract:
+    <<: *taboo_contract_query
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+  check_mode: yes
+  register: cm_query_taboo_contract
+
+- name: Query our taboo contract
+  aci_taboo_contract:
+    <<: *taboo_contract_query
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+  register: nm_query_taboo_contract
+
+- name: Verify query_taboo_contract
+  assert:
+    that:
+    - cm_query_taboo_contract is not changed
+    - nm_query_taboo_contract is not changed
+    - cm_query_taboo_contract == nm_query_taboo_contract
+    - nm_query_taboo_contract.current.0.vzTaboo.attributes.descr == 'Ansible test taboo contract'
+    - nm_query_taboo_contract.current.0.vzTaboo.attributes.dn == 'uni/tn-ansible_test/taboo-taboo_contract_test'
+    - nm_query_taboo_contract.current.0.vzTaboo.attributes.name == 'taboo_contract_test'
+
+
+# REMOVE TABOO CONTRACT
+- name: Remove taboo contract (check_mode)
+  aci_taboo_contract: *taboo_contract_absent
+  check_mode: yes
+  register: cm_remove_taboo_contract
+
+- name: Remove taboo contract (normal mode)
+  aci_taboo_contract: *taboo_contract_absent
+  register: nm_remove_taboo_contract
+
+- name: Verify remove_taboo_contract
+  assert:
+    that:
+    - cm_remove_taboo_contract is changed
+    - nm_remove_taboo_contract is changed
+    - 'cm_remove_taboo_contract.current == cm_remove_taboo_contract.previous == nm_remove_taboo_contract.previous == [{"vzTaboo": {"attributes": {"descr": "Ansible test taboo contract", "dn": "uni/tn-ansible_test/taboo-taboo_contract_test", "name": "taboo_contract_test", "nameAlias": "", "ownerKey": "", "ownerTag": ""}}}]'
+    - nm_remove_taboo_contract.current == []
+
+- name: Remove taboo contract again (check_mode)
+  aci_taboo_contract: *taboo_contract_absent
+  check_mode: yes
+  register: cm_remove_taboo_contract_again
+
+- name: Remove taboo contract again (normal mode)
+  aci_taboo_contract: *taboo_contract_absent
+  register: nm_remove_taboo_contract_again
+
+- name: Verify remove_taboo_contract_again
+  assert:
+    that:
+    - cm_remove_taboo_contract_again is not changed
+    - nm_remove_taboo_contract_again is not changed
+    - cm_remove_taboo_contract_again.proposed == nm_remove_taboo_contract_again.proposed == {}
+    - cm_remove_taboo_contract_again.sent == nm_remove_taboo_contract_again.sent == {}
+    - cm_remove_taboo_contract_again.previous == nm_remove_taboo_contract_again.previous == []
+    - cm_remove_taboo_contract_again.current == nm_remove_taboo_contract_again.current == []
+
+
+# QUERY NON-EXISTING TABOO CONTRACT
+- name: Query non-existing taboo contract (check_mode)
+  aci_taboo_contract:
+    <<: *taboo_contract_query
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+  check_mode: yes
+  register: cm_query_non_taboo_contract
+
+- name: Query non-existing taboo contract (normal mode)
+  aci_taboo_contract:
+    <<: *taboo_contract_query
+    tenant: ansible_test
+    taboo_contract: taboo_contract_test
+  register: nm_query_non_taboo_contract
+
+# TODO: Implement more tests
+- name: Verify query_non_taboo_contract
+  assert:
+    that:
+    - cm_query_non_taboo_contract is not changed
+    - nm_query_non_taboo_contract is not changed
+    - cm_remove_taboo_contract_again.previous == nm_remove_taboo_contract_again.previous == []
+    - cm_remove_taboo_contract_again.current == nm_remove_taboo_contract_again.current == []
+
+
+# PROVOKE ERRORS
+- name: Error when required parameter is missing
+  aci_taboo_contract:
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    state: present
+  ignore_errors: yes
+  register: error_on_missing_required_param
+
+- name: Verify error_on_missing_required_param
+  assert:
+    that:
+    - error_on_missing_required_param is failed
+    - 'error_on_missing_required_param.msg == "state is present but all of the following are missing: tenant, taboo_contract"'

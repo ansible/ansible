@@ -37,7 +37,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -69,15 +69,15 @@ vpcs:
         id:
             description: The ID of the VPC (for backwards compatibility).
             returned: always
-            type: string
+            type: str
         vpc_id:
             description: The ID of the VPC .
             returned: always
-            type: string
+            type: str
         state:
             description: The state of the VPC.
             returned: always
-            type: string
+            type: str
         tags:
             description: A dict of tags associated with the VPC.
             returned: always
@@ -85,31 +85,31 @@ vpcs:
         instance_tenancy:
             description: The instance tenancy setting for the VPC.
             returned: always
-            type: string
+            type: str
         is_default:
             description: True if this is the default VPC for account.
             returned: always
-            type: boolean
+            type: bool
         cidr_block:
             description: The IPv4 CIDR block assigned to the VPC.
             returned: always
-            type: string
+            type: str
         classic_link_dns_supported:
             description: True/False depending on attribute setting for classic link DNS support.
             returned: always
-            type: boolean
+            type: bool
         classic_link_enabled:
             description: True/False depending on if classic link support is enabled.
             returned: always
-            type: boolean
+            type: bool
         enable_dns_hostnames:
             description: True/False depending on attribute setting for DNS hostnames support.
             returned: always
-            type: boolean
+            type: bool
         enable_dns_support:
             description: True/False depending on attribute setting for DNS support.
             returned: always
-            type: boolean
+            type: bool
         ipv6_cidr_block_association_set:
             description: An array of IPv6 cidr block association set information.
             returned: always
@@ -118,11 +118,11 @@ vpcs:
                 association_id:
                     description: The association ID
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block:
                     description: The IPv6 CIDR block that is associated with the VPC.
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block_state:
                     description: A hash/dict that contains a single item. The state of the cidr block association.
                     returned: always
@@ -131,10 +131,11 @@ vpcs:
                         state:
                             description: The CIDR block association state.
                             returned: always
-                            type: string
+                            type: str
 '''
 
 import traceback
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (
     boto3_conn,
@@ -185,7 +186,11 @@ def describe_vpcs(connection, module):
     try:
         response = connection.describe_vpcs(VpcIds=vpc_ids, Filters=filters)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        module.fail_json(msg="Unable to describe VPCs {0}: {1}".format(vpc_ids, to_native(e)),
+                         exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to describe VPCs {0}: {1}".format(vpc_ids, to_native(e)),
+                         exception=traceback.format_exc())
 
     # Loop through results and create a list of VPC IDs
     for vpc in response['Vpcs']:
@@ -195,25 +200,47 @@ def describe_vpcs(connection, module):
     try:
         cl_enabled = connection.describe_vpc_classic_link(VpcIds=vpc_list)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
+            cl_enabled = {'Vpcs': [{'VpcId': vpc_id, 'ClassicLinkEnabled': False} for vpc_id in vpc_list]}
+        else:
+            module.fail_json(msg="Unable to describe if ClassicLink is enabled: {0}".format(to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to describe if ClassicLink is enabled: {0}".format(to_native(e)),
+                         exception=traceback.format_exc())
 
     try:
         cl_dns_support = connection.describe_vpc_classic_link_dns_support(VpcIds=vpc_list)
     except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        if e.response["Error"]["Message"] == "The functionality you requested is not available in this region.":
+            cl_dns_support = {'Vpcs': [{'VpcId': vpc_id, 'ClassicLinkDnsSupported': False} for vpc_id in vpc_list]}
+        else:
+            module.fail_json(msg="Unable to describe if ClassicLinkDns is supported: {0}".format(to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+    except botocore.exceptions.BotoCoreError as e:
+        module.fail_json(msg="Unable to describe if ClassicLinkDns is supported: {0}".format(to_native(e)),
+                         exception=traceback.format_exc())
 
     # Loop through the results and add the other VPC attributes we gathered
     for vpc in response['Vpcs']:
+        error_message = "Unable to describe VPC attribute {0}: {1}"
         # We have to make two separate calls per VPC to get these attributes.
         try:
             dns_support = describe_vpc_attr_with_backoff(connection, vpc['VpcId'], 'enableDnsSupport')
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-
+            module.fail_json(msg=error_message.format('enableDnsSupport', to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg=error_message.format('enableDnsSupport', to_native(e)),
+                             exception=traceback.format_exc())
         try:
             dns_hostnames = describe_vpc_attr_with_backoff(connection, vpc['VpcId'], 'enableDnsHostnames')
         except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+            module.fail_json(msg=error_message.format('enableDnsHostnames', to_native(e)),
+                             exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
+        except botocore.exceptions.BotoCoreError as e:
+            module.fail_json(msg=error_message.format('enableDnsHostnames', to_native(e)),
+                             exception=traceback.format_exc())
 
         # loop through the ClassicLink Enabled results and add the value for the correct VPC
         for item in cl_enabled['Vpcs']:
@@ -250,14 +277,7 @@ def main():
         module.fail_json(msg='boto3 and botocore are required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
-
-    if region:
-        try:
-            connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
-        except (botocore.exceptions.NoCredentialsError, botocore.exceptions.ProfileNotFound) as e:
-            module.fail_json(msg=e.message, exception=traceback.format_exc(), **camel_dict_to_snake_dict(e.response))
-    else:
-        module.fail_json(msg="region must be specified")
+    connection = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_params)
 
     describe_vpcs(connection, module)
 

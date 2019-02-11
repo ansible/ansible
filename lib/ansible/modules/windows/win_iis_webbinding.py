@@ -5,65 +5,75 @@
 # Copyright: (c) 2017, Henrik Wallström <henrik@wallstroms.nu>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
 module: win_iis_webbinding
 version_added: "2.0"
-short_description: Configures a IIS Web site binding.
+short_description: Configures a IIS Web site binding
 description:
-     - Creates, Removes and configures a binding to an existing IIS Web site
+     - Creates, removes and configures a binding to an existing IIS Web site.
 options:
   name:
     description:
-      - Names of web site
-    required: true
-    aliases: [website]
+      - Names of web site.
+    type: str
+    required: yes
+    aliases: [ website ]
   state:
     description:
-      - State of the binding
-    choices:
-      - present
-      - absent
+      - State of the binding.
+    type: str
+    choices: [ absent, present ]
     default: present
   port:
     description:
       - The port to bind to / use for the new site.
+    type: str
     default: 80
   ip:
     description:
       - The IP address to bind to / use for the new site.
+    type: str
     default: '*'
   host_header:
     description:
       - The host header to bind to / use for the new site.
       - If you are creating/removing a catch-all binding, omit this parameter rather than defining it as '*'.
+    type: str
   protocol:
     description:
       - The protocol to be used for the Web binding (usually HTTP, HTTPS, or FTP).
+    type: str
     default: http
   certificate_hash:
     description:
       - Certificate hash (thumbprint) for the SSL binding. The certificate hash is the unique identifier for the certificate.
+    type: str
   certificate_store_name:
     description:
       - Name of the certificate store where the certificate for the binding is located.
-    default: "my"
+    type: str
+    default: my
   ssl_flags:
     description:
       - This parameter is only valid on Server 2012 and newer.
       - Primarily used for enabling and disabling server name indication (SNI).
       - Set to c(0) to disable SNI.
       - Set to c(1) to enable SNI.
+    type: str
     version_added: "2.5"
+seealso:
+- module: win_iis_virtualdirectory
+- module: win_iis_webapplication
+- module: win_iis_webapppool
+- module: win_iis_website
 author:
   - Noah Sparks (@nwsparks)
-  - Henrik Wallström
+  - Henrik Wallström (@henrikwallstrom)
 '''
 
 EXAMPLES = r'''
@@ -113,7 +123,7 @@ website_state:
     - Can be helpful in case you accidentally cause a binding collision
       which can result in the targetted site being stopped
   returned: always
-  type: string
+  type: str
   sample: "Started"
   version_added: "2.5"
 operation_type:
@@ -121,14 +131,14 @@ operation_type:
     - The type of operation performed
     - Can be removed, updated, matched, or added
   returned: on success
-  type: string
+  type: str
   sample: "removed"
   version_added: "2.5"
 binding_info:
   description:
     - Information on the binding being manipulated
   returned: on success
-  type: dictionary
+  type: dict
   sample: |-
     "binding_info": {
       "bindingInformation": "127.0.0.1:443:",

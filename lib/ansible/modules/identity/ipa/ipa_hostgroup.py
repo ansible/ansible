@@ -44,7 +44,7 @@ options:
     description:
     - State to ensure.
     default: "present"
-    choices: ["present", "absent"]
+    choices: ["present", "absent", "enabled", "disabled"]
 extends_documentation_fragment: ipa.documentation
 version_added: "2.3"
 '''

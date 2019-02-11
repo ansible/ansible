@@ -39,8 +39,6 @@ options:
     description:
       - Description of the network ACL.
       - If not set, identical to C(name).
-    required: false
-    default: null
   vpc:
     description:
       - VPC the network ACL is related to.
@@ -48,35 +46,26 @@ options:
   state:
     description:
       - State of the network ACL.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the network ACL rule is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the network ACL rule is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the network ACL is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone the VPC is related to.
       - If not set, default zone is used.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -101,22 +90,22 @@ RETURN = '''
 name:
   description: Name of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer acl
 description:
   description: Description of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: Example description of a network ACL
 vpc:
   description: VPC of the network ACL.
   returned: success
-  type: string
+  type: str
   sample: customer vpc
 zone:
   description: Zone the VPC is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 '''
 

@@ -28,7 +28,7 @@ short_description: Copy a file to a remote cloudengine device over SCP on HUAWEI
 description:
     - Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - The feature must be enabled with feature scp-server.
     - If the file is already present, no transfer will take place.
@@ -45,8 +45,6 @@ options:
             - Remote file path of the copy. Remote directories must exist.
               If omitted, the name of the local file will be used.
               The maximum length of I(remote_file) is C(4096).
-        required: false
-        default: null
     file_system:
         description:
             - The remote file system of the device. If omitted,
@@ -59,7 +57,6 @@ options:
               3) C(chassis ID/slot number#flash) is root directory of the flash memory on
                  a device in a stack. For example, C(1/5#flash) indicates the flash memory
                  whose chassis ID is 1 and slot number is 5.
-        required: false
         default: 'flash:'
 '''
 
@@ -90,30 +87,31 @@ RETURN = '''
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 transfer_result:
     description: information about transfer result.
     returned: always
-    type: string
+    type: str
     sample: 'The local file has been successfully transferred to the device.'
 local_file:
     description: The path of the local file.
     returned: always
-    type: string
+    type: str
     sample: '/usr/work/vrpcfg.zip'
 remote_file:
     description: The path of the remote file.
     returned: always
-    type: string
+    type: str
     sample: '/vrpcfg.zip'
 '''
 
 import re
 import os
+import sys
 import time
 from xml.etree import ElementTree
-from ansible.module_utils.basic import get_exception, AnsibleModule
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec, run_commands, get_nc_config
 
 try:
@@ -158,7 +156,7 @@ def get_cli_exception(exc=None):
 
     msg = list()
     if not exc:
-        exc = get_exception()
+        exc = sys.exc_info[1]
     if exc:
         errs = str(exc).split("\r\n")
         for err in errs:
@@ -287,7 +285,7 @@ class FileCopy(object):
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)
-        except:
+        except Exception:
             time.sleep(10)
             file_exists, temp_size = self.remote_file_exists(
                 dest, self.file_system)

@@ -1,4 +1,4 @@
-# (c) 2017 Red Hat Inc.
+# (c) 2018 Red Hat Inc.
 #
 # This file is part of Ansible
 #
@@ -39,7 +39,7 @@ def load_fixture(name):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data

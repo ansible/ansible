@@ -1,10 +1,9 @@
 #!powershell
-#
-# Copyright 2015, Corwin Brown <corwin.brown@maxpoint.com>
+
+# Copyright: (c) 2015, Corwin Brown <corwin.brown@maxpoint.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
@@ -13,7 +12,7 @@ $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty $true
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
 $purge = Get-AnsibleParam -obj $params -name "purge" -type "bool" -default $false
 $recurse = Get-AnsibleParam -obj $params -name "recurse" -type "bool" -default $false
-$flags = Get-AnsibleParam -obj $params -name "flags" -type "string"
+$flags = Get-AnsibleParam -obj $params -name "flags" -type "str"
 
 $result = @{
     changed = $false

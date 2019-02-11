@@ -37,11 +37,9 @@ options:
       - An URL of the alternative overlays list that defines the overlay to install.
         This list will be fetched and saved under C(${overlay_defs})/${name}.xml), where
         C(overlay_defs) is readed from the Layman's configuration.
-    required: false
   state:
     description:
       - Whether to install (C(present)), sync (C(updated)), or uninstall (C(absent)) the overlay.
-    required: false
     default: present
     choices: [present, absent, updated]
   validate_certs:
@@ -49,9 +47,8 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be
         set to C(no) when no other option exists.  Prior to 1.9.3 the code
         defaulted to C(no).
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: '1.9.3'
 '''
 
@@ -83,17 +80,20 @@ EXAMPLES = '''
 '''
 
 import shutil
+import traceback
 
 from os import path
 
+LAYMAN_IMP_ERR = None
 try:
     from layman.api import LaymanAPI
     from layman.config import BareConfig
     HAS_LAYMAN_API = True
 except ImportError:
+    LAYMAN_IMP_ERR = traceback.format_exc()
     HAS_LAYMAN_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.urls import fetch_url
 
 
@@ -242,7 +242,7 @@ def main():
     )
 
     if not HAS_LAYMAN_API:
-        module.fail_json(msg='Layman is not installed')
+        module.fail_json(msg=missing_required_lib('Layman'), exception=LAYMAN_IMP_ERR)
 
     state, name, url = (module.params[key] for key in ['state', 'name', 'list_url'])
 

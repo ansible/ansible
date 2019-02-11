@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'network'}
+                    'supported_by': 'community'}
 
 DOCUMENTATION = """
 ---
@@ -25,24 +25,26 @@ description:
     configuration file and state of the active configuration. All
     configuration statements are based on `set` and `delete` commands
     in the device configuration.
+  - "This is a network module and requires the C(connection: network_cli) in order
+    to work properly."
+  - For more information please see the L(Network Guide,../network/getting_started/index.html).
 notes:
   - Tested against EdgeOS 1.9.7
+  - Setting C(ANSIBLE_PERSISTENT_COMMAND_TIMEOUT) to 30 is recommended since
+    the save command can take longer than the default of 10 seconds on
+    some EdgeOS hardware.
 options:
   lines:
     description:
       - The ordered set of configuration lines to be managed and
         compared with the existing configuration on the remote
         device.
-    required: false
-    default: null
   src:
     description:
       - The C(src) argument specifies the path to the source config
         file to load. The source config file can either be in
         bracket format or set format. The source file can include
         Jinja2 template variables.
-    required: no
-    default: null
   match:
     description:
       - The C(match) argument controls the method used to match
@@ -51,24 +53,23 @@ options:
         deltas are loaded. If the C(match) argument is set to C(none)
         the active configuration is ignored and the configuration is
         always loaded.
-    required: false
     default: line
     choices: ['line', 'none']
   backup:
     description:
-      - The C(backup) argument will backup the current devices active
+      - The C(backup) argument will backup the current device's active
         configuration to the Ansible control host prior to making any
-        changes. The backup file will be located in the backup folder
-        in the root of the playbook
-    required: false
-    default: false
-    choices: ['yes', 'no']
+        changes. If the C(backup_options) value is not given, the backup
+        file will be located in the backup folder in the playbook root
+        directory or role root directory if the playbook is part of an
+        ansible role. If the directory does not exist, it is created.
+    type: bool
+    default: 'no'
   comment:
     description:
       - Allows a commit description to be specified to be included
         when the configuration is committed. If the configuration is
         not changed or committed, this argument is ignored.
-    required: false
     default: 'configured by edgeos_config'
   config:
     description:
@@ -76,17 +77,36 @@ options:
         to compare against the desired configuration. If this value
         is not specified, the module will automatically retrieve the
         current active configuration from the remote device.
-    required: false
-    default: null
   save:
     description:
       - The C(save) argument controls whether or not changes made
         to the active configuration are saved to disk. This is
         independent of committing the config. When set to C(True), the
         active configuration is saved.
-    required: false
-    default: false
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -101,6 +121,14 @@ EXAMPLES = """
   edgeos_config:
     src: edgeos.cfg
     backup: yes
+
+- name: configurable backup path
+  edgeos_config:
+    src: edgeos.cfg
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -117,15 +145,17 @@ filtered:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/edgeos_config.2016-07-16@22:28:34
 """
 
 import re
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.edgeos.edgeos import load_config, get_config, run_commands
+
 
 DEFAULT_COMMENT = 'configured by edgeos_config'
 
@@ -151,7 +181,7 @@ def config_to_commands(config):
         commands = ['set %s' % cmd.replace(' {', '') for cmd in commands]
 
     else:
-        commands = str(candidate).split('\n')
+        commands = to_native(candidate).split('\n')
 
     return commands
 
@@ -166,19 +196,30 @@ def get_candidate(module):
 
 
 def diff_config(commands, config):
-    config = [str(c).replace("'", '') for c in config.splitlines()]
+    config = [to_native(c).replace("'", '') for c in config.splitlines()]
 
     updates = list()
     visited = set()
+    delete_commands = [line for line in commands if line.startswith('delete')]
 
     for line in commands:
-        item = str(line).replace("'", '')
+        item = to_native(line).replace("'", '')
 
         if not item.startswith('set') and not item.startswith('delete'):
             raise ValueError('line must start with either `set` or `delete`')
 
-        elif item.startswith('set') and item not in config:
-            updates.append(line)
+        elif item.startswith('set'):
+
+            if item not in config:
+                updates.append(line)
+
+            # If there is a corresponding delete command in the desired config, make sure to append
+            # the set command even though it already exists in the running config
+            else:
+                ditem = re.sub('set', 'delete', item)
+                for line in delete_commands:
+                    if ditem.startswith(line):
+                        updates.append(item)
 
         elif item.startswith('delete'):
             if not config:
@@ -196,7 +237,7 @@ def diff_config(commands, config):
 def sanitize_config(config, result):
     result['filtered'] = list()
     for regex in CONFIG_FILTERS:
-        for index, line in enumerate(list(config)):
+        for index, line in reversed(list(enumerate(config))):
             if regex.search(line):
                 result['filtered'].append(line)
                 del config[index]
@@ -230,6 +271,11 @@ def run(module, result):
 
 
 def main():
+
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     spec = dict(
         src=dict(type='path'),
         lines=dict(type='list'),
@@ -241,6 +287,7 @@ def main():
         config=dict(),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save=dict(type='bool', default=False),
     )
 

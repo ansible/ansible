@@ -47,7 +47,8 @@ options:
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
-            Defaults to false.
+        default: False
+        type: bool
 '''
 
 EXAMPLES = '''
@@ -82,12 +83,12 @@ rule:
     metric_name:
       description: Metric name for the rule
       returned: always
-      type: string
+      type: str
       sample: ansibletest1234rule
     name:
       description: Friendly name for the rule
       returned: always
-      type: string
+      type: str
       sample: ansible-test-1234_rule
     predicates:
       description: List of conditions used in the rule
@@ -97,7 +98,7 @@ rule:
         data_id:
           description: ID of the condition
           returned: always
-          type: string
+          type: str
           sample: 8251acdb-526c-42a8-92bc-d3d13e584166
         negated:
           description: Whether the sense of the condition is negated
@@ -107,12 +108,12 @@ rule:
         type:
           description: type of the condition
           returned: always
-          type: string
+          type: str
           sample: ByteMatch
     rule_id:
       description: ID of the WAF rule
       returned: always
-      type: string
+      type: str
       sample: 15de0cbc-9204-4e1f-90e6-69b2f415c261
 '''
 
@@ -126,7 +127,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.aws.waf import get_change_token, list_rules_with_backoff, MATCH_LOOKUP
+from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff
 
 
@@ -201,10 +202,13 @@ def find_and_update_rule(client, module, rule_id):
                               if not all_conditions[condition_type][condition['data_id']]['name'] in desired_conditions[condition_type]])
 
     changed = bool(insertions or deletions)
+    update = {
+        'RuleId': rule_id,
+        'Updates': insertions + deletions
+    }
     if changed:
         try:
-            client.update_rule(RuleId=rule_id, ChangeToken=get_change_token(client, module),
-                               Updates=insertions + deletions)
+            run_func_with_change_token_backoff(client, module, update, client.update_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update rule conditions')
 
@@ -229,8 +233,7 @@ def remove_rule_conditions(client, module, rule_id):
     conditions = get_rule(client, module, rule_id)['Predicates']
     updates = [format_for_deletion(camel_dict_to_snake_dict(condition)) for condition in conditions]
     try:
-        client.update_rule(RuleId=rule_id,
-                           ChangeToken=get_change_token(client, module), Updates=updates)
+        run_func_with_change_token_backoff(client, module, {'RuleId': rule_id, 'Updates': updates}, client.update_rule)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg='Could not remove rule conditions')
 
@@ -247,9 +250,8 @@ def ensure_rule_present(client, module):
         if not metric_name:
             metric_name = re.sub(r'[^a-zA-Z0-9]', '', module.params['name'])
         params['MetricName'] = metric_name
-        params['ChangeToken'] = get_change_token(client, module)
         try:
-            new_rule = client.create_rule(**params)['Rule']
+            new_rule = run_func_with_change_token_backoff(client, module, params, client.create_rule)['Rule']
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not create rule')
         return find_and_update_rule(client, module, new_rule['RuleId'])
@@ -281,7 +283,7 @@ def ensure_rule_absent(client, module):
     if rule_id:
         remove_rule_conditions(client, module, rule_id)
         try:
-            return True, client.delete_rule(RuleId=rule_id, ChangeToken=get_change_token(client, module))
+            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not delete rule')
     return False, {}

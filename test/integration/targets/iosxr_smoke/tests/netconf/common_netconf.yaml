@@ -1,0 +1,53 @@
+---
+- debug: msg="START iosxr netconf/common_netconf.yaml on connection={{ ansible_connection }}"
+
+# hit general code
+- name: setup - remove login
+  iosxr_banner:
+    banner: login
+    provider: "{{ netconf }}"
+    state: absent
+
+- name: Set login
+  iosxr_banner:
+    banner: login
+    text: |
+      this is my login banner
+      that has a multiline
+      string
+    provider: "{{ netconf }}"
+    state: present
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'this is my login banner' in result.xml"
+      - "'that has a multiline' in result.xml"
+
+# hit etree_findall()
+- name: remove host logging
+  iosxr_logging:
+    dest: host
+    name: 172.16.0.1
+    state: absent
+    provider: "{{ netconf }}"
+
+- name: set up syslog host logging
+  iosxr_logging: &addhostlog
+    dest: host
+    name: 172.16.0.1
+    level: errors
+    state: present
+    provider: "{{ netconf }}"
+  register: result
+
+- assert:
+    that:
+      - 'result.changed == true'
+      - '"172.16.0.1" in result.xml[0]'
+
+- debug: msg="END iosxr netconf/common_netconf.yaml on connection={{ ansible_connection }}"

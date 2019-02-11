@@ -1,23 +1,11 @@
 #!powershell
-# This file is part of Ansible
-#
-# Copyright 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# Copyright: (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.ArgvParser
+#Requires -Module Ansible.ModuleUtils.CommandUtil
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 Function Convert-RegistryPath {
     Param (
@@ -60,24 +48,31 @@ If ( $do_comparison -eq $True ) {
   $expanded_compare_key = Convert-RegistryPath ($compare_to_key) 
 
   # export from the reg key location to a file
-  $reg_args = @("EXPORT", "$expanded_compare_key", $exported_path)
-  & reg.exe $reg_args
+  $reg_args = Argv-ToString -Arguments @("reg.exe", "EXPORT", $expanded_compare_key, $exported_path)
+  $res = Run-Command -command $reg_args
+  if ($res.rc -ne 0) {
+      $result.rc = $res.rc
+      $result.stdout = $res.stdout
+      $result.stderr = $res.stderr
+      Fail-Json -obj $result -message "error exporting registry '$expanded_compare_key' to '$exported_path'"
+  }
 
   # compare the two files
   $comparison_result = Compare-Object -ReferenceObject $(Get-Content $path) -DifferenceObject $(Get-Content $exported_path)
 
-  If (Get-Member -InputObject $comparison_result -Name "count" -MemberType Properties )
+  If ($null -ne $comparison_result -and (Get-Member -InputObject $comparison_result -Name "count" -MemberType Properties ))
   {
      # Something is different, actually do reg merge
-     $reg_import_args = @("IMPORT", "$path")
-     $ret = & reg.exe $reg_import_args 2>&1
-     If ($LASTEXITCODE -eq 0) {
-         $result.changed = $true
-         $result.difference_count = $comparison_result.count
-     } Else {
-         $result.rc = $LASTEXITCODE
-         Fail-Json $result "$ret"
+     $reg_import_args = Argv-ToString -Arguments @("reg.exe", "IMPORT", $path)
+     $res = Run-Command -command $reg_import_args
+     if ($res.rc -ne 0) {
+         $result.rc = $res.rc
+         $result.stdout = $res.stdout
+         $result.stderr = $res.stderr
+         Fail-Json -obj $result -message "error importing registry values from '$path'"
      }
+     $result.changed = $true
+     $result.difference_count = $comparison_result.count
   } Else {
       $result.difference_count = 0
   }
@@ -87,15 +82,16 @@ If ( $do_comparison -eq $True ) {
 
 } Else {
      # not comparing, merge and report changed
-     $reg_import_args = @("IMPORT", "$path")
-     $ret = & reg.exe $reg_import_args 2>&1
-     If ( $LASTEXITCODE -eq 0 ) {
-         $result.changed = $true
-         $result.compared = $false
-     } Else {
-         $result.rc = $LASTEXITCODE
-         Fail-Json $result "$ret"
+     $reg_import_args = Argv-ToString -Arguments @("reg.exe", "IMPORT", $path)
+     $res = Run-Command -command $reg_import_args
+     if ($res.rc -ne 0) {
+         $result.rc = $res.rc
+         $result.stdout = $res.stdout
+         $result.stderr = $res.stderr
+         Fail-Json -obj $result -message "error importing registry value from '$path'"
      }
+     $result.changed = $true
+     $result.compared = $false
 }
 
 Exit-Json $result

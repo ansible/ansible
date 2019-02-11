@@ -22,201 +22,144 @@ options:
   additional_disks:
     description:
       - The list of additional disks for the server
-    required: False
     default: []
   add_public_ip:
     description:
       - Whether to add a public ip to the server
-    required: False
-    default: False
-    choices: [False, True]
+    type: bool
+    default: 'no'
   alias:
     description:
       - The account alias to provision the servers under.
-    required: False
-    default: None
   anti_affinity_policy_id:
     description:
       - The anti-affinity policy to assign to the server. This is mutually exclusive with 'anti_affinity_policy_name'.
-    required: False
-    default: None
   anti_affinity_policy_name:
     description:
       - The anti-affinity policy to assign to the server. This is mutually exclusive with 'anti_affinity_policy_id'.
-    required: False
-    default: None
   alert_policy_id:
     description:
       - The alert policy to assign to the server. This is mutually exclusive with 'alert_policy_name'.
-    required: False
-    default: None
   alert_policy_name:
     description:
       - The alert policy to assign to the server. This is mutually exclusive with 'alert_policy_id'.
-    required: False
-    default: None
   count:
     description:
       - The number of servers to build (mutually exclusive with exact_count)
-    required: False
     default: 1
   count_group:
     description:
       - Required when exact_count is specified.  The Server Group use to determine how many severs to deploy.
-    required: False
-    default: None
   cpu:
     description:
       - How many CPUs to provision on the server
     default: 1
-    required: False
   cpu_autoscale_policy_id:
     description:
       - The autoscale policy to assign to the server.
-    default: None
-    required: False
   custom_fields:
     description:
       - The list of custom fields to set on the server.
     default: []
-    required: False
   description:
     description:
       - The description to set for the server.
-    default: None
-    required: False
   exact_count:
     description:
       - Run in idempotent mode.  Will insure that this exact number of servers are running in the provided group,
         creating and deleting them to reach that count.  Requires count_group to be set.
-    default: None
-    required: False
   group:
     description:
       - The Server Group to create servers under.
     default: 'Default Group'
-    required: False
   ip_address:
     description:
       - The IP Address for the server. One is assigned if not provided.
-    default: None
-    required: False
   location:
     description:
       - The Datacenter to create servers in.
-    default: None
-    required: False
   managed_os:
     description:
       - Whether to create the server as 'Managed' or not.
-    default: False
+    type: bool
+    default: 'no'
     required: False
-    choices: [True, False]
   memory:
     description:
       - Memory in GB.
     default: 1
-    required: False
   name:
     description:
       - A 1 to 6 character identifier to use for the server. This is required when state is 'present'
-    default: None
-    required: False
   network_id:
     description:
       - The network UUID on which to create servers.
-    default: None
-    required: False
   packages:
     description:
       - The list of blue print packages to run on the server after its created.
     default: []
-    required: False
   password:
     description:
       - Password for the administrator / root user
-    default: None
-    required: False
   primary_dns:
     description:
       - Primary DNS used by the server.
-    default: None
-    required: False
   public_ip_protocol:
     description:
       - The protocol to use for the public ip if add_public_ip is set to True.
     default: 'TCP'
     choices: ['TCP', 'UDP', 'ICMP']
-    required: False
   public_ip_ports:
     description:
       - A list of ports to allow on the firewall to the servers public ip, if add_public_ip is set to True.
     default: []
-    required: False
   secondary_dns:
     description:
       - Secondary DNS used by the server.
-    default: None
-    required: False
   server_ids:
     description:
       - Required for started, stopped, and absent states.
         A list of server Ids to insure are started, stopped, or absent.
     default: []
-    required: False
   source_server_password:
     description:
       - The password for the source server if a clone is specified.
-    default: None
-    required: False
   state:
     description:
       - The state to insure that the provided resources are in.
     default: 'present'
-    required: False
     choices: ['present', 'absent', 'started', 'stopped']
   storage_type:
     description:
       - The type of storage to attach to the server.
     default: 'standard'
-    required: False
     choices: ['standard', 'hyperscale']
   template:
     description:
       - The template to use for server creation.  Will search for a template if a partial string is provided.
         This is required when state is 'present'
-    default: None
-    required: False
   ttl:
     description:
       - The time to live for the server in seconds.  The server will be deleted when this time expires.
-    default: None
-    required: False
   type:
     description:
       - The type of server to create.
     default: 'standard'
-    required: False
     choices: ['standard', 'hyperscale', 'bareMetal']
   configuration_id:
     description:
       -  Only required for bare metal servers.
          Specifies the identifier for the specific configuration type of bare metal server to deploy.
-    default: None
-    required: False
   os_type:
     description:
       - Only required for bare metal servers.
         Specifies the OS to provision with the bare metal server.
-    default: None
-    required: False
     choices: ['redHat6_64Bit', 'centOS6_64Bit', 'windows2012R2Standard_64Bit', 'ubuntu14_64Bit']
   wait:
     description:
       - Whether to wait for the provisioning tasks to finish before returning.
-    default: True
-    required: False
-    choices: [True, False]
+    type: bool
+    default: 'yes'
 requirements:
     - python = 2.7
     - requests >= 2.5.0
@@ -455,11 +398,14 @@ __version__ = '${version}'
 import json
 import os
 import time
+import traceback
 from distutils.version import LooseVersion
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     REQUESTS_FOUND = False
 else:
     REQUESTS_FOUND = True
@@ -468,17 +414,19 @@ else:
 #  Requires the clc-python-sdk.
 #  sudo pip install clc-sdk
 #
+CLC_IMP_ERR = None
 try:
     import clc as clc_sdk
     from clc import CLCException
     from clc import APIFailedResponse
 except ImportError:
+    CLC_IMP_ERR = traceback.format_exc()
     CLC_FOUND = False
     clc_sdk = None
 else:
     CLC_FOUND = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class ClcServer:
@@ -493,11 +441,9 @@ class ClcServer:
         self.group_dict = {}
 
         if not CLC_FOUND:
-            self.module.fail_json(
-                msg='clc-python-sdk required for this module')
+            self.module.fail_json(msg=missing_required_lib('clc-sdk'), exception=CLC_IMP_ERR)
         if not REQUESTS_FOUND:
-            self.module.fail_json(
-                msg='requests library is required for this module')
+            self.module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
         if requests.__version__ and LooseVersion(
                 requests.__version__) < LooseVersion('2.5.0'):
             self.module.fail_json(

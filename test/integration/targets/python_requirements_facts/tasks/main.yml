@@ -1,0 +1,22 @@
+- name: run python_requirements_facts module
+  python_requirements_facts:
+  register: basic_facts
+
+- name: ensure python_requirements_facts returns desired info
+  assert:
+    that:
+      - "'python' in basic_facts"
+      - "'python_version' in basic_facts"
+
+- name: run python_requirements_facts module
+  python_requirements_facts:
+    dependencies:
+      - notreal<1
+      - ansible>2
+  register: dep_facts
+
+- name: ensure python_requirements_facts returns desired info
+  assert:
+    that:
+      - "'installed' in dep_facts.valid.ansible"
+      - "'notreal' in dep_facts.not_found"

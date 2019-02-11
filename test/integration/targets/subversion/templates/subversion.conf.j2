@@ -1,0 +1,67 @@
+{% if ansible_os_family == "Debian" %}
+
+{# On Ubuntu 16.04 we can include the default config, other versions require explicit config #}
+{% if ansible_distribution_version == "16.04" %}
+Include /etc/apache2/apache2.conf
+
+{% else %}
+Timeout 300
+KeepAlive On
+MaxKeepAliveRequests 100
+KeepAliveTimeout 5
+User ${APACHE_RUN_USER}
+Group ${APACHE_RUN_GROUP}
+HostnameLookups Off
+LogLevel warn
+LogFormat "%v:%p %h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" vhost_combined
+LogFormat "%h %l %u %t \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\"" combined
+LogFormat "%h %l %u %t \"%r\" %>s %O" common
+LogFormat "%{Referer}i -> %U" referer
+LogFormat "%{User-agent}i" agent
+
+IncludeOptional mods-enabled/*.load
+IncludeOptional mods-enabled/*.conf
+IncludeOptional conf-enabled/*.conf
+IncludeOptional sites-enabled/*conf
+
+<FilesMatch "^\.ht">
+    Require all denied
+</FilesMatch>
+
+{% endif %}
+
+{% elif ansible_os_family == "FreeBSD" %}
+Include /usr/local/etc/apache24/httpd.conf
+LoadModule dav_module        libexec/apache24/mod_dav.so
+LoadModule dav_svn_module    libexec/apache24/mod_dav_svn.so
+LoadModule authz_svn_module  libexec/apache24/mod_authz_svn.so
+{% elif ansible_os_family == "Suse" %}
+Include /etc/apache2/httpd.conf
+LoadModule dav_module       /usr/lib64/apache2/mod_dav.so
+LoadModule dav_svn_module   /usr/lib64/apache2/mod_dav_svn.so
+{% elif ansible_os_family == "RedHat" %}
+Include /etc/httpd/conf/httpd.conf
+{% endif %}
+
+PidFile {{ subversion_server_dir }}/apache.pid
+Listen 127.0.0.1:{{ apache_port }}
+ErrorLog {{ subversion_server_dir }}/apache2-error.log
+
+<Location /svn>
+   DAV svn
+   SVNParentPath {{ subversion_server_dir }}
+{% if ansible_distribution == "CentOS" and ansible_distribution_version.startswith("6") %}
+   Allow from all
+{% else %}
+   Require all granted
+{% endif %}
+</Location>
+
+<Location /svnauth>
+    DAV svn
+    SVNParentPath {{ subversion_server_dir }}
+    AuthType Basic
+    AuthName "Subversion repositories"
+    AuthUserFile {{ subversion_server_dir }}/svn-auth-users
+    Require valid-user
+</Location>

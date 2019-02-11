@@ -1,7 +1,7 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Afterburn <http://github.com/afterburn>
+# (c) 2012, Afterburn <https://github.com/afterburn>
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
 # (c) 2015, Jonathan Lestrelin <jonathan.lestrelin@gmail.com>
 #
@@ -24,7 +24,7 @@ description:
     - Manage PHP packages with the pear package manager.
 version_added: 2.0
 author:
-    - "'jonathan.lestrelin' <jonathan.lestrelin@gmail.com>"
+    - Jonathan Lestrelin (@jle64) <jonathan.lestrelin@gmail.com>
 options:
     name:
         description:
@@ -34,14 +34,11 @@ options:
     state:
         description:
             - Desired state of the package.
-        required: false
         default: "present"
         choices: ["present", "absent", "latest"]
     executable:
       description:
         - Path to the pear executable
-      required: false
-      default: null
       version_added: "2.4"
 '''
 
@@ -69,6 +66,7 @@ EXAMPLES = '''
 
 import os
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -143,7 +141,7 @@ def remove_packages(module, packages):
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to remove %s" % (package))
+            module.fail_json(msg="failed to remove %s: %s" % (package, to_text(stdout + stderr)))
 
         remove_c += 1
 
@@ -174,7 +172,7 @@ def install_packages(module, state, packages):
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
-            module.fail_json(msg="failed to install %s" % (package))
+            module.fail_json(msg="failed to install %s: %s" % (package, to_text(stdout + stderr)))
 
         install_c += 1
 
@@ -204,10 +202,9 @@ def check_packages(module, packages, state):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pkg']),
+            name=dict(aliases=['pkg'], required=True),
             state=dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             executable=dict(default=None, required=False, type='path')),
-        required_one_of=[['name']],
         supports_check_mode=True)
 
     p = module.params

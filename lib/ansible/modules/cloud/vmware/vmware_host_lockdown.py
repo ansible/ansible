@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -24,7 +24,7 @@ description:
 - Please specify C(hostname) as vCenter IP or hostname only, as lockdown operations are not possible from standalone ESXi server.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -41,6 +41,16 @@ options:
     - List of ESXi hostname to manage lockdown.
     - Required parameter, if C(cluster_name) is not set.
     - See examples for specifications.
+  state:
+    description:
+    - State of hosts system
+    - If set to C(present), all host systems will be set in lockdown mode.
+    - If host system is already in lockdown mode and set to C(present), no action will be taken.
+    - If set to C(absent), all host systems will be removed from lockdown mode.
+    - If host system is already out of lockdown mode and set to C(absent), no action will be taken.
+    default: present
+    choices: [ present, absent ]
+    version_added: 2.5
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -52,6 +62,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     state: present
+  delegate_to: localhost
 
 - name: Exit host systems from lockdown mode
   vmware_host_lockdown:
@@ -60,6 +71,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
     state: absent
+  delegate_to: localhost
 
 - name: Enter host systems into lockdown mode
   vmware_host_lockdown:
@@ -70,6 +82,7 @@ EXAMPLES = r'''
         - '{{ esxi_hostname_1 }}'
         - '{{ esxi_hostname_2 }}'
     state: present
+  delegate_to: localhost
 
 - name: Exit host systems from lockdown mode
   vmware_host_lockdown:
@@ -80,6 +93,7 @@ EXAMPLES = r'''
         - '{{ esxi_hostname_1 }}'
         - '{{ esxi_hostname_2 }}'
     state: absent
+  delegate_to: localhost
 
 - name: Enter all host system from cluster into lockdown mode
   vmware_host_lockdown:
@@ -88,6 +102,7 @@ EXAMPLES = r'''
     password: '{{ vcenter_password }}'
     cluster_name: '{{ cluster_name }}'
     state: present
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -107,7 +122,7 @@ results:
 '''
 
 try:
-    from pyvmomi import vim, vmodl
+    from pyvmomi import vim
 except ImportError:
     pass
 
@@ -125,20 +140,7 @@ class VmwareLockdownManager(PyVmomi):
                                       "as vCenter server." % self.module.params['hostname'])
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            for host in esxi_host_name:
-                esxi_host_obj = self.find_hostsystem_by_name(host_name=host)
-                if esxi_host_obj:
-                    self.hosts.append(esxi_host_obj)
-                else:
-                    module.fail_json(changed=False, msg="ESXi '%s' not found" % host)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
     def ensure(self):
         """
@@ -146,8 +148,8 @@ class VmwareLockdownManager(PyVmomi):
         """
         results = dict(changed=False, host_lockdown_state=dict())
         change_list = []
+        desired_state = self.params.get('state')
         for host in self.hosts:
-            desired_state = self.params.get('state')
             results['host_lockdown_state'][host.name] = dict(current_state='',
                                                              desired_state=desired_state,
                                                              previous_state=''
@@ -192,7 +194,8 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         cluster_name=dict(type='str', required=False),
-        esxi_hostname=dict(type='str', required=False),
+        esxi_hostname=dict(type='list', required=False),
+        state=dict(str='str', default='present', choices=['present', 'absent'], required=False),
     )
 
     module = AnsibleModule(

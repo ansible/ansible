@@ -1,0 +1,18 @@
+---
+- name: ensure we start with a clean dir
+  win_file:
+    path: '{{ test_acl_path }}'
+    state: '{{ item }}'
+  with_items:
+  - absent
+  - directory
+
+- block:
+  - name: run tests
+    include_tasks: tests.yml
+
+  always:
+  - name: clenaup testing dir
+    win_file:
+      path: '{{ test_acl_path }}'
+      state: absent

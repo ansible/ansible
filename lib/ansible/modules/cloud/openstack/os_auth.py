@@ -21,8 +21,8 @@ author: "Monty Taylor (@emonty)"
 description:
     - Retrieve an auth token from an OpenStack Cloud
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
   availability_zone:
     description:
@@ -41,17 +41,21 @@ EXAMPLES = '''
     var: service_catalog
 '''
 
+RETURN = '''
+auth_token:
+    description: Openstack API Auth Token
+    returned: success
+    type: str
+service_catalog:
+    description: A dictionary of available API endpoints
+    returned: success
+    type: dict
+'''
+
 import traceback
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
-# this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -60,11 +64,8 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         module.exit_json(
             changed=False,
             ansible_facts=dict(

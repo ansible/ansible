@@ -1,11 +1,12 @@
 #!/usr/bin/python
-# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -13,26 +14,31 @@ module: win_owner
 version_added: "2.1"
 short_description: Set owner
 description:
-    - Set owner of files or directories
+    - Set owner of files or directories.
 options:
   path:
     description:
-      - Path to be used for changing owner
-    required: true
+      - Path to be used for changing owner.
+    type: path
+    required: yes
   user:
     description:
-      - Name to be used for changing owner
-    required: true
+      - Name to be used for changing owner.
+    type: str
+    required: yes
   recurse:
     description:
-      - Indicates if the owner should be changed recursively
+      - Indicates if the owner should be changed recursively.
     type: bool
-    default: 'no'
-author: Hans-Joachim Kliemeck (@h0nIg)
+    default: no
+seealso:
+- module: win_file
+author:
+- Hans-Joachim Kliemeck (@h0nIg)
 '''
 
 EXAMPLES = r'''
-- name: Change owner of Path
+- name: Change owner of path
   win_owner:
     path: C:\apache
     user: apache

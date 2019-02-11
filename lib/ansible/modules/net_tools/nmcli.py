@@ -24,211 +24,182 @@ requirements: [ nmcli, dbus, NetworkManager-glib ]
 version_added: "2.0"
 description:
     - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
-    - "On CentOS and Fedora like systems, install dependencies as 'yum/dnf install -y python-gobject NetworkManager-glib'"
-    - "On Ubuntu and Debian like systems, install dependencies as 'apt-get install -y libnm-glib-dev'"
+    - 'On CentOS and Fedora like systems, the requirements can be met by installing the following packages: NetworkManager-glib,
+      libnm-qt-devel.x86_64, nm-connection-editor.x86_64, libsemanage-python, policycoreutils-python.'
+    - 'On Ubuntu and Debian like systems, the requirements can be met by installing the following packages: network-manager,
+      python-dbus (or python3-dbus, depending on the Python version in use), libnm-glib-dev.'
 options:
     state:
-        required: True
-        choices: [ present, absent ]
         description:
             - Whether the device should exist or not, taking action if the state is different from what is stated.
+        required: True
+        choices: [ present, absent ]
     autoconnect:
-        required: False
-        default: "yes"
-        choices: [ "yes", "no" ]
         description:
             - Whether the connection should start on boot.
             - Whether the connection profile can be automatically activated
+        type: bool
+        default: True
     conn_name:
-        required: True
         description:
             - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
+        required: True
     ifname:
-        required: False
-        default: conn_name
         description:
             - Where IFNAME will be the what we call the interface name.
             - interface to bind the connection to. The connection will only be applicable to this interface name.
             - A special value of "*" can be used for interface-independent connections.
             - The ifname argument is mandatory for all connection types except bond, team, bridge and vlan.
+        default: conn_name
     type:
-        required: False
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, generic ]
         description:
             - This is the type of device or network connection that you wish to create or modify.
             - "type C(generic) is added in version 2.5."
+        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, vxlan, ipip, sit, generic ]
     mode:
-        required: False
-        choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
-        default: balence-rr
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
+        choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
+        default: balance-rr
     master:
-        required: False
-        default: None
         description:
             - master <master (ifname, or connection UUID or conn_name) of bridge, team, bond master connection profile.
     ip4:
-        required: False
-        default: None
         description:
             - 'The IPv4 address to this interface using this format ie: "192.0.2.24/24"'
     gw4:
-        required: False
         description:
             - 'The IPv4 gateway for this interface using this format ie: "192.0.2.1"'
     dns4:
-        required: False
-        default: None
         description:
             - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: "192.0.2.53 198.51.100.53"'
     dns4_search:
-        required: False
-        default: None
         description:
             - 'A list of DNS search domains.'
         version_added: 2.5
     ip6:
-        required: False
-        default: None
         description:
             - 'The IPv6 address to this interface using this format ie: "abbe::cafe"'
     gw6:
-        required: False
-        default: None
         description:
             - 'The IPv6 gateway for this interface using this format ie: "2001:db8::1"'
     dns6:
-        required: False
         description:
             - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: "2001:4860:4860::8888 2001:4860:4860::8844"'
     dns6_search:
-        required: False
-        default: None
         description:
             - 'A list of DNS search domains.'
         version_added: 2.5
     mtu:
-        required: False
-        default: 1500
         description:
             - The connection MTU, e.g. 9000. This can't be applied when creating the interface and is done once the interface has been created.
             - Can be used when modifying Team, VLAN, Ethernet (Future plans to implement wifi, pppoe, infiniband)
+        default: 1500
     dhcp_client_id:
-        required: False
-        default: None
         description:
             - DHCP Client Identifier sent to the DHCP server.
         version_added: "2.5"
     primary:
-        required: False
-        default: None
         description:
             - This is only used with bond and is the primary interface name (for "active-backup" mode), this is the usually the 'ifname'
     miimon:
-        required: False
-        default: 100
         description:
             - This is only used with bond - miimon
+        default: 100
     downdelay:
-        required: False
-        default: None
         description:
             - This is only used with bond - downdelay
     updelay:
-        required: False
-        default: None
         description:
             - This is only used with bond - updelay
     arp_interval:
-        required: False
-        default: None
         description:
             - This is only used with bond - ARP interval
     arp_ip_target:
-        required: False
-        default: None
         description:
             - This is only used with bond - ARP IP target
     stp:
-        required: False
-        default: None
         description:
             - This is only used with bridge and controls whether Spanning Tree Protocol (STP) is enabled for this bridge
+        type: bool
     priority:
-        required: False
-        default: 128
         description:
             - This is only used with 'bridge' - sets STP priority
+        default: 128
     forwarddelay:
-        required: False
-        default: 15
         description:
             - This is only used with bridge - [forward-delay <2-30>] STP forwarding delay, in seconds
+        default: 15
     hellotime:
-        required: False
-        default: 2
         description:
             - This is only used with bridge - [hello-time <1-10>] STP hello time, in seconds
+        default: 2
     maxage:
-        required: False
-        default: 20
         description:
             - This is only used with bridge - [max-age <6-42>] STP maximum message age, in seconds
+        default: 20
     ageingtime:
-        required: False
-        default: 300
         description:
             - This is only used with bridge - [ageing-time <0-1000000>] the Ethernet MAC address aging time, in seconds
+        default: 300
     mac:
-        required: False
-        default: None
         description:
             - >
               This is only used with bridge - MAC address of the bridge
               (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)
     slavepriority:
-        required: False
-        default: 32
         description:
             - This is only used with 'bridge-slave' - [<0-63>] - STP priority of this slave
+        default: 32
     path_cost:
-        required: False
-        default: 100
         description:
             - This is only used with 'bridge-slave' - [<1-65535>] - STP port cost for destinations via this slave
+        default: 100
     hairpin:
-        required: False
-        default: yes
         description:
             - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the
               frame was received on.
+        type: bool
+        default: 'yes'
     vlanid:
-        required: False
-        default: None
         description:
             - This is only used with VLAN - VLAN ID in range <0-4095>
     vlandev:
-        required: False
-        default: None
         description:
             - This is only used with VLAN - parent device this VLAN is on, can use ifname
     flags:
-        required: False
-        default: None
         description:
             - This is only used with VLAN - flags
     ingress:
-        required: False
-        default: None
         description:
             - This is only used with VLAN - VLAN ingress priority mapping
     egress:
-        required: False
-        default: None
         description:
             - This is only used with VLAN - VLAN egress priority mapping
-
+    vxlan_id:
+        description:
+            - This is only used with VXLAN - VXLAN ID.
+        version_added: "2.8"
+    vxlan_remote:
+       description:
+            - This is only used with VXLAN - VXLAN destination IP address.
+       version_added: "2.8"
+    vxlan_local:
+       description:
+            - This is only used with VXLAN - VXLAN local IP address.
+       version_added: "2.8"
+    ip_tunnel_dev:
+        description:
+            - This is used with IPIP/SIT - parent device this IPIP/SIT tunnel, can use ifname.
+        version_added: "2.8"
+    ip_tunnel_remote:
+       description:
+            - This is used with IPIP/SIT - IPIP/SIT destination IP address.
+       version_added: "2.8"
+    ip_tunnel_local:
+       description:
+            - This is used with IPIP/SIT - IPIP/SIT local IP address.
+       version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -345,15 +316,13 @@ EXAMPLES = '''
   tasks:
 
   - name: install needed network manager libs
-    yum:
-      name: '{{ item }}'
+    package:
+      name:
+        - NetworkManager-glib
+        - nm-connection-editor
+        - libsemanage-python
+        - policycoreutils-python
       state: installed
-    with_items:
-      - NetworkManager-glib
-      - libnm-qt-devel.x86_64
-      - nm-connection-editor.x86_64
-      - libsemanage-python
-      - policycoreutils-python
 
 ##### Working with all cloud nodes - Teaming
   - name: try nmcli add team - conn_name only & ip4 gw4
@@ -488,6 +457,30 @@ EXAMPLES = '''
       type: ethernet
       state: present
 
+# To add VxLan, issue a command as follows:
+  - nmcli:
+      type: vxlan
+      conn_name: vxlan_test1
+      vxlan_id: 16
+      vxlan_local: 192.168.1.2
+      vxlan_remote: 192.168.1.5
+
+# To add ipip, issue a command as follows:
+  - nmcli:
+      type: ipip
+      conn_name: ipip_test1
+      ip_tunnel_dev: eth0
+      ip_tunnel_local: 192.168.1.2
+      ip_tunnel_remote: 192.168.1.5
+
+# To add sit, issue a command as follows:
+  - nmcli:
+      type: sit
+      conn_name: sit_test1
+      ip_tunnel_dev: eth0
+      ip_tunnel_local: 192.168.1.2
+      ip_tunnel_remote: 192.168.1.5
+
 # nmcli exits with status 0 if it succeeds and exits with a status greater
 # than zero when there is a failure. The following list of status codes may be
 # returned:
@@ -508,12 +501,17 @@ EXAMPLES = '''
 RETURN = r"""#
 """
 
+import traceback
+
+DBUS_IMP_ERR = None
 try:
     import dbus
     HAVE_DBUS = True
 except ImportError:
+    DBUS_IMP_ERR = traceback.format_exc()
     HAVE_DBUS = False
 
+NM_CLIENT_IMP_ERR = None
 try:
     import gi
     gi.require_version('NMClient', '1.0')
@@ -521,10 +519,11 @@ try:
 
     from gi.repository import NetworkManager, NMClient
     HAVE_NM_CLIENT = True
-except ImportError:
+except (ImportError, ValueError):
+    NM_CLIENT_IMP_ERR = traceback.format_exc()
     HAVE_NM_CLIENT = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -559,7 +558,10 @@ class Nmcli(object):
         12: "ADSL",
         13: "Bridge",
         14: "Generic",
-        15: "Team"
+        15: "Team",
+        16: "VxLan",
+        17: "ipip",
+        18: "sit",
     }
     STATES = {
         0: "Unknown",
@@ -616,6 +618,12 @@ class Nmcli(object):
         self.flags = module.params['flags']
         self.ingress = module.params['ingress']
         self.egress = module.params['egress']
+        self.vxlan_id = module.params['vxlan_id']
+        self.vxlan_local = module.params['vxlan_local']
+        self.vxlan_remote = module.params['vxlan_remote']
+        self.ip_tunnel_dev = module.params['ip_tunnel_dev']
+        self.ip_tunnel_local = module.params['ip_tunnel_local']
+        self.ip_tunnel_remote = module.params['ip_tunnel_remote']
         self.nmcli_bin = self.module.get_bin_path('nmcli', True)
         self.dhcp_client_id = module.params['dhcp_client_id']
 
@@ -632,7 +640,7 @@ class Nmcli(object):
             for setting in secrets:
                 for key in secrets[setting]:
                     config[setting_name][key] = secrets[setting][key]
-        except:
+        except Exception:
             pass
 
     def dict_to_string(self, d):
@@ -681,7 +689,7 @@ class Nmcli(object):
         try:
             proxy = bus.get_object(service_name, "/org/freedesktop/NetworkManager/Settings")
             settings = dbus.Interface(proxy, "org.freedesktop.NetworkManager.Settings")
-        except dbus.Exceptions.DBusException as e:
+        except dbus.exceptions.DBusException as e:
             self.module.fail_json(msg="Unable to read Network Manager settings from DBus system bus: %s" % to_native(e),
                                   details="Please check if NetworkManager is installed and"
                                           " service network-manager is started.")
@@ -1087,10 +1095,10 @@ class Nmcli(object):
 
         params = {'dev': self.vlandev,
                   'id': self.vlanid,
-                  'ip4': self.ip4,
-                  'gw4': self.gw4,
-                  'ip6': self.ip6,
-                  'gw6': self.gw6,
+                  'ip4': self.ip4 or '',
+                  'gw4': self.gw4 or '',
+                  'ip6': self.ip6 or '',
+                  'gw6': self.gw6 or '',
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
         for k, v in params.items():
@@ -1102,22 +1110,173 @@ class Nmcli(object):
         cmd = [self.nmcli_bin]
         cmd.append('con')
         cmd.append('mod')
-        cmd.append('con-name')
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vlan%s' % self.vlanid)
 
         params = {'vlan.parent': self.vlandev,
                   'vlan.id': self.vlanid,
-                  'ipv4.address': self.ip4,
-                  'ipv4.geteway': self.gw4,
-                  'ipv4.dns': self.dns4,
-                  'ipv6.address': self.ip6,
-                  'ipv6.gateway': self.gw6,
-                  'ipv6.dns': self.dns6,
+                  'ipv4.address': self.ip4 or '',
+                  'ipv4.gateway': self.gw4 or '',
+                  'ipv4.dns': self.dns4 or '',
+                  'ipv6.address': self.ip6 or '',
+                  'ipv6.gateway': self.gw6 or '',
+                  'ipv6.dns': self.dns6 or '',
                   'autoconnect': self.bool_to_string(self.autoconnect)
                   }
 
         for k, v in params.items():
             cmd.extend([k, v])
 
+        return cmd
+
+    def create_connection_vxlan(self):
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'vxlan', 'con-name']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vxlan%s' % self.vxlanid)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('vxan%s' % self.vxlanid)
+
+        params = {'vxlan.id': self.vxlan_id,
+                  'vxlan.local': self.vxlan_local,
+                  'vxlan.remote': self.vxlan_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
+        return cmd
+
+    def modify_connection_vxlan(self):
+        cmd = [self.nmcli_bin, 'con', 'mod']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        else:
+            cmd.append('vxlan%s' % self.vxlanid)
+
+        params = {'vxlan.id': self.vxlan_id,
+                  'vxlan.local': self.vxlan_local,
+                  'vxlan.remote': self.vxlan_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+        return cmd
+
+    def create_connection_ipip(self):
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'ip-tunnel', 'mode', 'ipip', 'con-name']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('ipip%s' % self.ip_tunnel_dev)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('ipip%s' % self.ipip_dev)
+
+        if self.ip_tunnel_dev is not None:
+            cmd.append('dev')
+            cmd.append(self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
+        return cmd
+
+    def modify_connection_ipip(self):
+        cmd = [self.nmcli_bin, 'con', 'mod']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('ipip%s' % self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+        return cmd
+
+    def create_connection_sit(self):
+        cmd = [self.nmcli_bin, 'con', 'add', 'type', 'ip-tunnel', 'mode', 'sit', 'con-name']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('sit%s' % self.ip_tunnel_dev)
+
+        cmd.append('ifname')
+        if self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.conn_name is not None:
+            cmd.append(self.conn_name)
+        else:
+            cmd.append('sit%s' % self.ipip_dev)
+
+        if self.ip_tunnel_dev is not None:
+            cmd.append('dev')
+            cmd.append(self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
+
+        return cmd
+
+    def modify_connection_sit(self):
+        cmd = [self.nmcli_bin, 'con', 'mod']
+
+        if self.conn_name is not None:
+            cmd.append(self.conn_name)
+        elif self.ifname is not None:
+            cmd.append(self.ifname)
+        elif self.ip_tunnel_dev is not None:
+            cmd.append('sit%s' % self.ip_tunnel_dev)
+
+        params = {'ip-tunnel.local': self.ip_tunnel_local,
+                  'ip-tunnel.remote': self.ip_tunnel_remote,
+                  'autoconnect': self.bool_to_string(self.autoconnect)
+                  }
+        for k, v in params.items():
+            cmd.extend([k, v])
         return cmd
 
     def create_connection(self):
@@ -1165,6 +1324,12 @@ class Nmcli(object):
             cmd = self.create_connection_bridge_slave()
         elif self.type == 'vlan':
             cmd = self.create_connection_vlan()
+        elif self.type == 'vxlan':
+            cmd = self.create_connection_vxlan()
+        elif self.type == 'ipip':
+            cmd = self.create_connection_ipip()
+        elif self.type == 'sit':
+            cmd = self.create_connection_sit()
         elif self.type == 'generic':
             cmd = self.create_connection_ethernet(conn_type='generic')
 
@@ -1197,6 +1362,12 @@ class Nmcli(object):
             cmd = self.modify_connection_bridge_slave()
         elif self.type == 'vlan':
             cmd = self.modify_connection_vlan()
+        elif self.type == 'vxlan':
+            cmd = self.modify_connection_vxlan()
+        elif self.type == 'ipip':
+            cmd = self.modify_connection_ipip()
+        elif self.type == 'sit':
+            cmd = self.modify_connection_sit()
         elif self.type == 'generic':
             cmd = self.modify_connection_ethernet(conn_type='generic')
         if cmd:
@@ -1210,7 +1381,7 @@ def main():
     # Parsing argument file
     module = AnsibleModule(
         argument_spec=dict(
-            autoconnect=dict(required=False, default=None, type='bool'),
+            autoconnect=dict(required=False, default=True, type='bool'),
             state=dict(required=True, choices=['present', 'absent'], type='str'),
             conn_name=dict(required=True, type='str'),
             master=dict(required=False, default=None, type='str'),
@@ -1218,7 +1389,7 @@ def main():
             type=dict(required=False, default=None,
                       choices=['ethernet', 'team', 'team-slave', 'bond',
                                'bond-slave', 'bridge', 'bridge-slave',
-                               'vlan', 'generic'],
+                               'vlan', 'vxlan', 'ipip', 'sit', 'generic'],
                       type='str'),
             ip4=dict(required=False, default=None, type='str'),
             gw4=dict(required=False, default=None, type='str'),
@@ -1249,7 +1420,7 @@ def main():
             hellotime=dict(required=False, default="2", type='str'),
             maxage=dict(required=False, default="20", type='str'),
             ageingtime=dict(required=False, default="300", type='str'),
-            hairpin=dict(required=False, default=True, type='str'),
+            hairpin=dict(required=False, default=True, type='bool'),
             path_cost=dict(required=False, default="100", type='str'),
             # vlan specific vars
             vlanid=dict(required=False, default=None, type='str'),
@@ -1257,15 +1428,23 @@ def main():
             flags=dict(required=False, default=None, type='str'),
             ingress=dict(required=False, default=None, type='str'),
             egress=dict(required=False, default=None, type='str'),
+            # vxlan specific vars
+            vxlan_id=dict(required=False, default=None, type='str'),
+            vxlan_local=dict(required=False, default=None, type='str'),
+            vxlan_remote=dict(required=False, default=None, type='str'),
+            # ip-tunnel specific vars
+            ip_tunnel_dev=dict(required=False, default=None, type='str'),
+            ip_tunnel_local=dict(required=False, default=None, type='str'),
+            ip_tunnel_remote=dict(required=False, default=None, type='str'),
         ),
         supports_check_mode=True
     )
 
     if not HAVE_DBUS:
-        module.fail_json(msg="This module requires dbus python bindings")
+        module.fail_json(msg=missing_required_lib('dbus'), exception=DBUS_IMP_ERR)
 
     if not HAVE_NM_CLIENT:
-        module.fail_json(msg="This module requires NetworkManager glib API")
+        module.fail_json(msg=missing_required_lib('NetworkManager glib API'), exception=NM_CLIENT_IMP_ERR)
 
     nmcli = Nmcli(module)
 

@@ -33,30 +33,21 @@ options:
         - globally unique identifier (UUID) to be given to the resource. Will
           be auto-generated if not specified, and name is specified.
         - Definition of a UUID will always take precedence to a name value.
-      required: false
-      default: None
     name:
       description:
         - unique name identifier to be given to the resource.
-      required: false
-      default: None
     driver:
       description:
         - The name of the Ironic Driver to use with this node.
       required: true
-      default: None
     chassis_uuid:
       description:
         - Associate the node with a pre-defined chassis.
-      required: false
-      default: None
     ironic_url:
       description:
         - If noauth mode is utilized, this is required to be set to the
           endpoint URL for the Ironic API.  Use with "auth" and "auth_type"
           settings set to None.
-      required: false
-      default: None
     driver_info:
       description:
         - Information for this server's driver. Will vary based on which
@@ -102,6 +93,20 @@ options:
           description:
             - size of first storage device in this machine (typically /dev/sda), in GB
           default: 1
+        capabilities:
+          description:
+            - special capabilities for the node, such as boot_option, node_role etc
+              (see U(https://docs.openstack.org/ironic/latest/install/advanced.html)
+              for more information)
+          default: ""
+          version_added: "2.8"
+        root_device:
+          description:
+            - Root disk device hints for deployment.
+              (see U(https://docs.openstack.org/ironic/latest/install/include/root-device-hints.html)
+              for allowed hints)
+          default: ""
+          version_added: "2.8"
     skip_update_of_driver_password:
       description:
         - Allows the code that would assert changes to nodes to skip the
@@ -109,14 +114,13 @@ options:
           field.  As of Kilo, by default, passwords are always masked to API
           requests, which means the logic as a result always attempts to
           re-assert the password field.
-      required: false
-      default: false
+      type: bool
+      default: 'no'
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 
-requirements: ["shade", "jsonpatch"]
+requirements: ["openstacksdk", "jsonpatch"]
 '''
 
 EXAMPLES = '''
@@ -130,6 +134,9 @@ EXAMPLES = '''
       cpu_arch: "x86_64"
       ram: 8192
       disk_size: 64
+      capabilities: "boot_option:local"
+      root_device:
+        wwn: "0x4000cca77fc4dba1"
     nics:
       - mac: "aa:bb:cc:aa:bb:cc"
       - mac: "dd:ee:ff:dd:ee:ff"
@@ -148,14 +155,8 @@ try:
 except ImportError:
     HAS_JSONPATCH = False
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _parse_properties(module):
@@ -165,15 +166,17 @@ def _parse_properties(module):
         cpus=p.get('cpus') if p.get('cpus') else 1,
         memory_mb=p.get('ram') if p.get('ram') else 1,
         local_gb=p.get('disk_size') if p.get('disk_size') else 1,
+        capabilities=p.get('capabilities') if p.get('capabilities') else '',
+        root_device=p.get('root_device') if p.get('root_device') else '',
     )
     return props
 
 
-def _parse_driver_info(module):
+def _parse_driver_info(sdk, module):
     p = module.params['driver_info']
     info = p.get('power')
     if not info:
-        raise shade.OpenStackCloudException(
+        raise sdk.exceptions.OpenStackCloudException(
             "driver_info['power'] is required")
     if p.get('console'):
         info.update(p.get('console'))
@@ -226,8 +229,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
     if not HAS_JSONPATCH:
         module.fail_json(msg='jsonpatch is required for this module')
     if (module.params['auth_type'] in [None, 'None'] and
@@ -243,8 +244,8 @@ def main():
 
     node_id = _choose_id_value(module)
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
         server = cloud.get_machine(node_id)
         if module.params['state'] == 'present':
             if module.params['driver'] is None:
@@ -252,7 +253,7 @@ def main():
                                      "to set a node to present.")
 
             properties = _parse_properties(module)
-            driver_info = _parse_driver_info(module)
+            driver_info = _parse_driver_info(sdk, module)
             kwargs = dict(
                 driver=module.params['driver'],
                 properties=properties,
@@ -346,7 +347,7 @@ def main():
             else:
                 module.exit_json(changed=False, result="Server not found")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Davis Phillips davis.phillips@gmail.com
+# Copyright: (c) 2017, Davis Phillips davis.phillips@gmail.com
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -19,7 +18,8 @@ short_description: Add/remove resource pools to/from vCenter
 description:
     - This module can be used to add/remove a resource pool to/from vCenter
 version_added: 2.3
-author: "Davis Phillips (@dav1x)"
+author:
+- Davis Phillips (@dav1x)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -38,22 +38,11 @@ options:
         description:
             - Resource pool name to manage.
         required: True
-    hostname:
-        description:
-            - ESXi hostname to manage.
-        required: True
-    username:
-        description:
-            - ESXi username.
-        required: True
-    password:
-        description:
-            - ESXi password.
-        required: True
     cpu_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value.
         default: True
+        type: bool
     cpu_reservation:
         description:
             - Amount of resource that is guaranteed available to the virtual machine or resource pool.
@@ -61,7 +50,8 @@ options:
     cpu_limit:
         description:
             - The utilization of a virtual machine/resource pool will not exceed this limit, even if there are available resources.
-        default: -1 (No limit)
+            - The default value -1 indicates no limit.
+        default: -1
     cpu_shares:
         description:
             - Memory shares are used in case of resource contention.
@@ -70,11 +60,12 @@ options:
             - custom
             - low
             - normal
-        default: Normal
+        default: normal
     mem_expandable_reservations:
         description:
             - In a resource pool with an expandable reservation, the reservation on a resource pool can grow beyond the specified value.
         default: True
+        type: bool
     mem_reservation:
         description:
             - Amount of resource that is guaranteed available to the virtual machine or resource pool.
@@ -82,7 +73,8 @@ options:
     mem_limit:
         description:
             - The utilization of a virtual machine/resource pool will not exceed this limit, even if there are available resources.
-        default: -1 (No limit)
+            - The default value -1 indicates no limit.
+        default: -1
     mem_shares:
         description:
             - Memory shares are used in case of resource contention.
@@ -91,7 +83,7 @@ options:
             - custom
             - low
             - normal
-        default: Normal
+        default: normal
     state:
         description:
             - Add or remove the resource pool
@@ -103,24 +95,24 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Create a resource pool
-  - name: Add resource pool to vCenter
-    vmware_resource_pool:
-      hostname: vcsa_host
-      username: vcsa_user
-      password: vcsa_pass
-      datacenter: datacenter
-      cluster: cluster
-      resource_pool: resource_pool
-      mem_shares: normal
-      mem_limit: -1
-      mem_reservation: 0
-      mem_expandable_reservations: True
-      cpu_shares: normal
-      cpu_limit: -1
-      cpu_reservation: 0
-      cpu_expandable_reservations: True
-      state: present
+- name: Add resource pool to vCenter
+  vmware_resource_pool:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter: '{{ datacenter_name }}'
+    cluster: '{{ cluster_name }}'
+    resource_pool: '{{ resource_pool_name }}'
+    mem_shares: normal
+    mem_limit: -1
+    mem_reservation: 0
+    mem_expandable_reservations: yes
+    cpu_shares: normal
+    cpu_limit: -1
+    cpu_reservation: 0
+    cpu_expandable_reservations: yes
+    state: present
+  delegate_to: localhost
 '''
 
 RETURN = """
@@ -237,7 +229,7 @@ class VMwareResourcePool(object):
             task = self.resource_pool_obj.Destroy()
             success, result = wait_for_task(task)
 
-        except:
+        except Exception:
             self.module.fail_json(msg="Failed to remove resource pool '%s' '%s'" % (
                 self.resource_pool, resource_pool))
         self.module.exit_json(changed=changed, result=str(result))
@@ -294,14 +286,14 @@ def main():
                               resource_pool=dict(required=True, type='str'),
                               mem_shares=dict(type='str', default="normal", choices=[
                                               'high', 'custom', 'normal', 'low']),
-                              mem_limit=dict(type='int', default="-1"),
-                              mem_reservation=dict(type='int', default="0"),
+                              mem_limit=dict(type='int', default=-1),
+                              mem_reservation=dict(type='int', default=0),
                               mem_expandable_reservations=dict(
                                   type='bool', default="True"),
                               cpu_shares=dict(type='str', default="normal", choices=[
                                               'high', 'custom', 'normal', 'low']),
-                              cpu_limit=dict(type='int', default="-1"),
-                              cpu_reservation=dict(type='int', default="0"),
+                              cpu_limit=dict(type='int', default=-1),
+                              cpu_reservation=dict(type='int', default=0),
                               cpu_expandable_reservations=dict(
                                   type='bool', default="True"),
                               state=dict(default='present', choices=['present', 'absent'], type='str')))

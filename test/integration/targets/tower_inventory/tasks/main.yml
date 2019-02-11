@@ -1,0 +1,34 @@
+- name: Create an Inventory
+  tower_inventory:
+    name: my-inventory
+    organization: Default
+    state: present
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Delete an Inventory
+  tower_inventory:
+    name: my-inventory
+    organization: Default
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_inventory:
+    name: test-inventory
+    description: Inventory Description
+    organization: test-non-existing-org
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update inventory, organization not found: The requested object could not be found.'"

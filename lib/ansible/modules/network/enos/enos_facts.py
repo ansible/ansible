@@ -1,28 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
 #
-# Copyright (C) 2017 Lenovo, Inc.
+# (C) 2017 Red Hat Inc.
+# Copyright (C) 2017 Lenovo.
 #
-# This file is part of Ansible
+# GNU General Public License v3.0+
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
+# This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 # Module to Collect facts from Lenovo Switches running Lenovo ENOS commands
 # Lenovo Networking
 #
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -42,7 +38,7 @@ description:
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: enos
 notes:
-  - Tested against ENOS 8.4.1.68
+  - Tested against ENOS 8.4.1
 options:
   gather_subset:
     description:
@@ -113,11 +109,11 @@ RETURN = '''
   ansible_net_hostname:
     description: The configured hostname of the device
     returned: always
-    type: string
+    type: str
   ansible_net_image:
     description: Indicates the active image for the device
     returned: always
-    type: string
+    type: str
 # hardware
   ansible_net_memfree_mb:
     description: The available free memory on the remote device in MB
@@ -425,6 +421,7 @@ class Interfaces(FactsBase):
                     key = match.group(1)
                     parsed.append(line)
         return parsed
+
 
 FACT_SUBSETS = dict(
     default=Default,

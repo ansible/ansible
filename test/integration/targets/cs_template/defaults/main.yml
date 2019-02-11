@@ -1,0 +1,5 @@
+---
+cs_template_hypervisor: Simulator
+cs_template_os_type: Other Linux (64-bit)
+cs_template_url: http://dl.openvm.eu/cloudstack/macchinina/x86_64/macchinina-vmware.ova
+cs_template_format: OVA

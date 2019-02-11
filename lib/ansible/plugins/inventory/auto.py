@@ -7,15 +7,14 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: auto
     plugin_type: inventory
-    authors:
+    author:
       - Matt Davis <@nitzmahone>
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:
-        - By whitelisting C(auto) as the final inventory plugin, any YAML inventory config file with a
+        - By whitelisting C(auto) inventory plugin, any YAML inventory config file with a
           C(plugin) key at its root will automatically cause the named plugin to be loaded and executed with that
           config. This effectively provides automatic whitelisting of all installed/accessible inventory plugins.
         - To disable this behavior, remove C(auto) from the C(INVENTORY_ENABLED) config element.
-    options:
 '''
 
 EXAMPLES = '''
@@ -38,7 +37,7 @@ class InventoryModule(BaseInventoryPlugin):
         return super(InventoryModule, self).verify_file(path)
 
     def parse(self, inventory, loader, path, cache=True):
-        config_data = loader.load_from_file(path)
+        config_data = loader.load_from_file(path, cache=False)
 
         plugin_name = config_data.get('plugin')
 

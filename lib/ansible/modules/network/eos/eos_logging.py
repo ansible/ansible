@@ -114,8 +114,8 @@ commands:
 
 import re
 
-from copy import deepcopy
 
+from copy import deepcopy
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.eos.eos import get_config, load_config
@@ -150,19 +150,32 @@ def map_obj_to_commands(updates, module):
         del w['state']
 
         if state == 'absent' and w in have:
-            if dest == 'host':
-                commands.append('no logging host {}'.format(name))
-            elif dest:
-                commands.append('no logging {}'.format(dest))
-            else:
-                module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
+            if dest:
+                if dest == 'host':
+                    commands.append('no logging host {}'.format(name))
+
+                elif dest in DEST_GROUP:
+                    commands.append('no logging {}'.format(dest))
+
+                else:
+                    module.fail_json(msg='dest must be among console, monitor, buffered, host, on')
 
             if facility:
                 commands.append('no logging facility {}'.format(facility))
 
         if state == 'present' and w not in have:
             if facility:
-                commands.append('logging facility {}'.format(facility))
+                present = False
+
+                # Iterate over every dictionary in the 'have' list to check if
+                # similar configuration for facility exists or not
+
+                for entry in have:
+                    if not entry['dest'] and entry['facility'] == facility:
+                        present = True
+
+                if not present:
+                    commands.append('logging facility {}'.format(facility))
 
             if dest == 'host':
                 commands.append('logging host {}'.format(name))
@@ -171,7 +184,28 @@ def map_obj_to_commands(updates, module):
                 commands.append('logging on')
 
             elif dest == 'buffered' and size:
-                commands.append('logging buffered {}'.format(size))
+
+                present = False
+
+                # Deals with the following two cases:
+                # Case 1:       logging buffered <size> <level>
+                #               logging buffered <same-size>
+                #
+                # Case 2:       Same buffered logging configuration
+                #               already exists (i.e., both size &
+                #               level are same)
+
+                for entry in have:
+                    if entry['dest'] == 'buffered' and entry['size'] == size:
+
+                        if not level or entry['level'] == level:
+                            present = True
+
+                if not present:
+                    if size and level:
+                        commands.append('logging buffered {} {}'.format(size, level))
+                    else:
+                        commands.append('logging buffered {}'.format(size))
 
             else:
                 dest_cmd = 'logging {}'.format(dest)
@@ -222,11 +256,20 @@ def parse_name(line, dest):
     return name
 
 
-def parse_level(line, dest, module):
+def parse_level(line, dest):
     level = None
 
     if dest is not 'host':
-        match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+
+        # Line for buffer logging entry in running-config is of the form:
+        # logging buffered <size> <level>
+
+        if dest == 'buffered':
+            match = re.search(r'logging buffered (?:\d+) (\S+)', line, re.M)
+
+        else:
+            match = re.search(r'logging {} (\S+)'.format(dest), line, re.M)
+
         if match:
             if match.group(1) in LEVEL_GROUP:
                 level = match.group(1)
@@ -240,19 +283,21 @@ def map_config_to_obj(module):
     data = get_config(module, flags=['section logging'])
 
     for line in data.split('\n'):
+
         match = re.search(r'logging (\S+)', line, re.M)
 
         if match:
             if match.group(1) in DEST_GROUP:
                 dest = match.group(1)
+
             else:
-                pass
+                dest = None
 
             obj.append({'dest': dest,
                         'name': parse_name(line, dest),
                         'size': parse_size(line, dest),
                         'facility': parse_facility(line),
-                        'level': parse_level(line, dest, module)})
+                        'level': parse_level(line, dest)})
 
     return obj
 
@@ -361,8 +406,8 @@ def main():
     if warnings:
         result['warnings'] = warnings
 
-    want = map_params_to_obj(module, required_if=required_if)
     have = map_config_to_obj(module)
+    want = map_params_to_obj(module, required_if=required_if)
 
     commands = map_obj_to_commands((want, have), module)
     result['commands'] = commands
@@ -376,6 +421,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

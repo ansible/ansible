@@ -35,8 +35,7 @@ options:
         values to include a larger subset.  Values can also be used
         with an initial C(M(!)) to specify that a specific subset should
         not be collected.
-    required: false
-    default: '!config'
+    default: [ '!config' ]
 notes:
   - This module requires OS9 version 9.10.0.1P13 or above.
 
@@ -83,11 +82,11 @@ ansible_net_version:
 ansible_net_hostname:
   description: The configured hostname of the device
   returned: always
-  type: string
+  type: str
 ansible_net_image:
   description: The image file the device is running
   returned: always
-  type: string
+  type: str
 
 # hardware
 ansible_net_filesystems:

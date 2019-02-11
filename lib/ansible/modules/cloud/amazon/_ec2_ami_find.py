@@ -44,49 +44,31 @@ options:
       - You can include wildcards in many of the search options. An asterisk (*) matches zero or more characters, and a question mark (?) matches exactly one
         character. You can escape special characters using a backslash (\) before the character. For example, a value of \*amazon\?\\ searches for the
         literal string *amazon?\.
-    required: false
-    default: null
   ami_id:
     description:
       - An AMI ID to match.
-    default: null
-    required: false
   ami_tags:
     description:
       - A hash/dictionary of tags to match for the AMI.
-    default: null
-    required: false
   architecture:
     description:
       - An architecture type to match (e.g. x86_64).
-    default: null
-    required: false
   hypervisor:
     description:
       - A hypervisor type type to match (e.g. xen).
-    default: null
-    required: false
   is_public:
     description:
       - Whether or not the image(s) are public.
-    choices: ['yes', 'no']
-    default: null
-    required: false
+    type: bool
   name:
     description:
       - An AMI name to match.
-    default: null
-    required: false
   platform:
     description:
       - Platform type to match.
-    default: null
-    required: false
   product_code:
     description:
       - Marketplace product code to match.
-    default: null
-    required: false
     version_added: "2.3"
   sort:
     description:
@@ -110,48 +92,34 @@ options:
         - 'root_device_type'
         - 'state'
         - 'virtualization_type'
-    default: null
-    required: false
   sort_tag:
     description:
       - Tag name with which to sort results.
       - Required when specifying 'sort=tag'.
-    default: null
-    required: false
   sort_order:
     description:
       - Order in which to sort results.
       - Only used when the 'sort' parameter is specified.
     choices: ['ascending', 'descending']
     default: 'ascending'
-    required: false
   sort_start:
     description:
       - Which result to start with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   sort_end:
     description:
       - Which result to end with (when sorting).
       - Corresponds to Python slice notation.
-    default: null
-    required: false
   state:
     description:
       - AMI state to match.
     default: 'available'
-    required: false
   virtualization_type:
     description:
       - Virtualization type to match (e.g. hvm).
-    default: null
-    required: false
   root_device_type:
     description:
       - Root device type to match (e.g. ebs, instance-store).
-    default: null
-    required: false
     version_added: "2.5"
   no_result_action:
     description:
@@ -160,7 +128,6 @@ options:
       - "'fail' causes the module to report failure"
     choices: ['success', 'fail']
     default: 'success'
-    required: false
 extends_documentation_fragment:
     - aws
 requirements:
@@ -201,12 +168,12 @@ RETURN = '''
 ami_id:
     description: id of found amazon image
     returned: when AMI found
-    type: string
+    type: str
     sample: "ami-e9095e8c"
 architecture:
     description: architecture of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "x86_64"
 block_device_mapping:
     description: block device mapping associated with image
@@ -223,17 +190,17 @@ block_device_mapping:
 creationDate:
     description: creation date of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "2015-10-15T22:43:44.000Z"
 description:
     description: description of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "test-server01"
 hypervisor:
     description: type of hypervisor
     returned: when AMI found
-    type: string
+    type: str
     sample: "xen"
 is_public:
     description: whether image is public
@@ -243,37 +210,37 @@ is_public:
 location:
     description: location of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "435210894375/test-server01-20151015-234343"
 name:
     description: ami name of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "test-server01-20151015-234343"
 owner_id:
     description: owner of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "435210894375"
 platform:
     description: platform of image
     returned: when AMI found
-    type: string
+    type: str
     sample: null
 root_device_name:
     description: root device name of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "/dev/xvda"
 root_device_type:
     description: root device type of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "ebs"
 state:
     description: state of image
     returned: when AMI found
-    type: string
+    type: str
     sample: "available"
 tags:
     description: tags assigned to image
@@ -287,7 +254,7 @@ tags:
 virtualization_type:
     description: image virtualization type
     returned: when AMI found
-    type: string
+    type: str
     sample: "hvm"
 '''
 

@@ -1,0 +1,2 @@
+minor_changes:
+    - Add ``ansible_play_name`` magic var (https://github.com/ansible/ansible/issues/11349)

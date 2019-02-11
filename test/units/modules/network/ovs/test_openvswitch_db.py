@@ -20,7 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.ovs import openvswitch_db
 from units.modules.utils import set_module_args
 from .ovs_module import TestOpenVSwitchModule, load_fixture
@@ -39,6 +39,12 @@ test_name_side_effect_matrix = {
         (0, 'openvswitch_db_disable_in_band_missing.cfg', None),
         (0, None, None)],
     'test_openvswitch_db_present_updates_key': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_present_missing_key_on_map': [
+        (0, 'openvswitch_db_disable_in_band_true.cfg', None),
+        (0, None, None)],
+    'test_openvswitch_db_present_stp_enable': [
         (0, 'openvswitch_db_disable_in_band_true.cfg', None),
         (0, None, None)],
 }
@@ -108,8 +114,8 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
                              value='True'))
         self.execute_module(
             changed=True,
-            commands=['/usr/bin/ovs-vsctl -t 5 add Bridge test-br other_config'
-                      ' disable-in-band=True'],
+            commands=['/usr/bin/ovs-vsctl -t 5 set Bridge test-br other_config'
+                      ':disable-in-band=True'],
             test_name='test_openvswitch_db_present_adds_key')
 
     def test_openvswitch_db_present_updates_key(self):
@@ -122,3 +128,20 @@ class TestOpenVSwitchDBModule(TestOpenVSwitchModule):
             commands=['/usr/bin/ovs-vsctl -t 5 set Bridge test-br other_config'
                       ':disable-in-band=False'],
             test_name='test_openvswitch_db_present_updates_key')
+
+    def test_openvswitch_db_present_missing_key_on_map(self):
+        set_module_args(dict(state='present',
+                             table='Bridge', record='test-br',
+                             col='other_config',
+                             value='False'))
+        self.execute_module(
+            failed=True,
+            test_name='test_openvswitch_db_present_idempotent')
+
+    def test_openvswitch_db_present_stp_enable(self):
+        set_module_args(dict(state='present',
+                             table='Bridge', record='test-br',
+                             col='stp_enable',
+                             value='False'))
+        self.execute_module(changed=True,
+                            test_name='test_openvswitch_db_present_stp_enable')

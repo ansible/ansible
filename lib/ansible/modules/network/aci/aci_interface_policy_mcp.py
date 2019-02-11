@@ -8,16 +8,18 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_mcp
-short_description: Manage MCP interface policies on Cisco ACI fabrics (mcp:IfPol)
+short_description: Manage MCP interface policies (mcp:IfPol)
 description:
 - Manage MCP interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class I(mcp:IfPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(mcp:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -25,21 +27,24 @@ options:
   mcp:
     description:
     - The name of the MCP interface.
+    type: str
     required: yes
     aliases: [ mcp_interface, name ]
   description:
     description:
     - The description for the MCP interface.
+    type: str
     aliases: [ descr ]
   admin_state:
     description:
     - Enable or disable admin state.
-    choices: [ disable, enable ]
-    default: enable
+    - The APIC defaults to C(yes) when unset during creation.
+    type: bool
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -54,6 +59,7 @@ EXAMPLES = r'''
     mcp: '{{ mcp }}'
     description: '{{ descr }}'
     admin_state: '{{ admin_state }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -88,7 +94,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -137,17 +143,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -157,7 +163,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -172,8 +178,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -185,25 +189,25 @@ def main():
         ],
     )
 
+    aci = ACIModule(module)
+
     mcp = module.params['mcp']
     description = module.params['description']
     admin_state = aci.boolean(module.params['admin_state'], 'enabled', 'disabled')
     state = module.params['state']
 
-    aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='mcpIfPol',
             aci_rn='infra/mcpIfP-{0}'.format(mcp),
-            filter_target='eq(mcpIfPol.name, "{0}")'.format(mcp),
             module_object=mcp,
+            target_filter={'name': mcp},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='mcpIfPol',
             class_config=dict(
@@ -213,10 +217,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='mcpIfPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

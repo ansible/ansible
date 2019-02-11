@@ -27,6 +27,7 @@ from ansible.utils.vars import isidentifier
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
+    _VALID_ARGS = frozenset(('aggregate', 'data', 'per_host'))
 
     # TODO: document this in non-empty set_stats.py module
     def run(self, tmp=None, task_vars=None):

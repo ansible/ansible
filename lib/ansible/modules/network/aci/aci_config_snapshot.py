@@ -8,59 +8,65 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_config_snapshot
-short_description: Manage Config Snapshots on Cisco ACI fabrics (config:Snapshot, config:ExportP)
+short_description: Manage Config Snapshots (config:Snapshot, config:ExportP)
 description:
 - Manage Config Snapshots on Cisco ACI fabrics.
 - Creating new Snapshots is done using the configExportP class.
 - Removing Snapshots is done using the configSnapshot class.
-- More information from the internal APIC classes I(config:Snapshot) and I(config:ExportP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The APIC does not provide a mechanism for naming the snapshots.
 - 'Snapshot files use the following naming structure: ce_<config export policy name>-<yyyy>-<mm>-<dd>T<hh>:<mm>:<ss>.<mss>+<hh>:<mm>.'
 - 'Snapshot objects use the following naming structure: run-<yyyy>-<mm>-<dd>T<hh>-<mm>-<ss>.'
+seealso:
+- module: aci_config_rollback
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(config:Snapshot) and B(config:ExportP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   description:
     description:
     - The description for the Config Export Policy.
+    type: str
     aliases: [ descr ]
   export_policy:
     description:
     - The name of the Export Policy to use for Config Snapshots.
+    type: str
     aliases: [ name ]
   format:
     description:
     - Sets the config backup to be formatted in JSON or XML.
-    - The APIC defaults new Export Policies to C(json)
+    - The APIC defaults to C(json) when unset.
+    type: str
     choices: [ json, xml ]
-    default: json
   include_secure:
     description:
     - Determines if secure information should be included in the backup.
-    - The APIC defaults new Export Policies to C(yes).
+    - The APIC defaults to C(yes) when unset.
     type: bool
-    default: 'yes'
   max_count:
     description:
     - Determines how many snapshots can exist for the Export Policy before the APIC starts to rollover.
-    - The APIC defaults new Export Policies to C(3).
-    choices: [ range between 1 and 10 ]
-    default: 3
+    - Accepted values range between C(1) and C(10).
+    - The APIC defaults to C(3) when unset.
+    type: int
   snapshot:
     description:
     - The name of the snapshot to delete.
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -76,6 +82,7 @@ EXAMPLES = r'''
     export_policy: config_backup
     max_count: 10
     description: Backups taken before new configs are applied.
+  delegate_to: localhost
 
 - name: Query all Snapshots
   aci_config_snapshot:
@@ -83,23 +90,28 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query Snapshots associated with a particular Export Policy
   aci_config_snapshot:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: query
     export_policy: config_backup
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a Snapshot
   aci_config_snapshot:
     host: apic
     username: admin
     password: SomeSecretPassword
-    state: absent
     export_policy: config_backup
     snapshot: run-2017-08-24T17-20-05
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -134,7 +146,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -183,17 +195,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -203,7 +215,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -215,7 +227,7 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         description=dict(type='str', aliases=['descr']),
-        export_policy=dict(type='str', aliases=['name']),
+        export_policy=dict(type='str', aliases=['name']),  # Not required for querying all objects
         format=dict(type='str', choices=['json', 'xml']),
         include_secure=dict(type='bool'),
         max_count=dict(type='int'),
@@ -254,14 +266,13 @@ def main():
             root_class=dict(
                 aci_class='configExportP',
                 aci_rn='fabric/configexp-{0}'.format(export_policy),
-                filter_target='eq(configExportP.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
+                target_filter={'name': export_policy},
             ),
         )
 
         aci.get_existing()
 
-        # Filter out module params with null values
         aci.payload(
             aci_class='configExportP',
             class_config=dict(
@@ -289,14 +300,14 @@ def main():
             root_class=dict(
                 aci_class='configSnapshotCont',
                 aci_rn='backupst/snapshots-[{0}]'.format(export_policy),
-                filter_target='(configSnapshotCont.name, "{0}")'.format(export_policy),
                 module_object=export_policy,
+                target_filter={'name': export_policy},
             ),
             subclass_1=dict(
                 aci_class='configSnapshot',
                 aci_rn='snapshot-{0}'.format(snapshot),
-                filter_target='eq(configSnapshot.name, "{0}")'.format(snapshot),
                 module_object=snapshot,
+                target_filter={'name': snapshot},
             ),
         )
 

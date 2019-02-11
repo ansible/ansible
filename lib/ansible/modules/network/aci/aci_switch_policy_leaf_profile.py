@@ -9,16 +9,19 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_switch_policy_leaf_profile
-short_description: Create switch policy leaf profiles on Cisco ACI fabrics (infra:NodeP)
+short_description: Manage switch policy leaf profiles (infra:NodeP)
 description:
-- Create switch policy leaf profiles on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:NodeP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+- Manage switch policy leaf profiles on Cisco ACI fabrics.
+seealso:
+- module: aci_switch_policy_leaf_profile
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:NodeP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Bruno Calogero (@brunocalogero)
 version_added: '2.5'
@@ -26,15 +29,18 @@ options:
   leaf_profile:
     description:
     - The name of the Leaf Profile.
-    aliases: [ name, leaf_profile_name ]
+    type: str
+    aliases: [ leaf_profile_name, name ]
   description:
     description:
     - Description for the Leaf Profile.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -44,27 +50,31 @@ EXAMPLES = r'''
 - name: creating a Leaf Profile with description
   aci_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     description: sw_description
     state: present
+  delegate_to: localhost
 
 - name: Deleting a Leaf Profile
   aci_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     state: absent
+  delegate_to: localhost
 
 - name: Query a Leaf Profile
   aci_switch_policy_leaf_profile:
     host: apic
-    username: someusername
-    password: somepassword
+    username: admin
+    password: SomeSecretPassword
     leaf_profile: sw_name
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -99,7 +109,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -148,17 +158,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -168,7 +178,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -179,7 +189,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        leaf_profile=dict(type='str', aliases=['name', 'leaf_profile_name']),
+        leaf_profile=dict(type='str', aliases=['name', 'leaf_profile_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -202,27 +212,24 @@ def main():
         root_class=dict(
             aci_class='infraNodeP',
             aci_rn='infra/nprof-{0}'.format(leaf_profile),
-            filter_target='eq(infraNodeP.name, "{0}")'.format(leaf_profile),
-            module_object=leaf_profile
-        )
+            module_object=leaf_profile,
+            target_filter={'name': leaf_profile},
+        ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='infraNodeP',
             class_config=dict(
                 name=leaf_profile,
                 descr=description,
-            )
+            ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraNodeP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

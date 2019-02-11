@@ -9,40 +9,48 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_aep_to_domain
-short_description: Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics (infra:RsDomP)
+short_description: Bind AEPs to Physical or Virtual Domains (infra:RsDomP)
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class I(infra:RsDomP) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Dag Wieers (@dagwieers)
-version_added: '2.5'
 notes:
 - The C(aep) and C(domain) parameters should exist before using this module.
   The M(aci_aep) and M(aci_domain) can be used for these.
+seealso:
+- module: aci_aep
+- module: aci_domain
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsDomP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
+version_added: '2.5'
 options:
   aep:
     description:
     - The name of the Attachable Access Entity Profile.
+    type: str
     aliases: [ aep_name ]
   domain:
     description:
     - Name of the physical or virtual domain being associated with the AEP.
+    type: str
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
     - Determines if the Domain is physical (phys) or virtual (vmm).
+    type: str
     choices: [ fc, l2dom, l3dom, phys, vmm ]
     aliases: [ type ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   vm_provider:
@@ -50,11 +58,55 @@ options:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add AEP to domain binding
+  aci_aep_to_domain: &binding_present
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: present
+  delegate_to: localhost
+
+- name: Remove AEP to domain binding
+  aci_aep_to_domain: &binding_absent
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: absent
+  delegate_to: localhost
+
+- name: Query our AEP to domain binding
+  aci_aep_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    aep: test_aep
+    domain: phys_dom
+    domain_type: phys
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all AEP to domain bindings
+  aci_aep_to_domain: &binding_query
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+  delegate_to: localhost
+  register: query_result
+'''
 
 RETURN = r'''
 current:
@@ -88,7 +140,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -137,17 +189,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -157,7 +209,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -178,9 +230,9 @@ VM_PROVIDER_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        aep=dict(type='str', aliases=['aep_name']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        aep=dict(type='str', aliases=['aep_name']),  # Not required for querying all objects
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
     )
@@ -192,6 +244,9 @@ def main():
             ['domain_type', 'vmm', ['vm_provider']],
             ['state', 'absent', ['aep', 'domain', 'domain_type']],
             ['state', 'present', ['aep', 'domain', 'domain_type']],
+        ],
+        required_together=[
+            ['domain', 'domain_type'],
         ],
     )
 
@@ -217,37 +272,34 @@ def main():
     elif domain_type == 'vmm':
         domain_mo = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
     else:
-        aci_domain = None
+        domain_mo = None
 
     aci = ACIModule(module)
     aci.construct_url(
         root_class=dict(
             aci_class='infraAttEntityP',
             aci_rn='infra/attentp-{0}'.format(aep),
-            filter_target='eq(infraAttEntityP.name, "{0}")'.format(aep),
             module_object=aep,
+            target_filter={'name': aep},
         ),
         subclass_1=dict(
             aci_class='infraRsDomP',
             aci_rn='rsdomP-[{0}]'.format(domain_mo),
-            filter_target='eq(infraRsDomP.tDn, "{0}")'.format(domain_mo),
             module_object=domain_mo,
+            target_filter={'tDn': domain_mo},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='infraRsDomP',
             class_config=dict(tDn=domain_mo),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraRsDomP')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

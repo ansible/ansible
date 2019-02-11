@@ -1,0 +1,96 @@
+---
+
+- name: Set Connexion Information for All Tasks
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- block:
+    - name: Create AWS Inspector Target Group
+      aws_inspector_target:
+        name: "{{ aws_inspector_scan_name }}"
+        state: present
+        tags:
+          Name: "{{ aws_inspector_scan_name }}"
+          changed: "no"
+        <<: *aws_connection_info
+      register: target_group_create
+
+    - name: Create AWS Inspector Target Group (Verify)
+      aws_inspector_target:
+        name: "{{ aws_inspector_scan_name }}"
+        state: present
+        tags:
+          Name: "{{ aws_inspector_scan_name }}"
+          changed: "no"
+        <<: *aws_connection_info
+      register: target_group_create_verify
+
+    - name: Assert Successful AWS Inspector Target Group Creation
+      assert:
+        that:
+          - target_group_create is changed
+          - target_group_create.name == aws_inspector_scan_name
+          - target_group_create.tags.Name == aws_inspector_scan_name
+          - target_group_create.tags.changed == "no"
+          - target_group_create_verify is not changed
+          - target_group_create_verify.name == aws_inspector_scan_name
+          - target_group_create_verify.tags.Name == aws_inspector_scan_name
+          - target_group_create_verify.tags.changed == "no"
+
+    - name: Change AWS Inspector Target Group Tags
+      aws_inspector_target:
+        name: "{{ aws_inspector_scan_name }}"
+        state: present
+        tags:
+          Name: "{{ aws_inspector_scan_name }}"
+          changed: "yes"
+        <<: *aws_connection_info
+      register: target_group_tag_change
+
+    - name: Change AWS Inspector Target Group Tags (Verify)
+      aws_inspector_target:
+        name: "{{ aws_inspector_scan_name }}"
+        state: present
+        tags:
+          Name: "{{ aws_inspector_scan_name }}"
+          changed: "yes"
+        <<: *aws_connection_info
+      register: target_group_tag_change_verify
+
+    - name: Assert Successful AWS Inspector Target Group Tag Change
+      assert:
+        that:
+          - target_group_tag_change is changed
+          - target_group_tag_change.name == aws_inspector_scan_name
+          - target_group_tag_change.tags.Name == aws_inspector_scan_name
+          - target_group_tag_change.tags.changed == "yes"
+          - target_group_tag_change_verify is not changed
+          - target_group_tag_change_verify.name == aws_inspector_scan_name
+          - target_group_tag_change_verify.tags.Name == aws_inspector_scan_name
+          - target_group_tag_change_verify.tags.changed == "yes"
+
+  always:
+    - name: Delete AWS Inspector Target Group
+      aws_inspector_target:
+        name: "{{ aws_inspector_scan_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: target_group_delete
+
+    - name: Delete AWS Inspector Target Group (Verify)
+      aws_inspector_target:
+        name: "{{ aws_inspector_scan_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: target_group_delete_verify
+
+    - name: Assert Successful AWS Inspector Target Group Deletion
+      assert:
+        that:
+          - target_group_delete is changed
+          - target_group_delete_verify is not changed

@@ -29,9 +29,10 @@ description:
       to your needs and a user having the expected roles.
 
     - The names of module options are snake_cased versions of the camelCase ones found in the
-      Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/)
+      Keycloak API and its documentation at U(http://www.keycloak.org/docs-api/3.3/rest-api/).
+      Aliases are provided so camelCased versions can be used as well.
 
-    - The Keycloak API does not always enforce for only sensible settings to be used -- you can set
+    - The Keycloak API does not always sanity check inputs e.g. you can set
       SAML-specific settings on an OpenID Connect client for instance and vice versa. Be careful.
       If you do not specify a setting, usually a sensible default is chosen.
 
@@ -44,11 +45,17 @@ options:
         choices: ['present', 'absent']
         default: 'present'
 
+    realm:
+        description:
+            - The realm to create the client in.
+
     client_id:
         description:
             - Client id of client to be worked on. This is usually an alphanumeric name chosen by
               you. Either this or I(id) is required. If you specify both, I(id) takes precedence.
               This is 'clientId' in the Keycloak REST API.
+        aliases:
+            - clientId
 
     id:
         description:
@@ -67,20 +74,27 @@ options:
         description:
             - Root URL appended to relative URLs for this client
               This is 'rootUrl' in the Keycloak REST API.
+        aliases:
+            - rootUrl
 
     admin_url:
         description:
             - URL to the admin interface of the client
               This is 'adminUrl' in the Keycloak REST API.
+        aliases:
+            - adminUrl
 
     base_url:
         description:
             - Default URL to use when the auth server needs to redirect or link back to the client
               This is 'baseUrl' in the Keycloak REST API.
+        aliases:
+            - baseUrl
 
     enabled:
         description:
             - Is this client enabled or not?
+        type: bool
 
     client_authenticator_type:
         description:
@@ -91,6 +105,8 @@ options:
               to configure its behavior.
               This is 'clientAuthenticatorType' in the Keycloak REST API.
         choices: ['client-secret', 'client-jwt']
+        aliases:
+            - clientAuthenticatorType
 
     secret:
         description:
@@ -104,72 +120,109 @@ options:
             - The registration access token provides access for clients to the client registration
               service.
               This is 'registrationAccessToken' in the Keycloak REST API.
+        aliases:
+            - registrationAccessToken
 
     default_roles:
         description:
             - list of default roles for this client. If the client roles referenced do not exist
               yet, they will be created.
               This is 'defaultRoles' in the Keycloak REST API.
+        aliases:
+            - defaultRoles
 
     redirect_uris:
         description:
             - Acceptable redirect URIs for this client.
               This is 'redirectUris' in the Keycloak REST API.
+        aliases:
+            - redirectUris
 
     web_origins:
         description:
             - List of allowed CORS origins.
               This is 'webOrigins' in the Keycloak REST API.
+        aliases:
+            - webOrigins
 
     not_before:
         description:
             - Revoke any tokens issued before this date for this client (this is a UNIX timestamp).
               This is 'notBefore' in the Keycloak REST API.
+        aliases:
+            - notBefore
 
     bearer_only:
         description:
             - The access type of this client is bearer-only.
               This is 'bearerOnly' in the Keycloak REST API.
+        aliases:
+            - bearerOnly
+        type: bool
 
     consent_required:
         description:
             - If enabled, users have to consent to client access.
               This is 'consentRequired' in the Keycloak REST API.
+        aliases:
+            - consentRequired
+        type: bool
 
     standard_flow_enabled:
         description:
             - Enable standard flow for this client or not (OpenID connect).
               This is 'standardFlowEnabled' in the Keycloak REST API.
+        aliases:
+            - standardFlowEnabled
+        type: bool
 
     implicit_flow_enabled:
         description:
             - Enable implicit flow for this client or not (OpenID connect).
-              This is 'implictFlowEnabled' in the Keycloak REST API.
+              This is 'implicitFlowEnabled' in the Keycloak REST API.
+        aliases:
+            - implicitFlowEnabled
+        type: bool
 
     direct_access_grants_enabled:
         description:
             - Are direct access grants enabled for this client or not (OpenID connect).
               This is 'directAccessGrantsEnabled' in the Keycloak REST API.
+        aliases:
+            - directAccessGrantsEnabled
+        type: bool
 
     service_accounts_enabled:
         description:
             - Are service accounts enabled for this client or not (OpenID connect).
               This is 'serviceAccountsEnabled' in the Keycloak REST API.
+        aliases:
+            - serviceAccountsEnabled
+        type: bool
 
     authorization_services_enabled:
         description:
             - Are authorization services enabled for this client or not (OpenID connect).
               This is 'authorizationServicesEnabled' in the Keycloak REST API.
+        aliases:
+            - authorizationServicesEnabled
+        type: bool
 
     public_client:
         description:
             - Is the access type for this client public or not.
               This is 'publicClient' in the Keycloak REST API.
+        aliases:
+            - publicClient
+        type: bool
 
     frontchannel_logout:
         description:
             - Is frontchannel logout enabled for this client or not.
               This is 'frontchannelLogout' in the Keycloak REST API.
+        aliases:
+            - frontchannelLogout
+        type: bool
 
     protocol:
         description:
@@ -180,54 +233,79 @@ options:
         description:
             - Is the "Full Scope Allowed" feature set for this client or not.
               This is 'fullScopeAllowed' in the Keycloak REST API.
+        aliases:
+            - fullScopeAllowed
+        type: bool
 
     node_re_registration_timeout:
         description:
             - Cluster node re-registration timeout for this client.
               This is 'nodeReRegistrationTimeout' in the Keycloak REST API.
+        aliases:
+            - nodeReRegistrationTimeout
 
     registered_nodes:
         description:
             - dict of registered cluster nodes (with C(nodename) as the key and last registration
               time as the value).
               This is 'registeredNodes' in the Keycloak REST API.
+        aliases:
+            - registeredNodes
 
     client_template:
         description:
             - Client template to use for this client. If it does not exist this field will silently
               be dropped.
               This is 'clientTemplate' in the Keycloak REST API.
+        aliases:
+            - clientTemplate
 
     use_template_config:
         description:
             - Whether or not to use configuration from the I(client_template).
               This is 'useTemplateConfig' in the Keycloak REST API.
+        aliases:
+            - useTemplateConfig
+        type: bool
 
     use_template_scope:
         description:
             - Whether or not to use scope configuration from the I(client_template).
               This is 'useTemplateScope' in the Keycloak REST API.
+        aliases:
+            - useTemplateScope
+        type: bool
 
     use_template_mappers:
         description:
             - Whether or not to use mapper configuration from the I(client_template).
               This is 'useTemplateMappers' in the Keycloak REST API.
+        aliases:
+            - useTemplateMappers
+        type: bool
 
     surrogate_auth_required:
         description:
             - Whether or not surrogate auth is required.
               This is 'surrogateAuthRequired' in the Keycloak REST API.
+        aliases:
+            - surrogateAuthRequired
+        type: bool
 
     authorization_settings:
         description:
             - a data structure defining the authorization settings for this client. For reference,
               please see the Keycloak API docs at U(http://www.keycloak.org/docs-api/3.3/rest-api/index.html#_resourceserverrepresentation).
               This is 'authorizationSettings' in the Keycloak REST API.
+        aliases:
+            - authorizationSettings
 
     protocol_mappers:
         description:
             - a list of dicts defining protocol mappers for this client.
               This is 'protocolMappers' in the Keycloak REST API.
+        aliases:
+            - protocolMappers
         suboptions:
             consentRequired:
                 description:
@@ -518,7 +596,7 @@ RETURN = '''
 msg:
   description: Message as to what action was taken
   returned: always
-  type: string
+  type: str
   sample: "Client testclient has been updated"
 
 proposed:
@@ -592,41 +670,41 @@ def main():
         realm=dict(type='str', default='master'),
 
         id=dict(type='str'),
-        client_id=dict(type='str'),
+        client_id=dict(type='str', aliases=['clientId']),
         name=dict(type='str'),
         description=dict(type='str'),
-        root_url=dict(type='str'),
-        admin_url=dict(type='str'),
-        base_url=dict(type='str'),
-        surrogate_auth_required=dict(type='bool'),
+        root_url=dict(type='str', aliases=['rootUrl']),
+        admin_url=dict(type='str', aliases=['adminUrl']),
+        base_url=dict(type='str', aliases=['baseUrl']),
+        surrogate_auth_required=dict(type='bool', aliases=['surrogateAuthRequired']),
         enabled=dict(type='bool'),
-        client_authenticator_type=dict(type='str', choices=['client-secret', 'client-jwt']),
+        client_authenticator_type=dict(type='str', choices=['client-secret', 'client-jwt'], aliases=['clientAuthenticatorType']),
         secret=dict(type='str', no_log=True),
-        registration_access_token=dict(type='str'),
-        default_roles=dict(type='list'),
-        redirect_uris=dict(type='list'),
-        web_origins=dict(type='list'),
-        not_before=dict(type='int'),
-        bearer_only=dict(type='bool'),
-        consent_required=dict(type='bool'),
-        standard_flow_enabled=dict(type='bool'),
-        implicit_flow_enabled=dict(type='bool'),
-        direct_access_grants_enabled=dict(type='bool'),
-        service_accounts_enabled=dict(type='bool'),
-        authorization_services_enabled=dict(type='bool'),
-        public_client=dict(type='bool'),
-        frontchannel_logout=dict(type='bool'),
+        registration_access_token=dict(type='str', aliases=['registrationAccessToken']),
+        default_roles=dict(type='list', aliases=['defaultRoles']),
+        redirect_uris=dict(type='list', aliases=['redirectUris']),
+        web_origins=dict(type='list', aliases=['webOrigins']),
+        not_before=dict(type='int', aliases=['notBefore']),
+        bearer_only=dict(type='bool', aliases=['bearerOnly']),
+        consent_required=dict(type='bool', aliases=['consentRequired']),
+        standard_flow_enabled=dict(type='bool', aliases=['standardFlowEnabled']),
+        implicit_flow_enabled=dict(type='bool', aliases=['implicitFlowEnabled']),
+        direct_access_grants_enabled=dict(type='bool', aliases=['directAccessGrantsEnabled']),
+        service_accounts_enabled=dict(type='bool', aliases=['serviceAccountsEnabled']),
+        authorization_services_enabled=dict(type='bool', aliases=['authorizationServicesEnabled']),
+        public_client=dict(type='bool', aliases=['publicClient']),
+        frontchannel_logout=dict(type='bool', aliases=['frontchannelLogout']),
         protocol=dict(type='str', choices=['openid-connect', 'saml']),
         attributes=dict(type='dict'),
-        full_scope_allowed=dict(type='bool'),
-        node_re_registration_timeout=dict(type='int'),
-        registered_nodes=dict(type='dict'),
-        client_template=dict(type='str'),
-        use_template_config=dict(type='bool'),
-        use_template_scope=dict(type='bool'),
-        use_template_mappers=dict(type='bool'),
-        protocol_mappers=dict(type='list', elements='dict', options=protmapper_spec),
-        authorization_settings=dict(type='dict'),
+        full_scope_allowed=dict(type='bool', aliases=['fullScopeAllowed']),
+        node_re_registration_timeout=dict(type='int', aliases=['nodeReRegistrationTimeout']),
+        registered_nodes=dict(type='dict', aliases=['registeredNodes']),
+        client_template=dict(type='str', aliases=['clientTemplate']),
+        use_template_config=dict(type='bool', aliases=['useTemplateConfig']),
+        use_template_scope=dict(type='bool', aliases=['useTemplateScope']),
+        use_template_mappers=dict(type='bool', aliases=['useTemplateMappers']),
+        protocol_mappers=dict(type='list', elements='dict', options=protmapper_spec, aliases=['protocolMappers']),
+        authorization_settings=dict(type='dict', aliases=['authorizationSettings']),
     )
     argument_spec.update(meta_args)
 
@@ -663,13 +741,20 @@ def main():
     changeset = dict()
 
     for client_param in client_params:
-        # lists in the Keycloak API are sorted
         new_param_value = module.params.get(client_param)
+
+        # some lists in the Keycloak API are sorted, some are not.
         if isinstance(new_param_value, list):
-            try:
-                new_param_value = sorted(new_param_value)
-            except TypeError:
-                pass
+            if client_param in ['attributes']:
+                try:
+                    new_param_value = sorted(new_param_value)
+                except TypeError:
+                    pass
+        # Unfortunately, the ansible argument spec checker introduces variables with null values when
+        # they are not specified
+        if client_param == 'protocol_mappers':
+            new_param_value = [dict((k, v) for k, v in x.items() if x[k] is not None) for x in new_param_value]
+
         changeset[camel(client_param)] = new_param_value
 
     # Whether creating or updating a client, take the before-state and merge the changeset into it
@@ -715,6 +800,7 @@ def main():
                 if module._diff:
                     result['diff'] = dict(before=sanitize_cr(before_client),
                                           after=sanitize_cr(updated_client))
+                result['changed'] = (before_client != updated_client)
 
                 module.exit_json(**result)
 
@@ -747,6 +833,7 @@ def main():
             module.exit_json(**result)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

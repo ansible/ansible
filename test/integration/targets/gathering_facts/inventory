@@ -1,0 +1,2 @@
+[local]
+facthost[0:25] ansible_connection=local

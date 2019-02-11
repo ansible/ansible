@@ -19,12 +19,9 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):
@@ -77,6 +74,6 @@ class ActionModule(ActionBase):
         finally:
             if not self._task.async_val:
                 # remove a temporary path we created
-                self._remove_tmp_path(self._connection._shell.tempdir)
+                self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

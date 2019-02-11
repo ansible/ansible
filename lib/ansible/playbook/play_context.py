@@ -29,6 +29,7 @@ import string
 import sys
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import shlex_quote
@@ -37,14 +38,11 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
+from ansible.utils.display import Display
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayContext']
@@ -178,8 +176,8 @@ class PlayContext(Base):
 
     # general flags
     _verbosity = FieldAttribute(isa='int', default=0)
-    _only_tags = FieldAttribute(isa='set', default=set())
-    _skip_tags = FieldAttribute(isa='set', default=set())
+    _only_tags = FieldAttribute(isa='set', default=set)
+    _skip_tags = FieldAttribute(isa='set', default=set)
     _force_handlers = FieldAttribute(isa='bool', default=False)
     _start_at_task = FieldAttribute(isa='string')
     _step = FieldAttribute(isa='bool', default=False)
@@ -189,7 +187,7 @@ class PlayContext(Base):
     _gather_timeout = FieldAttribute(isa='string', default=C.DEFAULT_GATHER_TIMEOUT)
     _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
-    def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
+    def __init__(self, play=None, passwords=None, connection_lockfd=None):
 
         super(PlayContext, self).__init__()
 
@@ -206,8 +204,8 @@ class PlayContext(Base):
         self.connection_lockfd = connection_lockfd
 
         # set options before play to allow play to override them
-        if options:
-            self.set_options(options)
+        if context.CLIARGS:
+            self.set_options()
 
         if play:
             self.set_play(play)
@@ -253,7 +251,7 @@ class PlayContext(Base):
         # for flag in ('ssh_common_args', 'docker_extra_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args'):
         #     setattr(self, flag, getattr(options, flag, ''))
 
-    def set_options(self, options):
+    def set_options(self):
         '''
         Configures this connection information instance with data from
         options specified by the user on the command line. These have a
@@ -261,33 +259,33 @@ class PlayContext(Base):
         '''
 
         # privilege escalation
-        self.become = options.become
-        self.become_method = options.become_method
-        self.become_user = options.become_user
+        self.become = context.CLIARGS['become']
+        self.become_method = context.CLIARGS['become_method']
+        self.become_user = context.CLIARGS['become_user']
 
-        self.check_mode = boolean(options.check, strict=False)
-        self.diff = boolean(options.diff, strict=False)
+        self.check_mode = boolean(context.CLIARGS['check'], strict=False)
+        self.diff = boolean(context.CLIARGS['diff'], strict=False)
 
         #  general flags (should we move out?)
         #  should only be 'non plugin' flags
         for flag in OPTION_FLAGS:
-            attribute = getattr(options, flag, False)
+            attribute = context.CLIARGS.get(flag, False)
             if attribute:
                 setattr(self, flag, attribute)
 
-        if hasattr(options, 'timeout') and options.timeout:
-            self.timeout = int(options.timeout)
+        if context.CLIARGS.get('timeout', False):
+            self.timeout = context.CLIARGS['timeout']
 
         # get the tag info from options. We check to see if the options have
         # the attribute, as it is not always added via the CLI
-        if hasattr(options, 'tags'):
-            self.only_tags.update(options.tags)
+        if context.CLIARGS.get('tags', False):
+            self.only_tags.update(context.CLIARGS['tags'])
 
         if len(self.only_tags) == 0:
             self.only_tags = set(['all'])
 
-        if hasattr(options, 'skip_tags'):
-            self.skip_tags.update(options.skip_tags)
+        if context.CLIARGS.get('skip_tags', False):
+            self.skip_tags.update(context.CLIARGS['skip_tags'])
 
     def set_task_and_variable_override(self, task, variables, templar):
         '''
@@ -436,11 +434,6 @@ class PlayContext(Base):
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
-        if task.always_run:
-            display.deprecated("always_run is deprecated. Use check_mode = no instead.", version="2.4", removed=False)
-            new_info.check_mode = False
-
-        # check_mode replaces always_run, overwrite always_run if both are given
         if task.check_mode is not None:
             new_info.check_mode = task.check_mode
 
@@ -544,16 +537,20 @@ class PlayContext(Base):
                     flags += ' -u %s ' % self.become_user
 
                 # FIXME: make shell independent
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, executable, success_cmd)
 
             elif self.become_method == 'dzdo':
+                # If we have a password, we run dzdo with a randomly-generated
+                # prompt set using -p. Otherwise we run it with -n, if
+                # requested, which makes it fail if it would have prompted for a
+                # password.
 
                 exe = self.become_exe or 'dzdo'
                 if self.become_pass:
                     prompt = '[dzdo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s -p %s -u %s %s' % (exe, shlex_quote(prompt), self.become_user, command)
+                    becomecmd = '%s %s -p %s -u %s %s' % (exe, flags.replace('-n', ''), shlex_quote(prompt), self.become_user, command)
                 else:
-                    becomecmd = '%s -u %s %s' % (exe, self.become_user, command)
+                    becomecmd = '%s %s -u %s %s' % (exe, flags, self.become_user, command)
 
             elif self.become_method == 'pmrun':
 
@@ -561,6 +558,11 @@ class PlayContext(Base):
 
                 prompt = 'Enter UPM user password:'
                 becomecmd = '%s %s %s' % (exe, flags, shlex_quote(command))
+
+            elif self.become_method == 'machinectl':
+
+                exe = self.become_exe or 'machinectl'
+                becomecmd = '%s shell -q %s %s@ %s' % (exe, flags, self.become_user, command)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)

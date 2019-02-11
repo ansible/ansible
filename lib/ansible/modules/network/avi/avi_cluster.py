@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_cluster
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of Cluster Avi RESTful Object
 description:
@@ -52,6 +52,7 @@ options:
         description:
             - Re-join cluster nodes automatically in the event one of the node is reset to factory.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     tenant_ref:
         description:
             - It is a reference to an object of type tenant.
@@ -118,6 +119,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'cluster',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

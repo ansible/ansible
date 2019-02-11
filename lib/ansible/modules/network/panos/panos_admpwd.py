@@ -69,7 +69,7 @@ RETURN = '''
 status:
     description: success status
     returned: success
-    type: string
+    type: str
     sample: "Last login: Fri Sep 16 11:09:20 2016 from 10.35.34.56.....Configuration committed successfully"
 '''
 
@@ -202,6 +202,7 @@ def main():
     except Exception:
         x = sys.exc_info()[1]
         module.fail_json(msg=x)
+
 
 if __name__ == '__main__':
     main()

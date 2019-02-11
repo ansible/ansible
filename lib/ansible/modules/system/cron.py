@@ -128,65 +128,62 @@ requirements:
   - cron
 author:
     - Dane Summers (@dsummersl)
-    - Mike Grozak
-    - Patrick Callahan
+    - Mike Grozak (@rhaido)
+    - Patrick Callahan (@dirtyharrycallahan)
     - Evan Kaufman (@EvanK)
     - Luca Berruti (@lberruti)
 """
 
 EXAMPLES = '''
-# Ensure a job that runs at 2 and 5 exists.
-# Creates an entry like "0 5,2 * * ls -alh > /dev/null"
-- cron:
+- name: Ensure a job that runs at 2 and 5 exists. Creates an entry like "0 5,2 * * ls -alh > /dev/null"
+  cron:
     name: "check dirs"
     minute: "0"
     hour: "5,2"
     job: "ls -alh > /dev/null"
 
-# Ensure an old job is no longer present. Removes any job that is prefixed
-# by "#Ansible: an old job" from the crontab
-- cron:
+- name: 'Ensure an old job is no longer present. Removes any job that is prefixed by "#Ansible: an old job" from the crontab'
+  cron:
     name: "an old job"
     state: absent
 
-# Creates an entry like "@reboot /some/job.sh"
-- cron:
+- name: Creates an entry like "@reboot /some/job.sh"
+  cron:
     name: "a job for reboot"
     special_time: reboot
     job: "/some/job.sh"
 
-# Creates an entry like "PATH=/opt/bin" on top of crontab
-- cron:
+- name: Creates an entry like "PATH=/opt/bin" on top of crontab
+  cron:
     name: PATH
     env: yes
-    value: /opt/bin
+    job: /opt/bin
 
-# Creates an entry like "APP_HOME=/srv/app" and insert it after PATH
-# declaration
-- cron:
+- name: Creates an entry like "APP_HOME=/srv/app" and insert it after PATH declaration
+  cron:
     name: APP_HOME
     env: yes
-    value: /srv/app
+    job: /srv/app
     insertafter: PATH
 
-# Creates a cron file under /etc/cron.d
-- cron:
+- name: Creates a cron file under /etc/cron.d
+  cron:
     name: yum autoupdate
     weekday: 2
     minute: 0
     hour: 12
     user: root
-    job: "YUMINTERACTIVE: 0 /usr/sbin/yum-autoupdate"
+    job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
     cron_file: ansible_yum-autoupdate
 
-# Removes a cron file from under /etc/cron.d
-- cron:
+- name: Removes a cron file from under /etc/cron.d
+  cron:
     name: "yum autoupdate"
     cron_file: ansible_yum-autoupdate
     state: absent
 
-# Removes "APP_HOME" environment variable from crontab
-- cron:
+- name: Removes "APP_HOME" environment variable from crontab
+  cron:
     name: APP_HOME
     env: yes
     state: absent
@@ -249,7 +246,7 @@ class CronTab(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -374,7 +371,7 @@ class CronTab(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
     def find_job(self, name, job=None):
@@ -701,7 +698,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and not crontab.existing == '':
+    if not changed and crontab.existing != '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 

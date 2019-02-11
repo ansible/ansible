@@ -1,0 +1,312 @@
+{
+   "fmgr_set_ha_peer": [
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha/peer/"
+         }, 
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": "FMG-VM0A17004505", 
+            "next_peer_id": 1, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_peer_status": "enable", 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_cluster_id": 2, 
+            "peer_id": 1, 
+            "fmgr_ha_peer_ipv4": "10.7.220.35", 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_mode": "slave"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": "FMG-VM0A17005528", 
+            "next_peer_id": 1, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": null, 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_cluster_id": 1, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_peer_status": "enable", 
+            "peer_id": 1, 
+            "fmgr_ha_peer_ipv4": "10.7.220.36", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": null
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha/peer/"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": "FMG-VM0A17005528", 
+            "next_peer_id": 1, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": null, 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_cluster_id": 1, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_peer_status": "enable", 
+            "peer_id": 1, 
+            "fmgr_ha_peer_ipv4": "10.7.220.36", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": null
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha/peer/"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha/peer/"
+         }, 
+         "paramgram_used": {
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_peer_status": "enable", 
+            "fmgr_ha_peer_sn": "FMG-VM0A17004505", 
+            "next_peer_id": 1, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": "slave", 
+            "fmgr_ha_cluster_id": 2, 
+            "peer_id": 1, 
+            "fmgr_ha_peer_ipv4": "10.7.220.35", 
+            "fmgr_ha_hb_interval": 5
+         }, 
+         "post_method": "set"
+      }
+   ], 
+   "fmgr_get_ha_peer_list": [
+      {
+         "url": "/cli/global/system/ha/peer/", 
+         "raw_response": [
+            {
+               "status": 1, 
+               "ip": "10.7.220.36", 
+               "serial-number": "FMG-VM0A17005528", 
+               "ip6": "::", 
+               "id": 1
+            }
+         ], 
+         "paramgram_used": {
+            "method": "get"
+         }, 
+         "post_method": "get"
+      }, 
+      {
+         "url": "/cli/global/system/ha/peer/", 
+         "paramgram_used": {
+            "method": "get"
+         }, 
+         "raw_response": [
+            {
+               "status": 1, 
+               "ip": "10.7.220.35", 
+               "serial-number": "FMG-VM0A17004505", 
+               "ip6": "::", 
+               "id": 1
+            }
+         ], 
+         "post_method": "get"
+      }
+   ], 
+   "fmgr_set_ha_mode": [
+      {
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": null, 
+            "fmgr_ha_hb_threshold": 10, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_peer_status": null, 
+            "fmgr_ha_file_quota": 2048, 
+            "fmgr_ha_cluster_id": 2, 
+            "fmgr_ha_peer_ipv4": null, 
+            "fmgr_ha_hb_interval": 15, 
+            "fmgr_ha_mode": "master"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": null, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_cluster_id": 2, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_peer_status": null, 
+            "fmgr_ha_peer_ipv4": null, 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": "slave"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": "FMG-VM0A17004505", 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_peer_status": "enable", 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_cluster_id": 2, 
+            "fmgr_ha_peer_ipv4": "10.7.220.35", 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_mode": "slave"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": null, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": null, 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_cluster_id": 1, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_peer_status": null, 
+            "fmgr_ha_peer_ipv4": null, 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": "standalone"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": null, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": null, 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_peer_status": null, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_cluster_id": 1, 
+            "fmgr_ha_peer_ipv4": null, 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_mode": "standalone"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": null, 
+            "fmgr_ha_hb_threshold": 10, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_hb_interval": 15, 
+            "fmgr_ha_cluster_id": 2, 
+            "fmgr_ha_file_quota": 2048, 
+            "fmgr_ha_peer_status": null, 
+            "fmgr_ha_peer_ipv4": null, 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": "master"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": null, 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_peer_status": null, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_cluster_id": 2, 
+            "fmgr_ha_peer_ipv4": null, 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_mode": "slave"
+         }, 
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "post_method": "set"
+      }, 
+      {
+         "raw_response": {
+            "status": {
+               "message": "OK", 
+               "code": 0
+            }, 
+            "url": "/cli/global/system/ha"
+         }, 
+         "paramgram_used": {
+            "fmgr_ha_peer_sn": "FMG-VM0A17004505", 
+            "fmgr_ha_hb_threshold": 3, 
+            "fmgr_ha_cluster_pw": "fortinet", 
+            "fmgr_ha_hb_interval": 5, 
+            "fmgr_ha_cluster_id": 2, 
+            "fmgr_ha_file_quota": 4096, 
+            "fmgr_ha_peer_status": "enable", 
+            "fmgr_ha_peer_ipv4": "10.7.220.35", 
+            "fmgr_ha_peer_ipv6": null, 
+            "fmgr_ha_mode": "slave"
+         }, 
+         "post_method": "set"
+      }
+   ]
+}

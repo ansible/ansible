@@ -13,7 +13,7 @@ short_description: Manage AWS IAM users
 description:
   - Manage AWS IAM users
 version_added: "2.5"
-author: Josh Souza, @joshsouza
+author: Josh Souza (@joshsouza)
 options:
   name:
     description:
@@ -33,6 +33,7 @@ options:
       - Detach policies which are not included in managed_policy list
     required: false
     default: false
+    type: bool
 requirements: [ botocore, boto3 ]
 extends_documentation_fragment:
   - aws
@@ -77,23 +78,23 @@ user:
     contains:
         arn:
             description: the Amazon Resource Name (ARN) specifying the user
-            type: string
+            type: str
             sample: "arn:aws:iam::1234567890:user/testuser1"
         create_date:
             description: the date and time, in ISO 8601 date-time format, when the user was created
-            type: string
+            type: str
             sample: "2017-02-08T04:36:28+00:00"
         user_id:
             description: the stable and unique string identifying the user
-            type: string
+            type: str
             sample: AGPAIDBWE12NSFINE55TM
         user_name:
             description: the friendly name that identifies the user
-            type: string
+            type: str
             sample: testuser1
         path:
             description: the path to the user
-            type: string
+            type: str
             sample: /
 '''
 
@@ -166,7 +167,7 @@ def create_or_update_user(connection, module):
             module.exit_json(changed=True)
 
         try:
-            user = connection.create_user(**params)
+            connection.create_user(**params)
             changed = True
         except ClientError as e:
             module.fail_json(msg="Unable to create user: {0}".format(to_native(e)), exception=traceback.format_exc(),

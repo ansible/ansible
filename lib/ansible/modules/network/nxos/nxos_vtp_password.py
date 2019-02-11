@@ -47,12 +47,9 @@ options:
     vtp_password:
         description:
             - VTP password
-        required: false
-        default: null
     state:
         description:
             - Manage the state of the resource
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -98,7 +95,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

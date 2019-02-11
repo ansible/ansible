@@ -39,40 +39,29 @@ options:
   affinity_type:
     description:
       - Type of the affinity group. If not specified, first found affinity type is used.
-    required: false
-    default: null
     aliases: [ affinty_type ]
   description:
     description:
       - Description of the affinity group.
-    required: false
-    default: null
   state:
     description:
       - State of the affinity group.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the affinity group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the affinity group is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the affinity group is related to.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -95,37 +84,37 @@ RETURN = '''
 id:
   description: UUID of the affinity group.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of affinity group.
   returned: success
-  type: string
+  type: str
   sample: app
 description:
   description: Description of affinity group.
   returned: success
-  type: string
+  type: str
   sample: application affinity group
 affinity_type:
   description: Type of affinity group.
   returned: success
-  type: string
+  type: str
   sample: host anti-affinity
 project:
   description: Name of project the affinity group is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 domain:
   description: Domain the affinity group is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the affinity group is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 '''
 

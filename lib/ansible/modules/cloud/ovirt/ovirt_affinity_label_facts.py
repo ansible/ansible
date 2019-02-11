@@ -83,7 +83,7 @@ EXAMPLES = '''
 
 RETURN = '''
 ovirt_affinity_labels:
-    description: "List of dictionaries describing the affinity labels. Affinity labels attribues are mapped to dictionary keys,
+    description: "List of dictionaries describing the affinity labels. Affinity labels attributes are mapped to dictionary keys,
                   all affinity labels attributes can be found at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/affinity_label."
     returned: On success.
     type: list
@@ -98,6 +98,7 @@ from ansible.module_utils.ovirt import (
     create_connection,
     get_dict_of_struct,
     ovirt_facts_full_argument_spec,
+    search_by_name,
 )
 
 
@@ -108,9 +109,6 @@ def main():
         vm=dict(default=None),
     )
     module = AnsibleModule(argument_spec)
-
-    if module._name == 'ovirt_affinity_labels_facts':
-        module.deprecate("The 'ovirt_affinity_labels_facts' module is being renamed 'ovirt_affinity_label_facts'", version=2.8)
 
     check_sdk(module)
 
@@ -127,6 +125,8 @@ def main():
             ])
         if module.params['host']:
             hosts_service = connection.system_service().hosts_service()
+            if search_by_name(hosts_service, module.params['host']) is None:
+                raise Exception("Host '%s' was not found." % module.params['host'])
             labels.extend([
                 label
                 for label in all_labels
@@ -135,6 +135,8 @@ def main():
             ])
         if module.params['vm']:
             vms_service = connection.system_service().vms_service()
+            if search_by_name(vms_service, module.params['vm']) is None:
+                raise Exception("Vm '%s' was not found." % module.params['vm'])
             labels.extend([
                 label
                 for label in all_labels

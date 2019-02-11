@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright IBM Corp. 2017
+# Copyright: (c) 2017, IBM Corp
 # Author(s): Andreas Nafpliotis <nafpliot@de.ibm.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -31,7 +31,7 @@ requirements:
 options:
     esxi_hostname:
         description:
-            - Name of ESXi server.
+            - Name of ESXi server. This is required only if authentication against a vCenter is done.
         required: False
     dest:
         description:
@@ -51,39 +51,37 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# save the ESXi configuration locally
-- name: ESXI backup test
-  local_action:
-      module: vmware_cfg_backup
-      hostname: esxi_host
-      username: user
-      password: pass
-      state: saved
-      dest: /tmp/
+- name: Save the ESXi configuration locally by authenticating directly against the ESXi host
+  vmware_cfg_backup:
+    hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    state: saved
+    dest: /tmp/
+  delegate_to: localhost
 
-# save the ESXi configuration locally for specific ESXi
-- name: ESXI backup test
-  local_action:
-      module: vmware_cfg_backup
-      hostname: vCenter
-      esxi_hostname: esxi_hostname
-      username: user
-      password: pass
-      state: saved
-      dest: /tmp/
+- name: Save the ESXi configuration locally by authenticating against the vCenter and selecting the ESXi host
+  vmware_cfg_backup:
+    hostname: '{{ vcenter_hostname }}'
+    esxi_hostname: '{{ esxi_hostname }}'
+    username: '{{ esxi_username }}'
+    password: '{{ esxi_password }}'
+    state: saved
+    dest: /tmp/
+  delegate_to: localhost
 '''
 
 RETURN = '''
 dest_file:
     description: The full path of where the file holding the ESXi configurations was stored
     returned: changed
-    type: string
+    type: str
     sample: /tmp/configBundle-esxi.host.domain.tgz
 '''
 
 import os
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -133,7 +131,7 @@ class VMwareConfigurationBackup(PyVmomi):
             self.module.fail_json(msg="Source file {} does not exist".format(self.src))
 
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
-        url = url.replace('*', self.hostname)
+        url = url.replace('*', self.host.name)
         # find manually the url if there is a redirect because urllib2 -per RFC- doesn't do automatic redirects for PUT requests
         try:
             request = open_url(url=url, method='HEAD', validate_certs=self.validate_certs)
@@ -169,7 +167,7 @@ class VMwareConfigurationBackup(PyVmomi):
 
     def save_configuration(self):
         url = self.host.configManager.firmwareSystem.BackupFirmwareConfiguration()
-        url = url.replace('*', self.hostname)
+        url = url.replace('*', self.host.name)
         if os.path.isdir(self.dest):
             filename = url.rsplit('/', 1)[1]
             self.dest = os.path.join(self.dest, filename)

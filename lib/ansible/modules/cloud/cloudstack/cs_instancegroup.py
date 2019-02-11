@@ -39,22 +39,15 @@ options:
   domain:
     description:
       - Domain the instance group is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance group is related to.
-    required: false
-    default: null
   project:
     description:
       - Project the instance group is related to.
-    required: false
-    default: null
   state:
     description:
       - State of the instance group.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: cloudstack
@@ -78,32 +71,32 @@ RETURN = '''
 id:
   description: UUID of the instance group.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 name:
   description: Name of the instance group.
   returned: success
-  type: string
+  type: str
   sample: webservers
 created:
   description: Date when the instance group was created.
   returned: success
-  type: string
+  type: str
   sample: 2015-05-03T15:05:51+0200
 domain:
   description: Domain the instance group is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the instance group is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Project the instance group is related to.
   returned: success
-  type: string
+  type: str
   sample: example project
 '''
 
@@ -131,10 +124,11 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
             'account': self.get_account('name'),
             'domainid': self.get_domain('id'),
             'projectid': self.get_project('id'),
+            'fetch_list': True,
         }
         instance_groups = self.query_api('listInstanceGroups', **args)
         if instance_groups:
-            for g in instance_groups['instancegroup']:
+            for g in instance_groups:
                 if name in [g['name'], g['id']]:
                     self.instance_group = g
                     break

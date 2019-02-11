@@ -1,6 +1,0 @@
----
-
-msi_url: https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_win_msi/7z922-x64.msi
-msi_download_path: "C:\\Program Files\\7z922-x64.msi"
-msi_install_path: "C:\\Program Files\\7-Zip"
-msi_product_code: "{23170F69-40C1-2702-0922-000001000000}"

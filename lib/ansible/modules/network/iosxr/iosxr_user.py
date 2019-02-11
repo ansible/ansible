@@ -83,6 +83,14 @@ options:
         `admin` user and the current defined set of users.
     type: bool
     default: false
+  admin:
+    description:
+      - Enters into administration configuration mode for making config
+        changes to the device.
+      - Applicable only when using network_cli transport
+    type: bool
+    default: false
+    version_added: "2.8"
   state:
     description:
       - Configures the state of the username definition
@@ -122,6 +130,12 @@ EXAMPLES = """
   iosxr_user:
     name: ansible
     configured_password: mypassword
+    state: present
+- name: create a new user in admin configuration mode
+  iosxr_user:
+    name: ansible
+    configured_password: mypassword
+    admin: True
     state: present
 - name: remove all users except admin
   iosxr_user:
@@ -478,7 +492,8 @@ class CliConfiguration(ConfigBase):
         self._result['commands'] = []
         if commands:
             commit = not self._module.check_mode
-            diff = load_config(self._module, commands, commit=commit)
+            admin = self._module.params['admin']
+            diff = load_config(self._module, commands, commit=commit, admin=admin)
             if diff:
                 self._result['diff'] = dict(prepared=diff)
 
@@ -638,6 +653,8 @@ def main():
         configured_password=dict(no_log=True),
         update_password=dict(default='always', choices=['on_create', 'always']),
 
+        admin=dict(type='bool', default=False),
+
         public_key=dict(),
         public_key_contents=dict(),
 
@@ -689,7 +706,7 @@ def main():
     config_object = None
     if is_cliconf(module):
         module.deprecate(msg="cli support for 'iosxr_user' is deprecated. Use transport netconf instead",
-                         version="4 releases from v2.5")
+                         version="2.9")
         config_object = CliConfiguration(module, result)
     elif is_netconf(module):
         config_object = NCConfiguration(module, result)
@@ -702,6 +719,7 @@ def main():
         result = pubkey_object.run()
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

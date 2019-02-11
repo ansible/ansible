@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Peter Mounce <public@neverrunwithscissors.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2015, Peter Mounce <public@neverrunwithscissors.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
 # file of the same name
@@ -24,7 +10,6 @@
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -34,20 +19,24 @@ short_description: Installs packages using Web Platform Installer command-line
 description:
     - Installs packages using Web Platform Installer command-line
       (U(http://www.iis.net/learn/install/web-platform-installer/web-platform-installer-v4-command-line-webpicmdexe-rtw-release)).
-    - Must be installed and present in PATH (see M(win_chocolatey) module; 'webpicmd' is the package name, and you must install 'lessmsi' first too)
-    - Install IIS first (see M(win_feature) module)
+    - Must be installed and present in PATH (see M(win_chocolatey) module; 'webpicmd' is the package name, and you must install 'lessmsi' first too)?
+    - Install IIS first (see M(win_feature) module).
 notes:
-    - accepts EULAs and suppresses reboot - you will need to check manage reboots yourself (see M(win_reboot) module)
+    - Accepts EULAs and suppresses reboot - you will need to check manage reboots yourself (see M(win_reboot) module)
 options:
   name:
     description:
-      - Name of the package to be installed
-    required: true
-author: Peter Mounce
+      - Name of the package to be installed.
+    type: str
+    required: yes
+seealso:
+- module: win_package
+author:
+- Peter Mounce (@petemounce)
 '''
 
 EXAMPLES = r'''
-  # Install URLRewrite2.
+- name: Install URLRewrite2.
   win_webpicmd:
     name: URLRewrite2
 '''

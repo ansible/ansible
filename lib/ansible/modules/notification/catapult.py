@@ -27,17 +27,14 @@ options:
     description:
       - One of your catapult telephone numbers the message should come from (must be in E.164 format, like C(+19195551212)).
     required: true
-    default: null
   dest:
     description:
       - The phone number or numbers the message should be sent to (must be in E.164 format, like C(+19195551212)).
     required: true
-    default: null
   msg:
     description:
       - The contents of the text message (must be 2048 characters or less).
     required: true
-    default: null
   media:
     description:
       - For MMS messages, a media url to the location of the media to be sent with the message.
@@ -45,17 +42,14 @@ options:
     description:
       - User Id from Api account page.
     required: true
-    default: null
   api_token:
     description:
       - Api Token from Api account page.
     required: true
-    default: null
   api_secret:
     description:
       - Api Secret from Api account page.
     required: true
-    default: null
 
 author: "Jonathan Mainguy (@Jmainguy)"
 notes:
@@ -92,7 +86,7 @@ RETURN = '''
 changed:
     description: Whether the api accepted the message.
     returned: always
-    type: boolean
+    type: bool
     sample: True
 '''
 

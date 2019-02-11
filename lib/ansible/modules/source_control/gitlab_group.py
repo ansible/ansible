@@ -1,221 +1,380 @@
 #!/usr/bin/python
-# (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
+# Copyright: (c) 2015, Werner Dijkerman (ikben@werner-dijkerman.nl)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
 module: gitlab_group
 short_description: Creates/updates/deletes Gitlab Groups
 description:
-   - When the group does not exists in Gitlab, it will be created.
-   - When the group does exists and state=absent, the group will be deleted.
+  - When the group does not exist in Gitlab, it will be created.
+  - When the group does exist and state=absent, the group will be deleted.
 version_added: "2.1"
-author: "Werner Dijkerman (@dj-wasabi)"
+author:
+  - Werner Dijkerman (@dj-wasabi)
+  - Guillaume Martinez (@Lunik)
 requirements:
-    - pyapi-gitlab python module
+  - python >= 2.7
+  - python-gitlab python module
+extends_documentation_fragment:
+    - auth_basic
 options:
-    server_url:
-        description:
-            - Url of Gitlab server, with protocol (http or https).
-        required: true
-    validate_certs:
-        description:
-            - When using https if SSL certificate needs to be verified.
-        required: false
-        default: true
-        aliases:
-            - verify_ssl
-    login_user:
-        description:
-            - Gitlab user name.
-        required: false
-        default: null
-    login_password:
-        description:
-            - Gitlab password for login_user
-        required: false
-        default: null
-    login_token:
-        description:
-            - Gitlab token for logging in.
-        required: false
-        default: null
-    name:
-        description:
-            - Name of the group you want to create.
-        required: true
-    path:
-        description:
-            - The path of the group you want to create, this will be server_url/group_path
-            - If not supplied, the group_name will be used.
-        required: false
-        default: null
-    state:
-        description:
-            - create or delete group.
-            - Possible values are present and absent.
-        required: false
-        default: "present"
-        choices: ["present", "absent"]
+  server_url:
+    description:
+      - The URL of the Gitlab server, with protocol (i.e. http or https).
+    required: true
+    type: str
+  login_user:
+    description:
+      - Gitlab user name.
+    type: str
+  login_password:
+    description:
+      - Gitlab password for login_user
+    type: str
+  api_token:
+    description:
+      - Gitlab token for logging in.
+    type: str
+    aliases:
+      - login_token
+  name:
+    description:
+      - Name of the group you want to create.
+    required: true
+    type: str
+  path:
+    description:
+      - The path of the group you want to create, this will be server_url/group_path
+      - If not supplied, the group_name will be used.
+    type: str
+  description:
+    description:
+      - A description for the group.
+    version_added: "2.7"
+    type: str
+  state:
+    description:
+      - create or delete group.
+      - Possible values are present and absent.
+    default: present
+    type: str
+    choices: ["present", "absent"]
+  parent:
+    description:
+      - Allow to create subgroups
+      - Id or Full path of parent group in the form of group/name
+    version_added: "2.8"
+    type: str
+  visibility:
+    description:
+      - Default visibility of the group
+    version_added: "2.8"
+    choices: ["private", "internal", "public"]
+    default: private
+    type: str
 '''
 
 EXAMPLES = '''
-- name: Delete Gitlab Group
+- name: "Delete Gitlab Group"
   gitlab_group:
-    server_url: http://gitlab.example.com
+    api_url: https://gitlab.example.com/
+    api_token: "{{ access_token }}"
     validate_certs: False
-    login_token: WnUzDsxjy8230-Dy_k
     name: my_first_group
     state: absent
-  delegate_to: localhost
 
-- name: Create Gitlab Group
+- name: "Create Gitlab Group"
   gitlab_group:
-    server_url: https://gitlab.example.com
+    api_url: https://gitlab.example.com/
     validate_certs: True
-    login_user: dj-wasabi
-    login_password: MySecretPassword
+    api_usersername: dj-wasabi
+    api_password: "MySecretPassword"
     name: my_first_group
     path: my_first_group
     state: present
-  delegate_to: localhost
+
+# The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
+- name: "Create Gitlab SubGroup"
+  gitlab_group:
+    api_url: https://gitlab.example.com/
+    validate_certs: True
+    api_usersername: dj-wasabi
+    api_password: "MySecretPassword"
+    name: my_first_group
+    path: my_first_group
+    state: present
+    parent_path: "super_parent/parent"
 '''
 
-RETURN = '''# '''
+RETURN = '''
+msg:
+  description: Success or failure message
+  returned: always
+  type: str
+  sample: "Success"
 
+result:
+  description: json parsed response from the server
+  returned: always
+  type: dict
+
+error:
+  description: the error message returned by the Gitlab API
+  returned: failed
+  type: str
+  sample: "400: path is already in use"
+
+group:
+  description: API object
+  returned: always
+  type: dict
+'''
+
+import os
+import traceback
+
+GITLAB_IMP_ERR = None
 try:
     import gitlab
     HAS_GITLAB_PACKAGE = True
-except:
+except Exception:
+    GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.api import basic_auth_argument_spec
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+
+from ansible.module_utils.gitlab import findGroup
 
 
 class GitLabGroup(object):
-    def __init__(self, module, git):
+    def __init__(self, module, gitlab_instance):
         self._module = module
-        self._gitlab = git
+        self._gitlab = gitlab_instance
+        self.groupObject = None
 
-    def createGroup(self, group_name, group_path):
-        if self._module.check_mode:
-            self._module.exit_json(changed=True)
-        return self._gitlab.creategroup(group_name, group_path)
+    '''
+    @param group Group object
+    '''
+    def getGroupId(self, group):
+        if group is not None:
+            return group.id
+        return None
 
-    def deleteGroup(self, group_name):
-        is_group_empty = True
-        group_id = self.idGroup(group_name)
+    '''
+    @param name Name of the group
+    @param parent Parent group full path
+    @param options Group options
+    '''
+    def createOrUpdateGroup(self, name, parent, options):
+        changed = False
 
-        for project in self._gitlab.getall(self._gitlab.getprojects):
-            owner = project['namespace']['name']
-            if owner == group_name:
-                is_group_empty = False
+        # Because we have already call userExists in main()
+        if self.groupObject is None:
+            parent_id = self.getGroupId(parent)
 
-        if is_group_empty:
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            return self._gitlab.deletegroup(group_id)
+            group = self.createGroup({
+                'name': name,
+                'path': options['path'],
+                'parent_id': parent_id})
+            changed = True
         else:
-            self._module.fail_json(msg="There are still projects in this group. These needs to be moved or deleted before this group can be removed.")
+            changed, group = self.updateGroup(self.groupObject, {
+                'name': name,
+                'description': options['description'],
+                'visibility': options['visibility']})
 
-    def existsGroup(self, group_name):
-        for group in self._gitlab.getall(self._gitlab.getgroups):
-            if group['name'] == group_name:
+        self.groupObject = group
+        if changed:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True, msg="Successfully created or updated the group %s" % name)
+
+            try:
+                group.save()
+            except Exception as e:
+                self._module.fail_json(msg="Failed to update group: %s " % e)
+            return True
+        else:
+            return False
+
+    '''
+    @param arguments Attributs of the group
+    '''
+    def createGroup(self, arguments):
+        if self._module.check_mode:
+            return True
+
+        try:
+            group = self._gitlab.groups.create(arguments)
+        except (gitlab.exceptions.GitlabCreateError) as e:
+            self._module.fail_json(msg="Failed to create group: %s " % to_native(e))
+
+        return group
+
+    '''
+    @param group Group Object
+    @param arguments Attributs of the group
+    '''
+    def updateGroup(self, group, arguments):
+        changed = False
+
+        for arg_key, arg_value in arguments.items():
+            if arguments[arg_key] is not None:
+                if getattr(group, arg_key) != arguments[arg_key]:
+                    setattr(group, arg_key, arguments[arg_key])
+                    changed = True
+
+        return (changed, group)
+
+    def deleteGroup(self):
+        group = self.groupObject
+
+        if len(group.projects.list()) >= 1:
+            self._module.fail_json(
+                msg="There are still projects in this group. These needs to be moved or deleted before this group can be removed.")
+        else:
+            if self._module.check_mode:
                 return True
+
+            try:
+                group.delete()
+            except Exception as e:
+                self._module.fail_json(msg="Failed to delete group: %s " % to_native(e))
+
+    '''
+    @param name Name of the groupe
+    @param full_path Complete path of the Group including parent group path. <parent_path>/<group_path>
+    '''
+    def existsGroup(self, project_identifier):
+        # When group/user exists, object will be stored in self.groupObject.
+        group = findGroup(self._gitlab, project_identifier)
+        if group:
+            self.groupObject = group
+            return True
         return False
 
-    def idGroup(self, group_name):
-        for group in self._gitlab.getall(self._gitlab.getgroups):
-            if group['name'] == group_name:
-                return group['id']
+
+def deprecation_warning(module):
+    deprecated_aliases = ['login_token']
+
+    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
 
 
 def main():
+    argument_spec = basic_auth_argument_spec()
+    argument_spec.update(dict(
+        server_url=dict(type='str', required=True, removed_in_version=2.10),
+        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
+        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
+        api_token=dict(type='str', no_log=True, aliases=["login_token"]),
+        name=dict(type='str', required=True),
+        path=dict(type='str'),
+        description=dict(type='str'),
+        state=dict(type='str', default="present", choices=["absent", "present"]),
+        parent=dict(type='str'),
+        visibility=dict(type='str', default="private", choices=["internal", "private", "public"]),
+    ))
+
     module = AnsibleModule(
-        argument_spec=dict(
-            server_url=dict(required=True),
-            validate_certs=dict(required=False, default=True, type='bool', aliases=['verify_ssl']),
-            login_user=dict(required=False, no_log=True),
-            login_password=dict(required=False, no_log=True),
-            login_token=dict(required=False, no_log=True),
-            name=dict(required=True),
-            path=dict(required=False),
-            state=dict(default="present", choices=["present", "absent"]),
-        ),
-        supports_check_mode=True
+        argument_spec=argument_spec,
+        mutually_exclusive=[
+            ['api_url', 'server_url'],
+            ['api_username', 'login_user'],
+            ['api_password', 'login_password'],
+            ['api_username', 'api_token'],
+            ['api_password', 'api_token'],
+            ['login_user', 'login_token'],
+            ['login_password', 'login_token']
+        ],
+        required_together=[
+            ['api_username', 'api_password'],
+            ['login_user', 'login_password'],
+        ],
+        required_one_of=[
+            ['api_username', 'api_token', 'login_user', 'login_token']
+        ],
+        supports_check_mode=True,
     )
 
-    if not HAS_GITLAB_PACKAGE:
-        module.fail_json(msg="Missing required gitlab module (check docs or "
-                             "install with: pip install pyapi-gitlab")
+    deprecation_warning(module)
 
     server_url = module.params['server_url']
-    verify_ssl = module.params['validate_certs']
     login_user = module.params['login_user']
     login_password = module.params['login_password']
-    login_token = module.params['login_token']
+
+    api_url = module.params['api_url']
+    validate_certs = module.params['validate_certs']
+    api_user = module.params['api_username']
+    api_password = module.params['api_password']
+
+    gitlab_url = server_url if api_url is None else api_url
+    gitlab_user = login_user if api_user is None else api_user
+    gitlab_password = login_password if api_password is None else api_password
+    gitlab_token = module.params['api_token']
+
     group_name = module.params['name']
     group_path = module.params['path']
+    description = module.params['description']
     state = module.params['state']
+    parent_identifier = module.params['parent']
+    group_visibility = module.params['visibility']
 
-    # We need both login_user and login_password or login_token, otherwise we fail.
-    if login_user is not None and login_password is not None:
-        use_credentials = True
-    elif login_token is not None:
-        use_credentials = False
-    else:
-        module.fail_json(msg="No login credentials are given. Use login_user with login_password, or login_token")
+    if not HAS_GITLAB_PACKAGE:
+        module.fail_json(msg=missing_required_lib("python-gitlab"), exception=GITLAB_IMP_ERR)
 
-    # Set group_path to group_name if it is empty.
+    try:
+        gitlab_instance = gitlab.Gitlab(url=gitlab_url, ssl_verify=validate_certs, email=gitlab_user, password=gitlab_password,
+                                        private_token=gitlab_token, api_version=4)
+        gitlab_instance.auth()
+    except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+    except (gitlab.exceptions.GitlabHttpError) as e:
+        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
+            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+
+    # Define default group_path based on group_name
     if group_path is None:
         group_path = group_name.replace(" ", "_")
 
-    # Lets make an connection to the Gitlab server_url, with either login_user and login_password
-    # or with login_token
-    try:
-        if use_credentials:
-            git = gitlab.Gitlab(host=server_url, verify_ssl=verify_ssl)
-            git.login(user=login_user, password=login_password)
-        else:
-            git = gitlab.Gitlab(server_url, token=login_token, verify_ssl=verify_ssl)
-    except Exception as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s " % to_native(e))
+    gitlab_group = GitLabGroup(module, gitlab_instance)
 
-    # Check if user is authorized or not before proceeding to any operations
-    # if not, exit from here
-    auth_msg = git.currentuser().get('message', None)
-    if auth_msg is not None and auth_msg == '401 Unauthorized':
-        module.fail_json(msg='User unauthorized',
-                         details="User is not allowed to access Gitlab server "
-                                 "using login_token. Please check login_token")
+    parent_group = None
+    if parent_identifier:
+        parent_group = findGroup(gitlab_instance, parent_identifier)
+        if not parent_group:
+            module.fail_json(msg="Failed create Gitlab group: Parent group doesn't exists")
 
-    # Validate if group exists and take action based on "state"
-    group = GitLabGroup(module, git)
-    group_name = group_name.lower()
-    group_exists = group.existsGroup(group_name)
-
-    if group_exists and state == "absent":
-        group.deleteGroup(group_name)
-        module.exit_json(changed=True, result="Successfully deleted group %s" % group_name)
+        group_exists = gitlab_group.existsGroup(parent_group.full_path + '/' + group_path)
     else:
-        if state == "absent":
-            module.exit_json(changed=False, result="Group deleted or does not exists")
+        group_exists = gitlab_group.existsGroup(group_path)
+
+    if state == 'absent':
+        if group_exists:
+            gitlab_group.deleteGroup()
+            module.exit_json(changed=True, msg="Successfully deleted group %s" % group_name)
         else:
-            if group_exists:
-                module.exit_json(changed=False)
-            else:
-                if group.createGroup(group_name, group_path):
-                    module.exit_json(changed=True, result="Successfully created or updated the group %s" % group_name)
+            module.exit_json(changed=False, msg="Group deleted or does not exists")
+
+    if state == 'present':
+        if gitlab_group.createOrUpdateGroup(group_name, parent_group, {
+                                            "path": group_path,
+                                            "description": description,
+                                            "visibility": group_visibility}):
+            module.exit_json(changed=True, msg="Successfully created or updated the group %s" % group_name, group=gitlab_group.groupObject._attrs)
+        else:
+            module.exit_json(changed=False, msg="No need to update the group %s" % group_name, group=gitlab_group.groupObject._attrs)
 
 
 if __name__ == '__main__':

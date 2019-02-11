@@ -161,18 +161,11 @@ class AzureCloudEnvironment(CloudEnvironment):
             display.notice('If %s failed due to permissions, the test policy may need to be updated. '
                            'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
 
-    @property
-    def inventory_hosts(self):
-        """
-        :rtype: str | None
-        """
-        return 'azure'
-
 
 def get_config(config_path):
     """
-    :param config_path: str
-    :return: dict[str, str]
+    :type config_path: str
+    :rtype: dict[str, str]
     """
     with open(config_path, 'r') as config_fd:
         lines = [line for line in config_fd.read().splitlines() if ':' in line and line.strip() and not line.strip().startswith('#')]

@@ -1,10 +1,10 @@
 #!powershell
-# Copyright (c) 2017 Artem Zinenko <zinenkoartem@gmail.com>
-# Copyright (c) 2014 Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+
+# Copyright: (c) 2014, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# Copyright: (c) 2017, Artem Zinenko <zinenkoartem@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# WANT_JSON
-# POWERSHELL_COMMON
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 function Parse-ProtocolType {
     param($protocol)
@@ -169,7 +169,7 @@ $diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool"
 $name = Get-AnsibleParam -obj $params -name "name" -failifempty $true
 $description = Get-AnsibleParam -obj $params -name "description" -type "str"
 $direction = Get-AnsibleParam -obj $params -name "direction" -type "str" -failifempty $true -validateset "in","out"
-$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block","bypass"
+$action = Get-AnsibleParam -obj $params -name "action" -type "str" -failifempty $true -validateset "allow","block"
 $program = Get-AnsibleParam -obj $params -name "program" -type "str"
 $service = Get-AnsibleParam -obj $params -name "service" -type "str"
 $enabled = Get-AnsibleParam -obj $params -name "enabled" -type "bool" -default $true -aliases "enable"

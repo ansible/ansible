@@ -1,21 +1,8 @@
 #!/usr/bin/python
-#
-# Copyright 2016 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2016, Red Hat | Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # This is a windows documentation stub.  Actual code lives in the .ps1
 # file of the same name
@@ -24,8 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_path
 version_added: "2.3"
@@ -35,7 +21,8 @@ description:
 options:
   name:
     description:
-      - Target path environment variable name
+      - Target path environment variable name.
+    type: str
     default: PATH
   elements:
     description:
@@ -47,21 +34,19 @@ options:
       - New path elements are appended to the path, and existing path elements may be moved closer to the end to satisfy the requested ordering.
       - Paths are compared in a case-insensitive fashion, and trailing backslashes are ignored for comparison purposes. However, note that trailing
         backslashes in YAML require quotes.
-    required: true
+    type: list
+    required: yes
   state:
     description:
       - Whether the path elements specified in C(elements) should be present or absent.
-    choices:
-      - present
-      - absent
+    type: str
+    choices: [ absent, present ]
   scope:
     description:
       - The level at which the environment variable specified by C(name) should be managed (either for the current user or global machine scope).
-    choices:
-      - machine
-      - user
+    type: str
+    choices: [ machine, user ]
     default: machine
-author: "Matt Davis (@nitzmahone)"
 notes:
    - This module is for modifying indidvidual elements of path-like
      environment variables. For general-purpose management of other
@@ -70,8 +55,12 @@ notes:
      This means that the minority of windows applications which can have
      their environment changed without restarting will not be notified and
      therefore will need restarting to pick up new environment settings.
-     User level environment variables will require an interactive user to
+   - User level environment variables will require an interactive user to
      log out and in again before they become available.
+seealso:
+- module: win_environment
+author:
+- Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = r'''

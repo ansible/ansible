@@ -16,7 +16,7 @@ DOCUMENTATION = """
 ---
 module: dellos6_config
 version_added: "2.2"
-author: "Abirami N(@abirami-n)"
+author: "Abirami N (@abirami-n)"
 short_description: Manage Dell EMC Networking OS6 configuration sections
 description:
   - OS6 configurations use a simple block indent file syntax
@@ -32,17 +32,13 @@ options:
         in the device running-config. Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser. This argument is mutually exclusive with I(src).
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
-      - The ordered set of parents that uniquely identify the section
+      - The ordered set of parents that uniquely identify the section or hierarchy
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -50,8 +46,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory. This argument is
         mutually exclusive with I(lines).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -59,16 +53,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system.
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -79,7 +69,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -90,7 +79,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct.
-    required: false
     default: line
     choices: ['line', 'block']
   update:
@@ -102,7 +90,6 @@ options:
         device running configuration.  When you set this argument to I(check)
         the configuration updates are determined but not actually configured
         on the remote device.
-    required: false
     default: merge
     choices: ['merge', 'check']
   save:
@@ -110,9 +97,8 @@ options:
       - The C(save) argument instructs the module to save the running-
         config to the startup-config at the conclusion of the module
         running.  If check mode is specified, this argument is ignored.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+    type: bool
+    default: 'no'
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -122,18 +108,37 @@ options:
         every task in a playbook.  The I(config) argument allows the
         implementer to pass in the configuration to use as the base
         config for comparison.
-    required: false
-    default: null
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory. If the directory does not exist, it is created.
     type: bool
+    default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -161,6 +166,12 @@ EXAMPLES = """
     before: ['no ip access-list test']
     replace: block
 
+- dellos6_config:
+    lines: ['hostname {{ inventory_hostname }}']
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -186,7 +197,7 @@ saved:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/dellos6_config.2017-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -222,6 +233,10 @@ def get_running_config(module):
 
 def main():
 
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         lines=dict(aliases=['commands'], type='list'),
         parents=dict(type='list'),
@@ -238,7 +253,8 @@ def main():
         update=dict(choices=['merge', 'check'], default='merge'),
         save=dict(type='bool', default=False),
         config=dict(),
-        backup=dict(type='bool', default=False)
+        backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec)
     )
 
     argument_spec.update(dellos6_argument_spec)
@@ -279,7 +295,7 @@ def main():
             commands = dumps(configobjs, 'commands')
             if ((isinstance(module.params['lines'], list)) and
                     (isinstance(module.params['lines'][0], dict)) and
-                    ['prompt', 'answer'].issubset(module.params['lines'][0])):
+                    set(['prompt', 'answer']).issubset(module.params['lines'][0])):
                 cmd = {'command': commands,
                        'prompt': module.params['lines'][0]['prompt'],
                        'answer': module.params['lines'][0]['answer']}
@@ -304,7 +320,7 @@ def main():
         result['changed'] = True
         if not module.check_mode:
                 cmd = {'command': 'copy running-config startup-config',
-                       'prompt': r'\(y/n\)$', 'answer': 'yes'}
+                       'prompt': r'\(y/n\)\s?$', 'answer': 'y'}
                 run_commands(module, [cmd])
                 result['saved'] = True
         else:

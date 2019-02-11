@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_applicationprofile
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of ApplicationProfile Avi RESTful Object
 description:
@@ -63,6 +63,14 @@ options:
             - Specifies if client ip needs to be preserved for backend connection.
             - Not compatible with connection multiplexing.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        type: bool
+    preserve_client_port:
+        description:
+            - Specifies if we need to preserve client port while preseving client ip for backend connections.
+            - Field introduced in 17.2.7.
+            - Default value when not specified in API or module is interpreted by Avi Controller as False.
+        version_added: "2.6"
+        type: bool
     tcp_app_profile:
         description:
             - Specifies the tcp application proxy profile parameters.
@@ -175,6 +183,7 @@ def main():
         http_profile=dict(type='dict',),
         name=dict(type='str', required=True),
         preserve_client_ip=dict(type='bool',),
+        preserve_client_port=dict(type='bool',),
         tcp_app_profile=dict(type='dict',),
         tenant_ref=dict(type='str',),
         type=dict(type='str', required=True),
@@ -190,6 +199,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'applicationprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

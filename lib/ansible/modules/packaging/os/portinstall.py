@@ -37,7 +37,7 @@ options:
     use_packages:
         description:
             - use packages instead of ports whenever available
-        choices: [ 'yes', 'no' ]
+        type: bool
         required: false
         default: yes
 author: "berenddeboer (@berenddeboer)"
@@ -163,7 +163,7 @@ def install_packages(module, packages, use_packages):
             module.run_command("pkg install -y portupgrade")
         portinstall_path = module.get_bin_path('portinstall', True)
 
-    if use_packages == "yes":
+    if use_packages:
         portinstall_params = "--use-packages"
     else:
         portinstall_params = ""

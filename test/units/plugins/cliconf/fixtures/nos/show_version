@@ -1,0 +1,17 @@
+Network Operating System Software
+Network Operating System Version: 7.2.0
+Copyright (c) 1995-2017 Brocade Communications Systems, Inc.
+Firmware name:      7.2.0
+Build Time:         10:52:47 Jul 10, 2017
+Install Time:       01:32:03 Jan  5, 2018
+Kernel:             2.6.34.6
+
+BootProm:           1.0.1
+Control Processor:  e500mc with 4096 MB of memory
+
+Slot    Name    Primary/Secondary Versions                         Status
+---------------------------------------------------------------------------
+SW/0    NOS     7.2.0                                              ACTIVE*
+                7.2.0
+SW/1    NOS     7.2.0                                              STANDBY
+                7.2.0

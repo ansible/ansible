@@ -49,14 +49,11 @@ import sys
 import yaml
 from distutils.version import StrictVersion
 
-try:
-    import json
-except:
-    import simplejson as json
+import json
 
 try:
     import requests
-except:
+except Exception:
     sys.exit('requests package is required for this inventory script')
 
 

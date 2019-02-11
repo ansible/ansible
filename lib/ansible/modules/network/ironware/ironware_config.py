@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: ironware_config
 version_added: "2.5"
 author: "Paul Baker (@paulquack)"
-short_description: Manage configuration sections on Brocade Ironware devices
+short_description: Manage configuration sections on Extreme Ironware devices
 description:
-  - Brocade Ironware configurations use a simple block indent file syntax
+  - Extreme Ironware configurations use a simple block indent file syntax
     for segmenting configuration into sections.  This module provides
     an implementation for working with Ironware configuration sections in
     a deterministic way.
@@ -32,8 +32,6 @@ options:
         in the device running-config.  Be sure to note the configuration
         command syntax as some commands are automatically modified by the
         device config parser.
-    required: false
-    default: null
     aliases: ['commands']
   parents:
     description:
@@ -41,8 +39,6 @@ options:
         the commands should be checked against.  If the parents argument
         is omitted, the commands are checked against the set of top
         level or global commands.
-    required: false
-    default: null
   src:
     description:
       - Specifies the source path to the file that contains the configuration
@@ -50,8 +46,6 @@ options:
         either be the full path on the Ansible control host or a relative
         path from the playbook or role root directory.  This argument is mutually
         exclusive with I(lines), I(parents).
-    required: false
-    default: null
   before:
     description:
       - The ordered set of commands to push on to the command stack if
@@ -59,16 +53,12 @@ options:
         the opportunity to perform configuration commands prior to pushing
         any changes without affecting how the set of commands are matched
         against the system
-    required: false
-    default: null
   after:
     description:
       - The ordered set of commands to append to the end of the command
         stack if a change needs to be made.  Just like with I(before) this
         allows the playbook designer to append a set of commands to be
         executed after the command set.
-    required: false
-    default: null
   match:
     description:
       - Instructs the module on the way to perform the matching of
@@ -79,7 +69,6 @@ options:
         must be an equal match.  Finally, if match is set to I(none), the
         module will not attempt to compare the source configuration with
         the running configuration on the remote device.
-    required: false
     default: line
     choices: ['line', 'strict', 'exact', 'none']
   replace:
@@ -90,7 +79,6 @@ options:
         mode.  If the replace argument is set to I(block) then the entire
         command block is pushed to the device in configuration mode if any
         line is not correct
-    required: false
     default: line
     choices: ['line', 'block']
   update:
@@ -102,7 +90,6 @@ options:
         device running configuration.  When the argument is set to I(check)
         the configuration updates are determined but not actually configured
         on the remote device.
-    required: false
     default: merge
     choices: ['merge', 'check']
   commit:
@@ -112,27 +99,23 @@ options:
         I(merge) the configuration updates are merged with the running-
         config.  If the value is set to I(check), no changes are made to
         the remote host.
-    required: false
     default: merge
     choices: ['merge', 'check']
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
-    required: false
-    default: no
-    choices: ['yes', 'no']
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory.  If the directory does not exist, it is created.
+    type: bool
+    default: 'no'
   config:
     description:
       - The C(config) argument allows the playbook designer to supply
         the base configuration to be used to validate configuration
         changes necessary.  If this argument is provided, the module
         will not download the running-config from the remote node.
-    required: false
-    default: null
   save_when:
     description:
       - When changes are made to the device running-configuration, the
@@ -145,10 +128,31 @@ options:
         the last save to startup-config.  If the argument is set to
         I(never), the running-config will never be copied to the
         startup-config
-    required: false
     default: never
     choices: ['always', 'never', 'modified']
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -170,7 +174,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/ironware_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -235,6 +239,10 @@ def run(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -250,6 +258,7 @@ def main():
         config=dict(),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
         save_when=dict(choices=['always', 'never', 'modified'], default='never')
 
     )

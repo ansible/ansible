@@ -8,102 +8,165 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_epg_to_domain
-short_description: Bind EPGs to Domains on Cisco ACI fabrics (fv:RsDomAtt)
+short_description: Bind EPGs to Domains (fv:RsDomAtt)
 description:
 - Bind EPGs to Physical and Virtual Domains on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:RsDomAtt) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant), C(ap), C(epg), and C(domain) used must exist before using this module in your playbook.
   The M(aci_tenant) M(aci_ap), M(aci_epg) M(aci_domain) modules can be used for this.
 - OpenStack VMM domains must not be created using this module. The OpenStack VMM domain is created directly
   by the Cisco APIC Neutron plugin as part of the installation and configuration.
   This module can be used to query status of an OpenStack VMM domain.
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- module: aci_epg
+- module: aci_domain
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:RsDomAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   allow_useg:
     description:
     - Allows micro-segmentation.
-    - The APIC defaults new EPG to Domain bindings to use C(encap).
+    - The APIC defaults to C(encap) when unset during creation.
+    type: str
     choices: [ encap, useg ]
-    default: encap
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     aliases: [ app_profile, app_profile_name ]
   deploy_immediacy:
     description:
     - Determines when the policy is pushed to hardware Policy CAM.
-    - The APIC defaults new EPG to Domain bindings to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
+    type: str
     choices: [ immediate, lazy ]
-    default: lazy
   domain:
     description:
     - Name of the physical or virtual domain being associated with the EPG.
+    type: str
     aliases: [ domain_name, domain_profile ]
   domain_type:
     description:
-    - Determines if the Domain is physical (phys) or virtual (vmm).
-    choices: [ phys, vmm ]
+    - Specify whether the Domain is a physical (phys), a virtual (vmm) or an L2 external domain association (l2dom).
+    type: str
+    choices: [ l2dom, phys, vmm ]
     aliases: [ type ]
   encap:
     description:
-    - The VLAN encapsulation for the EPG when binding a VMM Domain with static encap_mode.
+    - The VLAN encapsulation for the EPG when binding a VMM Domain with static C(encap_mode).
     - This acts as the secondary encap when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   encap_mode:
     description:
     - The ecapsulataion method to be used.
-    - The APIC defaults new EPG to Domain bindings to C(auto).
+    - The APIC defaults to C(auto) when unset during creation.
+    type: str
     choices: [ auto, vlan, vxlan ]
-    default: auto
   epg:
     description:
     - Name of the end point group.
+    type: str
     aliases: [ epg_name, name ]
   netflow:
     description:
     - Determines if netflow should be enabled.
-    - The APIC defaults new EPG to Domain binings to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   primary_encap:
     description:
     - Determines the primary VLAN ID when using useg.
-    choices: [ range from 1 to 4096 ]
+    - Accepted values range between C(1) and C(4096).
+    type: int
   resolution_immediacy:
     description:
     - Determines when the policies should be resolved and available.
-    - The APIC defaults new EPG to Domain bindings to C(lazy).
+    - The APIC defaults to C(lazy) when unset during creation.
+    type: str
     choices: [ immediate, lazy, pre-provision ]
-    default: lazy
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   vm_provider:
     description:
     - The VM platform for VMM Domains.
     - Support for Kubernetes was added in ACI v3.0.
     - Support for CloudFoundry, OpenShift and Red Hat was added in ACI v3.1.
+    type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add a new physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: present
+  delegate_to: localhost
+
+- name: Remove an existing physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: absent
+  delegate_to: localhost
+
+- name: Query a specific physical domain to EPG binding
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    domain: anstest
+    domain_type: phys
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all domain to EPG bindings
+  aci_epg_to_domain:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
+  delegate_to: localhost
+  register: query_result
+'''
 
 RETURN = r'''
 current:
@@ -137,7 +200,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -186,17 +249,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -206,7 +269,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -228,21 +291,19 @@ def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
         allow_useg=dict(type='str', choices=['encap', 'useg']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        deploy_immediacy=dict(type='str', choices=['immediate', 'on-demand']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),
-        domain_type=dict(type='str', choices=['phys', 'vmm'], aliases=['type']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        deploy_immediacy=dict(type='str', choices=['immediate', 'lazy']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile']),  # Not required for querying all objects
+        domain_type=dict(type='str', choices=['l2dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap=dict(type='int'),
         encap_mode=dict(type='str', choices=['auto', 'vlan', 'vxlan']),
-        epg=dict(type='str', aliases=['name', 'epg_name']),
+        epg=dict(type='str', aliases=['name', 'epg_name']),  # Not required for querying all objects
         netflow=dict(type='raw'),  # Turn into a boolean in v2.9
         primary_encap=dict(type='int'),
         resolution_immediacy=dict(type='str', choices=['immediate', 'lazy', 'pre-provision']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vm_provider=dict(type='str', choices=['cloudfoundry', 'kubernetes', 'microsoft', 'openshift', 'openstack', 'redhat', 'vmware']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -282,13 +343,15 @@ def main():
     state = module.params['state']
     tenant = module.params['tenant']
 
-    if domain_type == 'phys' and vm_provider is not None:
-        module.fail_json(msg="Domain type 'phys' cannot have a 'vm_provider'")
+    if domain_type in ['l2dom', 'phys'] and vm_provider is not None:
+        module.fail_json(msg="Domain type '%s' cannot have a 'vm_provider'" % domain_type)
 
     # Compile the full domain for URL building
     if domain_type == 'vmm':
         epg_domain = 'uni/vmmp-{0}/dom-{1}'.format(VM_PROVIDER_MAPPING[vm_provider], domain)
-    elif domain_type is not None:
+    elif domain_type == 'l2dom':
+        epg_domain = 'uni/l2dom-{0}'.format(domain)
+    elif domain_type == 'phys':
         epg_domain = 'uni/phys-{0}'.format(domain)
     else:
         epg_domain = None
@@ -297,33 +360,32 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvTenant.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class='fvRsDomAtt',
             aci_rn='rsdomAtt-[{0}]'.format(epg_domain),
-            filter_target='eq(fvRsDomAtt.tDn, "{0}")'.format(epg_domain),
             module_object=epg_domain,
+            target_filter={'tDn': epg_domain},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvRsDomAtt',
             class_config=dict(
@@ -337,10 +399,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvRsDomAtt')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -52,7 +52,8 @@ class ActionModule(ActionBase):
             if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
 
-            fragment_content = open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb').read()
+            with open(self._loader.get_real_file(fragment, decrypt=decrypt), 'rb') as fragment_fh:
+                fragment_content = fragment_fh.read()
 
             # always put a newline between fragments if the previous fragment didn't end with a newline.
             if add_newline:
@@ -103,7 +104,7 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(task_vars=task_vars))
+                result.update(self._execute_module(module_name='assemble', task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:
@@ -134,24 +135,18 @@ class ActionModule(ActionBase):
             for opt in ['remote_src', 'regexp', 'delimiter', 'ignore_hidden', 'decrypt']:
                 if opt in new_module_args:
                     del new_module_args[opt]
-
-            new_module_args.update(
-                dict(
-                    dest=dest,
-                    original_basename=os.path.basename(src),
-                )
-            )
+            new_module_args['dest'] = dest
 
             if path_checksum != dest_stat['checksum']:
 
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
-                remote_path = self._connection._shell.join_path(self._connection._shell.tempdir, 'src')
+                remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
                 xfered = self._transfer_file(path, remote_path)
 
                 # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tempdir, remote_path))
+                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
 
                 new_module_args.update(dict(src=xfered,))
 
@@ -165,6 +160,6 @@ class ActionModule(ActionBase):
         except AnsibleAction as e:
             result.update(e.result)
         finally:
-            self._remove_tmp_path(self._connection._shell.tempdir)
+            self._remove_tmp_path(self._connection._shell.tmpdir)
 
         return result

@@ -16,8 +16,8 @@ DOCUMENTATION = '''
 module: os_keystone_domain
 short_description: Manage OpenStack Identity Domains
 author:
-    - Monty
-    - Haneef Ali
+    - Monty Taylor (@emonty)
+    - Haneef Ali (@haneefs)
 extends_documentation_fragment: openstack
 version_added: "2.1"
 description:
@@ -32,13 +32,11 @@ options:
    description:
      description:
         - Description of the domain
-     required: false
-     default: None
    enabled:
      description:
         - Is the domain enabled
-     required: false
-     default: True
+     type: bool
+     default: 'yes'
    state:
      description:
        - Should the resource be present or absent.
@@ -47,10 +45,9 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -76,36 +73,30 @@ domain:
     contains:
         id:
             description: Domain ID.
-            type: string
+            type: str
             sample: "474acfe5-be34-494c-b339-50f06aa143e4"
         name:
             description: Domain name.
-            type: string
+            type: str
             sample: "demo"
         description:
             description: Domain description.
-            type: string
+            type: str
             sample: "Demo Domain"
         enabled:
             description: Domain description.
-            type: boolean
+            type: bool
             sample: True
 
 id:
     description: The domain ID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "474acfe5-be34-494c-b339-50f06aa143e4"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, domain):
@@ -143,16 +134,13 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     name = module.params['name']
     description = module.params['description']
     enabled = module.params['enabled']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.operator_cloud(**module.params)
 
         domains = cloud.search_domains(filters=dict(name=name))
 
@@ -189,7 +177,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

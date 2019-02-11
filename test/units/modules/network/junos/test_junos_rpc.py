@@ -24,7 +24,7 @@ try:
 except ImportError:
     from xml.etree.ElementTree import tostring, fromstring
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.junos import junos_rpc
 from units.modules.utils import set_module_args
 from .junos_module import TestJunosModule, load_fixture
@@ -103,7 +103,7 @@ class TestJunosCommandModule(TestJunosModule):
         result = self.execute_module(format='xml')
         args, kwargs = self.exec_rpc.call_args
         reply = args[1]
-        self.assertTrue(reply.find(b'<interface>em0</interface><media /></get-software-information>'))
+        self.assertTrue(reply.find('<interface>em0</interface><media /></get-software-information>'))
 
     def test_junos_rpc_attrs(self):
         set_module_args(dict(rpc='load-configuration', output='xml', attrs={'url': '/var/tmp/config.conf'}))

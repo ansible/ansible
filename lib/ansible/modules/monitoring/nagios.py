@@ -46,31 +46,25 @@ options:
   host:
     description:
       - Host to operate on in Nagios.
-    required: false
-    default: null
   cmdfile:
     description:
       - Path to the nagios I(command file) (FIFO pipe).
         Only required if auto-detection fails.
-    required: false
     default: auto-detected
   author:
     description:
      - Author to leave downtime comments as.
        Only usable with the C(downtime) action.
-    required: false
     default: Ansible
   comment:
     version_added: "2.0"
     description:
      - Comment for C(downtime) action.
-    required: false
     default: Scheduling downtime
   minutes:
     description:
       - Minutes to schedule downtime for.
       - Only usable with the C(downtime) action.
-    required: false
     default: 30
   services:
     description:

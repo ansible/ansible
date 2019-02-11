@@ -54,7 +54,7 @@ DOCUMENTATION = '''
             default: "{}"
         skip:
             description:
-                - How many results should be skept
+                - How many results should be skipped
             type: integer
         limit:
             description:
@@ -66,7 +66,7 @@ DOCUMENTATION = '''
             type: list
             default: "[]"
     notes:
-        - "Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more detais."
+        - "Please check https://api.mongodb.org/python/current/api/pymongo/collection.html?highlight=find#pymongo.collection.Collection.find for more details."
     requirements:
         - pymongo >= 2.4 (python library)
 '''

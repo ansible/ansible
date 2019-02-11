@@ -1,0 +1,4 @@
+bugfixes:
+- imports - Prevent the name of an import from being addressable as a handler, only the tasks within should
+  be addressable. Use an include instead of an import if you need to execute many tasks from a single handler
+  (https://github.com/ansible/ansible/issues/48936)

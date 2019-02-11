@@ -23,10 +23,10 @@ extends_documentation_fragment:
   - ec2
 options:
     name:
-        description: Name of the Web Application Firewall condition to manage
+        description: Name of the Web Application Firewall condition to manage.
         required: yes
     type:
-        description: the type of matching to perform
+        description: the type of matching to perform.
         choices:
         - byte
         - geo
@@ -37,25 +37,28 @@ options:
         - xss
     filters:
         description:
-        - A list of the filters against which to match
-        - For I(type)=C(byte), valid keys are C(field_to_match), C(position), C(header), C(transformation)
-        - For I(type)=C(geo), the only valid key is C(country)
-        - For I(type)=C(ip), the only valid key is C(ip_address)
-        - For I(type)=C(regex), valid keys are C(field_to_match), C(transformation) and C(regex_pattern)
-        - For I(type)=C(size), valid keys are C(field_to_match), C(transformation), C(comparison) and C(size)
-        - For I(type)=C(sql), valid keys are C(field_to_match) and C(transformation)
-        - For I(type)=C(xss), valid keys are C(field_to_match) and C(transformation)
-        - I(field_to_match) can be one of C(uri), C(query_string), C(header) C(method) and C(body)
-        - If I(field_to_match) is C(header), then C(header) must also be specified
-        - I(transformation) can be one of C(none), C(compress_white_space), C(html_entity_decode), C(lowercase), C(cmd_line), C(url_decode)
-        - I(position), can be one of C(exactly), C(starts_with), C(ends_with), C(contains), C(contains_word),
-        - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT),
-        - I(target_string) is a maximum of 50 bytes
-        - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match
+        - A list of the filters against which to match.
+        - For I(type)=C(byte), valid keys are C(field_to_match), C(position), C(header), C(transformation).
+        - For I(type)=C(geo), the only valid key is C(country).
+        - For I(type)=C(ip), the only valid key is C(ip_address).
+        - For I(type)=C(regex), valid keys are C(field_to_match), C(transformation) and C(regex_pattern).
+        - For I(type)=C(size), valid keys are C(field_to_match), C(transformation), C(comparison) and C(size).
+        - For I(type)=C(sql), valid keys are C(field_to_match) and C(transformation).
+        - For I(type)=C(xss), valid keys are C(field_to_match) and C(transformation).
+        - I(field_to_match) can be one of C(uri), C(query_string), C(header) C(method) and C(body).
+        - If I(field_to_match) is C(header), then C(header) must also be specified.
+        - I(transformation) can be one of C(none), C(compress_white_space), C(html_entity_decode), C(lowercase), C(cmd_line), C(url_decode).
+        - I(position), can be one of C(exactly), C(starts_with), C(ends_with), C(contains), C(contains_word).
+        - I(comparison) can be one of C(EQ), C(NE), C(LE), C(LT), C(GE), C(GT).
+        - I(target_string) is a maximum of 50 bytes.
+        - I(regex_pattern) is a dict with a C(name) key and C(regex_strings) list of strings to match.
     purge_filters:
-        description: Whether to remove existing filters from a condition if not passed in I(filters). Defaults to false
+        description:
+        - Whether to remove existing filters from a condition if not passed in I(filters).
+        default: False
+        type: bool
     state:
-        description: Whether the condition should be C(present) or C(absent)
+        description: Whether the condition should be C(present) or C(absent).
         choices:
         - present
         - absent
@@ -140,12 +143,12 @@ condition:
     condition_id:
       description: type-agnostic ID for the condition
       returned: when state is present
-      type: string
+      type: str
       sample: dd74b1ff-8c06-4a4f-897a-6b23605de413
     byte_match_set_id:
       description: ID for byte match set
       returned: always
-      type: string
+      type: str
       sample: c4882c96-837b-44a2-a762-4ea87dbf812b
     byte_match_tuples:
       description: list of byte match tuples
@@ -159,23 +162,23 @@ condition:
           contains:
             data:
               description: Which specific header (if type is header)
-              type: string
+              type: str
               sample: content-type
             type:
               description: Type of field
-              type: string
+              type: str
               sample: HEADER
         positional_constraint:
           description: Position in the field to match
-          type: string
+          type: str
           sample: STARTS_WITH
         target_string:
           description: String to look for
-          type: string
+          type: str
           sample: Hello
         text_transformation:
           description: Transformation to apply to the field before matching
-          type: string
+          type: str
           sample: NONE
     geo_match_constraints:
       description: List of geographical constraints
@@ -184,16 +187,16 @@ condition:
       contains:
         type:
           description: Type of geo constraint
-          type: string
+          type: str
           sample: Country
         value:
           description: Value of geo constraint (typically a country code)
-          type: string
+          type: str
           sample: AT
     geo_match_set_id:
       description: ID of the geo match set
       returned: when type is geo and state is present
-      type: string
+      type: str
       sample: dd74b1ff-8c06-4a4f-897a-6b23605de413
     ip_set_descriptors:
       description: list of IP address filters
@@ -203,27 +206,27 @@ condition:
         type:
           description: Type of IP address (IPV4 or IPV6)
           returned: always
-          type: string
+          type: str
           sample: IPV4
         value:
           description: IP address
           returned: always
-          type: string
+          type: str
           sample: 10.0.0.0/8
     ip_set_id:
       description: ID of condition
       returned: when type is ip and state is present
-      type: string
+      type: str
       sample: 78ad334a-3535-4036-85e6-8e11e745217b
     name:
       description: Name of condition
       returned: when state is present
-      type: string
+      type: str
       sample: my_waf_condition
     regex_match_set_id:
       description: ID of the regex match set
       returned: when type is regex and state is present
-      type: string
+      type: str
       sample: 5ea3f6a8-3cd3-488b-b637-17b79ce7089c
     regex_match_tuples:
       description: List of regex matches
@@ -237,20 +240,20 @@ condition:
             type:
               description: The field name
               returned: when type is regex and state is present
-              type: string
+              type: str
               sample: QUERY_STRING
         regex_pattern_set_id:
           description: ID of the regex pattern
-          type: string
+          type: str
           sample: 6fdf7f2d-9091-445c-aef2-98f3c051ac9e
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: NONE
     size_constraint_set_id:
       description: ID of the size constraint set
       returned: when type is size and state is present
-      type: string
+      type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     size_constraints:
       description: List of size constraints to apply
@@ -259,7 +262,7 @@ condition:
       contains:
         comparison_operator:
           description: Comparison operator to apply
-          type: string
+          type: str
           sample: GT
         field_to_match:
           description: Field on which the size constraint is applied
@@ -267,7 +270,7 @@ condition:
           contains:
             type:
               description: Field name
-              type: string
+              type: str
               sample: QUERY_STRING
         size:
           description: size to compare against the field
@@ -275,12 +278,12 @@ condition:
           sample: 300
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: NONE
     sql_injection_match_set_id:
       description: ID of the SQL injection match set
       returned: when type is sql and state is present
-      type: string
+      type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     sql_injection_match_tuples:
       description: List of SQL injection match sets
@@ -293,16 +296,16 @@ condition:
           contains:
             type:
               description: Field name
-              type: string
+              type: str
               sample: QUERY_STRING
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: URL_DECODE
     xss_match_set_id:
       description: ID of the XSS match set
       returned: when type is xss and state is present
-      type: string
+      type: str
       sample: de84b4b3-578b-447e-a9a0-0db35c995656
     xss_match_tuples:
       description: List of XSS match sets
@@ -315,11 +318,11 @@ condition:
           contains:
             type:
               description: Field name
-              type: string
+              type: str
               sample: QUERY_STRING
         text_transformation:
           description: transformation applied to the text before matching
-          type: string
+          type: str
           sample: URL_DECODE
 '''
 
@@ -331,7 +334,7 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, AWSRetry, compare_policies
-from ansible.module_utils.aws.waf import get_change_token, MATCH_LOOKUP
+from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, MATCH_LOOKUP
 from ansible.module_utils.aws.waf import get_rule_with_backoff, list_rules_with_backoff
 
 
@@ -397,12 +400,10 @@ class Condition(object):
             kwargs['Updates'].append({'Action': 'INSERT', self.conditiontuple: condition_insert})
 
         kwargs[self.conditionsetid] = condition_set_id
-        kwargs['ChangeToken'] = get_change_token(self.client, self.module)
         return kwargs
 
     def format_for_deletion(self, condition):
-        return {'ChangeToken': get_change_token(self.client, self.module),
-                'Updates': [{'Action': 'DELETE', self.conditiontuple: current_condition_tuple}
+        return {'Updates': [{'Action': 'DELETE', self.conditiontuple: current_condition_tuple}
                             for current_condition_tuple in condition[self.conditiontuples]],
                 self.conditionsetid: condition[self.conditionsetid]}
 
@@ -443,15 +444,17 @@ class Condition(object):
 
         pattern_set = self.get_regex_pattern_by_name(name)
         if not pattern_set:
-            pattern_set = self.client.create_regex_pattern_set(Name=name, ChangeToken=get_change_token(self.client, self.module))['RegexPatternSet']
+            pattern_set = run_func_with_change_token_backoff(self.client, self.module, {'Name': name},
+                                                             self.client.create_regex_pattern_set)['RegexPatternSet']
         missing = set(regex_pattern['regex_strings']) - set(pattern_set['RegexPatternStrings'])
         extra = set(pattern_set['RegexPatternStrings']) - set(regex_pattern['regex_strings'])
         if not missing and not extra:
             return pattern_set
         updates = [{'Action': 'INSERT', 'RegexPatternString': pattern} for pattern in missing]
         updates.extend([{'Action': 'DELETE', 'RegexPatternString': pattern} for pattern in extra])
-        self.client.update_regex_pattern_set(RegexPatternSetId=pattern_set['RegexPatternSetId'],
-                                             Updates=updates, ChangeToken=get_change_token(self.client, self.module))
+        run_func_with_change_token_backoff(self.client, self.module,
+                                           {'RegexPatternSetId': pattern_set['RegexPatternSetId'], 'Updates': updates},
+                                           self.client.update_regex_pattern_set, wait=True)
         return self.get_regex_pattern_set_with_backoff(pattern_set['RegexPatternSetId'])['RegexPatternSet']
 
     def delete_unused_regex_pattern(self, regex_pattern_set_id):
@@ -460,12 +463,16 @@ class Condition(object):
             updates = list()
             for regex_pattern_string in regex_pattern_set['RegexPatternStrings']:
                 updates.append({'Action': 'DELETE', 'RegexPatternString': regex_pattern_string})
-            self.client.update_regex_pattern_set(RegexPatternSetId=regex_pattern_set_id, Updates=updates,
-                                                 ChangeToken=get_change_token(self.client, self.module))
+            run_func_with_change_token_backoff(self.client, self.module,
+                                               {'RegexPatternSetId': regex_pattern_set_id, 'Updates': updates},
+                                               self.client.update_regex_pattern_set)
 
-            self.client.delete_regex_pattern_set(RegexPatternSetId=regex_pattern_set_id,
-                                                 ChangeToken=get_change_token(self.client, self.module))
+            run_func_with_change_token_backoff(self.client, self.module,
+                                               {'RegexPatternSetId': regex_pattern_set_id},
+                                               self.client.delete_regex_pattern_set, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            if e.response['Error']['Code'] == 'WAFNonexistentItemException':
+                return
             self.module.fail_json_aws(e, msg='Could not delete regex pattern')
 
     def get_condition_by_name(self, name):
@@ -535,15 +542,15 @@ class Condition(object):
             func = getattr(self.client, 'update_' + self.method_suffix)
             params = self.format_for_deletion(current_condition)
             try:
-                func(**params)
+                # We do not need to wait for the conditiontuple delete because we wait later for the delete_* call
+                run_func_with_change_token_backoff(self.client, self.module, params, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not delete filters from condition')
         func = getattr(self.client, 'delete_' + self.method_suffix)
         params = dict()
         params[self.conditionsetid] = condition_set_id
-        params['ChangeToken'] = get_change_token(self.client, self.module)
         try:
-            func(**params)
+            run_func_with_change_token_backoff(self.client, self.module, params, func, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             self.module.fail_json_aws(e, msg='Could not delete condition')
         # tidy up regex patterns
@@ -579,7 +586,7 @@ class Condition(object):
             update['Updates'] = missing + extra
             func = getattr(self.client, 'update_' + self.method_suffix)
             try:
-                func(**update)
+                result = run_func_with_change_token_backoff(self.client, self.module, update, func, wait=True)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not update condition')
         return changed, self.get_condition_by_id(condition_set_id)
@@ -592,10 +599,9 @@ class Condition(object):
         else:
             params = dict()
             params['Name'] = name
-            params['ChangeToken'] = get_change_token(self.client, self.module)
             func = getattr(self.client, 'create_' + self.method_suffix)
             try:
-                condition = func(**params)
+                condition = run_func_with_change_token_backoff(self.client, self.module, params, func)
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 self.module.fail_json_aws(e, msg='Could not create condition')
             return self.find_and_update_condition(condition[self.conditionset][self.conditionsetid])

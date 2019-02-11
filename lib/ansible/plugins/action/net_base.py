@@ -28,14 +28,11 @@ from ansible.plugins.action import ActionBase
 from ansible.plugins.action.nxos import ActionModule as _NxosActionModule
 from ansible.plugins.action.eos import ActionModule as _EosActionModule
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
 from imp import find_module, load_module
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 _CLI_ONLY_MODULES = frozenset(['junos_netconf', 'iosxr_netconf', 'iosxr_config', 'iosxr_command'])
 _NETCONF_SUPPORTED_PLATFORMS = frozenset(['junos', 'iosxr'])
@@ -95,7 +92,8 @@ class ActionModule(ActionBase):
         else:
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnecessary when using connection=%s and will be ignored' % play_context.connection)
+                display.warning('provider is unnecessary when using %s and will be ignored' % play_context.connection)
+                del self._task.args['provider']
 
         if play_context.connection == 'network_cli':
             # make sure we are in the right cli context which should be
@@ -110,7 +108,7 @@ class ActionModule(ActionBase):
                 conn.send_command('exit')
 
         if 'fail_on_missing_module' not in self._task.args:
-            self._task.args['fail_on_missing_module'] = False
+            self._task.args['fail_on_missing_module'] = True
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
@@ -149,6 +147,8 @@ class ActionModule(ActionBase):
         display.vvv('using connection plugin %s (was local)' % play_context.connection, play_context.remote_addr)
         connection = self._shared_loader_obj.connection_loader.get('persistent',
                                                                    play_context, sys.stdin)
+
+        connection.set_options(direct={'persistent_command_timeout': play_context.timeout})
 
         socket_path = connection.run()
         display.vvvv('socket_path: %s' % socket_path, play_context.remote_addr)

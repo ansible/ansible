@@ -32,15 +32,13 @@ DOCUMENTATION = """
 """
 
 import subprocess
+
 from ansible.plugins.connection.jail import Connection as Jail
-
+from ansible.module_utils._text import to_native
 from ansible.errors import AnsibleError
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(Jail):
@@ -70,6 +68,13 @@ class Connection(Jail):
                              stderr=subprocess.STDOUT)
 
         stdout, stderr = p.communicate()
+
+        if stdout is not None:
+            stdout = to_native(stdout)
+
+        if stderr is not None:
+            stderr = to_native(stderr)
+
         # otherwise p.returncode would not be set
         p.wait()
 

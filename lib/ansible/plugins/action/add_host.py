@@ -24,12 +24,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class ActionModule(ActionBase):
@@ -48,11 +45,17 @@ class ActionModule(ActionBase):
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))
+
+        if new_name is None:
+            result['failed'] = True
+            result['msg'] = 'name or hostname arg needs to be provided'
+            return result
+
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
         try:
             name, port = parse_address(new_name, allow_ranges=False)
-        except:
+        except Exception:
             # not a parsable hostname, but might still be usable
             name = new_name
             port = None

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -25,7 +25,7 @@ options:
   role_arn:
     description:
       - The Amazon Resource Name (ARN) of the role that the caller is
-        assuming (http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs)
+        assuming U(https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs).
     required: true
   role_session_name:
     description:
@@ -34,31 +34,22 @@ options:
   policy:
     description:
       - Supplemental policy to use in addition to assumed role's policies.
-    required: false
-    default: null
   duration_seconds:
     description:
-      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour).
+      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours).
+        The max depends on the IAM role's sessions duration setting.
         By default, the value is set to 3600 seconds.
-    required: false
-    default: null
   external_id:
     description:
       - A unique identifier that is used by third parties to assume a role in their customers' accounts.
-    required: false
-    default: null
   mfa_serial_number:
     description:
       - The identification number of the MFA device that is associated with the user who is making the AssumeRole call.
-    required: false
-    default: null
   mfa_token:
     description:
       - The value provided by the MFA device, if the trust policy of the role being assumed requires MFA.
-    required: false
-    default: null
 notes:
-  - In order to use the assumed role in a following playbook task you must pass the access_key, access_secret and access_token
+  - In order to use the assumed role in a following playbook task you must pass the access_key, access_secret and access_token.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -94,7 +85,7 @@ changed:
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
-# Assume an existing role (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
+# Assume an existing role (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
 sts_assume_role:
   role_arn: "arn:aws:iam::123456789012:role/someRole"
   role_session_name: "someRoleSession"

@@ -30,69 +30,51 @@ options:
   profile:
     description:
       - Sets the user's profile.
-    required: false
-    default: null
   resource_pool:
     description:
       - Sets the user's resource pool.
-    required: false
-    default: null
   password:
     description:
       - The user's password encrypted by the MD5 algorithm.
       - The password must be generated with the format C("md5" + md5[password + username]),
         resulting in a total of 35 characters. An easy way to do this is by querying
         the Vertica database with select 'md5'||md5('<user_password><user_name>').
-    required: false
-    default: null
   expired:
     description:
       - Sets the user's password expiration.
-    required: false
-    default: null
+    type: bool
   ldap:
     description:
       - Set to true if users are authenticated via LDAP.
       - The user will be created with password expired and set to I($ldap$).
-    required: false
-    default: null
+    type: bool
   roles:
     description:
       - Comma separated list of roles to assign to the user.
     aliases: ['role']
-    required: false
-    default: null
   state:
     description:
       - Whether to create C(present), drop C(absent) or lock C(locked) a user.
-    required: false
     choices: ['present', 'absent', 'locked']
     default: present
   db:
     description:
       - Name of the Vertica database.
-    required: false
-    default: null
   cluster:
     description:
       - Name of the Vertica cluster.
-    required: false
     default: localhost
   port:
     description:
       - Vertica cluster port to connect to.
-    required: false
     default: 5433
   login_user:
     description:
       - The username used to authenticate with.
-    required: false
     default: dbadmin
   login_password:
     description:
       - The password used to authenticate with.
-    required: false
-    default: null
 notes:
   - The default authentication assumes that you are either logging in as or sudo'ing
     to the C(dbadmin) account on the host.
@@ -120,14 +102,16 @@ EXAMPLES = """
 """
 import traceback
 
+PYODBC_IMP_ERR = None
 try:
     import pyodbc
 except ImportError:
+    PYODBC_IMP_ERR = traceback.format_exc()
     pyodbc_found = False
 else:
     pyodbc_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -319,7 +303,7 @@ def main():
         ), supports_check_mode=True)
 
     if not pyodbc_found:
-        module.fail_json(msg="The python pyodbc module is required.")
+        module.fail_json(msg=missing_required_lib('pyodbc'), exception=PYODBC_IMP_ERR)
 
     user = module.params['user']
     profile = module.params['profile']

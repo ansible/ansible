@@ -8,16 +8,18 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_interface_policy_port_channel
-short_description: Manage port channel interface policies on Cisco ACI fabrics (lacp:LagPol)
+short_description: Manage port channel interface policies (lacp:LagPol)
 description:
 - Manage port channel interface policies on Cisco ACI fabrics.
-- More information from the internal APIC class I(lacp:LagPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(lacp:LagPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
@@ -25,75 +27,73 @@ options:
   port_channel:
     description:
     - Name of the port channel.
-    required: true
+    type: str
+    required: yes
     aliases: [ name ]
   description:
     description:
     - The description for the port channel.
+    type: str
     aliases: [ descr ]
   max_links:
     description:
-    - Maximum links (range 1-16).
-    - The APIC defaults new Port Channel Policies to C(16).
-    choices: [ Ranges from 1 to 16 ]
-    default: 16
+    - Maximum links.
+    - Accepted values range between 1 and 16.
+    - The APIC defaults to C(16) when unset during creation.
+    type: int
   min_links:
     description:
-    - Minimum links (range 1-16).
-    - The APIC defaults new Port Channel Policies to C(1).
-    choices: [ Ranges from 1 to 16 ]
-    default: 1
+    - Minimum links.
+    - Accepted values range between 1 and 16.
+    - The APIC defaults to C(1) when unset during creation.
+    type: int
   mode:
     description:
     - Port channel interface policy mode.
     - Determines the LACP method to use for forming port-channels.
-    - The APIC defaults new Port Channel Polices to C(off).
-    choices: [ active, mac-pin, mac-pin-nicload, off, passive ]
-    default: off
+    - The APIC defaults to C(off) when unset during creation.
+    type: str
+    choices: [ active, mac-pin, mac-pin-nicload, 'off', passive ]
   fast_select:
     description:
     - Determines if Fast Select is enabled for Hot Standby Ports.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(true).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: true
   graceful_convergence:
     description:
     - Determines if Graceful Convergence is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(true).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: true
   load_defer:
     description:
     - Determines if Load Defer is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(false).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: false
   suspend_individual:
     description:
     - Determines if Suspend Individual is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(true).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: true
   symmetric_hash:
     description:
     - Determines if Symmetric Hashing is enabled.
     - This makes up the LACP Policy Control Policy; if one setting is defined, then all other Control Properties
       left undefined or set to false will not exist after the task is ran.
-    - The APIC defaults new LACP Policies to C(false).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: false
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -109,6 +109,7 @@ EXAMPLES = r'''
     min_links: '{{ min_links }}'
     max_links: '{{ max_links }}'
     mode: '{{ mode }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -143,7 +144,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -192,17 +193,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -212,7 +213,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -234,8 +235,6 @@ def main():
         suspend_individual=dict(type='bool'),
         symmetric_hash=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -280,15 +279,14 @@ def main():
         root_class=dict(
             aci_class='lacpLagPol',
             aci_rn='infra/lacplagp-{0}'.format(port_channel),
-            filter_target='eq(lacpLagPol.name, "{0}")'.format(port_channel),
             module_object=port_channel,
+            target_filter={'name': port_channel},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='lacpLagPol',
             class_config=dict(
@@ -301,10 +299,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='lacpLagPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

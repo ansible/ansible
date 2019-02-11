@@ -43,15 +43,12 @@
 import argparse
 import os.path
 import sys
-from collections import MutableSequence
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 import paramiko
 
+from ansible.module_utils.common._collections_compat import MutableSequence
 
 SSH_CONF = '~/.ssh/config'
 

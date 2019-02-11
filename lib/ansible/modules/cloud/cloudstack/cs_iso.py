@@ -40,102 +40,77 @@ options:
     description:
       - Display text of the ISO.
       - If not specified, C(name) will be used.
-    required: false
-    default: null
     version_added: "2.4"
   url:
     description:
       - URL where the ISO can be downloaded from. Required if C(state) is present.
-    required: false
-    default: null
   os_type:
     description:
       - Name of the OS that best represents the OS of this ISO. If the iso is bootable this parameter needs to be passed. Required if C(state) is present.
-    required: false
-    default: null
   is_ready:
     description:
-      - This flag is used for searching existing ISOs. If set to C(true), it will only list ISO ready for deployment e.g.
-        successfully downloaded and installed. Recommended to set it to C(false).
-    required: false
-    default: false
+      - This flag is used for searching existing ISOs. If set to C(yes), it will only list ISO ready for deployment e.g.
+        successfully downloaded and installed. Recommended to set it to C(no).
+    type: bool
+    default: no
   is_public:
     description:
       - Register the ISO to be publicly available to all users. Only used if C(state) is present.
-    required: false
-    default: null
   is_featured:
     description:
       - Register the ISO to be featured. Only used if C(state) is present.
-    required: false
-    default: null
+    type: bool
   is_dynamically_scalable:
     description:
       - Register the ISO having XS/VMWare tools installed inorder to support dynamic scaling of VM cpu/memory. Only used if C(state) is present.
-    required: false
-    default: null
+    type: bool
   checksum:
     description:
       - The MD5 checksum value of this ISO. If set, we search by checksum instead of name.
-    required: false
-    default: null
   bootable:
     description:
       - Register the ISO to be bootable. Only used if C(state) is present.
-    required: false
-    default: null
+    type: bool
   domain:
     description:
       - Domain the ISO is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the ISO is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the ISO to be registered in.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone you wish the ISO to be registered or deleted from.
       - If not specified, first zone found will be used.
-    required: false
-    default: null
   cross_zones:
     description:
       - Whether the ISO should be synced or removed across zones.
       - Mutually exclusive with C(zone).
-    required: false
-    default: false
+    type: bool
+    default: 'no'
     version_added: "2.4"
   iso_filter:
     description:
       - Name of the filter used to search for the ISO.
-    required: false
     default: 'self'
     choices: [ 'featured', 'self', 'selfexecutable','sharedexecutable','executable', 'community' ]
   state:
     description:
       - State of the ISO.
-    required: false
     default: 'present'
     choices: [ 'present', 'absent' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
     version_added: "2.3"
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "To delete all tags, set a empty list e.g. C(tags: [])."
-    required: false
-    default: null
     aliases: [ 'tag' ]
     version_added: "2.4"
 extends_documentation_fragment: cloudstack
@@ -176,93 +151,93 @@ RETURN = '''
 id:
   description: UUID of the ISO.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the ISO.
   returned: success
-  type: string
+  type: str
   sample: Debian 7 64-bit
 display_text:
   description: Text to be displayed of the ISO.
   returned: success
-  type: string
+  type: str
   sample: Debian 7.7 64-bit minimal 2015-03-19
 zone:
   description: Name of zone the ISO is registered in.
   returned: success
-  type: string
+  type: str
   sample: zuerich
 status:
   description: Status of the ISO.
   returned: success
-  type: string
+  type: str
   sample: Successfully Installed
 is_ready:
   description: True if the ISO is ready to be deployed from.
   returned: success
-  type: boolean
+  type: bool
   sample: true
 is_public:
   description: True if the ISO is public.
   returned: success
-  type: boolean
+  type: bool
   sample: true
   version_added: "2.4"
 bootable:
   description: True if the ISO is bootable.
   returned: success
-  type: boolean
+  type: bool
   sample: true
   version_added: "2.4"
 is_featured:
   description: True if the ISO is featured.
   returned: success
-  type: boolean
+  type: bool
   sample: true
   version_added: "2.4"
 format:
   description: Format of the ISO.
   returned: success
-  type: string
+  type: str
   sample: ISO
   version_added: "2.4"
 os_type:
   description: Typo of the OS.
   returned: success
-  type: string
+  type: str
   sample: CentOS 6.5 (64-bit)
   version_added: "2.4"
 checksum:
   description: MD5 checksum of the ISO.
   returned: success
-  type: string
+  type: str
   sample: 0b31bccccb048d20b551f70830bb7ad0
 created:
   description: Date of registering.
   returned: success
-  type: string
+  type: str
   sample: 2015-03-29T14:57:06+0200
 cross_zones:
   description: true if the ISO is managed across all zones, false otherwise.
   returned: success
-  type: boolean
+  type: bool
   sample: false
   version_added: "2.4"
 domain:
   description: Domain the ISO is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the ISO is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Project the ISO is related to.
   returned: success
-  type: string
+  type: str
   sample: example project
 tags:
   description: List of resource tags associated with the ISO.
@@ -324,11 +299,11 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
             args['zoneid'] = -1
 
         if args['bootable'] and not args['ostypeid']:
-            self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
+            self.module.fail_json(msg="OS type 'os_type' is required if 'bootable=true'.")
 
         args['url'] = self.module.params.get('url')
         if not args['url']:
-            self.module.fail_json(msg="URL is requried.")
+            self.module.fail_json(msg="URL is required.")
 
         self.result['changed'] = True
         if not self.module.check_mode:

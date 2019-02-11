@@ -15,58 +15,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
- - include: 'apt.yml'
-   when: ansible_distribution in ('Ubuntu', 'Debian')
+- block:
+  - include: 'apt.yml'
 
- - include: 'apt-multiarch.yml'
-   when: ansible_distribution in ('Ubuntu', 'Debian') and ansible_userspace_architecture != apt_foreign_arch
+  - include: 'apt-multiarch.yml'
+    when:
+      - ansible_userspace_architecture != apt_foreign_arch
 
- - include: 'apt-builddep.yml'
-   when: ansible_distribution in ('Ubuntu', 'Debian')
+  - include: 'apt-builddep.yml'
 
- - include: upgrade.yml upgrade_type=dist
-   when: ansible_distribution in ('Ubuntu', 'Debian')
+  - block:
+      - include: 'repo.yml'
+    always:
+      - file:
+          path: /etc/apt/sources.list.d/file_tmp_repo.list
+          state: absent
+      - file:
+          name: "{{ repodir }}"
+          state: absent
 
- - name: Check if aptitude is installed
-   command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
-   register: aptitude_status
-   when: ansible_distribution in ('Ubuntu', 'Debian')
-
- - debug: var=aptitude_status.stdout
-
- - name: Remove aptitude, if installed, to test fall-back to apt-get
-   apt:
-     pkg: aptitude
-     state: absent
-   when:
-     - aptitude_status.stdout.find('ii') != -1
-
- - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
-   when:
-     - ansible_distribution in ('Ubuntu', 'Debian')
-   with_items:
-     - { upgrade_type: safe, force_apt_get: False }
-     - { upgrade_type: full, force_apt_get: False }
-     - { upgrade_type: safe, force_apt_get: True }
-     - { upgrade_type: full, force_apt_get: True }
-
- - name: (Re-)Install aptitude, run same tests again
-   apt:
-     pkg: aptitude
-     state: present
-
- - include: upgrade.yml upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}
-   when:
-     - ansible_distribution in ('Ubuntu', 'Debian')
-   with_items:
-     - { upgrade_type: safe, force_apt_get: False }
-     - { upgrade_type: full, force_apt_get: False }
-     - { upgrade_type: safe, force_apt_get: True }
-     - { upgrade_type: full, force_apt_get: True }
-
- - name: Remove aptitude if not originally present
-   apt:
-     pkg: aptitude
-     state: absent
-   when:
-     - aptitude_status.stdout.find('ii') == -1
+  when:
+    - ansible_distribution in ('Ubuntu', 'Debian')

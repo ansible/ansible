@@ -28,28 +28,23 @@ options:
   password:
     description:
       - set the user's password.
-    required: false
-    default: null
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "2.0"
   host:
     description:
       - the 'host' part of the MySQL username
-    required: false
     default: localhost
   host_all:
     description:
       - override the host option, making ansible apply changes to
         all hostnames for a given user.  This option cannot be used
         when creating users
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "2.1"
   priv:
     description:
@@ -62,39 +57,32 @@ options:
         exactly as returned by a C(SHOW GRANT) statement. If not followed,
         the module will always report changes. It includes grouping columns
         by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
-    required: false
-    default: null
   append_privs:
     description:
       - Append the privileges defined by priv to the existing ones for this
         user instead of overwriting existing ones.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "1.4"
   sql_log_bin:
     description:
       - Whether binary logging should be enabled or disabled for the connection.
-    required: false
-    choices: ["yes", "no" ]
-    default: "yes"
+    type: bool
+    default: 'yes'
     version_added: "2.1"
   state:
     description:
       - Whether the user should exist.  When C(absent), removes
         the user.
-    required: false
     default: present
     choices: [ "present", "absent" ]
   check_implicit_admin:
     description:
       - Check if mysql allows login as root/nopassword before trying supplied credentials.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
+    type: bool
+    default: 'no'
     version_added: "1.3"
   update_password:
-    required: false
     default: always
     choices: ['always', 'on_create']
     version_added: "2.0"
@@ -208,16 +196,9 @@ import re
 import string
 import traceback
 
-try:
-    import MySQLdb
-except ImportError:
-    mysqldb_found = False
-else:
-    mysqldb_found = True
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
-from ansible.module_utils.mysql import mysql_connect, mysqldb_found
+from ansible.module_utils.mysql import mysql_connect, mysql_driver, mysql_driver_fail_msg
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
@@ -446,14 +427,14 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("GRANT (.+) ON (.+) TO '.*'@'.*'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
+        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\5)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
         privileges = [pick(x) for x in privileges]
-        if "WITH GRANT OPTION" in res.group(4):
+        if "WITH GRANT OPTION" in res.group(7):
             privileges.append('GRANT')
-        if "REQUIRE SSL" in res.group(4):
+        if "REQUIRE SSL" in res.group(7):
             privileges.append('REQUIRESSL')
         db = res.group(2)
         output[db] = privileges
@@ -480,12 +461,20 @@ def privileges_unpack(priv, mode):
     for item in priv.strip().split('/'):
         pieces = item.strip().rsplit(':', 1)
         dbpriv = pieces[0].rsplit(".", 1)
+
+        # Check for FUNCTION or PROCEDURE object types
+        parts = dbpriv[0].split(" ", 1)
+        object_type = ''
+        if len(parts) > 1 and (parts[0] == 'FUNCTION' or parts[0] == 'PROCEDURE'):
+            object_type = parts[0] + ' '
+            dbpriv[0] = parts[1]
+
         # Do not escape if privilege is for database or table, i.e.
         # neither quote *. nor .*
         for i, side in enumerate(dbpriv):
             if side.strip('`') != '*':
                 dbpriv[i] = '%s%s%s' % (quote, side.strip('`'), quote)
-        pieces[0] = '.'.join(dbpriv)
+        pieces[0] = object_type + '.'.join(dbpriv)
 
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
@@ -590,8 +579,8 @@ def main():
     db = 'mysql'
     sql_log_bin = module.params["sql_log_bin"]
 
-    if not mysqldb_found:
-        module.fail_json(msg="The MySQL-python module is required.")
+    if mysql_driver is None:
+        module.fail_json(msg=mysql_driver_fail_msg)
 
     cursor = None
     try:
@@ -599,7 +588,7 @@ def main():
             try:
                 cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db,
                                        connect_timeout=connect_timeout)
-            except:
+            except Exception:
                 pass
 
         if not cursor:
@@ -630,14 +619,14 @@ def main():
                 else:
                     changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
+            except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
         else:
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
                 changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
+            except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):

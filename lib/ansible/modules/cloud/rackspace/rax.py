@@ -25,10 +25,8 @@ options:
       - Whether or not to increment a single number with the name of the
         created servers. Only applicable when used with the I(group) attribute
         or meta key.
-    default: yes
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'yes'
     version_added: 1.5
   boot_from_volume:
     description:
@@ -36,10 +34,8 @@ options:
         If C(yes) and I(image) is specified a new volume will be created at
         boot time. I(boot_volume_size) is required with I(image) to create a
         new volume at boot time.
-    default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
     version_added: 1.9
   boot_volume:
     description:
@@ -56,15 +52,14 @@ options:
     description:
       - Whether the I(boot_volume) or newly created volume from I(image) will
         be terminated when the server is terminated
-    default: false
+    type: bool
+    default: 'no'
     version_added: 1.9
   config_drive:
     description:
       - Attach read-only configuration drive to server as label config-2
-    default: no
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
     version_added: 1.7
   count:
     description:
@@ -91,10 +86,8 @@ options:
         the servers matched, servers will be deleted to match the count. If
         the number of matched servers is fewer than specified in I(count)
         additional servers will be added.
-    default: no
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
     version_added: 1.4
   extra_client_args:
     description:
@@ -110,11 +103,9 @@ options:
   files:
     description:
       - Files to insert into the instance. remotefilename:localcontent
-    default: null
   flavor:
     description:
       - flavor to use for the instance
-    default: null
   group:
     description:
       - host group to assign to server, is also used for idempotent operations
@@ -125,7 +116,6 @@ options:
       - image to use for the instance. Can be an C(id), C(human_id) or C(name).
         With I(boot_from_volume), a Cloud Block Storage volume will be created
         with this image
-    default: null
   instance_ids:
     description:
       - list of instance ids, currently only used when state='absent' to
@@ -134,17 +124,14 @@ options:
   key_name:
     description:
       - key pair to use on the instance
-    default: null
     aliases:
       - keypair
   meta:
     description:
       - A hash of metadata to associate with the instance
-    default: null
   name:
     description:
       - Name to give the instance
-    default: null
   networks:
     description:
       - The network to attach to the instances. If specified, you must include
@@ -169,16 +156,14 @@ options:
   wait:
     description:
       - wait for the instance to be in state 'running' before returning
-    default: "no"
-    choices:
-      - "yes"
-      - "no"
+    type: bool
+    default: 'no'
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
 author:
-    - "Jesse Keating (@j2sol)"
+    - "Jesse Keating (@omgjlk)"
     - "Matt Martz (@sivel)"
 notes:
   - I(exact_count) can be "destructive" if the number of running servers in
@@ -347,7 +332,7 @@ def create(module, names=None, flavor=None, image=None, meta=None, key_name=None
             for server in servers:
                 try:
                     server.get()
-                except:
+                except Exception:
                     server.status = 'ERROR'
 
             if not filter(lambda s: s.status not in FINAL_STATUSES,
@@ -361,7 +346,7 @@ def create(module, names=None, flavor=None, image=None, meta=None, key_name=None
     for server in servers:
         try:
             server.get()
-        except:
+        except Exception:
             server.status = 'ERROR'
         instance = rax_to_dict(server, 'server')
         if server.status == 'ACTIVE' or not wait:
@@ -433,7 +418,7 @@ def delete(module, instance_ids=None, wait=True, wait_timeout=300, kept=None):
                 instance_id = server.id
                 try:
                     server.get()
-                except:
+                except Exception:
                     instances[instance_id]['status'] = 'DELETED'
                     instances[instance_id]['rax_status'] = 'DELETED'
 

@@ -28,12 +28,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_proxy
-short_description: Zabbix proxy creates/deletes/gets/updates
+short_description: Create/delete/get/update Zabbix proxies
 description:
    - This module allows you to create, modify, get and delete Zabbix proxy entries.
 version_added: "2.5"
 author:
-    - "Alen Komic"
+    - "Alen Komic (@akomic)"
 requirements:
     - "python >= 2.6"
     - "zabbix-api >= 0.5.3"
@@ -44,7 +44,7 @@ options:
         required: true
     description:
         description:
-            - Description of the proxy..
+            - Description of the proxy.
         required: false
     status:
         description:
@@ -102,7 +102,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-- name: Create a new proxy or update an existing proxies info
+- name: Create a new proxy or update an existing proxy
   local_action:
     module: zabbix_proxy
     server_url: http://monitor.example.com
@@ -259,7 +259,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module" +
+        module.fail_json(msg="Missing required zabbix-api module" +
                              " (check docs or install with:" +
                              " pip install zabbix-api)")
 

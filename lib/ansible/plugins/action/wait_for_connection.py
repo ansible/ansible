@@ -22,13 +22,11 @@ __metaclass__ = type
 import time
 from datetime import datetime, timedelta
 
+from ansible.module_utils._text import to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class TimedOutException(Exception):
@@ -37,6 +35,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
+    _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout'))
 
     DEFAULT_CONNECT_TIMEOUT = 5
     DEFAULT_DELAY = 0
@@ -54,11 +53,12 @@ class ActionModule(ActionBase):
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
             except Exception as e:
+                error = e  # PY3 compatibility to store exception for use outside of this block
                 if what_desc:
                     display.debug("wait_for_connection: %s fail (expected), retrying in %d seconds..." % (what_desc, sleep))
                 time.sleep(sleep)
 
-        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, e))
+        raise TimedOutException("timed out waiting for %s: %s" % (what_desc, error))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -81,7 +81,7 @@ class ActionModule(ActionBase):
             display.vvv("wait_for_connection: attempting ping module test")
             # call connection reset between runs if it's there
             try:
-                self._connection._reset()
+                self._connection.reset()
             except AttributeError:
                 pass
 
@@ -110,7 +110,7 @@ class ActionModule(ActionBase):
 
         except TimedOutException as e:
             result['failed'] = True
-            result['msg'] = str(e)
+            result['msg'] = to_text(e)
 
         elapsed = datetime.now() - start
         result['elapsed'] = elapsed.seconds

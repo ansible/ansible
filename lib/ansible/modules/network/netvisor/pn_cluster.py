@@ -71,7 +71,7 @@ options:
   pn_validate:
     description:
       - Validate the inter-switch links and state of switches in the cluster.
-    choices: ['validate', 'no-validate']
+    type: bool
 """
 
 EXAMPLES = """
@@ -111,6 +111,9 @@ changed:
 """
 
 import shlex
+
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
 
 NAME_EXISTS = None
 NODE1_EXISTS = None
@@ -310,8 +313,6 @@ def main():
 
     run_cli(module, cli)
 
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
 
 if __name__ == '__main__':
     main()

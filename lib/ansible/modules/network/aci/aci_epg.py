@@ -8,73 +8,84 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_epg
-short_description: Manage End Point Groups (EPG) on Cisco ACI fabrics (fv:AEPg)
+short_description: Manage End Point Groups (EPG) objects (fv:AEPg)
 description:
 - Manage End Point Groups (EPG) on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:AEPg) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Swetha Chunduri (@schunduri)
-version_added: '2.4'
 notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_ap) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:AEPg).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
+version_added: '2.4'
 options:
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     required: yes
     aliases: [ app_profile, app_profile_name ]
   epg:
     description:
     - Name of the end point group.
+    type: str
     required: yes
-    aliases: [ name, epg_name ]
+    aliases: [ epg_name, name ]
   bd:
     description:
     - Name of the bridge domain being associated with the EPG.
-    required: yes
+    type: str
     aliases: [ bd_name, bridge_domain ]
   priority:
     description:
-    - QoS class.
+    - The QoS class.
+    - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   intra_epg_isolation:
     description:
-    - Intra EPG Isolation.
+    - The Intra EPG Isolation.
+    - The APIC defaults to C(unenforced) when unset during creation.
+    type: str
     choices: [ enforced, unenforced ]
-    default: unenforced
   description:
     description:
     - Description for the EPG.
+    type: str
     aliases: [ descr ]
   fwd_control:
     description:
     - The forwarding control used by the EPG.
-    - The APIC defaults new EPGs to C(none).
+    - The APIC defaults to C(none) when unset during creation.
+    type: str
     choices: [ none, proxy-arp ]
-    default: none
   preferred_group:
     description:
     - Whether ot not the EPG is part of the Preferred Group and can communicate without contracts.
     - This is very convenient for migration scenarios, or when ACI is used for network automation but not for policy.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
     version_added: '2.5'
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -92,6 +103,8 @@ EXAMPLES = r'''
     description: Web Intranet EPG
     bd: prod_bd
     preferred_group: yes
+    state: present
+  delegate_to: localhost
 
 - aci_epg:
     host: apic
@@ -105,6 +118,7 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
+  delegate_to: localhost
   with_items:
     - epg: web
       bd: web_bd
@@ -116,11 +130,12 @@ EXAMPLES = r'''
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: false
+    validate_certs: no
     tenant: production
     app_profile: intranet
     epg: web_epg
     state: absent
+  delegate_to: localhost
 
 - name: Query an EPG
   aci_epg:
@@ -131,6 +146,8 @@ EXAMPLES = r'''
     ap: ticketing
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs
   aci_epg:
@@ -138,24 +155,30 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs with a Specific Name
   aci_epg:
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: false
+    validate_certs: no
     epg: web_epg
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPGs of an App Profile
   aci_epg:
     host: apic
     username: admin
     password: SomeSecretPassword
-    validate_certs: false
+    validate_certs: no
     ap: ticketing
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -190,7 +213,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -239,17 +262,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -259,7 +282,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -270,18 +293,16 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        epg=dict(type='str', aliases=['name', 'epg_name']),
+        epg=dict(type='str', aliases=['epg_name', 'name']),  # Not required for querying all objects
         bd=dict(type='str', aliases=['bd_name', 'bridge_domain']),
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        tenant=dict(type='str', aliases=['tenant_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
         intra_epg_isolation=dict(choices=['enforced', 'unenforced']),
         fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
         preferred_group=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -310,20 +331,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         child_classes=['fvRsBd'],
     )
@@ -331,7 +352,6 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class='fvAEPg',
             class_config=dict(
@@ -342,15 +362,17 @@ def main():
                 fwdCtrl=fwd_control,
                 prefGrMemb=preferred_group,
             ),
-            child_configs=[
-                dict(fvRsBd=dict(attributes=dict(tnFvBDName=bd))),
-            ],
+            child_configs=[dict(
+                fvRsBd=dict(
+                    attributes=dict(
+                        tnFvBDName=bd,
+                    ),
+                ),
+            )],
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAEPg')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

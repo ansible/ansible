@@ -20,7 +20,9 @@ module: os_stack
 short_description: Add/Remove Heat Stack
 extends_documentation_fragment: openstack
 version_added: "2.2"
-author: "Mathieu Bultel (matbu), Steve Baker (steveb)"
+author:
+  - "Mathieu Bultel (@matbu)"
+  - "Steve Baker (@steveb)"
 description:
    - Add or Remove a Stack to an OpenStack Heat
 options:
@@ -28,7 +30,6 @@ options:
       description:
         - Indicate desired state of the resource
       choices: ['present', 'absent']
-      required: false
       default: present
     name:
       description:
@@ -37,41 +38,31 @@ options:
     tag:
       description:
         - Tag for the stack that should be created, name could be char and digit, no space
-      required: false
-      default: None
       version_added: "2.5"
     template:
       description:
         - Path of the template file to use for the stack creation
-      required: false
-      default: None
     environment:
       description:
         - List of environment files that should be used for the stack creation
-      required: false
-      default: None
     parameters:
       description:
         - Dictionary of parameters for the stack creation
-      required: false
-      default: None
     rollback:
       description:
         - Rollback stack creation
-      required: false
-      default: false
+      type: bool
+      default: 'yes'
     timeout:
       description:
         - Maximum number of seconds to wait for the stack creation
-      required: false
       default: 3600
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 EXAMPLES = '''
 ---
@@ -101,7 +92,7 @@ EXAMPLES = '''
 RETURN = '''
 id:
     description: Stack ID.
-    type: string
+    type: str
     sample: "97a3f543-8136-4570-920e-fd7605c989d6"
     returned: always
 
@@ -112,27 +103,27 @@ stack:
     contains:
         action:
             description: Action, could be Create or Update.
-            type: string
+            type: str
             sample: "CREATE"
         creation_time:
             description: Time when the action has been made.
-            type: string
+            type: str
             sample: "2016-07-05T17:38:12Z"
         description:
             description: Description of the Stack provided in the heat template.
-            type: string
+            type: str
             sample: "HOT template to create a new instance and networks"
         id:
             description: Stack ID.
-            type: string
+            type: str
             sample: "97a3f543-8136-4570-920e-fd7605c989d6"
         name:
             description: Name of the Stack
-            type: string
+            type: str
             sample: "test-stack"
         identifier:
             description: Identifier of the current Stack action.
-            type: string
+            type: str
             sample: "test-stack/97a3f543-8136-4570-920e-fd7605c989d6"
         links:
             description: Links to the current Stack.
@@ -158,19 +149,12 @@ stack:
                         'updated_time': null}"
 '''
 
-from distutils.version import StrictVersion
-
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
+from ansible.module_utils._text import to_native
 
 
-def _create_stack(module, stack, cloud):
+def _create_stack(module, stack, cloud, sdk):
     try:
         stack = cloud.create_stack(module.params['name'],
                                    tags=module.params['tag'],
@@ -186,11 +170,14 @@ def _create_stack(module, stack, cloud):
             return stack
         else:
             module.fail_json(msg="Failure in creating stack: {0}".format(stack))
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except sdk.exceptions.OpenStackCloudException as e:
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
-def _update_stack(module, stack, cloud):
+def _update_stack(module, stack, cloud, sdk):
     try:
         stack = cloud.update_stack(
             module.params['name'],
@@ -206,8 +193,11 @@ def _update_stack(module, stack, cloud):
         else:
             module.fail_json(msg="Failure in updating stack: %s" %
                              stack['stack_status_reason'])
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except sdk.exceptions.OpenStackCloudException as e:
+        if hasattr(e, 'response'):
+            module.fail_json(msg=to_native(e), response=e.response.json())
+        else:
+            module.fail_json(msg=to_native(e))
 
 
 def _system_state_change(module, stack, cloud):
@@ -238,16 +228,6 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    tag = module.params['tag']
-    if tag is not None:
-        # stack tag API was introduced in 1.26.0
-        if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.26.0')):
-            module.fail_json(msg='shade 1.26.0 or higher is required for this module')
-    else:
-        # stack API introduced in 1.8.0
-        if not HAS_SHADE or (StrictVersion(shade.__version__) < StrictVersion('1.8.0')):
-            module.fail_json(msg='shade 1.8.0 or higher is required for this module')
-
     state = module.params['state']
     name = module.params['name']
     # Check for required parameters when state == 'present'
@@ -256,8 +236,8 @@ def main():
             if not module.params[p]:
                 module.fail_json(msg='%s required with present state' % p)
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         stack = cloud.get_stack(name)
 
         if module.check_mode:
@@ -266,9 +246,9 @@ def main():
 
         if state == 'present':
             if not stack:
-                stack = _create_stack(module, stack, cloud)
+                stack = _create_stack(module, stack, cloud, sdk)
             else:
-                stack = _update_stack(module, stack, cloud)
+                stack = _update_stack(module, stack, cloud, sdk)
             changed = True
             module.exit_json(changed=changed,
                              stack=stack,
@@ -281,8 +261,8 @@ def main():
                 if not cloud.delete_stack(name, wait=module.params['wait']):
                     module.fail_json(msg='delete stack failed for stack: %s' % name)
             module.exit_json(changed=changed)
-    except shade.OpenStackCloudException as e:
-        module.fail_json(msg=str(e))
+    except sdk.exceptions.OpenStackCloudException as e:
+        module.fail_json(msg=to_native(e))
 
 
 if __name__ == '__main__':

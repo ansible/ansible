@@ -26,7 +26,7 @@ version_added: "2.4"
 short_description: Manages static route configuration on HUAWEI CloudEngine switches.
 description:
     - Manages the static routes on HUAWEI CloudEngine switches.
-author: Yang yang (@CloudEngine-Ansible)
+author: Yang yang (@QijunPan)
 notes:
     - If no vrf is supplied, vrf is set to default.
       If I(state=absent), the route will be removed, regardless of the
@@ -48,42 +48,27 @@ options:
     next_hop:
         description:
             - Next hop address of static route.
-        required: false
-        default: null
     nhp_interface:
         description:
             - Next hop interface full name of static route.
-        required: false
-        default: null
     vrf:
         description:
             - VPN instance of destination ip address.
-        required: false
-        default: null
     destvrf:
         description:
             - VPN instance of next hop ip address.
-        required: false
-        default: null
     tag:
         description:
             - Route tag value (numeric).
-        required: false
-        default: null
     description:
         description:
             - Name of the route. Used with the name parameter on the CLI.
-        required: false
-        default: null
     pref:
         description:
             - Preference or administrative difference of route (range 1-255).
-        required: false
-        default: null
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         choices: ['present','absent']
         default: present
 '''
@@ -173,7 +158,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

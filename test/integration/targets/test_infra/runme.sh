@@ -21,3 +21,15 @@ echo "rc was $APB_RC (must be non-zero)"
 echo "ensure playbook output shows assert/fail works (True)"
 echo "$PB_OUT" | grep -F "fail works (True)" || exit 1
 echo "$PB_OUT" | grep -F "assert works (True)" || exit 1
+
+set -e
+
+# ensure test-module script works well
+PING_MODULE_PATH="../../../../lib/ansible/modules/system/ping.py"
+../../../../hacking/test-module -m "$PING_MODULE_PATH" -I ansible_python_interpreter="$(which python)"
+
+# ensure module.ansible_version is defined when using test-module
+../../../../hacking/test-module -m library/test.py -I ansible_python_interpreter="$(which python)" <<< '{"ANSIBLE_MODULE_ARGS": {}}'
+
+# ensure exercising module code locally works
+python -m ansible.modules.files.file  <<< '{"ANSIBLE_MODULE_ARGS": {"path": "/path/to/file", "state": "absent"}}'

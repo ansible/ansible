@@ -25,34 +25,34 @@ options:
     description:
       - Account API Key.
     required: true
-    default: null
 
   account_secret:
     description:
       - Account Secret Key.
     required: true
-    default: null
 
   domain:
     description:
       - Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNS Made Easy (e.g. "839989") for faster
         resolution
     required: true
-    default: null
+
+  sandbox:
+    description:
+      - Decides if the sandbox API should be used. Otherwise (default) the production API of DNS Made Easy is used.
+    type: bool
+    default: 'no'
+    version_added: 2.7
 
   record_name:
     description:
       - Record name to get/create/delete/update. If record_name is not specified; all records for the domain will be returned in "result" regardless
         of the state argument.
-    required: false
-    default: null
 
   record_type:
     description:
       - Record type.
-    required: false
     choices: [ 'A', 'AAAA', 'CNAME', 'ANAME', 'HTTPRED', 'MX', 'NS', 'PTR', 'SRV', 'TXT' ]
-    default: null
 
   record_value:
     description:
@@ -62,13 +62,10 @@ options:
       - >
         If record_value is not specified; no changes will be made and the record will be returned in 'result'
         (in other words, this module can be used to fetch a record's current id, type, and ttl)
-    required: false
-    default: null
 
   record_ttl:
     description:
       - record's "Time to live".  Number of seconds the record remains cached in DNS servers.
-    required: false
     default: 1800
 
   state:
@@ -76,23 +73,20 @@ options:
       - whether the record should exist or not
     required: true
     choices: [ 'present', 'absent' ]
-    default: null
 
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices: ['yes', 'no']
     version_added: 1.5.1
 
   monitor:
     description:
       - If C(yes), add or change the monitor.  This is applicable only for A records.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   systemDescription:
@@ -143,68 +137,58 @@ options:
   httpFqdn:
     description:
       - The fully qualified domain name used by the monitor.
-    required: false
     version_added: 2.4
 
   httpFile:
     description:
       - The file at the Fqdn that the monitor queries for HTTP or HTTPS.
-    required: false
     version_added: 2.4
 
   httpQueryString:
     description:
       - The string in the httpFile that the monitor queries for HTTP or HTTPS.
-    required: False
     version_added: 2.4
 
   failover:
     description:
       - If C(yes), add or change the failover.  This is applicable only for A records.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   autoFailover:
     description:
       - If true, fallback to the primary IP address is manual after a failover.
       - If false, fallback to the primary IP address is automatic after a failover.
-    required: true
+    type: bool
     default: 'no'
-    choices: ['yes', 'no']
     version_added: 2.4
 
   ip1:
     description:
       - Primary IP address for the failover.
       - Required if adding or changing the monitor or failover.
-    required: false
     version_added: 2.4
 
   ip2:
     description:
       - Secondary IP address for the failover.
       - Required if adding or changing the failover.
-    required: false
     version_added: 2.4
 
   ip3:
     description:
       - Tertiary IP address for the failover.
-    required: false
     version_added: 2.4
 
   ip4:
     description:
       - Quaternary IP address for the failover.
-    required: false
     version_added: 2.4
 
   ip5:
     description:
       - Quinary IP address for the failover.
-    required: false
     version_added: 2.4
 
 notes:
@@ -263,6 +247,7 @@ EXAMPLES = '''
     account_key: key
     account_secret: secret
     domain: my.com
+    record_type: A
     state: absent
     record_name: test
 
@@ -390,12 +375,18 @@ from ansible.module_utils.six import string_types
 
 class DME2(object):
 
-    def __init__(self, apikey, secret, domain, module):
+    def __init__(self, apikey, secret, domain, sandbox, module):
         self.module = module
 
         self.api = apikey
         self.secret = secret
-        self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
+
+        if sandbox:
+            self.baseurl = 'https://api.sandbox.dnsmadeeasy.com/V2.0/'
+            self.module.warn(warning="Sandbox is enabled. All actions are made against the URL %s" % self.baseurl)
+        else:
+            self.baseurl = 'https://api.dnsmadeeasy.com/V2.0/'
+
         self.domain = str(domain)
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
@@ -559,6 +550,7 @@ def main():
             account_key=dict(required=True),
             account_secret=dict(required=True, no_log=True),
             domain=dict(required=True),
+            sandbox=dict(default='no', type='bool'),
             state=dict(required=True, choices=['present', 'absent']),
             record_name=dict(required=False),
             record_type=dict(required=False, choices=[
@@ -584,9 +576,9 @@ def main():
             ip5=dict(required=False),
             validate_certs=dict(default='yes', type='bool'),
         ),
-        required_together=(
+        required_together=[
             ['record_value', 'record_ttl', 'record_type']
-        ),
+        ],
         required_if=[
             ['failover', True, ['autoFailover', 'port', 'protocol', 'ip1', 'ip2']],
             ['monitor', True, ['port', 'protocol', 'maxEmails', 'systemDescription', 'ip1']]
@@ -597,7 +589,7 @@ def main():
     sensitivities = dict(Low=8, Medium=5, High=3)
 
     DME = DME2(module.params["account_key"], module.params[
-               "account_secret"], module.params["domain"], module)
+               "account_secret"], module.params["domain"], module.params["sandbox"], module)
     state = module.params["state"]
     record_name = module.params["record_name"]
     record_type = module.params["record_type"]

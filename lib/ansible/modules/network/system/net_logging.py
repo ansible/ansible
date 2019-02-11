@@ -22,6 +22,7 @@ short_description: Manage logging on network devices
 description:
   - This module provides declarative management of logging
     on network devices.
+extends_documentation_fragment: network_agnostic
 options:
   dest:
     description:
@@ -65,7 +66,7 @@ EXAMPLES = """
 - name: configure host logging
   net_logging:
     dest: host
-    name: 1.1.1.1
+    name: 192.0.2.1
     facility: kernel
     level: critical
 

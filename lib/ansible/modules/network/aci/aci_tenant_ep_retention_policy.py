@@ -8,68 +8,82 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_tenant_ep_retention_policy
-short_description: Manage End Point (EP) retention protocol policies on Cisco ACI fabrics (fv:EpRetPol)
+short_description: Manage End Point (EP) retention protocol policies (fv:EpRetPol)
 description:
 - Manage End Point (EP) retention protocol policies on Cisco ACI fabrics.
-- More information from the internal APIC class I(fv:EpRetPol) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Swetha Chunduri (@schunduri)
-version_added: '2.4'
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:EpRetPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
+version_added: '2.4'
 options:
   tenant:
     description:
     - The name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
   epr_policy:
     description:
     - The name of the end point retention policy.
+    type: str
     aliases: [ epr_name, name ]
   bounce_age:
     description:
-    - Bounce Entry Aging Interval (range 150secs - 65535secs)
-    - 0 is used for infinite.
-    default: 630
+    - Bounce entry aging interval in seconds.
+    - Accepted values range between C(150) and C(65535); 0 is used for infinite.
+    - The APIC defaults to C(630) when unset during creation.
+    type: int
   bounce_trigger:
     description:
     - Determines if the bounce entries are installed by RARP Flood or COOP Protocol.
-    - The APIC defaults new End Point Retention Policies to C(coop).
-    default: coop
+    - The APIC defaults to C(coop) when unset during creation.
+    type: str
+    choices: [ coop, flood ]
   hold_interval:
     description:
-    - Hold Interval (range 5secs - 65535secs).
-    default: 300
+    - Hold interval in seconds.
+    - Accepted values range between C(5) and C(65535).
+    - The APIC defaults to C(300) when unset during creation.
+    type: int
   local_ep_interval:
     description:
-    - Local end point Aging Interval (range 120secs - 65535secs).
-    - 0 is used for infinite.
-    default: 900
+    - Local end point aging interval in seconds.
+    - Accepted values range between C(120) and C(65535); 0 is used for infinite.
+    - The APIC defaults to C(900) when unset during creation.
+    type: int
   remote_ep_interval:
     description:
-    - Remote end point Aging Interval (range 120secs - 65535secs).
-    - O is used for infinite.
-    default: 300
+    - Remote end point aging interval in seconds.
+    - Accepted values range between C(120) and C(65535); 0 is used for infinite.
+    - The APIC defaults to C(300) when unset during creation.
+    type: int
   move_frequency:
     description:
-    - Move frequency per second (range 0secs - 65535secs).
-    - 0 is used for none.
-    default: 256
+    - Move frequency per second.
+    - Accepted values range between C(0) and C(65535); 0 is used for none.
+    - The APIC defaults to C(256) when unset during creation.
+    type: int
   description:
     description:
     - Description for the End point rentention policy.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -90,6 +104,7 @@ EXAMPLES = r'''
     move_frequency: 256
     description: test
     state: present
+  delegate_to: localhost
 
 - name: Remove an EPR policy
   aci_epr_policy:
@@ -99,6 +114,7 @@ EXAMPLES = r'''
     tenant: production
     epr_policy: EPRPol1
     state: absent
+  delegate_to: localhost
 
 - name: Query an EPR policy
   aci_epr_policy:
@@ -108,6 +124,8 @@ EXAMPLES = r'''
     tenant: production
     epr_policy: EPRPol1
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all EPR policies
   aci_epr_policy:
@@ -115,6 +133,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -149,7 +169,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -198,17 +218,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -218,7 +238,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -231,7 +251,7 @@ BOUNCE_TRIG_MAPPING = dict(coop='protocol', rarp='rarp-flood')
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']),  # not required for querying all EPRs
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         epr_policy=dict(type='str', aliases=['epr_name', 'name']),
         bounce_age=dict(type='int'),
         bounce_trigger=dict(type='str', choices=['coop', 'flood']),
@@ -241,8 +261,6 @@ def main():
         description=dict(type='str', aliases=['descr']),
         move_frequency=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -290,21 +308,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvEpRetPol',
             aci_rn='epRPol-{0}'.format(epr_policy),
-            filter_target='eq(fvEpRetPol.name, "{0}")'.format(epr_policy),
             module_object=epr_policy,
+            target_filter={'name': epr_policy},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # filter out module parameters with null values
         aci.payload(
             aci_class='fvEpRetPol',
             class_config=dict(
@@ -319,10 +336,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvEpRetPol')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

@@ -13,7 +13,7 @@ For more details, see [Lenovo modules for Ansible: cnos_showrun](http://systemx.
 ---
 <add role requirements information below>
 
-- Ansible version 2.2 or later ([Ansible installation documentation](http://docs.ansible.com/ansible/intro_installation.html))
+- Ansible version 2.2 or later ([Ansible installation documentation](https://docs.ansible.com/ansible/intro_installation.html))
 - Lenovo switches running CNOS version 10.2.1.0 or later
 - an SSH connection to the Lenovo switch (SSH must be enabled on the network device)
 

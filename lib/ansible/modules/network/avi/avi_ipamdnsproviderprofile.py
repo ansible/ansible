@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_ipamdnsproviderprofile
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of IpamDnsProviderProfile Avi RESTful Object
 description:
@@ -48,6 +48,7 @@ options:
             - Field introduced in 17.2.4.
             - Default value when not specified in API or module is interpreted by Avi Controller as False.
         version_added: "2.5"
+        type: bool
     aws_profile:
         description:
             - Provider details if type is aws.
@@ -166,6 +167,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'ipamdnsproviderprofile',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

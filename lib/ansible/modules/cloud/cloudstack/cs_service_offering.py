@@ -36,7 +36,7 @@ options:
   limit_cpu_usage:
     description:
       - Restrict the CPU usage to committed service offering.
-    choices: [ yes, no ]
+    type: bool
   deployment_planner:
     description:
       - The deployment planner heuristics used to deploy a VM of this offering.
@@ -77,13 +77,13 @@ options:
   is_system:
     description:
       - Whether it is a system VM offering or not.
-    choices: [ yes, no ]
+    type: bool
     default: no
   is_volatile:
     description:
       - Whether the virtual machine needs to be volatile or not.
       - Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
-    choices: [ yes, no ]
+    type: bool
     default: no
   memory:
     description:
@@ -99,7 +99,7 @@ options:
   offer_ha:
     description:
       - Whether HA is set for the service offering.
-    choices: [ yes, no ]
+    type: bool
     default: no
   provisioning_type:
     description:
@@ -210,7 +210,7 @@ RETURN = '''
 id:
   description: UUID of the service offering
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 cpu_number:
   description: Number of CPUs in the service offering
@@ -255,17 +255,17 @@ disk_iops_write_rate:
 created:
   description: Date the offering was created
   returned: success
-  type: string
+  type: str
   sample: 2017-11-19T10:48:59+0000
 display_text:
   description: Display text of the offering
   returned: success
-  type: string
+  type: str
   sample: Micro 512mb 1cpu
 domain:
   description: Domain the offering is into
   returned: success
-  type: string
+  type: str
   sample: ROOT
 host_tags:
   description: List of host tags
@@ -305,7 +305,7 @@ memory:
 name:
   description: Name of the system offering
   returned: success
-  type: string
+  type: str
   sample: Micro
 offer_ha:
   description: Whether HA support is enabled in the offering or not
@@ -315,17 +315,17 @@ offer_ha:
 provisioning_type:
   description: Provisioning type used to create volumes
   returned: success
-  type: string
+  type: str
   sample: thin
 storage_type:
   description: Storage type used to create volumes
   returned: success
-  type: string
+  type: str
   sample: shared
 system_vm_type:
   description: System VM type of this offering
   returned: success
-  type: string
+  type: str
   sample: consoleproxy
 service_offering_details:
   description: Additioanl service offering details

@@ -1,0 +1,16 @@
+Total Number of VLANs configured    : 3
+VLAN             Name            State                      Ports           Classification
+(R)-RSPAN                                                   (u)-Untagged
+                                                            (t)-Tagged
+================ =============== ========================== =============== ====================
+1                default         INACTIVE(member port down) Eth 0/45(u)
+                                                            Eth 0/3(u)
+                                                            Eth 0/4(u)
+
+22               VLAN0022        INACTIVE(no member port)
+
+
+200              VLAN0200        INACTIVE(member port down) Eth 0/8(t)
+                                                            Po 200(u)
+
+1001             VLAN1001        INACTIVE(no member port)

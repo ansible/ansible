@@ -35,92 +35,70 @@ options:
     required: true
   state:
     description:
-      - Create or delete Lambda function
+      - Create or delete Lambda function.
     default: present
     choices: [ 'present', 'absent' ]
   runtime:
     description:
-      - The runtime environment for the Lambda function you are uploading. Required when creating a function. Use parameters as described in boto3 docs.
-        Current example runtime environments are nodejs, nodejs4.3, java8 or python2.7
-      - Required when C(state=present)
+      - The runtime environment for the Lambda function you are uploading.
+      - Required when creating a function. Uses parameters as described in boto3 docs.
+      - Required when C(state=present).
+      - For supported list of runtimes, see U(https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).
   role:
     description:
       - The Amazon Resource Name (ARN) of the IAM role that Lambda assumes when it executes your function to access any other Amazon Web Services (AWS)
         resources. You may use the bare ARN if the role belongs to the same AWS account.
-      - Required when C(state=present)
+      - Required when C(state=present).
   handler:
     description:
-      - The function within your code that Lambda calls to begin execution
-    default: null
+      - The function within your code that Lambda calls to begin execution.
   zip_file:
     description:
       - A .zip file containing your deployment package
       - If C(state=present) then either zip_file or s3_bucket must be present.
-    required: false
-    default: null
     aliases: [ 'src' ]
   s3_bucket:
     description:
-      - Amazon S3 bucket name where the .zip file containing your deployment package is stored
+      - Amazon S3 bucket name where the .zip file containing your deployment package is stored.
       - If C(state=present) then either zip_file or s3_bucket must be present.
-      - s3_bucket and s3_key are required together
-    required: false
-    default: null
+      - C(s3_bucket) and C(s3_key) are required together.
   s3_key:
     description:
-      - The Amazon S3 object (the deployment package) key name you want to upload
-      - s3_bucket and s3_key are required together
-    required: false
-    default: null
+      - The Amazon S3 object (the deployment package) key name you want to upload.
+      - C(s3_bucket) and C(s3_key) are required together.
   s3_object_version:
     description:
       - The Amazon S3 object (the deployment package) version you want to upload.
-    required: false
-    default: null
   description:
     description:
       - A short, user-defined function description. Lambda does not use this value. Assign a meaningful description as you see fit.
-    required: false
-    default: null
   timeout:
     description:
-      - The function execution time at which Lambda should terminate the function.
-    required: false
+      - The function maximum execution time in seconds after which Lambda should terminate the function.
     default: 3
   memory_size:
     description:
-      - The amount of memory, in MB, your Lambda function is given
-    required: false
+      - The amount of memory, in MB, your Lambda function is given.
     default: 128
   vpc_subnet_ids:
     description:
       - List of subnet IDs to run Lambda function in. Use this option if you need to access resources in your VPC. Leave empty if you don't want to run
         the function in a VPC.
-    required: false
-    default: None
   vpc_security_group_ids:
     description:
       - List of VPC security group IDs to associate with the Lambda function. Required when vpc_subnet_ids is used.
-    required: false
-    default: None
   environment_variables:
     description:
       - A dictionary of environment variables the Lambda function is given.
-    required: false
-    default: None
     aliases: [ 'environment' ]
     version_added: "2.3"
   dead_letter_arn:
     description:
       - The parent object that contains the target Amazon Resource Name (ARN) of an Amazon SQS queue or Amazon SNS topic.
-    required: false
-    default: None
     version_added: "2.3"
   tags:
     description:
-      - tag dict to apply to the function (requires botocore 1.5.40 or above)
-    required: false
-    default: None
+      - tag dict to apply to the function (requires botocore 1.5.40 or above).
     version_added: "2.5"
 author:
     - 'Steyn Huizinga (@steynovich)'
@@ -148,7 +126,7 @@ EXAMPLES = '''
     environment_variables: '{{ item.env_vars }}'
     tags:
       key1: 'value1'
-  with_items:
+  loop:
     - name: HelloWorld
       zip_file: hello-code.zip
       env_vars:
@@ -176,7 +154,7 @@ EXAMPLES = '''
   lambda:
     name: '{{ item }}'
     state: absent
-  with_items:
+  loop:
     - HelloWorld
     - ByeBye
 '''
@@ -240,7 +218,7 @@ def get_account_id(module, region=None, endpoint=None, **aws_connect_kwargs):
 
     get_account_id tries too find out the account that we are working
     on.  It's not guaranteed that this will be easy so we try in
-    several different ways.  Giving either IAM or STS privilages to
+    several different ways.  Giving either IAM or STS privileges to
     the account should be enough to permit this.
     """
     account_id = None
@@ -300,8 +278,8 @@ def set_tag(client, module, tags, function):
     try:
         current_tags = client.list_tags(Resource=arn).get('Tags', {})
     except ClientError as e:
-        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e),
-                         exception=traceback.format_exc()))
+        module.fail_json(msg="Unable to list tags: {0}".format(to_native(e)),
+                         exception=traceback.format_exc())
 
     tags_to_add, tags_to_remove = compare_aws_tags(current_tags, tags, purge_tags=True)
 
@@ -577,6 +555,7 @@ def main():
                                               'SecurityGroupIds': vpc_security_group_ids}})
 
         # Finally try to create function
+        current_version = None
         try:
             if not check_mode:
                 response = client.create_function(**func_kwargs)

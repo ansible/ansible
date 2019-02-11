@@ -32,6 +32,7 @@ def set_module_args(args):
 
     return _set_module_args(args)
 
+
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
 
@@ -49,7 +50,7 @@ def load_fixture(module_name, name, device=''):
 
     try:
         data = json.loads(data)
-    except:
+    except Exception:
         pass
 
     fixture_data[path] = data

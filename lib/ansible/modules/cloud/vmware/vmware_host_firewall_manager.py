@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: vmware_host_firewall_manager
 short_description: Manage firewall configurations about an ESXi host
@@ -21,7 +21,7 @@ description:
 - This module can be used to manage firewall configurations about an ESXi host when ESXi hostname or Cluster name is given.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -44,6 +44,7 @@ options:
     - Each member of list is rule set name and state to be set the rule.
     - Both rule name and rule state are required parameters.
     - Please see examples for more information.
+    default: []
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -57,6 +58,7 @@ EXAMPLES = r'''
     rules:
         - name: vvold
           enabled: True
+  delegate_to: localhost
 
 - name: Enable vvold rule set for an ESXi Host
   vmware_host_firewall_manager:
@@ -67,6 +69,7 @@ EXAMPLES = r'''
     rules:
         - name: vvold
           enabled: True
+  delegate_to: localhost
 
 - name: Manage multiple rule set for an ESXi Host
   vmware_host_firewall_manager:
@@ -79,6 +82,7 @@ EXAMPLES = r'''
           enabled: True
         - name: CIMHttpServer
           enabled: False
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -106,7 +110,7 @@ rule_set_state:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -121,19 +125,7 @@ class VmwareFirewallManager(PyVmomi):
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.options = self.params.get('options', dict())
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-            if esxi_host_obj:
-                self.hosts = [esxi_host_obj]
-            else:
-                module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
         self.firewall_facts = dict()
         self.rule_options = self.module.params.get("rules")
         self.gather_rule_set()
@@ -178,10 +170,11 @@ class VmwareFirewallManager(PyVmomi):
                 current_rule_state = self.firewall_facts[host.name][rule_name]['enabled']
                 if current_rule_state != rule_enabled:
                     try:
-                        if rule_enabled:
-                            firewall_system.EnableRuleset(id=rule_name)
-                        else:
-                            firewall_system.DisableRuleset(id=rule_name)
+                        if not self.module.check_mode:
+                            if rule_enabled:
+                                firewall_system.EnableRuleset(id=rule_name)
+                            else:
+                                firewall_system.DisableRuleset(id=rule_name)
                         fw_change_list.append(True)
                     except vim.fault.NotFound as not_found:
                         self.module.fail_json(msg="Failed to enable rule set %s as"
@@ -214,7 +207,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_firewall_manager = VmwareFirewallManager(module)

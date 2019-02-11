@@ -30,35 +30,26 @@ options:
    name:
      description:
         - Name that has to be given to the port.
-     required: false
-     default: None
    fixed_ips:
      description:
         - Desired IP and/or subnet for this port.  Subnet is referenced by
           subnet_id and IP is referenced by ip_address.
-     required: false
-     default: None
    admin_state_up:
      description:
         - Sets admin state.
-     required: false
-     default: None
+     type: bool
    mac_address:
      description:
         - MAC address of this port.
-     required: false
-     default: None
    security_groups:
      description:
         - Security group(s) ID(s) or name(s) associated with the port (comma
           separated string or YAML list)
-     required: false
-     default: None
    no_security_groups:
      description:
         - Do not associate a security group with this port.
-     required: false
-     default: False
+     type: bool
+     default: 'no'
    allowed_address_pairs:
      description:
         - "Allowed address pairs list.  Allowed address pairs are supported with
@@ -67,8 +58,6 @@ options:
                   - ip_address: 10.1.0.12
                     mac_address: ab:cd:ef:12:34:56
                   - ip_address: ..."
-     required: false
-     default: None
    extra_dhcp_opts:
      description:
         - "Extra dhcp options to be assigned to this port.  Extra options are
@@ -77,18 +66,12 @@ options:
                   - opt_name: opt name1
                     opt_value: value1
                   - opt_name: ..."
-     required: false
-     default: None
    device_owner:
      description:
         - The ID of the entity that uses this port.
-     required: false
-     default: None
    device_id:
      description:
         - Device ID of device using this port.
-     required: false
-     default: None
    state:
      description:
        - Should the resource be present or absent.
@@ -97,7 +80,12 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
+   vnic_type:
+     description:
+       - The type of the port that should be created
+     choices: [normal, direct, direct-physical, macvtap, baremetal, virtio-forwarder]
+     default: normal
+     version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -105,7 +93,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -116,7 +104,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -129,7 +117,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -141,7 +129,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/d
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -152,7 +140,7 @@ EXAMPLES = '''
 - os_port:
     state: present
     auth:
-      auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/d
+      auth_url: https://identity.example.com
       username: admin
       password: admin
       project_name: admin
@@ -160,21 +148,32 @@ EXAMPLES = '''
     security_groups:
       - 1496e8c7-4918-482a-9172-f4f00fc4a3a5
       - 057d4bdf-6d4d-472...
+
+# Create port of type 'direct'
+- os_port:
+    state: present
+    auth:
+      auth_url: https://identity.example.com
+      username: admin
+      password: admin
+      project_name: admin
+    name: port1
+    vnic_type: direct
 '''
 
 RETURN = '''
 id:
     description: Unique UUID.
     returned: success
-    type: string
+    type: str
 name:
     description: Name given to the port.
     returned: success
-    type: string
+    type: str
 network_id:
     description: Network ID this port belongs in.
     returned: success
-    type: string
+    type: str
 security_groups:
     description: Security group(s) associated with this port.
     returned: success
@@ -182,7 +181,7 @@ security_groups:
 status:
     description: Port's status.
     returned: success
-    type: string
+    type: str
 fixed_ips:
     description: Fixed ip(s) associated with this port.
     returned: success
@@ -190,7 +189,7 @@ fixed_ips:
 tenant_id:
     description: Tenant id associated with this port.
     returned: success
-    type: string
+    type: str
 allowed_address_pairs:
     description: Allowed address pairs with this port.
     returned: success
@@ -199,16 +198,14 @@ admin_state_up:
     description: Admin state up flag for this port.
     returned: success
     type: bool
+vnic_type:
+    description: Type of the created port
+    returned: success
+    type: str
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def _needs_update(module, port, cloud):
@@ -219,7 +216,8 @@ def _needs_update(module, port, cloud):
     compare_simple = ['admin_state_up',
                       'mac_address',
                       'device_owner',
-                      'device_id']
+                      'device_id',
+                      'binding:vnic_type']
     compare_dict = ['allowed_address_pairs',
                     'extra_dhcp_opts']
     compare_list = ['security_groups']
@@ -284,7 +282,8 @@ def _compose_port_args(module, cloud):
                            'allowed_address_pairs',
                            'extra_dhcp_opts',
                            'device_owner',
-                           'device_id']
+                           'device_id',
+                           'binding:vnic_type']
     for optional_param in optional_parameters:
         if module.params[optional_param] is not None:
             port_kwargs[optional_param] = module.params[optional_param]
@@ -317,6 +316,9 @@ def main():
         device_owner=dict(default=None),
         device_id=dict(default=None),
         state=dict(default='present', choices=['absent', 'present']),
+        vnic_type=dict(default='normal',
+                       choices=['normal', 'direct', 'direct-physical',
+                                'macvtap', 'baremetal', 'virtio-forwarder']),
     )
 
     module_kwargs = openstack_module_kwargs(
@@ -329,19 +331,23 @@ def main():
                            supports_check_mode=True,
                            **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
     name = module.params['name']
     state = module.params['state']
 
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         if module.params['security_groups']:
             # translate security_groups to UUID's if names where provided
             module.params['security_groups'] = [
                 get_security_group_id(module, cloud, v)
                 for v in module.params['security_groups']
             ]
+
+        if module.params['vnic_type']:
+            # Neutron API accept 'binding:vnic_type' as an argument
+            # for the port type.
+            module.params['binding:vnic_type'] = module.params['vnic_type']
+            module.params.pop('vnic_type', None)
 
         port = None
         network_id = None
@@ -384,7 +390,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

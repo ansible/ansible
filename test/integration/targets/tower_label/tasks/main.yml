@@ -1,0 +1,19 @@
+- name: Create a Label
+  tower_label:
+    name: important
+    organization: Default
+    state: present
+
+- name: Check module fails with correct msg
+  tower_label:
+    name: "Test Label"
+    organization: "Non existing org"
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg == 'Failed to update label, organization not found: The requested object could not be found.'"
+
+# TODO: Deleting labels doesn't seem to work currently

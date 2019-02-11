@@ -14,8 +14,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: group
-author:
-- Stephen Fromm (@sfromm)
 version_added: "0.0.2"
 short_description: Add or remove groups
 requirements:
@@ -29,22 +27,37 @@ options:
     name:
         description:
             - Name of the group to manage.
+        type: str
         required: true
     gid:
         description:
             - Optional I(GID) to set for the group.
+        type: int
     state:
         description:
             - Whether the group should be present or not on the remote host.
+        type: str
         choices: [ absent, present ]
         default: present
     system:
         description:
             - If I(yes), indicates that the group created is a system group.
         type: bool
-        default: 'no'
-notes:
-    - For Windows targets, use the M(win_group) module instead.
+        default: no
+    local:
+        description:
+            - Forces the use of "local" command alternatives on platforms that implement it.
+            - This is useful in environments that use centralized authentication when you want to manipulate the local groups.
+              (e.g. it uses C(lgroupadd) instead of C(useradd)).
+            - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
+        type: bool
+        default: no
+        version_added: "2.6"
+seealso:
+- module: user
+- module: win_group
+author:
+- Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = '''
@@ -85,16 +98,25 @@ class Group(object):
         self.name = module.params['name']
         self.gid = module.params['gid']
         self.system = module.params['system']
+        self.local = module.params['local']
 
     def execute_command(self, cmd):
         return self.module.run_command(cmd)
 
     def group_del(self):
-        cmd = [self.module.get_bin_path('groupdel', True), self.name]
+        if self.local:
+            command_name = 'lgroupdel'
+        else:
+            command_name = 'groupdel'
+        cmd = [self.module.get_bin_path(command_name, True), self.name]
         return self.execute_command(cmd)
 
     def group_add(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupadd', True)]
+        if self.local:
+            command_name = 'lgroupadd'
+        else:
+            command_name = 'groupadd'
+        cmd = [self.module.get_bin_path(command_name, True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
@@ -105,7 +127,11 @@ class Group(object):
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
-        cmd = [self.module.get_bin_path('groupmod', True)]
+        if self.local:
+            command_name = 'lgroupmod'
+        else:
+            command_name = 'groupmod'
+        cmd = [self.module.get_bin_path(command_name, True)]
         info = self.group_info()
         for key in kwargs:
             if key == 'gid':
@@ -261,7 +287,7 @@ class DragonFlyBsdGroup(FreeBsdGroup):
 
 class DarwinGroup(Group):
     """
-    This is a Mac OS X Darwin Group manipulation class.
+    This is a Mac macOS Darwin Group manipulation class.
 
     This overrides the following methods from the generic class:-
       - group_del()
@@ -324,7 +350,7 @@ class DarwinGroup(Group):
             if highest == 0 or highest == 499:
                 return False
             return (highest + 1)
-        except:
+        except Exception:
             return False
 
 
@@ -419,6 +445,7 @@ def main():
             name=dict(type='str', required=True),
             gid=dict(type='str'),
             system=dict(type='bool', default=False),
+            local=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
     )

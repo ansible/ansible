@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_tenant
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of Tenant Avi RESTful Object
 description:
@@ -55,6 +55,7 @@ options:
         description:
             - Boolean flag to set local.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     name:
         description:
             - Name of the object.
@@ -123,6 +124,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'tenant',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

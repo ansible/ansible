@@ -37,14 +37,10 @@ options:
     description:
       - username for logging into the SendGrid account.
       - Since 2.2 it is only required if api_key is not supplied.
-    required: false
-    default: null
   password:
     description:
       - password that corresponds to the username
       - Since 2.2 it is only required if api_key is not supplied.
-    required: false
-    default: null
   from_address:
     description:
       - the address in the "from" field for the email
@@ -61,44 +57,32 @@ options:
     description:
       - sendgrid API key to use instead of username/password
     version_added: 2.2
-    required: false
-    default: null
   cc:
     description:
       - a list of email addresses to cc
     version_added: 2.2
-    required: false
-    default: null
   bcc:
     description:
       - a list of email addresses to bcc
     version_added: 2.2
-    required: false
-    default: null
   attachments:
     description:
       - a list of relative or explicit paths of files you want to attach (7MB limit as per SendGrid docs)
     version_added: 2.2
-    required: false
-    default: null
   from_name:
     description:
       - the name you want to appear in the from field, i.e 'John Doe'
     version_added: 2.2
-    required: false
-    default: null
   html_body:
     description:
       - whether the body is html content that should be rendered
     version_added: 2.2
-    required: false
-    default: false
+    type: bool
+    default: 'no'
   headers:
     description:
       - a dict to pass on as headers
     version_added: 2.2
-    required: false
-    default: null
 author: "Matt Makai (@makaimc)"
 '''
 
@@ -131,14 +115,17 @@ EXAMPLES = '''
 # sendgrid module support methods
 #
 import os
+import traceback
 
+SENDGRID_IMP_ERR = None
 try:
     import sendgrid
     HAS_SENDGRID = True
 except ImportError:
+    SENDGRID_IMP_ERR = traceback.format_exc()
     HAS_SENDGRID = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six.moves.urllib.parse import urlencode
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.urls import fetch_url
@@ -250,8 +237,10 @@ def main():
     sendgrid_lib_args = [api_key, bcc, cc, headers, from_name, html_body, attachments]
 
     if any(lib_arg is not None for lib_arg in sendgrid_lib_args) and not HAS_SENDGRID:
-        module.fail_json(msg='You must install the sendgrid python library if you want to use any of the following arguments: '
-                             'api_key, bcc, cc, headers, from_name, html_body, attachments')
+        reason = 'when using any of the following arguments: ' \
+                 'api_key, bcc, cc, headers, from_name, html_body, attachments'
+        module.fail_json(msg=missing_required_lib('sendgrid', reason=reason),
+                         exception=SENDGRID_IMP_ERR)
 
     response, info = post_sendgrid_api(module, username, password,
                                        from_address, to_addresses, subject, body, attachments=attachments,

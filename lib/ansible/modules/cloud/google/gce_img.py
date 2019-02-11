@@ -27,59 +27,43 @@ options:
     description:
       - the name of the image to create or delete
     required: true
-    default: null
   description:
     description:
       - an optional description
-    required: false
-    default: null
   family:
     description:
       - an optional family name
-    required: false
-    default: null
     version_added: "2.2"
   source:
     description:
       - the source disk or the Google Cloud Storage URI to create the image from
-    required: false
-    default: null
   state:
     description:
       - desired state of the image
-    required: false
     default: "present"
     choices: ["present", "absent"]
   zone:
     description:
       - the zone of the disk specified by source
-    required: false
     default: "us-central1-a"
   timeout:
     description:
       - timeout for the operation
-    required: false
     default: 180
     version_added: "2.0"
   service_account_email:
     description:
       - service account email
-    required: false
-    default: null
   pem_file:
     description:
       - path to the pem file associated with the service account email
-    required: false
-    default: null
   project_id:
     description:
       - your GCE project ID
-    required: false
-    default: null
 requirements:
     - "python >= 2.6"
     - "apache-libcloud"
-author: "Tom Melendez (supertom)"
+author: "Tom Melendez (@supertom)"
 '''
 
 EXAMPLES = '''

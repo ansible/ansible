@@ -14,13 +14,13 @@ DOCUMENTATION = '''
     version_added: "2.0"
     description:
         - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
-        - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a commadn line option.
+        - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
 '''
 
 import os
 
 from ansible.constants import TREE_DIR
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe
 
@@ -53,7 +53,7 @@ class CallbackModule(CallbackBase):
             with open(path, 'wb+') as fd:
                 fd.write(buf)
         except (OSError, IOError) as e:
-            self._display.warning("Unable to write to %s's file: %s" % (hostname, str(e)))
+            self._display.warning(u"Unable to write to %s's file: %s" % (hostname, to_text(e)))
 
     def result_to_tree(self, result):
         if self.tree:

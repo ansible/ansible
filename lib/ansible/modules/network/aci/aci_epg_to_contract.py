@@ -8,66 +8,128 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_epg_to_contract
-short_description: Bind EPGs to Contracts on Cisco ACI fabrics (fv:RsCons and fv:RsProv)
+short_description: Bind EPGs to Contracts (fv:RsCons, fv:RsProv)
 description:
 - Bind EPGs to Contracts on Cisco ACI fabrics.
-- More information from the internal APIC classes I(fv:RsCons) and I(fv:RsProv) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant), C(app_profile), C(EPG), and C(Contract) used must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_ap), M(aci_epg), and M(aci_contract) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- module: aci_epg
+- module: aci_contract
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fv:RsCons) and B(fv:RsProv).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   ap:
     description:
     - Name of an existing application network profile, that will contain the EPGs.
+    type: str
     aliases: [ app_profile, app_profile_name ]
   contract:
     description:
     - The name of the contract.
+    type: str
     aliases: [ contract_name ]
   contract_type:
     description:
     - Determines if the EPG should Provide or Consume the Contract.
+    type: str
     required: yes
-    choices: [ consumer, proivder ]
+    choices: [ consumer, provider ]
   epg:
     description:
     - The name of the end point group.
+    type: str
     aliases: [ epg_name ]
   priority:
     description:
     - QoS class.
-    - The APIC defaults new EPG to Contract bindings to C(unspecified).
+    - The APIC defaults to C(unspecified) when unset during creation.
+    type: str
     choices: [ level1, level2, level3, unspecified ]
-    default: unspecified
   provider_match:
     description:
     - The matching algorithm for Provided Contracts.
-    - The APIC defaults new EPG to Provided Contracts to C(at_least_one).
+    - The APIC defaults to C(at_least_one) when unset during creation.
+    type: str
     choices: [ all, at_least_one, at_most_one, none ]
-    default: at_least_one
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - Name of an existing tenant.
+    type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = r''' # '''
+EXAMPLES = r'''
+- name: Add a new contract to EPG binding
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract: anstest_http
+    contract_type: provider
+    state: present
+  delegate_to: localhost
+
+- name: Remove an existing contract to EPG binding
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract: anstest_http
+    contract_type: provider
+    state: absent
+  delegate_to: localhost
+
+- name: Query a specific contract to EPG binding
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant: anstest
+    ap: anstest
+    epg: anstest
+    contract: anstest_http
+    contract_type: provider
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all provider contract to EPG bindings
+  aci_epg_to_contract:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    contract_type: provider
+    state: query
+  delegate_to: localhost
+  register: query_result
+'''
 
 RETURN = r'''
 current:
@@ -101,7 +163,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -150,17 +212,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -170,7 +232,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -184,16 +246,14 @@ PROVIDER_MATCH_MAPPING = {"all": "All", "at_least_one": "AtleastOne", "at_most_o
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),
-        epg=dict(type='str', aliases=['epg_name']),
-        contract=dict(type='str', aliases=['contract_name']),
+        ap=dict(type='str', aliases=['app_profile', 'app_profile_name']),  # Not required for querying all objects
+        epg=dict(type='str', aliases=['epg_name']),  # Not required for querying all objects
+        contract=dict(type='str', aliases=['contract_name']),  # Not required for querying all objects
         contract_type=dict(type='str', required=True, choices=['consumer', 'provider']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        tenant=dict(type='str', aliases=['tenant_name']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -227,33 +287,32 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvAp',
             aci_rn='ap-{0}'.format(ap),
-            filter_target='eq(fvAp.name, "{0}")'.format(ap),
             module_object=ap,
+            target_filter={'name': ap},
         ),
         subclass_2=dict(
             aci_class='fvAEPg',
             aci_rn='epg-{0}'.format(epg),
-            filter_target='eq(fvAEPg.name, "{0}")'.format(epg),
             module_object=epg,
+            target_filter={'name': epg},
         ),
         subclass_3=dict(
             aci_class=aci_class,
             aci_rn='{0}{1}'.format(aci_rn, contract),
-            filter_target='eq({0}.tnVzBrCPName, "{1}'.format(aci_class, contract),
             module_object=contract,
+            target_filter={'tnVzBrCPName': contract},
         ),
     )
 
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module parameters with null values
         aci.payload(
             aci_class=aci_class,
             class_config=dict(
@@ -263,10 +322,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class=aci_class)
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

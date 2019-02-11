@@ -20,8 +20,9 @@ short_description: Manage Red Hat Network registration using the C(rhnreg_ks) co
 description:
     - Manage registration to the Red Hat Network.
 version_added: "1.2"
-author: James Laska
+author: James Laska (@jlaska)
 notes:
+    - This is for older Red Hat products. You probably want the M(redhat_subscription) module instead.
     - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
 requirements:
     - rhnreg_ks
@@ -30,62 +31,47 @@ options:
     state:
         description:
           - whether to register (C(present)), or unregister (C(absent)) a system
-        required: false
         choices: [ "present", "absent" ]
         default: "present"
     username:
         description:
             - Red Hat Network username
-        required: False
-        default: null
     password:
         description:
             - Red Hat Network password
-        required: False
-        default: null
     server_url:
         description:
             - Specify an alternative Red Hat Network server URL
-        required: False
         default: Current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date) is the default
     activationkey:
         description:
             - supply an activation key for use with registration
-        required: False
-        default: null
     profilename:
         description:
             - supply an profilename for use with registration
-        required: False
-        default: null
         version_added: "2.0"
     sslcacert:
         description:
             - supply a custom ssl CA certificate file for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     systemorgid:
         description:
             - supply an organizational id for use with registration
-        required: False
-        default: None
         version_added: "2.1"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
-        required: false
         default: []
     enable_eus:
         description:
-            - If true, extended update support will be requested.
-        required: false
-        default: false
+            - If C(no), extended update support will be requested.
+        type: bool
+        default: 'no'
     nopackages:
         description:
-            - If true, the registered node will not upload its installed packages information to Satellite server
-        required: false
-        default: false
+            - If C(yes), the registered node will not upload its installed packages information to Satellite server
+        type: bool
+        default: 'no'
         version_added: "2.5"
 '''
 
@@ -307,11 +293,15 @@ class Rhn(redhat.RegistrationBase):
         os.unlink(self.config['systemIdPath'])
 
     def subscribe(self, channels):
+        if not channels:
+            return
+
         if self._is_hosted():
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             new_channels = [item['channel_label'] for item in current_channels]
             new_channels.extend(channels)
             return self.api('channel.software.setSystemChannels', self.systemid, list(new_channels))
+
         else:
             current_channels = self.api('channel.software.listSystemChannels', self.systemid)
             current_channels = [item['label'] for item in current_channels]
@@ -327,10 +317,13 @@ class Rhn(redhat.RegistrationBase):
                         new_childs.append(ch)
             out_base = 0
             out_childs = 0
+
             if new_base:
                 out_base = self.api('system.setBaseChannel', self.systemid, new_base)
+
             if new_childs:
                 out_childs = self.api('system.setChildChannels', self.systemid, new_childs)
+
             return out_base and out_childs
 
     def _is_hosted(self):
@@ -356,7 +349,13 @@ def main():
             enable_eus=dict(default=False, type='bool'),
             nopackages=dict(default=False, type='bool'),
             channels=dict(default=[], type='list'),
-        )
+        ),
+        # username/password is required for state=absent, or if channels is not empty
+        # (basically anything that uses self.api requires username/password) but it doesnt
+        # look like we can express that with required_if/required_together/mutually_exclusive
+
+        # only username+password can be used for unregister
+        required_if=[['state', 'absent', ['username', 'password']]]
     )
 
     if not HAS_UP2DATE_CLIENT:
@@ -415,6 +414,9 @@ def main():
     if state == 'absent':
         if not rhn.is_registered:
             module.exit_json(changed=False, msg="System already unregistered.")
+
+        if not (rhn.username and rhn.password):
+            module.fail_json(msg="Missing arguments, the system is currently registered and unregistration requires a username and password")
 
         try:
             rhn.unregister()

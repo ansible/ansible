@@ -90,32 +90,32 @@ RETURN = r'''
 id:
   description: UUID of the VPN connection.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 vpn_gateway_id:
   description: UUID of the VPN gateway.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-93f5-4ffc-b698b8ac38b6
 domain:
   description: Domain the VPN connection is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VPN connection is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VPN connection is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 created:
   description: Date the connection was created.
   returned: success
-  type: string
+  type: str
   sample: 2014-12-01T14:57:57+0100
 dpd:
   description: Whether dead pear detection is enabled or not.
@@ -130,7 +130,7 @@ esp_lifetime:
 esp_policy:
   description: IKE policy of the VPN connection.
   returned: success
-  type: string
+  type: str
   sample: aes256-sha1;modp1536
 force_encap:
   description: Whether encapsulation for NAT traversal is enforced or not.
@@ -145,7 +145,7 @@ ike_lifetime:
 ike_policy:
   description: ESP policy of the VPN connection.
   returned: success
-  type: string
+  type: str
   sample: aes256-sha1;modp1536
 cidrs:
   description: List of CIDRs of the customer gateway.
@@ -160,17 +160,17 @@ passive:
 public_ip:
   description: IP address of the VPN gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 gateway:
   description: IP address of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.101.214.10
 state:
   description: State of the VPN connection.
   returned: success
-  type: string
+  type: str
   sample: Connected
 '''
 
@@ -206,13 +206,14 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
         args = {
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
-            'projectid': self.get_project(key='id')
+            'projectid': self.get_project(key='id'),
+            'fetch_list': True,
         }
 
         vpn_customer_gateway = identifier or self.module.params.get('vpn_customer_gateway')
         vcgws = self.query_api('listVpnCustomerGateways', **args)
         if vcgws:
-            for vcgw in vcgws['vpncustomergateway']:
+            for vcgw in vcgws:
                 if vpn_customer_gateway.lower() in [vcgw['id'], vcgw['name'].lower()]:
                     self.vpn_customer_gateway = vcgw
                     return self._get_by_key(key, self.vpn_customer_gateway)
@@ -296,7 +297,7 @@ class AnsibleCloudStackVpnConnection(AnsibleCloudStack):
             if 'cidrlist' in vpn_conn:
                 self.result['cidrs'] = vpn_conn['cidrlist'].split(',') or [vpn_conn['cidrlist']]
             # Ensure we return a bool
-            self.result['force_encap'] = True if vpn_conn['forceencap'] else False
+            self.result['force_encap'] = True if vpn_conn.get('forceencap') else False
             args = {
                 'key': 'name',
                 'identifier': vpn_conn['s2scustomergatewayid'],

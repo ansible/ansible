@@ -24,17 +24,14 @@ options:
     description:
       - Whether the client should be present or not
     choices: [ 'present', 'absent' ]
-    required: False
     default: present
   name:
     description:
       - A unique name for the client. The name cannot contain special characters or spaces.
-    required: False
     default: System hostname as determined by Ruby Socket.gethostname (provided by Sensu)
   address:
     description:
       - An address to help identify and reach the client. This is only informational, usually an IP address or hostname.
-    required: False
     default: Non-loopback IPv4 address as determined by Ruby Socket.ip_address_list (provided by Sensu)
   subscriptions:
     description:
@@ -42,73 +39,50 @@ options:
       - These subscriptions determine which monitoring checks are executed by the client, as check requests are sent to subscriptions.
       - The subscriptions array items must be strings.
     required: True
-    default: null
   safe_mode:
     description:
       - If safe mode is enabled for the client. Safe mode requires local check definitions in order to accept a check request and execute the check.
-    choices: [ 'true', 'false' ]
-    required: False
-    default: false
+    type: bool
+    default: 'no'
   redact:
     description:
       - Client definition attributes to redact (values) when logging and sending client keepalives.
-    required: False
-    default: null
   socket:
     description:
       - The socket definition scope, used to configure the Sensu client socket.
-    required: False
-    default: null
   keepalives:
     description:
       - If Sensu should monitor keepalives for this client.
-    choices: [ 'true', 'false' ]
-    required: False
-    default: true
+    type: bool
+    default: 'yes'
   keepalive:
     description:
       - The keepalive definition scope, used to configure Sensu client keepalives behavior (e.g. keepalive thresholds, etc).
-    required: False
-    default: null
   registration:
     description:
       - The registration definition scope, used to configure Sensu registration event handlers.
-    required: False
-    default: null
   deregister:
     description:
       - If a deregistration event should be created upon Sensu client process stop.
-    choices: [ 'true', 'false' ]
-    required: False
-    default: false
+    type: bool
+    default: 'no'
   deregistration:
     description:
       - The deregistration definition scope, used to configure automated Sensu client de-registration.
-    required: False
-    default: null
   ec2:
     description:
       - The ec2 definition scope, used to configure the Sensu Enterprise AWS EC2 integration (Sensu Enterprise users only).
-    required: False
-    default: null
   chef:
     description:
       - The chef definition scope, used to configure the Sensu Enterprise Chef integration (Sensu Enterprise users only).
-    required: False
-    default: null
   puppet:
     description:
       - The puppet definition scope, used to configure the Sensu Enterprise Puppet integration (Sensu Enterprise users only).
-    required: False
-    default: null
   servicenow:
     description:
       - The servicenow definition scope, used to configure the Sensu Enterprise ServiceNow integration (Sensu Enterprise users only).
-    required: False
-    default: null
 notes:
   - Check mode is supported
-requirements: [ ]
 '''
 
 EXAMPLES = '''
@@ -165,7 +139,7 @@ config:
 file:
   description: Path to the client configuration file
   returned: success
-  type: string
+  type: str
   sample: "/etc/sensu/conf.d/client.json"
 '''
 
@@ -271,6 +245,7 @@ def main():
     except (OSError, IOError) as e:
         module.fail_json(msg='Unable to write file {0}: {1}'.format(path,
                                                                     str(e)))
+
 
 if __name__ == '__main__':
     main()

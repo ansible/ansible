@@ -37,8 +37,6 @@ options:
   bgp_asn:
     description:
       - Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when state=present.
-    required: false
-    default: null
   ip_address:
     description:
       - Internet-routable IP address for customers gateway, must be a static address.
@@ -56,7 +54,6 @@ options:
   state:
     description:
       - Create or terminate the Customer Gateway.
-    required: false
     default: present
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment:
@@ -93,32 +90,32 @@ gateway.customer_gateways:
             description: The Border Gateway Autonomous System Number.
             returned: when exists and gateway is available.
             sample: 65123
-            type: string
+            type: str
         customer_gateway_id:
             description: gateway id assigned by amazon.
             returned: when exists and gateway is available.
             sample: cgw-cb6386a2
-            type: string
+            type: str
         ip_address:
             description: ip address of your gateway device.
             returned: when exists and gateway is available.
             sample: 1.2.3.4
-            type: string
+            type: str
         state:
             description: state of gateway.
             returned: when gateway exists and is available.
             state: available
-            type: string
+            type: str
         tags:
             description: any tags on the gateway.
             returned: when gateway exists and is available, and when tags exist.
             state: available
-            type: string
+            type: str
         type:
             description: encryption type.
             returned: when gateway exists and is available.
             sample: ipsec.1
-            type: string
+            type: str
 '''
 
 try:
@@ -134,7 +131,7 @@ except ImportError:
     HAS_BOTO3 = False
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import (boto3_conn, camel_dict_to_snake_dict,
+from ansible.module_utils.ec2 import (boto3_conn, AWSRetry, camel_dict_to_snake_dict,
                                       ec2_argument_spec, get_aws_connection_info)
 
 
@@ -151,6 +148,7 @@ class Ec2CustomerGatewayManager:
         except ClientError as e:
             module.fail_json(msg=e.message)
 
+    @AWSRetry.jittered_backoff(delay=2, max_delay=30, retries=6, catch_extra_error_codes=['IncorrectState'])
     def ensure_cgw_absent(self, gw_id):
         response = self.ec2.delete_customer_gateway(
             DryRun=False,

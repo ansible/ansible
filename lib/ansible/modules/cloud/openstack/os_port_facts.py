@@ -22,26 +22,21 @@ description:
 notes:
     - Facts are placed in the C(openstack_ports) variable.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
     port:
         description:
             - Unique name or ID of a port.
-        required: false
-        default: null
     filters:
         description:
             - A dictionary of meta data to use for further filtering. Elements
               of this dictionary will be matched against the returned port
               dictionaries. Matching is currently limited to strings within
               the port dictionary, or strings within nested dictionaries.
-        required: false
-        default: null
     availability_zone:
       description:
         - Ignored. Present for backwards compatibility
-      required: false
 extends_documentation_fragment: openstack
 '''
 
@@ -75,7 +70,7 @@ openstack_ports:
             description: The administrative state of the router, which is
                          up (true) or down (false).
             returned: success
-            type: boolean
+            type: bool
             sample: true
         allowed_address_pairs:
             description: A set of zero or more allowed address pairs. An
@@ -86,7 +81,7 @@ openstack_ports:
         "binding:host_id":
             description: The UUID of the host where the port is allocated.
             returned: success
-            type: string
+            type: str
             sample: "b4bd682d-234a-4091-aa5b-4b025a6a7759"
         "binding:profile":
             description: A dictionary the enables the application running on
@@ -111,17 +106,17 @@ openstack_ports:
             description: The virtual network interface card (vNIC) type that is
                          bound to the neutron port.
             returned: success
-            type: string
+            type: str
             sample: "normal"
         device_id:
             description: The UUID of the device that uses this port.
             returned: success
-            type: string
+            type: str
             sample: "b4bd682d-234a-4091-aa5b-4b025a6a7759"
         device_owner:
             description: The UUID of the entity that uses this port.
             returned: success
-            type: string
+            type: str
             sample: "network:router_interface"
         dns_assignment:
             description: DNS assignment information.
@@ -130,7 +125,7 @@ openstack_ports:
         dns_name:
             description: DNS name
             returned: success
-            type: string
+            type: str
             sample: ""
         extra_dhcp_opts:
             description: A set of zero or more extra DHCP option pairs.
@@ -146,32 +141,32 @@ openstack_ports:
         id:
             description: The UUID of the port.
             returned: success
-            type: string
+            type: str
             sample: "3ec25c97-7052-4ab8-a8ba-92faf84148de"
         ip_address:
             description: The IP address.
             returned: success
-            type: string
+            type: str
             sample: "127.0.0.1"
         mac_address:
             description: The MAC address.
             returned: success
-            type: string
+            type: str
             sample: "00:00:5E:00:53:42"
         name:
             description: The port name.
             returned: success
-            type: string
+            type: str
             sample: "port_name"
         network_id:
             description: The UUID of the attached network.
             returned: success
-            type: string
+            type: str
             sample: "dd1ede4f-3952-4131-aab6-3b8902268c7d"
         port_security_enabled:
             description: The port security status. The status is enabled (true) or disabled (false).
             returned: success
-            type: boolean
+            type: bool
             sample: false
         security_groups:
             description: The UUIDs of any attached security groups.
@@ -180,23 +175,17 @@ openstack_ports:
         status:
             description: The port status.
             returned: success
-            type: string
+            type: str
             sample: "ACTIVE"
         tenant_id:
             description: The UUID of the tenant who owns the network.
             returned: success
-            type: string
+            type: str
             sample: "51fce036d7984ba6af4f6c849f65ef00"
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -207,19 +196,16 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+    port = module.params.get('port')
+    filters = module.params.get('filters')
 
-    port = module.params.pop('port')
-    filters = module.params.pop('filters')
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
-        cloud = shade.openstack_cloud(**module.params)
         ports = cloud.search_ports(port, filters)
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_ports=ports))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -1,0 +1,4 @@
+- name: uninstall supervisor
+  package:
+    name: supervisor
+    state: absent

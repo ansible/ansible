@@ -29,7 +29,7 @@ short_description: Manages interface DLDP configuration on HUAWEI CloudEngine sw
 description:
     - Manages interface DLDP configuration on HUAWEI CloudEngine switches.
 author:
-    - Zhou Zhijin (@CloudEngine-Ansible)
+    - Zhou Zhijin (@QijunPan)
 notes:
     - If C(state=present, enable=disable), interface DLDP enable will be turned off and
       related interface DLDP confuration will be cleared.
@@ -42,31 +42,22 @@ options:
     enable:
         description:
             - Set interface DLDP enable state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     mode_enable:
         description:
             - Set DLDP compatible-mode enable state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     local_mac:
         description:
             - Set the source MAC address for DLDP packets sent in the DLDP-compatible mode.
               The value of MAC address is in H-H-H format. H contains 1 to 4 hexadecimal digits.
-        required: false
-        default: null
     reset:
         description:
             - Specify whether reseting interface DLDP state.
-        required: false
-        default: null
         choices: ['enable', 'disable']
     state:
         description:
             - Manage the state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -170,7 +161,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

@@ -8,48 +8,57 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
 module: aci_vrf
-short_description: Manage VRF (private networks aka. contexts) on Cisco ACI fabrics (fv:Ctx)
+short_description: Manage contexts or VRFs (fv:Ctx)
 description:
-- Manage VRF (private networks aka. contexts) on Cisco ACI fabrics.
+- Manage contexts or VRFs on Cisco ACI fabrics.
 - Each context is a private network associated to a tenant, i.e. VRF.
-- More information from the internal APIC class I(fv:Ctx) at
-  U(https://developer.cisco.com/docs/apic-mim-ref/).
-author:
-- Jacob McGill (@jmcgill298)
-version_added: '2.4'
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Ctx).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 options:
   tenant:
     description:
     - The name of the Tenant the VRF should belong to.
+    type: str
     aliases: [ tenant_name ]
   vrf:
     description:
     - The name of the VRF.
+    type: str
     aliases: [ context, name, vrf_name ]
   policy_control_direction:
     description:
     - Determines if the policy should be enforced by the fabric on ingress or egress.
+    type: str
     choices: [ egress, ingress ]
   policy_control_preference:
     description:
-    - Determines if the Fabric should enforce Contrac Policies.
+    - Determines if the fabric should enforce contract policies to allow routing and packet forwarding.
+    type: str
     choices: [ enforced, unenforced ]
   description:
     description:
     - The description for the VRF.
+    type: str
     aliases: [ descr ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -67,6 +76,7 @@ EXAMPLES = r'''
     policy_control_preference: enforced
     policy_control_direction: ingress
     state: present
+  delegate_to: localhost
 
 - name: Remove a VRF for a tenant
   aci_vrf:
@@ -76,6 +86,7 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: absent
+  delegate_to: localhost
 
 - name: Query a VRF of a tenant
   aci_vrf:
@@ -85,6 +96,8 @@ EXAMPLES = r'''
     vrf: vrf_lab
     tenant: lab_tenant
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query all VRFs
   aci_vrf:
@@ -92,6 +105,8 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -126,7 +141,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -175,17 +190,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -195,7 +210,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -212,8 +227,6 @@ def main():
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all objects
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -237,20 +250,20 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvCtx',
             aci_rn='ctx-{0}'.format(vrf),
-            filter_target='eq(fvCtx.name, "{0}")'.format(vrf),
             module_object=vrf,
+            target_filter={'name': vrf},
         ),
     )
+
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
         aci.payload(
             aci_class='fvCtx',
             class_config=dict(
@@ -261,10 +274,8 @@ def main():
             ),
         )
 
-        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvCtx')
 
-        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':

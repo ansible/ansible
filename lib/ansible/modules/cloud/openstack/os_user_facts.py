@@ -21,8 +21,8 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack users
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
@@ -31,18 +31,13 @@ options:
    domain:
      description:
         - Name or ID of the domain containing the user if the cloud supports domains
-     required: false
-     default: None
    filters:
      description:
         - A dictionary of meta data to use for further filtering.  Elements of
           this dictionary may be additional dictionaries.
-     required: false
-     default: None
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-     required: false
 '''
 
 EXAMPLES = '''
@@ -88,11 +83,11 @@ openstack_users:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the user.
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the user is enabled
             returned: success
@@ -100,29 +95,23 @@ openstack_users:
         domain_id:
             description: Domain ID containing the user
             returned: success
-            type: string
+            type: str
         default_project_id:
             description: Default project ID of the user
             returned: success
-            type: string
+            type: str
         email:
             description: Email of the user
             returned: success
-            type: string
+            type: str
         username:
             description: Username of the user
             returned: success
-            type: string
+            type: str
 '''
 
-try:
-    import shade
-    HAS_SHADE = True
-except ImportError:
-    HAS_SHADE = False
-
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.openstack import openstack_full_argument_spec
+from ansible.module_utils.openstack import openstack_full_argument_spec, openstack_module_kwargs, openstack_cloud_from_module
 
 
 def main():
@@ -135,22 +124,18 @@ def main():
 
     module = AnsibleModule(argument_spec)
 
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
+    sdk, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         domain = module.params['domain']
         filters = module.params['filters']
-
-        opcloud = shade.operator_cloud(**module.params)
 
         if domain:
             try:
                 # We assume admin is passing domain id
                 dom = opcloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 dom = opcloud.search_domains(filters={'name': domain})
@@ -168,7 +153,7 @@ def main():
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_users=users))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

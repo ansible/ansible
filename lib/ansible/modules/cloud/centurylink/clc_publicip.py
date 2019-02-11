@@ -24,12 +24,9 @@ options:
       - The protocol that the public IP will listen for.
     default: TCP
     choices: ['TCP', 'UDP', 'ICMP']
-    required: False
   ports:
     description:
       - A list of ports to expose. This is required when state is 'present'
-    required: False
-    default: None
   server_ids:
     description:
       - A list of servers to create public ips on.
@@ -40,13 +37,11 @@ options:
         already exists.
     default: present
     choices: ['present', 'absent']
-    required: False
   wait:
     description:
       - Whether to wait for the tasks to finish before returning.
-    choices: [ True, False ]
-    default: True
-    required: False
+    type: bool
+    default: 'yes'
 requirements:
     - python = 2.7
     - requests >= 2.5.0
@@ -120,11 +115,14 @@ server_ids:
 __version__ = '${version}'
 
 import os
+import traceback
 from distutils.version import LooseVersion
 
+REQUESTS_IMP_ERR = None
 try:
     import requests
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     REQUESTS_FOUND = False
 else:
     REQUESTS_FOUND = True
@@ -133,16 +131,18 @@ else:
 #  Requires the clc-python-sdk.
 #  sudo pip install clc-sdk
 #
+CLC_IMP_ERR = None
 try:
     import clc as clc_sdk
     from clc import CLCException
 except ImportError:
+    CLC_IMP_ERR = traceback.format_exc()
     CLC_FOUND = False
     clc_sdk = None
 else:
     CLC_FOUND = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class ClcPublicIp(object):
@@ -155,11 +155,9 @@ class ClcPublicIp(object):
         """
         self.module = module
         if not CLC_FOUND:
-            self.module.fail_json(
-                msg='clc-python-sdk required for this module')
+            self.module.fail_json(msg=missing_required_lib('clc-sdk'), exception=CLC_IMP_ERR)
         if not REQUESTS_FOUND:
-            self.module.fail_json(
-                msg='requests library is required for this module')
+            self.module.fail_json(msg=missing_required_lib('requests'), exception=REQUESTS_IMP_ERR)
         if requests.__version__ and LooseVersion(requests.__version__) < LooseVersion('2.5.0'):
             self.module.fail_json(
                 msg='requests library  version should be >= 2.5.0')

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: avi_poolgroupdeploymentpolicy
-author: Gaurav Rastogi (grastogi@avinetworks.com)
+author: Gaurav Rastogi (@grastogi23) <grastogi@avinetworks.com>
 
 short_description: Module for setup of PoolGroupDeploymentPolicy Avi RESTful Object
 description:
@@ -45,6 +45,7 @@ options:
         description:
             - It will automatically disable old production pools once there is a new production candidate.
             - Default value when not specified in API or module is interpreted by Avi Controller as True.
+        type: bool
     cloud_ref:
         description:
             - It is a reference to an object of type cloud.
@@ -155,6 +156,7 @@ def main():
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'poolgroupdeploymentpolicy',
                            set([]))
+
 
 if __name__ == '__main__':
     main()

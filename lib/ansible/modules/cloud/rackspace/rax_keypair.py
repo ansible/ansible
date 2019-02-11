@@ -26,7 +26,6 @@ options:
   public_key:
     description:
       - Public Key string to upload. Can be a file path or string
-    default: null
   state:
     description:
       - Indicate desired state of the resource
@@ -129,7 +128,7 @@ def rax_keypair(module, name, public_key, state):
     elif state == 'absent':
         try:
             keypair = cs.keypairs.find(name=name)
-        except:
+        except Exception:
             pass
 
         if keypair:

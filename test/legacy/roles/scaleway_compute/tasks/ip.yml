@@ -1,0 +1,201 @@
+- name: Create a server with no IP (Check)
+  check_mode: yes
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+
+  register: server_creation_absent_check_task
+
+- debug: var=server_creation_absent_check_task
+
+- assert:
+    that:
+      - server_creation_absent_check_task is success
+      - server_creation_absent_check_task is changed
+
+- name: Create a server
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_creation_absent_task
+
+- debug: var=server_creation_absent_task
+
+- assert:
+    that:
+      - server_creation_absent_task is success
+      - server_creation_absent_task is changed
+
+- name: Create a server (Confirmation)
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_creation_absent_confirmation_task
+
+- debug: var=server_creation_absent_confirmation_task
+
+- assert:
+    that:
+      - server_creation_absent_confirmation_task is success
+      - server_creation_absent_confirmation_task is not changed
+
+# Add a dynamic IP to the instance
+
+- name: Patch server tags (Check)
+  check_mode: yes
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: dynamic
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+
+  register: ip_patching_check_task
+
+- debug: var=ip_patching_check_task
+
+- assert:
+    that:
+      - ip_patching_check_task is success
+      - ip_patching_check_task is changed
+
+- name: Patch server tags
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: dynamic
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+  register: ip_patching_task
+
+- debug: var=ip_patching_task
+
+- assert:
+    that:
+      - ip_patching_task is success
+      - ip_patching_task is changed
+
+- name: Patch server tags (Confirmation)
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: dynamic
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: ip_patching_confirmation_task
+
+- debug: var=ip_patching_confirmation_task
+
+- assert:
+    that:
+      - ip_patching_confirmation_task is success
+      - ip_patching_confirmation_task is not changed
+
+# Remove dynamic IP
+
+- name: Patch server tags (Check)
+  check_mode: yes
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+
+  register: remove_ip_check_task
+
+- debug: var=remove_ip_check_task
+
+- assert:
+    that:
+      - remove_ip_check_task is success
+      - remove_ip_check_task is changed
+
+- name: Patch server tags
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: remove_ip_task
+
+- debug: var=remove_ip_task
+
+- assert:
+    that:
+      - remove_ip_task is success
+      - remove_ip_task is changed
+
+- name: Patch server tags (Confirmation)
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: present
+    public_ip: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: remove_ip_confirmation_task
+
+- debug: var=remove_ip_confirmation_task
+
+- assert:
+    that:
+      - remove_ip_confirmation_task is success
+      - remove_ip_confirmation_task is not changed
+
+- name: Destroy it
+  scaleway_compute:
+    name: '{{ scaleway_name }}'
+    state: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+  register: server_destroy_task
+
+- debug: var=server_destroy_task
+
+- assert:
+    that:
+      - server_destroy_task is success
+      - server_destroy_task is changed

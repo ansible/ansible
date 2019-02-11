@@ -40,7 +40,7 @@ options:
      description:
         - Force disabling of default modules and override Debian warnings.
      required: false
-     choices: ['True', 'False']
+     type: bool
      default: False
      version_added: "2.1"
    state:
@@ -51,7 +51,7 @@ options:
    ignore_configcheck:
      description:
         - Ignore configuration checks about inconsistent module configuration. Especially for mpm_* modules.
-     choices: ['True', 'False']
+     type: bool
      default: False
      version_added: "2.3"
 requirements: ["a2enmod","a2dismod"]
@@ -87,7 +87,7 @@ RETURN = '''
 result:
     description: message about action taken
     returned: always
-    type: string
+    type: str
 warnings:
     description: list of warning messages
     returned: when needed
@@ -99,14 +99,17 @@ rc:
 stdout:
     description: stdout of underlying command
     returned: failed
-    type: string
+    type: str
 stderr:
     description: stderr of underlying command
     returned: failed
-    type: string
+    type: str
 '''
 
 import re
+
+# import module snippets
+from ansible.module_utils.basic import AnsibleModule
 
 
 def _run_threaded(module):
@@ -259,7 +262,6 @@ def main():
     if module.params['state'] in ['present', 'absent']:
         _set_state(module, module.params['state'])
 
-# import module snippets
-from ansible.module_utils.basic import AnsibleModule
+
 if __name__ == '__main__':
     main()

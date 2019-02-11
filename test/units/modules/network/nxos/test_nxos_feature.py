@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_feature
 from .nxos_module import TestNxosModule, load_fixture, set_module_args
 
@@ -69,9 +69,9 @@ class TestNxosFeatureModule(TestNxosModule):
     def test_nxos_feature_enable(self):
         set_module_args(dict(feature='nve', state='enabled'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['feature nv overlay'])
+        self.assertEqual(result['commands'], ['terminal dont-ask', 'feature nv overlay'])
 
     def test_nxos_feature_disable(self):
         set_module_args(dict(feature='ospf', state='disabled'))
         result = self.execute_module(changed=True)
-        self.assertEqual(result['commands'], ['no feature ospf'])
+        self.assertEqual(result['commands'], ['terminal dont-ask', 'no feature ospf'])

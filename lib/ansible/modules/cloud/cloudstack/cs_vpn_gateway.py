@@ -39,35 +39,26 @@ options:
   state:
     description:
       - State of the VPN gateway.
-    required: false
     default: "present"
     choices: [ 'present', 'absent' ]
   domain:
     description:
       - Domain the VPN gateway is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the VPN gateway is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the VPN gateway is related to.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone the VPC is related to.
       - If not set, default zone is used.
-    required: false
-    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -89,32 +80,32 @@ RETURN = '''
 id:
   description: UUID of the VPN site-to-site gateway.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 public_ip:
   description: IP address of the VPN site-to-site gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 vpc:
   description: Name of the VPC.
   returned: success
-  type: string
+  type: str
   sample: My VPC
 domain:
   description: Domain the VPN site-to-site gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VPN site-to-site gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VPN site-to-site gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

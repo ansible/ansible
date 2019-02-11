@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -30,26 +30,35 @@ options:
         a C(type) be specified.
       - These conditions can be specified in any order. Despite them being a list, the
         BIG-IP does not treat their order as anything special.
-      - Available C(type) values are C(forward).
     suboptions:
       type:
         description:
           - The action type. This value controls what below options are required.
-          - When C(type) is C(forward), will associate a given C(pool) with this rule.
+          - When C(type) is C(forward), will associate a given C(pool), or C(virtual)
+            with this rule.
           - When C(type) is C(enable), will associate a given C(asm_policy) with
             this rule.
           - When C(type) is C(ignore), will remove all existing actions from this
             rule.
+          - When C(type) is C(redirect), will redirect an HTTP request to a different URL.
         required: true
-        choices: [ 'forward', 'enable', 'ignore' ]
+        choices: ['forward', 'enable', 'ignore', 'redirect']
       pool:
         description:
           - Pool that you want to forward traffic to.
+          - This parameter is only valid with the C(forward) type.
+      virtual:
+        description:
+          - Virtual Server that you want to forward traffic to.
           - This parameter is only valid with the C(forward) type.
       asm_policy:
         description:
           - ASM policy to enable.
           - This parameter is only valid with the C(enable) type.
+      location:
+        description:
+          - The new URL for which a redirect response will be sent.
+          - A Tcl command substitution can be used for this field.
   policy:
     description:
       - The name of the policy that you want to associate this rule with.
@@ -77,12 +86,20 @@ options:
             list will provide a match.
           - When C(type) is C(all_traffic), will remove all existing conditions from
             this rule.
-        required: true
-        choices: [ 'http_uri', 'all_traffic' ]
+        required: True
+        choices: [ 'http_uri', 'all_traffic', 'http_host' ]
       path_begins_with_any:
         description:
           - A list of strings of characters that the HTTP URI should start with.
           - This parameter is only valid with the C(http_uri) type.
+      host_is_any:
+        description:
+          - A list of strings of characters that the HTTP Host should match.
+          - This parameter is only valid with the C(http_host) type.
+      host_begins_with_any:
+        description:
+          - A list of strings of characters that the HTTP Host should start with.
+          - This parameter is only valid with the C(http_host) type.
   state:
     description:
       - When C(present), ensures that the key is uploaded to the device. When
@@ -101,6 +118,7 @@ requirements:
   - BIG-IP >= v12.1.0
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -108,6 +126,10 @@ EXAMPLES = r'''
   bigip_policy:
     name: Policy-Foo
     state: present
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Add a rule to the new policy
@@ -120,6 +142,11 @@ EXAMPLES = r'''
     actions:
       - type: forward
         pool: pool-svrs
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 
 - name: Add multiple rules to the new policy
   bigip_policy_rule:
@@ -127,6 +154,11 @@ EXAMPLES = r'''
     name: "{{ item.name }}"
     conditions: "{{ item.conditions }}"
     actions: "{{ item.actions }}"
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
   loop:
     - name: rule1
       actions:
@@ -151,6 +183,11 @@ EXAMPLES = r'''
       - type: all_traffic
     actions:
       - type: ignore
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -162,12 +199,12 @@ actions:
     type:
       description: The action type
       returned: changed
-      type: string
+      type: str
       sample: forward
     pool:
       description: Pool for forward to
       returned: changed
-      type: string
+      type: str
       sample: foo-pool
   sample: hash/dictionary of values
 conditions:
@@ -176,9 +213,9 @@ conditions:
   type: complex
   contains:
     type:
-      description: The condition type
+      description: The condition type.
       returned: changed
-      type: string
+      type: str
       sample: http_uri
     path_begins_with_any:
       description: List of strings that the URI begins with.
@@ -189,7 +226,7 @@ conditions:
 description:
   description: The new description of the rule.
   returned: changed
-  type: string
+  type: str
   sample: My rule
 '''
 
@@ -197,54 +234,48 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
+    from library.module_utils.network.f5.common import fq_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
+    from library.module_utils.network.f5.common import transform_name
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    # Upstream Ansible
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
+    from ansible.module_utils.network.f5.common import fq_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import transform_name
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
     api_map = {
         'actionsReference': 'actions',
-        'conditionsReference': 'conditions'
+        'conditionsReference': 'conditions',
     }
     api_attributes = [
-        'description', 'actions', 'conditions'
+        'description',
+        'actions',
+        'conditions',
     ]
 
     updatables = [
-        'actions', 'conditions', 'description'
+        'actions',
+        'conditions',
+        'description',
     ]
 
-    def _fqdn_name(self, value):
-        if value is not None and not value.startswith('/'):
-            return '/{0}/{1}'.format(self.partition, value)
-        return value
+    returnable = [
+        'description',
+    ]
 
     @property
     def name(self):
@@ -255,13 +286,6 @@ class Parameters(AnsibleF5Parameters):
         return self._values.get('description', None)
 
     @property
-    def strategy(self):
-        if self._values['strategy'] is None:
-            return None
-        result = self._fqdn_name(self._values['strategy'])
-        return result
-
-    @property
     def policy(self):
         if self._values['policy'] is None:
             return None
@@ -270,7 +294,9 @@ class Parameters(AnsibleF5Parameters):
 
 class ApiParameters(Parameters):
     def _remove_internal_keywords(self, resource):
-        items = ['kind', 'generation', 'selfLink', 'poolReference']
+        items = [
+            'kind', 'generation', 'selfLink', 'poolReference', 'offset',
+        ]
         for item in items:
             try:
                 del resource[item]
@@ -293,6 +319,10 @@ class ApiParameters(Parameters):
                 action.update(item)
                 action['type'] = 'enable'
                 del action['enable']
+            elif 'redirect' in item:
+                action.update(item)
+                action['type'] = 'redirect'
+                del action['redirect']
             result.append(action)
         result = sorted(result, key=lambda x: x['name'])
         return result
@@ -316,6 +346,11 @@ class ApiParameters(Parameters):
                 # engine does not recognize that a u'foo' and 'foo' are equal "enough"
                 # to consider them a subset. Therefore, we cast everything here to
                 # whatever the common stringiness is.
+                if 'values' in action:
+                    action['values'] = [str(x) for x in action['values']]
+            elif 'httpHost' in item:
+                action.update(item)
+                action['type'] = 'http_host'
                 if 'values' in action:
                     action['values'] = [str(x) for x in action['values']]
             result.append(action)
@@ -342,6 +377,8 @@ class ModuleParameters(Parameters):
                 self._handle_enable_action(action, item)
             elif item['type'] == 'ignore':
                 return [dict(type='ignore')]
+            elif item['type'] == 'redirect':
+                self._handle_redirect_action(action, item)
             result.append(action)
         result = sorted(result, key=lambda x: x['name'])
         return result
@@ -359,11 +396,36 @@ class ModuleParameters(Parameters):
                 action['name'] = str(idx)
             if item['type'] == 'http_uri':
                 self._handle_http_uri_condition(action, item)
+            elif item['type'] == 'http_host':
+                self._handle_http_host_condition(action, item)
             elif item['type'] == 'all_traffic':
                 return [dict(type='all_traffic')]
             result.append(action)
         result = sorted(result, key=lambda x: x['name'])
         return result
+
+    def _handle_http_host_condition(self, action, item):
+        action['type'] = 'http_host'
+        if 'host_begins_with_any' in item:
+            if isinstance(item['host_begins_with_any'], list):
+                values = item['host_begins_with_any']
+            else:
+                values = [item['host_begins_with_any']]
+            action.update(dict(
+                host=True,
+                startsWith=True,
+                values=values
+            ))
+        elif 'host_is_any' in item:
+            if isinstance(item['host_is_any'], list):
+                values = item['host_is_any']
+            else:
+                values = [item['host_is_any']]
+            action.update(dict(
+                equals=True,
+                host=True,
+                values=values
+            ))
 
     def _handle_http_uri_condition(self, action, item):
         """Handle the nuances of the forwarding type
@@ -403,11 +465,14 @@ class ModuleParameters(Parameters):
         :return:
         """
         action['type'] = 'forward'
-        if 'pool' not in item:
+        if not any(x for x in ['pool', 'virtual'] if x in item):
             raise F5ModuleError(
-                "A 'pool' must be specified when the 'forward' type is used."
+                "A 'pool' or 'virtual' must be specified when the 'forward' type is used."
             )
-        action['pool'] = self._fqdn_name(item['pool'])
+        if item.get('pool', None):
+            action['pool'] = fq_name(self.partition, item['pool'])
+        elif item.get('virtual', None):
+            action['virtual'] = fq_name(self.partition, item['virtual'])
 
     def _handle_enable_action(self, action, item):
         """Handle the nuances of the enable type
@@ -422,9 +487,26 @@ class ModuleParameters(Parameters):
                 "An 'asm_policy' must be specified when the 'enable' type is used."
             )
         action.update(dict(
-            policy=self._fqdn_name(item['asm_policy']),
+            policy=fq_name(self.partition, item['asm_policy']),
             asm=True
         ))
+
+    def _handle_redirect_action(self, action, item):
+        """Handle the nuances of the redirect type
+
+        :param action:
+        :param item:
+        :return:
+        """
+        action['type'] = 'redirect'
+        if 'location' not in item:
+            raise F5ModuleError(
+                "A 'location' must be specified when the 'redirect' type is used."
+            )
+        action.update(
+            location=item['location'],
+            httpReply=True,
+        )
 
 
 class Changes(Parameters):
@@ -459,6 +541,11 @@ class ReportableChanges(Changes):
                 action.update(item)
                 action['type'] = 'enable'
                 del action['enable']
+            elif 'redirect' in item:
+                action.update(item)
+                action['type'] = 'redirect'
+                del action['redirect']
+                del action['httpReply']
             result.append(action)
         result = sorted(result, key=lambda x: x['name'])
         return result
@@ -474,6 +561,10 @@ class ReportableChanges(Changes):
                 action.update(item)
                 action['type'] = 'http_uri'
                 del action['httpUri']
+            elif 'httpHost' in item:
+                action.update(item)
+                action['type'] = 'http_host'
+                del action['httpHost']
             result.append(action)
         # Names contains the index in which the rule is at.
         result = sorted(result, key=lambda x: x['name'])
@@ -498,6 +589,10 @@ class UsableChanges(Changes):
             elif action['type'] == 'ignore':
                 result = []
                 break
+            elif action['type'] == 'redirect':
+                action['httpReply'] = True
+                action['redirect'] = True
+                del action['type']
             result.append(action)
         return result
 
@@ -511,6 +606,9 @@ class UsableChanges(Changes):
                 continue
             if condition['type'] == 'http_uri':
                 condition['httpUri'] = True
+                del condition['type']
+            elif condition['type'] == 'http_host':
+                condition['httpHost'] = True
                 del condition['type']
             elif condition['type'] == 'all_traffic':
                 result = []
@@ -630,13 +728,10 @@ class ModuleManager(object):
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.present()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         reportable = ReportableChanges(params=self.changes.to_return())
         changes = reportable.to_return()
@@ -659,46 +754,10 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def exists(self):
-        args = dict(
-            name=self.want.policy,
-            partition=self.want.partition,
-        )
-        if self.draft_exists():
-            args['subPath'] = 'Drafts'
-
-        policy = self.client.api.tm.ltm.policys.policy.load(**args)
-        result = policy.rules_s.rules.exists(
-            name=self.want.name
-        )
-        return result
-
-    def draft_exists(self):
-        params = dict(
-            name=self.want.policy,
-            partition=self.want.partition,
-            subPath='Drafts'
-        )
-        result = self.client.api.tm.ltm.policys.policy.exists(**params)
-        return result
-
-    def _create_existing_policy_draft_on_device(self):
-        params = dict(
-            name=self.want.policy,
-            partition=self.want.partition,
-        )
-        resource = self.client.api.tm.ltm.policys.policy.load(**params)
-        resource.draft()
-        return True
-
-    def publish_on_device(self):
-        resource = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.policy,
-            partition=self.want.partition,
-            subPath='Drafts'
-        )
-        resource.publish()
-        return True
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -745,62 +804,172 @@ class ModuleManager(object):
             self.publish_on_device()
         return True
 
+    def exists(self):
+        if self.draft_exists():
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.policy, sub_path='Drafts'),
+                self.want.name
+            )
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.policy),
+                self.want.name
+            )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def draft_exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.policy, sub_path='Drafts')
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
+
+    def _create_existing_policy_draft_on_device(self):
+        params = dict(createDraft=True)
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.policy)
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
+
+    def publish_on_device(self):
+        params = dict(
+            name=fq_name(self.want.partition,
+                         self.want.name,
+                         sub_path='Drafts'
+                         ),
+            command="publish"
+
+        )
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
+
     def create_on_device(self):
         params = self.changes.api_params()
-        policy = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.policy,
-            partition=self.want.partition,
-            subPath='Drafts'
+        params['name'] = self.want.name
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.policy, sub_path='Drafts'),
         )
-        policy.rules_s.rules.create(
-            name=self.want.name,
-            **params
-        )
+        resp = self.client.api.post(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
-        policy = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.policy,
-            partition=self.want.partition,
-            subPath='Drafts'
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.policy, sub_path='Drafts'),
+            self.want.name
         )
-        resource = policy.rules_s.rules.load(
-            name=self.want.name
-        )
-        resource.modify(**params)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def remove_from_device(self):
-        policy = self.client.api.tm.ltm.policys.policy.load(
-            name=self.want.policy,
-            partition=self.want.partition,
-            subPath='Drafts'
+        uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.policy, sub_path='Drafts'),
+            self.want.name
         )
-        resource = policy.rules_s.rules.load(
-            name=self.want.name
-        )
-        if resource:
-            resource.delete()
+        response = self.client.api.delete(uri)
+        if response.status == 200:
+            return True
+        raise F5ModuleError(response.content)
 
     def read_current_from_device(self):
-        args = dict(
-            name=self.want.policy,
-            partition=self.want.partition,
-        )
         if self.draft_exists():
-            args['subPath'] = 'Drafts'
-        policy = self.client.api.tm.ltm.policys.policy.load(**args)
-        resource = policy.rules_s.rules.load(
-            name=self.want.name,
-            requests_params=dict(
-                params='expandSubcollections=true'
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.policy, sub_path='Drafts'),
+                self.want.name
             )
-        )
-        return ApiParameters(params=resource.attrs)
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/ltm/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.policy),
+                self.want.name
+            )
+        query = "?expandSubcollections=true"
+        resp = self.client.api.get(uri + query)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
 
 class ArgumentSpec(object):
@@ -816,15 +985,18 @@ class ArgumentSpec(object):
                         choices=[
                             'forward',
                             'enable',
-                            'ignore'
+                            'ignore',
+                            'redirect',
                         ],
                         required=True
                     ),
                     pool=dict(),
-                    asm_policy=dict()
+                    asm_policy=dict(),
+                    virtual=dict(),
+                    location=dict(),
                 ),
                 mutually_exclusive=[
-                    ['pool', 'asm_policy']
+                    ['pool', 'asm_policy', 'virtual', 'location']
                 ]
             ),
             conditions=dict(
@@ -833,12 +1005,15 @@ class ArgumentSpec(object):
                     type=dict(
                         choices=[
                             'http_uri',
+                            'http_host',
                             'all_traffic'
                         ],
                         required=True
-                    )
+                    ),
+                    path_begins_with_any=dict(),
+                    host_begins_with_any=dict(),
+                    host_is_any=dict()
                 ),
-                path_begins_with_any=dict()
             ),
             name=dict(required=True),
             policy=dict(required=True),
@@ -863,18 +1038,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

@@ -25,42 +25,35 @@ options:
     name:
         description:
             - ZFS dataset name.
-        aliases: [ "ds", "dataset" ]
         required: yes
+        aliases: [ "ds", "dataset" ]
     recurse:
         description:
             - Specifies if properties for any children should be recursively
               displayed.
         type: bool
-        default: False
-        required: false
+        default: 'no'
     parsable:
         description:
             - Specifies if property values should be displayed in machine
               friendly format.
         type: bool
-        default: False
-        required: false
+        default: 'no'
     properties:
         description:
             - Specifies which dataset properties should be queried in comma-separated format.
               For more information about dataset properties, check zfs(1M) man page.
-        aliases: [ "props" ]
         default: all
-        required: false
+        aliases: [ "props" ]
     type:
         description:
             - Specifies which datasets types to display. Multiple values have to be
               provided in comma-separated form.
-        aliases: [ "props" ]
-        default: all
         choices: [ 'all', 'filesystem', 'volume', 'snapshot', 'bookmark' ]
-        required: false
+        default: all
     depth:
         description:
             - Specifiies recurion depth.
-        default: None
-        required: false
 '''
 
 EXAMPLES = '''
@@ -83,22 +76,22 @@ RETURN = '''
 name:
     description: ZFS dataset name
     returned: always
-    type: string
+    type: str
     sample: rpool/var/spool
 parsable:
     description: if parsable output should be provided in machine friendly format.
     returned: if 'parsable' is set to True
-    type: boolean
+    type: bool
     sample: True
 recurse:
     description: if we should recurse over ZFS dataset
     returned: if 'recurse' is set to True
-    type: boolean
+    type: bool
     sample: True
 zfs_datasets:
     description: ZFS dataset facts
     returned: always
-    type: string
+    type: str
     sample:
             {
                 "aclinherit": "restricted",

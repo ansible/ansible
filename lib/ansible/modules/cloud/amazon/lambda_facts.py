@@ -40,14 +40,10 @@ options:
   function_name:
     description:
       - The name of the lambda function for which facts are requested.
-    required: false
-    default: null
     aliases: [ "function", "name"]
   event_source_arn:
     description:
       - For query type 'mappings', this is the Amazon Resource Name (ARN) of the Amazon Kinesis or DynamoDB stream.
-    default: null
-    required: false
 author: Pierre Jodouin (@pjodouin)
 requirements:
     - boto3

@@ -1,5 +1,5 @@
 destructive
-posix/ci/group1
+shippable/posix/group1
 postgresql_db
 postgresql_privs
 postgresql_user

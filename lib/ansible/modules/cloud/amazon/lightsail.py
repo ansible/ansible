@@ -29,37 +29,26 @@ options:
     description:
       - Name of the instance
     required: true
-    default : null
   zone:
     description:
       - AWS availability zone in which to launch the instance. Required when state='present'
-    required: false
-    default: null
   blueprint_id:
     description:
       - ID of the instance blueprint image. Required when state='present'
-    required: false
-    default: null
   bundle_id:
     description:
       - Bundle of specification info for the instance. Required when state='present'
-    required: false
-    default: null
   user_data:
     description:
       - Launch script that can configure the instance with additional data
-    required: false
-    default: null
   key_pair_name:
     description:
       - Name of the key pair to use with the instance
-    required: false
-    default: null
   wait:
     description:
       - Wait for the instance to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned
-    default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
+    default: 'yes'
   wait_timeout:
     description:
       - How long before wait gives up, in seconds.
@@ -93,7 +82,7 @@ EXAMPLES = '''
     msg: "Name is {{ my_instance.instance.name }}"
 
 - debug:
-    msg: "IP is {{ my_instance.instance.publicIpAddress }}"
+    msg: "IP is {{ my_instance.instance.public_ip_address }}"
 
 # Delete an instance if present
 - lightsail:

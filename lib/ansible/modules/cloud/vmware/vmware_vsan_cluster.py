@@ -1,17 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Russell Teague <rteague2 () csc.com>
+# Copyright: (c) 2015, Russell Teague <rteague2 () csc.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -20,7 +18,8 @@ short_description: Configure VSAN clustering on an ESXi host
 description:
     - This module can be used to configure VSAN clustering on an ESXi host
 version_added: 2.0
-author: "Russell Teague (@mtnbikenc)"
+author:
+- Russell Teague (@mtnbikenc)
 notes:
     - Tested on vSphere 5.5
 requirements:
@@ -35,11 +34,8 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
-# Example command from Ansible Playbook
-
 - name: Configure VMware VSAN Cluster
   hosts: deploy_node
-  gather_facts: False
   tags:
     - vsan
   tasks:
@@ -48,6 +44,7 @@ EXAMPLES = '''
          hostname: "{{ groups['esxi'][0] }}"
          username: "{{ esxi_username }}"
          password: "{{ site_password }}"
+      delegate_to: localhost
       register: vsan_cluster
 
     - name: Configure VSAN on remaining hosts
@@ -56,8 +53,8 @@ EXAMPLES = '''
          username: "{{ esxi_username }}"
          password: "{{ site_password }}"
          cluster_uuid: "{{ vsan_cluster.cluster_uuid }}"
-      with_items: "{{ groups['esxi'][1:] }}"
-
+      delegate_to: localhost
+      loop: "{{ groups['esxi'][1:] }}"
 '''
 
 try:

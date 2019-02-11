@@ -40,14 +40,12 @@ options:
       - Specifies which banner should be configured on the remote device.
         In Ansible 2.4 and earlier only I(login) and I(motd) were supported.
     required: true
-    default: null
     choices: ['login', 'motd', 'exec', 'incoming', 'slip-ppp']
   text:
     description:
       - The banner text that should be
         present in the remote device running configuration.  This argument
         accepts a multiline string, with no empty lines. Requires I(state=present).
-    default: null
   state:
     description:
       - Specifies whether or not the configuration is
@@ -183,6 +181,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

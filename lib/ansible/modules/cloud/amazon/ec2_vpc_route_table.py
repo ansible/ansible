@@ -15,7 +15,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -38,28 +38,29 @@ options:
     choices: [ 'tag', 'id' ]
   propagating_vgw_ids:
     description: Enable route propagation from virtual gateways specified by ID.
-    default: None
   purge_routes:
     version_added: "2.3"
     description: Purge existing routes that are not found in routes.
-    default: 'true'
+    type: bool
+    default: 'yes'
   purge_subnets:
     version_added: "2.3"
     description: Purge existing subnets that are not found in subnets. Ignored unless the subnets option is supplied.
     default: 'true'
+    type: bool
   purge_tags:
     version_added: "2.5"
     description: Purge existing tags that are not found in route table
-    default: 'false'
+    type: bool
+    default: 'no'
   route_table_id:
     description: The ID of the route table to update or delete.
   routes:
     description: List of routes in the route table.
         Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id',
-        'instance_id', 'interface_id', or 'vpc_peering_connection_id'.
+        'instance_id', 'network_interface_id', or 'vpc_peering_connection_id'.
         If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
         Routes are required for present states.
-    default: None
   state:
     description: Create or destroy the VPC route table
     default: present
@@ -142,22 +143,22 @@ route_table:
         route_table_association_id:
           description: ID of association between route table and subnet
           returned: always
-          type: string
+          type: str
           sample: rtbassoc-ab47cfc3
         route_table_id:
           description: ID of the route table
           returned: always
-          type: string
+          type: str
           sample: rtb-bf779ed7
         subnet_id:
           description: ID of the subnet
           returned: always
-          type: string
+          type: str
           sample: subnet-82055af9
     id:
       description: ID of the route table (same as route_table_id for backwards compatibility)
       returned: always
-      type: string
+      type: str
       sample: rtb-bf779ed7
     propagating_vgws:
       description: List of Virtual Private Gateways propagating routes
@@ -167,7 +168,7 @@ route_table:
     route_table_id:
       description: ID of the route table
       returned: always
-      type: string
+      type: str
       sample: rtb-bf779ed7
     routes:
       description: List of routes in the route table
@@ -177,37 +178,37 @@ route_table:
         destination_cidr_block:
           description: CIDR block of destination
           returned: always
-          type: string
+          type: str
           sample: 10.228.228.0/22
         gateway_id:
           description: ID of the gateway
           returned: when gateway is local or internet gateway
-          type: string
+          type: str
           sample: local
         instance_id:
           description: ID of a NAT instance
           returned: when the route is via an EC2 instance
-          type: string
+          type: str
           sample: i-abcd123456789
         instance_owner_id:
           description: AWS account owning the NAT instance
           returned: when the route is via an EC2 instance
-          type: string
+          type: str
           sample: 123456789012
         nat_gateway_id:
           description: ID of the NAT gateway
           returned: when the route is via a NAT gateway
-          type: string
+          type: str
           sample: local
         origin:
           description: mechanism through which the route is in the table
           returned: always
-          type: string
+          type: str
           sample: CreateRouteTable
         state:
           description: state of the route
           returned: always
-          type: string
+          type: str
           sample: active
     tags:
       description: Tags applied to the route table
@@ -219,12 +220,14 @@ route_table:
     vpc_id:
       description: ID for the VPC in which the route lives
       returned: always
-      type: string
+      type: str
       sample: vpc-6e2d2407
 '''
 
 import re
+from time import sleep
 from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import ec2_argument_spec, boto3_conn, get_aws_connection_info
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict, snake_dict_to_camel_dict
@@ -254,7 +257,7 @@ def find_subnets(connection, module, vpc_id, identified_subnets):
     'Name' tag, or a CIDR such as 10.0.0.0/8.
 
     Note that this function is duplicated in other ec2 modules, and should
-    potentially be moved into potentially be moved into a shared module_utils
+    potentially be moved into a shared module_utils
     """
     subnet_ids = []
     subnet_names = []
@@ -292,7 +295,7 @@ def find_subnets(connection, module, vpc_id, identified_subnets):
             module.fail_json_aws(e, msg="Couldn't find subnet with names %s" % subnet_names)
 
         for name in subnet_names:
-            matching_count = len([1 for s in subnets_by_name if s.tags.get('Name') == name])
+            matching_count = len([1 for s in subnets_by_name for t in s.get('Tags', []) if t['Key'] == 'Name' and t['Value'] == name])
             if matching_count == 0:
                 module.fail_json(msg='Subnet named "{0}" does not exist'.format(name))
             elif matching_count > 1:
@@ -411,12 +414,15 @@ def get_route_table_by_tags(connection, module, vpc_id, tags):
 def route_spec_matches_route(route_spec, route):
     if route_spec.get('GatewayId') and 'nat-' in route_spec['GatewayId']:
         route_spec['NatGatewayId'] = route_spec.pop('GatewayId')
+    if route_spec.get('GatewayId') and 'vpce-' in route_spec['GatewayId']:
+        if route_spec.get('DestinationCidrBlock', '').startswith('pl-'):
+            route_spec['DestinationPrefixListId'] = route_spec.pop('DestinationCidrBlock')
 
     return set(route_spec.items()).issubset(route.items())
 
 
 def route_spec_matches_route_cidr(route_spec, route):
-    return route_spec['DestinationCidrBlock'] == route['DestinationCidrBlock']
+    return route_spec['DestinationCidrBlock'] == route.get('DestinationCidrBlock')
 
 
 def rename_key(d, old_key, new_key):
@@ -427,8 +433,9 @@ def index_of_matching_route(route_spec, routes_to_match):
     for i, route in enumerate(routes_to_match):
         if route_spec_matches_route(route_spec, route):
             return "exact", i
-        elif route_spec_matches_route_cidr(route_spec, route):
-            return "replace", i
+        elif 'Origin' in route_spec and route_spec['Origin'] != 'EnableVgwRoutePropagation':
+            if route_spec_matches_route_cidr(route_spec, route):
+                return "replace", i
 
 
 def ensure_routes(connection=None, module=None, route_table=None, route_specs=None,
@@ -439,15 +446,26 @@ def ensure_routes(connection=None, module=None, route_table=None, route_specs=No
     for route_spec in route_specs:
         match = index_of_matching_route(route_spec, routes_to_match)
         if match is None:
-            route_specs_to_create.append(route_spec)
+            if route_spec.get('DestinationCidrBlock'):
+                route_specs_to_create.append(route_spec)
+            else:
+                module.warn("Skipping creating {0} because it has no destination cidr block. "
+                            "To add VPC endpoints to route tables use the ec2_vpc_endpoint module.".format(route_spec))
         else:
             if match[0] == "replace":
-                route_specs_to_recreate.append(route_spec)
+                if route_spec.get('DestinationCidrBlock'):
+                    route_specs_to_recreate.append(route_spec)
+                else:
+                    module.warn("Skipping recreating route {0} because it has no destination cidr block.".format(route_spec))
             del routes_to_match[match[1]]
 
     routes_to_delete = []
     if purge_routes:
         for r in routes_to_match:
+            if not r.get('DestinationCidrBlock'):
+                module.warn("Skipping purging route {0} because it has no destination cidr block. "
+                            "To remove VPC endpoints from route tables use the ec2_vpc_endpoint module.".format(r))
+                continue
             if r['Origin'] == 'CreateRoute':
                 routes_to_delete.append(r)
 
@@ -647,6 +665,12 @@ def ensure_route_table_present(connection, module):
         if not module.check_mode:
             try:
                 route_table = connection.create_route_table(VpcId=vpc_id)['RouteTable']
+                # try to wait for route table to be present before moving on
+                get_waiter(
+                    connection, 'route_table_exists'
+                ).wait(
+                    RouteTableIds=[route_table['RouteTableId']],
+                )
             except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                 module.fail_json_aws(e, msg="Error creating route table")
         else:
@@ -678,6 +702,9 @@ def ensure_route_table_present(connection, module):
                                             purge_subnets=purge_subnets)
         changed = changed or result['changed']
 
+    if changed:
+        # pause to allow route table routes/subnets/associations to be updated before exiting with final state
+        sleep(5)
     module.exit_json(changed=changed, route_table=get_route_table_info(connection, module, route_table))
 
 

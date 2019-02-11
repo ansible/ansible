@@ -1,0 +1,18 @@
+{
+    "kind": "tm:gtm:server:virtual-servers:virtual-serversstate",
+    "name": "vs2",
+    "fullPath": "vs2",
+    "generation": 129,
+    "selfLink": "https://localhost/mgmt/tm/gtm/server/~Common~server1/virtual-servers/vs2?ver=13.0.0",
+    "destination": "6.6.6.6:8080",
+    "enabled": true,
+    "limitMaxBps": 100,
+    "limitMaxBpsStatus": "enabled",
+    "limitMaxConnections": 300,
+    "limitMaxConnectionsStatus": "enabled",
+    "limitMaxPps": 200,
+    "limitMaxPpsStatus": "enabled",
+    "monitor": "/Common/gtp ",
+    "translationAddress": "none",
+    "translationPort": 0
+}

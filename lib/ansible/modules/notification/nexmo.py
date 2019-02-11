@@ -46,11 +46,8 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
-    required: false
+    type: bool
     default: 'yes'
-    choices:
-      - 'yes'
-      - 'no'
 extends_documentation_fragment:
   - url
 """
@@ -98,7 +95,7 @@ def send_msg(module):
 
         try:
             responses[number] = json.load(response)
-        except:
+        except Exception:
             failed.append(number)
             responses[number] = dict(failed=True)
         else:

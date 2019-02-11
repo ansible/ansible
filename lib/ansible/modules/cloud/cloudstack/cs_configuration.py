@@ -43,29 +43,20 @@ options:
   account:
     description:
       - Ensure the value for corresponding account.
-    required: false
-    default: null
   domain:
     description:
       - Domain the account is related to.
       - Only considered if C(account) is used.
-    required: false
     default: ROOT
   zone:
     description:
       - Ensure the value for corresponding zone.
-    required: false
-    default: null
   storage:
     description:
       - Ensure the value for corresponding storage pool.
-    required: false
-    default: null
   cluster:
     description:
       - Ensure the value for corresponding cluster.
-    required: false
-    default: null
 extends_documentation_fragment: cloudstack
 '''
 
@@ -104,52 +95,52 @@ RETURN = '''
 category:
   description: Category of the configuration.
   returned: success
-  type: string
+  type: str
   sample: Advanced
 scope:
   description: Scope (zone/cluster/storagepool/account) of the parameter that needs to be updated.
   returned: success
-  type: string
+  type: str
   sample: storagepool
 description:
   description: Description of the configuration.
   returned: success
-  type: string
+  type: str
   sample: Setup the host to do multipath
 name:
   description: Name of the configuration.
   returned: success
-  type: string
+  type: str
   sample: zone.vlan.capacity.notificationthreshold
 value:
   description: Value of the configuration.
   returned: success
-  type: string
+  type: str
   sample: "0.75"
 account:
   description: Account of the configuration.
   returned: success
-  type: string
+  type: str
   sample: admin
 Domain:
   description: Domain of account of the configuration.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 zone:
   description: Zone of the configuration.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-01
 cluster:
   description: Cluster of the configuration.
   returned: success
-  type: string
+  type: str
   sample: cluster01
 storage:
   description: Storage of the configuration.
   returned: success
-  type: string
+  type: str
   sample: storage01
 '''
 
@@ -225,10 +216,13 @@ class AnsibleCloudStackConfiguration(AnsibleCloudStack):
     def get_configuration(self):
         configuration = None
         args = self._get_common_configuration_args()
+        args['fetch_list'] = True
         configurations = self.query_api('listConfigurations', **args)
         if not configurations:
             self.module.fail_json(msg="Configuration %s not found." % args['name'])
-        configuration = configurations['configuration'][0]
+        for config in configurations:
+            if args['name'] == config['name']:
+                configuration = config
         return configuration
 
     def get_value(self):

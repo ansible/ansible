@@ -59,12 +59,12 @@ options:
     description:
       - Enable Dead Peer Detection.
       - Disabled per default by the API on creation if not set.
-    choices: [ yes, no ]
+    type: bool
   force_encap:
     description:
       - Force encapsulation for NAT traversal.
       - Disabled per default by the API on creation if not set.
-    choices: [ yes, no ]
+    type: bool
   state:
     description:
       - State of the VPN customer gateway.
@@ -83,6 +83,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
@@ -111,27 +112,27 @@ RETURN = r'''
 id:
   description: UUID of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 gateway:
   description: IP address of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: 10.100.212.10
 domain:
   description: Domain the VPN customer gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VPN customer gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VPN customer gateway is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 dpd:
   description: Whether dead pear detection is enabled or not.
@@ -146,7 +147,7 @@ esp_lifetime:
 esp_policy:
   description: IKE policy of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: aes256-sha1;modp1536
 force_encap:
   description: Whether encapsulation for NAT traversal is enforced or not.
@@ -161,12 +162,12 @@ ike_lifetime:
 ike_policy:
   description: ESP policy of the VPN customer gateway.
   returned: success
-  type: string
+  type: str
   sample: aes256-sha1;modp1536
 name:
   description: Name of this customer gateway.
   returned: success
-  type: string
+  type: str
   sample: my vpn customer gateway
 cidrs:
   description: List of CIDRs of this customer gateway.
@@ -218,12 +219,13 @@ class AnsibleCloudStackVpnCustomerGateway(AnsibleCloudStack):
         args = {
             'account': self.get_account(key='name'),
             'domainid': self.get_domain(key='id'),
-            'projectid': self.get_project(key='id')
+            'projectid': self.get_project(key='id'),
+            'fetch_list': True,
         }
         vpn_customer_gateway = self.module.params.get('name')
         vpn_customer_gateways = self.query_api('listVpnCustomerGateways', **args)
         if vpn_customer_gateways:
-            for vgw in vpn_customer_gateways['vpncustomergateway']:
+            for vgw in vpn_customer_gateways:
                 if vpn_customer_gateway.lower() in [vgw['id'], vgw['name'].lower()]:
                     return vgw
 
@@ -288,7 +290,7 @@ class AnsibleCloudStackVpnCustomerGateway(AnsibleCloudStack):
             if 'cidrlist' in vpn_customer_gateway:
                 self.result['cidrs'] = vpn_customer_gateway['cidrlist'].split(',') or [vpn_customer_gateway['cidrlist']]
             # Ensure we return a bool
-            self.result['force_encap'] = True if vpn_customer_gateway['forceencap'] else False
+            self.result['force_encap'] = True if vpn_customer_gateway.get('forceencap') else False
         return self.result
 
 

@@ -19,7 +19,7 @@ description:
      changing of options for a zone that's already been created.
 version_added: "2.0"
 author:
-- Paul Markham
+- Paul Markham (@pmarkham)
 requirements:
   - Solaris 10 or 11
 options:

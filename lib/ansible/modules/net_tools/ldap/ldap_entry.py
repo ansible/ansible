@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Peter Sagerson <psagers@ignorare.net>
-# (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
+# Copyright: (c) 2016, Peter Sagerson <psagers@ignorare.net>
+# Copyright: (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -10,9 +10,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    'metadata_version': '1.1',
+    'status': ['preview'],
+    'supported_by': 'community'
+}
 
 
 DOCUMENTATION = """
@@ -36,70 +38,27 @@ author:
 requirements:
   - python-ldap
 options:
-  bind_dn:
-    required: false
-    default: null
-    description:
-      - A DN to bind with. If this is omitted, we'll try a SASL bind with
-        the EXTERNAL mechanism. If this is blank, we'll use an anonymous
-        bind.
-  bind_pw:
-    required: false
-    default: null
-    description:
-      - The password to use with I(bind_dn).
-  dn:
-    required: true
-    description:
-      - The DN of the entry to add or remove.
   attributes:
-    required: false
-    default: null
     description:
       - If I(state=present), attributes necessary to create an entry. Existing
         entries are never modified. To assert specific attribute values on an
         existing entry, use M(ldap_attr) module instead.
   objectClass:
-    required: false
-    default: null
     description:
       - If I(state=present), value or list of values to use when creating
         the entry. It can either be a string or an actual list of
         strings.
   params:
-    required: false
-    default: null
     description:
       - List of options which allows to overwrite any of the task or the
         I(attributes) options. To remove an option, set the value of the option
         to C(null).
-  server_uri:
-    required: false
-    default: ldapi:///
-    description:
-      - A URI to the LDAP server. The default value lets the underlying
-        LDAP client library look for a UNIX domain socket in its default
-        location.
-  start_tls:
-    required: false
-    choices: ['yes', 'no']
-    default: 'no'
-    description:
-      - If true, we'll use the START_TLS LDAP extension.
   state:
-    required: false
-    choices: [present, absent]
-    default: present
     description:
       - The target state of the entry.
-  validate_certs:
-    required: false
-    choices: ['yes', 'no']
-    default: 'yes'
-    description:
-      - If C(no), SSL certificates will not be validated. This should only be
-        used on sites using self-signed certificates.
-    version_added: "2.4"
+    choices: [present, absent]
+    default: present
+extends_documentation_fragment: ldap.documentation
 """
 
 
@@ -149,31 +108,27 @@ RETURN = """
 
 import traceback
 
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native, to_bytes
+from ansible.module_utils.ldap import LdapGeneric, gen_specs
+
+LDAP_IMP_ERR = None
 try:
-    import ldap
     import ldap.modlist
-    import ldap.sasl
 
     HAS_LDAP = True
 except ImportError:
+    LDAP_IMP_ERR = traceback.format_exc()
     HAS_LDAP = False
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_native
 
-
-class LdapEntry(object):
+class LdapEntry(LdapGeneric):
     def __init__(self, module):
+        LdapGeneric.__init__(self, module)
+
         # Shortcuts
-        self.module = module
-        self.bind_dn = self.module.params['bind_dn']
-        self.bind_pw = self.module.params['bind_pw']
-        self.dn = self.module.params['dn']
-        self.server_uri = self.module.params['server_uri']
-        self.start_tls = self.module.params['start_tls']
         self.state = self.module.params['state']
-        self.verify_cert = self.module.params['validate_certs']
 
         # Add the objectClass into the list of attributes
         self.module.params['attributes']['objectClass'] = (
@@ -182,9 +137,6 @@ class LdapEntry(object):
         # Load attributes
         if self.state == 'present':
             self.attrs = self._load_attrs()
-
-        # Establish connection
-        self.connection = self._connect_to_ldap()
 
     def _load_attrs(self):
         """ Turn attribute's value to array. """
@@ -195,9 +147,9 @@ class LdapEntry(object):
                 attrs[name] = []
 
             if isinstance(value, list):
-                attrs[name] = value
+                attrs[name] = list(map(to_bytes, value))
             else:
-                attrs[name].append(str(value))
+                attrs[name].append(to_bytes(value))
 
         return attrs
 
@@ -236,52 +188,21 @@ class LdapEntry(object):
 
         return is_present
 
-    def _connect_to_ldap(self):
-        if not self.verify_cert:
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-
-        connection = ldap.initialize(self.server_uri)
-
-        if self.start_tls:
-            try:
-                connection.start_tls_s()
-            except ldap.LDAPError as e:
-                self.module.fail_json(msg="Cannot start TLS.", details=to_native(e),
-                                      exception=traceback.format_exc())
-
-        try:
-            if self.bind_dn is not None:
-                connection.simple_bind_s(self.bind_dn, self.bind_pw)
-            else:
-                connection.sasl_interactive_bind_s('', ldap.sasl.external())
-        except ldap.LDAPError as e:
-            self.module.fail_json(
-                msg="Cannot bind to the server.", details=to_native(e),
-                exception=traceback.format_exc())
-
-        return connection
-
 
 def main():
     module = AnsibleModule(
-        argument_spec={
-            'attributes': dict(default={}, type='dict'),
-            'bind_dn': dict(),
-            'bind_pw': dict(default='', no_log=True),
-            'dn': dict(required=True),
-            'objectClass': dict(type='raw'),
-            'params': dict(type='dict'),
-            'server_uri': dict(default='ldapi:///'),
-            'start_tls': dict(default=False, type='bool'),
-            'state': dict(default='present', choices=['present', 'absent']),
-            'validate_certs': dict(default=True, type='bool'),
-        },
+        argument_spec=gen_specs(
+            attributes=dict(default={}, type='dict'),
+            objectClass=dict(type='raw'),
+            params=dict(type='dict'),
+            state=dict(default='present', choices=['present', 'absent']),
+        ),
         supports_check_mode=True,
     )
 
     if not HAS_LDAP:
-        module.fail_json(
-            msg="Missing required 'ldap' module (pip install python-ldap).")
+        module.fail_json(msg=missing_required_lib('python-ldap'),
+                         exception=LDAP_IMP_ERR)
 
     state = module.params['state']
 

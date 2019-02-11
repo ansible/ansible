@@ -35,7 +35,7 @@ options:
     force:
         required: false
         default: False
-        choices: [ True, False ]
+        type: bool
         description:
             - Should the key be regenerated even it it already exists
     format:
@@ -97,17 +97,17 @@ RETURN = '''
 privatekey:
     description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 format:
     description: The format of the public key (PEM, OpenSSH, ...)
     returned: changed or success
-    type: string
+    type: str
     sample: PEM
 filename:
     description: Path to the generated TLS/SSL public key file
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/public/ansible.com.pem
 fingerprint:
     description: The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.
@@ -125,19 +125,22 @@ fingerprint:
 
 import hashlib
 import os
+import traceback
 
+PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization as crypto_serialization
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class PublicKeyError(crypto_utils.OpenSSLObjectError):
@@ -170,7 +173,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
         if not self.check(module, perms_required=False) or self.force:
             try:
                 if self.format == 'OpenSSH':
-                    privatekey_content = open(self.privatekey_path, 'rb').read()
+                    with open(self.privatekey_path, 'rb') as private_key_fh:
+                        privatekey_content = private_key_fh.read()
                     key = crypto_serialization.load_pem_private_key(privatekey_content,
                                                                     password=self.privatekey_passphrase,
                                                                     backend=default_backend())
@@ -212,7 +216,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
                 return False
 
             try:
-                publickey_content = open(self.path, 'rb').read()
+                with open(self.path, 'rb') as public_key_fh:
+                    publickey_content = public_key_fh.read()
                 if self.format == 'OpenSSH':
                     current_publickey = crypto_serialization.load_ssh_public_key(publickey_content, backend=default_backend())
                     publickey_content = current_publickey.public_bytes(crypto_serialization.Encoding.PEM,
@@ -259,7 +264,7 @@ def main():
             path=dict(required=True, type='path'),
             privatekey_path=dict(type='path'),
             format=dict(type='str', choices=['PEM', 'OpenSSH'], default='PEM'),
-            privatekey_passphrase=dict(type='path', no_log=True),
+            privatekey_passphrase=dict(type='str', no_log=True),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -267,9 +272,9 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='the python pyOpenSSL module is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

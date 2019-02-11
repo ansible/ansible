@@ -29,14 +29,14 @@ if 'action_write_locks' not in globals():
     # when it forks?
     action_write_locks = dict()
 
-    # Below is a Lock for use when we weren't expecting a named module.
-    # It gets used when an action plugin directly invokes a module instead
-    # of going through the strategies.  Slightly less efficient as all
-    # processes with unexpected module names will wait on this lock
+    # Below is a Lock for use when we weren't expecting a named module.  It gets used when an action
+    # plugin invokes a module whose name does not match with the action's name.  Slightly less
+    # efficient as all processes with unexpected module names will wait on this lock
     action_write_locks[None] = Lock()
 
-    # These plugins are called directly by action plugins (not going through
-    # a strategy).  We precreate them here as an optimization
+    # These plugins are known to be called directly by action plugins with names differing from the
+    # action plugin name.  We precreate them here as an optimization.
+    # If a list of service managers is created in the future we can do the same for them.
     mods = set(p['name'] for p in PKG_MGRS)
 
     mods.update(('copy', 'file', 'setup', 'slurp', 'stat'))

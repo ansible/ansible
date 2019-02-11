@@ -47,45 +47,32 @@ options:
   ip_address:
     description:
       - IP address to be used for the nic.
-    required: false
-    default: null
   vpc:
     description:
       - Name of the VPC the C(vm) is related to.
-    required: false
-    default: null
   domain:
     description:
       - Domain the instance is related to.
-    required: false
-    default: null
   account:
     description:
       - Account the instance is related to.
-    required: false
-    default: null
   project:
     description:
       - Name of the project the instance is deployed in.
-    required: false
-    default: null
   zone:
     description:
       - Name of the zone in which the instance is deployed in.
       - If not set, default zone is used.
-    required: false
-    default: null
   state:
     description:
       - State of the nic.
-    required: false
     default: "present"
     choices: [ 'present', 'absent' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    required: false
-    default: true
+    type: bool
+    default: 'yes'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -116,47 +103,47 @@ RETURN = '''
 id:
   description: UUID of the nic.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 vm:
   description: Name of the VM.
   returned: success
-  type: string
+  type: str
   sample: web-01
 ip_address:
   description: Primary IP of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 10.10.10.10
 netmask:
   description: Netmask of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 255.255.255.0
 mac_address:
   description: MAC address of the NIC.
   returned: success
-  type: string
+  type: str
   sample: 02:00:33:31:00:e4
 network:
   description: Name of the network if not default.
   returned: success
-  type: string
+  type: str
   sample: sync network
 domain:
   description: Domain the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 project:
   description: Name of project the VM is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 '''
 

@@ -72,13 +72,16 @@ old_value:
 
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+
+
 try:
     import etcd3
-    etcd_found = True
+    HAS_ETCD = True
 except ImportError:
-    etcd_found = False
+    ETCD_IMP_ERR = traceback.format_exc()
+    HAS_ETCD = False
 
 
 def run_module():
@@ -112,8 +115,8 @@ def run_module():
 
     result['key'] = module.params.get('key')
 
-    if not etcd_found:
-        module.fail_json(msg="the python etcd3 module is required")
+    if not HAS_ETCD:
+        module.fail_json(msg=missing_required_lib('etcd3'), exception=ETCD_IMP_ERR)
 
     allowed_keys = ['host', 'port', 'ca_cert', 'cert_key', 'cert_cert',
                     'timeout', 'user', 'password']
@@ -179,6 +182,7 @@ def run_module():
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

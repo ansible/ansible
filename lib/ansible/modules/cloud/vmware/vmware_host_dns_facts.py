@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -22,7 +23,7 @@ description:
 - All parameters and VMware object names are case sensitive.
 version_added: '2.5'
 author:
-- Abhijeet Kasurde (@akasurde)
+- Abhijeet Kasurde (@Akasurde)
 notes:
 - Tested on vSphere 6.5
 requirements:
@@ -41,12 +42,13 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Gather DNS facts about all ESXi Host in given Cluster
+- name: Gather DNS facts about all ESXi Hosts in given Cluster
   vmware_host_dns_facts:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     cluster_name: cluster_name
+  delegate_to: localhost
 
 - name: Gather DNS facts about ESXi Host
   vmware_host_dns_facts:
@@ -54,10 +56,11 @@ EXAMPLES = r'''
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
     esxi_hostname: '{{ esxi_hostname }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
-drs_rule_facts:
+hosts_dns_facts:
     description: metadata about DNS config from given cluster / host system
     returned: always
     type: dict
@@ -86,19 +89,7 @@ class VmwareDnsFactsManager(PyVmomi):
         super(VmwareDnsFactsManager, self).__init__(module)
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
-        self.hosts = []
-        if cluster_name:
-            cluster_obj = self.find_cluster_by_name(cluster_name=cluster_name)
-            if cluster_obj:
-                self.hosts = [host for host in cluster_obj.host]
-            else:
-                module.fail_json(changed=False, msg="Cluster '%s' not found" % cluster_name)
-        elif esxi_host_name:
-            esxi_host_obj = self.find_hostsystem_by_name(host_name=esxi_host_name)
-            if esxi_host_obj:
-                self.hosts = [esxi_host_obj]
-            else:
-                module.fail_json(changed=False, msg="ESXi '%s' not found" % esxi_host_name)
+        self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
 
     def gather_dns_facts(self):
         hosts_facts = {}
@@ -126,7 +117,8 @@ def main():
         argument_spec=argument_spec,
         required_one_of=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
+        supports_check_mode=True
     )
 
     vmware_dns_config = VmwareDnsFactsManager(module)

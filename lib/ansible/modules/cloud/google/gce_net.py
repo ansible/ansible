@@ -28,117 +28,79 @@ description:
 options:
   allowed:
     description:
-      - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
+      - the protocol:ports to allow (I(tcp:80) or I(tcp:80,443) or I(tcp:80-800;udp:1-25))
         this parameter is mandatory when creating or updating a firewall rule
-    required: false
-    default: null
-    aliases: []
   ipv4_range:
     description:
       - the IPv4 address range in CIDR notation for the network
-        this parameter is not mandatory when you specified existing network in name parameter, but when you create new network, this parameter is mandatory
-    required: false
+        this parameter is not mandatory when you specified existing network in name parameter,
+        but when you create new network, this parameter is mandatory
     aliases: ['cidr']
   fwname:
     description:
       - name of the firewall rule
-    required: false
-    default: null
     aliases: ['fwrule']
   name:
     description:
       - name of the network
-    required: false
-    default: null
-    aliases: []
   src_range:
     description:
       - the source IPv4 address range in CIDR notation
-    required: false
     default: []
     aliases: ['src_cidr']
   src_tags:
     description:
       - the source instance tags for creating a firewall rule
-    required: false
     default: []
-    aliases: []
   target_tags:
     version_added: "1.9"
     description:
       - the target instance tags for creating a firewall rule
-    required: false
     default: []
-    aliases: []
   state:
     description:
       - desired state of the network or firewall
-    required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
-    aliases: []
   service_account_email:
     version_added: "1.6"
     description:
       - service account email
-    required: false
-    default: null
-    aliases: []
   pem_file:
     version_added: "1.6"
     description:
       - path to the pem file associated with the service account email
-        This option is deprecated. Use 'credentials_file'.
-    required: false
-    default: null
-    aliases: []
+        This option is deprecated. Use C(credentials_file).
   credentials_file:
     version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
-    required: false
-    default: null
-    aliases: []
   project_id:
     version_added: "1.6"
     description:
       - your GCE project ID
-    required: false
-    default: null
-    aliases: []
   mode:
     version_added: "2.2"
     description:
       - network mode for Google Cloud
-        "legacy" indicates a network with an IP address range
-        "auto" automatically generates subnetworks in different regions
-        "custom" uses networks to group subnets of user specified IP address ranges
+        C(legacy) indicates a network with an IP address range;
+        C(auto) automatically generates subnetworks in different regions;
+        C(custom) uses networks to group subnets of user specified IP address ranges
         https://cloud.google.com/compute/docs/networking#network_types
-    required: false
     default: "legacy"
     choices: ["legacy", "auto", "custom"]
-    aliases: []
   subnet_name:
     version_added: "2.2"
     description:
       - name of subnet to create
-    required: false
-    default: null
-    aliases: []
   subnet_region:
     version_added: "2.2"
     description:
       - region of subnet to create
-    required: false
-    default: null
-    aliases: []
   subnet_desc:
     version_added: "2.2"
     description:
       - description of subnet to create
-    required: false
-    default: null
-    aliases: []
 
 requirements:
     - "python >= 2.6"
@@ -204,25 +166,25 @@ RETURN = '''
 allowed:
     description: Rules (ports and protocols) specified by this firewall rule.
     returned: When specified
-    type: string
+    type: str
     sample: "tcp:80;icmp"
 
 fwname:
     description: Name of the firewall rule.
     returned: When specified
-    type: string
+    type: str
     sample: "my-fwname"
 
 ipv4_range:
     description: IPv4 range of the specified network or subnetwork.
     returned: when specified or when a subnetwork is created
-    type: string
+    type: str
     sample: "10.0.0.0/16"
 
 name:
     description: Name of the network.
     returned: always
-    type: string
+    type: str
     sample: "my-network"
 
 src_range:
@@ -240,19 +202,19 @@ src_tags:
 state:
     description: State of the item operated on.
     returned: always
-    type: string
+    type: str
     sample: "present"
 
 subnet_name:
     description: Name of the subnetwork.
     returned: when specified or when a subnetwork is created
-    type: string
+    type: str
     sample: "my-subnetwork"
 
 subnet_region:
     description: Region of the specified subnet.
     returned: when specified or when a subnetwork is created
-    type: string
+    type: str
     sample: "us-east1"
 
 target_tags:
@@ -310,7 +272,7 @@ def sorted_allowed_list(allowed_list):
     # sort by protocol
     allowed_by_protocol = sorted(allowed_list, key=lambda x: x['IPProtocol'])
     # sort the ports list
-    return sorted(allowed_by_protocol, key=lambda y: y.get('ports', []).sort())
+    return sorted(allowed_by_protocol, key=lambda y: sorted(y.get('ports', [])))
 
 
 def main():

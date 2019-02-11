@@ -1,0 +1,8 @@
+[0] fail_json message: Error: interface aggi not found
+options:
+{
+    "iface": "aggi",
+    "option": "slaves",
+    "state": "present",
+    "value": "int1  int3"
+}

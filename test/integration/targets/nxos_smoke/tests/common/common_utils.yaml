@@ -1,0 +1,102 @@
+---
+# nxos_command -> ComplexList
+# nxos_config -> to_list
+# nxos_interface -> conditional, remove_default_spec
+
+- debug: msg="START connection={{ ansible_connection }} common/common_utils.yaml"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+# hit ComplexList
+- name: test contains operator
+  nxos_command:
+    commands:
+      - show version
+    provider: "{{ connection }}"
+
+# hit to_list()
+- name: setup
+  nxos_config:
+    lines: hostname switch
+    provider: "{{ connection }}"
+    match: none
+
+- name: configure top level command
+  nxos_config:
+    lines: hostname foo
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'hostname foo' in result.updates"
+
+- name: setup
+  nxos_config:
+    lines: hostname switch
+    provider: "{{ connection }}"
+    match: none
+
+# hit conditional()
+- set_fact: testint1="{{ nxos_int1 }}"
+- set_fact: testint2="{{ nxos_int2 }}"
+
+- name: "Setup: Put interfaces into a default state"
+  nxos_config:
+    lines:
+      - "default interface {{ testint1 }}"
+      - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes
+
+  register: result
+
+- name: Check intent arguments
+  nxos_interface:
+    name: "{{ testint2 }}"
+    admin_state: up
+    tx_rate: ge(0)
+    rx_rate: ge(0)
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.failed == false"
+
+- name: Check intent arguments (failed condition)
+  nxos_interface:
+    name: "{{ testint2 }}"
+    admin_state: down
+    tx_rate: gt(0)
+    rx_rate: lt(0)
+    provider: "{{ connection }}"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'tx_rate gt(0)' in result.failed_conditions"
+      - "'rx_rate lt(0)' in result.failed_conditions"
+
+- name: aggregate definition of interface
+  nxos_interface:
+    aggregate:
+      - { name: "{{ testint1 }}", description: "Test aggregation on first interface" }
+      - { name: "{{ testint2 }}", mode: layer3 }
+    provider: "{{ connection }}"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: "TearDown: Put interfaces into a default state"
+  nxos_config:
+    lines:
+      - "default interface {{ testint1 }}"
+      - "default interface {{ testint2 }}"
+    provider: "{{ connection }}"
+  ignore_errors: yes

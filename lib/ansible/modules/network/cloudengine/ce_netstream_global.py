@@ -26,51 +26,39 @@ version_added: "2.4"
 short_description: Manages global parameters of NetStream on HUAWEI CloudEngine switches.
 description:
     - Manages global parameters of NetStream on HUAWEI CloudEngine switches.
-author: YangYang (@CloudEngine-Ansible)
+author: YangYang (@QijunPan)
 options:
     type:
         description:
             - Specifies the type of netstream global.
-        required: false
         choices: ['ip', 'vxlan']
         default: 'ip'
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         choices: ['present', 'absent']
         default: present
     interface:
         description:
             - Netstream global interface.
         required: true
-        default: null
     sampler_interval:
         description:
             -  Specifies the netstream sampler interval, length is 1 - 65535.
-        required: false
-        default: null
     sampler_direction:
         description:
             -  Specifies the netstream sampler direction.
-        required: false
         choices: ['inbound', 'outbound']
-        default: null
     statistics_direction:
         description:
             -  Specifies the netstream statistic direction.
-        required: false
         choices: ['inbound', 'outbound']
-        default: null
     statistics_record:
         description:
             -  Specifies the flexible netstream statistic record, length is 1 - 32.
-        required: false
-        default: null
     index_switch:
         description:
             -  Specifies the netstream index-switch.
-        required: false
         choices: ['16', '32']
         default: '16'
 """
@@ -220,7 +208,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

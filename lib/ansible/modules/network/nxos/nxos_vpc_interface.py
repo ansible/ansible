@@ -47,18 +47,16 @@ options:
   vpc:
     description:
       - VPC group/id that will be configured on associated portchannel.
-    required: false
-    default: null
   peer_link:
     description:
       - Set to true/false for peer link config on associated portchannel.
-    required: false
-    default: null
+    type: bool
   state:
     description:
       - Manages desired state of the resource.
     required: true
     choices: ['present','absent']
+    default: present
 '''
 
 EXAMPLES = '''

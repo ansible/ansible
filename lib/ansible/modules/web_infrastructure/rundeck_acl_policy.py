@@ -88,7 +88,7 @@ RETURN = '''
 rundeck_response:
     description: Rundeck response when a failure occurs.
     returned: failed
-    type: string
+    type: str
 before:
     description: dictionnary containing ACL policy informations before modification.
     returned: success
@@ -219,6 +219,7 @@ def main():
         rundeck.create_or_update_acl()
     elif module.params['state'] == 'absent':
         rundeck.remove_acl()
+
 
 if __name__ == '__main__':
     main()

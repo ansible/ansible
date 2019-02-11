@@ -1,0 +1,2 @@
+bugfixes:
+- uri - Ensure the ``uri`` module supports async (https://github.com/ansible/ansible/issues/47660)

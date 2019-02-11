@@ -26,7 +26,6 @@ options:
   taiga_host:
     description:
       - The hostname of the Taiga instance.
-    required: False
     default: https://api.taiga.io
   project:
     description:
@@ -43,42 +42,33 @@ options:
   priority:
     description:
       - The issue priority. Must exist previously.
-    required: False
     default: Normal
   status:
     description:
       - The issue status. Must exist previously.
-    required: False
     default: New
   severity:
     description:
       - The issue severity. Must exist previously.
-    required: False
     default: Normal
   description:
     description:
       - The issue description.
-    required: False
     default: ""
   attachment:
     description:
       - Path to a file to be attached to the issue.
-    required: False
-    default: None
   attachment_description:
     description:
       - A string describing the file to be attached to the issue.
-    required: False
     default: ""
   tags:
     description:
       - A lists of tags to be assigned to the issue.
-    required: False
     default: []
   state:
     description:
       - Whether the issue should be present or not.
-    required: False
     choices: ["present", "absent"]
     default: present
 author: Alejandro Guirao (@lekum)
@@ -115,15 +105,20 @@ EXAMPLES = '''
 '''
 
 RETURN = '''# '''
+import traceback
+
 from os import getenv
 from os.path import isfile
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+
+TAIGA_IMP_ERR = None
 try:
     from taiga import TaigaAPI
     from taiga.exceptions import TaigaException
     TAIGA_MODULE_IMPORTED = True
 except ImportError:
+    TAIGA_IMP_ERR = traceback.format_exc()
     TAIGA_MODULE_IMPORTED = False
 
 
@@ -262,8 +257,8 @@ def main():
     )
 
     if not TAIGA_MODULE_IMPORTED:
-        msg = "This module needs python-taiga module"
-        module.fail_json(msg=msg)
+        module.fail_json(msg=missing_required_lib("python-taiga"),
+                         exception=TAIGA_IMP_ERR)
 
     taiga_host = module.params['taiga_host']
     project_name = module.params['project']

@@ -75,6 +75,7 @@ options:
     description:
       - Persistence.
     required: true
+    type: bool
   persistence_time:
     description:
       - Persistence time in seconds. Required if persistence is enabled. minimum=30, maximum=1200, multipleOf=1
@@ -122,7 +123,7 @@ options:
       - wait for the instance to be in state 'running' before returning
     required: false
     default: "yes"
-    choices: [ "yes", "no" ]
+    type: bool
   wait_timeout:
     description:
       - how long before wait gives up, in seconds

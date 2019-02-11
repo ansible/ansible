@@ -30,28 +30,21 @@ options:
     value:
         description:
             - The value assigned to the znode.
-        default: None
-        required: false
     op:
         description:
             - An operation to perform. Mutually exclusive with state.
-        default: None
-        required: false
     state:
         description:
             - The state to enforce. Mutually exclusive with op.
-        default: None
-        required: false
     timeout:
         description:
             - The amount of time to wait for a node to appear.
         default: 300
-        required: false
     recursive:
         description:
             - Recursively delete node and all its children.
-        default: False
-        required: false
+        type: bool
+        default: 'no'
         version_added: "2.1"
 requirements:
     - kazoo >= 2.1
@@ -102,15 +95,19 @@ EXAMPLES = """
 """
 
 import time
+import traceback
 
+KAZOO_IMP_ERR = None
 try:
     from kazoo.client import KazooClient
     from kazoo.handlers.threading import KazooTimeoutError
     KAZOO_INSTALLED = True
 except ImportError:
+    KAZOO_IMP_ERR = traceback.format_exc()
     KAZOO_INSTALLED = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils._text import to_bytes
 
 
 def main():
@@ -128,7 +125,7 @@ def main():
     )
 
     if not KAZOO_INSTALLED:
-        module.fail_json(msg='kazoo >= 2.1 is required to use this module. Use pip to install it.')
+        module.fail_json(msg=missing_required_lib('kazoo >= 2.1'), exception=KAZOO_IMP_ERR)
 
     check = check_params(module.params)
     if not check['success']:
@@ -232,13 +229,13 @@ class KazooCommandProxy():
         if self.exists(path):
             (current_value, zstat) = self.zk.get(path)
             if value != current_value:
-                self.zk.set(path, value)
+                self.zk.set(path, to_bytes(value))
                 return True, {'changed': True, 'msg': 'Updated the znode value.', 'znode': path,
                               'value': value}
             else:
                 return True, {'changed': False, 'msg': 'No changes were necessary.', 'znode': path, 'value': value}
         else:
-            self.zk.create(path, value, makepath=True)
+            self.zk.create(path, to_bytes(value), makepath=True)
             return True, {'changed': True, 'msg': 'Created a new znode.', 'znode': path, 'value': value}
 
     def _wait(self, path, timeout, interval=5):

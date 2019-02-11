@@ -1,0 +1,9 @@
+# Below information has been taken from https://developer.scaleway.com/#servers
+---
+scaleway_image_id: 6a601340-19c1-4ca7-9c1c-0704bcc9f5fe
+scaleway_organization: '{{ scw_org }}'
+scaleway_region: ams1
+scaleway_commerial_type: START1-S
+scaleway_name: scaleway_compute_test
+first_server_name: scaleway_compute_test_first
+second_server_name: scaleway_compute_test_second

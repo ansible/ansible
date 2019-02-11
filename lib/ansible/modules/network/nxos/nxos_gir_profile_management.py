@@ -40,8 +40,6 @@ options:
     commands:
         description:
             - List of commands to be included into the profile.
-        required: false
-        default: null
     mode:
         description:
             - Configure the profile as Maintenance or Normal mode.
@@ -50,7 +48,6 @@ options:
     state:
         description:
             - Specify desired state of the resource.
-        required: false
         default: present
         choices: ['present','absent']
 '''
@@ -96,7 +93,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

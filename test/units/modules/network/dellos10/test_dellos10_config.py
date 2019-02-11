@@ -22,7 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.dellos10 import dellos10_config
 from units.modules.utils import set_module_args
 from .dellos10_module import TestDellos10Module, load_fixture

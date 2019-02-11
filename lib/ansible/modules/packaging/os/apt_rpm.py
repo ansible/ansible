@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2013, Evgenii Terechkov
@@ -170,6 +170,7 @@ def main():
 
     elif p['state'] in ['absent', 'removed']:
         remove_packages(module, packages)
+
 
 if __name__ == '__main__':
     main()

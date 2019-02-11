@@ -101,6 +101,9 @@ changed:
 
 import shlex
 
+# AnsibleModule boilerplate
+from ansible.module_utils.basic import AnsibleModule
+
 VROUTER_EXISTS = None
 NETWORK_EXISTS = None
 
@@ -287,8 +290,7 @@ def main():
                 % (command, vrouter_name, network_ip))
 
     run_cli(module, cli)
-# AnsibleModule boilerplate
-from ansible.module_utils.basic import AnsibleModule
+
 
 if __name__ == '__main__':
     main()
