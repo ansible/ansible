@@ -1021,7 +1021,11 @@ def update_cache(m, cache, cache_valid_time):
     now = datetime.datetime.now()
     tdelta = datetime.timedelta(seconds=cache_valid_time)
     if not mtimestamp + tdelta >= now:
-        update_cache_run(m, cache)
+        if not m.check_mode:
+            update_cache_run(m, cache)
+        else:
+            # Signal that we would update the cache, but don't.
+            updated_cache = True
         cache.open(progress=None)
         mtimestamp, post_cache_update_time = get_updated_cache_time()
         if updated_cache_time != post_cache_update_time:
