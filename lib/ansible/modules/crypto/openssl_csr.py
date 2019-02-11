@@ -534,7 +534,7 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
         def _check_subjectAltName(extensions):
             altnames_ext = next((ext for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
-            altnames = [altname.strip() for altname in str(altnames_ext).split(',')]
+            altnames = [altname.strip() for altname in str(altnames_ext).split(',') if altname.strip()]
             # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
             # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
             altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
@@ -840,7 +840,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         def _check_subjectAltName(extensions):
             current_altnames_ext = _find_extension(extensions, cryptography.x509.SubjectAlternativeName)
             current_altnames = [str(altname) for altname in current_altnames_ext.value] if current_altnames_ext else []
-            altnames = [str(self._get_san(altname)) for altname in self.subjectAltName]
+            altnames = [str(self._get_san(altname)) for altname in self.subjectAltName] if self.subjectAltName else []
             if set(altnames) != set(current_altnames):
                 return False
             if altnames:
