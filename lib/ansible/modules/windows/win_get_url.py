@@ -34,7 +34,7 @@ options:
     required: yes
   force:
     description:
-    - If C(yes), will always download the file. If C(no), will only
+    - If C(yes), will download the file every time and replace the file if the contents change. If C(no), will only
       download the file if it does not exist or the remote file has been
       modified more recently than the local file.
     - This works by sending an http HEAD request to retrieve last modified
@@ -164,6 +164,11 @@ dest:
 checksum_dest:
     description: <algorithm> checksum of the file after copy
     returned: success and if checksum is defined
+    type: str
+    sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+checksum_src:
+    description: sha1 checksum of the file
+    returned: success
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 elapsed:

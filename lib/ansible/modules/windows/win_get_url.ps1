@@ -9,6 +9,7 @@
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.AddType
 #Requires -Module Ansible.ModuleUtils.FileUtil
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $spec = @{
     options = @{
@@ -220,48 +221,23 @@ Function Parse-Checksum {
     }
 
     $checksum_algorithm = $checksum_parameter_splited[0].Trim()
-    $checksum_value = $checksum_parameter_splited[1].Trim()
+    $checksum_hash = $checksum_parameter_splited[1].Trim()
 
-    return @{algorithm = $checksum_algorithm; hash = $checksum_value}
-}
-
-Function Get-FileChecksum {
-    param($path, $algorithm)
-    switch ($algorithm) {
-        'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
-        'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
-        'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
-        'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
-        'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
-        default {
-            $module.FailJson("Unsupported hash algorithm supplied '$algorithm'")
-        }
-    }
-
-    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
-    try {
-        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "")
-    } finally {
-        $fp.Dispose()
-    }
-    $module.Warn("Your host uses legacy powershell. Please update.")
-    return @{Algorithm = $algorithm; Hash = $hash; Path = $dest}
+    return @{algorithm = $checksum_algorithm; hash = $checksum_hash}
 }
 
 Function Get-FileHash-Wrapper {
     param($path, $algorithm)
-    $command = 'Get-FileHash'
-    if([bool](Get-Command $command -ea 0)) {
-        return (Get-FileHash -Path $dest -Algorithm $algorithm)
-    } else {
-        return (Get-FileChecksum -Path $dest -Algorithm $algorithm)
-    }
+    return @{Algorithm = $algorithm; Hash = $(Get-FileChecksum -Path $path -Algorithm $algorithm); Path = $path}
 }
 
 Function Get-NormaliseHash {
-    param($dest, $checksum = $null, $hashAlgorithm = "SHA256")
+    param($dest, $checksum = $null, $hashAlgorithm = $null)
     if($checksum) {
         $hashAlgorithm = $(Parse-Checksum -checksum $checksum).algorithm
+    }
+    if([string]::IsNullOrEmpty($hashAlgorithm)) {
+        $hashAlgorithm = "SHA1"
     }
     $destHashFile = Get-FileHash-Wrapper -Path $dest -Algorithm $hashAlgorithm
     return [string]$destHashFile.Hash.ToLower()
@@ -270,8 +246,8 @@ Function Get-NormaliseHash {
 Function CheckModifiedChecksum-File {
     param($dest, $checksum)
     $normaliseHashDest = Get-NormaliseHash -dest $dest -checksum $checksum
-    $ChecksumSrc = $(Parse-Checksum -checksum $checksum).hash
-    return [bool]($normaliseHashDest -ne $ChecksumSrc)
+    $checksumHash = $(Parse-Checksum -checksum $checksum).hash
+    return [bool]($normaliseHashDest -ne $checksumHash)
 }
 
 Function Download-File {
@@ -292,7 +268,7 @@ Function Download-File {
             $checksum_parameter_splited = Parse-Checksum -checksum $checksum
 
             $checksum_algorithm = $checksum_parameter_splited.algorithm
-            $checksum_value = $checksum_parameter_splited.hash.ToLower()
+            $checksum_hash = $checksum_parameter_splited.hash.ToLower()
         }
         Catch {
             $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
@@ -324,29 +300,59 @@ Function Download-File {
         }
     }
 
-    if (-not $module.CheckMode) {
-        # FIXME: Single-out catched exceptions with more specific error messages
-        Try {
-            $extWebClient.DownloadFile($url, $dest)
+    Try {
+
+        $tmpDest = [System.IO.Path]::GetTempFileName()
+        $extWebClient.DownloadFile($url, $tmpDest)
+
+        $tmpDestHash = Get-NormaliseHash -dest $tmpDest -hashAlgorithm $checksum_algorithm
+
+        #$module.Warn("tmpDest='$tmpDest' tmpDestHash='$tmpDestHash' checksum_hash='$checksum_hash'")
+
+#        if (-not $module.CheckMode) {
 
             # Checksum verification for downloaded file
             if ($checksum) {
-                $hashDest = Get-NormaliseHash -dest $dest -hashAlgorithm $checksum_algorithm
                 # Check both hashes are the same
-                if ($hashDest -ne $checksum_value) {
-                    Remove-Item -Path $dest
-                    throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum_value, $normaliseHashDest)
+                if ($tmpDestHash -ne $checksum_hash) {
+                    throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum_hash, $tmpDestHash)
+                } else {
+                    if(Test-Path -LiteralPath $dest) {
+                        $destHash = Get-NormaliseHash -dest $dest -hashAlgorithm $checksum_algorithm
+                        if ($destHash -eq $checksum_hash) {
+                            $module.Result.status_code = 200
+                            $module.Result.msg = 'file already exists'
+                            $module.Result.checksum_src = $tmpDestHash
+#                            $module.Result.checksum_dest = $destHash
+                            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+                            return
+                        }
+                    } else {
+                        if (-not $module.CheckMode) {
+                            Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
+                        }
+                    }
+                }
+            } else {
+                if (-not $module.CheckMode) {
+                    Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
                 }
             }
+#        }
 
-        } Catch [System.Net.WebException] {
-            $module.Result.status_code = [int] $_.Exception.Response.StatusCode
-            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
-        } Catch {
-            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-            $module.Result.checksum_dest = $hashDest
-            $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
+    } Catch [System.Net.WebException] {
+        $module.Result.status_code = [int] $_.Exception.Response.StatusCode
+        $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+        $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
+    } Catch {
+        $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+        $module.Result.checksum_dest = $hashDest
+        $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
+    }
+    Finally {
+        if (Test-Path -LiteralPath $tmpDest) {
+            Remove-Item -Path $tmpDest | Out-Null
+            $module.Warn("removed tmpDest='$tmpDest'")
         }
     }
 
@@ -354,7 +360,8 @@ Function Download-File {
     $module.Result.changed = $true
     $module.Result.msg = 'OK'
     $module.Result.dest = $dest
-    $module.Result.checksum_dest = $hashDest
+    $module.Result.checksum_src = $tmpDestHash
+#    $module.Result.checksum_dest = $destHash
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 
 }
@@ -420,12 +427,12 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 
 # Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
 if ($checksum) {
-    $checksum_value = $(Parse-Checksum -checksum $checksum).hash
+    $checksum_hash = $(Parse-Checksum -checksum $checksum).hash
 
-    if ($checksum_value.startswith('http://', 1) -or $checksum_value.startswith('https://', 1) -or `
-        $checksum_value.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_value).isFile) {
+    if ($checksum_hash.startswith('http://', 1) -or $checksum_hash.startswith('https://', 1) -or `
+        $checksum_hash.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_hash).isFile) {
         
-        $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_value -credentials $credentials `
+        $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_hash -credentials $credentials `
                                                 -headers $headers -timeout $timeout -use_proxy $use_proxy `
                                                 -proxy $proxy -src_file_url $url
         $checksum = $(Parse-Checksum -checksum $checksum).algorithm + ":" + $hash_from_file
@@ -441,24 +448,24 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 } else {
 
     $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials `
-                                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy `
+                                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
     if ($is_modified) {
 
-        Download-File -module $module -url $url -dest $dest -credentials $credentials `
-                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
-    } else {
-        $module.Result.msg = 'file already exists'
-    }
+       Download-File -module $module -url $url -dest $dest -credentials $credentials `
+                     -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+   } else {
+       $module.Result.msg = 'file already exists'
+   }
 }
-if(-not $module.CheckMode) {
+
+if(Test-Path -LiteralPath $dest) {
     $module.Result.size = (Get-AnsibleItem -Path $dest).Length
     Try {
         if(-not $module.Result.checksum_dest) {
             $module.Result.checksum_dest = Get-NormaliseHash -dest $dest -checksum $checksum
         }
     } Catch {
-        $module.Result.checksum_dest = $null
         $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
     }
 }
