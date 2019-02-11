@@ -34,6 +34,11 @@ options:
       - Name of the load-balancer
     required: true
 
+  description:
+    description:
+      - Description
+    required: true
+
   organization_id:
     description:
       - Organization identifier
@@ -204,11 +209,10 @@ def wait_to_complete_state_transition(api, lb, force_wait=False):
 
 
 def lb_attributes_should_be_changed(target_lb, wished_lb):
-    diff = {
-        attr: wished_lb[attr] for attr in MUTABLE_ATTRIBUTES if target_lb[attr] != wished_lb[attr]
-    }
+    diff = dict((attr, wished_lb[attr]) for attr in MUTABLE_ATTRIBUTES if target_lb[attr] != wished_lb[attr])
+
     if diff:
-        return {attr: wished_lb[attr] for attr in MUTABLE_ATTRIBUTES}
+        return dict((attr, wished_lb[attr]) for attr in MUTABLE_ATTRIBUTES)
     else:
         return diff
 
