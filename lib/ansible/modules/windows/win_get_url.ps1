@@ -137,7 +137,7 @@ Function Get-Checksum-From-Url {
 }
 
 Function CheckModified-File {
-    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
+    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy, $only_length)
     if ($checksum) {
         Try {
             $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
@@ -150,37 +150,45 @@ Function CheckModified-File {
     $fileLastMod = (Get-AnsibleItem -Path $dest).LastWriteTimeUtc
     $webLastMod = $null
 
+    $fileLength = (Get-AnsibleItem -Path $dest).Length
+    $webFileLength = $null
+
     $srcUri = [System.Uri]$url
 
     if([bool]$srcUri.isFile) {
-        $webLastMod = (Get-AnsibleItem -Path $srcUri.AbsolutePath).LastWriteTimeUtc;
+        $webLastMod = (Get-AnsibleItem -Path $srcUri.AbsolutePath).LastWriteTimeUtc
+        $webFileLength = (Get-AnsibleItem -Path $srcUri.AbsolutePath).Length
 
         $module.Result.status_code = 200
         $module.Result.msg = 'OK'
     } else {
 
         $webRequest = [System.Net.WebRequest]::Create($url)
+        $webRequestPaired = [System.Net.WebRequest]::Create($url)
 
         foreach ($header in $headers.GetEnumerator()) {
             $webRequest.Headers.Add($header.Name, $header.Value)
+            $webRequestPaired.Headers.Add($header.Name, $header.Value)
         }
 
         if ($timeout) {
-            $webRequest.Timeout = $timeout * 1000
+            $webRequestPaired.Timeout = $webRequest.Timeout = $timeout * 1000
         }
 
         if (-not $use_proxy) {
             # Ignore the system proxy settings
-            $webRequest.Proxy = $null
+            $webRequestPaired.Proxy = $webRequest.Proxy = $null
         } elseif ($proxy) {
-            $webRequest.Proxy = $proxy
+            $webRequestPaired.Proxy = $webRequest.Proxy = $proxy
         }
 
         if ($credentials) {
             if ($force_basic_auth) {
                 $webRequest.Headers.Add("Authorization", "Basic $credentials")
+                $webRequestPaired.Headers.Add("Authorization", "Basic $credentials")
             } else {
                 $webRequest.Credentials = $credentials
+                $webRequestPaired.Credentials = $credentials
             }
         }
 
@@ -192,8 +200,20 @@ Function CheckModified-File {
 
         # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
         Try {
-            $webResponse = $webRequest.GetResponse()
-            $webLastMod = $webResponse.LastModified
+            if ($webRequest -is [System.Net.FtpWebRequest]) {
+                $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+                $webResponse = $webRequest.GetResponse()
+                $webLastMod = $webResponse.LastModified
+
+                $webRequestPaired.Method = [System.Net.WebRequestMethods+Ftp]::GetFileSize
+                $webResponsePaired = $webRequestPaired.GetResponse()
+                $webFileLength = $webResponsePaired.ContentLength
+            } else {
+                $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
+                $webResponse = $webRequest.GetResponse()
+                $webLastMod = $webResponse.LastModified
+                $webFileLength = $webResponse.ContentLength
+            }
         } Catch [System.Net.WebException] {
             $module.Result.status_code = [int] $_.Exception.Response.StatusCode
             $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
@@ -201,13 +221,26 @@ Function CheckModified-File {
             $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
         }
         Finally {
-            $webResponse.Close()
+            # in case GetResponse timeout, $webResponse == $null
+            if($webResponse) { 
+               $webResponse.Close()
+            }
+            if($webResponsePaired) { 
+                $webResponsePaired.Close()
+             } 
         }
         $module.Result.status_code = [int] $webResponse.StatusCode
         $module.Result.msg = [string] $webResponse.StatusDescription
     }
-
-    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
+    
+    if(-not ($webFileLength -and ($webFileLength -eq $fileLength))) {
+        return $true
+    }
+    if($only_length){
+        return $false
+    }
+    # TODO Check for right comparison operator to use: -le ? or -eq 
+    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -eq $fileLastMod)) {
         return $false
     } else {
         return $true
@@ -336,6 +369,11 @@ Function Download-File {
                 }
             } else {
                 if (-not $module.CheckMode) {
+                    $is_modified = CheckModified-File -module $module -url $url -dest $tmpDest -credentials $credentials -headers $headers `
+                                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy -only_length $true
+                    if ($is_modified) {
+                        throw "Source and recieved files size mismatch."
+                    }
                     Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
                 }
             }
@@ -448,8 +486,8 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
 } else {
 
-    $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials `
-                                      -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials -headers $headers `
+                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy -only_length $false
 
     if ($is_modified) {
 
