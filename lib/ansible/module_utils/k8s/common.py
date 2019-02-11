@@ -148,6 +148,8 @@ class K8sAnsibleMixin(object):
             if auth_params.get(arg) is None:
                 env_value = os.getenv('K8S_AUTH_{0}'.format(arg.upper()), None)
                 if env_value is not None:
+                    if AUTH_ARG_SPEC[arg].get('type') == 'bool':
+                        env_value = env_value.lower() not in ['0', 'false', 'no']
                     auth[arg] = env_value
 
         def auth_set(*names):
