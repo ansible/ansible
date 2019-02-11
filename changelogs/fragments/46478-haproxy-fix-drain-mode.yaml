@@ -1,0 +1,2 @@
+bugfixes:
+- Backport of https://github.com/ansible/ansible/pull/46478 , fixes name collision in haproxy module
