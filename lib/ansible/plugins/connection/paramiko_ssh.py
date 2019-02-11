@@ -415,7 +415,7 @@ class Connection(ConnectionBase):
 
         try:
             chan.exec_command(cmd)
-            if self._play_context.prompt:
+            if self.become and self.become.expect_prompt():
                 passprompt = False
                 become_sucess = False
                 while not (become_sucess or passprompt):

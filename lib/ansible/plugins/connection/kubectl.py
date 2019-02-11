@@ -198,7 +198,6 @@ class Connection(ConnectionBase):
     connection_options = CONNECTION_OPTIONS
     documentation = DOCUMENTATION
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
     transport_cmd = None
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):

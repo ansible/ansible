@@ -30,6 +30,10 @@ class ShellModule(ShellBase):
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'sh'
 
+    # commonly used
+    ECHO = 'echo'
+    COMMAND_SEP = ';'
+
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\n'
     _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'

@@ -90,7 +90,7 @@ later).
 
      .. code-block:: shell
 
-        $ ansible myhost --sudo -m raw -a "yum install -y python2"
+        $ ansible myhost --become -m raw -a "yum install -y python2"
 
 .. _installing_the_control_node:
 
