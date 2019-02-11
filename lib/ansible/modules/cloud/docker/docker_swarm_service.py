@@ -605,9 +605,9 @@ def get_docker_environment(env, env_files):
             parsed_env_file = parse_env_file(env_file)
             for name, value in parsed_env_file.items():
                 env_dict[name] = str(value)
-    if env and isinstance(env, string_types):
+    if env is not None and isinstance(env, string_types):
         env = env.split(',')
-    if env and isinstance(env, dict):
+    if env is not None and isinstance(env, dict):
         for name, value in env.items():
             if not isinstance(value, string_types):
                 raise ValueError(
@@ -615,7 +615,7 @@ def get_docker_environment(env, env_files):
                     'Ambiguous env options must be wrapped in quotes to avoid YAML parsing. Key: %s' % name
                 )
             env_dict[name] = str(value)
-    elif env and isinstance(env, list):
+    elif env is not None and isinstance(env, list):
         for item in env:
             try:
                 name, value = item.split('=', 1)
@@ -626,9 +626,13 @@ def get_docker_environment(env, env_files):
         raise ValueError(
             'Invalid type for env %s (%s). Only list or dict allowed.' % (env, type(env))
         )
-
     env_list = format_environment(env_dict)
-    return sorted(env_list) or None
+    if not env_list:
+        if env is not None or env_files is not None:
+            return []
+        else:
+            return None
+    return sorted(env_list)
 
 
 class DockerService(DockerBaseClass):

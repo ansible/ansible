@@ -86,3 +86,15 @@ def test_get_docker_environment(mocker, docker_swarm_service):
         env_string, env_files=['dummypath']
     )
     assert result == expected_result
+
+    assert result == expected_result
+    # Test with empty env
+    result = docker_swarm_service.get_docker_environment(
+        [], env_files=None
+    )
+    assert result == []
+    # Test with empty env_files
+    result = docker_swarm_service.get_docker_environment(
+        None, env_files=[]
+    )
+    assert result == []

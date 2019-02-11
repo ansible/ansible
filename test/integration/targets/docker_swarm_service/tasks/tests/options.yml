@@ -718,13 +718,29 @@
       - "TEST2=val3"
   register: env_3
 
+- name: env (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    env: []
+  register: env_4
+
+- name: env (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    env: []
+  register: env_5
+
 - name: env (fail unwrapped values)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     env:
       TEST1: true
-  register: env_4
+  register: env_6
   ignore_errors: yes
 
 - name: env (fail invalid formatted string)
@@ -734,25 +750,8 @@
     env:
       - "TEST1=val3"
       - "TEST2"
-  register: env_5
-  ignore_errors: yes
-
-- name: env (empty)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    env: []
-  register: env_6
-
-- name: env (empty idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    command: '/bin/sh -v -c "sleep 10m"'
-    env: []
   register: env_7
-
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -765,10 +764,10 @@
       - env_1 is changed
       - env_2 is not changed
       - env_3 is changed
-      - env_4 is failed
-      - env_5 is failed
-      - env_6 is changed
-      - env_7 is not changed
+      - env_4 is changed
+      - env_5 is not changed
+      - env_6 is failed
+      - env_7 is failed
 
 ####################################################################
 ## env_files #######################################################
@@ -817,6 +816,20 @@
       - "{{ role_path }}/files/env-file-1"
   register: env_file_5
 
+- name: env_files (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files: []
+  register: env_file_6
+
+- name: env_files (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files: []
+  register: env_file_7
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -830,6 +843,8 @@
     - env_file_3 is changed
     - env_file_4 is changed
     - env_file_5 is not changed
+    - env_file_6 is changed
+    - env_file_7 is not changed
 
 ###################################################################
 ## force_update ###################################################
