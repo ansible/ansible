@@ -249,20 +249,15 @@ Function CheckModified-File {
 
 Function Parse-Checksum {
     param($checksum)
-    $checksum_parameter_splited = $checksum.split(":", 2)
-    if ($checksum_parameter_splited.Count -ne 2) {
+    $checksum_parameter_splitted = $checksum.split(":", 2)
+    if ($checksum_parameter_splitted.Count -ne 2) {
         throw
     }
 
-    $checksum_algorithm = $checksum_parameter_splited[0].Trim()
-    $checksum_hash = $checksum_parameter_splited[1].Trim()
+    $checksum_algorithm = $checksum_parameter_splitted[0].Trim()
+    $checksum_hash = $checksum_parameter_splitted[1].Trim()
 
     return @{algorithm = $checksum_algorithm; hash = $checksum_hash}
-}
-
-Function Get-FileHash-Wrapper {
-    param($path, $algorithm)
-    return @{Algorithm = $algorithm; Hash = $(Get-FileChecksum -Path $path -Algorithm $algorithm); Path = $path}
 }
 
 Function Get-NormaliseHash {
@@ -273,8 +268,7 @@ Function Get-NormaliseHash {
     if([string]::IsNullOrEmpty($hashAlgorithm)) {
         $hashAlgorithm = "SHA1"
     }
-    $destHashFile = Get-FileHash-Wrapper -Path $dest -Algorithm $hashAlgorithm
-    return [string]$destHashFile.Hash.ToLower()
+    return (Get-FileChecksum -Path $dest -Algorithm $hashAlgorithm)
 }
 
 Function CheckModifiedChecksum-File {
@@ -299,10 +293,10 @@ Function Download-File {
     if ($checksum) {
         Try
         {
-            $checksum_parameter_splited = Parse-Checksum -checksum $checksum
+            $checksum_parameter_splitted = Parse-Checksum -checksum $checksum
 
-            $checksum_algorithm = $checksum_parameter_splited.algorithm
-            $checksum_hash = $checksum_parameter_splited.hash.ToLower()
+            $checksum_algorithm = $checksum_parameter_splitted.algorithm
+            $checksum_hash = $checksum_parameter_splitted.hash.ToLower()
         }
         Catch {
             $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
