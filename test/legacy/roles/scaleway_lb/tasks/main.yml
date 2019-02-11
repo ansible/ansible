@@ -1,0 +1,216 @@
+# SCW_API_KEY='XXX' SCW_ORG='YYY' ansible-playbook ./test/legacy/scaleway.yml --tags test_scaleway_lb
+
+- name: Create a load-balancer (Check)
+  check_mode: yes
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ description }}'
+    tags: '{{ tags }}'
+  register: lb_creation_check_task
+
+- debug: var=lb_creation_check_task
+
+- name: lb_creation_check_task is success
+  assert:
+    that:
+      - lb_creation_check_task is success
+
+- name: lb_creation_check_task is changed
+  assert:
+    that:
+      - lb_creation_check_task is changed
+
+- name: Create load-balancer
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ description }}'
+    tags: '{{ tags }}'
+    wait: true
+  register: lb_creation_task
+
+- debug: var=lb_creation_task
+
+- name: lb_creation_task is success
+  assert:
+    that:
+      - lb_creation_task is success
+
+- name: lb_creation_task is changed
+  assert:
+    that:
+      - lb_creation_task is changed
+
+- name: Assert that the load-balancer is in a valid state
+  assert:
+    that:
+      - lb_creation_task.scaleway_lb.status == "ready"
+
+- name: Create load-balancer (Confirmation)
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    tags: '{{ tags }}'
+    description: '{{ description }}'
+  register: lb_creation_confirmation_task
+
+- debug: var=lb_creation_confirmation_task
+
+- name: lb_creation_confirmation_task is success
+  assert:
+    that:
+      - lb_creation_confirmation_task is success
+
+- name: lb_creation_confirmation_task is not changed
+  assert:
+    that:
+      - lb_creation_confirmation_task is not changed
+
+- name: Assert that the load-balancer is in a valid state
+  assert:
+    that:
+      - lb_creation_confirmation_task.scaleway_lb.status == "ready"
+
+- name: Update load-balancer (Check)
+  check_mode: yes
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    organization_id: '{{ scw_org }}'
+    tags: '{{ tags }}'
+    description: '{{ updated_description }}'
+  register: lb_update_check_task
+
+- debug: var=lb_update_check_task
+
+- name: lb_update_check_task is success
+  assert:
+    that:
+      - lb_update_check_task is success
+
+- name: lb_update_check_task is changed
+  assert:
+    that:
+      - lb_update_check_task is changed
+
+- name: Update load-balancer
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    tags: '{{ tags }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ updated_description }}'
+    wait: true
+  register: lb_update_task
+
+- debug: var=lb_update_task
+
+- name: lb_update_task is success
+  assert:
+    that:
+      - lb_update_task is success
+
+- name: lb_update_task is changed
+  assert:
+    that:
+      - lb_update_task is changed
+
+- name: Assert that the load-balancer is in a valid state
+  assert:
+    that:
+      - lb_update_task.scaleway_lb.status == "ready"
+
+- name: Update load-balancer (Confirmation)
+  scaleway_lb:
+    state: present
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    tags: '{{ tags }}'
+    organization_id: '{{ scw_org }}'
+    description: '{{ updated_description }}'
+  register: lb_update_confirmation_task
+
+- debug: var=lb_update_confirmation_task
+
+- name: lb_update_confirmation_task is success
+  assert:
+    that:
+      - lb_update_confirmation_task is success
+
+- name: lb_update_confirmation_task is not changed
+  assert:
+    that:
+      - lb_update_confirmation_task is not changed
+
+- name: Assert that the load-balancer is in a valid state
+  assert:
+    that:
+      - lb_update_confirmation_task.scaleway_lb.status == "ready"
+
+- name: Delete load-balancer (Check)
+  check_mode: yes
+  scaleway_lb:
+    state: absent
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    description: '{{ description }}'
+    organization_id: '{{ scw_org }}'
+  register: lb_deletion_check_task
+
+- name: lb_deletion_check_task is success
+  assert:
+    that:
+      - lb_deletion_check_task is success
+
+- name: lb_deletion_check_task is changed
+  assert:
+    that:
+      - lb_deletion_check_task is changed
+
+- name: Delete load-balancer
+  scaleway_lb:
+    state: absent
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    description: '{{ description }}'
+    organization_id: '{{ scw_org }}'
+    wait: true
+  register: lb_deletion_task
+
+- name: lb_deletion_task is success
+  assert:
+    that:
+      - lb_deletion_task is success
+
+- name: lb_deletion_task is changed
+  assert:
+    that:
+      - lb_deletion_task is changed
+
+- name: Delete load-balancer (Confirmation)
+  scaleway_lb:
+    state: absent
+    name: '{{ name }}'
+    region: '{{ scaleway_region }}'
+    description: '{{ description }}'
+    organization_id: '{{ scw_org }}'
+  register: lb_deletion_confirmation_task
+
+- name: lb_deletion_confirmation_task is success
+  assert:
+    that:
+      - lb_deletion_confirmation_task is success
+
+- name: lb_deletion_confirmation_task is not changed
+  assert:
+    that:
+      - lb_deletion_confirmation_task is not changed
