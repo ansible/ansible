@@ -137,14 +137,15 @@ if ($records -ne $null)
 
 if ($values -ne $null -and $values.Count -gt 0)
 {
-    $values | ForEach-Object {
+    foreach ($value in $values)
+    {
         if (-not $check_mode)
         {
-            $splat_args = @{ $type = $true; $record_argument_name = $_ }
+            $splat_args = @{ $type = $true; $record_argument_name = $value }
             Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args
         }
 
-        $changes += "+[$zone] $( $record.HostName ) $($ttl.TotalSeconds) $type $( $record.RecordData.$record_argument_name )`n"
+        $changes += "+[$zone] $name $($ttl.TotalSeconds) $type $value`n"
     }
 
     $result.changed = $true
