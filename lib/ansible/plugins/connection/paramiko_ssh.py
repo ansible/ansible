@@ -434,10 +434,10 @@ class Connection(ConnectionBase):
                     # need to check every line because we might get lectured
                     # and we might get the middle of a line in a chunk
                     for l in become_output.splitlines(True):
-                        if self.check_become_success(l):
+                        if self.become.check_success(l):
                             become_sucess = True
                             break
-                        elif self.check_password_prompt(l):
+                        elif self.become.check_password_prompt(l):
                             passprompt = True
                             break
 

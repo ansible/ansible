@@ -120,10 +120,10 @@ class TestConnectionBaseClass(unittest.TestCase):
                 return True
             return False
 
-        conn.check_password_prompt.side_effect = _check_password_prompt
-        conn.check_become_success.side_effect = _check_become_success
-        conn.check_incorrect_password.side_effect = _check_incorrect_password
-        conn.check_missing_password.side_effect = _check_missing_password
+        conn.become.check_password_prompt = MagicMock(side_effect=_check_password_prompt)
+        conn.become.check_become_success = MagicMock(side_effect=_check_become_success)
+        conn.become.check_incorrect_password = MagicMock(side_effect=_check_incorrect_password)
+        conn.become.check_missing_password = MagicMock(side_effect=_check_missing_password)
 
         # test examining output for prompt
         conn._flags = dict(
