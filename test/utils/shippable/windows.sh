@@ -92,6 +92,6 @@ for version in "${python_versions[@]}"; do
     # shellcheck disable=SC2086
     ansible-test windows-integration --color -v --retry-on-error win_become win_whoami ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         "${platforms[@]}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
-        --docker default --python "${version}" \
+        --docker default --python "2.7" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

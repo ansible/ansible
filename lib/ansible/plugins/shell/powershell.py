@@ -721,7 +721,7 @@ namespace AnsibleBecome
                 }
 
                 // add the original token as a fallback
-                tokens.Add(hToken);
+                // tokens.Add(hToken);
             }
             finally
             {
