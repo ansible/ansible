@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: digital_ocean_droplet
-short_description: Create and delete a DigitalOcean droplet
+short_description: Create, rebuild, delete a DigitalOcean droplet.
 description:
      - Create, rebuild, or delete a droplet in DigitalOcean and optionally wait for it to be active.
 version_added: "2.8"
@@ -29,42 +29,51 @@ options:
   id:
     description:
      - Numeric, the droplet id you want to operate on.
+     - If I(id) and I(name) both are present and a droplet with that I(id) exists, I(name) will be ignored.
     aliases: ['droplet_id']
   name:
     description:
-     - Droplet name - must be a valid hostname or a FQDN. Required when I(state=present) and there's no such Droplet yet.
+     - Droplet name, must be a valid hostname or a FQDN in your domain.
+     - Required when I(state=present) and the droplet does not yet exist.
   unique_name:
     description:
-     - deprecated and ignored parameter, consider it always True.
+     - Deprecated and ignored parameter. Consider it always True.
   size:
-    description: >
-      Droplet configuration slug, e.g. C(s-1vcpu-1gb), C(2gb), C(c-32vcpu-64gb), or C(s-32vcpu-192gb). If you forget to supply that,
-      the module will build the smallest and the cheapest droplet C(s-1vcpu-1gb). If you need to grow your droplet you may do that later.
+    description:
+     - Droplet configuration slug, e.g. C(s-1vcpu-1gb), C(2gb), C(c-32vcpu-64gb), or C(s-32vcpu-192gb).
+     - If you forget to supply that, the module will build the cheapest droplet C(s-1vcpu-1gb).
+     - If you need to grow your droplet you may do that later.
     aliases: ['size_id']
   image:
     description:
-     - Image slug for new or rebuilt droplet. Required when I(state=present).
+     - Image slug or ID for new or rebuilt droplet e.g. C(ubuntu-16-04-x64) or C(42251561).
+     - Required when I(state=present) and the droplet does not yet exist.
     aliases: ['image_id']
   region:
-    description: >
-      Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(ams3), or C(sgp1). Required when I(state=present) and this is a new Droplet.
-      New DO users please note: due to limited capacity, NYC2, AMS2, and SFO1 are currently unavailable for those who don't have resources already there.
+    description:
+     - Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(ams3), or C(sgp1).
+     - Required when I(state=present) and the droplet does not yet exist.
+     - "New DO users be aware: due to limited capacity, NYC2, AMS2, and SFO1 are
+      currently available only to resource owners in respective datacenters."
     aliases: ['region_id']
   ssh_keys:
     description:
-     - list of SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation.
+     - List of SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation.
   private_networking:
     description:
-     - add an additional, private network interface to droplet for intra-region communication.
+     - Add an additional, private network interface to the newly created droplet.
+     - Private networking isolates communication at the account or team level between Droplets located in the same datacenter.
+     - Useful e.g. for a droplet behind DigitalOcean Load Balancer.
+     - No Multicast or Broadcast support.
     default: False
     type: bool
   user_data:
     description:
-      - string data >64KB, e.g. a 'cloud-config' file or a Bash script to configure the Droplet on first boot.
+     - string data >64KB, e.g. a 'cloud-config' file or a Bash script to configure the Droplet on first boot.
     required: False
   ipv6:
     description:
-      - enable IPv6 for new droplet.
+     - enable IPv6 for new droplet.
     default: False
     type: bool
   wait:
@@ -109,7 +118,7 @@ requirements:
 
 
 EXAMPLES = '''
-- name: create new or find existing droplet
+- name: create new droplet. If droplet with this name exists other parameters ignored.
   digital_ocean_droplet:
     state: present
     name: mydroplet.example.com
@@ -142,37 +151,114 @@ EXAMPLES = '''
 
 
 RETURN = '''
-# Digital Ocean API info https://developers.digitalocean.com/documentation/v2/#droplets
 data:
-    description: a DigitalOcean Droplet
-    returned: changed
-    type: dict
-    sample: {
-        "ip_address": "104.248.118.172",
-        "ipv6_address": "2604:a880:400:d1::90a:6001",
-        "private_ipv4_address": "10.136.122.141",
-        "droplet": {
-            "id": 3164494,
-            "name": "mydroplet.example.com",
-            "memory": 1024,
-            "vcpus": 1,
-            "disk": 25,
-            "locked": false,
-            "status": "active",
-            "kernel": null,
-            "created_at": "2014-11-14T16:36:31Z",
-            "features": ["private_networking", "ipv6"],
-            "backup_ids": [],
-            "snapshot_ids": [],
-            "image": {"slug": "debian-9-x64", ...},
-            "volume_ids": [],
-            "size": {"transfer": 1.0, "price_monthly": 5.0, "price_hourly": 0.00744, ...},
-            "size_slug": "1gb",
-            "networks": {"v4": [{"type": "public", ...}, {"type": "private", ...},], "v6": [{"type": "public", ...}]},
-            "region": {"slug":"sfo1",...},
-            "tags": []
-        }
-    }
+  description: DigitalOcean API Response with IP addresses exposed
+  returned: success and present
+  type: complex
+  contains:
+    ip_address:
+      description: public IPv4 address
+      returned: success and present
+      sample: "139.59.144.10"
+    ipv6_address:
+      description: IPv6 address (public)
+      returned: success and present and ipv6
+      sample: "2A03:B0C0:0003:00D0:0000:0000:0424:0001"
+    private_ipv4_address:
+      description: private IPv4 address
+      returned: success and present and private_networking
+      sample: "10.135.133.25"
+    droplet:
+      description: exact DigitalOcean API Response
+      returned: success and present
+      type: complex
+      contains:
+        id:
+          sample: 3164494
+        name:
+          sample: "mydroplet.example.com"
+        locked:
+          sample: false
+        status:
+          sample: "active"
+        tags:
+          type: list
+          sample: []
+        created_at:
+          sample: "2017-11-14T16:36:31Z"
+        backup_ids:
+          type: list
+          sample: []
+        next_backup_window:
+          sample: null
+        snapshot_ids:
+          type: list
+          sample: []
+        image:
+          type: complex
+          contains:
+            id:
+              sample: 43130763
+            slug:
+              sample: "debian-9-x64"
+        volume_ids:
+          type: list
+          sample: []
+        size:
+          type: complex
+          contains:
+            transfer:
+              sample: 1.0
+            price_monthly:
+              sample: 5.0
+            price_hourly:
+              sample: 0.00744
+            slug:
+              sample: "1gb"
+        size_slug:
+          sample: "1gb"
+        networks:
+          type: complex
+          contains:
+            v4:
+              type: list
+              sample:
+                - {"ip_address": "139.59.144.10",
+                 "type": "public", "gateway": "139.59.144.1", "netmask": "255.255.240.0"}
+                - {"ip_address": "10.135.133.25",
+                 "type": "private", "gateway": "10.135.0.1", "netmask": "255.255.0.0"}
+            v6:
+              type: list
+              sample:
+                 - {"ip_address": "2A03:B0C0:0003:00D0:0000:0000:0424:0001", "netmask": 64,
+                  "type": "public", "gateway": "2A03:B0C0:0003:00D0:0000:0000:0000:0001"}
+        region:
+          type: complex
+          contains:
+            available:
+              sample: True
+            slug:
+              sample: "fra1"
+            name:
+              sample: "Frankfurt 1"
+            features:
+              type: list
+              sample: ["private_networking", "backups", "ipv6", "metadata", "install_agent", "storage", "image_transfer"]
+            sizes:
+              type: list
+              sample: ["512mb", "1gb", "2gb", "s-1vcpu-1gb", "s-3vcpu-1gb", "s-1vcpu-2gb", "s-2vcpu-2gb", "s-1vcpu-3gb",
+              "s-2vcpu-4gb", "4gb", "s-4vcpu-8gb", "8gb", "s-6vcpu-16gb", "16gb"]
+        features:
+          type: list
+          sample: ["private_networking", "ipv6"]
+        memory:
+          sample: 1024
+        vcpus:
+          sample: 1
+        disk:
+          sample: 25
+        kernel:
+          sample: null
 '''
 
 import time
@@ -227,7 +313,7 @@ class DODroplet(object):
 
     def expose_addresses(self, data):
         """
-         Expose IP addresses as their own property allowing users extend to additional tasks
+         Expose IP addresses as their own property the same way M(digital_ocean) did.
         """
         _data = data
         for k, v in data.items():
@@ -295,7 +381,8 @@ class DODroplet(object):
 
     def _rebuild(self, json_data):
         if self._id and self._name:
-            self.module.warn("Trying to rebuild droplet id={0}. Parameter name is found too, it makes no sense here!".format(self._id))
+            self.module.warn("Trying to rebuild droplet id={0}. Parameter name is found too,"
+                             " it makes no sense here!".format(self._id))
         if self.module.check_mode:
             self.module.exit_json(changed=True)
         droplet_id = json_data['droplet']['id']
@@ -308,7 +395,7 @@ class DODroplet(object):
             self.module.fail_json(changed=False, msg=response.json['message'])
         self.module.exit_json(  # wait for rebuild to finish, enrich received JSON, then return it.
             changed=True, data=self.expose_addresses(
-                self.ensure_unlocked(droplet_id)))
+                self.ensure_unlocked(droplet_id, 'rebuild')))
 
     def delete(self):
         json_data = self.find_droplet()
@@ -322,14 +409,14 @@ class DODroplet(object):
         else:
             self.module.exit_json(changed=False, msg='Droplet {0} not found'.format(self._droplet))
 
-    def ensure_unlocked(self, droplet_id):
+    def ensure_unlocked(self, droplet_id, action):
         end_time = time.time() + self.wait_timeout
         while time.time() < end_time:
             response = self.rest.get('droplets/{0}'.format(droplet_id))
             if not response.json['droplet']['locked']:
                 return response.json
             time.sleep(min(2, end_time - time.time()))
-        self.module.fail_json(msg='Droplet action finish timeout')
+        self.module.fail_json(msg='Droplet {0}: {1} timeout'.format(self._droplet, action))
 
     def ensure_active(self, droplet_id):
         end_time = time.time() + self.wait_timeout
@@ -338,7 +425,7 @@ class DODroplet(object):
             if response.json['droplet']['status'] == 'active':
                 return response.json
             time.sleep(min(2, end_time - time.time()))
-        self.module.fail_json(msg='Wait for droplet status=active timeout')
+        self.module.fail_json(msg='Wait for droplet {0} status=active timeout'.format(self._droplet))
 
 
 def main():
