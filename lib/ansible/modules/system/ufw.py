@@ -81,7 +81,7 @@ options:
   proto:
     description:
       - TCP/IP protocol.
-    choices: [ any, tcp, udp, ipv6, esp, ah ]
+    choices: [ any, tcp, udp, ipv6, esp, ah, gre, igmp ]
   name:
     description:
       - Use profile located in C(/etc/ufw/applications.d).
@@ -255,7 +255,7 @@ def main():
             from_port=dict(type='str'),
             to_ip=dict(type='str', default='any', aliases=['dest', 'to']),
             to_port=dict(type='str', aliases=['port']),
-            proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp']),
+            proto=dict(type='str', aliases=['protocol'], choices=['ah', 'any', 'esp', 'ipv6', 'tcp', 'udp', 'gre', 'igmp']),
             app=dict(type='str', aliases=['name']),
             comment=dict(type='str'),
         ),
