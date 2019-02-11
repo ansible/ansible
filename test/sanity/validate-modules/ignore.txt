@@ -356,7 +356,6 @@ lib/ansible/modules/clustering/k8s/_kubernetes.py E322
 lib/ansible/modules/clustering/k8s/_kubernetes.py E323
 lib/ansible/modules/clustering/k8s/_kubernetes.py E324
 lib/ansible/modules/clustering/k8s/_kubernetes.py E325
-lib/ansible/modules/clustering/k8s/k8s_auth.py E203
 lib/ansible/modules/clustering/znode.py E326
 lib/ansible/modules/commands/command.py E322
 lib/ansible/modules/commands/command.py E323
