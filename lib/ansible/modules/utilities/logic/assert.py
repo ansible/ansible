@@ -38,6 +38,10 @@ options:
     version_added: "2.7"
     description:
       - "The customized message used for a successful assertion"
+  quiet:
+    version_added: "2.8"
+    description:
+      - "Set this to true to avoid verbose output"
 notes:
      - This module is also supported for Windows targets.
 author:
@@ -66,5 +70,6 @@ EXAMPLES = '''
     that:
       - "my_param <= 100"
       - "my_param >= 0"
+    quiet: True
     msg: "'my_param' must be between 0 and 100"
 '''

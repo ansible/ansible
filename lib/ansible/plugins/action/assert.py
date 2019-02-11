@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
         cond = Conditional(loader=self._loader)
         if not quiet:
             result['_ansible_verbose_always'] = True
-        result['_ansible_verbose_always'] = True
+
         for that in thats:
             cond.when = [that]
             test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
