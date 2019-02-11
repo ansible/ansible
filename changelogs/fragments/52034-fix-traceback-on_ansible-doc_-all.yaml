@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc - Fix traceback on providing arguemnt --all to ansible-doc command
