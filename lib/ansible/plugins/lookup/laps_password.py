@@ -132,7 +132,7 @@ EXAMPLES = """
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'SERVER', kdc='dc01.ansible.com') }}"
 
-- name: Use Kerberos auth and explicit credentials
+- name: Use Kerberos auth with explicit credentials
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'WINDOWS-PC',
                                  kdc='dc01.ansible.com',
@@ -149,7 +149,7 @@ EXAMPLES = """
                                  password='SuperSecret123') }}"
 
 
-- name: Use Simple auth of LDAP with StartTLS
+- name: Use Simple auth with LDAP and StartTLS
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'app01',
                                  kdc='dc01.ansible.com',
@@ -158,7 +158,7 @@ EXAMPLES = """
                                  username='username@ANSIBLE.COM',
                                  password='SuperSecret123') }}"
 
-- name: Narrow down the search base
+- name: Narrow down the search base to a an OU
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'sql10',
                                  kdc='dc01.ansible.com',
