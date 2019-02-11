@@ -348,10 +348,10 @@ def unset_mount(module, args):
         # If we got here we found a match - continue and mark changed
         changed = True
 
-    if changed and not module.check_mode:
+    if changed:
         write_fstab(module, to_write, args['fstab'])
 
-    return (args['name'], changed)
+    return changed
 
 
 def _set_fstab_args(fstab_file):
@@ -666,7 +666,7 @@ def main():
         open(args['fstab'], 'a').close()
 
     # absent:
-    #   Remove from fstab and unmounted.
+    #   Unmounted and removed from fstab.
     # unmounted:
     #   Do not change fstab state, but unmount.
     # present:
@@ -680,9 +680,9 @@ def main():
     changed = False
 
     if state == 'absent':
-        name, changed = unset_mount(module, args)
+        name = args['name']
 
-        if changed and not module.check_mode:
+        if not module.check_mode:
             if ismount(name) or is_bind_mounted(module, linux_mounts, name):
                 res, msg = umount(module, name)
 
@@ -690,11 +690,17 @@ def main():
                     module.fail_json(
                         msg="Error unmounting %s: %s" % (name, msg))
 
+                changed = True
+
             if os.path.exists(name):
                 try:
                     os.rmdir(name)
                 except (OSError, IOError) as e:
                     module.fail_json(msg="Error rmdir %s: %s" % (name, to_native(e)))
+
+                changed = True
+
+            changed |= unset_mount(module, args)
     elif state == 'unmounted':
         if ismount(name) or is_bind_mounted(module, linux_mounts, name):
             if not module.check_mode:
