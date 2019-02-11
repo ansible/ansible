@@ -135,7 +135,7 @@ So let us assume we have our target configured in the inventory using the FQDN n
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
 
 One way to set this up is to add to every task the directive: ``delegate_to: localhost``.
 
@@ -146,7 +146,7 @@ One way to set this up is to add to every task the directive: ``delegate_to: loc
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       delegate_to: localhost
@@ -168,7 +168,7 @@ In this case the inventory may look like this:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
         ansible_connection: local
 
 But used tasks do not need anything special added.
@@ -179,7 +179,7 @@ But used tasks do not need anything special added.
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       register: all_tenants
