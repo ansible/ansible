@@ -42,10 +42,14 @@ options:
     description:
     - Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME environment
       variable.
+    - Please note that this only works with clusters configured to use HTTP Basic Auth. If your cluster has a
+      different form of authentication (e.g. OAuth2 in OpenShift), this option will not work as expected and you
+      should look into the C(k8s_auth) module, as that might do what you need.
   password:
     description:
     - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD environment
       variable.
+    - Please read the description of the C(username) option for a discussion of when this option is applicable.
   cert_file:
     description:
     - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE environment
