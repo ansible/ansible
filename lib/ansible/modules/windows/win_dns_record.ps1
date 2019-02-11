@@ -102,14 +102,14 @@ if ($records -ne $null)
             # This record matches one of the values; but does it match the TTL?
             if ($record.TimeToLive -ne $ttl)
             {
+                $original_ttl_seconds = $record.TimeToLive.TotalSeconds
                 if (-not $check_mode)
                 {
-                    $new_record = $record
-                    $new_record.TimeToLive = $ttl
-                    Set-DnsServerResourceRecord -OldInputObject $record -NewInputObject $new_record
+                    $record.TimeToLive = $ttl
+                    Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record
                 }
 
-                $changes += "-[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $record_value`n"
+                $changes += "-[$zone] $($record.HostName) $original_ttl_seconds $type $record_value`n"
                 $changes += "+[$zone] $($record.HostName) $($ttl.TotalSeconds) $type $record_value`n"
                 $result.changed = $true
             }
