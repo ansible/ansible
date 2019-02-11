@@ -67,11 +67,6 @@ $record_argument_name = @{
     TXT = "DescriptiveText"
 }[$type]
 
-$record_object_types = @{
-    A = [System.Net.IPAddress];
-    AAAA = [System.Net.IPAddress];
-}
-
 
 $changes = New-Object -Typename System.Collections.ArrayList
 
