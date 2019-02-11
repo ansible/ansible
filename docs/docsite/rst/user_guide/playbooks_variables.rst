@@ -1006,28 +1006,28 @@ If multiple variables of the same name are defined in different places, they get
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
-  * command line values (eg "-u user")
-  * role defaults [1]_
-  * inventory file or script group vars [2]_
-  * inventory group_vars/all [3]_
-  * playbook group_vars/all [3]_
-  * inventory group_vars/* [3]_
-  * playbook group_vars/* [3]_
-  * inventory file or script host vars [2]_
-  * inventory host_vars/* [3]_
-  * playbook host_vars/* [3]_
-  * host facts / cached set_facts [4]_
-  * play vars
-  * play vars_prompt
-  * play vars_files
-  * role vars (defined in role/vars/main.yml)
-  * block vars (only for tasks in block)
-  * task vars (only for the task)
-  * include_vars
-  * set_facts / registered vars
-  * role (and include_role) params
-  * include params
-  * extra vars (always win precedence)
+  #. command line values (eg "-u user")
+  #. role defaults [1]_
+  #. inventory file or script group vars [2]_
+  #. inventory group_vars/all [3]_
+  #. playbook group_vars/all [3]_
+  #. inventory group_vars/* [3]_
+  #. playbook group_vars/* [3]_
+  #. inventory file or script host vars [2]_
+  #. inventory host_vars/* [3]_
+  #. playbook host_vars/* [3]_
+  #. host facts / cached set_facts [4]_
+  #. play vars
+  #. play vars_prompt
+  #. play vars_files
+  #. role vars (defined in role/vars/main.yml)
+  #. block vars (only for tasks in block)
+  #. task vars (only for the task)
+  #. include_vars
+  #. set_facts / registered vars
+  #. role (and include_role) params
+  #. include params
+  #. extra vars (always win precedence)
 
 Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
