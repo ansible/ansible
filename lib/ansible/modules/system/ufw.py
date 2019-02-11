@@ -400,7 +400,7 @@ def main():
                 execute(cmd + [[command], [value]])
 
         elif command == 'default':
-            if params['direction'] in ['in', 'out', None]:
+            if params['direction'] not in ['outgoing', 'incoming', 'routed']:
                 module.fail_json(msg='For default, direction must be one of "outgoing", "incoming" and "routed".')
             if module.check_mode:
                 regexp = r'Default: (deny|allow|reject) \(incoming\), (deny|allow|reject) \(outgoing\), (deny|allow|reject|disabled) \(routed\)'
