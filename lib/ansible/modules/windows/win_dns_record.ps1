@@ -86,16 +86,12 @@ if ($records -ne $null)
     $required_values = @{}
     foreach ($value in $values)
     {
-        if ($record_object_types.Contains($type))
-        {
-            $value = [System.Management.Automation.LanguagePrimitives]::ConvertTo($value, $record_object_types[$type])
-        }
-        $required_values[$value] = $null
+        $required_values[$value.ToString()] = $null
     }
 
     foreach ($record in $records)
     {
-        $record_value = $record.RecordData.$record_argument_name
+        $record_value = $record.RecordData.$record_argument_name.ToString()
 
         if ($required_values.ContainsKey($record_value))
         {
