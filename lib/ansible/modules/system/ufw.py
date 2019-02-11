@@ -418,7 +418,7 @@ def main():
                 execute(cmd + [[command], [value], [params['direction']]])
 
         elif command == 'rule':
-            if params['direction'] in ['outgoing', 'incoming', 'routed']:
+            if params['direction'] not in ['in', 'out', None]:
                 module.fail_json(msg='For rules, direction must be one of "in" and "out".')
             # Rules are constructed according to the long format
             #
