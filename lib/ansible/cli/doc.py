@@ -80,7 +80,7 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if options.all_plugins:
-            args = self.get_all_plugins_of_type(options['type'])
+            args = self.get_all_plugins_of_type(options.type)
             if options.module_path:
                 display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
 
