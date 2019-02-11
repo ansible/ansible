@@ -707,18 +707,18 @@ class Connection(ConnectionBase):
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
-            if self.become.expect_prompt() and self.check_password_prompt(b_line):
+            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
-            elif self.become.success and self.check_become_success(b_line):
+            elif self.become.success and self.become.check_success(b_line):
                 display.debug("become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
-            elif sudoable and self.check_incorrect_password(b_line):
+            elif sudoable and self.become.check_incorrect_password(b_line):
                 display.debug("become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_error'] = True
-            elif sudoable and self.check_missing_password(b_line):
+            elif sudoable and self.become.check_missing_password(b_line):
                 display.debug("become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_nopasswd_error'] = True
 
