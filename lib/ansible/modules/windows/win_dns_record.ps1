@@ -35,10 +35,10 @@ else
 }
 
 
-$minimum_ttl = 900  # https://docs.microsoft.com/en-us/windows/desktop/ad/configuration-of-ttl-limits
-if ($ttl -lt $minimum_ttl)
+# TODO: add warning for forest minTTL override -- see https://docs.microsoft.com/en-us/windows/desktop/ad/configuration-of-ttl-limits
+if ($ttl -lt 1 -or $ttl -gt 31557600)
 {
-    Fail-Json "ttl must be $minimum_ttl or greater"
+    Fail-Json "ttl must be between 1 and 31557600"
 }
 $ttl = New-TimeSpan -Seconds $ttl
 
