@@ -55,18 +55,6 @@ options:
       - value of BIOS attribute to update
     default: 'null'
     version_added: "2.8"
-  manager_attribute_name:
-    required: false
-    description:
-      - name of Manager attribute to update
-    default: 'null'
-    version_added: "2.8"
-  manager_attribute_value:
-    required: false
-    description:
-      - value of Manager attribute to update
-    default: 'null'
-    version_added: "2.8"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -109,36 +97,6 @@ EXAMPLES = '''
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
-
-  - name: Enable NTP in the OOB Controller
-    redfish_config:
-      category: Manager
-      command: SetManagerAttributes
-      manager_attribute_name: NTPConfigGroup.1.NTPEnable
-      manager_attribute_value: Enabled
-      baseuri: "{{ baseuri }}"
-      username: "{{ username}}"
-      password: "{{ password }}"
-
-  - name: Set NTP server 1 to {{ ntpserver1 }} in the OOB Controller
-    redfish_config:
-      category: Manager
-      command: SetManagerAttributes
-      manager_attribute_name: NTPConfigGroup.1.NTP1
-      manager_attribute_value: "{{ ntpserver1 }}"
-      baseuri: "{{ baseuri }}"
-      username: "{{ username}}"
-      password: "{{ password }}"
-
-  - name: Set Timezone to {{ timezone }} in the OOB Controller
-    redfish_config:
-      category: Manager
-      command: SetManagerAttributes
-      manager_attribute_name: Time.1.Timezone
-      manager_attribute_value: "{{ timezone }}"
-      baseuri: "{{ baseuri }}"
-      username: "{{ username}}"
-      password: "{{ password }}"
 '''
 
 RETURN = '''
@@ -156,8 +114,7 @@ from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes"],
-    "Manager": ["SetManagerAttributes"],
+    "Systems": ["SetBiosDefaultSettings", "SetBiosAttributes"]
 }
 
 
@@ -170,8 +127,6 @@ def main():
             baseuri=dict(required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
-            manager_attribute_name=dict(default='null'),
-            manager_attribute_value=dict(default='null'),
             bios_attribute_name=dict(default='null'),
             bios_attribute_value=dict(default='null'),
         ),
@@ -185,9 +140,6 @@ def main():
     creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
-    # Manager attributes to update
-    mgr_attributes = {'mgr_attr_name': module.params['manager_attribute_name'],
-                      'mgr_attr_value': module.params['manager_attribute_value']}
     # BIOS attributes to update
     bios_attributes = {'bios_attr_name': module.params['bios_attribute_name'],
                        'bios_attr_value': module.params['bios_attribute_value']}
@@ -219,16 +171,6 @@ def main():
                 result = rf_utils.set_bios_default_settings()
             elif command == "SetBiosAttributes":
                 result = rf_utils.set_bios_attributes(bios_attributes)
-
-    elif category == "Manager":
-        # execute only if we find a Manager service resource
-        result = rf_utils._find_managers_resource(rf_uri)
-        if result['ret'] is False:
-            module.fail_json(msg=to_native(result['msg']))
-
-        for command in command_list:
-            if command == "SetManagerAttributes":
-                result = rf_utils.set_manager_attributes(mgr_attributes)
 
     # Return data back or fail with proper message
     if result['ret'] is True:
