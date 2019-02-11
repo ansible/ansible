@@ -51,7 +51,9 @@ DOCUMENTATION = """
         vars:
             - name: ansible_password
             - name: ansible_ssh_pass
+            - name: ansible_ssh_password
             - name: ansible_paramiko_pass
+            - name: ansible_paramiko_password
               version_added: '2.5'
       host_key_auto_add:
         description: 'TODO: write it'
