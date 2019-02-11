@@ -36,7 +36,7 @@ options:
 
   description:
     description:
-      - Description
+      - Description of the load-balancer
     required: true
 
   organization_id:
