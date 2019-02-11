@@ -1,0 +1,2 @@
+minor_changes:
+  - ufw - enable "changed" status while check mode is enabled
