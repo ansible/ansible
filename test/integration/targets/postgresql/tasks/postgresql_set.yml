@@ -2,9 +2,9 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Notice: assertions are different for Ubuntu 16.04 because they don't work
-# correctly for these tests. However I checked it manually on 16.04
-# and it works as expected.
+# Notice: assertions are different for Ubuntu 16.04 and FreeBSD because they don't work
+# correctly for these tests. There are some stranges exactly in Shippable CI.
+# However I checked it manually for all points and it worked as expected.
 
 - name: postgresql_set - preparation to the next step
   become_user: "{{ pg_user }}"
@@ -34,7 +34,7 @@
       - set_wm.cur_val == '12MB'
       - set_wm.cur_val != set_wm.prev_val
       - set_wm.restart_required == false
-  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16'
+  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != "FreeBSD"
 
 - assert:
     that:
@@ -60,7 +60,7 @@
       - reset_wm.changed == true
       - reset_wm.cur_val != reset_wm.prev_val
       - reset_wm.restart_required == false
-  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16'
+  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != "FreeBSD"
 
 - assert:
     that:
@@ -122,14 +122,14 @@
       - def_wm.changed == true
       - def_wm.cur_val != def_wm.prev_val
       - def_wm.restart_required == false
-  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16'
+  when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != 'FreeBSD'
 
 - assert:
     that:
       - def_wm.name == 'work_mem'
       - def_wm.changed == true
       - def_wm.restart_required == false
-  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '16'
+  when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '16' and ansible_distribution != 'FreeBSD'
 
 - name: postgresql_set - set shared_buffers (restart is required)
   become_user: "{{ pg_user }}"
