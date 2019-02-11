@@ -101,6 +101,11 @@ options:
             description:
               - The local AS number for the neighbor.
             type: int
+          port:
+            description:
+              - The TCP Port number to use for this neighbor.
+              - The range is from 0 to 65535.
+            type: int
       networks:
         description:
           - Specify networks to announce via BGP.

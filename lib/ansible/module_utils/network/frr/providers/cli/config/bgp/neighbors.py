@@ -59,6 +59,11 @@ class Neighbors(CliProvider):
         if not config or cmd not in config:
             return cmd
 
+    def _render_port(self, item, config=None):
+        cmd = 'neighbor %s port %s' % (item['neighbor'], item['port'])
+        if not config or cmd not in config:
+            return cmd
+
     def _render_description(self, item, config=None):
         cmd = 'neighbor %s description %s' % (item['neighbor'], item['description'])
         if not config or cmd not in config:
