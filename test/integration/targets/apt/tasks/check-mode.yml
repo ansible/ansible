@@ -1,0 +1,15 @@
+# Verify that packages to be installed aren't marked as manual in check mode
+
+- name: Remove hello if installed
+  apt:
+    name: hello
+    state: absent
+
+- name: Check status of hello
+  apt:
+    name: hello
+    state: present
+  check_mode: yes
+
+- name: Ensure hello was not re-marked as manual
+  shell: "! (apt-mark showmanual | grep hello)"

@@ -24,6 +24,8 @@
 
   - include: 'apt-builddep.yml'
 
+  - include: 'check-mode.yml'
+
   - block:
       - include: 'repo.yml'
     always:
