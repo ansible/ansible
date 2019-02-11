@@ -190,7 +190,7 @@ def main():
         except KeyError as e:
             module.fail_json(msg="User '%s' does not exist." % name, **result)
 
-    if quota_type == 'group':
+    elif quota_type == 'group':
         type_arg = '-g'
         quota_default = 'root'
         if name is None:
