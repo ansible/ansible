@@ -6,7 +6,7 @@
 # correctly for these tests. However I checked it manually on 16.04
 # and it works as expected.
 
-- name: postgresql_set - preparation to the nex step
+- name: postgresql_set - preparation to the next step
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
