@@ -1,0 +1,3 @@
+---
+bugfixes:
+- redfish_utils - get standard properties for firmware entries (https://github.com/ansible/ansible/issues/49832)
