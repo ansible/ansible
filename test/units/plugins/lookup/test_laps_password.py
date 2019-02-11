@@ -10,29 +10,86 @@ import platform
 import pytest
 import sys
 
-from units.compat.mock import patch, MagicMock
+from units.compat.mock import MagicMock
 
 from ansible.errors import AnsibleError
-from ansible.plugins.lookup import laps_password
-
-ldap = pytest.importorskip("ldap")
 
 
-@pytest.fixture("function")
-def reset_imports():
-    # ensure the changes to these globals aren't persisted after each test
-    orig_has_gssapi = laps_password.HAS_GSSAPI
-    orig_gssapi_imp_err = laps_password.GSSAPI_IMP_ERR
-    orig_has_ldap = laps_password.HAS_LDAP
-    orig_ldap_imp_err = laps_password.LDAP_IMP_ERR
-    yield None
-    laps_password.HAS_GSSAPI = orig_has_gssapi
-    laps_password.GSSAPI_IMP_ERR = orig_gssapi_imp_err
-    laps_password.HAS_LDAP = orig_has_ldap
-    laps_password.LDAP_IMP_ERR = orig_ldap_imp_err
+class FakeLdap(object):
+    SASL_AVAIL = 1
+    TLS_AVAIL = 1
+
+    SCOPE_SUBTREE = 2
+
+    OPT_PROTOCOL_VERSION = 17
+    OPT_REFERRALS = 8
+
+    OPT_X_TLS_NEVER = 0
+    OPT_X_TLS_DEMAND = 2
+    OPT_X_TLS_ALLOW = 3
+    OPT_X_TLS_TRY = 4
+
+    OPT_X_TLS_CACERTFILE = 24578
+    OPT_X_TLS_REQUIRE_CERT = 24582
+    OPT_X_TLS_NEWCTX = 24591
+
+    @staticmethod
+    def initialize(uri, bytes_mode=None, **kwargs):
+        return MagicMock()
 
 
-def test_missing_ldap(reset_imports):
+class FakeLdapUrl(object):
+
+    def __init__(self, ldapUrl=None, urlscheme='ldap', hostport='', **kwargs):
+        url = ldapUrl if ldapUrl else "%s://%s" % (urlscheme, hostport)
+        self.urlscheme = url.split('://', 2)[0].lower()
+        self._url = url
+
+    def initializeUrl(self):
+        return self._url
+
+
+def fake_is_ldap_url(s):
+    s_lower = s.lower()
+    return s_lower.startswith("ldap://") or s_lower.startswith("ldaps://") or s_lower.startswith("ldapi://")
+
+
+@pytest.fixture(autouse=True)
+def laps_password():
+    """Imports and the laps_password lookup with a mocks laps module for testing"""
+
+    # Build the fake ldap and ldapurl Python modules
+    fake_ldap_obj = FakeLdap()
+    fake_ldap_url_obj = MagicMock()
+    fake_ldap_url_obj.isLDAPUrl.side_effect = fake_is_ldap_url
+    fake_ldap_url_obj.LDAPUrl.side_effect = FakeLdapUrl
+
+    # Take a snapshot of sys.modules before we manipulate it
+    orig_modules = sys.modules.copy()
+    try:
+        sys.modules["ldap"] = fake_ldap_obj
+        sys.modules["ldapurl"] = fake_ldap_url_obj
+
+        from ansible.plugins.lookup import laps_password
+
+        # ensure the changes to these globals aren't persisted after each test
+        orig_has_gssapi = laps_password.HAS_GSSAPI
+        orig_gssapi_imp_err = laps_password.GSSAPI_IMP_ERR
+        orig_has_ldap = laps_password.HAS_LDAP
+        orig_ldap_imp_err = laps_password.LDAP_IMP_ERR
+
+        yield laps_password
+
+        laps_password.HAS_GSSAPI = orig_has_gssapi
+        laps_password.GSSAPI_IMP_ERR = orig_gssapi_imp_err
+        laps_password.HAS_LDAP = orig_has_ldap
+        laps_password.LDAP_IMP_ERR = orig_ldap_imp_err
+    finally:
+        # Restore sys.modules back to our pre-shenanigans
+        sys.modules = orig_modules
+
+
+def test_missing_ldap(laps_password):
     laps_password.HAS_LDAP = False
     laps_password.LDAP_IMP_ERR = "no import for you!"
 
@@ -45,7 +102,7 @@ def test_missing_ldap(reset_imports):
                              "Import Error: no import for you!" % (platform.node(), sys.executable)
 
 
-def test_invalid_cert_mapping():
+def test_invalid_cert_mapping(laps_password):
     with pytest.raises(AnsibleError) as err:
         laps_password.LookupModule().run(["host"], validate_certs="incorrect")
 
@@ -53,14 +110,14 @@ def test_invalid_cert_mapping():
                              "'never', 'try'"
 
 
-def test_invalid_auth():
+def test_invalid_auth(laps_password):
     with pytest.raises(AnsibleError) as err:
         laps_password.LookupModule().run(["host"], auth="fail")
 
     assert str(err.value) == "Invalid auth value 'fail': expecting either 'gssapi', or 'simple'"
 
 
-def test_gssapi_without_sasl(monkeypatch):
+def test_gssapi_without_sasl(monkeypatch, laps_password):
     monkeypatch.setattr("ldap.SASL_AVAIL", 0)
 
     with pytest.raises(AnsibleError) as err:
@@ -69,21 +126,21 @@ def test_gssapi_without_sasl(monkeypatch):
     assert str(err.value) == "Cannot use auth=gssapi when SASL is not configured with the local LDAP install"
 
 
-def test_simple_auth_without_credentials():
+def test_simple_auth_without_credentials(laps_password):
     with pytest.raises(AnsibleError) as err:
         laps_password.LookupModule().run(["host"], auth="simple")
 
     assert str(err.value) == "The username and password values are required when auth=simple"
 
 
-def test_password_not_set_with_username():
+def test_password_not_set_with_username(laps_password):
     with pytest.raises(AnsibleError) as err:
         laps_password.LookupModule().run(["host"], username="test")
 
     assert str(err.value) == "The password must be set if username is also set"
 
 
-def test_not_encrypted_without_override():
+def test_not_encrypted_without_override(laps_password):
     with pytest.raises(AnsibleError) as err:
         laps_password.LookupModule().run(["host"], kdc="dc01", auth="simple", username="test", password="test")
 
@@ -91,7 +148,7 @@ def test_not_encrypted_without_override():
                              "auth=gssapi, scheme=ldaps, start_tls=True, or allow_plaintext=True to continue"
 
 
-def test_ldaps_without_tls(monkeypatch):
+def test_ldaps_without_tls(monkeypatch, laps_password):
     monkeypatch.setattr("ldap.TLS_AVAIL", 0)
 
     with pytest.raises(AnsibleError) as err:
@@ -100,7 +157,7 @@ def test_ldaps_without_tls(monkeypatch):
     assert str(err.value) == "Cannot use TLS as the local LDAP installed has not been configured to support it"
 
 
-def test_start_tls_without_tls(monkeypatch):
+def test_start_tls_without_tls(monkeypatch, laps_password):
     monkeypatch.setattr("ldap.TLS_AVAIL", 0)
 
     with pytest.raises(AnsibleError) as err:
@@ -109,7 +166,7 @@ def test_start_tls_without_tls(monkeypatch):
     assert str(err.value) == "Cannot use TLS as the local LDAP installed has not been configured to support it"
 
 
-def test_normal_run(monkeypatch):
+def test_normal_run(monkeypatch, laps_password):
     def get_laps_password(conn, cn, search_base):
         return "CN=%s,%s" % (cn, search_base)
 
@@ -133,10 +190,10 @@ def test_normal_run(monkeypatch):
 
     # Verify the number of calls made to the mocked LDAP object
     assert mock_ldap.mock_calls[1][0] == "().set_option"
-    assert mock_ldap.mock_calls[1][1] == (ldap.OPT_PROTOCOL_VERSION, 3)
+    assert mock_ldap.mock_calls[1][1] == (FakeLdap.OPT_PROTOCOL_VERSION, 3)
 
     assert mock_ldap.mock_calls[2][0] == "().set_option"
-    assert mock_ldap.mock_calls[2][1] == (ldap.OPT_REFERRALS, 0)
+    assert mock_ldap.mock_calls[2][1] == (FakeLdap.OPT_REFERRALS, 0)
 
     assert mock_ldap.mock_calls[3][0] == '().sasl_gssapi_bind_s'
     assert mock_ldap.mock_calls[3][1] == ()
@@ -148,7 +205,7 @@ def test_normal_run(monkeypatch):
     assert mock_ldap.mock_calls[5][1] == ()
 
 
-def test_run_with_simple_auth_and_search_base(monkeypatch):
+def test_run_with_simple_auth_and_search_base(monkeypatch, laps_password):
     def get_laps_password(conn, cn, search_base):
         return "CN=%s,%s" % (cn, search_base)
 
@@ -173,10 +230,10 @@ def test_run_with_simple_auth_and_search_base(monkeypatch):
 
     # Verify the number of calls made to the mocked LDAP object
     assert mock_ldap.mock_calls[1][0] == "().set_option"
-    assert mock_ldap.mock_calls[1][1] == (ldap.OPT_PROTOCOL_VERSION, 3)
+    assert mock_ldap.mock_calls[1][1] == (FakeLdap.OPT_PROTOCOL_VERSION, 3)
 
     assert mock_ldap.mock_calls[2][0] == "().set_option"
-    assert mock_ldap.mock_calls[2][1] == (ldap.OPT_REFERRALS, 0)
+    assert mock_ldap.mock_calls[2][1] == (FakeLdap.OPT_REFERRALS, 0)
 
     assert mock_ldap.mock_calls[3][0] == '().bind_s'
     assert mock_ldap.mock_calls[3][1] == (u"user", u"pass")
@@ -192,7 +249,7 @@ def test_run_with_simple_auth_and_search_base(monkeypatch):
     # Verifies that an explicit URI ignores port and scheme
     [{"kdc": "ldap://dc04", "port": 1234, "scheme": "ldaps"}, "ldap://dc04"],
 ])
-def test_uri_options(monkeypatch, kwargs, expected):
+def test_uri_options(monkeypatch, laps_password, kwargs, expected):
     mock_ldap = MagicMock()
     monkeypatch.setattr("ldap.initialize", mock_ldap)
 
@@ -204,22 +261,22 @@ def test_uri_options(monkeypatch, kwargs, expected):
 
 
 @pytest.mark.parametrize("validate, expected", [
-    ["never", ldap.OPT_X_TLS_NEVER],
-    ["allow", ldap.OPT_X_TLS_ALLOW],
-    ["try", ldap.OPT_X_TLS_TRY],
-    ["demand", ldap.OPT_X_TLS_DEMAND],
+    ["never", FakeLdap.OPT_X_TLS_NEVER],
+    ["allow", FakeLdap.OPT_X_TLS_ALLOW],
+    ["try", FakeLdap.OPT_X_TLS_TRY],
+    ["demand", FakeLdap.OPT_X_TLS_DEMAND],
 ])
-def test_certificate_validation(monkeypatch, validate, expected):
+def test_certificate_validation(monkeypatch, laps_password, validate, expected):
     mock_ldap = MagicMock()
     monkeypatch.setattr("ldap.initialize", mock_ldap)
 
     laps_password.LookupModule().run([], kdc="dc01", start_tls=True, validate_certs=validate)
 
     assert mock_ldap.mock_calls[3][0] == "().set_option"
-    assert mock_ldap.mock_calls[3][1] == (ldap.OPT_X_TLS_REQUIRE_CERT, expected)
+    assert mock_ldap.mock_calls[3][1] == (FakeLdap.OPT_X_TLS_REQUIRE_CERT, expected)
 
     assert mock_ldap.mock_calls[4][0] == "().set_option"
-    assert mock_ldap.mock_calls[4][1] == (ldap.OPT_X_TLS_NEWCTX, 0)
+    assert mock_ldap.mock_calls[4][1] == (FakeLdap.OPT_X_TLS_NEWCTX, 0)
 
     assert mock_ldap.mock_calls[5][0] == "().start_tls_s"
     assert mock_ldap.mock_calls[5][1] == ()
@@ -228,28 +285,28 @@ def test_certificate_validation(monkeypatch, validate, expected):
     assert mock_ldap.mock_calls[6][1] == ()
 
 
-def test_certificate_validate_with_custom_cacert(monkeypatch):
+def test_certificate_validate_with_custom_cacert(monkeypatch, laps_password):
     mock_ldap = MagicMock()
     monkeypatch.setattr("ldap.initialize", mock_ldap)
 
     laps_password.LookupModule().run([], kdc="dc01", scheme="ldaps", cacert_file="cacert.pem")
 
     assert mock_ldap.mock_calls[3][0] == "().set_option"
-    assert mock_ldap.mock_calls[3][1] == (ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+    assert mock_ldap.mock_calls[3][1] == (FakeLdap.OPT_X_TLS_REQUIRE_CERT, FakeLdap.OPT_X_TLS_DEMAND)
 
     assert mock_ldap.mock_calls[4][0] == "().set_option"
-    assert mock_ldap.mock_calls[4][1] == (ldap.OPT_X_TLS_CACERTFILE, u"cacert.pem")
+    assert mock_ldap.mock_calls[4][1] == (FakeLdap.OPT_X_TLS_CACERTFILE, u"cacert.pem")
 
     assert mock_ldap.mock_calls[5][0] == "().set_option"
-    assert mock_ldap.mock_calls[5][1] == (ldap.OPT_X_TLS_NEWCTX, 0)
+    assert mock_ldap.mock_calls[5][1] == (FakeLdap.OPT_X_TLS_NEWCTX, 0)
 
     assert mock_ldap.mock_calls[6][0] == "().sasl_gssapi_bind_s"
     assert mock_ldap.mock_calls[6][1] == ()
 
 
-def test_certificate_validate_with_custom_cacert_fail(monkeypatch):
+def test_certificate_validate_with_custom_cacert_fail(monkeypatch, laps_password):
     def set_option(key, value):
-        if key == ldap.OPT_X_TLS_CACERTFILE:
+        if key == FakeLdap.OPT_X_TLS_CACERTFILE:
             raise ValueError("set_option() failed")
 
     mock_ldap = MagicMock()
@@ -263,17 +320,17 @@ def test_certificate_validate_with_custom_cacert_fail(monkeypatch):
                              "libraries on the host. Update OpenLDAP and reinstall python-ldap to continue"
 
 
-def test_simple_auth_with_ldaps(monkeypatch):
+def test_simple_auth_with_ldaps(monkeypatch, laps_password):
     mock_ldap = MagicMock()
     monkeypatch.setattr("ldap.initialize", mock_ldap)
 
     laps_password.LookupModule().run([], kdc="dc01", scheme="ldaps", auth="simple", username="user", password="pass")
 
     assert mock_ldap.mock_calls[3][0] == "().set_option"
-    assert mock_ldap.mock_calls[3][1] == (ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+    assert mock_ldap.mock_calls[3][1] == (FakeLdap.OPT_X_TLS_REQUIRE_CERT, FakeLdap.OPT_X_TLS_DEMAND)
 
     assert mock_ldap.mock_calls[4][0] == "().set_option"
-    assert mock_ldap.mock_calls[4][1] == (ldap.OPT_X_TLS_NEWCTX, 0)
+    assert mock_ldap.mock_calls[4][1] == (FakeLdap.OPT_X_TLS_NEWCTX, 0)
 
     assert mock_ldap.mock_calls[5][0] == '().bind_s'
     assert mock_ldap.mock_calls[5][1] == (u"user", u"pass")
@@ -282,17 +339,17 @@ def test_simple_auth_with_ldaps(monkeypatch):
     assert mock_ldap.mock_calls[6][1] == ()
 
 
-def test_simple_auth_with_start_tls(monkeypatch):
+def test_simple_auth_with_start_tls(monkeypatch, laps_password):
     mock_ldap = MagicMock()
     monkeypatch.setattr("ldap.initialize", mock_ldap)
 
     laps_password.LookupModule().run([], kdc="dc01", start_tls=True, auth="simple", username="user", password="pass")
 
     assert mock_ldap.mock_calls[3][0] == "().set_option"
-    assert mock_ldap.mock_calls[3][1] == (ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+    assert mock_ldap.mock_calls[3][1] == (FakeLdap.OPT_X_TLS_REQUIRE_CERT, FakeLdap.OPT_X_TLS_DEMAND)
 
     assert mock_ldap.mock_calls[4][0] == "().set_option"
-    assert mock_ldap.mock_calls[4][1] == (ldap.OPT_X_TLS_NEWCTX, 0)
+    assert mock_ldap.mock_calls[4][1] == (FakeLdap.OPT_X_TLS_NEWCTX, 0)
 
     assert mock_ldap.mock_calls[5][0] == "().start_tls_s"
     assert mock_ldap.mock_calls[5][1] == ()
@@ -304,7 +361,7 @@ def test_simple_auth_with_start_tls(monkeypatch):
     assert mock_ldap.mock_calls[7][1] == ()
 
 
-def test_gssapi_with_explicit_credentials(monkeypatch):
+def test_gssapi_with_explicit_credentials(monkeypatch, laps_password):
     mock_kinit = MagicMock()
     monkeypatch.setattr(laps_password, "kinit", mock_kinit)
 
@@ -319,10 +376,10 @@ def test_gssapi_with_explicit_credentials(monkeypatch):
 
     # Verify the number of calls made to the mocked LDAP object
     assert mock_ldap.mock_calls[1][0] == "().set_option"
-    assert mock_ldap.mock_calls[1][1] == (ldap.OPT_PROTOCOL_VERSION, 3)
+    assert mock_ldap.mock_calls[1][1] == (FakeLdap.OPT_PROTOCOL_VERSION, 3)
 
     assert mock_ldap.mock_calls[2][0] == "().set_option"
-    assert mock_ldap.mock_calls[2][1] == (ldap.OPT_REFERRALS, 0)
+    assert mock_ldap.mock_calls[2][1] == (FakeLdap.OPT_REFERRALS, 0)
 
     assert mock_ldap.mock_calls[3][0] == '().sasl_gssapi_bind_s'
     assert mock_ldap.mock_calls[3][1] == ()
@@ -331,7 +388,7 @@ def test_gssapi_with_explicit_credentials(monkeypatch):
     assert mock_ldap.mock_calls[4][1] == ()
 
 
-def test_gssapi_with_explicit_credentials_no_gssapi(monkeypatch):
+def test_gssapi_with_explicit_credentials_no_gssapi(monkeypatch, laps_password):
     laps_password.HAS_GSSAPI = False
     laps_password.GSSAPI_IMP_ERR = "no import for you!"
 
@@ -348,7 +405,7 @@ def test_gssapi_with_explicit_credentials_no_gssapi(monkeypatch):
                              "Import Error: no import for you!" % (platform.node(), sys.executable)
 
 
-def test_get_password_valid():
+def test_get_password_valid(laps_password):
     mock_conn = MagicMock()
     mock_conn.search_s.return_value = [
         ("CN=server,DC=domain,DC=local",
@@ -364,12 +421,12 @@ def test_get_password_valid():
 
     assert len(mock_conn.method_calls) == 1
     assert mock_conn.method_calls[0][0] == "search_s"
-    assert mock_conn.method_calls[0][1] == ("DC=domain,DC=local", ldap.SCOPE_SUBTREE,
+    assert mock_conn.method_calls[0][1] == ("DC=domain,DC=local", FakeLdap.SCOPE_SUBTREE,
                                             "(&(objectClass=computer)(CN=server))")
     assert mock_conn.method_calls[0][2] == {"attrlist": ["distinguishedName", "ms-Mcs-AdmPwd"]}
 
 
-def test_get_password_laps_not_configured():
+def test_get_password_laps_not_configured(laps_password):
     mock_conn = MagicMock()
     mock_conn.search_s.return_value = [
         ("CN=server,DC=domain,DC=local", {"distinguishedName": ["CN=server,DC=domain,DC=local"]}),
@@ -385,12 +442,12 @@ def test_get_password_laps_not_configured():
 
     assert len(mock_conn.method_calls) == 1
     assert mock_conn.method_calls[0][0] == "search_s"
-    assert mock_conn.method_calls[0][1] == ("DC=test,DC=local", ldap.SCOPE_SUBTREE,
+    assert mock_conn.method_calls[0][1] == ("DC=test,DC=local", FakeLdap.SCOPE_SUBTREE,
                                             "(&(objectClass=computer)(CN=server2))")
     assert mock_conn.method_calls[0][2] == {"attrlist": ["distinguishedName", "ms-Mcs-AdmPwd"]}
 
 
-def test_get_password_no_results():
+def test_get_password_no_results(laps_password):
     mock_conn = MagicMock()
     mock_conn.search_s.return_value = [
         (None, ["ldap://ForestDnsZones.domain.com/DC=ForestDnsZones,DC=domain,DC=com"]),
@@ -404,12 +461,12 @@ def test_get_password_no_results():
 
     assert len(mock_conn.method_calls) == 1
     assert mock_conn.method_calls[0][0] == "search_s"
-    assert mock_conn.method_calls[0][1] == ("DC=domain,DC=local", ldap.SCOPE_SUBTREE,
+    assert mock_conn.method_calls[0][1] == ("DC=domain,DC=local", FakeLdap.SCOPE_SUBTREE,
                                             "(&(objectClass=computer)(CN=server))")
     assert mock_conn.method_calls[0][2] == {"attrlist": ["distinguishedName", "ms-Mcs-AdmPwd"]}
 
 
-def test_get_password_multiple_results():
+def test_get_password_multiple_results(laps_password):
     mock_conn = MagicMock()
     mock_conn.search_s.return_value = [
         ("CN=server,OU=Workstations,DC=domain,DC=local",
@@ -430,6 +487,6 @@ def test_get_password_multiple_results():
 
     assert len(mock_conn.method_calls) == 1
     assert mock_conn.method_calls[0][0] == "search_s"
-    assert mock_conn.method_calls[0][1] == ("DC=domain,DC=local", ldap.SCOPE_SUBTREE,
+    assert mock_conn.method_calls[0][1] == ("DC=domain,DC=local", FakeLdap.SCOPE_SUBTREE,
                                             "(&(objectClass=computer)(CN=server))")
     assert mock_conn.method_calls[0][2] == {"attrlist": ["distinguishedName", "ms-Mcs-AdmPwd"]}

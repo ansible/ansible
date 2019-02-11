@@ -189,7 +189,6 @@ from ansible.plugins.lookup import LookupBase
 LDAP_IMP_ERR = None
 try:
     import ldap
-    import ldap.sasl
     import ldapurl
     HAS_LDAP = True
 except ImportError:
