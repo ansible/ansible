@@ -103,6 +103,7 @@ DOCUMENTATION = """
         default: ''
         vars:
           - name: ansible_kubectl_username
+          - name: ansible_kubectl_user
         env:
           - name: K8S_AUTH_USERNAME
       kubectl_password:

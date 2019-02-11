@@ -167,6 +167,13 @@ Noteworthy module changes
 Plugins
 =======
 
+* Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
+  and ``ansible_<conn-type>_password`` variables.  Variables such as
+  ``ansible_<conn-type>_pass`` and ``ansible_<conn-type>_username`` are treated
+  with lower priority than the standardized names and may be deprecated in the
+  future.  In general, the ``ansible_user`` and ``ansible_password`` vars should
+  be used unless there is a reason to use the connection-specific variables.
+
 * The ``powershell`` shell plugin now uses ``async_dir`` to define the async path for the results file and the default
   has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
   variable or the ``async_dir`` value in the ``powershell`` section of the config ini.

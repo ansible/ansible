@@ -184,13 +184,13 @@ class ConnectionBase(AnsiblePlugin):
             processed on the remote machine, not on the local machine so no
             shell is needed on the local machine.  (Example, ``/bin/sh``)
         :ConnectionCommand: This is the command that connects us to the remote
-            machine to run the rest of the command.  ``ansible_ssh_user``,
+            machine to run the rest of the command.  ``ansible_user``,
             ``ansible_ssh_host`` and so forth are fed to this piece of the
             command to connect to the correct host (Examples ``ssh``,
             ``chroot``)
         :UsersLoginShell: This shell may or may not be created depending on
             the ConnectionCommand used by the connection plugin.  This is the
-            shell that the ``ansible_ssh_user`` has configured as their login
+            shell that the ``ansible_user`` has configured as their login
             shell.  In traditional UNIX parlance, this is the last field of
             a user's ``/etc/passwd`` entry   We do not specifically try to run
             the ``UsersLoginShell`` when we connect.  Instead it is implicit
