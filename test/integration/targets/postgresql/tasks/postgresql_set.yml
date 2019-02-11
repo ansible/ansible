@@ -10,6 +10,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: work_mem
     reset: yes
   ignore_errors: yes
@@ -18,6 +20,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: work_mem
     value: 12MB
   register: set_wm
@@ -43,6 +47,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: work_mem
     reset: yes
   register: reset_wm
@@ -67,6 +73,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: work_mem
     reset: yes
   register: reset_wm2
@@ -91,6 +99,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: work_mem
     value: 14MB
   ignore_errors: yes
@@ -99,6 +109,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: work_mem
     value: default
   register: def_wm
@@ -123,6 +135,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
     name: shared_buffers
     value: 111MB
   register: set_shb
