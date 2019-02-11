@@ -72,6 +72,7 @@ RETURN = '''
 import json
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.network.common.utils import dict_diff
 from ansible.module_utils.network.restconf import restconf
@@ -116,7 +117,7 @@ def main():
         if exc.code == 404:
             running = None
         else:
-            module.fail_json(msg=module.from_json(exc.message), code=exc.code)
+            module.fail_json(msg=module.from_json(to_text(exc)), code=exc.code)
 
     try:
         if method.lower() == 'delete':
@@ -146,7 +147,7 @@ def main():
                 result['changed'] = True
 
     except ConnectionError as exc:
-        module.fail_json(msg=module.from_json(exc.message), code=exc.code)
+        module.fail_json(msg=module.from_json(str(exc)), code=exc.code)
 
     result['response'] = response
 
