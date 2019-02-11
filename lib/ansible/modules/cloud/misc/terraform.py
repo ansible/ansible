@@ -362,7 +362,7 @@ def main():
     if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
         # checks out to decide if changes were made during execution
-        if not '0 added, 0 changed' in out and not state == "absent" or not '0 destroyed' in out:
+        if '0 added, 0 changed' not in out and not state == "absent" or '0 destroyed' not in out:
             changed = True
         if rc != 0:
             module.fail_json(
