@@ -15,7 +15,6 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
-from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.display import Display
 
 display = Display()
@@ -66,8 +65,6 @@ class AdHocCLI(CLI):
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
 
-        options = self.normalize_become_options(options)
-
         return options, args
 
     def _play_ds(self, pattern, async_val, poll):
@@ -100,9 +97,7 @@ class AdHocCLI(CLI):
         (sshpass, becomepass) = self.ask_passwords()
         passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        # dynamically load any plugins
-        get_all_plugin_loaders()
-
+        # get basic objects
         loader, inventory, variable_manager = self._play_prereqs()
 
         try:
