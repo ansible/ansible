@@ -793,7 +793,7 @@ namespace Ansible.Become
             using (sessionPtr)
             {
                 for (IntPtr p = sessionPtr.DangerousGetHandle();
-                    p != IntPtr.Add(sessionPtr.DangerousGetHandle(), (int)(IntPtr.Size * sessionCount));
+                    p != IntPtr.Add(sessionPtr.DangerousGetHandle(), (int)(Marshal.SizeOf(typeof(NativeHelpers.LUID)) * sessionCount));
                     p = IntPtr.Add(p, Marshal.SizeOf(typeof(NativeHelpers.LUID))))
                 {
                     SafeLsaMemoryBuffer sessionDataPtr;

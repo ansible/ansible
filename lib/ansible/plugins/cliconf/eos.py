@@ -23,11 +23,11 @@ DOCUMENTATION = """
 ---
 author: Ansible Networking Team
 cliconf: eos
-short_description: Use eos cliconf to run command on eos platform
+short_description: Use eos cliconf to run command on Arista EOS platform
 description:
-  - This eos plugin provides low level abstraction api's for
-    sending and receiving CLI commands from eos network devices.
-version_added: "2.7"
+  - This eos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Arista EOS network devices.
+version_added: "2.4"
 options:
   eos_use_sessions:
     type: int
@@ -272,13 +272,10 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        rpc_list = ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
-        result['rpc'] = self.get_base_rpc() + rpc_list
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'run_commands', 'supports_sessions']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
-        result['network_api'] = 'cliconf'
 
         return json.dumps(result)
 

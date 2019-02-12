@@ -167,3 +167,15 @@ SCALEWAY_LOCATION = {
     'ams1': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'},
     'EMEA-NL-EVS': {'name': 'Amsterdam 1', 'country': 'NL', "api_endpoint": 'https://cp-ams1.scaleway.com'}
 }
+
+SCALEWAY_ENDPOINT = "https://api-world.scaleway.com"
+
+SCALEWAY_REGIONS = [
+    "fr-par",
+    "nl-ams",
+]
+
+SCALEWAY_ZONES = [
+    "fr-par-1",
+    "nl-ams-1",
+]

@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: routeros
+short_description: Use routeros cliconf to run command on MikroTik RouterOS platform
+description:
+  - This routeros plugin provides low level abstraction apis for
+    sending and receiving CLI commands from MikroTik RouterOS network devices.
+version_added: "2.7"
+"""
+
 import re
 import json
 
@@ -35,19 +45,19 @@ class Cliconf(CliconfBase):
         device_info = {}
         device_info['network_os'] = 'RouterOS'
 
-        resource = self.get(b'/system resource print')
+        resource = self.get('/system resource print')
         data = to_text(resource, errors='surrogate_or_strict').strip()
         match = re.search(r'version: (\S+)', data)
         if match:
             device_info['network_os_version'] = match.group(1)
 
-        routerboard = self.get(b'/system routerboard print')
+        routerboard = self.get('/system routerboard print')
         data = to_text(routerboard, errors='surrogate_or_strict').strip()
         match = re.search(r'model: (.+)$', data, re.M)
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        identity = self.get(b'/system identity print')
+        identity = self.get('/system identity print')
         data = to_text(identity, errors='surrogate_or_strict').strip()
         match = re.search(r'name: (.+)$', data, re.M)
         if match:
@@ -65,8 +75,5 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)

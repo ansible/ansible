@@ -23,9 +23,9 @@ please open a bug or ask for help on Ansible IRC.
 What Are Unit Tests?
 ====================
 
-Ansible includes a set of unit tests in the :file:`test/unit` directory. These tests primarily cover the
+Ansible includes a set of unit tests in the :file:`test/units` directory. These tests primarily cover the
 internals but can also can cover Ansible modules.  The structure of the unit tests matches
-the structure of the code base, so the tests that reside in the :file:`test/unit/modules/` directory
+the structure of the code base, so the tests that reside in the :file:`test/units/modules/` directory
 are organized by module groups.
 
 Integration tests can be used for most modules, but there are situations where

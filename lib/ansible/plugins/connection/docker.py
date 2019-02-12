@@ -62,7 +62,6 @@ class Connection(ConnectionBase):
 
     transport = 'docker'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

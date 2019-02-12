@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -84,10 +83,9 @@ options:
     description:
     - The network to which all instances in the instance group belong.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
     required: false
   region:
     description:
@@ -97,10 +95,9 @@ options:
     description:
     - The subnetwork to which all instances in the instance group belong.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-      you can set this subnetwork to a dictionary with the selfLink key where the
-      value is the selfLink of your Subnetwork'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
+      task and then set this subnetwork field to "{{ name-of-resource }}"'
     required: false
   zone:
     description:
@@ -191,7 +188,7 @@ network:
   description:
   - The network to which all instances in the instance group belong.
   returned: success
-  type: dict
+  type: str
 region:
   description:
   - The region where the instance group is located (for regional resources).
@@ -201,7 +198,7 @@ subnetwork:
   description:
   - The subnetwork to which all instances in the instance group belong.
   returned: success
-  type: dict
+  type: str
 zone:
   description:
   - A reference to the zone where the instance group resides.
@@ -240,15 +237,12 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(type='str'),
-            named_ports=dict(type='list', elements='dict', options=dict(
-                name=dict(type='str'),
-                port=dict(type='int')
-            )),
-            network=dict(type='dict'),
+            named_ports=dict(type='list', elements='dict', options=dict(name=dict(type='str'), port=dict(type='int'))),
+            network=dict(),
             region=dict(type='str'),
-            subnetwork=dict(type='dict'),
+            subnetwork=dict(),
             zone=dict(required=True, type='str'),
-            instances=dict(type='list', elements='dict')
+            instances=dict(type='list'),
         )
     )
 
@@ -310,7 +304,7 @@ def resource_to_request(module):
         u'namedPorts': InstanceGroupNamedportsArray(module.params.get('named_ports', []), module).to_request(),
         u'network': replace_resource_dict(module.params.get(u'network', {}), 'selfLink'),
         u'region': region_selflink(module.params.get('region'), module.params),
-        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -345,8 +339,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -383,7 +377,7 @@ def response_to_hash(module, response):
         u'namedPorts': InstanceGroupNamedportsArray(response.get(u'namedPorts', []), module).from_response(),
         u'network': response.get(u'network'),
         u'region': response.get(u'region'),
-        u'subnetwork': response.get(u'subnetwork')
+        u'subnetwork': response.get(u'subnetwork'),
     }
 
 
@@ -418,9 +412,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -456,8 +450,7 @@ class InstanceLogic(object):
 
     def list_instances(self):
         auth = GcpSession(self.module, 'compute')
-        response = return_if_object(self.module, auth.post(self._list_instances_url(), {'instanceState': 'ALL'}),
-                                    'compute#instanceGroupsListInstances')
+        response = return_if_object(self.module, auth.post(self._list_instances_url(), {'instanceState': 'ALL'}), 'compute#instanceGroupsListInstances')
 
         # Transform instance list into a list of selfLinks for diffing with module parameters
         instances = []
@@ -483,9 +476,7 @@ class InstanceLogic(object):
         return "https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/instanceGroups/{name}/addInstances".format(**self.module.params)
 
     def _build_request(self, instances):
-        request = {
-            'instances': []
-        }
+        request = {'instances': []}
         for instance in instances:
             request['instances'].append({'instance': instance})
         return request
@@ -512,16 +503,10 @@ class InstanceGroupNamedportsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'name': item.get('name'),
-            u'port': item.get('port')
-        })
+        return remove_nones_from_dict({u'name': item.get('name'), u'port': item.get('port')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'name': item.get(u'name'),
-            u'port': item.get(u'port')
-        })
+        return remove_nones_from_dict({u'name': item.get(u'name'), u'port': item.get(u'port')})
 
 
 if __name__ == '__main__':

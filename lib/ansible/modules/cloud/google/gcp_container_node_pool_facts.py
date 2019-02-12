@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -41,18 +40,21 @@ requirements:
 - requests >= 2.18.4
 - google-auth >= 1.3.0
 options:
-  zone:
+  location:
     description:
-    - The zone where the node pool is deployed.
+    - The location where the node pool is deployed.
     required: true
+    aliases:
+    - region
+    - zone
+    version_added: 2.8
   cluster:
     description:
     - The cluster this node pool belongs to.
     - 'This field represents a link to a Cluster resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
-      task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
-      you can set this cluster to a dictionary with the name key where the value is
-      the name of your Cluster'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_container_cluster
+      task and then set this cluster field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -61,7 +63,7 @@ EXAMPLES = '''
 - name:  a node pool facts
   gcp_container_node_pool_facts:
       cluster: "{{ cluster }}"
-      zone: us-central1-a
+      location: us-central1-a
       project: test_project
       auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
@@ -168,7 +170,7 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
     initialNodeCount:
@@ -249,10 +251,10 @@ items:
       description:
       - The cluster this node pool belongs to.
       returned: success
-      type: dict
-    zone:
+      type: str
+    location:
       description:
-      - The zone where the node pool is deployed.
+      - The location where the node pool is deployed.
       returned: success
       type: str
 '''
@@ -269,12 +271,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            zone=dict(required=True, type='str'),
-            cluster=dict(required=True, type='dict')
-        )
-    )
+    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone']), cluster=dict(required=True)))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -284,19 +281,13 @@ def main():
         items = items.get('nodePools')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'zone': module.params['zone'],
-        'cluster': replace_resource_dict(module.params['cluster'], 'name')
-    }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
+    res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools".format(**res)
 
 
 def fetch_list(module, link):

@@ -1,0 +1,2 @@
+bugfixes:
+  - "docker_swarm_service - When docker fails to update a container with an ``update out of sequence`` error, the module will retry to update up to two times, and only fail if all three attempts do not succeed."

@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -81,15 +80,25 @@ options:
       between users and the load balancer. Currently, exactly one SSL certificate
       must be specified.
     required: true
+  ssl_policy:
+    description:
+    - A reference to the SslPolicy resource that will be associated with the TargetHttpsProxy
+      resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
+      configured.
+    - 'This field represents a link to a SslPolicy resource in GCP. It can be specified
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_ssl_policy
+      task and then set this ssl_policy field to "{{ name-of-resource }}"'
+    required: false
+    version_added: 2.8
   url_map:
     description:
     - A reference to the UrlMap resource that defines the mapping from URL to the
       BackendService.
     - 'This field represents a link to a UrlMap resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_url_map
-      task and then set this url_map field to "{{ name-of-resource }}" Alternatively,
-      you can set this url_map to a dictionary with the selfLink key where the value
-      is the selfLink of your UrlMap'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_url_map
+      task and then set this url_map field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 notes:
@@ -232,11 +241,18 @@ sslCertificates:
     users and the load balancer. Currently, exactly one SSL certificate must be specified.
   returned: success
   type: list
+sslPolicy:
+  description:
+  - A reference to the SslPolicy resource that will be associated with the TargetHttpsProxy
+    resource. If not set, the TargetHttpsProxy resource will not have any SSL policy
+    configured.
+  returned: success
+  type: str
 urlMap:
   description:
   - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
   returned: success
-  type: dict
+  type: str
 '''
 
 ################################################################################
@@ -261,8 +277,9 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             quic_override=dict(type='str', choices=['NONE', 'ENABLE', 'DISABLE']),
-            ssl_certificates=dict(required=True, type='list', elements='dict'),
-            url_map=dict(required=True, type='dict')
+            ssl_certificates=dict(required=True, type='list'),
+            ssl_policy=dict(),
+            url_map=dict(required=True),
         )
     )
 
@@ -303,8 +320,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -313,6 +329,8 @@ def update_fields(module, request, response):
         quic_override_update(module, request, response)
     if response.get('sslCertificates') != request.get('sslCertificates'):
         ssl_certificates_update(module, request, response)
+    if response.get('sslPolicy') != request.get('sslPolicy'):
+        ssl_policy_update(module, request, response)
     if response.get('urlMap') != request.get('urlMap'):
         url_map_update(module, request, response)
 
@@ -320,39 +338,32 @@ def update_fields(module, request, response):
 def quic_override_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/global/targetHttpsProxies/{name}/setQuicOverride"
-        ]).format(**module.params),
-        {
-            u'quicOverride': module.params.get('quic_override')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetHttpsProxies/{name}/setQuicOverride"]).format(**module.params),
+        {u'quicOverride': module.params.get('quic_override')},
     )
 
 
 def ssl_certificates_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/targetHttpsProxies/{name}/setSslCertificates"
-        ]).format(**module.params),
-        {
-            u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/targetHttpsProxies/{name}/setSslCertificates"]).format(**module.params),
+        {u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink')},
+    )
+
+
+def ssl_policy_update(module, request, response):
+    auth = GcpSession(module, 'compute')
+    auth.post(
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/global/targetHttpsProxies/{name}/setSslPolicy"]).format(**module.params),
+        {u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink')},
     )
 
 
 def url_map_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/targetHttpsProxies/{name}/setUrlMap"
-        ]).format(**module.params),
-        {
-            u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/targetHttpsProxies/{name}/setUrlMap"]).format(**module.params),
+        {u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')},
     )
 
 
@@ -368,7 +379,8 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'quicOverride': module.params.get('quic_override'),
         u'sslCertificates': replace_resource_dict(module.params.get('ssl_certificates', []), 'selfLink'),
-        u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink')
+        u'sslPolicy': replace_resource_dict(module.params.get(u'ssl_policy', {}), 'selfLink'),
+        u'urlMap': replace_resource_dict(module.params.get(u'url_map', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -403,8 +415,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -440,7 +452,8 @@ def response_to_hash(module, response):
         u'name': module.params.get('name'),
         u'quicOverride': response.get(u'quicOverride'),
         u'sslCertificates': response.get(u'sslCertificates'),
-        u'urlMap': response.get(u'urlMap')
+        u'sslPolicy': response.get(u'sslPolicy'),
+        u'urlMap': response.get(u'urlMap'),
     }
 
 
@@ -466,9 +479,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

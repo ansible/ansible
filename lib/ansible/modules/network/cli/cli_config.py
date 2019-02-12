@@ -22,6 +22,7 @@ short_description: Push text based configuration to network devices over network
 description:
   - This module provides platform agnostic way of pushing text based
     configuration to network devices over network_cli connection plugin.
+extends_documentation_fragment: network_agnostic
 options:
   config:
     description:
@@ -49,10 +50,10 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current running config from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.8"
@@ -118,12 +119,40 @@ options:
         a list of regular expressions or exact line matches.
         Note that this parameter will be ignored if the platform has onbox
         diff support.
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
 - name: configure device with config
   cli_config:
     config: "{{ lookup('template', 'basic/config.j2') }}"
+
+- name: multiline config
+  cli_config:
+    config: |
+      hostname foo
+      feature nxapi
 
 - name: configure device with config with defaults enabled
   cli_config:
@@ -143,6 +172,14 @@ EXAMPLES = """
   cli_config:
     config: set system host-name foo
     commit_comment: this is a test
+
+- name: configurable backup path
+  cli_config:
+    config: "{{ lookup('template', 'basic/config.j2') }}"
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -165,50 +202,33 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils._text import to_text
 
 
-def validate_args(module, capabilities):
+def validate_args(module, device_operations):
     """validate param if it is supported on the platform
     """
-    if (module.params['replace'] and
-            not capabilities['device_operations']['supports_replace']):
-        module.fail_json(msg='replace is not supported on this platform')
+    feature_list = [
+        'replace', 'rollback', 'commit_comment', 'defaults', 'multiline_delimiter',
+        'diff_replace', 'diff_match', 'diff_ignore_lines',
+    ]
 
-    if (module.params['rollback'] is not None and
-            not capabilities['device_operations']['supports_rollback']):
-        module.fail_json(msg='rollback is not supported on this platform')
-
-    if (module.params['commit_comment'] and
-            not capabilities['device_operations']['supports_commit_comment']):
-        module.fail_json(msg='commit_comment is not supported on this platform')
-
-    if (module.params['defaults'] and
-            not capabilities['device_operations']['supports_defaults']):
-        module.fail_json(msg='defaults is not supported on this platform')
-
-    if (module.params['multiline_delimiter'] and
-            not capabilities['device_operations']['supports_multiline_delimiter']):
-        module.fail_json(msg='multiline_delimiter is not supported on this platform')
-
-    if (module.params['diff_replace'] and
-            not capabilities['device_operations']['supports_diff_replace']):
-        module.fail_json(msg='diff_replace is not supported on this platform')
-
-    if (module.params['diff_match'] and
-            not capabilities['device_operations']['supports_diff_match']):
-        module.fail_json(msg='diff_match is not supported on this platform')
-
-    if (module.params['diff_ignore_lines'] and
-            not capabilities['device_operations']['supports_diff_ignore_lines']):
-        module.fail_json(msg='diff_ignore_lines is not supported on this platform')
+    for feature in feature_list:
+        if module.params[feature]:
+            supports_feature = device_operations.get('supports_%s' % feature)
+            if supports_feature is None:
+                module.fail_json(
+                    "This platform does not specify whether %s is supported or not. "
+                    "Please report an issue against this platform's cliconf plugin." % feature
+                )
+            elif not supports_feature:
+                module.fail_json(msg='Option %s is not supported on this platform' % feature)
 
 
-def run(module, capabilities, connection, candidate, running):
+def run(module, device_operations, connection, candidate, running, rollback_id):
     result = {}
     resp = {}
     config_diff = []
     banner_diff = {}
 
     replace = module.params['replace']
-    rollback_id = module.params['rollback']
     commit_comment = module.params['commit_comment']
     multiline_delimiter = module.params['multiline_delimiter']
     diff_replace = module.params['diff_replace']
@@ -227,7 +247,7 @@ def run(module, capabilities, connection, candidate, running):
         if 'diff' in resp:
             result['changed'] = True
 
-    elif capabilities['device_operations']['supports_onbox_diff']:
+    elif device_operations.get('supports_onbox_diff'):
         if diff_replace:
             module.warn('diff_replace is ignored as the device supports onbox diff')
         if diff_match:
@@ -245,7 +265,7 @@ def run(module, capabilities, connection, candidate, running):
         if 'diff' in resp:
             result['changed'] = True
 
-    elif capabilities['device_operations']['supports_generate_diff']:
+    elif device_operations.get('supports_generate_diff'):
         kwargs = {'candidate': candidate, 'running': running}
         if diff_match:
             kwargs.update({'diff_match': diff_match})
@@ -267,7 +287,8 @@ def run(module, capabilities, connection, candidate, running):
 
             kwargs = {'candidate': candidate, 'commit': commit, 'replace': replace,
                       'comment': commit_comment}
-            connection.edit_config(**kwargs)
+            if commit:
+                connection.edit_config(**kwargs)
             result['changed'] = True
 
         if banner_diff:
@@ -276,7 +297,8 @@ def run(module, capabilities, connection, candidate, running):
             kwargs = {'candidate': candidate, 'commit': commit}
             if multiline_delimiter:
                 kwargs.update({'multiline_delimiter': multiline_delimiter})
-            connection.edit_banner(**kwargs)
+            if commit:
+                connection.edit_banner(**kwargs)
             result['changed'] = True
 
     if module._diff:
@@ -299,8 +321,13 @@ def run(module, capabilities, connection, candidate, running):
 def main():
     """main entry point for execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         backup=dict(default=False, type='bool'),
+        backup_options=dict(type='dict', options=backup_spec),
         config=dict(type='str'),
         commit=dict(type='bool'),
         replace=dict(type='str'),
@@ -327,7 +354,10 @@ def main():
     capabilities = module.from_json(connection.get_capabilities())
 
     if capabilities:
-        validate_args(module, capabilities)
+        device_operations = capabilities.get('device_operations', dict())
+        validate_args(module, device_operations)
+    else:
+        device_operations = dict()
 
     if module.params['defaults']:
         if 'get_default_flag' in capabilities.get('rpc'):
@@ -337,16 +367,19 @@ def main():
     else:
         flags = []
 
-    candidate = to_text(module.params['config'])
+    candidate = module.params['config']
+    candidate = to_text(candidate, errors='surrogate_then_replace') if candidate else None
     running = connection.get_config(flags=flags)
+    rollback_id = module.params['rollback']
 
     if module.params['backup']:
         result['__backup__'] = running
 
-    try:
-        result.update(run(module, capabilities, connection, candidate, running))
-    except Exception as exc:
-        module.fail_json(msg=to_text(exc))
+    if candidate or rollback_id:
+        try:
+            result.update(run(module, device_operations, connection, candidate, running, rollback_id))
+        except Exception as exc:
+            module.fail_json(msg=to_text(exc))
 
     module.exit_json(**result)
 

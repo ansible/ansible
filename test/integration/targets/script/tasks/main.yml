@@ -45,7 +45,6 @@
   assert:
     that:
       - "script_result0.rc == 0"
-      - "script_result0.stderr == ''"
       - "script_result0.stdout == 'win'"
 
 - name: Execute a script with a space in the path

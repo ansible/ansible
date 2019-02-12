@@ -59,10 +59,94 @@ A YAML version would look like:
           two.example.com:
           three.example.com:
 
+.. _host_multiple_groups:
 
-It is ok to put systems in more than one group, for instance a server could be both a webserver and a dbserver.
-If you do, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in a later chapter.
+Hosts in multiple groups
+------------------------
 
+You can put systems in more than one group, for instance a server could be both a webserver and in a specific datacenter.  For example, you could create groups that track:
+
+* What - An application, stack or microservice. (For example, database servers, web servers, etc).
+* Where - A datacenter or region, to talk to local DNS, storage, etc. (For example, east, west).
+* When - The development stage, to avoid testing on production resources. (For example, prod, test).
+
+Extending the previous YAML inventory to include what, when, and where would look like:
+
+.. code-block:: yaml
+
+  all:
+    hosts:
+      mail.example.com:
+    children:
+      webservers:
+        hosts:
+          foo.example.com:
+          bar.example.com:
+      dbservers:
+        hosts:
+          one.example.com:
+          two.example.com:
+          three.example.com:
+      east:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      west:
+        hosts:
+          bar.example.com:
+          three.example.com:
+      prod:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      test:
+        hosts:
+          bar.example.com:
+          three.example.com:
+
+You can see that ``one.example.com`` exists in the ``dbservers``, ``east``, and ``prod`` groups.
+
+You could also use nested groups to simplify ``prod`` and ``test`` in this inventory, for the same result:
+
+.. code-block:: yaml
+
+  all:
+    hosts:
+      mail.example.com:
+    children:
+      webservers:
+        hosts:
+          foo.example.com:
+          bar.example.com:
+      dbservers:
+        hosts:
+          one.example.com:
+          two.example.com:
+          three.example.com:
+      east:
+        hosts:
+          foo.example.com:
+          one.example.com:
+          two.example.com:
+      west:
+        hosts:
+          bar.example.com:
+          three.example.com:
+      prod:
+        children:
+          east:
+      test:
+        children:
+          west:
+
+
+If you do have systems in multiple groups, note that variables will come from all of the groups they are a member of. Variable precedence is detailed in :ref:`ansible_variable_precedence`.
+
+
+Hosts and non-standard ports
+-----------------------------
 If you have hosts that run on non-standard SSH ports you can put the port number after the hostname with a colon.
 Ports listed in your SSH config file won't be used with the `paramiko` connection but will be used with the `openssh` connection.
 
@@ -110,7 +194,7 @@ In INI:
 
     [webservers]
     www[01:50].example.com
-    
+
 In YAML:
 
 .. code-block:: yaml
@@ -354,15 +438,16 @@ Starting in Ansible version 2.4, users can use the group variable ``ansible_grou
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
 
+.. note:: ``ansible_group_priority`` can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars.
 
 .. _using_multiple_inventory_sources:
 
 Using multiple inventory sources
 ================================
 
-As an advanced use case you can target multiple inventory sources (directories, dynamic inventory scripts 
-or files supported by inventory plugins) at the same time by giving multiple inventory parameters from the command 
-line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally 
+As an advanced use case you can target multiple inventory sources (directories, dynamic inventory scripts
+or files supported by inventory plugins) at the same time by giving multiple inventory parameters from the command
+line or by configuring :envvar:`ANSIBLE_INVENTORY`. This can be useful when you want to target normally
 separate environments, like staging and production, at the same time for a specific action.
 
 Target two sources from the command line like this::
@@ -430,15 +515,15 @@ General for all connections:
 ansible_host
     The name of the host to connect to, if different from the alias you wish to give to it.
 ansible_port
-    The ssh port number, if not 22
+    The connection port number, if not the default (22 for ssh)
 ansible_user
-    The default ssh user name to use.
+    The user name to use when connecting to the host
+ansible_password
+    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 
 
 Specific to the SSH connection:
 
-ansible_ssh_pass
-    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
@@ -465,8 +550,8 @@ ansible_become_method
     Allows to set privilege escalation method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
-ansible_become_pass
-    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+ansible_become_password
+    Equivalent to ``ansible_sudo_password`` or ``ansible_su_password``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_become_exe
     Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected
 ansible_become_flags

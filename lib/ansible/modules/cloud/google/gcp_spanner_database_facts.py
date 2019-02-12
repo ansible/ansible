@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -45,10 +44,9 @@ options:
     description:
     - The instance to create the database on.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_spanner_instance
-      task and then set this instance field to "{{ name-of-resource }}" Alternatively,
-      you can set this instance to a dictionary with the name key where the value
-      is the name of your Instance'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_spanner_instance
+      task and then set this instance field to "{{ name-of-resource }}"'
     required: true
 extends_documentation_fragment: gcp
 '''
@@ -71,8 +69,7 @@ items:
     name:
       description:
       - A unique identifier for the database, which cannot be changed after the instance
-        is created. Values are of the form projects/<project>/instances/[a-z][-a-z0-9]*[a-z0-9].
-        The final segment of the name must be between 6 and 30 characters in length.
+        is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
       returned: success
       type: str
     extraStatements:
@@ -87,7 +84,7 @@ items:
       description:
       - The instance to create the database on.
       returned: success
-      type: dict
+      type: str
 '''
 
 ################################################################################
@@ -102,11 +99,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            instance=dict(required=True, type='dict')
-        )
-    )
+    module = GcpModule(argument_spec=dict(instance=dict(required=True)))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/spanner.admin']
@@ -116,17 +109,12 @@ def main():
         items = items.get('databases')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'instance': replace_resource_dict(module.params['instance'], 'name')
-    }
+    res = {'project': module.params['project'], 'instance': replace_resource_dict(module.params['instance'], 'name')}
     return "https://spanner.googleapis.com/v1/projects/{project}/instances/{instance}/databases".format(**res)
 
 

@@ -5,7 +5,7 @@
     path: '{{win_cert_dir}}\subj-cert.pem'
     store_location: FakeLocation
   register: fail_fake_location
-  failed_when: "fail_fake_location.msg != 'value of store_location must be one of: CurrentUser, LocalMachine, got: FakeLocation'"
+  failed_when: "fail_fake_location.msg != 'value of store_location must be one of: CurrentUser, LocalMachine. Got no match for: FakeLocation'"
 
 - name: fail with invalid store name
   win_certificate_store:
@@ -13,7 +13,7 @@
     path: '{{win_cert_dir}}\subj-cert.pem'
     store_name: FakeName
   register: fail_fake_name
-  failed_when: "fail_fake_name.msg != 'value of store_name must be one of: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher, got: FakeName'"
+  failed_when: "fail_fake_name.msg != 'value of store_name must be one of: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher. Got no match for: FakeName'"
 
 - name: fail when state=present and no path is set
   win_certificate_store:

@@ -1,2 +1,0 @@
-bugfixes:
-    - fix issue in which 'cacheable' was not being properly applied and the fact was x2 defined

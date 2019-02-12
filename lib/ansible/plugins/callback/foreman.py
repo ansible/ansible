@@ -47,7 +47,7 @@ DOCUMENTATION = '''
             key: ssl_key
       verify_certs:
         description:
-          - Toggle to decidewhether to verify the Foreman certificate.
+          - Toggle to decide whether to verify the Foreman certificate.
           - It can be set to '1' to verify SSL certificates using the installed CAs or to a path pointing to a CA bundle.
           - Set to '0' to disable certificate checking.
         env:

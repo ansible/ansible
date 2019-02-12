@@ -253,13 +253,22 @@ options:
     version_added: 2.5
   metadata:
     description:
-      - Arbitrary key/value pairs that you can attach to a pool. This is useful in
-        situations where you might want to annotate a virtual to me managed by Ansible.
+      - Arbitrary key/value pairs that you can attach to a virtual server. This is useful in
+        situations where you might want to annotate a virtual to be managed by Ansible.
       - Key names will be stored as strings; this includes names that are numbers.
       - Values for all of the keys will be stored as strings; this includes values
         that are numbers.
       - Data will be persisted, not ephemeral.
     version_added: 2.5
+  insert_metadata:
+    description:
+      - When set to C(no) it will not set metadata on the device.
+      - Currently there is a limitation that non-admin users cannot set metadata on the object, despite being
+        able to create and modify virtual server objects, setting this option to C(no) will allow
+        such users to utilize this module to manage Virtual Server objects on the device.
+    type: bool
+    default: yes
+    version_added: 2.8
   address_translation:
     description:
       - Specifies, when C(enabled), that the system translates the address of the
@@ -397,6 +406,62 @@ options:
       - This parameter requires that a valid BIG-IP security module such as ASM or AFM
         be provisioned.
     version_added: 2.8
+  rate_limit:
+    description:
+      - Virtual server rate limit (connections-per-second). Setting this to 0
+        disables the limit.
+      - The valid value range is C(0) - C(4294967295).
+    type: int
+    version_added: 2.8
+  rate_limit_dst_mask:
+    description:
+      - Specifies a mask, in bits, to be applied to the destination address as part of the rate limiting.
+      - The default value is C(0), which is equivalent to using the entire address - C(32) in IPv4, or C(128) in IPv6.
+      - The valid value range is C(0) - C(4294967295).
+    type: int
+    version_added: 2.8
+  rate_limit_src_mask:
+    description:
+      - Specifies a mask, in bits, to be applied to the source address as part of the rate limiting.
+      - The default value is C(0), which is equivalent to using the entire address - C(32) in IPv4, or C(128) in IPv6.
+      - The valid value range is C(0) - C(4294967295).
+    type: int
+    version_added: 2.8
+  rate_limit_mode:
+    description:
+      - Indicates whether the rate limit is applied per virtual object, per source address, per destination address,
+        or some combination thereof.
+      - The default value is 'object', which does not use the source or destination address as part of the key.
+    choices:
+      - object
+      - object-source
+      - object-destination
+      - object-source-destination
+      - destination
+      - source
+      - source-destination
+    default: object
+    version_added: 2.8
+  clone_pools:
+    description:
+      - Specifies a pool or list of pools that the virtual server uses to replicate either client-side
+        or server-side traffic.
+      - Typically this option is used for intrusion detection.
+    version_added: 2.8
+    suboptions:
+      pool_name:
+        description:
+          - The pool name to which the server replicates the traffic.
+          - Only pools created on Common partition or on the same partition as the virtual server can be used.
+          - Referencing pool on common partition needs to be done in the full path format,
+            for example, C(/Common/pool_name).
+        required: True
+      context:
+        description:
+          - The context option for a clone pool to replicate either client-side or server-side traffic.
+        choices:
+         - clientside
+         - serverside
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -568,6 +633,56 @@ EXAMPLES = r'''
       user: admin
       password: secret
   delegate_to: localhost
+
+- name: Add virtual server with rate limit
+  bigip_virtual_server:
+    state: present
+    partition: Common
+    name: my-virtual-server
+    destination: 10.10.10.10
+    port: 443
+    pool: my-pool
+    snat: Automap
+    description: Test Virtual Server
+    profiles:
+      - http
+      - fix
+      - name: clientssl
+        context: server-side
+      - name: ilx
+        context: client-side
+    policies:
+      - my-ltm-policy-for-asm
+      - ltm-uri-policy
+      - ltm-policy-2
+      - ltm-policy-3
+    enabled_vlans:
+      - /Common/vlan2
+    rate_limit: 400
+    rate_limit_mode: destination
+    rate_limit_dst_mask: 32
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Add FastL4 virtual server with clone_pools
+  bigip_virtual_server:
+    destination: 1.1.1.1
+    name: fastl4_vs
+    port: 80
+    profiles:
+      - fastL4
+    state: present
+    clone_pools:
+      - pool_name: FooPool
+        context: clientside
+    provider:
+      server: lb.mydomain.net
+      user: admin
+      password: secret
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -696,6 +811,31 @@ ip_intelligence_policy:
   returned: changed
   type: str
   sample: /Common/ip-intelligence
+rate_limit:
+  description: The maximum number of connections per second allowed for a virtual server.
+  returned: changed
+  type: int
+  sample: 5000
+rate_limit_src_mask:
+  description: Specifies a mask, in bits, to be applied to the source address as part of the rate limiting.
+  returned: changed
+  type: int
+  sample: 32
+rate_limit_dst_mask:
+  description: Specifies a mask, in bits, to be applied to the destination address as part of the rate limiting.
+  returned: changed
+  type: int
+  sample: 32
+rate_limit_mode:
+  description: Sets the type of rate limiting to be used on the virtual server.
+  returned: changed
+  type: str
+  sample: object-source
+clone_pools:
+  description: Pools to which virtual server copies traffic.
+  returned: changed
+  type: list
+  sample: [{'pool_name':'/Common/Pool1', 'context': 'clientside'}]
 '''
 
 import os
@@ -771,6 +911,11 @@ class Parameters(AnsibleF5Parameters):
         'securityNatPolicy': 'security_nat_policy',
         'sourcePort': 'source_port',
         'ipIntelligencePolicy': 'ip_intelligence_policy',
+        'rateLimit': 'rate_limit',
+        'rateLimitMode': 'rate_limit_mode',
+        'rateLimitDstMask': 'rate_limit_dst_mask',
+        'rateLimitSrcMask': 'rate_limit_src_mask',
+        'clonePools': 'clone_pools',
     }
 
     api_attributes = [
@@ -807,6 +952,11 @@ class Parameters(AnsibleF5Parameters):
         'mirror',
         'mask',
         'ipIntelligencePolicy',
+        'rateLimit',
+        'rateLimitMode',
+        'rateLimitDstMask',
+        'rateLimitSrcMask',
+        'clonePools',
     ]
 
     updatables = [
@@ -837,6 +987,11 @@ class Parameters(AnsibleF5Parameters):
         'mirror',
         'mask',
         'ip_intelligence_policy',
+        'rate_limit',
+        'rate_limit_mode',
+        'rate_limit_src_mask',
+        'rate_limit_dst_mask',
+        'clone_pools',
     ]
 
     returnables = [
@@ -871,6 +1026,11 @@ class Parameters(AnsibleF5Parameters):
         'mirror',
         'mask',
         'ip_intelligence_policy',
+        'rate_limit',
+        'rate_limit_mode',
+        'rate_limit_src_mask',
+        'rate_limit_dst_mask',
+        'clone_pools',
     ]
 
     profiles_mutex = [
@@ -1104,6 +1264,72 @@ class Parameters(AnsibleF5Parameters):
                 raise F5ModuleError(resp.content)
         result = [x['name'] for x in response['items']]
         return result
+
+    def _read_current_clientssl_profiles_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/client-ssl/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = [x['name'] for x in response['items']]
+        return result
+
+    def _read_current_serverssl_profiles_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/profile/server-ssl/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        result = [x['name'] for x in response['items']]
+        return result
+
+    def _is_client_ssl_profile(self, profile):
+        if profile['name'] in self._read_current_clientssl_profiles_from_device():
+            return True
+        return False
+
+    def _is_server_ssl_profile(self, profile):
+        if profile['name'] in self._read_current_serverssl_profiles_from_device():
+            return True
+        return False
+
+    def _check_pool(self, item):
+        pool = transform_name(name=fq_name(self.partition, item))
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            pool
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            raise F5ModuleError(
+                'The specified pool {0} does not exist.'.format(pool)
+            )
+        return item
 
 
 class ApiParameters(Parameters):
@@ -1410,6 +1636,29 @@ class ApiParameters(Parameters):
             return []
         return self._values['irules']
 
+    @property
+    def rate_limit(self):
+        if self._values['rate_limit'] is None:
+            return None
+        if self._values['rate_limit'] == 'disabled':
+            return 0
+        return int(self._values['rate_limit'])
+
+    @property
+    def clone_pools(self):
+        if self._values['clone_pools'] is None:
+            return None
+        result = []
+        for item in self._values['clone_pools']:
+            pool_name = fq_name(item['partition'], item['name'])
+            context = item['context']
+            tmp = {
+                'name': pool_name,
+                'context': context
+            }
+            result.append(tmp)
+        return result
+
 
 class ModuleParameters(Parameters):
     services_map = {
@@ -1440,11 +1689,14 @@ class ModuleParameters(Parameters):
         tmp['context'] = tmp['context'].replace('server-side', 'serverside')
         tmp['context'] = tmp['context'].replace('client-side', 'clientside')
 
-    def _handle_clientssl_profile_nuances(self, profile):
-        if profile['name'] != 'clientssl':
-            return
-        if profile['context'] != 'clientside':
-            profile['context'] = 'clientside'
+    def _handle_ssl_profile_nuances(self, profile):
+        if profile['name'] == 'serverssl' or self._is_server_ssl_profile(profile):
+            if profile['context'] != 'serverside':
+                profile['context'] = 'serverside'
+        if profile['name'] == 'clientssl' or self._is_client_ssl_profile(profile):
+            if profile['context'] != 'clientside':
+                profile['context'] = 'clientside'
+        return
 
     def _check_port(self):
         try:
@@ -1458,6 +1710,19 @@ class ModuleParameters(Parameters):
         raise F5ModuleError(
             "Valid ports must be in range 0 - 65535"
         )
+
+    def _check_clone_pool_contexts(self):
+        client = 0
+        server = 0
+        for item in self._values['clone_pools']:
+            if item['context'] == 'clientside':
+                client += 1
+            if item['context'] == 'serverside':
+                server += 1
+        if client > 1 or server > 1:
+            raise F5ModuleError(
+                'You must specify only one clone pool for each context.'
+            )
 
     @property
     def destination(self):
@@ -1553,13 +1818,13 @@ class ModuleParameters(Parameters):
                 if 'name' not in profile:
                     tmp['name'] = profile
                 tmp['fullPath'] = fq_name(self.partition, tmp['name'])
-                self._handle_clientssl_profile_nuances(tmp)
+                self._handle_ssl_profile_nuances(tmp)
             else:
                 full_path = fq_name(self.partition, profile)
                 tmp['name'] = os.path.basename(profile)
                 tmp['context'] = 'all'
                 tmp['fullPath'] = full_path
-                self._handle_clientssl_profile_nuances(tmp)
+                self._handle_ssl_profile_nuances(tmp)
             result.append(tmp)
         mutually_exclusive = [x['name'] for x in result if x in self.profiles_mutex]
         if len(mutually_exclusive) > 1:
@@ -1837,6 +2102,54 @@ class ModuleParameters(Parameters):
             return 'enabled'
         return 'disabled'
 
+    @property
+    def rate_limit(self):
+        if self._values['rate_limit'] is None:
+            return None
+        if 0 <= int(self._values['rate_limit']) <= 4294967295:
+            return int(self._values['rate_limit'])
+        raise F5ModuleError(
+            "Valid 'rate_limit' must be in range 0 - 4294967295."
+        )
+
+    @property
+    def rate_limit_src_mask(self):
+        if self._values['rate_limit_src_mask'] is None:
+            return None
+        if 0 <= int(self._values['rate_limit_src_mask']) <= 4294967295:
+            return int(self._values['rate_limit_src_mask'])
+        raise F5ModuleError(
+            "Valid 'rate_limit_src_mask' must be in range 0 - 4294967295."
+        )
+
+    @property
+    def rate_limit_dst_mask(self):
+        if self._values['rate_limit_dst_mask'] is None:
+            return None
+        if 0 <= int(self._values['rate_limit_dst_mask']) <= 4294967295:
+            return int(self._values['rate_limit_dst_mask'])
+        raise F5ModuleError(
+            "Valid 'rate_limit_dst_mask' must be in range 0 - 4294967295."
+        )
+
+    @property
+    def clone_pools(self):
+        if self._values['clone_pools'] is None:
+            return None
+        if len(self._values['clone_pools']) == 1 and self._values['clone_pools'][0] in ['', []]:
+            return []
+        self._check_clone_pool_contexts()
+        result = []
+        for item in self._values['clone_pools']:
+            pool_name = fq_name(self.partition, self._check_pool(item['pool_name']))
+            context = item['context']
+            tmp = {
+                'name': pool_name,
+                'context': context
+            }
+            result.append(tmp)
+        return result
+
 
 class Changes(Parameters):
     pass
@@ -1865,6 +2178,8 @@ class UsableChanges(Changes):
             return None
         if self._values['type'] in ['dhcp', 'stateless', 'reject', 'internal']:
             return None
+        if self._values['irules'] == '':
+            return []
         return self._values['irules']
 
     @property
@@ -1873,6 +2188,8 @@ class UsableChanges(Changes):
             return None
         if self._values['type'] in ['dhcp', 'reject', 'internal']:
             return None
+        if self._values['policies'] == '':
+            return []
         return self._values['policies']
 
     @property
@@ -2004,8 +2321,18 @@ class ReportableChanges(Changes):
     def policies(self):
         if len(self._values['policies']) == 0:
             return []
+        if len(self._values['policies']) == 1 and self._values['policies'][0] == '':
+            return ''
         result = ['/{0}/{1}'.format(x['partition'], x['name']) for x in self._values['policies']]
         return result
+
+    @property
+    def irules(self):
+        if len(self._values['irules']) == 0:
+            return []
+        if len(self._values['irules']) == 1 and self._values['irules'][0] == '':
+            return ''
+        return self._values['irules']
 
     @property
     def enabled_vlans(self):
@@ -2734,7 +3061,6 @@ class Difference(object):
             return None
         want = set([(p['name'], p['context'], p['fullPath']) for p in self.want.profiles])
         have = set([(p['name'], p['context'], p['fullPath']) for p in self.have.profiles])
-
         if len(have) == 0:
             return self.want.profiles
         elif len(have) == 1:
@@ -2806,7 +3132,7 @@ class Difference(object):
     def policies(self):
         if self.want.policies is None:
             return None
-        if self.want.policies == '' and self.have.policies is None:
+        if self.want.policies in [[], ''] and self.have.policies is None:
             return None
         if self.want.policies == '' and len(self.have.policies) > 0:
             return []
@@ -2853,7 +3179,7 @@ class Difference(object):
             return None
         if self.want.irules == '' and len(self.have.irules) > 0:
             return []
-        if self.want.irules == '' and len(self.have.irules) == 0:
+        if self.want.irules in [[], ''] and len(self.have.irules) == 0:
             return None
         if sorted(set(self.want.irules)) != sorted(set(self.have.irules)):
             return self.want.irules
@@ -2875,7 +3201,9 @@ class Difference(object):
             return None
         elif len(self.want.metadata) == 0 and self.have.metadata is None:
             return None
-        elif len(self.want.metadata) == 0:
+        elif len(self.want.metadata) == 0 and not self.want.insert_metadata:
+            return None
+        elif len(self.want.metadata) == 0 and self.want.insert_metadata:
             return []
         elif self.have.metadata is None:
             return self.want.metadata
@@ -2910,6 +3238,13 @@ class Difference(object):
                 result['policy'] = self.want.sec_nat_policy
         if result:
             return dict(security_nat_policy=result)
+
+    @property
+    def clone_pools(self):
+        if self.want.clone_pools == [] and self.have.clone_pools:
+            return self.want.clone_pools
+        result = self._diff_complex_items(self.want.clone_pools, self.have.clone_pools)
+        return result
 
 
 class ModuleManager(object):
@@ -3050,8 +3385,9 @@ class ModuleManager(object):
     def update_on_device(self):
         params = self.changes.api_params()
 
-        # Mark the resource as managed by Ansible.
-        params = mark_managed_by(self.module.ansible_version, params)
+        if self.want.insert_metadata:
+            # Mark the resource as managed by Ansible, this is default behavior
+            params = mark_managed_by(self.module.ansible_version, params)
 
         uri = "https://{0}:{1}/mgmt/tm/ltm/virtual/{2}".format(
             self.client.provider['server'],
@@ -3094,9 +3430,9 @@ class ModuleManager(object):
         params = self.changes.api_params()
         params['name'] = self.want.name
         params['partition'] = self.want.partition
-
-        # Mark the resource as managed by Ansible.
-        params = mark_managed_by(self.module.ansible_version, params)
+        if self.want.insert_metadata:
+            # Mark the resource as managed by Ansible, this is default behavior
+            params = mark_managed_by(self.module.ansible_version, params)
 
         uri = "https://{0}:{1}/mgmt/tm/ltm/virtual/".format(
             self.client.provider['server'],
@@ -3210,6 +3546,32 @@ class ArgumentSpec(object):
                     policy=dict(),
                     use_device_policy=dict(type='bool'),
                     use_route_domain_policy=dict(type='bool')
+                )
+            ),
+            insert_metadata=dict(
+                type='bool',
+                default='yes'
+            ),
+            rate_limit=dict(type='int'),
+            rate_limit_dst_mask=dict(type='int'),
+            rate_limit_src_mask=dict(type='int'),
+            rate_limit_mode=dict(
+                default='object',
+                choices=[
+                    'destination', 'object-destination', 'object-source-destination',
+                    'source-destination', 'object', 'object-source', 'source'
+                ]
+            ),
+            clone_pools=dict(
+                type='list',
+                options=dict(
+                    pool_name=dict(required=True),
+                    context=dict(
+                        required=True,
+                        choices=[
+                            'clientside', 'serverside'
+                        ]
+                    )
                 )
             )
         )

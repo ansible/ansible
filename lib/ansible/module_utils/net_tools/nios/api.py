@@ -31,6 +31,7 @@ from functools import partial
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
+from ansible.module_utils.basic import env_fallback
 
 try:
     from infoblox_client.connector import Connector
@@ -58,19 +59,21 @@ NIOS_NSGROUP = 'nsgroup'
 NIOS_IPV4_FIXED_ADDRESS = 'fixedaddress'
 NIOS_IPV6_FIXED_ADDRESS = 'ipv6fixedaddress'
 NIOS_NEXT_AVAILABLE_IP = 'func:nextavailableip'
+NIOS_IPV4_NETWORK_CONTAINER = 'networkcontainer'
+NIOS_IPV6_NETWORK_CONTAINER = 'ipv6networkcontainer'
 
 NIOS_PROVIDER_SPEC = {
-    'host': dict(),
-    'username': dict(),
-    'password': dict(no_log=True),
-    'ssl_verify': dict(type='bool', default=False),
+    'host': dict(fallback=(env_fallback, ['INFOBLOX_HOST'])),
+    'username': dict(fallback=(env_fallback, ['INFOBLOX_USERNAME'])),
+    'password': dict(fallback=(env_fallback, ['INFOBLOX_PASSWORD']), no_log=True),
+    'ssl_verify': dict(type='bool', default=False, fallback=(env_fallback, ['INFOBLOX_SSL_VERIFY'])),
     'silent_ssl_warnings': dict(type='bool', default=True),
-    'http_request_timeout': dict(type='int', default=10),
+    'http_request_timeout': dict(type='int', default=10, fallback=(env_fallback, ['INFOBLOX_HTTP_REQUEST_TIMEOUT'])),
     'http_pool_connections': dict(type='int', default=10),
     'http_pool_maxsize': dict(type='int', default=10),
-    'max_retries': dict(type='int', default=3),
-    'wapi_version': dict(default='2.1'),
-    'max_results': dict(type='int', default=1000)
+    'max_retries': dict(type='int', default=3, fallback=(env_fallback, ['INFOBLOX_MAX_RETRIES'])),
+    'wapi_version': dict(default='2.1', fallback=(env_fallback, ['INFOBLOX_WAP_VERSION'])),
+    'max_results': dict(type='int', default=1000, fallback=(env_fallback, ['INFOBLOX_MAX_RETRIES']))
 }
 
 
@@ -395,6 +398,10 @@ class WapiModule(WapiBase):
                     test_obj_filter = dict([('name', name), ('view', obj_filter['view'])])
             elif (ib_obj_type == NIOS_IPV4_FIXED_ADDRESS or ib_obj_type == NIOS_IPV6_FIXED_ADDRESS and 'mac' in obj_filter):
                 test_obj_filter = dict([['mac', obj_filter['mac']]])
+            elif (ib_obj_type == NIOS_A_RECORD):
+                # resolves issue where a_record with uppercase name was returning null and was failing
+                test_obj_filter = obj_filter
+                test_obj_filter['name'] = test_obj_filter['name'].lower()
             # check if test_obj_filter is empty copy passed obj_filter
             else:
                 test_obj_filter = obj_filter

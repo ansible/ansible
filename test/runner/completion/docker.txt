@@ -7,3 +7,4 @@ opensuse42.3 name=quay.io/ansible/opensuse42.3-test-container:1.4.0 seccomp=unco
 ubuntu1404 name=quay.io/ansible/ubuntu1404-test-container:1.4.0 seccomp=unconfined
 ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.4.0 seccomp=unconfined
 ubuntu1604py3 name=quay.io/ansible/ubuntu1604py3-test-container:1.4.0 seccomp=unconfined python=3
+ubuntu1804 name=quay.io/ansible/ubuntu1804-test-container:1.6.0 seccomp=unconfined python=3

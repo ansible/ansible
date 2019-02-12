@@ -20,6 +20,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
@@ -222,9 +223,8 @@ class PullCLI(CLI):
         cmd = '%s/ansible %s %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts,
                                                               context.CLIARGS['module_name'],
                                                               repo_opts, limit_opts)
-
         for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e "%s"' % ev
+            cmd += ' -e %s' % shlex_quote(ev)
 
         # Nap?
         if context.CLIARGS['sleep']:
@@ -259,8 +259,8 @@ class PullCLI(CLI):
                 cmd += " --vault-id=%s" % vault_id
 
         for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e "%s"' % ev
-        if context.CLIARGS['ask_sudo_pass'] or context.CLIARGS['ask_su_pass'] or context.CLIARGS['become_ask_pass']:
+            cmd += ' -e %s' % shlex_quote(ev)
+        if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
             cmd += ' --skip-tags "%s"' % to_native(u','.join(context.CLIARGS['skip_tags']))

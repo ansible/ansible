@@ -35,7 +35,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import iteritems, text_type, string_types
 from ansible.plugins.loader import lookup_loader, vars_loader
@@ -43,7 +43,7 @@ from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 
@@ -76,7 +76,7 @@ class VariableManager:
     _ALLOWED = frozenset(['plugins_by_group', 'groups_plugins_play', 'groups_plugins_inventory', 'groups_inventory',
                           'all_plugins_play', 'all_plugins_inventory', 'all_inventory'])
 
-    def __init__(self, loader=None, inventory=None):
+    def __init__(self, loader=None, inventory=None, version_info=None):
         self._nonpersistent_fact_cache = defaultdict(dict)
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
@@ -86,16 +86,25 @@ class VariableManager:
         self._loader = loader
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
-        self._options_vars = defaultdict(dict)
-        self.safe_basedir = False
         self._templar = Templar(loader=self._loader)
 
-        # bad cache plugin is not fatal error
+        self._options_vars = load_options_vars(version_info)
+
+        # If the basedir is specified as the empty string then it results in cwd being used.
+        # This is not a safe location to load vars from.
+        basedir = self._options_vars.get('basedir', False)
+        self.safe_basedir = bool(basedir is False or basedir)
+
+        # load extra vars
+        self._extra_vars = load_extra_vars(loader=self._loader)
+
+        # load fact cache
         try:
             self._fact_cache = FactCache()
         except AnsibleError as e:
-            display.warning(to_native(e))
+            # bad cache plugin is not fatal error
             # fallback to a dict as in memory cache
+            display.warning(to_native(e))
             self._fact_cache = {}
 
     def __getstate__(self):
@@ -127,30 +136,10 @@ class VariableManager:
 
     @property
     def extra_vars(self):
-        ''' ensures a clean copy of the extra_vars are made '''
-        return self._extra_vars.copy()
-
-    @extra_vars.setter
-    def extra_vars(self, value):
-        ''' ensures a clean copy of the extra_vars are used to set the value '''
-        if not isinstance(value, Mapping):
-            raise AnsibleAssertionError("the type of 'value' for extra_vars should be a Mapping, but is a %s" % type(value))
-        self._extra_vars = value.copy()
+        return self._extra_vars
 
     def set_inventory(self, inventory):
         self._inventory = inventory
-
-    @property
-    def options_vars(self):
-        ''' ensures a clean copy of the options_vars are made '''
-        return self._options_vars.copy()
-
-    @options_vars.setter
-    def options_vars(self, value):
-        ''' ensures a clean copy of the options_vars are used to set the value '''
-        if not isinstance(value, dict):
-            raise AnsibleAssertionError("the type of 'value' for options_vars should be a dict, but is a %s" % type(value))
-        self._options_vars = value.copy()
 
     def get_vars(self, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
@@ -240,7 +229,7 @@ class VariableManager:
                 for inventory_dir in self._inventory._sources:
                     if ',' in inventory_dir and not os.path.exists(inventory_dir):  # skip host lists
                         continue
-                    elif not os.path.isdir(inventory_dir):  # always pass 'inventory directory'
+                    elif not os.path.isdir(to_bytes(inventory_dir)):  # always pass 'inventory directory'
                         inventory_dir = os.path.dirname(inventory_dir)
 
                     for plugin in vars_loader.all():

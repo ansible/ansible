@@ -352,7 +352,7 @@ options:
       - Connect the container to a network. Choices are "bridge", "host", "none" or "container:<name|id>"
   userns_mode:
      description:
-       - User namespace to use
+       - Set the user namespace mode for the container. Currently, the only valid value is C(host).
      version_added: "2.5"
   networks:
      description:
@@ -586,30 +586,22 @@ options:
       - Path to the working directory.
     version_added: "2.4"
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - "Cove Schneider (@cove)"
-    - "Joshua Conner (@joshuaconner)"
-    - "Pavel Antonov (@softzilla)"
-    - "Thomas Steinbach (@ThomasSteinbach)"
-    - "Philippe Jandot (@zfil)"
-    - "Daan Oosterveld (@dusdanig)"
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Kassian Sun (@kassiansun)"
+  - "Cove Schneider (@cove)"
+  - "Joshua Conner (@joshuaconner)"
+  - "Pavel Antonov (@softzilla)"
+  - "Thomas Steinbach (@ThomasSteinbach)"
+  - "Philippe Jandot (@zfil)"
+  - "Daan Oosterveld (@dusdanig)"
+  - "Chris Houseknecht (@chouseknecht)"
+  - "Kassian Sun (@kassiansun)"
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.8.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "Docker API >= 1.20"
+  - "docker-py >= 1.8.0"
+  - "Docker API >= 1.20"
 '''
 
 EXAMPLES = '''
@@ -875,7 +867,7 @@ from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DockerBaseClass, sanitize_result, is_image_name_id,
     compare_generic, DifferenceTracker,
@@ -884,14 +876,14 @@ from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    from ansible.module_utils.docker_common import docker_version
+    from ansible.module_utils.docker.common import docker_version
     if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 
@@ -1546,7 +1538,7 @@ class TaskParameters(DockerBaseClass):
                     elif key == 'retries':
                         try:
                             result[key] = int(result[key])
-                        except Exception as e:
+                        except Exception as dummy:
                             self.fail('Cannot parse number of retries for healthcheck. '
                                       'Expected an integer, got "{0}".'.format(result[key]))
 
@@ -2555,7 +2547,7 @@ class ContainerManager(DockerBaseClass):
             while True:
                 try:
                     response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-                except NotFound as exc:
+                except NotFound as dummy:
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:
@@ -2643,6 +2635,16 @@ class ContainerManager(DockerBaseClass):
                 # We only loop when explicitly requested by 'continue'
                 break
         return response
+
+
+def detect_ipvX_address_usage(client):
+    '''
+    Helper function to detect whether any specified network uses ipv4_address or ipv6_address
+    '''
+    for network in client.module.params.get("networks") or []:
+        if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
+            return True
+    return False
 
 
 class AnsibleDockerClientContainer(AnsibleDockerClient):
@@ -2772,15 +2774,6 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.option_minimal_versions['stop_timeout']['supported'] = stop_timeout_supported
 
     def __init__(self, **kwargs):
-        def detect_ipvX_address_usage():
-            '''
-            Helper function to detect whether any specified network uses ipv4_address or ipv6_address
-            '''
-            for network in self.module.params.get("networks") or []:
-                if network.get('ipv4_address') is not None or network.get('ipv6_address') is not None:
-                    return True
-            return False
-
         option_minimal_versions = dict(
             # internal options
             log_config=dict(),
@@ -2814,7 +2807,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
             pids_limit=dict(docker_py_version='1.10.0', docker_api_version='1.23'),
             # specials
             ipvX_address_supported=dict(docker_py_version='1.9.0', detect_usage=detect_ipvX_address_usage,
-                                        usage_msg='ipv4_address or ipv6_address in networks'),  # see above
+                                        usage_msg='ipv4_address or ipv6_address in networks'),
             stop_timeout=dict(),  # see _get_additional_minimal_versions()
         )
 

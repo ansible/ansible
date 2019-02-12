@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -136,7 +135,7 @@ options:
       preemptible:
         description:
         - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-          for more inforamtion about preemptible VM instances.'
+          for more information about preemptible VM instances.'
         required: false
         type: bool
   initial_node_count:
@@ -204,15 +203,18 @@ options:
     description:
     - The cluster this node pool belongs to.
     - 'This field represents a link to a Cluster resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_container_cluster
-      task and then set this cluster field to "{{ name-of-resource }}" Alternatively,
-      you can set this cluster to a dictionary with the name key where the value is
-      the name of your Cluster'
+      in two ways. First, you can place in the name of the resource here as a string
+      Alternatively, you can add `register: name-of-resource` to a gcp_container_cluster
+      task and then set this cluster field to "{{ name-of-resource }}"'
     required: true
-  zone:
+  location:
     description:
-    - The zone where the node pool is deployed.
+    - The location where the node pool is deployed.
     required: true
+    aliases:
+    - region
+    - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
@@ -221,7 +223,7 @@ EXAMPLES = '''
   gcp_container_cluster:
       name: "cluster-nodepool"
       initial_node_count: 4
-      zone: us-central1-a
+      location: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -233,7 +235,7 @@ EXAMPLES = '''
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      zone: us-central1-a
+      location: us-central1-a
       project: "test_project"
       auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
@@ -336,7 +338,7 @@ config:
     preemptible:
       description:
       - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-        for more inforamtion about preemptible VM instances.'
+        for more information about preemptible VM instances.'
       returned: success
       type: bool
 initialNodeCount:
@@ -416,10 +418,10 @@ cluster:
   description:
   - The cluster this node pool belongs to.
   returned: success
-  type: dict
-zone:
+  type: str
+location:
   description:
-  - The zone where the node pool is deployed.
+  - The location where the node pool is deployed.
   returned: success
   type: str
 '''
@@ -444,34 +446,33 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(type='str'),
-            config=dict(type='dict', options=dict(
-                machine_type=dict(type='str'),
-                disk_size_gb=dict(type='int'),
-                oauth_scopes=dict(type='list', elements='str'),
-                service_account=dict(type='str'),
-                metadata=dict(type='dict'),
-                image_type=dict(type='str'),
-                labels=dict(type='dict'),
-                local_ssd_count=dict(type='int'),
-                tags=dict(type='list', elements='str'),
-                preemptible=dict(type='bool')
-            )),
+            config=dict(
+                type='dict',
+                options=dict(
+                    machine_type=dict(type='str'),
+                    disk_size_gb=dict(type='int'),
+                    oauth_scopes=dict(type='list', elements='str'),
+                    service_account=dict(type='str'),
+                    metadata=dict(type='dict'),
+                    image_type=dict(type='str'),
+                    labels=dict(type='dict'),
+                    local_ssd_count=dict(type='int'),
+                    tags=dict(type='list', elements='str'),
+                    preemptible=dict(type='bool'),
+                ),
+            ),
             initial_node_count=dict(required=True, type='int'),
-            autoscaling=dict(type='dict', options=dict(
-                enabled=dict(type='bool'),
-                min_node_count=dict(type='int'),
-                max_node_count=dict(type='int')
-            )),
-            management=dict(type='dict', options=dict(
-                auto_upgrade=dict(type='bool'),
-                auto_repair=dict(type='bool'),
-                upgrade_options=dict(type='dict', options=dict(
-                    auto_upgrade_start_time=dict(type='str'),
-                    description=dict(type='str')
-                ))
-            )),
-            cluster=dict(required=True, type='dict'),
-            zone=dict(required=True, type='str')
+            autoscaling=dict(type='dict', options=dict(enabled=dict(type='bool'), min_node_count=dict(type='int'), max_node_count=dict(type='int'))),
+            management=dict(
+                type='dict',
+                options=dict(
+                    auto_upgrade=dict(type='bool'),
+                    auto_repair=dict(type='bool'),
+                    upgrade_options=dict(type='dict', options=dict(auto_upgrade_start_time=dict(type='str'), description=dict(type='str'))),
+                ),
+            ),
+            cluster=dict(required=True),
+            location=dict(required=True, type='str', aliases=['region', 'zone']),
         )
     )
 
@@ -526,7 +527,7 @@ def resource_to_request(module):
         u'config': NodePoolConfig(module.params.get('config', {}), module).to_request(),
         u'initialNodeCount': module.params.get('initial_node_count'),
         u'autoscaling': NodePoolAutoscaling(module.params.get('autoscaling', {}), module).to_request(),
-        u'management': NodePoolManagement(module.params.get('management', {}), module).to_request()
+        u'management': NodePoolManagement(module.params.get('management', {}), module).to_request(),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -545,20 +546,16 @@ def fetch_resource(module, link, allow_not_found=True):
 def self_link(module):
     res = {
         'project': module.params['project'],
-        'zone': module.params['zone'],
+        'location': module.params['location'],
         'cluster': replace_resource_dict(module.params['cluster'], 'name'),
-        'name': module.params['name']
+        'name': module.params['name'],
     }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools/{name}".format(**res)
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools/{name}".format(**res)
 
 
 def collection(module):
-    res = {
-        'project': module.params['project'],
-        'zone': module.params['zone'],
-        'cluster': replace_resource_dict(module.params['cluster'], 'name')
-    }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
+    res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools".format(**res)
 
 
 def return_if_object(module, response, allow_not_found=False):
@@ -573,8 +570,8 @@ def return_if_object(module, response, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -609,7 +606,7 @@ def response_to_hash(module, response):
         u'initialNodeCount': module.params.get('initial_node_count'),
         u'version': response.get(u'version'),
         u'autoscaling': NodePoolAutoscaling(response.get(u'autoscaling', {}), module).from_response(),
-        u'management': NodePoolManagement(response.get(u'management', {}), module).from_response()
+        u'management': NodePoolManagement(response.get(u'management', {}), module).from_response(),
     }
 
 
@@ -635,9 +632,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri)
+        op_result = fetch_resource(module, op_uri, False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -659,9 +656,7 @@ def raise_if_errors(response, err_path, module):
 #
 # Format the request to match the expected input by the API
 def encode_request(resource_request, module):
-    return {
-        'nodePool': resource_request
-    }
+    return {'nodePool': resource_request}
 
 
 class NodePoolConfig(object):
@@ -673,32 +668,36 @@ class NodePoolConfig(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'machineType': self.request.get('machine_type'),
-            u'diskSizeGb': self.request.get('disk_size_gb'),
-            u'oauthScopes': self.request.get('oauth_scopes'),
-            u'serviceAccount': self.request.get('service_account'),
-            u'metadata': self.request.get('metadata'),
-            u'imageType': self.request.get('image_type'),
-            u'labels': self.request.get('labels'),
-            u'localSsdCount': self.request.get('local_ssd_count'),
-            u'tags': self.request.get('tags'),
-            u'preemptible': self.request.get('preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'machineType': self.request.get('machine_type'),
+                u'diskSizeGb': self.request.get('disk_size_gb'),
+                u'oauthScopes': self.request.get('oauth_scopes'),
+                u'serviceAccount': self.request.get('service_account'),
+                u'metadata': self.request.get('metadata'),
+                u'imageType': self.request.get('image_type'),
+                u'labels': self.request.get('labels'),
+                u'localSsdCount': self.request.get('local_ssd_count'),
+                u'tags': self.request.get('tags'),
+                u'preemptible': self.request.get('preemptible'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'machineType': self.request.get(u'machineType'),
-            u'diskSizeGb': self.request.get(u'diskSizeGb'),
-            u'oauthScopes': self.request.get(u'oauthScopes'),
-            u'serviceAccount': self.request.get(u'serviceAccount'),
-            u'metadata': self.request.get(u'metadata'),
-            u'imageType': self.request.get(u'imageType'),
-            u'labels': self.request.get(u'labels'),
-            u'localSsdCount': self.request.get(u'localSsdCount'),
-            u'tags': self.request.get(u'tags'),
-            u'preemptible': self.request.get(u'preemptible')
-        })
+        return remove_nones_from_dict(
+            {
+                u'machineType': self.request.get(u'machineType'),
+                u'diskSizeGb': self.request.get(u'diskSizeGb'),
+                u'oauthScopes': self.request.get(u'oauthScopes'),
+                u'serviceAccount': self.request.get(u'serviceAccount'),
+                u'metadata': self.request.get(u'metadata'),
+                u'imageType': self.request.get(u'imageType'),
+                u'labels': self.request.get(u'labels'),
+                u'localSsdCount': self.request.get(u'localSsdCount'),
+                u'tags': self.request.get(u'tags'),
+                u'preemptible': self.request.get(u'preemptible'),
+            }
+        )
 
 
 class NodePoolAutoscaling(object):
@@ -710,18 +709,14 @@ class NodePoolAutoscaling(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get('enabled'),
-            u'minNodeCount': self.request.get('min_node_count'),
-            u'maxNodeCount': self.request.get('max_node_count')
-        })
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'minNodeCount': self.request.get('min_node_count'), u'maxNodeCount': self.request.get('max_node_count')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get(u'enabled'),
-            u'minNodeCount': self.request.get(u'minNodeCount'),
-            u'maxNodeCount': self.request.get(u'maxNodeCount')
-        })
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'minNodeCount': self.request.get(u'minNodeCount'), u'maxNodeCount': self.request.get(u'maxNodeCount')}
+        )
 
 
 class NodePoolManagement(object):
@@ -733,18 +728,22 @@ class NodePoolManagement(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'autoUpgrade': self.request.get('auto_upgrade'),
-            u'autoRepair': self.request.get('auto_repair'),
-            u'upgradeOptions': NodePoolUpgradeoptions(self.request.get('upgrade_options', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'autoUpgrade': self.request.get('auto_upgrade'),
+                u'autoRepair': self.request.get('auto_repair'),
+                u'upgradeOptions': NodePoolUpgradeoptions(self.request.get('upgrade_options', {}), self.module).to_request(),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'autoUpgrade': self.request.get(u'autoUpgrade'),
-            u'autoRepair': self.request.get(u'autoRepair'),
-            u'upgradeOptions': NodePoolUpgradeoptions(self.request.get(u'upgradeOptions', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'autoUpgrade': self.request.get(u'autoUpgrade'),
+                u'autoRepair': self.request.get(u'autoRepair'),
+                u'upgradeOptions': NodePoolUpgradeoptions(self.request.get(u'upgradeOptions', {}), self.module).from_response(),
+            }
+        )
 
 
 class NodePoolUpgradeoptions(object):
@@ -756,16 +755,10 @@ class NodePoolUpgradeoptions(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'autoUpgradeStartTime': self.request.get('auto_upgrade_start_time'),
-            u'description': self.request.get('description')
-        })
+        return remove_nones_from_dict({u'autoUpgradeStartTime': self.request.get('auto_upgrade_start_time'), u'description': self.request.get('description')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'autoUpgradeStartTime': self.request.get(u'autoUpgradeStartTime'),
-            u'description': self.request.get(u'description')
-        })
+        return remove_nones_from_dict({u'autoUpgradeStartTime': self.request.get(u'autoUpgradeStartTime'), u'description': self.request.get(u'description')})
 
 
 if __name__ == '__main__':

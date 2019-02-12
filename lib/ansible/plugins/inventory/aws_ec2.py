@@ -48,18 +48,27 @@ DOCUMENTATION = '''
               - name: AWS_SESSION_TOKEN
               - name: EC2_SECURITY_TOKEN
         regions:
-          description: A list of regions in which to describe EC2 instances. By default this is all regions except us-gov-west-1
-              and cn-north-1.
+          description:
+            - A list of regions in which to describe EC2 instances.
+            - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
+          type: list
+          default: []
         hostnames:
           description: A list in order of precedence for hostname variables. You can use the options specified in
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options). To use tags as hostnames
               use the syntax tag:Name=Value to use the hostname Name_Value, or tag:Name to use the value of the Name tag.
+          type: list
+          default: []
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
               U(http://docs.aws.amazon.com/cli/latest/reference/ec2/describe-instances.html#options)
+          type: dict
+          default: {}
         strict_permissions:
           description: By default if a 403 (Forbidden) is encountered this plugin will fail. You can set strict_permissions to
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
+          type: bool
+          default: True
 '''
 
 EXAMPLES = '''
@@ -127,9 +136,8 @@ compose:
   ansible_host: private_ip_address
 '''
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six import string_types
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
@@ -308,6 +316,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return boto_params
 
+    def _get_connection(self, credentials, region='us-east-1'):
+        try:
+            connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
+        except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+            if self.boto_profile:
+                try:
+                    connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
+                except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+            else:
+                raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+        return connection
+
     def _boto3_conn(self, regions):
         '''
             :param regions: A list of regions to create a boto3 client
@@ -317,17 +338,27 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         credentials = self._get_credentials()
 
-        for region in regions:
+        if not regions:
             try:
-                connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
-            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                if self.boto_profile:
-                    try:
-                        connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
-                    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                        raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
-                else:
-                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+                # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
+                client = self._get_connection(credentials)
+                resp = client.describe_regions()
+                regions = [x['RegionName'] for x in resp.get('Regions', [])]
+            except botocore.exceptions.NoRegionError:
+                # above seems to fail depending on boto3 version, ignore and lets try something else
+                pass
+
+        # fallback to local list hardcoded in boto3 if still no regions
+        if not regions:
+            session = boto3.Session()
+            regions = session.get_available_regions('ec2')
+
+        # I give up, now you MUST give me regions
+        if not regions:
+            raise AnsibleError('Unable to get regions list from available methods, you must specify the "regions" option to continue.')
+
+        for region in regions:
+            connection = self._get_connection(credentials, region)
             yield connection, region
 
     def _get_instances_by_region(self, regions, filters, strict_permissions):
@@ -486,49 +517,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         display.debug("aws_ec2 inventory filename must end with 'aws_ec2.yml' or 'aws_ec2.yaml'")
         return False
 
-    def _get_query_options(self, config_data):
-        '''
-            :param config_data: contents of the inventory config file
-            :return A list of regions to query,
-                    a list of boto3 filter dicts,
-                    a list of possible hostnames in order of preference
-                    a boolean to indicate whether to fail on permission errors
-        '''
-        options = {'regions': {'type_to_be': list, 'value': config_data.get('regions', [])},
-                   'filters': {'type_to_be': dict, 'value': config_data.get('filters', {})},
-                   'hostnames': {'type_to_be': list, 'value': config_data.get('hostnames', [])},
-                   'strict_permissions': {'type_to_be': bool, 'value': config_data.get('strict_permissions', True)}}
-
-        # validate the options
-        for name in options:
-            options[name]['value'] = self._validate_option(name, options[name]['type_to_be'], options[name]['value'])
-
-        regions = options['regions']['value']
-        filters = ansible_dict_to_boto3_filter_list(options['filters']['value'])
-        hostnames = options['hostnames']['value']
-        strict_permissions = options['strict_permissions']['value']
-
-        return regions, filters, hostnames, strict_permissions
-
-    def _validate_option(self, name, desired_type, option_value):
-        '''
-            :param name: the option name
-            :param desired_type: the class the option needs to be
-            :param option: the value the user has provided
-            :return The option of the correct class
-        '''
-
-        if isinstance(option_value, string_types) and desired_type == list:
-            option_value = [option_value]
-
-        if option_value is None:
-            option_value = desired_type()
-
-        if not isinstance(option_value, desired_type):
-            raise AnsibleParserError("The option %s (%s) must be a %s" % (name, option_value, desired_type))
-
-        return option_value
-
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
 
@@ -536,7 +524,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self._set_credentials()
 
         # get user specifications
-        regions, filters, hostnames, strict_permissions = self._get_query_options(config_data)
+        regions = self.get_option('regions')
+        filters = ansible_dict_to_boto3_filter_list(self.get_option('filters'))
+        hostnames = self.get_option('hostnames')
+        strict_permissions = self.get_option('strict_permissions')
 
         cache_key = self.get_cache_key(path)
         # false when refresh_cache or --flush-cache is used

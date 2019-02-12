@@ -14,10 +14,11 @@ from lib.config import (
 )
 
 
-def ansible_environment(args, color=True):
+def ansible_environment(args, color=True, ansible_config=None):
     """
     :type args: CommonConfig
     :type color: bool
+    :type ansible_config: str | None
     :rtype: dict[str, str]
     """
     env = common_environment()
@@ -28,12 +29,14 @@ def ansible_environment(args, color=True):
     if not path.startswith(ansible_path + os.path.pathsep):
         path = ansible_path + os.path.pathsep + path
 
-    if isinstance(args, IntegrationConfig):
+    if ansible_config:
+        pass
+    elif isinstance(args, IntegrationConfig):
         ansible_config = 'test/integration/%s.cfg' % args.command
     else:
         ansible_config = 'test/%s/ansible.cfg' % args.command
 
-    if not os.path.exists(ansible_config):
+    if not args.explain and not os.path.exists(ansible_config):
         raise ApplicationError('Configuration not found: %s' % ansible_config)
 
     ansible = dict(

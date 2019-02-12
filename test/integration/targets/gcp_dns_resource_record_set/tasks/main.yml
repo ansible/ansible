@@ -68,7 +68,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length >= 2
+      - "'www.testzone-4.com.'in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: create a resource record set that already exists
   gcp_dns_resource_record_set:
@@ -121,7 +121,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length >= 2
+      - "'www.testzone-4.com.'not in \"{{ results['items'] | map(attribute='name') | list }}\""
 # ----------------------------------------------------------------------------
 - name: delete a resource record set that does not exist
   gcp_dns_resource_record_set:
@@ -144,6 +144,7 @@
       - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
+# If errors happen, don't crash the playbook!
 - name: delete a managed zone
   gcp_dns_managed_zone:
       name: "managedzone-rrs"
@@ -154,3 +155,4 @@
       service_account_file: "{{ gcp_cred_file }}"
       state: absent
   register: managed_zone
+  ignore_errors: true

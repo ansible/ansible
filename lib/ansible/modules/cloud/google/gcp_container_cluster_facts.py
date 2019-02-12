@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -41,17 +40,21 @@ requirements:
 - requests >= 2.18.4
 - google-auth >= 1.3.0
 options:
-  zone:
+  location:
     description:
-    - The zone where the cluster is deployed.
+    - The location where the cluster is deployed.
     required: true
+    aliases:
+    - region
+    - zone
+    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
 EXAMPLES = '''
 - name:  a cluster facts
   gcp_container_cluster_facts:
-      zone: us-central1-a
+      location: us-central1-a
       project: test_project
       auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
@@ -66,7 +69,7 @@ items:
     name:
       description:
       - The name of this cluster. The name must be unique within this project and
-        zone, and can be up to 40 characters. Must be Lowercase letters, numbers,
+        location, and can be up to 40 characters. Must be Lowercase letters, numbers,
         and hyphens only. Must start with a letter. Must end with a number or a letter.
       returned: success
       type: str
@@ -181,7 +184,7 @@ items:
         preemptible:
           description:
           - 'Whether the nodes are created as preemptible VM instances. See: U(https://cloud.google.com/compute/docs/instances/preemptible)
-            for more inforamtion about preemptible VM instances.'
+            for more information about preemptible VM instances.'
           returned: success
           type: bool
     masterAuth:
@@ -240,8 +243,6 @@ items:
       description:
       - The name of the Google Compute Engine network to which the cluster is connected.
         If left unspecified, the default network will be used.
-      - To ensure it exists and it is operations, configure the network using 'gcompute_network'
-        resource.
       returned: success
       type: str
     clusterIpv4Cidr:
@@ -291,12 +292,6 @@ items:
       - The name of the Google Compute Engine subnetwork to which the cluster is connected.
       returned: success
       type: str
-    location:
-      description:
-      - The list of Google Compute Engine locations in which the cluster's nodes should
-        be located.
-      returned: success
-      type: list
     endpoint:
       description:
       - The IP address of this cluster's master endpoint.
@@ -350,9 +345,9 @@ items:
       - The time the cluster will be automatically deleted in RFC3339 text format.
       returned: success
       type: str
-    zone:
+    location:
       description:
-      - The zone where the cluster is deployed.
+      - The location where the cluster is deployed.
       returned: success
       type: str
 '''
@@ -369,11 +364,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            zone=dict(required=True, type='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone'])))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -383,14 +374,12 @@ def main():
         items = items.get('clusters')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 
 def collection(module):
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters".format(**module.params)
+    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters".format(**module.params)
 
 
 def fetch_list(module, link):

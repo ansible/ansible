@@ -1,5 +1,5 @@
 - name: Test pause
-  hosts: testhost
+  hosts: localhost
   gather_facts: no
   become: no
 

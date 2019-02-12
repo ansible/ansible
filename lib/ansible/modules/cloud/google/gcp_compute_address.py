@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -102,10 +101,9 @@ options:
     - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER
       purposes.
     - 'This field represents a link to a Subnetwork resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_subnetwork
-      task and then set this subnetwork field to "{{ name-of-resource }}" Alternatively,
-      you can set this subnetwork to a dictionary with the selfLink key where the
-      value is the selfLink of your Subnetwork'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork
+      task and then set this subnetwork field to "{{ name-of-resource }}"'
     required: false
     version_added: 2.7
   region:
@@ -183,7 +181,7 @@ subnetwork:
   - This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER
     purposes.
   returned: success
-  type: dict
+  type: str
 users:
   description:
   - The URLs of the resources that are using this address.
@@ -221,8 +219,8 @@ def main():
             description=dict(type='str'),
             name=dict(required=True, type='str'),
             network_tier=dict(type='str', choices=['PREMIUM', 'STANDARD']),
-            subnetwork=dict(type='dict'),
-            region=dict(required=True, type='str')
+            subnetwork=dict(),
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -279,7 +277,7 @@ def resource_to_request(module):
         u'description': module.params.get('description'),
         u'name': module.params.get('name'),
         u'networkTier': module.params.get('network_tier'),
-        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink')
+        u'subnetwork': replace_resource_dict(module.params.get(u'subnetwork', {}), 'selfLink'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -314,8 +312,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -353,7 +351,7 @@ def response_to_hash(module, response):
         u'name': response.get(u'name'),
         u'networkTier': response.get(u'networkTier'),
         u'subnetwork': response.get(u'subnetwork'),
-        u'users': response.get(u'users')
+        u'users': response.get(u'users'),
     }
 
 
@@ -379,9 +377,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

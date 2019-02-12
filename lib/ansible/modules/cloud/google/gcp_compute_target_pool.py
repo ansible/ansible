@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -62,10 +61,9 @@ options:
       pool in the "force" mode, where traffic will be spread to the healthy instances
       with the best effort, or to all instances when no instance is healthy.
     - 'This field represents a link to a TargetPool resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_target_pool
-      task and then set this backup_pool field to "{{ name-of-resource }}" Alternatively,
-      you can set this backup_pool to a dictionary with the selfLink key where the
-      value is the selfLink of your TargetPool'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_target_pool
+      task and then set this backup_pool field to "{{ name-of-resource }}"'
     required: false
   description:
     description:
@@ -92,10 +90,10 @@ options:
       checks pass. If not specified it means all member instances will be considered
       healthy at all times.
     - 'This field represents a link to a HttpHealthCheck resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_http_health_check
-      task and then set this health_check field to "{{ name-of-resource }}" Alternatively,
-      you can set this health_check to a dictionary with the selfLink key where the
-      value is the selfLink of your HttpHealthCheck'
+      specified in two ways. First, you can place in the selfLink of the resource
+      here as a string Alternatively, you can add `register: name-of-resource` to
+      a gcp_compute_http_health_check task and then set this health_check field to
+      "{{ name-of-resource }}"'
     required: false
   instances:
     description:
@@ -160,7 +158,7 @@ backupPool:
     pool in the "force" mode, where traffic will be spread to the healthy instances
     with the best effort, or to all instances when no instance is healthy.
   returned: success
-  type: dict
+  type: str
 creationTimestamp:
   description:
   - Creation timestamp in RFC3339 text format.
@@ -193,7 +191,7 @@ healthCheck:
     checks pass. If not specified it means all member instances will be considered
     healthy at all times.
   returned: success
-  type: dict
+  type: str
 id:
   description:
   - The unique identifier for the resource.
@@ -251,14 +249,14 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            backup_pool=dict(type='dict'),
+            backup_pool=dict(),
             description=dict(type='str'),
             failover_ratio=dict(type='str'),
-            health_check=dict(type='dict'),
-            instances=dict(type='list', elements='dict'),
+            health_check=dict(),
+            instances=dict(type='list'),
             name=dict(required=True, type='str'),
             session_affinity=dict(type='str', choices=['NONE', 'CLIENT_IP', 'CLIENT_IP_PROTO']),
-            region=dict(required=True, type='str')
+            region=dict(required=True, type='str'),
         )
     )
 
@@ -317,7 +315,7 @@ def resource_to_request(module):
         u'healthCheck': replace_resource_dict(module.params.get(u'health_check', {}), 'selfLink'),
         u'instances': replace_resource_dict(module.params.get('instances', []), 'selfLink'),
         u'name': module.params.get('name'),
-        u'sessionAffinity': module.params.get('session_affinity')
+        u'sessionAffinity': module.params.get('session_affinity'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -353,8 +351,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     result = decode_request(result, module)
 
@@ -395,7 +393,7 @@ def response_to_hash(module, response):
         u'id': response.get(u'id'),
         u'instances': response.get(u'instances'),
         u'name': module.params.get('name'),
-        u'sessionAffinity': module.params.get('session_affinity')
+        u'sessionAffinity': module.params.get('session_affinity'),
     }
 
 
@@ -421,9 +419,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

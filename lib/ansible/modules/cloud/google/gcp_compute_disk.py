@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -130,6 +129,10 @@ options:
         - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
           key that protects this resource.
         required: false
+      kms_key_name:
+        description:
+        - The name of the encryption key that is stored in Google Cloud KMS.
+        required: false
   disk_encryption_key:
     description:
     - Encrypts the disk using a customer-supplied encryption key.
@@ -152,15 +155,18 @@ options:
         - The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption
           key that protects this resource.
         required: false
+      kms_key_name:
+        description:
+        - The name of the encryption key that is stored in Google Cloud KMS.
+        required: false
   source_snapshot:
     description:
     - The source snapshot used to create this disk. You can provide this as a partial
       or full URL to the resource.
     - 'This field represents a link to a Snapshot resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_snapshot
-      task and then set this source_snapshot field to "{{ name-of-resource }}" Alternatively,
-      you can set this source_snapshot to a dictionary with the selfLink key where
-      the value is the selfLink of your Snapshot'
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_snapshot
+      task and then set this source_snapshot field to "{{ name-of-resource }}"'
     required: false
   source_snapshot_encryption_key:
     description:
@@ -172,6 +178,10 @@ options:
         description:
         - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
           base64 to either encrypt or decrypt this resource.
+        required: false
+      kms_key_name:
+        description:
+        - The name of the encryption key that is stored in Google Cloud KMS.
         required: false
       sha256:
         description:
@@ -312,6 +322,11 @@ sourceImageEncryptionKey:
         key that protects this resource.
       returned: success
       type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
+      returned: success
+      type: str
 sourceImageId:
   description:
   - The ID value of the image used to create this disk. This value identifies the
@@ -346,12 +361,17 @@ diskEncryptionKey:
         key that protects this resource.
       returned: success
       type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
+      returned: success
+      type: str
 sourceSnapshot:
   description:
   - The source snapshot used to create this disk. You can provide this as a partial
     or full URL to the resource.
   returned: success
-  type: dict
+  type: str
 sourceSnapshotEncryptionKey:
   description:
   - The customer-supplied encryption key of the source snapshot. Required if the source
@@ -363,6 +383,11 @@ sourceSnapshotEncryptionKey:
       description:
       - Specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
         base64 to either encrypt or decrypt this resource.
+      returned: success
+      type: str
+    kmsKeyName:
+      description:
+      - The name of the encryption key that is stored in Google Cloud KMS.
       returned: success
       type: str
     sha256:
@@ -410,19 +435,10 @@ def main():
             type=dict(type='str'),
             source_image=dict(type='str'),
             zone=dict(required=True, type='str'),
-            source_image_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
-            disk_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            )),
-            source_snapshot=dict(type='dict'),
-            source_snapshot_encryption_key=dict(type='dict', options=dict(
-                raw_key=dict(type='str'),
-                sha256=dict(type='str')
-            ))
+            source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'), kms_key_name=dict(type='str'))),
+            disk_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'), kms_key_name=dict(type='str'))),
+            source_snapshot=dict(),
+            source_snapshot_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), kms_key_name=dict(type='str'), sha256=dict(type='str'))),
         )
     )
 
@@ -463,8 +479,7 @@ def create(module, link, kind):
 
 
 def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+    update_fields(module, resource_to_request(module), response_to_hash(module, fetch))
     return fetch_resource(module, self_link(module), kind)
 
 
@@ -478,27 +493,16 @@ def update_fields(module, request, response):
 def label_fingerprint_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/zones/{zone}/disks/{name}/setLabels"
-        ]).format(**module.params),
-        {
-            u'labelFingerprint': response.get('labelFingerprint'),
-            u'labels': module.params.get('labels')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/disks/{name}/setLabels"]).format(**module.params),
+        {u'labelFingerprint': response.get('labelFingerprint'), u'labels': module.params.get('labels')},
     )
 
 
 def size_gb_update(module, request, response):
     auth = GcpSession(module, 'compute')
     auth.post(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/zones/{zone}/disks/{name}/resize"
-        ]).format(**module.params),
-        {
-            u'sizeGb': module.params.get('size_gb')
-        }
+        ''.join(["https://www.googleapis.com/compute/v1/", "projects/{project}/zones/{zone}/disks/{name}/resize"]).format(**module.params),
+        {u'sizeGb': module.params.get('size_gb')},
     )
 
 
@@ -519,7 +523,7 @@ def resource_to_request(module):
         u'name': module.params.get('name'),
         u'sizeGb': module.params.get('size_gb'),
         u'type': disk_type_selflink(module.params.get('type'), module.params),
-        u'sourceImage': module.params.get('source_image')
+        u'sourceImage': module.params.get('source_image'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -554,8 +558,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -597,7 +601,7 @@ def response_to_hash(module, response):
         u'sizeGb': response.get(u'sizeGb'),
         u'users': response.get(u'users'),
         u'type': response.get(u'type'),
-        u'sourceImage': module.params.get('source_image')
+        u'sourceImage': module.params.get('source_image'),
     }
 
 
@@ -632,9 +636,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -654,16 +658,14 @@ class DiskSourceimageencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
+        )
 
 
 class DiskDiskencryptionkey(object):
@@ -675,16 +677,14 @@ class DiskDiskencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get('raw_key'), u'sha256': self.request.get('sha256'), u'kmsKeyName': self.request.get('kms_key_name')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get(u'rawKey'), u'sha256': self.request.get(u'sha256'), u'kmsKeyName': self.request.get(u'kmsKeyName')}
+        )
 
 
 class DiskSourcesnapshotencryptionkey(object):
@@ -696,16 +696,14 @@ class DiskSourcesnapshotencryptionkey(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get('raw_key'),
-            u'sha256': self.request.get('sha256')
-        })
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get('raw_key'), u'kmsKeyName': self.request.get('kms_key_name'), u'sha256': self.request.get('sha256')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'rawKey': self.request.get(u'rawKey'),
-            u'sha256': self.request.get(u'sha256')
-        })
+        return remove_nones_from_dict(
+            {u'rawKey': self.request.get(u'rawKey'), u'kmsKeyName': self.request.get(u'kmsKeyName'), u'sha256': self.request.get(u'sha256')}
+        )
 
 
 if __name__ == '__main__':

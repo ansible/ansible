@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -97,10 +96,10 @@ options:
         - When the BackendService has load balancing scheme INTERNAL, the instance
           group must be in a zone within the same region as the BackendService.
         - 'This field represents a link to a InstanceGroup resource in GCP. It can
-          be specified in two ways. You can add `register: name-of-resource` to a
-          gcp_compute_instance_group task and then set this group field to "{{ name-of-resource
-          }}" Alternatively, you can set this group to a dictionary with the selfLink
-          key where the value is the selfLink of your InstanceGroup'
+          be specified in two ways. First, you can place in the selfLink of the resource
+          here as a string Alternatively, you can add `register: name-of-resource`
+          to a gcp_compute_instance_group task and then set this group field to "{{
+          name-of-resource }}"'
         required: false
       max_connections:
         description:
@@ -387,7 +386,7 @@ backends:
       - When the BackendService has load balancing scheme INTERNAL, the instance group
         must be in a zone within the same region as the BackendService.
       returned: success
-      type: dict
+      type: str
     maxConnections:
       description:
       - The max number of simultaneous connections for the group. Can be used with
@@ -622,45 +621,56 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             affinity_cookie_ttl_sec=dict(type='int'),
-            backends=dict(type='list', elements='dict', options=dict(
-                balancing_mode=dict(type='str', choices=['UTILIZATION', 'RATE', 'CONNECTION']),
-                capacity_scaler=dict(type='str'),
-                description=dict(type='str'),
-                group=dict(type='dict'),
-                max_connections=dict(type='int'),
-                max_connections_per_instance=dict(type='int'),
-                max_rate=dict(type='int'),
-                max_rate_per_instance=dict(type='str'),
-                max_utilization=dict(type='str')
-            )),
-            cdn_policy=dict(type='dict', options=dict(
-                cache_key_policy=dict(type='dict', options=dict(
-                    include_host=dict(type='bool'),
-                    include_protocol=dict(type='bool'),
-                    include_query_string=dict(type='bool'),
-                    query_string_blacklist=dict(type='list', elements='str'),
-                    query_string_whitelist=dict(type='list', elements='str')
-                ))
-            )),
-            connection_draining=dict(type='dict', options=dict(
-                draining_timeout_sec=dict(type='int')
-            )),
+            backends=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    balancing_mode=dict(type='str', choices=['UTILIZATION', 'RATE', 'CONNECTION']),
+                    capacity_scaler=dict(type='str'),
+                    description=dict(type='str'),
+                    group=dict(),
+                    max_connections=dict(type='int'),
+                    max_connections_per_instance=dict(type='int'),
+                    max_rate=dict(type='int'),
+                    max_rate_per_instance=dict(type='str'),
+                    max_utilization=dict(type='str'),
+                ),
+            ),
+            cdn_policy=dict(
+                type='dict',
+                options=dict(
+                    cache_key_policy=dict(
+                        type='dict',
+                        options=dict(
+                            include_host=dict(type='bool'),
+                            include_protocol=dict(type='bool'),
+                            include_query_string=dict(type='bool'),
+                            query_string_blacklist=dict(type='list', elements='str'),
+                            query_string_whitelist=dict(type='list', elements='str'),
+                        ),
+                    )
+                ),
+            ),
+            connection_draining=dict(type='dict', options=dict(draining_timeout_sec=dict(type='int'))),
             description=dict(type='str'),
             enable_cdn=dict(type='bool'),
             health_checks=dict(type='list', elements='str'),
-            iap=dict(type='dict', options=dict(
-                enabled=dict(type='bool'),
-                oauth2_client_id=dict(type='str'),
-                oauth2_client_secret=dict(type='str'),
-                oauth2_client_secret_sha256=dict(type='str')
-            )),
+            iap=dict(
+                type='dict',
+                options=dict(
+                    enabled=dict(type='bool'),
+                    oauth2_client_id=dict(type='str'),
+                    oauth2_client_secret=dict(type='str'),
+                    oauth2_client_secret_sha256=dict(type='str'),
+                ),
+            ),
             load_balancing_scheme=dict(type='str', choices=['INTERNAL', 'EXTERNAL']),
             name=dict(type='str'),
             port_name=dict(type='str'),
             protocol=dict(type='str', choices=['HTTP', 'HTTPS', 'TCP', 'SSL']),
             region=dict(type='str'),
             session_affinity=dict(type='str', choices=['NONE', 'CLIENT_IP', 'GENERATED_COOKIE', 'CLIENT_IP_PROTO', 'CLIENT_IP_PORT_PROTO']),
-            timeout_sec=dict(type='int', aliases=['timeout_seconds'])
+            timeout_sec=dict(type='int', aliases=['timeout_seconds']),
         )
     )
 
@@ -727,7 +737,7 @@ def resource_to_request(module):
         u'protocol': module.params.get('protocol'),
         u'region': region_selflink(module.params.get('region'), module.params),
         u'sessionAffinity': module.params.get('session_affinity'),
-        u'timeoutSec': module.params.get('timeout_sec')
+        u'timeoutSec': module.params.get('timeout_sec'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -762,8 +772,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -809,7 +819,7 @@ def response_to_hash(module, response):
         u'protocol': response.get(u'protocol'),
         u'region': response.get(u'region'),
         u'sessionAffinity': response.get(u'sessionAffinity'),
-        u'timeoutSec': response.get(u'timeoutSec')
+        u'timeoutSec': response.get(u'timeoutSec'),
     }
 
 
@@ -844,9 +854,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -878,30 +888,34 @@ class BackendServiceBackendsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'balancingMode': item.get('balancing_mode'),
-            u'capacityScaler': item.get('capacity_scaler'),
-            u'description': item.get('description'),
-            u'group': replace_resource_dict(item.get(u'group', {}), 'selfLink'),
-            u'maxConnections': item.get('max_connections'),
-            u'maxConnectionsPerInstance': item.get('max_connections_per_instance'),
-            u'maxRate': item.get('max_rate'),
-            u'maxRatePerInstance': item.get('max_rate_per_instance'),
-            u'maxUtilization': item.get('max_utilization')
-        })
+        return remove_nones_from_dict(
+            {
+                u'balancingMode': item.get('balancing_mode'),
+                u'capacityScaler': item.get('capacity_scaler'),
+                u'description': item.get('description'),
+                u'group': replace_resource_dict(item.get(u'group', {}), 'selfLink'),
+                u'maxConnections': item.get('max_connections'),
+                u'maxConnectionsPerInstance': item.get('max_connections_per_instance'),
+                u'maxRate': item.get('max_rate'),
+                u'maxRatePerInstance': item.get('max_rate_per_instance'),
+                u'maxUtilization': item.get('max_utilization'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'balancingMode': item.get(u'balancingMode'),
-            u'capacityScaler': item.get(u'capacityScaler'),
-            u'description': item.get(u'description'),
-            u'group': item.get(u'group'),
-            u'maxConnections': item.get(u'maxConnections'),
-            u'maxConnectionsPerInstance': item.get(u'maxConnectionsPerInstance'),
-            u'maxRate': item.get(u'maxRate'),
-            u'maxRatePerInstance': item.get(u'maxRatePerInstance'),
-            u'maxUtilization': item.get(u'maxUtilization')
-        })
+        return remove_nones_from_dict(
+            {
+                u'balancingMode': item.get(u'balancingMode'),
+                u'capacityScaler': item.get(u'capacityScaler'),
+                u'description': item.get(u'description'),
+                u'group': item.get(u'group'),
+                u'maxConnections': item.get(u'maxConnections'),
+                u'maxConnectionsPerInstance': item.get(u'maxConnectionsPerInstance'),
+                u'maxRate': item.get(u'maxRate'),
+                u'maxRatePerInstance': item.get(u'maxRatePerInstance'),
+                u'maxUtilization': item.get(u'maxUtilization'),
+            }
+        )
 
 
 class BackendServiceCdnpolicy(object):
@@ -913,14 +927,10 @@ class BackendServiceCdnpolicy(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get('cache_key_policy', {}), self.module).to_request()
-        })
+        return remove_nones_from_dict({u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get('cache_key_policy', {}), self.module).to_request()})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()
-        })
+        return remove_nones_from_dict({u'cacheKeyPolicy': BackendServiceCachekeypolicy(self.request.get(u'cacheKeyPolicy', {}), self.module).from_response()})
 
 
 class BackendServiceCachekeypolicy(object):
@@ -932,22 +942,26 @@ class BackendServiceCachekeypolicy(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'includeHost': self.request.get('include_host'),
-            u'includeProtocol': self.request.get('include_protocol'),
-            u'includeQueryString': self.request.get('include_query_string'),
-            u'queryStringBlacklist': self.request.get('query_string_blacklist'),
-            u'queryStringWhitelist': self.request.get('query_string_whitelist')
-        })
+        return remove_nones_from_dict(
+            {
+                u'includeHost': self.request.get('include_host'),
+                u'includeProtocol': self.request.get('include_protocol'),
+                u'includeQueryString': self.request.get('include_query_string'),
+                u'queryStringBlacklist': self.request.get('query_string_blacklist'),
+                u'queryStringWhitelist': self.request.get('query_string_whitelist'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'includeHost': self.request.get(u'includeHost'),
-            u'includeProtocol': self.request.get(u'includeProtocol'),
-            u'includeQueryString': self.request.get(u'includeQueryString'),
-            u'queryStringBlacklist': self.request.get(u'queryStringBlacklist'),
-            u'queryStringWhitelist': self.request.get(u'queryStringWhitelist')
-        })
+        return remove_nones_from_dict(
+            {
+                u'includeHost': self.request.get(u'includeHost'),
+                u'includeProtocol': self.request.get(u'includeProtocol'),
+                u'includeQueryString': self.request.get(u'includeQueryString'),
+                u'queryStringBlacklist': self.request.get(u'queryStringBlacklist'),
+                u'queryStringWhitelist': self.request.get(u'queryStringWhitelist'),
+            }
+        )
 
 
 class BackendServiceConnectiondraining(object):
@@ -959,14 +973,10 @@ class BackendServiceConnectiondraining(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'drainingTimeoutSec': self.request.get('draining_timeout_sec')
-        })
+        return remove_nones_from_dict({u'drainingTimeoutSec': self.request.get('draining_timeout_sec')})
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'drainingTimeoutSec': self.request.get(u'drainingTimeoutSec')
-        })
+        return remove_nones_from_dict({u'drainingTimeoutSec': self.request.get(u'drainingTimeoutSec')})
 
 
 class BackendServiceIap(object):
@@ -978,20 +988,24 @@ class BackendServiceIap(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get('enabled'),
-            u'oauth2ClientId': self.request.get('oauth2_client_id'),
-            u'oauth2ClientSecret': self.request.get('oauth2_client_secret'),
-            u'oauth2ClientSecretSha256': self.request.get('oauth2_client_secret_sha256')
-        })
+        return remove_nones_from_dict(
+            {
+                u'enabled': self.request.get('enabled'),
+                u'oauth2ClientId': self.request.get('oauth2_client_id'),
+                u'oauth2ClientSecret': self.request.get('oauth2_client_secret'),
+                u'oauth2ClientSecretSha256': self.request.get('oauth2_client_secret_sha256'),
+            }
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({
-            u'enabled': self.request.get(u'enabled'),
-            u'oauth2ClientId': self.request.get(u'oauth2ClientId'),
-            u'oauth2ClientSecret': self.request.get(u'oauth2ClientSecret'),
-            u'oauth2ClientSecretSha256': self.request.get(u'oauth2ClientSecretSha256')
-        })
+        return remove_nones_from_dict(
+            {
+                u'enabled': self.request.get(u'enabled'),
+                u'oauth2ClientId': self.request.get(u'oauth2ClientId'),
+                u'oauth2ClientSecret': self.request.get(u'oauth2ClientSecret'),
+                u'oauth2ClientSecretSha256': self.request.get(u'oauth2ClientSecretSha256'),
+            }
+        )
 
 
 if __name__ == '__main__':

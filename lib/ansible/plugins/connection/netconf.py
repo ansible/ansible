@@ -67,6 +67,8 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
+      - name: ansible_ssh_password
+      - name: ansible_netconf_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -140,6 +142,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -147,7 +151,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -204,8 +208,10 @@ try:
     from ncclient.transport.errors import SSHUnknownHostError
     from ncclient.xml_ import to_ele, to_xml
     HAS_NCCLIENT = True
-except ImportError:
+    NCCLIENT_IMP_ERR = None
+except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
     HAS_NCCLIENT = False
+    NCCLIENT_IMP_ERR = err
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
@@ -268,8 +274,8 @@ class Connection(NetworkConnectionBase):
     def _connect(self):
         if not HAS_NCCLIENT:
             raise AnsibleError(
-                'ncclient is required to use the netconf connection type.\n'
-                'Please run pip install ncclient'
+                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
+                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
             )
 
         self.queue_message('log', 'ssh connection done, starting ncclient')
@@ -312,7 +318,7 @@ class Connection(NetworkConnectionBase):
                 look_for_keys=self.get_option('look_for_keys'),
                 device_params=device_params,
                 allow_agent=self._play_context.allow_agent,
-                timeout=self._play_context.timeout,
+                timeout=self.get_option('persistent_connect_timeout'),
                 ssh_config=ssh_config
             )
         except SSHUnknownHostError as exc:

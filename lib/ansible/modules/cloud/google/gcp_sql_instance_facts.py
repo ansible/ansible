@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -90,7 +89,7 @@ items:
           description:
           - The availability status of the failover replica. A false status indicates
             that the failover replica is out of sync. The master can only failover
-            to the falover replica when the status is true.
+            to the failover replica when the status is true.
           returned: success
           type: bool
         name:
@@ -200,8 +199,8 @@ items:
               type: str
             clientKey:
               description:
-              - PEM representation of the slave's private key. The corresponsing public
-                key is encoded in the client's asf asd certificate.
+              - PEM representation of the slave's private key. The corresponding public
+                key is encoded in the client's certificate.
               returned: success
               type: str
             connectRetryInterval:
@@ -335,10 +334,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-        )
-    )
+    module = GcpModule(argument_spec=dict())
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/sqlservice.admin']
@@ -348,9 +344,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

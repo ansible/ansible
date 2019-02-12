@@ -109,27 +109,44 @@ As originally designed, Ansible modules are shipped to and run on the remote tar
 For this very reason, the modules need to run on the local Ansible controller (or are delegated to another system that *can* connect to the APIC).
 
 
+Gathering facts
+```````````````
+Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play.
+
+.. code-block:: yaml
+   :emphasize-lines: 3
+
+    - name: Another play in my playbook
+      hosts: my-apic-1
+      gather_facts: no
+      tasks:
+      - name: Create a tenant
+        aci_tenant:
+          ...
+
 Delegating to localhost
 ```````````````````````
 So let us assume we have our target configured in the inventory using the FQDN name as the ``ansible_host`` value, as shown below.
 
 .. code-block:: yaml
+   :emphasize-lines: 3
 
     apics:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
 
 One way to set this up is to add to every task the directive: ``delegate_to: localhost``.
 
 .. code-block:: yaml
+   :emphasize-lines: 8
 
     - name: Query all tenants
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       delegate_to: localhost
@@ -145,12 +162,13 @@ Another option frequently used, is to tie the ``local`` connection method to thi
 In this case the inventory may look like this:
 
 .. code-block:: yaml
+   :emphasize-lines: 6
 
     apics:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
         ansible_connection: local
 
 But used tasks do not need anything special added.
@@ -161,7 +179,7 @@ But used tasks do not need anything special added.
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       register: all_tenants
@@ -343,6 +361,7 @@ Use signature-based authentication with Ansible
 You need the following parameters with your ACI module(s) for it to work:
 
 .. code-block:: yaml
+   :emphasize-lines: 2,3
 
     username: admin
     private_key: pki/admin.key
@@ -498,7 +517,6 @@ The below example waits until the cluster is fully-fit. In this example you know
         infrawinode.imdata[0].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[1].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[2].infraWiNode.attributes.health == 'fully-fit'
-    #    all(apic.infraWiNode.attributes.health == 'fully-fit' for apic in infrawinode.imdata)
       retries: 30
       delay: 30
 

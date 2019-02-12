@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -220,7 +219,7 @@ def main():
             port=dict(type='int'),
             request_path=dict(type='str'),
             timeout_sec=dict(type='int', aliases=['timeout_seconds']),
-            unhealthy_threshold=dict(type='int')
+            unhealthy_threshold=dict(type='int'),
         )
     )
 
@@ -281,7 +280,7 @@ def resource_to_request(module):
         u'port': module.params.get('port'),
         u'requestPath': module.params.get('request_path'),
         u'timeoutSec': module.params.get('timeout_sec'),
-        u'unhealthyThreshold': module.params.get('unhealthy_threshold')
+        u'unhealthyThreshold': module.params.get('unhealthy_threshold'),
     }
     return_vals = {}
     for k, v in request.items():
@@ -316,8 +315,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -357,7 +356,7 @@ def response_to_hash(module, response):
         u'port': response.get(u'port'),
         u'requestPath': response.get(u'requestPath'),
         u'timeoutSec': response.get(u'timeoutSec'),
-        u'unhealthyThreshold': response.get(u'unhealthyThreshold')
+        u'unhealthyThreshold': response.get(u'unhealthyThreshold'),
     }
 
 
@@ -383,9 +382,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

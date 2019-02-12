@@ -77,7 +77,6 @@ options:
               'dbAdminAnyDatabase'
             - "Or the following dictionary '{ db: DATABASE_NAME, role: ROLE_NAME }'."
             - "This param requires pymongo 2.5+. If it is a string, mongodb 2.4+ is also required. If it is a dictionary, mongo 2.6+  is required."
-        default: "readWrite"
     state:
         description:
             - The database user state
@@ -195,7 +194,7 @@ except ImportError:
 else:
     pymongo_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
@@ -351,7 +350,7 @@ def main():
     )
 
     if not pymongo_found:
-        module.fail_json(msg='the python pymongo module is required')
+        module.fail_json(msg=missing_required_lib('pymongo'))
 
     login_user = module.params['login_user']
     login_password = module.params['login_password']

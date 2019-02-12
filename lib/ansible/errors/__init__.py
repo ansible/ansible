@@ -20,8 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
-import sys
-import traceback
 
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
@@ -71,8 +69,6 @@ class AnsibleError(Exception):
             self.message = '%s' % to_native(message)
         if orig_exc:
             self.orig_exc = orig_exc
-
-        self.tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
 
     def __str__(self):
         return self.message
@@ -220,6 +216,11 @@ class AnsibleModuleError(AnsibleRuntimeError):
 
 class AnsibleConnectionFailure(AnsibleRuntimeError):
     ''' the transport / connection_plugin had a fatal error '''
+    pass
+
+
+class AnsibleAuthenticationFailure(AnsibleConnectionFailure):
+    '''invalid username/password/key'''
     pass
 
 

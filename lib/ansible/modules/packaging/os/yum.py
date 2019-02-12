@@ -215,7 +215,7 @@ notes:
     of packages in a single transaction and yum requires groups to be specified
     in different ways when used in that way.  Package groups are specified as
     "@development-tools" and environment groups are "@^gnome-desktop-environment".
-    Use the "yum group list" command to see which category of group the group
+    Use the "yum group list hidden ids" command to see which category of group the group
     you want to install falls into.'
   - 'The yum module does not support clearing yum cache in an idempotent way, so it
     was decided not to implement it, the only method is to use shell and call the yum
@@ -723,6 +723,12 @@ class YumModule(YumDnf):
                         os.environ[item + "_proxy"] = re.sub(
                             r"(http://)",
                             r"\g<1>" + namepass, proxy_url
+                        )
+                else:
+                    for item in scheme:
+                        os.environ[item + "_proxy"] = re.sub(
+                            r"(http://)",
+                            r"\g<1>", proxy_url
                         )
             yield
         except yum.Errors.YumBaseError:
@@ -1478,9 +1484,6 @@ class YumModule(YumDnf):
             error_msgs.append('The Python 2 yum module is needed for this module. If you require Python 3 support use the `dnf` Ansible module instead.')
 
         self.wait_for_lock()
-
-        if self.disable_excludes and yum.__version_info__ < (3, 4):
-            self.module.fail_json(msg="'disable_includes' is available in yum version 3.4 and onwards.")
 
         if error_msgs:
             self.module.fail_json(msg='. '.join(error_msgs))

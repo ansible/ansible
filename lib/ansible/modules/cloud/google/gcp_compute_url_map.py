@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -53,10 +52,10 @@ options:
     description:
     - A reference to BackendService resource if none of the hostRules match.
     - 'This field represents a link to a BackendService resource in GCP. It can be
-      specified in two ways. You can add `register: name-of-resource` to a gcp_compute_backend_service
-      task and then set this default_service field to "{{ name-of-resource }}" Alternatively,
-      you can set this default_service to a dictionary with the selfLink key where
-      the value is the selfLink of your BackendService'
+      specified in two ways. First, you can place in the selfLink of the resource
+      here as a string Alternatively, you can add `register: name-of-resource` to
+      a gcp_compute_backend_service task and then set this default_service field to
+      "{{ name-of-resource }}"'
     required: true
   description:
     description:
@@ -103,11 +102,10 @@ options:
         - A reference to a BackendService resource. This will be used if none of the
           pathRules defined by this PathMatcher is matched by the URL's path portion.
         - 'This field represents a link to a BackendService resource in GCP. It can
-          be specified in two ways. You can add `register: name-of-resource` to a
-          gcp_compute_backend_service task and then set this default_service field
-          to "{{ name-of-resource }}" Alternatively, you can set this default_service
-          to a dictionary with the selfLink key where the value is the selfLink of
-          your BackendService'
+          be specified in two ways. First, you can place in the selfLink of the resource
+          here as a string Alternatively, you can add `register: name-of-resource`
+          to a gcp_compute_backend_service task and then set this default_service
+          field to "{{ name-of-resource }}"'
         required: true
       description:
         description:
@@ -133,11 +131,10 @@ options:
             description:
             - A reference to the BackendService resource if this rule is matched.
             - 'This field represents a link to a BackendService resource in GCP. It
-              can be specified in two ways. You can add `register: name-of-resource`
-              to a gcp_compute_backend_service task and then set this service field
-              to "{{ name-of-resource }}" Alternatively, you can set this service
-              to a dictionary with the selfLink key where the value is the selfLink
-              of your BackendService'
+              can be specified in two ways. First, you can place in the selfLink of
+              the resource here as a string Alternatively, you can add `register:
+              name-of-resource` to a gcp_compute_backend_service task and then set
+              this service field to "{{ name-of-resource }}"'
             required: true
   tests:
     description:
@@ -162,10 +159,10 @@ options:
         - A reference to expected BackendService resource the given URL should be
           mapped to.
         - 'This field represents a link to a BackendService resource in GCP. It can
-          be specified in two ways. You can add `register: name-of-resource` to a
-          gcp_compute_backend_service task and then set this service field to "{{
-          name-of-resource }}" Alternatively, you can set this service to a dictionary
-          with the selfLink key where the value is the selfLink of your BackendService'
+          be specified in two ways. First, you can place in the selfLink of the resource
+          here as a string Alternatively, you can add `register: name-of-resource`
+          to a gcp_compute_backend_service task and then set this service field to
+          "{{ name-of-resource }}"'
         required: true
 extends_documentation_fragment: gcp
 '''
@@ -228,7 +225,7 @@ defaultService:
   description:
   - A reference to BackendService resource if none of the hostRules match.
   returned: success
-  type: dict
+  type: str
 description:
   description:
   - An optional description of this resource. Provide this property when you create
@@ -292,7 +289,7 @@ pathMatchers:
       - A reference to a BackendService resource. This will be used if none of the
         pathRules defined by this PathMatcher is matched by the URL's path portion.
       returned: success
-      type: dict
+      type: str
     description:
       description:
       - An optional description of this resource.
@@ -321,7 +318,7 @@ pathMatchers:
           description:
           - A reference to the BackendService resource if this rule is matched.
           returned: success
-          type: dict
+          type: str
 tests:
   description:
   - The list of expected URL mappings. Requests to update this UrlMap will succeed
@@ -349,7 +346,7 @@ tests:
       - A reference to expected BackendService resource the given URL should be mapped
         to.
       returned: success
-      type: dict
+      type: str
 '''
 
 ################################################################################
@@ -371,29 +368,35 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            default_service=dict(required=True, type='dict'),
+            default_service=dict(required=True),
             description=dict(type='str'),
-            host_rules=dict(type='list', elements='dict', options=dict(
-                description=dict(type='str'),
-                hosts=dict(required=True, type='list', elements='str'),
-                path_matcher=dict(required=True, type='str')
-            )),
+            host_rules=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    description=dict(type='str'), hosts=dict(required=True, type='list', elements='str'), path_matcher=dict(required=True, type='str')
+                ),
+            ),
             name=dict(required=True, type='str'),
-            path_matchers=dict(type='list', elements='dict', options=dict(
-                default_service=dict(required=True, type='dict'),
-                description=dict(type='str'),
-                name=dict(required=True, type='str'),
-                path_rules=dict(type='list', elements='dict', options=dict(
-                    paths=dict(required=True, type='list', elements='str'),
-                    service=dict(required=True, type='dict')
-                ))
-            )),
-            tests=dict(type='list', elements='dict', options=dict(
-                description=dict(type='str'),
-                host=dict(required=True, type='str'),
-                path=dict(required=True, type='str'),
-                service=dict(required=True, type='dict')
-            ))
+            path_matchers=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    default_service=dict(required=True),
+                    description=dict(type='str'),
+                    name=dict(required=True, type='str'),
+                    path_rules=dict(
+                        type='list', elements='dict', options=dict(paths=dict(required=True, type='list', elements='str'), service=dict(required=True))
+                    ),
+                ),
+            ),
+            tests=dict(
+                type='list',
+                elements='dict',
+                options=dict(
+                    description=dict(type='str'), host=dict(required=True, type='str'), path=dict(required=True, type='str'), service=dict(required=True)
+                ),
+            ),
         )
     )
 
@@ -451,7 +454,7 @@ def resource_to_request(module):
         u'hostRules': UrlMapHostrulesArray(module.params.get('host_rules', []), module).to_request(),
         u'name': module.params.get('name'),
         u'pathMatchers': UrlMapPathmatchersArray(module.params.get('path_matchers', []), module).to_request(),
-        u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request()
+        u'tests': UrlMapTestsArray(module.params.get('tests', []), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
@@ -486,8 +489,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -525,7 +528,7 @@ def response_to_hash(module, response):
         u'fingerprint': response.get(u'fingerprint'),
         u'name': module.params.get('name'),
         u'pathMatchers': UrlMapPathmatchersArray(response.get(u'pathMatchers', []), module).from_response(),
-        u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response()
+        u'tests': UrlMapTestsArray(response.get(u'tests', []), module).from_response(),
     }
 
 
@@ -551,9 +554,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -585,18 +588,10 @@ class UrlMapHostrulesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'hosts': item.get('hosts'),
-            u'pathMatcher': item.get('path_matcher')
-        })
+        return remove_nones_from_dict({u'description': item.get('description'), u'hosts': item.get('hosts'), u'pathMatcher': item.get('path_matcher')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'hosts': item.get(u'hosts'),
-            u'pathMatcher': item.get(u'pathMatcher')
-        })
+        return remove_nones_from_dict({u'description': item.get(u'description'), u'hosts': item.get(u'hosts'), u'pathMatcher': item.get(u'pathMatcher')})
 
 
 class UrlMapPathmatchersArray(object):
@@ -620,20 +615,24 @@ class UrlMapPathmatchersArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
-            u'description': item.get('description'),
-            u'name': item.get('name'),
-            u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request()
-        })
+        return remove_nones_from_dict(
+            {
+                u'defaultService': replace_resource_dict(item.get(u'default_service', {}), 'selfLink'),
+                u'description': item.get('description'),
+                u'name': item.get('name'),
+                u'pathRules': UrlMapPathrulesArray(item.get('path_rules', []), self.module).to_request(),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'defaultService': item.get(u'defaultService'),
-            u'description': item.get(u'description'),
-            u'name': item.get(u'name'),
-            u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response()
-        })
+        return remove_nones_from_dict(
+            {
+                u'defaultService': item.get(u'defaultService'),
+                u'description': item.get(u'description'),
+                u'name': item.get(u'name'),
+                u'pathRules': UrlMapPathrulesArray(item.get(u'pathRules', []), self.module).from_response(),
+            }
+        )
 
 
 class UrlMapPathrulesArray(object):
@@ -657,16 +656,10 @@ class UrlMapPathrulesArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'paths': item.get('paths'),
-            u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')
-        })
+        return remove_nones_from_dict({u'paths': item.get('paths'), u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'paths': item.get(u'paths'),
-            u'service': item.get(u'service')
-        })
+        return remove_nones_from_dict({u'paths': item.get(u'paths'), u'service': item.get(u'service')})
 
 
 class UrlMapTestsArray(object):
@@ -690,20 +683,19 @@ class UrlMapTestsArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get('description'),
-            u'host': item.get('host'),
-            u'path': item.get('path'),
-            u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink')
-        })
+        return remove_nones_from_dict(
+            {
+                u'description': item.get('description'),
+                u'host': item.get('host'),
+                u'path': item.get('path'),
+                u'service': replace_resource_dict(item.get(u'service', {}), 'selfLink'),
+            }
+        )
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'description': item.get(u'description'),
-            u'host': item.get(u'host'),
-            u'path': item.get(u'path'),
-            u'service': item.get(u'service')
-        })
+        return remove_nones_from_dict(
+            {u'description': item.get(u'description'), u'host': item.get(u'host'), u'path': item.get(u'path'), u'service': item.get(u'service')}
+        )
 
 
 if __name__ == '__main__':

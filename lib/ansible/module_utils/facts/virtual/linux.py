@@ -189,9 +189,10 @@ class LinuxVirtual(Virtual):
                 modules.append(data[0])
 
             if 'kvm' in modules:
+                virtual_facts['virtualization_type'] = 'kvm'
+                virtual_facts['virtualization_role'] = 'host'
 
                 if os.path.isdir('/rhev/'):
-
                     # Check whether this is a RHEV hypervisor (is vdsm running ?)
                     for f in glob.glob('/proc/[0-9]*/comm'):
                         try:
@@ -202,12 +203,6 @@ class LinuxVirtual(Virtual):
                                 break
                         except Exception:
                             pass
-                    else:
-                        virtual_facts['virtualization_type'] = 'kvm'
-
-                else:
-                    virtual_facts['virtualization_type'] = 'kvm'
-                    virtual_facts['virtualization_role'] = 'host'
 
                 return virtual_facts
 
