@@ -179,7 +179,7 @@ files:
   $modules/commands/script.py: $team_ansible
   $modules/commands/shell.py: $team_ansible
   $modules/crypto/: &crypto
-    keywords: [ letsencrypt, lets encrypt ]
+    keywords: [ acme, letsencrypt, lets encrypt, luks, openssl ]
     labels: crypto
     maintainers: $team_crypto
   $modules/database/influxdb/: kamsz
@@ -535,8 +535,7 @@ files:
 # MODULE_UTILS
   $module_utils:
     support: community
-  $module_utils/acme.py:
-    maintainers: resmo felixfontein
+  $module_utils/acme.py: *crypto
   $module_utils/ansible_tower.py:
     support: community
     maintainers: $team_tower
@@ -1036,8 +1035,7 @@ files:
   $plugins/doc_fragments/__init__.py:
     support: core
   $plugins/doc_fragments/aci.py: *aci
-  $plugins/doc_fragments/acme.py:
-    maintainers: resmo felixfontein
+  $plugins/doc_fragments/acme.py: *crypto
   $plugins/doc_fragments/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -1256,11 +1254,13 @@ files:
 # 'test' is a component path, then 'test' label will be automatically added
   test/runner/:
     notified: mattclay
+  test/runner/lib/cloud/acme.py: *crypto
   test/sanity/:
     notified: mattclay
   test/utils/shippable/:
     notified: mattclay
   test/integration/targets/aci: *aci
+  test/integration/targets/acme: *crypto
   test/integration/targets/aix: *aix
   test/integration/targets/cloudscale:
     maintainers: $team_cloudscale
@@ -1279,10 +1279,11 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
+  test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
-  test/integration/targets/setup_acme:
-    maintainers: resmo felixfontein
+  test/integration/targets/setup_acme: *crypto
   test/integration/targets/setup_docker: *docker
+  test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
@@ -1300,6 +1301,7 @@ files:
     <<: *docker
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
+  test/units/module_utils/test_acme.py: *crypto
   test/units/modules/cloud/docker:
     <<: *docker
     support: community
@@ -1330,7 +1332,7 @@ macros:
   team_bsd: AMDmi3 bcoca dagwieers jasperla JoergFiedler mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
-  team_crypto: felixfontein resmo Spredzy Shaps
+  team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
   team_cumulus: isharacomix jrrivers
   team_cyberark_conjur: jvanderhoof ryanprior
   team_digital_ocean: aluvenko, BondAnthony, mgregson
