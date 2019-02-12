@@ -57,10 +57,21 @@
         ihard: '{{ pquota_default_ihard }}'
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
         rtbsoft: '{{ pquota_default_rtbsoft }}'
-        rtbhard: '{{ pquota_default_rthard }}'
+        rtbhard: '{{ pquota_default_rtbhard }}'
         type: project 
       become: True
-      register: test_pquota_default_bsoft_before
+      register: test_pquota_default_before
+
+    - name: Assert default project limits results
+      assert:
+        that:
+          - test_pquota_default_before.changed
+          - test_pquota_default_before.xfs_quota.bsoft == pquota_default_bsoft|human_to_bytes
+          - test_pquota_default_before.xfs_quota.bhard == pquota_default_bhard|human_to_bytes
+          - test_pquota_default_before.xfs_quota.isoft == pquota_default_isoft
+          - test_pquota_default_before.xfs_quota.ihard == pquota_default_ihard
+          - test_pquota_default_before.xfs_quota.rtbsoft == pquota_default_rtbsoft|human_to_bytes
+          - test_pquota_default_before.xfs_quota.rtbhard == pquota_default_rtbhard|human_to_bytes
 
     - name: 'Apply project limits'
       xfs_quota:
@@ -71,10 +82,21 @@
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
         name: xft_quotaval
         rtbsoft: '{{ pquota_project_rtbsoft }}'
-        rtbhard: '{{ pquota_project_rthard }}'
+        rtbhard: '{{ pquota_project_rtbhard }}'
         type: project 
       become: True
-      register: test_pquota_project_bsoft_before
+      register: test_pquota_project_before
+
+    - name: Assert project limits results for xft_quotaval
+      assert:
+        that:
+          - test_pquota_project_before.changed
+          - test_pquota_project_before.xfs_quota.bsoft == pquota_project_bsoft|human_to_bytes
+          - test_pquota_project_before.xfs_quota.bhard == pquota_project_bhard|human_to_bytes
+          - test_pquota_project_before.xfs_quota.isoft == pquota_project_isoft
+          - test_pquota_project_before.xfs_quota.ihard == pquota_project_ihard
+          - test_pquota_project_before.xfs_quota.rtbsoft == pquota_project_rtbsoft|human_to_bytes
+          - test_pquota_project_before.xfs_quota.rtbhard == pquota_project_rtbhard|human_to_bytes
 
     - name: 'Re-apply default project limits'
       xfs_quota:
@@ -84,10 +106,15 @@
         ihard: '{{ pquota_default_ihard }}'
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
         rtbsoft: '{{ pquota_default_rtbsoft }}'
-        rtbhard: '{{ pquota_default_rthard }}'
+        rtbhard: '{{ pquota_default_rtbhard }}'
         type: project
       become: True
-      register: test_pquota_default_bsoft_after
+      register: test_pquota_default_after
+
+    - name: Assert default project limits results after re-apply
+      assert:
+        that:
+          - not test_pquota_default_after.changed
 
     - name: 'Re-apply project limits'
       xfs_quota:
@@ -98,28 +125,54 @@
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
         name: xft_quotaval
         rtbsoft: '{{ pquota_project_rtbsoft }}'
-        rtbhard: '{{ pquota_project_rthard }}'
+        rtbhard: '{{ pquota_project_rtbhard }}'
         type: project
       become: True
-      register: test_pquota_project_bsoft_after
+      register: test_pquota_project_after
 
-    - name: 'Evaluate Project quotas'
+    - name: Assert project limits results for xft_quotaval after re-apply
       assert:
         that:
-          - not test_pquota_default_bsoft_after.changed
-          - test_pquota_default_bsoft_after.xfs_quota.bsoft == pquota_default_bsoft|human_to_bytes
-          - test_pquota_default_bsoft_after.xfs_quota.bhard == pquota_default_bhard|human_to_bytes
-          - test_pquota_default_bsoft_after.xfs_quota.isoft == pquota_default_isoft|human_to_bytes
-          - test_pquota_default_bsoft_after.xfs_quota.ihard == pquota_default_ihard|human_to_bytes
-          - test_pquota_default_bsoft_after.xfs_quota.rtbsoft == pquota_default_rtbsoft|human_to_bytes
-          - test_pquota_default_bsoft_after.xfs_quota.rtbhard == pquota_default_rthard|human_to_bytes
-          - not test_pquota_project_bsoft_after.changed
-          - test_pquota_project_bsoft_after.xfs_quota.bsoft == pquota_project_bsoft|human_to_bytes
-          - test_pquota_project_bsoft_after.xfs_quota.bhard == pquota_project_bhard|human_to_bytes
-          - test_pquota_project_bsoft_after.xfs_quota.isoft == pquota_project_isoft|human_to_bytes
-          - test_pquota_project_bsoft_after.xfs_quota.ihard == pquota_project_ihard|human_to_bytes
-          - test_pquota_project_bsoft_after.xfs_quota.rtbsoft == pquota_project_rtbsoft|human_to_bytes
-          - test_pquota_project_bsoft_after.xfs_quota.rtbhard == pquota_project_rthard|human_to_bytes
+          - not test_pquota_project_after.changed
+
+    - name: 'Reset default project limits'
+      xfs_quota:
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        state: absent
+        type: project
+      become: True
+      register: test_reset_pquota_default
+
+    - name: Assert reset of default projecy limits results
+      assert:
+        that:
+          - test_reset_pquota_default.changed
+          - test_reset_pquota_default.xfs_quota.bsoft == 0
+          - test_reset_pquota_default.xfs_quota.bhard == 0
+          - test_reset_pquota_default.xfs_quota.isoft == 0
+          - test_reset_pquota_default.xfs_quota.ihard == 0
+          - test_reset_pquota_default.xfs_quota.rtbsoft == 0
+          - test_reset_pquota_default.xfs_quota.rtbhard == 0
+
+    - name: 'Reset project limits for xft_quotaval'
+      xfs_quota:
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/pquota'
+        name: xft_quotaval
+        state: absent
+        type: project
+      become: True
+      register: test_reset_pquota_project
+
+    - name: Assert reset of project limits results for xft_quotaval
+      assert:
+        that:
+          - test_reset_pquota_project.changed
+          - test_reset_pquota_project.xfs_quota.bsoft == 0
+          - test_reset_pquota_project.xfs_quota.bhard == 0
+          - test_reset_pquota_project.xfs_quota.isoft == 0
+          - test_reset_pquota_project.xfs_quota.ihard == 0
+          - test_reset_pquota_project.xfs_quota.rtbsoft == 0
+          - test_reset_pquota_project.xfs_quota.rtbhard == 0
 
   always:
     - name: 'Unmount filesystem'

@@ -27,10 +27,21 @@
         ihard: '{{ gquota_default_ihard }}'
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
         rtbsoft: '{{ gquota_default_rtbsoft }}'
-        rtbhard: '{{ gquota_default_rthard }}'
+        rtbhard: '{{ gquota_default_rtbhard }}'
         type: group
       become: True
-      register: test_gquota_default_bsoft_before
+      register: test_gquota_default_before
+
+    - name: Assert default group limits results
+      assert:
+        that:
+          - test_gquota_default_before.changed
+          - test_gquota_default_before.xfs_quota.bsoft == gquota_default_bsoft|human_to_bytes
+          - test_gquota_default_before.xfs_quota.bhard == gquota_default_bhard|human_to_bytes
+          - test_gquota_default_before.xfs_quota.isoft == gquota_default_isoft
+          - test_gquota_default_before.xfs_quota.ihard == gquota_default_ihard
+          - test_gquota_default_before.xfs_quota.rtbsoft == gquota_default_rtbsoft|human_to_bytes
+          - test_gquota_default_before.xfs_quota.rtbhard == gquota_default_rtbhard|human_to_bytes
 
     - name: 'Apply group limits'
       xfs_quota:
@@ -41,10 +52,21 @@
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
         name: xfsquotauser
         rtbsoft: '{{ gquota_group_rtbsoft }}'
-        rtbhard: '{{ gquota_group_rthard }}'
+        rtbhard: '{{ gquota_group_rtbhard }}'
         type: group
       become: True
-      register: test_gquota_group_bsoft_before
+      register: test_gquota_group_before
+
+    - name: Assert group limits results for xfsquotauser
+      assert:
+        that:
+          - test_gquota_group_before.changed
+          - test_gquota_group_before.xfs_quota.bsoft == gquota_group_bsoft|human_to_bytes
+          - test_gquota_group_before.xfs_quota.bhard == gquota_group_bhard|human_to_bytes
+          - test_gquota_group_before.xfs_quota.isoft == gquota_group_isoft
+          - test_gquota_group_before.xfs_quota.ihard == gquota_group_ihard
+          - test_gquota_group_before.xfs_quota.rtbsoft == gquota_group_rtbsoft|human_to_bytes
+          - test_gquota_group_before.xfs_quota.rtbhard == gquota_group_rtbhard|human_to_bytes
 
     - name: 'Re-apply default group limits'
       xfs_quota:
@@ -54,10 +76,15 @@
         ihard: '{{ gquota_default_ihard }}'
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
         rtbsoft: '{{ gquota_default_rtbsoft }}'
-        rtbhard: '{{ gquota_default_rthard }}'
+        rtbhard: '{{ gquota_default_rtbhard }}'
         type: group
       become: True
-      register: test_gquota_default_bsoft_after
+      register: test_gquota_default_after
+
+    - name: Assert default group limits results after re-apply
+      assert:
+        that:
+          - not test_gquota_default_after.changed
 
     - name: 'Re-apply group limits'
       xfs_quota:
@@ -68,28 +95,54 @@
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
         name: xfsquotauser
         rtbsoft: '{{ gquota_group_rtbsoft }}'
-        rtbhard: '{{ gquota_group_rthard }}'
+        rtbhard: '{{ gquota_group_rtbhard }}'
         type: group
       become: True
-      register: test_gquota_group_bsoft_after
+      register: test_gquota_group_after
 
-    - name: 'Evaluate group quotas'
+    - name: Assert group limits results for xfsquotauser after re-apply
       assert:
         that:
-          - not test_gquota_default_bsoft_after.changed
-          - test_gquota_default_bsoft_after.xfs_quota.bsoft == gquota_default_bsoft|human_to_bytes
-          - test_gquota_default_bsoft_after.xfs_quota.bhard == gquota_default_bhard|human_to_bytes
-          - test_gquota_default_bsoft_after.xfs_quota.isoft == gquota_default_isoft|human_to_bytes
-          - test_gquota_default_bsoft_after.xfs_quota.ihard == gquota_default_ihard|human_to_bytes
-          - test_gquota_default_bsoft_after.xfs_quota.rtbsoft == gquota_default_rtbsoft|human_to_bytes
-          - test_gquota_default_bsoft_after.xfs_quota.rtbhard == gquota_default_rthard|human_to_bytes
-          - not test_gquota_group_bsoft_after.changed
-          - test_gquota_group_bsoft_after.xfs_quota.bsoft == gquota_group_bsoft|human_to_bytes
-          - test_gquota_group_bsoft_after.xfs_quota.bhard == gquota_group_bhard|human_to_bytes
-          - test_gquota_group_bsoft_after.xfs_quota.isoft == gquota_group_isoft|human_to_bytes
-          - test_gquota_group_bsoft_after.xfs_quota.ihard == gquota_group_ihard|human_to_bytes
-          - test_gquota_group_bsoft_after.xfs_quota.rtbsoft == gquota_group_rtbsoft|human_to_bytes
-          - test_gquota_group_bsoft_after.xfs_quota.rtbhard == gquota_group_rthard|human_to_bytes
+          - not test_gquota_group_after.changed
+
+    - name: 'Reset default group limits'
+      xfs_quota:
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        state: absent
+        type: group
+      become: True
+      register: test_reset_gquota_default
+
+    - name: Assert reset of default group limits results
+      assert:
+        that:
+          - test_reset_gquota_default.changed
+          - test_reset_gquota_default.xfs_quota.bsoft == 0
+          - test_reset_gquota_default.xfs_quota.bhard == 0
+          - test_reset_gquota_default.xfs_quota.isoft == 0
+          - test_reset_gquota_default.xfs_quota.ihard == 0
+          - test_reset_gquota_default.xfs_quota.rtbsoft == 0
+          - test_reset_gquota_default.xfs_quota.rtbhard == 0
+
+    - name: 'Reset group limits for xfsquotauser'
+      xfs_quota:
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/gquota'
+        name: xfsquotauser
+        state: absent
+        type: group
+      become: True
+      register: test_reset_gquota_group
+
+    - name: Assert reset of default group limits results
+      assert:
+        that:
+          - test_reset_gquota_group.changed
+          - test_reset_gquota_group.xfs_quota.bsoft == 0
+          - test_reset_gquota_group.xfs_quota.bhard == 0
+          - test_reset_gquota_group.xfs_quota.isoft == 0
+          - test_reset_gquota_group.xfs_quota.ihard == 0
+          - test_reset_gquota_group.xfs_quota.rtbsoft == 0
+          - test_reset_gquota_group.xfs_quota.rtbhard == 0
 
   always:
     - name: 'Unmount filesystem'

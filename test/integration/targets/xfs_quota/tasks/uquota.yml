@@ -27,10 +27,21 @@
         ihard: '{{ uquota_default_ihard }}'
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
         rtbsoft: '{{ uquota_default_rtbsoft }}'
-        rtbhard: '{{ uquota_default_rthard }}'
+        rtbhard: '{{ uquota_default_rtbhard }}'
         type: user
       become: True
-      register: test_uquota_default_bsoft_before
+      register: test_uquota_default_before
+
+    - name: Assert default user limits results
+      assert:
+        that:
+          - test_uquota_default_before.changed
+          - test_uquota_default_before.xfs_quota.bsoft == uquota_default_bsoft|human_to_bytes
+          - test_uquota_default_before.xfs_quota.bhard == uquota_default_bhard|human_to_bytes
+          - test_uquota_default_before.xfs_quota.isoft == uquota_default_isoft
+          - test_uquota_default_before.xfs_quota.ihard == uquota_default_ihard
+          - test_uquota_default_before.xfs_quota.rtbsoft == uquota_default_rtbsoft|human_to_bytes
+          - test_uquota_default_before.xfs_quota.rtbhard == uquota_default_rtbhard|human_to_bytes
 
     - name: 'Apply user limits'
       xfs_quota:
@@ -41,10 +52,21 @@
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
         name: xfsquotauser
         rtbsoft: '{{ uquota_user_rtbsoft }}'
-        rtbhard: '{{ uquota_user_rthard }}'
+        rtbhard: '{{ uquota_user_rtbhard }}'
         type: user
       become: True
-      register: test_uquota_user_bsoft_before
+      register: test_uquota_user_before
+
+    - name: Assert user limits results
+      assert:
+        that:
+          - test_uquota_user_before.changed
+          - test_uquota_user_before.xfs_quota.bsoft == uquota_user_bsoft|human_to_bytes
+          - test_uquota_user_before.xfs_quota.bhard == uquota_user_bhard|human_to_bytes
+          - test_uquota_user_before.xfs_quota.isoft == uquota_user_isoft
+          - test_uquota_user_before.xfs_quota.ihard == uquota_user_ihard
+          - test_uquota_user_before.xfs_quota.rtbsoft == uquota_user_rtbsoft|human_to_bytes
+          - test_uquota_user_before.xfs_quota.rtbhard == uquota_user_rtbhard|human_to_bytes
 
     - name: 'Re-apply default user limits'
       xfs_quota:
@@ -54,10 +76,15 @@
         ihard: '{{ uquota_default_ihard }}'
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
         rtbsoft: '{{ uquota_default_rtbsoft }}'
-        rtbhard: '{{ uquota_default_rthard }}'
+        rtbhard: '{{ uquota_default_rtbhard }}'
         type: user
       become: True
-      register: test_uquota_default_bsoft_after
+      register: test_uquota_default_after
+
+    - name: Assert default user limits results after re-apply
+      assert:
+        that:
+          - not test_uquota_default_after.changed
 
     - name: 'Re-apply user limits'
       xfs_quota:
@@ -68,28 +95,54 @@
         mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
         name: xfsquotauser
         rtbsoft: '{{ uquota_user_rtbsoft }}'
-        rtbhard: '{{ uquota_user_rthard }}'
+        rtbhard: '{{ uquota_user_rtbhard }}'
         type: user
       become: True
-      register: test_uquota_user_bsoft_after
+      register: test_uquota_user_after
 
-    - name: 'Evaluate user quotas'
+    - name: Assert user limits results for xfsquotauser after re-apply
       assert:
         that:
-          - not test_uquota_default_bsoft_after.changed
-          - test_uquota_default_bsoft_after.xfs_quota.bsoft == uquota_default_bsoft|human_to_bytes
-          - test_uquota_default_bsoft_after.xfs_quota.bhard == uquota_default_bhard|human_to_bytes
-          - test_uquota_default_bsoft_after.xfs_quota.isoft == uquota_default_isoft|human_to_bytes
-          - test_uquota_default_bsoft_after.xfs_quota.ihard == uquota_default_ihard|human_to_bytes
-          - test_uquota_default_bsoft_after.xfs_quota.rtbsoft == uquota_default_rtbsoft|human_to_bytes
-          - test_uquota_default_bsoft_after.xfs_quota.rtbhard == uquota_default_rthard|human_to_bytes
-          - not test_uquota_user_bsoft_after.changed
-          - test_uquota_user_bsoft_after.xfs_quota.bsoft == uquota_user_bsoft|human_to_bytes
-          - test_uquota_user_bsoft_after.xfs_quota.bhard == uquota_user_bhard|human_to_bytes
-          - test_uquota_user_bsoft_after.xfs_quota.isoft == uquota_user_isoft|human_to_bytes
-          - test_uquota_user_bsoft_after.xfs_quota.ihard == uquota_user_ihard|human_to_bytes
-          - test_uquota_user_bsoft_after.xfs_quota.rtbsoft == uquota_user_rtbsoft|human_to_bytes
-          - test_uquota_user_bsoft_after.xfs_quota.rtbhard == uquota_user_rthard|human_to_bytes
+          - not test_uquota_user_after.changed
+
+    - name: 'Reset default user limits'
+      xfs_quota:
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        state: absent
+        type: user
+      become: True
+      register: test_reset_uquota_default
+
+    - name: Assert reset of default user limits results
+      assert:
+        that:
+          - test_reset_uquota_default.changed
+          - test_reset_uquota_default.xfs_quota.bsoft == 0
+          - test_reset_uquota_default.xfs_quota.bhard == 0
+          - test_reset_uquota_default.xfs_quota.isoft == 0
+          - test_reset_uquota_default.xfs_quota.ihard == 0
+          - test_reset_uquota_default.xfs_quota.rtbsoft == 0
+          - test_reset_uquota_default.xfs_quota.rtbhard == 0
+
+    - name: 'Reset user limits for xfsquotauser'
+      xfs_quota:
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        name: xfsquotauser
+        state: absent
+        type: user
+      become: True
+      register: test_reset_uquota_user
+
+    - name: Assert reset of default user limits results
+      assert:
+        that:
+          - test_reset_uquota_user.changed
+          - test_reset_uquota_user.xfs_quota.bsoft == 0
+          - test_reset_uquota_user.xfs_quota.bhard == 0
+          - test_reset_uquota_user.xfs_quota.isoft == 0
+          - test_reset_uquota_user.xfs_quota.ihard == 0
+          - test_reset_uquota_user.xfs_quota.rtbsoft == 0
+          - test_reset_uquota_user.xfs_quota.rtbhard == 0
 
   always:
     - name: 'Unmount filesystem'
