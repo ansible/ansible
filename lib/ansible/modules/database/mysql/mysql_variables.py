@@ -85,7 +85,7 @@ def typedvalue(value):
 def getvariable(cursor, mysqlvar):
     cursor.execute("SHOW VARIABLES WHERE Variable_name = %s", (mysqlvar,))
     mysqlvar_val = cursor.fetchall()
-    if len(mysqlvar_val) is 1:
+    if len(mysqlvar_val) == 1:
         return mysqlvar_val[0][1]
     else:
         return None

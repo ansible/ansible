@@ -185,7 +185,7 @@ class LogicMonitor(object):
         resp = self.rpc("getAgents", {})
         resp_json = json.loads(resp)
 
-        if resp_json["status"] is 200:
+        if resp_json["status"] == 200:
             self.module.debug("RPC call succeeded")
             return resp_json["data"]
         else:
