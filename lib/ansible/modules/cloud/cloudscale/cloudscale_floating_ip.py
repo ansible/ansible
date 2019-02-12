@@ -19,12 +19,7 @@ module: cloudscale_floating_ip
 short_description: Manages floating IPs on the cloudscale.ch IaaS service
 description:
   - Create, assign and delete floating IPs on the cloudscale.ch IaaS service.
-  - All operations are performed using the cloudscale.ch public API v1.
-  - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
-    U(https://control.cloudscale.ch).
 notes:
-  - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new floating IP at least the C(ip_version) and C(server) options are required.
   - Once a floating_ip is created all parameters except C(server) are read-only.
   - It's not possible to request a floating IP without associating it with a server at the same time.
@@ -61,14 +56,7 @@ options:
     description:
       - Reverse PTR entry for this address.
       - You cannot set a reverse PTR entry for IPv6 floating networks. Reverse PTR entries are only allowed for single addresses.
-  api_token:
-    description:
-      - cloudscale.ch API token.
-      - This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
-  api_timeout:
-    description:
-      - Timeout in seconds for calls to the cloudscale.ch API.
-    default: 30
+extends_documentation_fragment: cloudscale
 '''
 
 EXAMPLES = '''
