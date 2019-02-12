@@ -418,8 +418,15 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
             # and in the new privileges, then we need to see if there's a difference.
             db_table_intersect = set(new_priv.keys()) & set(curr_priv.keys())
             for db_table in db_table_intersect:
-                priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
-                if len(priv_diff) > 0:
+                if "ALL" in new_priv[db_table] and db_table == "*.*":
+                    version = get_db_version(cursor)
+                    if version == "8":
+                        full_priv = {}
+                        full_priv[db_table] = privileges_get_all(cursor)
+                    priv_diff = set(full_priv[db_table]) ^ set(curr_priv[db_table])
+                else:
+                    priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
+                if priv_diff:
                     msg = "Privileges updated"
                     if module.check_mode:
                         return (True, msg)
@@ -488,9 +495,32 @@ def privileges_get(cursor, user, host):
         if "REQUIRE SSL" in res.group(7):
             privileges.append('REQUIRESSL')
         db = res.group(2)
-        output[db] = privileges
+        if db in output.keys():
+            privileges = res.group(1).split(",")
+            output[db] += privileges
+
+        else:
+            if "GRANT" in privileges:
+                privileges.remove("GRANT")
+            output[db] = privileges
     return output
 
+
+def privileges_get_all(cursor):
+    privileges = []
+    cursor.execute('SELECT DISTINCT PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.USER_PRIVILEGES WHERE IS_GRANTABLE="yes"')
+    grants = cursor.fetchall()
+    for grant in grants:
+        privileges.append(grant[0])
+
+    return privileges
+
+
+def get_db_version(cursor):
+    cursor.execute("Select @@version")
+    output = cursor.fetchall()[0]
+    version = output[0].split(".")[0]
+    return version
 
 def privileges_unpack(priv, mode):
     """ Take a privileges string, typically passed as a parameter, and unserialize
