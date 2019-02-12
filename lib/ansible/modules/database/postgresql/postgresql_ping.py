@@ -108,8 +108,6 @@ server_version:
 '''
 
 
-from fnmatch import fnmatch
-
 try:
     import psycopg2
     HAS_PSYCOPG2 = True
@@ -160,7 +158,7 @@ class PgPing(object):
             self.module.fail_json(msg=to_native(e))
             self.cursor.close()
         except Exception as e:
-            self.module.warn("PostgreSQL server is unavailable: %s" % e)
+            self.module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
 
         return False
 
@@ -228,7 +226,7 @@ def main():
                                  'version 8.4 to support sslrootcert')
         module.fail_json(msg="unable to connect to database: %s" % to_native(e))
     except Exception as e:
-        module.warn("PostgreSQL server is unavailable: %s" % e)
+        module.warn("PostgreSQL server is unavailable: %s" % to_native(e))
 
     # Do job:
     pg_ping = PgPing(module, cursor)
