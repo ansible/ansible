@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_cluster
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to create/delete a cluster.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute cluster-create or cluster-delete command.
   - A cluster allows two switches to cooperate in high-availability (HA)
@@ -50,6 +54,7 @@ options:
     description:
       - Target switch to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - Specify action to perform. Use 'present' to create cluster and 'absent'
@@ -81,7 +86,7 @@ EXAMPLES = """
     pn_name: 'spine-cluster'
     pn_cluster_node1: 'spine01'
     pn_cluster_node2: 'spine02'
-    pn_validate: validate
+    pn_validate: True
     pn_quiet: True
 
 - name: delete spine cluster

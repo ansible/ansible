@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_vrouterif
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to add/remove/modify vrouter-interface.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute vrouter-interface-add, vrouter-interface-remove,
     vrouter-interface-modify command.
@@ -47,6 +51,7 @@ options:
     description:
       - Target switch to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to add vrouter interface,
@@ -85,6 +90,7 @@ options:
         specified when you configure the interface as span interface and allows
         higher throughput through the interface.
     type: bool
+    required: False
   pn_nic_enable:
     description:
       - Specify if the NIC is enabled or not
@@ -353,7 +359,7 @@ def main():
             pn_clipassword=dict(required=False, type='str', no_log=True),
             pn_cliswitch=dict(required=False, type='str', default='local'),
             state=dict(required=True, type='str',
-                       choices=['present', 'absent']),
+                       choices=['present', 'absent', 'update']),
             pn_vrouter_name=dict(required=True, type='str'),
             pn_vlan=dict(type='int'),
             pn_interface_ip=dict(required=True, type='str'),

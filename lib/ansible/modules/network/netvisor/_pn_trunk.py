@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_trunk
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to create/delete/modify a trunk.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute trunk-create or trunk-delete command.
   - Trunks can be used to aggregate network links at Layer 2 on the local
@@ -46,6 +50,7 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to create trunk,
@@ -70,6 +75,7 @@ options:
   pn_jumbo:
     description:
       - Specify if the port can receive jumbo frames.
+    type: bool
   pn_lacp_mode:
     description:
       - Specify the LACP mode for the configuration.
@@ -94,18 +100,22 @@ options:
   pn_edge_switch:
     description:
       - Specify if the switch is an edge switch.
+    type: bool
   pn_pause:
     description:
       - Specify if pause frames are sent.
+    type: bool
   pn_description:
     description:
       - Specify a description for the trunk configuration.
   pn_loopback:
     description:
       - Specify loopback if you want to use loopback.
+    type: bool
   pn_mirror_receive:
     description:
       - Specify if the configuration receives mirrored traffic.
+    type: bool
   pn_unknown_ucast_level:
     description:
       - Specify an unknown unicast level in percent. The default value is 100%.
@@ -124,9 +134,11 @@ options:
   pn_routing:
     description:
       - Specify if the port participates in routing on the network.
+    type: bool
   pn_host:
     description:
       - Host facing port control setting.
+    type: bool
 """
 
 EXAMPLES = """
@@ -294,7 +306,7 @@ def main():
             pn_lacp_mode=dict(type='str', choices=[
                               'off', 'passive', 'active']),
             pn_lacp_priority=dict(type='int'),
-            pn_lacp_timeout=dict(type='str'),
+            pn_lacp_timeout=dict(type='str', choices=['slow', 'fast']),
             pn_lacp_fallback=dict(type='str', choices=[
                                   'bundle', 'individual']),
             pn_lacp_fallback_timeout=dict(type='str'),
