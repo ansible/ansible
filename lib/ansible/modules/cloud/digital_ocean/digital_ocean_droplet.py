@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 module: digital_ocean_droplet
 short_description: Create, rebuild, delete a DigitalOcean droplet.
 description:
-     - Create, rebuild, or delete a droplet in DigitalOcean and optionally wait for it to be active.
+     - Create, rebuild, or delete a droplet in DigitalOcean.
 version_added: "2.8"
 author: "Gurchet Rai (@gurch101)"
 options:
@@ -64,7 +64,11 @@ options:
     aliases: ['region_id']
   ssh_keys:
     description:
-     - List of SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation.
+     - List of DO registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
+     C(12345) or C("1e:f8:e3:b2:0d:dc:15:02:aa:54:15:23:bc:5c:ec:34").
+     - You may register keys with M(digital_ocean_sshkey) and list them with M(digital_ocean_sshkey_facts).
+     - "Hint: compute fingerprint C(cut -f2 -d' ' ~/.ssh/do_key1.pub| base64 -d | md5sum -b | sed 's/../&:/g; s/: .*$//'),
+     or grab it from M(digital_ocean_sshkey_facts), or from your tab U(https://cloud.digitalocean.com/account/security)"
     type: list
   private_networking:
     description:
@@ -86,14 +90,25 @@ options:
     type: bool
   wait:
     description:
-     - Wait for the droplet to be active before returning.
+     - Wait for the droplet public IPv4 address, ensure the droplet is usable (locked=false).
     default: True
     type: bool
-  wait_timeout:
+  wait_new:
+    description:
+     - When I(wait: True) and this is a new or I(rebuild: yes), wait I(wait_new) seconds before checking droplet status.
+    type: int
+    default: 30
+  wait_minimum:
+    description:
+     - When I(wait: True) wait I(wait_minimum) seconds before checking droplet status. In other words, how often to spam DO API.
+    type: int
+    default: 2
+  wait_maximum:
     description:
      - How long before wait gives up, in seconds, when creating a droplet.
     type: int
     default: 120
+    aliases: ['wait_timeout']
   backups:
     description:
      - indicates whether automated backups should be enabled.
@@ -122,7 +137,7 @@ options:
     required: True
   rebuild:
     description:
-     - force Droplet rebuild. You may supply image if you want it changed or omit it and just re-fresh your Droplet.
+     - force Droplet rebuild. You may supply I(image) id/slug if you want it changed or omit I(image) and just re-fresh your Droplet.
     default: False
     type: bool
 requirements:
@@ -140,7 +155,7 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     tags: [ 'foo', 'bar' ]
-    wait_timeout: 500
+    wait_maximum: 500
   register: my_droplet
 
 - debug:
@@ -158,7 +173,7 @@ EXAMPLES = '''
     oauth_token: "{{ lookup('file', '~/.do/api-key1') }}"
     rebuild: yes
     image: debian-9-x64  # may be omitted.
-    wait_timeout: 240
+    wait_maximum: 240
   register: my_droplet
 '''
 
@@ -290,8 +305,10 @@ class DODroplet(object):
         self.rest = DigitalOceanHelper(module)
         # pop all the parameters which we never POST as data
         self.rebuild = self.module.params.pop('rebuild')
-        self.wait = self.module.params.pop('wait', True)
-        self.wait_timeout = self.module.params.pop('wait_timeout', 120)
+        self.wait = self.module.params.pop('wait')
+        self.wait_maximum = self.module.params.pop('wait_maximum')
+        self.wait_minimum = self.module.params.pop('wait_minimum')
+        self.wait_new = self.module.params.pop('wait_new')
         self.module.params.pop('oauth_token')
         if self.module.params.pop('unique_name', None) is not None:
             self.module.warn("Parameter `unique_name` is deprecated. Consider it's always True.")
@@ -386,11 +403,15 @@ class DODroplet(object):
                                                      ' image={2} size={3}'.format(self._name, _region, _image, _size))
         if self.module.check_mode:
             self.module.exit_json(changed=True)
+        self.module.warn("send command time {}".format(time.time()))
         response = self.rest.post('droplets', data=self.module.params)
+        dbg1 = response.json['droplet'] if 'droplet' in response.json else response.json
+        self.module.warn("req 1 resp time {} droplet: {}".format(time.time(), dbg1))
+        # self.module.warn("req 1 resp headers: {}".format(response.headers['ratelimit-remaining']))
         if response.status_code >= 400:
             self.module.fail_json(changed=False, msg=response.json['message'])
         if self.wait:
-            self.ensure_active(response.json['droplet']['id'])
+            self.ensure_active(response.json['droplet']['id'], new=True)
         self.module.exit_json(
             changed=True, data=self.expose_addresses(response.json))
 
@@ -425,7 +446,7 @@ class DODroplet(object):
             self.module.exit_json(changed=False, msg='Droplet {0} not found'.format(self._droplet))
 
     def ensure_unlocked(self, droplet_id, action):
-        end_time = time.time() + self.wait_timeout
+        end_time = time.time() + self.wait_maximum
         while time.time() < end_time:
             response = self.rest.get('droplets/{0}'.format(droplet_id))
             if not response.json['droplet']['locked']:
@@ -433,13 +454,22 @@ class DODroplet(object):
             time.sleep(min(2, end_time - time.time()))
         self.module.fail_json(msg='Droplet {0}: {1} timeout'.format(self._droplet, action))
 
-    def ensure_active(self, droplet_id):
-        end_time = time.time() + self.wait_timeout
+    def ensure_active(self, droplet_id, new=False):
+        if new: time.sleep(self.wait_new)
+        end_time = time.time() + self.wait_maximum
+        n = 1
         while time.time() < end_time:
+            n += 1
             response = self.rest.get('droplets/{0}'.format(droplet_id))
+            if 'locked' in response.json['droplet']:
+                lock = response.json['droplet']['locked']
+                stat = response.json['droplet']['status']
+                resp1 = "req {} time {} status {} locked {}".format(n, time.time(), stat, lock)
+            self.module.warn(resp1)
+
             if response.json['droplet']['status'] == 'active':
                 return response.json
-            time.sleep(min(2, end_time - time.time()))
+            time.sleep(min(self.wait_minimum, end_time - time.time()))
         self.module.fail_json(msg='Wait for droplet {0} status=active timeout'.format(self._droplet))
 
 
@@ -467,7 +497,9 @@ def main():
             volumes=dict(type='list'),
             tags=dict(type='list'),
             wait=dict(type='bool', default=True),
-            wait_timeout=dict(default=120, type='int'),
+            wait_maximum=dict(default=120, type='int',aliases=['wait_timeout']),
+            wait_minimum=dict(default=2, type='int'),
+            wait_new=dict(default=30, type='int'),
             unique_name=dict(),
         ),
         required_one_of=(
