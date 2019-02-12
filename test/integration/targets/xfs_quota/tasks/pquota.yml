@@ -66,12 +66,12 @@
       assert:
         that:
           - test_pquota_default_before.changed
-          - test_pquota_default_before.xfs_quota.bsoft == pquota_default_bsoft|human_to_bytes
-          - test_pquota_default_before.xfs_quota.bhard == pquota_default_bhard|human_to_bytes
-          - test_pquota_default_before.xfs_quota.isoft == pquota_default_isoft
-          - test_pquota_default_before.xfs_quota.ihard == pquota_default_ihard
-          - test_pquota_default_before.xfs_quota.rtbsoft == pquota_default_rtbsoft|human_to_bytes
-          - test_pquota_default_before.xfs_quota.rtbhard == pquota_default_rtbhard|human_to_bytes
+          - test_pquota_default_before.bsoft == pquota_default_bsoft|human_to_bytes
+          - test_pquota_default_before.bhard == pquota_default_bhard|human_to_bytes
+          - test_pquota_default_before.isoft == pquota_default_isoft
+          - test_pquota_default_before.ihard == pquota_default_ihard
+          - test_pquota_default_before.rtbsoft == pquota_default_rtbsoft|human_to_bytes
+          - test_pquota_default_before.rtbhard == pquota_default_rtbhard|human_to_bytes
 
     - name: 'Apply project limits'
       xfs_quota:
@@ -91,12 +91,12 @@
       assert:
         that:
           - test_pquota_project_before.changed
-          - test_pquota_project_before.xfs_quota.bsoft == pquota_project_bsoft|human_to_bytes
-          - test_pquota_project_before.xfs_quota.bhard == pquota_project_bhard|human_to_bytes
-          - test_pquota_project_before.xfs_quota.isoft == pquota_project_isoft
-          - test_pquota_project_before.xfs_quota.ihard == pquota_project_ihard
-          - test_pquota_project_before.xfs_quota.rtbsoft == pquota_project_rtbsoft|human_to_bytes
-          - test_pquota_project_before.xfs_quota.rtbhard == pquota_project_rtbhard|human_to_bytes
+          - test_pquota_project_before.bsoft == pquota_project_bsoft|human_to_bytes
+          - test_pquota_project_before.bhard == pquota_project_bhard|human_to_bytes
+          - test_pquota_project_before.isoft == pquota_project_isoft
+          - test_pquota_project_before.ihard == pquota_project_ihard
+          - test_pquota_project_before.rtbsoft == pquota_project_rtbsoft|human_to_bytes
+          - test_pquota_project_before.rtbhard == pquota_project_rtbhard|human_to_bytes
 
     - name: 'Re-apply default project limits'
       xfs_quota:
@@ -147,12 +147,12 @@
       assert:
         that:
           - test_reset_pquota_default.changed
-          - test_reset_pquota_default.xfs_quota.bsoft == 0
-          - test_reset_pquota_default.xfs_quota.bhard == 0
-          - test_reset_pquota_default.xfs_quota.isoft == 0
-          - test_reset_pquota_default.xfs_quota.ihard == 0
-          - test_reset_pquota_default.xfs_quota.rtbsoft == 0
-          - test_reset_pquota_default.xfs_quota.rtbhard == 0
+          - test_reset_pquota_default.bsoft == 0
+          - test_reset_pquota_default.bhard == 0
+          - test_reset_pquota_default.isoft == 0
+          - test_reset_pquota_default.ihard == 0
+          - test_reset_pquota_default.rtbsoft == 0
+          - test_reset_pquota_default.rtbhard == 0
 
     - name: 'Reset project limits for xft_quotaval'
       xfs_quota:
@@ -167,12 +167,12 @@
       assert:
         that:
           - test_reset_pquota_project.changed
-          - test_reset_pquota_project.xfs_quota.bsoft == 0
-          - test_reset_pquota_project.xfs_quota.bhard == 0
-          - test_reset_pquota_project.xfs_quota.isoft == 0
-          - test_reset_pquota_project.xfs_quota.ihard == 0
-          - test_reset_pquota_project.xfs_quota.rtbsoft == 0
-          - test_reset_pquota_project.xfs_quota.rtbhard == 0
+          - test_reset_pquota_project.bsoft == 0
+          - test_reset_pquota_project.bhard == 0
+          - test_reset_pquota_project.isoft == 0
+          - test_reset_pquota_project.ihard == 0
+          - test_reset_pquota_project.rtbsoft == 0
+          - test_reset_pquota_project.rtbhard == 0
 
   always:
     - name: 'Unmount filesystem'

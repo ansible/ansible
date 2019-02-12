@@ -36,12 +36,12 @@
       assert:
         that:
           - test_uquota_default_before.changed
-          - test_uquota_default_before.xfs_quota.bsoft == uquota_default_bsoft|human_to_bytes
-          - test_uquota_default_before.xfs_quota.bhard == uquota_default_bhard|human_to_bytes
-          - test_uquota_default_before.xfs_quota.isoft == uquota_default_isoft
-          - test_uquota_default_before.xfs_quota.ihard == uquota_default_ihard
-          - test_uquota_default_before.xfs_quota.rtbsoft == uquota_default_rtbsoft|human_to_bytes
-          - test_uquota_default_before.xfs_quota.rtbhard == uquota_default_rtbhard|human_to_bytes
+          - test_uquota_default_before.bsoft == uquota_default_bsoft|human_to_bytes
+          - test_uquota_default_before.bhard == uquota_default_bhard|human_to_bytes
+          - test_uquota_default_before.isoft == uquota_default_isoft
+          - test_uquota_default_before.ihard == uquota_default_ihard
+          - test_uquota_default_before.rtbsoft == uquota_default_rtbsoft|human_to_bytes
+          - test_uquota_default_before.rtbhard == uquota_default_rtbhard|human_to_bytes
 
     - name: 'Apply user limits'
       xfs_quota:
@@ -61,12 +61,12 @@
       assert:
         that:
           - test_uquota_user_before.changed
-          - test_uquota_user_before.xfs_quota.bsoft == uquota_user_bsoft|human_to_bytes
-          - test_uquota_user_before.xfs_quota.bhard == uquota_user_bhard|human_to_bytes
-          - test_uquota_user_before.xfs_quota.isoft == uquota_user_isoft
-          - test_uquota_user_before.xfs_quota.ihard == uquota_user_ihard
-          - test_uquota_user_before.xfs_quota.rtbsoft == uquota_user_rtbsoft|human_to_bytes
-          - test_uquota_user_before.xfs_quota.rtbhard == uquota_user_rtbhard|human_to_bytes
+          - test_uquota_user_before.bsoft == uquota_user_bsoft|human_to_bytes
+          - test_uquota_user_before.bhard == uquota_user_bhard|human_to_bytes
+          - test_uquota_user_before.isoft == uquota_user_isoft
+          - test_uquota_user_before.ihard == uquota_user_ihard
+          - test_uquota_user_before.rtbsoft == uquota_user_rtbsoft|human_to_bytes
+          - test_uquota_user_before.rtbhard == uquota_user_rtbhard|human_to_bytes
 
     - name: 'Re-apply default user limits'
       xfs_quota:
@@ -117,12 +117,12 @@
       assert:
         that:
           - test_reset_uquota_default.changed
-          - test_reset_uquota_default.xfs_quota.bsoft == 0
-          - test_reset_uquota_default.xfs_quota.bhard == 0
-          - test_reset_uquota_default.xfs_quota.isoft == 0
-          - test_reset_uquota_default.xfs_quota.ihard == 0
-          - test_reset_uquota_default.xfs_quota.rtbsoft == 0
-          - test_reset_uquota_default.xfs_quota.rtbhard == 0
+          - test_reset_uquota_default.bsoft == 0
+          - test_reset_uquota_default.bhard == 0
+          - test_reset_uquota_default.isoft == 0
+          - test_reset_uquota_default.ihard == 0
+          - test_reset_uquota_default.rtbsoft == 0
+          - test_reset_uquota_default.rtbhard == 0
 
     - name: 'Reset user limits for xfsquotauser'
       xfs_quota:
@@ -137,12 +137,12 @@
       assert:
         that:
           - test_reset_uquota_user.changed
-          - test_reset_uquota_user.xfs_quota.bsoft == 0
-          - test_reset_uquota_user.xfs_quota.bhard == 0
-          - test_reset_uquota_user.xfs_quota.isoft == 0
-          - test_reset_uquota_user.xfs_quota.ihard == 0
-          - test_reset_uquota_user.xfs_quota.rtbsoft == 0
-          - test_reset_uquota_user.xfs_quota.rtbhard == 0
+          - test_reset_uquota_user.bsoft == 0
+          - test_reset_uquota_user.bhard == 0
+          - test_reset_uquota_user.isoft == 0
+          - test_reset_uquota_user.ihard == 0
+          - test_reset_uquota_user.rtbsoft == 0
+          - test_reset_uquota_user.rtbhard == 0
 
   always:
     - name: 'Unmount filesystem'
