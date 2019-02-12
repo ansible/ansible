@@ -39,7 +39,7 @@ options:
       - State the action to perform. C(update) to modify system-settings.
     required: true
     type: str
-    choice: ['update']
+    choices: ['update']
   pn_optimize_arps:
     description:
       - enable ARP optimization.
