@@ -39,12 +39,12 @@ options:
 EXAMPLES = """
 - name: return skydive metdata if present based on Name
   set_fact:
-    skydive_meta: "{{ lookup('skydive_lookup', filter={'Name':'test-VirtualBox'}) }}"
+    skydive_meta: "{{ lookup('skydive_lookup', filter={'query': \"G.V().Has('Name', 'sumit-VirtualBox')\"}) }}"
 
 - name: return skydive metdata if present based on TID
   set_fact:
-    skydive: "{{ lookup('skydive_lookup', filter={'TID': '2b5e8263-89d3-5e01-506b-9120f49572b5'},
-                                        provider={'host': 'host:8082', 'username': 'admin', 'password': 'password'}) }}"
+    skydive: "{{ lookup('skydive_lookup', filter={'query': \"G.V().Has('Name', 'sumit-VirtualBox')\"},
+                            provider={'endpoint': 'localhost:8082', 'username': 'admin', 'password': 'password'}) }}"
 """
 
 RETURN = """
@@ -57,7 +57,7 @@ _list:
 
 
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.network.skydive.skydive import skydive_lookup
+from ansible.module_utils.network.skydive.api import skydive_lookup
 from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
 
