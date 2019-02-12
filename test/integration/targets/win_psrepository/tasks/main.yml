@@ -13,18 +13,6 @@
   when: powershell_major_version.stdout | int >= 5
   block:
 
-    - name: update NuGet version
-      win_shell: |
-        $nuget_exists = (Get-PackageProvider | Where-Object { $_.Name -eq 'Nuget' } | Measure-Object).Count -eq 1
-
-        if ( $nuget_exists ) {
-          $nuget_outdated = (Get-PackageProvider -Name NuGet -ErrorAction Ignore).Version -lt [Version]"2.8.5.201"
-        }
-
-        if ( -not $nuget_exists -or $nuget_outdated ) {
-          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-        }
-
     - name: ensure test repository is deleted
       win_psrepository:
         name: '{{ repository_name }}'
