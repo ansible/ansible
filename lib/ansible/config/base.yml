@@ -86,6 +86,7 @@ ANSIBLE_PIPELINING:
     - This can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
+    - This options is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
   env:
     - name: ANSIBLE_PIPELINING
     - name: ANSIBLE_SSH_PIPELINING
@@ -746,7 +747,9 @@ DEFAULT_JINJA2_NATIVE:
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
-  description: Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
+  description:
+    - Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
+    - If this option is enabled it will disable ``ANSIBLE_PIPELINING``.
   env: [{name: ANSIBLE_KEEP_REMOTE_FILES}]
   ini:
   - {key: keep_remote_files, section: defaults}
