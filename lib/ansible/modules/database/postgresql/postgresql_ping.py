@@ -200,7 +200,7 @@ def main():
               if k in params_map and v != "" and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == None or kw["host"] == "localhost"
+    is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
