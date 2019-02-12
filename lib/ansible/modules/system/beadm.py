@@ -250,8 +250,8 @@ class BE(object):
                 # On FreeBSD, we exclude currently mounted BE on /, as it is
                 # special and can be activated even if it is mounted. That is not
                 # possible with non-root BEs.
-                if line.split('\t')[2] is not '-' and \
-                        line.split('\t')[2] is not '/':
+                if line.split('\t')[2] != '-' and \
+                        line.split('\t')[2] != '/':
                     return True
             else:
                 if out.split(';')[3]:

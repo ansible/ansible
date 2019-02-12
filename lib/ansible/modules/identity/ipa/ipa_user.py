@@ -310,7 +310,7 @@ def main():
     # Therefore a small check here to replace list(None) by None. Otherwise get_user_diff() would return sshpubkey
     # as different which should be avoided.
     if module.params['sshpubkey'] is not None:
-        if len(module.params['sshpubkey']) == 1 and module.params['sshpubkey'][0] is "":
+        if len(module.params['sshpubkey']) == 1 and module.params['sshpubkey'][0] == "":
             module.params['sshpubkey'] = None
 
     try:
