@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "update GetBiosBootOrder to use standard Redfish resources (https://github.com/ansible/ansible/issues/47571)"

@@ -561,7 +561,7 @@ class RedfishUtils(object):
         result["entries"] = bios_attributes
         return result
 
-    def get_boot_order(self):
+    def get_bios_boot_order(self):
         result = {}
         # Get these entries from BootOption, if present
         properties = ['DisplayName', 'BootOptionReference']
