@@ -127,20 +127,16 @@ class RedfishUtils(object):
         data = response['data']
         if 'Systems' not in data:
             return {'ret': False, 'msg': "Systems resource not found"}
-        else:
-            systems = data["Systems"]["@odata.id"]
-            response = self.get_request(self.root_uri + systems)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-            if data.get(u'Members'):
-                for member in data[u'Members']:
-                    systems_service = member[u'@odata.id']
-                    self.systems_uri = systems_service
-                    return {'ret': True}
-            else:
-                return {'ret': False,
-                        'msg': "ComputerSystem's Members array is either empty or missing"}
+        response = self.get_request(self.root_uri + data['Systems']['@odata.id'])
+        if response['ret'] is False:
+            return response
+        self.systems_uris = [
+            i['@odata.id'] for i in response['data'].get('Members', [])]
+        if not self.systems_uris:
+            return {
+                'ret': False,
+                'msg': "ComputerSystem's Members array is either empty or missing"}
+        return {'ret': True}
 
     def _find_updateservice_resource(self, uri):
         response = self.get_request(self.root_uri + uri)
@@ -275,7 +271,7 @@ class RedfishUtils(object):
                         return response
         return {'ret': True}
 
-    def get_storage_controller_inventory(self):
+    def get_storage_controller_inventory(self, systems_uri):
         result = {}
         controller_list = []
         controller_results = []
@@ -283,7 +279,7 @@ class RedfishUtils(object):
         properties = ['Name', 'Status']
 
         # Find Storage service
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -317,7 +313,16 @@ class RedfishUtils(object):
         result["entries"] = controller_results
         return result
 
-    def get_disk_inventory(self):
+    def get_multi_storage_controller_inventory(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = self.get_storage_controller_inventory(systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory)
+        return dict(ret=ret, entries=entries)
+
+    def get_disk_inventory(self, systems_uri):
         result = {}
         controller_list = []
         disk_results = []
@@ -325,7 +330,7 @@ class RedfishUtils(object):
         properties = ['Name', 'Manufacturer', 'Model', 'Status', 'CapacityBytes']
 
         # Find Storage service
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         data = response['data']
@@ -360,6 +365,15 @@ class RedfishUtils(object):
         result["entries"] = disk_results
         return result
 
+    def get_multi_disk_inventory(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = self.get_disk_inventory(systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory)
+        return dict(ret=ret, entries=entries)
+
     def restart_manager_gracefully(self):
         result = {}
         key = "Actions"
@@ -378,12 +392,12 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
-    def manage_system_power(self, command):
+    def manage_system_power(self, command, systems_uri):
         result = {}
         key = "Actions"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -418,6 +432,15 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         return result
+
+    def manage_multi_system_power(self, command):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            system = self.manage_system_power(command, systems_uri)
+            ret = system.pop('ret') and ret
+            entries.append(system)
+        return dict(ret=ret, entries=entries)
 
     def list_users(self):
         result = {}
@@ -531,13 +554,13 @@ class RedfishUtils(object):
             result['entries'].append(firmware)
         return result
 
-    def get_bios_attributes(self):
+    def get_bios_attributes(self, systems_uri):
         result = {}
         bios_attributes = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -558,13 +581,22 @@ class RedfishUtils(object):
         result["entries"] = bios_attributes
         return result
 
-    def get_boot_order(self):
+    def get_multi_bios_attributes(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            bios_attributes = self.get_bios_attributes(systems_uri)
+            ret = bios_attributes.pop('ret') and ret
+            entries.append(bios_attributes)
+        return dict(ret=ret, entries=entries)
+
+    def get_boot_order(self, systems_uri):
         result = {}
         # Get these entries from BootOption, if present
         properties = ['DisplayName', 'BootOptionReference']
 
         # Retrieve System resource
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -627,12 +659,21 @@ class RedfishUtils(object):
         result["entries"] = boot_device_list
         return result
 
-    def set_bios_default_settings(self):
+    def get_multi_boot_order(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            boot_order = self.get_boot_order(systems_uri)
+            ret = boot_order.pop('ret') and ret
+            entries.append(boot_order)
+        return dict(ret=ret, entries=entries)
+
+    def set_bios_default_settings(self, systems_uri):
         result = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -656,12 +697,21 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
-    def set_one_time_boot_device(self, bootdevice):
+    def set_multi_bios_default_settings(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            bios_default_settings = self.set_bios_default_settings(systems_uri)
+            ret = bios_default_settings.pop('ret') and ret
+            entries.append(bios_default_settings)
+        return dict(ret=ret, entries=entries)
+
+    def set_one_time_boot_device(self, bootdevice, systems_uri):
         result = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -683,17 +733,26 @@ class RedfishUtils(object):
         else:
             payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
 
-        response = self.patch_request(self.root_uri + self.systems_uri, payload, HEADERS)
+        response = self.patch_request(self.root_uri + systems_uri, payload, HEADERS)
         if response['ret'] is False:
             return response
         return {'ret': True}
 
-    def set_bios_attributes(self, attr):
+    def set_multi_time_boot_device(self, bootdevice):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            boot_device = self.set_one_time_boot_device(bootdevice, systems_uri)
+            ret = boot_device.pop('ret') and ret
+            entries.append(boot_device)
+        return dict(ret=ret, entries=entries)
+
+    def set_bios_attributes(self, attr, systems_uris):
         result = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -729,6 +788,15 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
 
+    def set_multi_bios_attributes(self, attr):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            bios_attributes = self.set_bios_attributes(attr, systems_uri)
+            ret = bios_attributes.pop('ret') and ret
+            entries.append(bios_attributese)
+        return dict(ret=ret, entries=entries)
+
     def get_fan_inventory(self):
         result = {}
         fan_results = []
@@ -762,7 +830,7 @@ class RedfishUtils(object):
                 result["entries"] = fan_results
         return result
 
-    def get_cpu_inventory(self):
+    def get_cpu_inventory(self, systems_uri):
         result = {}
         cpu_list = []
         cpu_results = []
@@ -772,7 +840,7 @@ class RedfishUtils(object):
                       'TotalThreads', 'Status']
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -809,7 +877,16 @@ class RedfishUtils(object):
         result["entries"] = cpu_results
         return result
 
-    def get_nic_inventory(self, resource_type):
+    def get_multi_cpu_inventory(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = self.get_cpu_inventory(systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory)
+        return dict(ret=ret, entries=entries)
+
+    def get_nic_inventory(self, resource_type, systems_uri):
         result = {}
         nic_list = []
         nic_results = []
@@ -821,7 +898,7 @@ class RedfishUtils(object):
 
         #  Given resource_type, use the proper URI
         if resource_type == 'Systems':
-            resource_uri = self.systems_uri
+            resource_uri = systems_uri
         elif resource_type == 'Manager':
             resource_uri = self.manager_uri
 
@@ -862,7 +939,16 @@ class RedfishUtils(object):
         result["entries"] = nic_results
         return result
 
-    def get_psu_inventory(self):
+    def get_multi_nic_inventory(self, resource_type):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = self.get_nic_inventory(resource_type, systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory)
+        return dict(ret=ret, entries=entries)
+
+    def get_psu_inventory(self, systems_uri):
         result = {}
         psu_list = []
         psu_results = []
@@ -873,7 +959,7 @@ class RedfishUtils(object):
                       'Status']
 
         # Get a list of all PSUs and build respective URIs
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -904,7 +990,16 @@ class RedfishUtils(object):
         result["entries"] = psu_results
         return result
 
-    def get_system_inventory(self):
+    def get_multi_psu_inventory(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = self.get_psu_inventory(systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory)
+        return dict(ret=ret, entries=entries)
+
+    def get_system_inventory(self, systems_uri):
         result = {}
         inventory = {}
         # Get these entries, but does not fail if not found
@@ -913,7 +1008,7 @@ class RedfishUtils(object):
                       'SerialNumber', 'BiosVersion', 'MemorySummary',
                       'ProcessorSummary', 'TrustedModules']
 
-        response = self.get_request(self.root_uri + self.systems_uri)
+        response = self.get_request(self.root_uri + systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -925,3 +1020,12 @@ class RedfishUtils(object):
 
         result["entries"] = inventory
         return result
+
+    def get_multi_system_inventory(self):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = self.get_system_inventory(systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory)
+        return dict(ret=ret, entries=entries)
