@@ -102,15 +102,16 @@ Function Get-Checksum-From-Url {
     # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
     Try {
          # TBD implement case for FTP
-         $webResponse = $webRequest.GetResponse()      
+         $webResponse = $webRequest.GetResponse()
          $requestStream = $webResponse.GetResponseStream()
          $readStream = New-Object System.IO.StreamReader $requestStream
          $web_checksum=$readStream.ReadToEnd()
 
-         $basename = Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf
-         $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+" + $basename + "\s*$")
+         $basename = (Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf)
+         $basename = [regex]::Escape($basename)
+         $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+\.?\/?\\?" + $basename + "\s*$")
          if (-not $web_checksum_str) { 
-             throw "Checksum record not found for file name '$basename' in file from url: '$url'" 
+             throw "Checksum record not found for file name '$basename' in file from url: '$url'"
          }
 
         $web_checksum_str_splitted = $web_checksum_str[0].ToString().split(" ", 2)
@@ -124,8 +125,9 @@ Function Get-Checksum-From-Url {
         $module.FailJson("Error get HASH data file from '$url'. $($_.Exception.Message)", $_)
     }
     Finally {
-        $webResponse.Close()
-    }
+        if($webResponse) {
+           $webResponse.Close()
+        }
     if ( [bool]([System.Uri]$url).isFile ) {
         $module.Result.status_code = 200
         $module.Result.msg = 'OK'
@@ -222,12 +224,12 @@ Function CheckModified-File {
         }
         Finally {
             # in case GetResponse timeout, $webResponse == $null
-            if($webResponse) { 
+            if($webResponse) {
                $webResponse.Close()
             }
-            if($webResponsePaired) { 
+            if($webResponsePaired) {
                 $webResponsePaired.Close()
-             } 
+             }
         }
         $module.Result.status_code = [int] $webResponse.StatusCode
         $module.Result.msg = [string] $webResponse.StatusDescription
@@ -238,9 +240,8 @@ Function CheckModified-File {
     }
     if($only_length){
         return $false
-    }
-    # TODO Check for right comparison operator to use: -le ? or -eq 
-    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -eq $fileLastMod)) {
+    } 
+    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
         return $false
     } else {
         return $true
