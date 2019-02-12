@@ -1,0 +1,2 @@
+bugfixes:
+  - playbook_executor - use play ordering when running serial.
