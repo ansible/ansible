@@ -176,7 +176,7 @@ class ActionModule(ActionBase):
         # but continue if reboot is requested
         failed = result.get('failed', False)
         if ("updates" not in result.keys() and self._task.async_val == 0) or \
-            (failed and not (reboot and result.get('reboot_required', False))):
+                (failed and not (reboot and result.get('reboot_required', False))):
             result['failed'] = True
             return result
 
