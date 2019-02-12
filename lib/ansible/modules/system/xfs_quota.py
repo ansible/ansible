@@ -110,7 +110,38 @@ EXAMPLES = r'''
 
 '''
 
-RETURN = ''' # '''
+RETURN = r'''
+bhard:
+    description: the current bhard setting in bytes
+    returned: always
+    type: int
+    sample: 1024
+bsoft:
+    description: the current bsoft setting in bytes
+    returned: always
+    type: int
+    sample: 1024
+ihard:
+    description: the current ihard setting in bytes
+    returned: always
+    type: int
+    sample: 100
+isoft:
+    description: the current isoft setting in bytes
+    returned: always
+    type: int
+    sample: 100
+rtbhard:
+    description: the current rtbhard setting in bytes
+    returned: always
+    type: int
+    sample: 1024
+rtbsoft:
+    description: the current rtbsoft setting in bytes
+    returned: always
+    type: int
+    sample: 1024
+'''
 
 import grp
 import os
