@@ -660,7 +660,7 @@ def main():
             if len(instances) > count:
                 for i in range(0, len(instances) - count):
                     inst = instances[len(instances) - 1]
-                    if inst.status is not 'stopped' and not force:
+                    if inst.status != 'stopped' and not force:
                         module.fail_json(msg="That to delete instance {0} is failed results from it is running, "
                                              "and please stop it or set 'force' as True.".format(inst.id))
                     try:
@@ -765,7 +765,7 @@ def main():
         else:
             try:
                 for inst in instances:
-                    if inst.status is not 'stopped' and not force:
+                    if inst.status != 'stopped' and not force:
                         module.fail_json(msg="Instance is running, and please stop it or set 'force' as True.")
                     if inst.terminate(force=module.params['force']):
                         changed = True
