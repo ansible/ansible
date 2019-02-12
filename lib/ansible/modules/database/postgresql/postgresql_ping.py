@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -13,62 +13,69 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: postgresql_ping
 short_description: Check remote PostgreSQL server availability
 description:
-   - Simple module to check remote PostgreSQL server availability.
+- Simple module to check remote PostgreSQL server availability.
 version_added: "2.8"
 options:
   db:
     description:
-      - Name of database to connect.
+    - Name of database to connect.
+    type: str
   port:
     description:
-      - Database port to connect.
+    - Database port to connect.
+    type: int
     default: 5432
   login_user:
     description:
-      - User (role) used to authenticate with PostgreSQL.
+    - User (role) used to authenticate with PostgreSQL.
+    type: str
     default: postgres
   login_password:
     description:
-      - Password used to authenticate with PostgreSQL.
+    - Password used to authenticate with PostgreSQL.
+    type: str
   login_host:
     description:
-      - Host running PostgreSQL.
+    - Host running PostgreSQL.
+    type: str
   login_unix_socket:
     description:
-      - Path to a Unix domain socket for local connections.
+    - Path to a Unix domain socket for local connections.
+    type: str
   ssl_mode:
     description:
-      - Determines whether or with what priority a secure SSL TCP/IP connection
-        will be negotiated with the server.
-      - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
-        more information on the modes.
-      - Default of C(prefer) matches libpq default.
+    - Determines whether or with what priority a secure SSL TCP/IP connection
+      will be negotiated with the server.
+    - See U(https://www.postgresql.org/docs/current/static/libpq-ssl.html) for
+      more information on the modes.
+    - Default of C(prefer) matches libpq default.
+    type: str
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
     default: prefer
-    choices: ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
   ssl_rootcert:
     description:
-      - Specifies the name of a file containing SSL certificate authority (CA)
-        certificate(s).
-      - If the file exists, the server's certificate will be
-        verified to be signed by one of these authorities.
+    - Specifies the name of a file containing SSL certificate authority (CA)
+      certificate(s).
+    - If the file exists, the server's certificate will be
+      verified to be signed by one of these authorities.
+    type: str
 notes:
-   - The default authentication assumes that you are either logging in as or
-     sudo'ing to the postgres account on the host.
-   - This module uses psycopg2, a Python PostgreSQL database adapter. You must
-     ensure that psycopg2 is installed on the host before using this module. If
-     the remote host is the PostgreSQL server (which is the default case), then
-     PostgreSQL must also be installed on the remote host. For Ubuntu-based
-     systems, install the postgresql, libpq-dev, and python-psycopg2 packages
-     on the remote host before using this module.
+- The default authentication assumes that you are either logging in as or
+  sudo'ing to the postgres account on the host.
+- This module uses psycopg2, a Python PostgreSQL database adapter. You must
+  ensure that psycopg2 is installed on the host before using this module. If
+  the remote host is the PostgreSQL server (which is the default case), then
+  PostgreSQL must also be installed on the remote host. For Ubuntu-based
+  systems, install the postgresql, libpq-dev, and python-psycopg2 packages
+  on the remote host before using this module.
 requirements: [ psycopg2 ]
 author:
-    - Andrew Klychkov (@Andersson007)
+- Andrew Klychkov (@Andersson007)
 '''
 
 EXAMPLES = '''
@@ -89,29 +96,26 @@ EXAMPLES = '''
 
 RETURN = '''
 is_available:
-    description: PostgreSQL server availability.
-    returned: always
-    type: bool
-    sample: true
-
+  description: PostgreSQL server availability.
+  returned: always
+  type: bool
+  sample: true
 server_version:
-    description: PostgreSQL server version.
-    returned: always
-    type: dict
-    sample: { major: 10, minor: 1 }
+  description: PostgreSQL server version.
+  returned: always
+  type: dict
+  sample: { major: 10, minor: 1 }
 '''
 
 
-import traceback
 from fnmatch import fnmatch
 
 try:
     import psycopg2
     import psycopg2.extras
+    HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
-else:
-    HAS_PSYCOPG2 = True
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
@@ -154,8 +158,7 @@ class PgPing(object):
             if res:
                 return res
         except SQLParseError as e:
-            self.module.fail_json(msg=to_native(e),
-                                  exception=traceback.format_exc())
+            self.module.fail_json(msg=to_native(e))
             self.cursor.close()
         except Exception as e:
             self.module.warn("PostgreSQL server is unavailable: %s" % e)
@@ -170,14 +173,13 @@ class PgPing(object):
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
     argument_spec.update(dict(
-        db=dict(default=''),
-        ssl_mode=dict(default='prefer', choices=[
-            'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-        ssl_rootcert=dict(default=None),
+        db=dict(type='str', default=''),
+        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        ssl_rootcert=dict(type='str'),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if not HAS_PSYCOPG2:
@@ -212,7 +214,11 @@ def main():
     # Set some default values:
     cursor = False
     db_connection = False
-    ret_dict = {}
+    result = dict(
+        changed=False,
+        is_available=False,
+        server_version=dict(),
+    )
 
     try:
         db_connection = psycopg2.connect(**kw)
@@ -221,8 +227,7 @@ def main():
         if 'sslrootcert' in e.args[0]:
             module.fail_json(msg='Postgresql server must be at least '
                                  'version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e),
-                         exception=traceback.format_exc())
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
     except Exception as e:
         module.warn("PostgreSQL server is unavailable: %s" % e)
 
@@ -230,14 +235,10 @@ def main():
     pg_ping = PgPing(module, cursor)
     if cursor:
         # If connection established:
-        ret_dict["is_available"], ret_dict["server_version"] = pg_ping.do()
+        result["is_available"], result["server_version"] = pg_ping.do()
         db_connection.rollback()
-    else:
-        # Return if PostgreSQL is unavailable:
-        ret_dict["is_available"], ret_dict["server_version"] = (False, {})
 
-    ret_dict['changed'] = False
-    module.exit_json(**ret_dict)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
