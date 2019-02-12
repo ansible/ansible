@@ -146,8 +146,7 @@ class IntersightModule():
         :return: concatenated authorization header
         """
 
-        auth_str = ""
-        auth_str = auth_str + "Signature"
+        auth_str = "Signature"
 
         auth_str = auth_str + " " + "keyId=\"" + self.public_key + "\"," + "algorithm=\"" + self.digest_algorithm + "\"," + "headers=\"(request-target)"
 

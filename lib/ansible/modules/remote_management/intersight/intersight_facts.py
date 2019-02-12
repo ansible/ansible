@@ -20,7 +20,9 @@ extends_documentation_fragment: intersight
 options:
   server_names:
     description:
-    - Server names to retrieve facts from.  An empty list will return all servers.
+    - Server names to retrieve facts from.
+    - An empty list will return all servers.
+    type: list
     required: yes
 author:
 - David Soper (@dsoper2)
@@ -29,25 +31,25 @@ version_added: '2.8'
 '''
 
 EXAMPLES = r'''
-- name: get facts for all servers
+- name: Get facts for all servers
   intersight_facts:
     api_private_key: ~/Downloads/SecretKey.txt
     api_key_id: 64612d300d0982/64612d300d0b00/64612d300d3650
     server_names:
 - debug:
     msg: "server name {{ item.Name }}, moid {{ item.Moid }}"
-  loop: "{{ ansible_facts.intersight_servers }}"
-  when: ansible_facts.intersight_servers is defined
+  loop: "{{ intersight_servers }}"
+  when: intersight_servers is defined
 
-- name: get facts for servers by name
+- name: Get facts for servers by name
   intersight_facts:
     api_private_key: ~/Downloads/SecretKey.txt
     api_key_id: 64612d300d0982/64612d300d0b00/64612d300d3650
     server_names:
       - SJC18-L14-UCS1-1
 - debug:
-    msg: "server moid {{ ansible_facts.intersight_servers[0].Moid }}"
-  when: ansible_facts.intersight_servers[0] is defined
+    msg: "server moid {{ intersight_servers[0].Moid }}"
+  when: intersight_servers[0] is defined
 '''
 
 RETURN = r'''
@@ -59,10 +61,12 @@ intersight_servers:
     Name:
       description: The name of the server.
       returned: always
+      type: str
       sample: SJC18-L14-UCS1-1
     Moid:
       description: The unique identifier of this Managed Object instance.
       returned: always
+      type: str
       sample: 5978bea36ad4b000018d63dc
 '''
 
@@ -102,7 +106,7 @@ def main():
     intersight = IntersightModule(module)
 
     # one API call returning all requested servers
-    module.exit_json(ansible_facts=dict(intersight_servers=get_servers(module, intersight)))
+    module.exit_json(intersight_servers=get_servers(module, intersight))
 
 
 if __name__ == '__main__':

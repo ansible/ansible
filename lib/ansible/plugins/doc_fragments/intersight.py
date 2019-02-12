@@ -37,14 +37,17 @@ options:
   api_private_key:
     description:
     - 'Filename (absolute path) of a PEM formatted file that contains your private key to be used for Intersight API authentication.'
+    type: path
     required: yes
   api_uri:
     description:
     - URI used to access the Intersight API.
+    type: str
     default: https://intersight.com/api/v1
   api_key_id:
     description:
     - Public API Key ID associated with the private key.
+    type: str
     required: yes
   secure:
     description:

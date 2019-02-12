@@ -19,18 +19,19 @@
   assert:
     that:
       - result.changed == false
-      - "'Name' in result.ansible_facts.intersight_servers[0]"
-      - "'Moid' in result.ansible_facts.intersight_servers[0]"
+      - "'Name' in result.intersight_servers[0]"
+      - "'Moid' in result.intersight_servers[0]"
 
 - name: get facts for servers by name
   intersight_facts:
     <<: *api_info
     server_names:
       - SJC18-L14-UCS1-1
+  register: result2
 
 - name: verify facts does not report a change
   assert:
     that:
       - result.changed == false
-      - "'Name' in result.ansible_facts.intersight_servers[0]"
-      - "'Moid' in result.ansible_facts.intersight_servers[0]"
+      - "'Name' in result2.intersight_servers[0]"
+      - "'Moid' in result2.intersight_servers[0]"
