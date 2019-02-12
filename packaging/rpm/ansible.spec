@@ -1,10 +1,6 @@
 %define name ansible
 %define release_date %(date "+%a %b %e %Y")
 
-%if 0%{?rhel} == 5
-%define __python2 /usr/bin/python26
-%endif
-
 Name:      %{name}
 Version:   %{rpmversion}
 Release:   %{rpmrelease}%{?dist}%{?repotag}
@@ -14,26 +10,13 @@ License:   GPLv3+
 Group:     Development/Libraries
 Source:    https://releases.ansible.com/ansible/%{name}-%{upstream_version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-%{!?__python2: %global __python2 /usr/bin/python2.7}
-%{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
-
-# RHEL <=5
-%if 0%{?rhel} && 0%{?rhel} <= 5
-BuildRequires: python26-devel
-BuildRequires: python26-setuptools
-Requires: python26-PyYAML
-Requires: python26-paramiko
-Requires: python26-jinja2
-Requires: python26-httplib2
-Requires: python26-setuptools
-Requires: python26-six
-%endif
 
 # RHEL == 6
 %if 0%{?rhel} == 6
 Requires: python-crypto
+Requires: python2-rpm-macros
 %endif
 
 # RHEL >=7
@@ -78,6 +61,8 @@ Requires: python-six
 
 Requires: sshpass
 
+%{!?python2_sitelib: %global python2_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
+
 %description
 
 Ansible is a radically simple model-driven configuration management,
@@ -103,8 +88,8 @@ done
 
 # Amazon Linux doesn't install to dist-packages but python_sitelib expands to
 # that location and the python interpreter expects things to be there.
-if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
-    DEST_DIR='%{buildroot}%{python_sitelib}'
+if expr x'%{python2_sitelib}' : 'x.*dist-packages/\?' ; then
+    DEST_DIR='%{buildroot}%{python2_sitelib}'
     SOURCE_DIR=$(echo "$DEST_DIR" | sed 's/dist-packages/site-packages/g')
     if test -d "$SOURCE_DIR" -a ! -d "$DEST_DIR" ; then
         mv $SOURCE_DIR $DEST_DIR
@@ -124,8 +109,8 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
-%{python_sitelib}/ansible/
-%{python_sitelib}/ansible-*.egg-info
+%{python2_sitelib}/ansible/
+%{python2_sitelib}/ansible-*.egg-info
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible
