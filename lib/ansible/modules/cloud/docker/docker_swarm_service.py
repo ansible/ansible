@@ -438,7 +438,7 @@ options:
     type: str
     default: stop-first
     description:
-      - Rollback order (“start-first”|”stop-first”) ().
+      - Rollback order ("start-first"|"stop-first").
       - Corresponds to the C(--rollback-order) option of C(docker service create).
       - Requires API version >= 1.29.
   user:
