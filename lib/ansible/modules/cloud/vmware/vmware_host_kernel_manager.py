@@ -111,8 +111,8 @@ class VmwareKernelManager(PyVmomi):
         cluster_name = self.params.get('cluster_name', None)
         esxi_host_name = self.params.get('esxi_hostname', None)
         self.hosts = self.get_all_host_objs(cluster_name=cluster_name, esxi_host_name=esxi_host_name)
-        self.kernel_module_name = self.params.get('kernel_module_name') # string
-        self.kernel_module_option = self.params.get('kernel_module_option') # string
+        self.kernel_module_name = self.params.get('kernel_module_name')
+        self.kernel_module_option = self.params.get('kernel_module_option')
         self.results = {}
 
         if not self.hosts:
@@ -125,9 +125,7 @@ class VmwareKernelManager(PyVmomi):
         try:
             configured_module_options = host_kernel_manager.QueryConfiguredModuleOptionString(self.kernel_module_name)
         except vim.fault.NotFound as kernel_fault:
-            self.module.fail_json(
-            msg="Failed to find kernel module on host '%s'. More information : %s" % (host.name, to_native(kernel_fault.msg))
-            )
+            self.module.fail_json(msg="Failed to find kernel module on host '%s'. More information: %s" % (host.name, to_native(kernel_fault.msg)))
 
         return configured_module_options
 
@@ -158,11 +156,11 @@ class VmwareKernelManager(PyVmomi):
                 host_kernel_manager = host.configManager.kernelModuleSystem
 
                 if host_kernel_manager:
-                    #keep track of original options on the kernel module
+                    # keep track of original options on the kernel module
                     original_options = self.get_kernel_module_option(host, self.kernel_module_name)
                     desired_options = self.kernel_module_option
 
-                    #apply as needed, also depending on check mode
+                    # apply as needed, also depending on check mode
                     if original_options != desired_options:
                         if self.module.check_mode:
                             msg = "Options would be changed on the kernel module"
@@ -190,6 +188,7 @@ class VmwareKernelManager(PyVmomi):
 
         self.module.exit_json(changed=any(change_list), results=self.results)
 
+
 def main():
     argument_spec = vmware_argument_spec()
     # add the arguments we're going to use for this module
@@ -215,6 +214,7 @@ def main():
 
     vmware_host_config = VmwareKernelManager(module)
     vmware_host_config.check_host_configuration_state()
+
 
 if __name__ == '__main__':
     main()
