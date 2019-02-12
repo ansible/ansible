@@ -98,10 +98,8 @@ def generate_ansible_template_vars(path, dest_path=None):
         'template_uid': to_text(template_uid),
         'template_fullpath': os.path.abspath(path),
         'template_run_date': datetime.datetime.now(),
+        'template_destpath': to_native(dest_path) if dest_path else None,
     }
-
-    if dest_path:
-        temp_vars['template_destpath'] = to_native(dest_path)
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
