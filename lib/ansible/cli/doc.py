@@ -283,6 +283,10 @@ class DocCLI(CLI):
             display.vvvv("%s does not exist" % path)
             return plugin_list
 
+        if not os.path.isdir(path):
+            display.vvvv("%s is not a directory" % path)
+            return plugin_list
+
         bkey = ptype.upper()
         for plugin in os.listdir(path):
             display.vvvv("Found %s" % plugin)
