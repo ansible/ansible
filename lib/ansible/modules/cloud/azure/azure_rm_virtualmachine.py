@@ -1641,7 +1641,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         try:
             self.storage_client.storage_accounts.delete(self.resource_group, name)
         except Exception as exc:
-            self.fail("Error deleting storage account {0} - {2}".format(name, str(exc)))
+            self.fail("Error deleting storage account {0} - {1}".format(name, str(exc)))
         return True
 
     def delete_vm_storage(self, vhd_uris):
