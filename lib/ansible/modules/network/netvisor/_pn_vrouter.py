@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_vrouter
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to create/delete/modify a vrouter.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute vrouter-create, vrouter-delete, vrouter-modify command.
   - Each fabric, cluster, standalone switch, or virtual network (VNET) can
@@ -50,6 +54,7 @@ options:
     description:
       - Target switch(es) to run the CLI on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to create vrouter,
@@ -112,6 +117,9 @@ options:
     description:
       - Specify other OSPF options as a whitespaces separated string within
         single quotes ''.
+  pn_vrrp_track_port:
+    description:
+      - Specify list of ports and port ranges.
 """
 
 EXAMPLES = """

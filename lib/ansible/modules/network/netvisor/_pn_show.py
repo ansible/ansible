@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_show
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: Run show commands on nvOS device.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute show command in the nodes and returns the results
     read from the device.
@@ -51,8 +55,9 @@ options:
     required: true
   pn_parameters:
     description:
-      - Display output using a specific parameter. Use 'all' to display possible
-        output. List of comma separated parameters.
+      - Display output using a specific parameter. Use 'all' to display
+        possible output. List of comma separated parameters.
+    default: 'all'
   pn_options:
     description:
       - Specify formatting options.
