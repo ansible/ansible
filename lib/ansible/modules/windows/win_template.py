@@ -134,5 +134,5 @@ backup_file:
     description: Name of the backup file that was created.
     returned: if backup=yes
     type: str
-    sample: C:\Path\To\File.txt.20150212-220915.bak
+    sample: C:\Path\To\File.txt.11540.20150212-220915.bak
 '''
