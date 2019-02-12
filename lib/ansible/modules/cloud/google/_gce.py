@@ -20,6 +20,10 @@ description:
        U(https://cloud.google.com/compute) for an overview.
        Full install/configuration instructions for the gce* modules can
        be found in the comments of ansible/test/gce_tests.py.
+deprecated:
+    removed_in: "2.12"
+    why: Updated modules released with increased functionality
+    alternative: Use M(gcp_compute_instance) instead.
 options:
   image:
     description:
