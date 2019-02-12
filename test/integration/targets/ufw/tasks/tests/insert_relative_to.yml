@@ -1,0 +1,80 @@
+---
+- name: Enable
+  ufw:
+    state: enabled
+  register: enable
+
+# ## CREATE RULES ############################
+- name: ipv4
+  ufw:
+    rule: deny
+    port: 22
+    to_ip: 0.0.0.0
+- name: ipv4
+  ufw:
+    rule: deny
+    port: 23
+    to_ip: 0.0.0.0
+
+- name: ipv6
+  ufw:
+    rule: deny
+    port: 122
+    to_ip: "::"
+- name: ipv6
+  ufw:
+    rule: deny
+    port: 123
+    to_ip: "::"
+
+- name: first-ipv4
+  ufw:
+    rule: deny
+    port: 10
+    to_ip: 0.0.0.0
+    insert: 0
+    insert_relative_to: first-ipv4
+- name: last-ipv4
+  ufw:
+    rule: deny
+    port: 11
+    to_ip: 0.0.0.0
+    insert: 0
+    insert_relative_to: last-ipv4
+
+- name: first-ipv6
+  ufw:
+    rule: deny
+    port: 110
+    to_ip: "::"
+    insert: 0
+    insert_relative_to: first-ipv6
+- name: last-ipv6
+  ufw:
+    rule: deny
+    port: 111
+    to_ip: "::"
+    insert: 0
+    insert_relative_to: last-ipv6
+
+# ## CHECK RESULT ############################
+- name: Get rules
+  shell: |
+    ufw status | grep DENY | cut -f 1-2 -d ' ' | grep -E "^(0\.0\.0\.0|::) [123]+"
+  # Note that there was also a rule "ff02::fb mDNS" on at least one CI run;
+  # to ignore these, the extra filtering (grepping for DENY and the regex) makes
+  # sure to remove all rules not added here.
+  register: ufw_status
+- assert:
+    that:
+    - ufw_status.stdout_lines == expected_stdout
+  vars:
+    expected_stdout:
+    - "0.0.0.0 10"
+    - "0.0.0.0 22"
+    - "0.0.0.0 11"
+    - "0.0.0.0 23"
+    - ":: 110"
+    - ":: 122"
+    - ":: 111"
+    - ":: 123"
