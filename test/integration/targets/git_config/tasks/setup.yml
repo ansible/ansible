@@ -1,0 +1,11 @@
+---
+- name: verify that git is installed so this test can continue
+  command: which git
+  register: git_installed
+  ignore_errors: yes
+
+- name: get git version, only newer than {{git_version_supporting_includes}} has includes option
+  shell: "git --version | grep 'git version' | sed 's/git version //'"
+  register: git_version
+  ignore_errors: yes
+...
