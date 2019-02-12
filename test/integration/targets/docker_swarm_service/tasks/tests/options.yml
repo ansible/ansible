@@ -704,8 +704,8 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     env:
-      - "TEST1=val1"
-      - "TEST2=val2"
+      TEST1: val1
+      TEST2: val2
   register: env_2
 
 - name: env (changes)
@@ -734,6 +734,25 @@
     env: []
   register: env_5
 
+- name: env (fail unwrapped values)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env:
+      TEST1: true
+  register: env_6
+  ignore_errors: yes
+
+- name: env (fail invalid formatted string)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env:
+      - "TEST1=val3"
+      - "TEST2"
+  register: env_7
+  ignore_errors: yes
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -747,6 +766,85 @@
       - env_3 is changed
       - env_4 is changed
       - env_5 is not changed
+      - env_6 is failed
+      - env_7 is failed
+
+####################################################################
+## env_files #######################################################
+####################################################################
+
+- name: env_files
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files:
+      - "{{ role_path }}/files/env-file-1"
+  register: env_file_1
+
+- name: env_files (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files:
+      - "{{ role_path }}/files/env-file-1"
+  register: env_file_2
+
+- name: env_files (more items)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files:
+      - "{{ role_path }}/files/env-file-1"
+      - "{{ role_path }}/files/env-file-2"
+  register: env_file_3
+
+- name: env_files (order)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files:
+      - "{{ role_path }}/files/env-file-2"
+      - "{{ role_path }}/files/env-file-1"
+  register: env_file_4
+
+- name: env_files (multiple idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files:
+      - "{{ role_path }}/files/env-file-2"
+      - "{{ role_path }}/files/env-file-1"
+  register: env_file_5
+
+- name: env_files (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files: []
+  register: env_file_6
+
+- name: env_files (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    env_files: []
+  register: env_file_7
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - env_file_1 is changed
+    - env_file_2 is not changed
+    - env_file_3 is changed
+    - env_file_4 is changed
+    - env_file_5 is not changed
+    - env_file_6 is changed
+    - env_file_7 is not changed
 
 ###################################################################
 ## force_update ###################################################
