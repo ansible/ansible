@@ -24,7 +24,7 @@
 $params = Parse-Args $args -supports_check_mode $true
 
 $name = Get-AnsibleParam -obj $params "name" -type "str" -failifempty $true
-$repo = Get-AnsibleParam -obj $params "repository" -type "str" 
+$repo = Get-AnsibleParam -obj $params "repository" -type "str"
 $url = Get-AnsibleParam -obj $params "url" -type "str"
 $state = Get-AnsibleParam -obj $params "state" -type "str" -default "present" -validateset "present", "absent"
 $allow_clobber = Get-AnsibleParam -obj $params "allow_clobber" -type "bool" -default $false
@@ -39,8 +39,8 @@ Function Install-NugetProvider {
   param(
     [bool]$CheckMode
     )
-  $PackageProvider = Get-PackageProvider -ListAvailable|?{($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201")}
-  if (!($PackageProvider)){
+  $PackageProvider = Get-PackageProvider -ListAvailable| Where-Object {($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201")}
+  if (-not ($PackageProvider)){
       try{
         Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
         $result.changed = $true
@@ -64,10 +64,11 @@ Function Install-Repository {
     $Repo = (Get-PSRepository).SourceLocation
 
     # If repository isn't already present, try to register it as trusted.
-    if ($Repo -notcontains $Url){ 
+    if ($Repo -notcontains $Url){
       try {
-           if (!($CheckMode)) {
-               Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop       
+           if (-not($CheckMode)) {
+              Install-NugetProvider
+              Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
            }
           $result.changed = $true
           $result.repository_changed = $true
@@ -90,8 +91,8 @@ Function Remove-Repository{
 
     # Try to remove the repository
     if ($Repo -contains $Name){
-        try {         
-            if (!($CheckMode)) {
+        try {
+            if (-not ($CheckMode)) {
                 Unregister-PSRepository -Name $Name -ErrorAction Stop
             }
             $result.changed = $true
@@ -111,10 +112,10 @@ Function Install-PsModule {
       [bool]$AllowClobber,
       [bool]$CheckMode
     )
-    if (Get-Module -Listavailable|?{$_.name -eq $Name}){
+    if (Get-Module -Listavailable| Where-Object {$_.name -eq $Name}){
         $result.output = "Module $($Name) already present"
     }
-    else {      
+    else {
       try{
         # Install NuGet Provider if needed
         Install-NugetProvider -CheckMode $CheckMode
@@ -143,7 +144,7 @@ Function Remove-PsModule {
       [bool]$CheckMode
     )
     # If module is present, unistalls it.
-    if (Get-Module -Listavailable|?{$_.name -eq $Name}){
+    if (Get-Module -Listavailable| Where-Object {$_.name -eq $Name}){
       try{
         Uninstall-Module -Name $Name -Confirm:$false -Force -ErrorAction Stop -WhatIf:$CheckMode | out-null
         $result.output = "Module $($Name) removed"
@@ -169,15 +170,15 @@ if ($PsVersion.Major -lt 5){
 
 if ($state -eq "present") {
     if (($repo) -and ($url)) {
-        Install-Repository -Name $repo -Url $url -CheckMode $check_mode 
+        Install-Repository -Name $repo -Url $url -CheckMode $check_mode
     }
     else {
         $ErrorMessage = "Repository Name and Url are mandatory if you want to add a new repository"
     }
     Install-PsModule -Name $Name -CheckMode $check_mode -AllowClobber $allow_clobber
 }
-else {  
-    if ($repo) {   
+else {
+    if ($repo) {
         Remove-Repository -Name $repo -CheckMode $check_mode
     }
     Remove-PsModule -Name $Name -CheckMode $check_mode
