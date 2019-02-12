@@ -163,7 +163,7 @@ class RoleRequirement(RoleDefinition):
         run_scm_cmd(clone_cmd, tempdir)
 
         if scm == 'git' and version:
-            checkout_cmd = [scm_path, 'checkout', version]
+            checkout_cmd = [scm_path, 'checkout', str(version)]
             run_scm_cmd(checkout_cmd, os.path.join(tempdir, name))
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar', dir=C.DEFAULT_LOCAL_TMP)
