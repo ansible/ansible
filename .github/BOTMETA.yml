@@ -131,15 +131,23 @@ files:
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
-  $modules/cloud/misc/ovirt.py:
-    ignored: vincentvdk skvidal
-    maintainers: joshainglis karmab machacekondra mwperina
-  $modules/cloud/misc/virt.py: $team_ansible
+  $modules/cloud/misc/ovirt.py: &virt
+    ignored: skvidal vincentvdk
+    keywords: [ kvm, libvirt, ovirt, proxmox, qemu, RHEV, RHV ]
+    labels: [ cloud, virt ]
+    maintainers: $team_virt
+  $modules/cloud/misc/proxmox.py: *virt
+  $modules/cloud/misc/proxmox_kvm.py: *virt
+  $modules/cloud/misc/proxmox_template.py: *virt
+  $modules/cloud/misc/rhevm.py: *virt
+  $modules/cloud/misc/virt.py: *virt
+  $modules/cloud/misc/virt_net.py: *virt
+  $modules/cloud/misc/virt_pool.py: *virt
   $modules/cloud/misc/xenserver_facts.py:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
-  $modules/cloud/ovirt/: machacekondra mwperina
+  $modules/cloud/ovirt/: *virt
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
     ignored: sivel angstwad
@@ -150,16 +158,15 @@ files:
     labels: solaris
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
-  $modules/cloud/vmware/:
+  $modules/cloud/vmware/: &vmware
     ignored: cigamit jcpowermac mtnbikenc
-    labels: [ esx, vcenter, vcsa, vsphere ]
+    keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
+    labels: vmware
     maintainers: $team_vmware
-  $modules/cloud/vmware/vmware_host.py: dagwieers
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
-  $modules/cloud/vmware/_vsphere_guest.py: dagwieers
-  $modules/cloud/vultr/:
+  $modules/cloud/vultr/: &vultr
+    labels: [ cloud, vultr ]
     maintainers: $team_vultr
-    labels: cloud
   $modules/cloud/webfaction/: quentinsf
   $modules/cloud/xenserver/xenserver_guest.py: bvitnik
   $modules/clustering/k8s/:
@@ -439,7 +446,7 @@ files:
   $modules/web_infrastructure/jira.py: Slezhuk
   $modules/windows/: &windows
     ignored: angstwad georgefrank h0nIg
-    keywords: [ powershell, psrp, winrm ]
+    keywords: [ credssp, hyperv, powershell, psrp, winrm ]
     maintainers: $team_windows
     labels: windows
   $modules/windows/win_security_policy.py:
@@ -473,11 +480,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  contrib/inventory/ovirt4.py:
-    maintainers: machacekondra
-    labels:
-      - ovirt
-      - cloud
+  contrib/inventory/ovirt4.py: *virt
   contrib/inventory/infoblox.py:
     keywords:
       - infoblox dynamic inventory script
@@ -742,10 +745,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  $module_utils/ovirt.py:
-    maintainers: joshainglis karmab machacekondra
-    labels:
-      - cloud
+  $module_utils/ovirt.py: *virt
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
   $module_utils/pure.py:
@@ -764,12 +764,8 @@ files:
       - cloud
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
-  $module_utils/vmware:
-    maintainers: $team_vmware
-  $module_utils/vultr.py: &vultr
-    maintainers: $team_vultr
-    labels:
-      - cloud
+  $module_utils/vmware: *vmware
+  $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
       maintainers: bvitnik
 
@@ -1051,9 +1047,7 @@ files:
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/postgres.py: *postgresql
-  $plugins/doc_fragments/vultr.py:
-    maintainers: $team_vultr
-    labels: cloud
+  $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
 ###############################
@@ -1296,9 +1290,7 @@ files:
     maintainers: $team_ucs
     labels:
       - remote_management
-  test/integration/targets/vultr:
-    maintainers: $team_vultr
-    labels: cloud
+  test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
   test/legacy/scaleway:
@@ -1376,6 +1368,7 @@ macros:
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
   team_vmware: Akasurde dav1x warthog9 ckotte
+  team_virt: joshainglis karmab machacekondra mwperina
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
