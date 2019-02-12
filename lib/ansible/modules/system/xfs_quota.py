@@ -28,7 +28,7 @@ author:
 options:
   type:
     description:
-      - The xfs quota type.
+      - The XFS quota type.
     type: str
     required: true
     choices:
