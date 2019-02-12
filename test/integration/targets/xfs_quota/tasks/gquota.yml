@@ -1,4 +1,4 @@
-
+---
 - name: 'Create disk image'
   command: >
     dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img-gquota bs=1M count=20
@@ -18,9 +18,6 @@
         opts: gquota
         state: mounted
       become: True
-
-#    - include_tasks: gquota-default.yml
-#    - include_tasks: gquota-group.yml
 
     - name: 'Apply default group limits'
       xfs_quota:
@@ -94,9 +91,6 @@
           - test_gquota_group_bsoft_after.xfs_quota.rtbsoft == gquota_group_rtbsoft|human_to_bytes
           - test_gquota_group_bsoft_after.xfs_quota.rtbhard == gquota_group_rthard|human_to_bytes
 
-
-
-
   always:
     - name: 'Unmount filesystem'
       mount:
@@ -109,5 +103,3 @@
       file:
         path: '{{ ansible_user_dir }}/ansible_testing/img-gquota'
         state: absent
-
-

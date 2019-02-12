@@ -1,4 +1,4 @@
-
+---
 - name: 'Create disk image'
   command: >
     dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img-pquota bs=1M count=20
@@ -121,7 +121,6 @@
           - test_pquota_project_bsoft_after.xfs_quota.rtbsoft == pquota_project_rtbsoft|human_to_bytes
           - test_pquota_project_bsoft_after.xfs_quota.rtbhard == pquota_project_rthard|human_to_bytes
 
-
   always:
     - name: 'Unmount filesystem'
       mount:
@@ -148,5 +147,3 @@
         regexp: '^99999:.*$'
         state: absent
       become: True
-
-
