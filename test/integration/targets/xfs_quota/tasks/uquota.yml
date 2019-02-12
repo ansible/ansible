@@ -1,0 +1,109 @@
+
+- name: 'Create disk image'
+  command: >
+    dd if=/dev/zero of={{ ansible_user_dir }}/ansible_testing/img-uquota bs=1M count=20
+
+- name: 'Create XFS filesystem'
+  filesystem:
+    dev: '{{ ansible_user_dir }}/ansible_testing/img-uquota'
+    fstype: xfs
+
+- block:
+    - name: 'Mount filesystem'
+      mount:
+        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
+        src: '{{ ansible_user_dir }}/ansible_testing/img-uquota'
+        path: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        fstype: xfs
+        opts: uquota
+        state: mounted
+      become: True
+
+
+    - name: 'Apply default user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_default_bsoft }}'
+        bhard: '{{ uquota_default_bhard }}'
+        isoft: '{{ uquota_default_isoft }}'
+        ihard: '{{ uquota_default_ihard }}'
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        rtbsoft: '{{ uquota_default_rtbsoft }}'
+        rtbhard: '{{ uquota_default_rthard }}'
+        type: user
+      become: True
+      register: test_uquota_default_bsoft_before
+
+    - name: 'Apply user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_user_bsoft }}'
+        bhard: '{{ uquota_user_bhard }}'
+        isoft: '{{ uquota_user_isoft }}'
+        ihard: '{{ uquota_user_ihard }}'
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        name: xfsquotauser
+        rtbsoft: '{{ uquota_user_rtbsoft }}'
+        rtbhard: '{{ uquota_user_rthard }}'
+        type: user
+      become: True
+      register: test_uquota_user_bsoft_before
+
+    - name: 'Re-apply default user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_default_bsoft }}'
+        bhard: '{{ uquota_default_bhard }}'
+        isoft: '{{ uquota_default_isoft }}'
+        ihard: '{{ uquota_default_ihard }}'
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        rtbsoft: '{{ uquota_default_rtbsoft }}'
+        rtbhard: '{{ uquota_default_rthard }}'
+        type: user
+      become: True
+      register: test_uquota_default_bsoft_after
+
+    - name: 'Re-apply user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_user_bsoft }}'
+        bhard: '{{ uquota_user_bhard }}'
+        isoft: '{{ uquota_user_isoft }}'
+        ihard: '{{ uquota_user_ihard }}'
+        mountpoint: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        name: xfsquotauser
+        rtbsoft: '{{ uquota_user_rtbsoft }}'
+        rtbhard: '{{ uquota_user_rthard }}'
+        type: user
+      become: True
+      register: test_uquota_user_bsoft_after
+
+    - name: 'Evaluate user quotas'
+      assert:
+        that:
+          - not test_uquota_default_bsoft_after.changed
+          - test_uquota_default_bsoft_after.xfs_quota.bsoft == uquota_default_bsoft|human_to_bytes
+          - test_uquota_default_bsoft_after.xfs_quota.bhard == uquota_default_bhard|human_to_bytes
+          - test_uquota_default_bsoft_after.xfs_quota.isoft == uquota_default_isoft|human_to_bytes
+          - test_uquota_default_bsoft_after.xfs_quota.ihard == uquota_default_ihard|human_to_bytes
+          - test_uquota_default_bsoft_after.xfs_quota.rtbsoft == uquota_default_rtbsoft|human_to_bytes
+          - test_uquota_default_bsoft_after.xfs_quota.rtbhard == uquota_default_rthard|human_to_bytes
+          - not test_uquota_user_bsoft_after.changed
+          - test_uquota_user_bsoft_after.xfs_quota.bsoft == uquota_user_bsoft|human_to_bytes
+          - test_uquota_user_bsoft_after.xfs_quota.bhard == uquota_user_bhard|human_to_bytes
+          - test_uquota_user_bsoft_after.xfs_quota.isoft == uquota_user_isoft|human_to_bytes
+          - test_uquota_user_bsoft_after.xfs_quota.ihard == uquota_user_ihard|human_to_bytes
+          - test_uquota_user_bsoft_after.xfs_quota.rtbsoft == uquota_user_rtbsoft|human_to_bytes
+          - test_uquota_user_bsoft_after.xfs_quota.rtbhard == uquota_user_rthard|human_to_bytes
+
+
+  always:
+    - name: 'Unmount filesystem'
+      mount:
+        fstab: '{{ ansible_user_dir }}/ansible_testing/fstab'
+        path: '{{ ansible_user_dir }}/ansible_testing/uquota'
+        state: unmounted
+      become: True
+
+    - name: Remove disk image
+      file:
+        path: '{{ ansible_user_dir }}/ansible_testing/img-uquota'
+        state: absent
+
+
