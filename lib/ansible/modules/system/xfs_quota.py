@@ -176,14 +176,10 @@ def main():
         if name is None:
             name = quota_default
 
-        if 'uquota' not in mp['mntopts'] \
-                and 'usrquota' not in mp['mntopts'] \
-                and 'quota' not in mp['mntopts'] \
-                and 'uqnoenforce' not in mp['mntopts'] \
-                and 'qnoenforce' not in mp['mntopts']:
+        if 'uquota' not in mp['mntopts'] and 'usrquota' not in mp['mntopts'] and 'quota' not in mp['mntopts'] and 'uqnoenforce' not in mp['mntopts'] and \
+                'qnoenforce' not in mp['mntopts']:
             module.fail_json(
-                msg="Path '%s' is not mounted with the uquota/usrquota/quota/uqnoenforce/qnoenforce option."
-                    % mountpoint, **result
+                msg="Path '%s' is not mounted with the uquota/usrquota/quota/uqnoenforce/qnoenforce option." % mountpoint, **result
             )
         try:
             pwd.getpwnam(name)
@@ -198,8 +194,7 @@ def main():
 
         if 'gquota' not in mp['mntopts'] and 'grpquota' not in mp['mntopts'] and 'gqnoenforce' not in mp['mntopts']:
             module.fail_json(
-                msg="Path '%s' is not mounted with the gquota/grpquota/gqnoenforce option. (current options: %s)"
-                    % (mountpoint, mp['mntopts']), **result
+                msg="Path '%s' is not mounted with the gquota/grpquota/gqnoenforce option. (current options: %s)" % (mountpoint, mp['mntopts']), **result
             )
         try:
             grp.getgrnam(name)
@@ -280,27 +275,27 @@ def main():
     limit = []
     if bsoft is not None and int(bsoft) != current_bsoft:
         limit.append('bsoft=%s' % bsoft)
-        result['xfs_quota']['bsoft'] = int(bsoft)
+        result['bsoft'] = int(bsoft)
 
     if bhard is not None and int(bhard) != current_bhard:
         limit.append('bhard=%s' % bhard)
-        result['xfs_quota']['bhard'] = int(bhard)
+        result['bhard'] = int(bhard)
 
     if isoft is not None and isoft != current_isoft:
         limit.append('isoft=%s' % isoft)
-        result['xfs_quota']['isoft'] = isoft
+        result['isoft'] = isoft
 
     if ihard is not None and ihard != current_ihard:
         limit.append('ihard=%s' % ihard)
-        result['xfs_quota']['ihard'] = ihard
+        result['ihard'] = ihard
 
     if rtbsoft is not None and int(rtbsoft) != current_rtbsoft:
         limit.append('rtbsoft=%s' % rtbsoft)
-        result['xfs_quota']['rtbsoft'] = int(rtbsoft)
+        result['rtbsoft'] = int(rtbsoft)
 
     if rtbhard is not None and int(rtbhard) != current_rtbhard:
         limit.append('rtbhard=%s' % rtbhard)
-        result['xfs_quota']['rtbhard'] = int(rtbhard)
+        result['rtbhard'] = int(rtbhard)
 
     if len(limit) > 0 and not module.check_mode:
         if name == quota_default:
