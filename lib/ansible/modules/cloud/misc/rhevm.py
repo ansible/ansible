@@ -1378,7 +1378,7 @@ def core(module):
 
             # Set VM Host
             vmhost = module.params.get('vmhost')
-            if vmhost is not False and vmhost is not "False":
+            if vmhost is not False and vmhost != "False":
                 if r.setVMHost(vminfo['name'], vmhost) is False:
                     return RHEV_FAILED, msg
 
