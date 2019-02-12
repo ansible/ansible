@@ -37,6 +37,24 @@ using an import, a task can notify any of the named tasks within the imported fi
 
 To achieve the results of notifying a single name but running mulitple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
 
+Jinja Undefined values
+----------------------
+
+Beginning in version 2.8, attempting to access an attribute of an Undefined value in Jinja will return another Undefined value, rather than throwing an error immediately. This means that you can now simply use
+a default with a value in a nested data structure when you don't know if the intermediate values are defined.
+
+In Ansible 2.8::
+
+    {{ foo.bar.baz | default('DEFAULT') }}
+
+In Ansible 2.7 and older::
+
+    {{ ((foo | default({})).bar | default({})).baz | default('DEFAULT') }}
+    
+    or
+    
+    {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
+
 Command Line
 ============
 
