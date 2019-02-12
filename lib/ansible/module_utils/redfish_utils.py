@@ -747,7 +747,7 @@ class RedfishUtils(object):
             entries.append(boot_device)
         return dict(ret=ret, entries=entries)
 
-    def set_bios_attributes(self, attr, systems_uris):
+    def set_bios_attributes(self, attr, systems_uri):
         result = {}
         key = "Bios"
 
@@ -794,7 +794,7 @@ class RedfishUtils(object):
         for systems_uri in self.systems_uris:
             bios_attributes = self.set_bios_attributes(attr, systems_uri)
             ret = bios_attributes.pop('ret') and ret
-            entries.append(bios_attributese)
+            entries.append(bios_attributes)
         return dict(ret=ret, entries=entries)
 
     def get_fan_inventory(self):
