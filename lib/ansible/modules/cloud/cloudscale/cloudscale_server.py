@@ -81,6 +81,9 @@ options:
     description:
       - Cloud-init configuration (cloud-config) data to use for the server.
   api_timeout:
+    description:
+      - Timeout in seconds for calls to the cloudscale.ch API.
+    default: 30
     version_added: "2.5"
 extends_documentation_fragment: cloudscale
 '''
