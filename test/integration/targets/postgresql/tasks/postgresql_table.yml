@@ -23,7 +23,7 @@
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
-      - result.owner == 'postgres'
+      - result.owner == "{{ pg_user }}"
 
 # Create a table LILE another table without any additional parameters:
 - name: postgresql_table - create table like
@@ -45,7 +45,7 @@
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
-      - result.owner == 'postgres'
+      - result.owner == "{{ pg_user }}"
 
 # Drop a table:
 - name: postgresql_table - drop table
@@ -66,10 +66,10 @@
       - result.state == 'absent'
       - result.storage_params == []
       - result.tablespace == ""
-      - result.owner == 'postgres'
+      - result.owner == "{{ pg_user }}"
 
 # Create a table like another table including:
-- name: postgresql_table - create table like with including comments and indexes
+- name: postgresql_table - create table like with including indexes
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_table:
@@ -77,18 +77,18 @@
     login_user: "{{ pg_user }}"
     name: test2
     like: test1
-    including: comments,indexes
+    including: indexes
   register: result
   ignore_errors: yes
 
 - assert:
     that:
       - result.changed == true
-      - result.query == 'CREATE TABLE test2 (LIKE test1 INCLUDING comments INCLUDING indexes)'
+      - result.query == 'CREATE TABLE test2 (LIKE test1 INCLUDING indexes)'
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
-      - result.owner == 'postgres'
+      - result.owner == "{{ pg_user }}"
 
 # Check to create table if it exists:
 - name: postgresql_table - try to create existing table again
@@ -99,7 +99,7 @@
     login_user: "{{ pg_user }}"
     name: test2
     like: test1
-    including: comments, indexes
+    including: indexes
   register: result
   ignore_errors: yes
 
