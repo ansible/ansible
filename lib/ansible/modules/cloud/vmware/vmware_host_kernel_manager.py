@@ -54,9 +54,9 @@ options:
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 - name: Configure IPv6 to be off via tcpip4 kernel module
-vmware_host_kernel_manager:
+  vmware_host_kernel_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
@@ -65,7 +65,7 @@ vmware_host_kernel_manager:
     kernel_module_option: "ipv6=0"
 
 - name: Using cluster_name, configure vmw_psp_rr options
-vmware_host_kernel_manager:
+  vmware_host_kernel_manager:
     hostname: '{{ vcenter_hostname }}'
     username: '{{ vcenter_username }}'
     password: '{{ vcenter_password }}'
@@ -76,7 +76,7 @@ vmware_host_kernel_manager:
 
 RETURN = r'''
 results:
-    description::
+    description:
     - dict with information on what was changed, by ESXi host
     returned: success
     type: dict
@@ -123,8 +123,7 @@ class VmwareKernelManager(PyVmomi):
             configured_module_options = host_kernel_manager.QueryConfiguredModuleOptionString(self.kernel_module_name)
         except vim.fault.NotFound as kernel_fault:
             self.module.fail_json(
-            msg="Failed to find kernel module on host '%s'. More information : %s" %
-                (host.name, to_native(kernel_fault.msg) )
+            msg="Failed to find kernel module on host '%s'. More information : %s" % (host.name, to_native(kernel_fault.msg))
             )
 
         return configured_module_options
@@ -186,7 +185,7 @@ class VmwareKernelManager(PyVmomi):
                 self.results[host.name]['changed'] = changed
                 self.results[host.name]['msg'] = msg
 
-        self.module.exit_json(changed=any(change_list),results=self.results)
+        self.module.exit_json(changed=any(change_list), results=self.results)
 
 def main():
     argument_spec = vmware_argument_spec()
