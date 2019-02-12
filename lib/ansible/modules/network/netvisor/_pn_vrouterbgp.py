@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_vrouterbgp
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to add/remove/modify vrouter-bgp.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute vrouter-bgp-add, vrouter-bgp-remove, vrouter-bgp-modify command.
   - Each fabric, cluster, standalone switch, or virtual network (VNET) can
@@ -47,6 +51,7 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
       - State the action to perform. Use 'present' to add bgp,

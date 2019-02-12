@@ -19,7 +19,7 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -29,6 +29,10 @@ module: pn_ospf
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
 short_description: CLI command to add/remove ospf protocol to a vRouter.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
   - Execute vrouter-ospf-add, vrouter-ospf-remove command.
   - This command adds/removes Open Shortest Path First(OSPF) routing
@@ -46,6 +50,7 @@ options:
     description:
       - Target switch to run the CLI on.
     required: False
+    default: 'local'
   state:
     description:
       - Assert the state of the ospf. Use 'present' to add ospf

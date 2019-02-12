@@ -1,5 +1,5 @@
 #!/usr/bin/python
-""" PN CLI vrouter-loopback-interface-add/remove """
+""" PN CLI vlan-create/vlan-delete """
 
 #
 # This file is part of Ansible
@@ -19,22 +19,25 @@
 #
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 DOCUMENTATION = """
 ---
-module: pn_vrouterlbif
+module: pn_vlan
 author: "Pluribus Networks (@amitsi)"
 version_added: "2.2"
-short_description: CLI command to add/remove vrouter-loopback-interface.
+short_description: CLI command to create/delete a VLAN.
+deprecated:
+  removed_in: '2.12'
+  why: Doesn't support latest Pluribus Networks netvisor
+  alternative: Latest modules will be pushed in Ansible future versions.
 description:
-  - Execute vrouter-loopback-interface-add, vrouter-loopback-interface-remove
-    commands.
-  - Each fabric, cluster, standalone switch, or virtual network (VNET) can
-    provide its tenants with a virtual router (vRouter) service that forwards
-    traffic between networks and implements Layer 3 protocols.
+  - Execute vlan-create or vlan-delete command.
+  - VLANs are used to isolate network traffic at Layer 2.The VLAN identifiers
+    0 and 4095 are reserved and cannot be used per the IEEE 802.1Q standard.
+    The range of configurable VLAN identifiers is 2 through 4092.
 options:
   pn_cliusername:
     description:
@@ -48,37 +51,53 @@ options:
     description:
       - Target switch(es) to run the cli on.
     required: False
+    default: 'local'
   state:
     description:
-      - State the action to perform. Use 'present' to add vrouter loopback
-        interface and 'absent' to remove vrouter loopback interface.
+      - State the action to perform. Use 'present' to create vlan and
+        'absent' to delete vlan.
     required: True
     choices: ['present', 'absent']
-  pn_vrouter_name:
+  pn_vlanid:
     description:
-      - Specify the name of the vRouter.
+      - Specify a VLAN identifier for the VLAN. This is a value between
+        2 and 4092.
     required: True
-  pn_index:
+  pn_scope:
     description:
-      - Specify the interface index from 1 to 255.
-  pn_interface_ip:
+      - Specify a scope for the VLAN.
+      - Required for vlan-create.
+    choices: ['fabric', 'local']
+  pn_description:
     description:
-      - Specify the IP address.
-    required: True
+      - Specify a description for the VLAN.
+  pn_stats:
+    description:
+      - Specify if you want to collect statistics for a VLAN. Statistic
+        collection is enabled by default.
+    type: bool
+  pn_ports:
+    description:
+      - Specifies the switch network data port number, list of ports, or range
+        of ports. Port numbers must ne in the range of 1 to 64.
+  pn_untagged_ports:
+    description:
+      - Specifies the ports that should have untagged packets mapped to the
+        VLAN. Untagged packets are packets that do not contain IEEE 802.1Q VLAN
+        tags.
 """
 
 EXAMPLES = """
-- name: add vrouter-loopback-interface
-  pn_vrouterlbif:
+- name: create a VLAN
+  pn_vlan:
     state: 'present'
-    pn_vrouter_name: 'ansible-vrouter'
-    pn_interface_ip: '104.104.104.1'
+    pn_vlanid: 1854
+    pn_scope: fabric
 
-- name: remove vrouter-loopback-interface
-  pn_vrouterlbif:
+- name: delete VLANs
+  pn_vlan:
     state: 'absent'
-    pn_vrouter_name: 'ansible-vrouter'
-    pn_interface_ip: '104.104.104.1'
+    pn_vlanid: 1854
 """
 
 RETURN = """
@@ -87,11 +106,11 @@ command:
   returned: always
   type: str
 stdout:
-  description: The set of responses from the vrouterlb command.
+  description: The set of responses from the vlan command.
   returned: always
   type: list
 stderr:
-  description: The set of error responses from the vrouterlb command.
+  description: The set of error responses from the vlan command.
   returned: on error
   type: list
 changed:
@@ -102,14 +121,12 @@ changed:
 
 import shlex
 
-# Ansible boiler-plate
+# AnsibleModule boilerplate
 from ansible.module_utils.basic import AnsibleModule
 
-VROUTER_EXISTS = None
-LB_INTERFACE_EXISTS = None
-# Index range
-MIN_INDEX = 1
-MAX_INDEX = 255
+VLAN_EXISTS = None
+MAX_VLAN_ID = 4092
+MIN_VLAN_ID = 2
 
 
 def pn_cli(module):
@@ -137,45 +154,26 @@ def pn_cli(module):
 
 def check_cli(module, cli):
     """
-    This method checks if vRouter exists on the target node.
-    This method also checks for idempotency using the
-    vrouter-loopback-interface-show command.
-    If the given vRouter exists, return VROUTER_EXISTS as True else False.
-    If a loopback interface with the given ip exists on the given vRouter,
-    return LB_INTERFACE_EXISTS as True else False.
-
+    This method checks for idempotency using the vlan-show command.
+    If a vlan with given vlan id exists, return VLAN_EXISTS as True else False.
     :param module: The Ansible module to fetch input parameters
     :param cli: The CLI string
-    :return Global Booleans: VROUTER_EXISTS, LB_INTERFACE_EXISTS
+    :return Global Booleans: VLAN_EXISTS
     """
-    vrouter_name = module.params['pn_vrouter_name']
-    interface_ip = module.params['pn_interface_ip']
+    vlanid = module.params['pn_vlanid']
 
-    # Global flags
-    global VROUTER_EXISTS, LB_INTERFACE_EXISTS
-
-    # Check for vRouter
-    check_vrouter = cli + ' vrouter-show format name no-show-headers '
-    check_vrouter = shlex.split(check_vrouter)
-    out = module.run_command(check_vrouter)[1]
-    out = out.split()
-
-    if vrouter_name in out:
-        VROUTER_EXISTS = True
-    else:
-        VROUTER_EXISTS = False
-
-    # Check for loopback interface
-    show = (cli + ' vrouter-loopback-interface-show vrouter-name %s format ip '
-            'no-show-headers' % vrouter_name)
+    show = cli + \
+        ' vlan-show id %s format id,scope no-show-headers' % str(vlanid)
     show = shlex.split(show)
     out = module.run_command(show)[1]
-    out = out.split()
 
-    if interface_ip in out:
-        LB_INTERFACE_EXISTS = True
+    out = out.split()
+    # Global flags
+    global VLAN_EXISTS
+    if str(vlanid) in out:
+        VLAN_EXISTS = True
     else:
-        LB_INTERFACE_EXISTS = False
+        VLAN_EXISTS = False
 
 
 def run_cli(module, cli):
@@ -190,7 +188,6 @@ def run_cli(module, cli):
     command = get_command_from_state(state)
 
     cmd = shlex.split(cli)
-
     # 'out' contains the output
     # 'err' contains the error messages
     result, out, err = module.run_command(cmd)
@@ -198,6 +195,7 @@ def run_cli(module, cli):
     print_cli = cli.split(cliswitch)[1]
 
     # Response in JSON format
+
     if result != 0:
         module.exit_json(
             command=print_cli,
@@ -230,14 +228,14 @@ def get_command_from_state(state):
     """
     command = None
     if state == 'present':
-        command = 'vrouter-loopback-interface-add'
+        command = 'vlan-create'
     if state == 'absent':
-        command = 'vrouter-loopback-interface-remove'
+        command = 'vlan-delete'
     return command
 
 
 def main():
-    """ This portion is for arguments parsing """
+    """ This section is for arguments parsing """
     module = AnsibleModule(
         argument_spec=dict(
             pn_cliusername=dict(required=False, type='str'),
@@ -245,82 +243,74 @@ def main():
             pn_cliswitch=dict(required=False, type='str', default='local'),
             state=dict(required=True, type='str',
                        choices=['present', 'absent']),
-            pn_vrouter_name=dict(required=True, type='str'),
-            pn_interface_ip=dict(type='str'),
-            pn_index=dict(type='int')
+            pn_vlanid=dict(required=True, type='int'),
+            pn_scope=dict(type='str', choices=['fabric', 'local']),
+            pn_description=dict(type='str'),
+            pn_stats=dict(type='bool'),
+            pn_ports=dict(type='str'),
+            pn_untagged_ports=dict(type='str')
         ),
         required_if=(
-            ["state", "present",
-             ["pn_vrouter_name", "pn_interface_ip"]],
-            ["state", "absent",
-             ["pn_vrouter_name", "pn_interface_ip"]]
+            ["state", "present", ["pn_vlanid", "pn_scope"]],
+            ["state", "absent", ["pn_vlanid"]]
         )
     )
 
     # Accessing the arguments
     state = module.params['state']
-    vrouter_name = module.params['pn_vrouter_name']
-    interface_ip = module.params['pn_interface_ip']
-    index = module.params['pn_index']
+    vlanid = module.params['pn_vlanid']
+    scope = module.params['pn_scope']
+    description = module.params['pn_description']
+    stats = module.params['pn_stats']
+    ports = module.params['pn_ports']
+    untagged_ports = module.params['pn_untagged_ports']
 
     command = get_command_from_state(state)
 
     # Building the CLI command string
     cli = pn_cli(module)
 
-    if index:
-        if not MIN_INDEX <= index <= MAX_INDEX:
-            module.exit_json(
-                msg="Index must be between 1 and 255",
-                changed=False
-            )
-        index = str(index)
+    if not MIN_VLAN_ID <= vlanid <= MAX_VLAN_ID:
+        module.exit_json(
+            msg="VLAN id must be between 2 and 4092",
+            changed=False
+        )
 
-    if command == 'vrouter-loopback-interface-remove':
+    if command == 'vlan-create':
+
         check_cli(module, cli)
-        if VROUTER_EXISTS is False:
+        if VLAN_EXISTS is True:
             module.exit_json(
                 skipped=True,
-                msg='vRouter %s does not exist' % vrouter_name
+                msg='VLAN with id %s already exists' % str(vlanid)
             )
-        if LB_INTERFACE_EXISTS is False:
-            module.exit_json(
-                skipped=True,
-                msg=('Loopback interface with IP %s does not exist on %s'
-                     % (interface_ip, vrouter_name))
-            )
-        if not index:
-            # To remove loopback interface, we need the index.
-            # If index is not specified, get the Loopback interface index
-            # using the given interface ip.
-            get_index = cli
-            get_index += (' vrouter-loopback-interface-show vrouter-name %s ip '
-                          '%s ' % (vrouter_name, interface_ip))
-            get_index += 'format index no-show-headers'
 
-            get_index = shlex.split(get_index)
-            out = module.run_command(get_index)[1]
-            index = out.split()[1]
+        cli += ' %s id %s scope %s ' % (command, str(vlanid), scope)
 
-        cli += ' %s vrouter-name %s index %s' % (command, vrouter_name, index)
+        if description:
+            cli += ' description ' + description
 
-    if command == 'vrouter-loopback-interface-add':
+        if stats is True:
+            cli += ' stats '
+        if stats is False:
+            cli += ' no-stats '
+
+        if ports:
+            cli += ' ports ' + ports
+
+        if untagged_ports:
+            cli += ' untagged-ports ' + untagged_ports
+
+    if command == 'vlan-delete':
+
         check_cli(module, cli)
-        if VROUTER_EXISTS is False:
+        if VLAN_EXISTS is False:
             module.exit_json(
                 skipped=True,
-                msg=('vRouter %s does not exist' % vrouter_name)
+                msg='VLAN with id %s does not exist' % str(vlanid)
             )
-        if LB_INTERFACE_EXISTS is True:
-            module.exit_json(
-                skipped=True,
-                msg=('Loopback interface with IP %s already exists on %s'
-                     % (interface_ip, vrouter_name))
-            )
-        cli += (' %s vrouter-name %s ip %s'
-                % (command, vrouter_name, interface_ip))
-        if index:
-            cli += ' index %s ' % index
+
+        cli += ' %s id %s ' % (command, str(vlanid))
 
     run_cli(module, cli)
 
