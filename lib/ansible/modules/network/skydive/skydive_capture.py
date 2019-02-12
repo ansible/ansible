@@ -58,6 +58,11 @@ options:
       - To define flow capture ReassembleTCP.
     type: bool
     default: false
+  layer_key_mode:
+    description:
+      - To define flow capture Layer KeyMode.
+    type: str
+    default: L2
   state:
     description:
       - State of the flow capture. If value is I(present) flow capture
@@ -69,7 +74,7 @@ options:
 """
 
 EXAMPLES = """
-- name: add a skydive capture
+- name: start a new flow capture on the given node(s)
   skydive_capture:
     name: Node1
     capture_type: myhost
@@ -83,7 +88,7 @@ EXAMPLES = """
       username: admin
       password: admin
 
-- name: remove a skydive capture
+- name: stop the flow capture
   skydive_capture:
     name: Node1
     capture_type: myhost
@@ -100,7 +105,7 @@ EXAMPLES = """
 RETURN = """ # """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.skydive.skydive import skydive_flow_topology
+from ansible.module_utils.network.skydive.api import skydive_flow_topology
 
 
 def main():
@@ -113,7 +118,7 @@ def main():
         extra_tcp_metric=dict(type='bool', required=False, ib_req=True, default=False),
         ip_defrag=dict(type='bool', required=False, ib_req=True, default=False),
         reassemble_tcp=dict(type='bool', required=False, ib_req=True, default=False),
-        ssl=dict(type='bool', default=False)
+        layer_key_mode=dict(required=False, ib_req=True, default='L2')
     )
 
     argument_spec = dict(
