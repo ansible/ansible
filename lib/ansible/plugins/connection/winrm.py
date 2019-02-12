@@ -469,7 +469,7 @@ class Connection(ConnectionBase):
 
             return response
         except requests.exceptions.ConnectionError as exc:
-            raise AnsibleConnectionFailure('winrm connection error: %s' % exc)
+            raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
         finally:
             if command_id:
                 self.protocol.cleanup_command(self.shell_id, command_id)
