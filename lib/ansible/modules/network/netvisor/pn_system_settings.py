@@ -14,7 +14,7 @@ DOCUMENTATION = """
 ---
 module: pn_system_settings
 author: "Pluribus Networks (@rajaspachipulusu17)"
-version: "2.8"
+version_added: "2.8"
 short_description: CLI command to modify system-settings
 description:
   - This module can be used to update system settings.
@@ -39,7 +39,7 @@ options:
       - State the action to perform. C(update) to modify system-settings.
     required: true
     type: str
-    choices: ['update']
+    choice: ['update']
   pn_optimize_arps:
     description:
       - enable ARP optimization.
@@ -187,14 +187,10 @@ EXAMPLES = """
     pn_cliswitch: "sw01"
     state: "update"
     pn_policy_based_routing: True
-
-- name: Modify system settings
-  pn_system_settings:
-    pn_cliusername: "foo"
-    pn_clipassword: "foo123"
-    pn_cliswitch: "sw01"
-    state: "update"
     pn_auto_trunk: False
+    pn_optimize_arps: True
+    pn_optimize_nd: True
+    pn_lldp: True
 """
 
 RETURN = """
@@ -367,7 +363,7 @@ def main():
 
     if out is not None:
         if RESTART_STR in out:
-            cli = pn_cli(module, switch, username, password)
+            cli = pn_cli(module, cliswitch, username, password)
             cli += ' switch-reboot '
             aggr_cli += ' and ' + cli
             out = run_cli(module, cli, state_map)
@@ -376,14 +372,14 @@ def main():
         module.exit_json(
             command=aggr_cli,
             stdout=aggr_out.strip(),
-            msg="system-settings %s operation completed" % action,
+            msg="%s operation completed" % state_map[state],
             changed=True
         )
     else:
         module.exit_json(
             command=aggr_cli,
             stdout=aggr_out.strip(),
-            msg="system-settings %s operation completed" % action,
+            msg="%s operation completed" % state_map[state],
             changed=True
         )
 
