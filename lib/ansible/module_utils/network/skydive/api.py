@@ -147,7 +147,6 @@ class skydive_flow_topology(skydive_restclient):
             if current_ref:
                 # iterating over the captured list and get capture uuid
                 uuid = None
-                # q(capture_str, captured_list_objs)
                 for each_capture in captured_list_objs:
                     if capture_str == each_capture.__dict__['query']:
                         uuid = each_capture.__dict__['uuid']
