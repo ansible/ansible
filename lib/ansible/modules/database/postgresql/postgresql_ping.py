@@ -78,7 +78,7 @@ author:
 - Andrew Klychkov (@Andersson007)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # PostgreSQL ping dbsrv server from the shell:
 # ansible dbsrv -m postgresql_ping
 
@@ -94,7 +94,7 @@ EXAMPLES = '''
     ssl_mode: verify-full
 '''
 
-RETURN = '''
+RETURN = r'''
 is_available:
   description: PostgreSQL server availability.
   returned: always
@@ -112,14 +112,13 @@ from fnmatch import fnmatch
 
 try:
     import psycopg2
-    import psycopg2.extras
     HAS_PSYCOPG2 = True
 except ImportError:
     HAS_PSYCOPG2 = False
 
-import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
 
@@ -171,12 +170,12 @@ class PgPing(object):
 
 
 def main():
-    argument_spec = pgutils.postgres_common_argument_spec()
-    argument_spec.update(dict(
-        db=dict(type='str', default=''),
+    argument_spec = postgres_common_argument_spec()
+    argument_spec.update(
+        db=dict(type='str'),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
-    ))
+    )
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
@@ -203,7 +202,7 @@ def main():
               if k in params_map and v != "" and v is not None)
 
     # If a login_unix_socket is specified, incorporate it here.
-    is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+    is_localhost = "host" not in kw or kw["host"] == None or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
 
