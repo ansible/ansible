@@ -1,0 +1,4 @@
+minor_changes:
+    - >-
+      slack: Explicitly set Content-Type header to "application/json" for
+      improved compatibility with non-Slack chat systems
