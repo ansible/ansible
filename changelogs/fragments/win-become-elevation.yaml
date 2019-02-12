@@ -1,0 +1,2 @@
+bugfixes:
+- win become - Fix some scenarios where become failed to create an elevated process

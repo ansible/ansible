@@ -207,6 +207,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -262,6 +263,25 @@ namespace Ansible
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    public struct LUID
+    {
+        public UInt32 LowPart;
+        public Int32 HighPart;
+
+        public static explicit operator UInt64(LUID l)
+        {
+            return (UInt64)((UInt64)l.HighPart << 32) | (UInt64)l.LowPart;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct LUID_AND_ATTRIBUTES
+    {
+        public LUID Luid;
+        public UInt32 Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     public struct PROCESS_INFORMATION
     {
         public IntPtr hProcess;
@@ -275,6 +295,14 @@ namespace Ansible
     {
         public IntPtr Sid;
         public int Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct TOKEN_PRIVILEGES
+    {
+        public UInt32 PrivilegeCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public LUID_AND_ATTRIBUTES[] Privileges;
     }
 
     public struct TOKEN_USER
@@ -355,6 +383,7 @@ namespace Ansible
     public enum TokenInformationClass
     {
         TokenUser = 1,
+        TokenPrivileges = 3,
         TokenType = 8,
         TokenImpersonationLevel = 9,
         TokenElevationType = 18,
@@ -408,6 +437,26 @@ namespace Ansible
         public NativeWaitHandle(IntPtr handle)
         {
             this.SafeWaitHandle = new SafeWaitHandle(handle, false);
+        }
+    }
+
+    class SafeMemoryBuffer : SafeHandleZeroOrMinusOneIsInvalid
+    {
+        public SafeMemoryBuffer() : base(true) { }
+        public SafeMemoryBuffer(int cb) : base(true)
+        {
+            base.SetHandle(Marshal.AllocHGlobal(cb));
+        }
+        public SafeMemoryBuffer(IntPtr handle) : base(true)
+        {
+            base.SetHandle(handle);
+        }
+
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
+        protected override bool ReleaseHandle()
+        {
+            Marshal.FreeHGlobal(handle);
+            return true;
         }
     }
 
@@ -548,35 +597,28 @@ namespace Ansible
         private static extern bool GetTokenInformation(
             IntPtr TokenHandle,
             TokenInformationClass TokenInformationClass,
-            IntPtr TokenInformation,
+            SafeMemoryBuffer TokenInformation,
             uint TokenInformationLength,
             out uint ReturnLength);
 
-        [DllImport("psapi.dll", SetLastError = true)]
-        private static extern bool EnumProcesses(
-            [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.U4)]
-                [In][Out] IntPtr[] processIds,
-            uint cb,
-            [MarshalAs(UnmanagedType.U4)]
-                out uint pBytesReturned);
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool LookupPrivilegeNameW(
+            string lpSystemName,
+            ref LUID lpLuid,
+            StringBuilder lpName,
+            ref UInt32 cchName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr OpenProcess(
             ProcessAccessFlags processAccess,
             bool bInheritHandle,
-            IntPtr processId);
+            UInt32 processId);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool OpenProcessToken(
             IntPtr ProcessHandle,
             TokenAccessLevels DesiredAccess,
             out IntPtr TokenHandle);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        private static extern bool ConvertSidToStringSidW(
-            IntPtr pSID,
-            [MarshalAs(UnmanagedType.LPTStr)]
-            out string StringSid);
 
         [DllImport("advapi32", SetLastError = true)]
         private static extern bool DuplicateTokenEx(
@@ -757,7 +799,6 @@ namespace Ansible
 
             try
             {
-                IntPtr hSystemTokenDup = IntPtr.Zero;
                 if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
                 {
                     // We need the SYSTEM token if we want to become one of those accounts, fail here
@@ -765,28 +806,13 @@ namespace Ansible
                 }
                 else if (hSystemToken != IntPtr.Zero)
                 {
-                    // We have the token, need to duplicate and impersonate
-                    bool dupResult = DuplicateTokenEx(
-                        hSystemToken,
-                        TokenAccessLevels.MaximumAllowed,
-                        IntPtr.Zero,
-                        SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                        TOKEN_TYPE.TokenPrimary,
-                        out hSystemTokenDup);
-                    int lastError = Marshal.GetLastWin32Error();
-                    CloseHandle(hSystemToken);
-
-                    if (!dupResult && service_sids.Contains(account_sid))
-                        throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
-                    else if (dupResult && account_sid != "S-1-5-18")
-                    {
-                        if (ImpersonateLoggedOnUser(hSystemTokenDup))
-                            impersonated = true;
-                        else if (service_sids.Contains(account_sid))
-                            throw new Win32Exception("Failed to impersonate as SYSTEM account");
-                    }
                     // If SYSTEM impersonation failed but we're trying to become a regular user, just proceed;
                     // might get a limited token in UAC-enabled cases, but better than nothing...
+                    if (ImpersonateLoggedOnUser(hSystemToken))
+                        impersonated = true;
+                    else if (service_sids.Contains(account_sid))
+                        throw new Win32Exception("Failed to impersonate as SYSTEM account");
+
                 }
 
                 string domain = null;
@@ -800,7 +826,7 @@ namespace Ansible
                     switch (account_sid)
                     {
                         case "S-1-5-18":
-                            tokens.Add(hSystemTokenDup);
+                            tokens.Add(hSystemToken);
                             return tokens;
                         case "S-1-5-19":
                             username = "LocalService";
@@ -858,44 +884,59 @@ namespace Ansible
 
         private static IntPtr GetSystemUserHandle()
         {
-            uint array_byte_size = 1024 * sizeof(uint);
-            IntPtr[] pids = new IntPtr[1024];
-            uint bytes_copied;
+            // According to CreateProcessWithTokenW we require a token with
+            //  TOKEN_QUERY, TOKEN_DUPLICATE and TOKEN_ASSIGN_PRIMARY
+            // Also add in TOKEN_IMPERSONATE so we can get an impersontated token
+            TokenAccessLevels desired_access = TokenAccessLevels.Query |
+                TokenAccessLevels.Duplicate |
+                TokenAccessLevels.AssignPrimary |
+                TokenAccessLevels.Impersonate;
 
-            if (!EnumProcesses(pids, array_byte_size, out bytes_copied))
+            foreach (System.Diagnostics.Process process in System.Diagnostics.Process.GetProcesses())
             {
-                throw new Win32Exception("Failed to enumerate processes");
-            }
-            // TODO: Handle if bytes_copied is larger than the array size and rerun EnumProcesses with larger array
-            uint num_processes = bytes_copied / sizeof(uint);
-
-            for (uint i = 0; i < num_processes; i++)
-            {
-                IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_QUERY_INFORMATION, false, pids[i]);
-                if (hProcess != IntPtr.Zero)
+                using (process)
                 {
-                    IntPtr hToken = IntPtr.Zero;
-                    // According to CreateProcessWithTokenW we require a token with
-                    //  TOKEN_QUERY, TOKEN_DUPLICATE and TOKEN_ASSIGN_PRIMARY
-                    // Also add in TOKEN_IMPERSONATE so we can get an impersontated token
-                    TokenAccessLevels desired_access = TokenAccessLevels.Query |
-                        TokenAccessLevels.Duplicate |
-                        TokenAccessLevels.AssignPrimary |
-                        TokenAccessLevels.Impersonate;
+                    IntPtr hProcess = OpenProcess(ProcessAccessFlags.PROCESS_QUERY_INFORMATION, false, (UInt32)process.Id);
+                    if (hProcess == IntPtr.Zero)
+                        continue;
 
-                    if (OpenProcessToken(hProcess, desired_access, out hToken))
+                    try
                     {
-                        string sid = GetTokenUserSID(hToken);
-                        if (sid == "S-1-5-18")
+                        IntPtr hToken = IntPtr.Zero;
+                        if (!OpenProcessToken(hProcess, desired_access, out hToken))
+                            continue;
+
+                        try
                         {
-                            CloseHandle(hProcess);
-                            return hToken;
+                            string sid = GetTokenUserSID(hToken);
+                            if (sid != "S-1-5-18")
+                                continue;
+
+                            // Make sure the SYSTEM token we are checking contains the SeTcbPrivilege required for
+                            // escalation. Some SYSTEM tokens have this privilege stripped out.
+                            List<string> actualPrivileges = GetTokenPrivileges(hToken);
+                            if (!actualPrivileges.Contains("SeTcbPrivilege"))
+                                continue;
+
+                            IntPtr dupToken = IntPtr.Zero;
+                            if (!DuplicateTokenEx(hToken, TokenAccessLevels.MaximumAllowed, IntPtr.Zero,
+                                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation, TOKEN_TYPE.TokenPrimary,
+                                out dupToken))
+                            {
+                                continue;
+                            }
+                            return dupToken;
+                        }
+                        finally
+                        {
+                            CloseHandle(hToken);
                         }
                     }
-
-                    CloseHandle(hToken);
+                    finally
+                    {
+                        CloseHandle(hProcess);
+                    }
                 }
-                CloseHandle(hProcess);
             }
 
             return IntPtr.Zero;
@@ -903,33 +944,12 @@ namespace Ansible
 
         private static string GetTokenUserSID(IntPtr hToken)
         {
-            uint token_length;
-            string sid;
-
-            if (!GetTokenInformation(hToken, TokenInformationClass.TokenUser, IntPtr.Zero, 0, out token_length))
+            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, TokenInformationClass.TokenUser))
             {
-                int last_err = Marshal.GetLastWin32Error();
-                if (last_err != 122) // ERROR_INSUFFICIENT_BUFFER
-                    throw new Win32Exception(last_err, "Failed to get TokenUser length");
+                TOKEN_USER tokenUser = (TOKEN_USER)Marshal.PtrToStructure(tokenInfo.DangerousGetHandle(),
+                    typeof(TOKEN_USER));
+                return new SecurityIdentifier(tokenUser.User.Sid).Value;
             }
-
-            IntPtr token_information = Marshal.AllocHGlobal((int)token_length);
-            try
-            {
-                if (!GetTokenInformation(hToken, TokenInformationClass.TokenUser, token_information, token_length, out token_length))
-                    throw new Win32Exception("Failed to get TokenUser information");
-
-                TOKEN_USER token_user = (TOKEN_USER)Marshal.PtrToStructure(token_information, typeof(TOKEN_USER));
-
-                if (!ConvertSidToStringSidW(token_user.User.Sid, out sid))
-                    throw new Win32Exception("Failed to get user SID");
-            }
-            finally
-            {
-                Marshal.FreeHGlobal(token_information);
-            }
-
-            return sid;
         }
 
         private static void GetProcessOutput(StreamReader stdoutStream, StreamReader stderrStream, out string stdout, out string stderr)
@@ -964,38 +984,65 @@ namespace Ansible
 
         private static IntPtr GetElevatedToken(IntPtr hToken)
         {
-            uint requestedLength;
-
-            IntPtr pTokenInfo = Marshal.AllocHGlobal(sizeof(int));
-
-            try
+            // First determine if the current token is a limited token
+            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, TokenInformationClass.TokenElevationType))
             {
-                if (!GetTokenInformation(hToken, TokenInformationClass.TokenElevationType, pTokenInfo, sizeof(int), out requestedLength))
-                    throw new Win32Exception("Unable to get TokenElevationType");
-
-                var tet = (TokenElevationType)Marshal.ReadInt32(pTokenInfo);
-
-                // we already have the best token we can get, just use it
+                TokenElevationType tet = (TokenElevationType)Marshal.ReadInt32(tokenInfo.DangerousGetHandle());
+                // We already have the best token we can get, just use it
                 if (tet != TokenElevationType.TokenElevationTypeLimited)
                     return hToken;
-
-                GetTokenInformation(hToken, TokenInformationClass.TokenLinkedToken, IntPtr.Zero, 0, out requestedLength);
-
-                IntPtr pLinkedToken = Marshal.AllocHGlobal((int)requestedLength);
-
-                if (!GetTokenInformation(hToken, TokenInformationClass.TokenLinkedToken, pLinkedToken, requestedLength, out requestedLength))
-                    throw new Win32Exception("Unable to get linked token");
-
-                IntPtr linkedToken = Marshal.ReadIntPtr(pLinkedToken);
-
-                Marshal.FreeHGlobal(pLinkedToken);
-
-                return linkedToken;
             }
-            finally
+
+            // We have a limited token, get the linked elevated token
+            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, TokenInformationClass.TokenLinkedToken))
+                return Marshal.ReadIntPtr(tokenInfo.DangerousGetHandle());
+        }
+
+        private static List<string> GetTokenPrivileges(IntPtr hToken)
+        {
+            using (SafeMemoryBuffer tokenInfo = GetTokenInformation(hToken, TokenInformationClass.TokenPrivileges))
             {
-                Marshal.FreeHGlobal(pTokenInfo);
+                TOKEN_PRIVILEGES tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+                    tokenInfo.DangerousGetHandle(), typeof(TOKEN_PRIVILEGES));
+
+                LUID_AND_ATTRIBUTES[] luidAndAttributes = new LUID_AND_ATTRIBUTES[tokenPrivileges.PrivilegeCount];
+                PtrToStructureArray(luidAndAttributes, IntPtr.Add(tokenInfo.DangerousGetHandle(), Marshal.SizeOf(tokenPrivileges.PrivilegeCount)));
+
+                return luidAndAttributes.Select(x => GetPrivilegeName(x.Luid)).ToList();
             }
+        }
+
+        private static SafeMemoryBuffer GetTokenInformation(IntPtr hToken, TokenInformationClass tokenClass)
+        {
+            UInt32 tokenLength;
+            bool res = GetTokenInformation(hToken, tokenClass, new SafeMemoryBuffer(IntPtr.Zero), 0, out tokenLength);
+            if (!res && tokenLength == 0)  // res will be false due to insufficient buffer size, we ignore if we got the buffer length
+                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed to get buffer length", tokenClass.ToString()));
+
+            SafeMemoryBuffer tokenInfo = new SafeMemoryBuffer((int)tokenLength);
+            if (!GetTokenInformation(hToken, tokenClass, tokenInfo, tokenLength, out tokenLength))
+                throw new Win32Exception(String.Format("GetTokenInformation({0}) failed", tokenClass.ToString()));
+
+            return tokenInfo;
+        }
+
+        private static string GetPrivilegeName(LUID luid)
+        {
+            UInt32 nameLen = 0;
+            LookupPrivilegeNameW(null, ref luid, null, ref nameLen);
+
+            StringBuilder name = new StringBuilder((int)(nameLen + 1));
+            if (!LookupPrivilegeNameW(null, ref luid, name, ref nameLen))
+                throw new Win32Exception("LookupPrivilegeNameW() failed");
+
+            return name.ToString();
+        }
+
+        private static void PtrToStructureArray<T>(T[] array, IntPtr ptr)
+        {
+            IntPtr ptrOffset = ptr;
+            for (int i = 0; i < array.Length; i++, ptrOffset = IntPtr.Add(ptrOffset, Marshal.SizeOf(typeof(T))))
+                array[i] = (T)Marshal.PtrToStructure(ptrOffset, typeof(T));
         }
 
         private static void GrantAccessToWindowStationAndDesktop(SecurityIdentifier account)
