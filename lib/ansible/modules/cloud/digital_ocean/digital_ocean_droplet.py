@@ -64,8 +64,8 @@ options:
     aliases: ['region_id']
   ssh_keys:
     description:
-     - List of DO registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
-     C(12345) or C("1e:f8:e3:b2:0d:dc:15:02:aa:54:15:23:bc:5c:ec:34").
+     - 'List of DO registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
+     C(12345) or C("1e:f8:e3:b2:0d:dc:15:02:aa:54:15:23:bc:5c:ec:34").'
      - You may register keys with M(digital_ocean_sshkey) and list them with M(digital_ocean_sshkey_facts).
      - "Hint: compute fingerprint C(cut -f2 -d' ' ~/.ssh/do_key1.pub| base64 -d | md5sum -b | sed 's/../&:/g; s/: .*$//'),
      or grab it from M(digital_ocean_sshkey_facts), or from your tab U(https://cloud.digitalocean.com/account/security)"
@@ -90,17 +90,17 @@ options:
     type: bool
   wait:
     description:
-     - Wait for the droplet public IPv4 address, ensure the droplet is usable (locked=false).
+     - Wait for the droplet IPv4 address, ensure the droplet is usable (locked=false).
     default: True
     type: bool
   wait_new:
     description:
-     - When I(wait: True) and this is a new or I(rebuild: yes), wait I(wait_new) seconds before checking droplet status.
+     - 'When I(wait: True) and this is a new or I(rebuild: yes), wait I(wait_new) seconds before checking droplet status.'
     type: int
     default: 30
   wait_minimum:
     description:
-     - When I(wait: True) wait I(wait_minimum) seconds before checking droplet status. In other words, how often to spam DO API.
+     - 'When I(wait: True) wait I(wait_minimum) seconds before checking droplet status. In other words, how often to spam DO API.'
     type: int
     default: 2
   wait_maximum:
@@ -109,6 +109,11 @@ options:
     type: int
     default: 120
     aliases: ['wait_timeout']
+  timeout:
+    description:
+     - DO API response timeout.
+    type: int
+    default: 30
   backups:
     description:
      - indicates whether automated backups should be enabled.
@@ -309,6 +314,7 @@ class DODroplet(object):
         self.wait_maximum = self.module.params.pop('wait_maximum')
         self.wait_minimum = self.module.params.pop('wait_minimum')
         self.wait_new = self.module.params.pop('wait_new')
+        self.timeout = self.module.params.pop('timeout')
         self.module.params.pop('oauth_token')
         if self.module.params.pop('unique_name', None) is not None:
             self.module.warn("Parameter `unique_name` is deprecated. Consider it's always True.")
@@ -377,6 +383,34 @@ class DODroplet(object):
         """
         return name and image and region
 
+    @staticmethod
+    def same_dc(j, dc):
+        if (j and dc and
+                'droplet' in j and
+                'region' in j['droplet'] and
+                'slug' in j['droplet']['region']):
+            return j['droplet']['region']['slug'] == dc
+        return None
+
+    @staticmethod
+    def same_size(j, size):
+        if (j and size and
+                'droplet' in j and
+                'size_slug' in j['droplet']):
+            return j['droplet']['size_slug'] == size
+        return None
+
+    @staticmethod
+    def same_image(j, image):
+        if (j and image and
+                'droplet' in j and
+                'image' in j['droplet'] and
+                'id' in j['droplet']['image'] and
+                'slug' in j['droplet']['image']):
+            return (j['droplet']['image']['slug'] == image
+                    or str(j['droplet']['image']['id']) == image)
+        return None
+
     def get(self):
         """
         Find the droplet (either by id or name), rebuild if requested so, build if not found.
@@ -385,6 +419,12 @@ class DODroplet(object):
         _size = self.module.params['size']
         _image = self.module.params['image']
         _region = self.module.params['region']
+        if json_data and not self.same_dc(json_data, _region):
+            self.module.warn("Droplet found but in a different DC!")
+        if json_data and not self.same_size(json_data, _size):
+            self.module.warn("Droplet found but of a different size!")
+        if json_data and not self.same_image(json_data, _image) and not self.rebuild:
+            self.module.warn("Droplet found but its image differs!")
         if json_data and not self.rebuild:
             self.module.exit_json(changed=False, data=self.expose_addresses(json_data))
         elif self.rebuild and not json_data:
@@ -403,15 +443,19 @@ class DODroplet(object):
                                                      ' image={2} size={3}'.format(self._name, _region, _image, _size))
         if self.module.check_mode:
             self.module.exit_json(changed=True)
-        self.module.warn("send command time {}".format(time.time()))
+        self.module.warn("send command time {0}".format(time.time()))
         response = self.rest.post('droplets', data=self.module.params)
-        dbg1 = response.json['droplet'] if 'droplet' in response.json else response.json
-        self.module.warn("req 1 resp time {} droplet: {}".format(time.time(), dbg1))
-        # self.module.warn("req 1 resp headers: {}".format(response.headers['ratelimit-remaining']))
+        if response.json and 'droplet' in response.json:
+            dbg1 = response.json['droplet']
+        elif response.json:
+            dbg1 = response.json
+        else:
+            dbg1 = "! no JSON !"
+        self.module.warn("req 1 resp time {0} droplet: {1}".format(time.time(), dbg1))
         if response.status_code >= 400:
             self.module.fail_json(changed=False, msg=response.json['message'])
         if self.wait:
-            self.ensure_active(response.json['droplet']['id'], new=True)
+            self.ensure_ready(response.json['droplet']['id'], action="create", new=True)
         self.module.exit_json(
             changed=True, data=self.expose_addresses(response.json))
 
@@ -431,7 +475,7 @@ class DODroplet(object):
             self.module.fail_json(changed=False, msg=response.json['message'])
         self.module.exit_json(  # wait for rebuild to finish, enrich received JSON, then return it.
             changed=True, data=self.expose_addresses(
-                self.ensure_unlocked(droplet_id, 'rebuild')))
+                self.ensure_ready(droplet_id, action="rebuild")))
 
     def delete(self):
         json_data = self.find_droplet()
@@ -445,32 +489,27 @@ class DODroplet(object):
         else:
             self.module.exit_json(changed=False, msg='Droplet {0} not found'.format(self._droplet))
 
-    def ensure_unlocked(self, droplet_id, action):
+    def ensure_ready(self, droplet_id, action, new=False):
+        if new:
+            time.sleep(self.wait_new)
         end_time = time.time() + self.wait_maximum
         while time.time() < end_time:
             response = self.rest.get('droplets/{0}'.format(droplet_id))
-            if not response.json['droplet']['locked']:
-                return response.json
-            time.sleep(min(2, end_time - time.time()))
-        self.module.fail_json(msg='Droplet {0}: {1} timeout'.format(self._droplet, action))
-
-    def ensure_active(self, droplet_id, new=False):
-        if new: time.sleep(self.wait_new)
-        end_time = time.time() + self.wait_maximum
-        n = 1
-        while time.time() < end_time:
-            n += 1
-            response = self.rest.get('droplets/{0}'.format(droplet_id))
-            if 'locked' in response.json['droplet']:
+            rj = response.json
+            if 'droplet' in rj and 'locked' in rj['droplet']:
+                if 'v4' in rj['droplet']['networks'] and len(response.json['droplet']['networks']['v4']):
+                    net1 = response.json['droplet']['networks']['v4'][0]
+                else:
+                    net1 = rj['droplet']['networks']
                 lock = response.json['droplet']['locked']
                 stat = response.json['droplet']['status']
-                resp1 = "req {} time {} status {} locked {}".format(n, time.time(), stat, lock)
+                resp1 = "{0} status {1} locked {2} net {3}".format(time.time(), stat, lock, net1)
             self.module.warn(resp1)
 
-            if response.json['droplet']['status'] == 'active':
+            if not response.json['droplet']['locked'] and len(response.json['droplet']['networks']['v4']):
                 return response.json
             time.sleep(min(self.wait_minimum, end_time - time.time()))
-        self.module.fail_json(msg='Wait for droplet {0} status=active timeout'.format(self._droplet))
+        self.module.fail_json(msg='Droplet {0} action "{1}" `wait_maximum` exceeded.'.format(self._droplet, action))
 
 
 def main():
@@ -482,6 +521,7 @@ def main():
                 no_log=True,
                 fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN'])
             ),
+            timeout=dict(default=30, type='int'),
             name=dict(type='str'),
             size=dict(aliases=['size_id']),
             image=dict(aliases=['image_id']),
@@ -497,7 +537,7 @@ def main():
             volumes=dict(type='list'),
             tags=dict(type='list'),
             wait=dict(type='bool', default=True),
-            wait_maximum=dict(default=120, type='int',aliases=['wait_timeout']),
+            wait_maximum=dict(default=120, type='int', aliases=['wait_timeout']),
             wait_minimum=dict(default=2, type='int'),
             wait_new=dict(default=30, type='int'),
             unique_name=dict(),
