@@ -18,7 +18,8 @@ DOCUMENTATION = r'''
 module: postgresql_table
 short_description: Allow to create, drop, rename, or truncate a table and to change some table attributes
 description:
-- Allows to create, drop, rename, truncate a table, or change some table attributes.
+- Allows to create, drop, rename, truncate a table, or change some table attributes
+  U(https://www.postgresql.org/docs/current/sql-createtable.html).
 version_added: "2.8"
 options:
   table:
@@ -134,6 +135,8 @@ notes:
   sudo'ing to the postgres account on the host.
 - To avoid "Peer authentication failed for user postgres" error,
   use postgres user as a I(become_user).
+- Unlogged tables are available from PostgreSQL server version 9.1
+  U(https://www.postgresql.org/docs/9.1/sql-createtable.html).
 - This module uses psycopg2, a Python PostgreSQL database adapter. You must
   ensure that psycopg2 is installed on the host before using this module.
 - If the remote host is the PostgreSQL server (which is the default case), then

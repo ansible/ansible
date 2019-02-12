@@ -140,6 +140,7 @@
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
+    db: postgres
     name: test_user
     state: present
   ignore_errors: yes
@@ -236,3 +237,4 @@
     that:
       - result.changed == true
       - result.query == "CREATE UNLOGGED TABLE test5 ()"
+  when: postgres_version_resp.stdout is version('9.1', '>=')
