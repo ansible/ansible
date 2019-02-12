@@ -31,7 +31,7 @@ options:
         prefix-list-network and C(absent) to delete prefix-list-network.
     required: true
     type: str
-    choice: ['present', 'absent']
+    choices: ['present', 'absent']
   pn_netmask:
     description:
       - netmask of the network associated the prefix list.
