@@ -92,7 +92,7 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
         If host is not a swarm manager then Ansible task on this host should end with 'failed' state
         """
         if not self.check_if_swarm_manager():
-            self.fail(msg="This node is not a manager.")
+            self.fail(msg="Error running docker swarm module: must run on swarm manager node")
 
     def check_if_swarm_worker(self):
         """
@@ -216,3 +216,6 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             return None
 
         return nodes_list
+
+    def get_node_name_by_id(self, nodeid):
+        return self.get_node_inspect(nodeid)['Description']['Hostname']
