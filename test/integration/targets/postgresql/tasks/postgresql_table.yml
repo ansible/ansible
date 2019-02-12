@@ -1,0 +1,238 @@
+# Test code for the postgresql_set module
+
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Create a simple table:
+- name: postgresql_table - create table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test1
+    columns: id int
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.table == 'test1'
+      - result.query == 'CREATE TABLE test1 (id int)'
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == 'postgres'
+
+# Create a table LILE another table without any additional parameters:
+- name: postgresql_table - create table like
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.table == 'test2'
+      - result.query == 'CREATE TABLE test2 (LIKE test1)'
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == 'postgres'
+
+# Drop a table:
+- name: postgresql_table - drop table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.query == 'DROP TABLE test2'
+      - result.state == 'absent'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == 'postgres'
+
+# Create a table like another table including:
+- name: postgresql_table - create table like with including comments and indexes
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+    including: comments,indexes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.query == 'CREATE TABLE test2 (LIKE test1 INCLUDING comments INCLUDING indexes)'
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == 'postgres'
+
+# Check to create table if it exists:
+- name: postgresql_table - try to create existing table again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+    including: comments, indexes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == false
+
+# Drop a table to prepare for the next step:
+- name: postgresql_table - drop table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+
+# Try to drop non existing table:
+- name: postgresql_table - try drop dropped table again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == false
+
+# Create user to prepare for the next step:
+- name: postgresql_table - create the new user test_user
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_user:
+    name: test_user
+    state: present
+  ignore_errors: yes
+
+# Try to change owner to test_user
+- name: postgresql_table - change table ownership to test_user
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test1
+    owner: test_user
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.owner == 'test_user'
+      - result.query == 'ALTER TABLE test1 OWNER TO test_user'
+      - result.state == 'present'
+      - result.changed == true
+
+# Create a table with additional storage parameters:
+- name: postgresql_table - create table with storage_params
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    columns: id int, name text
+    storage_params: fillfactor=10, autovacuum_analyze_threshold=1
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.state == 'present'
+      - result.query == 'CREATE TABLE test3 (id int, name text) WITH (fillfactor=10, autovacuum_analyze_threshold=1)'
+      - result.storage_params == [ "fillfactor=10", "autovacuum_analyze_threshold=1" ]
+  
+# Truncate a table. It always returns changed == true
+# becaus it always creates a new table with the same schema and drop the old table:
+- name: postgresql_table - truncate table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    truncate: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.query == "TRUNCATE TABLE test3"
+      - result.state == "present"
+
+# Rename a table:
+- name: postgresql_table - rename table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    rename: test4
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.query == "ALTER TABLE test3 RENAME TO test4"
+      - result.state == "present"
+
+# Create unlogged table:
+- name: postgresql_table - create unlogged table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test5
+    unlogged: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.changed == true
+      - result.query == "CREATE UNLOGGED TABLE test5 ()"
