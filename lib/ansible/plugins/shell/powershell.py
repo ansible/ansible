@@ -675,7 +675,6 @@ namespace AnsibleBecome
 
             try
             {
-                IntPtr hSystemTokenDup = IntPtr.Zero;
                 if (hSystemToken == IntPtr.Zero && service_sids.Contains(account_sid))
                 {
                     // We need the SYSTEM token if we want to become one of those accounts, fail here
@@ -683,28 +682,13 @@ namespace AnsibleBecome
                 }
                 else if (hSystemToken != IntPtr.Zero)
                 {
-                    // We have the token, need to duplicate and impersonate
-                    bool dupResult = DuplicateTokenEx(
-                        hSystemToken,
-                        TokenAccessLevels.MaximumAllowed,
-                        IntPtr.Zero,
-                        SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                        TOKEN_TYPE.TokenPrimary,
-                        out hSystemTokenDup);
-                    int lastError = Marshal.GetLastWin32Error();
-                    CloseHandle(hSystemToken);
-
-                    if (!dupResult && service_sids.Contains(account_sid))
-                        throw new Win32Exception(lastError, "Failed to duplicate token for NT AUTHORITY\\SYSTEM");
-                    else if (dupResult && account_sid != "S-1-5-18")
-                    {
-                        if (ImpersonateLoggedOnUser(hSystemTokenDup))
-                            impersonated = true;
-                        else if (service_sids.Contains(account_sid))
-                            throw new Win32Exception("Failed to impersonate as SYSTEM account");
-                    }
                     // If SYSTEM impersonation failed but we're trying to become a regular user, just proceed;
                     // might get a limited token in UAC-enabled cases, but better than nothing...
+                    if (ImpersonateLoggedOnUser(hSystemToken))
+                        impersonated = true;
+                    else if (service_sids.Contains(account_sid))
+                        throw new Win32Exception("Failed to impersonate as SYSTEM account");
+
                 }
 
                 string domain = null;
@@ -718,7 +702,7 @@ namespace AnsibleBecome
                     switch (account_sid)
                     {
                         case "S-1-5-18":
-                            tokens.Add(hSystemTokenDup);
+                            tokens.Add(hSystemToken);
                             return tokens;
                         case "S-1-5-19":
                             username = "LocalService";
