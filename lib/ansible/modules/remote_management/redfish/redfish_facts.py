@@ -134,7 +134,7 @@ CATEGORY_COMMANDS_DEFAULT = {
     "Chassis": "GetFanInventory",
     "Accounts": "ListUsers",
     "Update": "GetFirmwareInventory",
-    "Manager": "GetManagerNicInventory"
+    "Manager": "GetLogs"
 }
 
 
