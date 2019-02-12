@@ -16,5 +16,3 @@
         name: xfsquotauser
         state: absent
       become: yes
-
-
