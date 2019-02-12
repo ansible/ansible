@@ -140,6 +140,7 @@
   become: yes
   become_user: "{{ pg_user }}"
   postgresql_user:
+    login_user: "{{ pg_user }}"
     db: postgres
     name: test_user
     state: present
