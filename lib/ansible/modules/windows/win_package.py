@@ -132,9 +132,9 @@ options:
     version_added: '2.4'
   log_path:
     description:
-    - Full path of log file.
-    - This file will be kept regardless of overall success or failure.
-    - This is only valid for MSI files, use arguments for other packages.
+    - Specifies the path to a log file that is persisted after an MSI package is installed or uninstalled.
+    - When omitted, a temporary log file is used for MSI packages.
+    - This is only valid for MSI files, use C(arguments) for other package types.
     type: path
     version_added: '2.8'
 notes:
