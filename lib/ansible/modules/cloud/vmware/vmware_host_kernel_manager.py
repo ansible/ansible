@@ -45,7 +45,7 @@ options:
     - Name of the kernel module to be configured
     required: true
     type: str
-  kernel_module_options:
+  kernel_module_option:
     description:
     - Specified configurations will be applied to the given module
     - These values are specified in key=value pairs and separated by a space when there are multiple options
