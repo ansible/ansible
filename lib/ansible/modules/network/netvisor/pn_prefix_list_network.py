@@ -106,8 +106,8 @@ def check_cli(module, cli):
 
     if not out:
         module.fail_json(
-             failed=True,
-             msg='Prefix list with name %s does not exists' % name
+            failed=True,
+            msg='Prefix list with name %s does not exists' % name
         )
 
     cli = show
@@ -172,8 +172,8 @@ def main():
     if command == 'prefix-list-network-add':
         if NETWORK_EXISTS is True:
             module.exit_json(
-                 skipped=True,
-                 msg='Prefix list with network %s already exists' % network
+                skipped=True,
+                msg='Prefix list with network %s already exists' % network
             )
 
     if name:
