@@ -14,16 +14,15 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = """
 ---
-module: utm_network_interface_address
+module: utm_network_interface_address_info
 
 author:
     - Juergen Wiebe (@steamx)
 
-short_description: Create, update or destroy network/interface_address object
+short_description: Get info for a network/interface_address object
 
 description:
-    - Create, update or destroy a network/interface_address object in SOPHOS UTM.
-    - This module needs to have the REST Ability of the UTM to be activated.
+    - Get info for a network/interface_address object in SOPHOS UTM.
 
 version_added: "2.8"
 
@@ -32,46 +31,17 @@ options:
         description:
           - The name of the object. Will be used to identify the entry
         required: true
-    address:
-        description:
-          - The ip4 address of the network/interface_address object.
-        required: true
-    address6:
-        description:
-          - The ip6 address of the network/interface_address object.
-        required: false
-    comment:
-        description:
-          - An optional comment to add to the object
-    resolved:
-        description:
-          - Whether or not the object is resolved
-    resolved6:
-        description:
-          - Whether or not the object is resolved
 
 extends_documentation_fragment:
     - utm
 """
 
 EXAMPLES = """
-# Create a network interface address
 - name: utm network interface address
-  utm_proxy_backend:
+  utm_proxy_interface_address_info:
     utm_host: sophos.host.name
     utm_token: abcdefghijklmno1234
     name: TestNetworkInterfaceAddress
-    address: 0.0.0.0
-    state: present
-
-# Remove a network interface address
-- name: utm network interface address
-  network_interface_address:
-    utm_host: sophos.host.name
-    utm_token: abcdefghijklmno1234
-    name: TestNetworkInterfaceAddress
-    address: 0.0.0.0
-    state: absent
 """
 
 RETURN = """
@@ -115,19 +85,14 @@ from ansible.module_utils._text import to_native
 
 def main():
     endpoint = "network/interface_address"
-    key_to_check_for_changes = ["comment", "address"]
+    key_to_check_for_changes = []
     module = UTMModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            address=dict(type='str', required=True),
-            comment=dict(type='str', required=False, default=""),
-            address6=dict(type='str', required=False),
-            resolved=dict(type='boolean', required=False),
-            resolved6=dict(type='boolean', required=False)
+            name=dict(type='str', required=True)
         )
     )
     try:
-        UTM(module, endpoint, key_to_check_for_changes).execute()
+        UTM(module, endpoint, key_to_check_for_changes, info_only=True).execute()
     except Exception as e:
         module.fail_json(msg=to_native(e))
 
