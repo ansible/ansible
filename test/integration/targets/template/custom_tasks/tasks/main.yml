@@ -1,0 +1,12 @@
+---
+- template:
+    src: test
+    dest: "{{ output_dir }}/templated_test"
+  register: custom_template_result
+
+- debug:
+    msg: "{{ custom_template_result }}"
+
+- assert:
+    that:
+      - custom_template_result.changed
