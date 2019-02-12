@@ -63,5 +63,5 @@ test_ids = ['lvm_1', 'lvm_2', 'single_without_equal_sign', 'single_with_equal_si
 @pytest.mark.parametrize("cmdline, cmdline_dict", test_data, ids=test_ids)
 def test_cmd_line_factor(cmdline, cmdline_dict):
     cmdline_facter = CmdLineFactCollector()
-    parsed_cmdline = cmdline_facter._parse_proc_cmdline(data=cmdline)
+    parsed_cmdline = cmdline_facter._parse_proc_cmdline_facts(data=cmdline)
     assert parsed_cmdline == cmdline_dict
