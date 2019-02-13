@@ -36,6 +36,8 @@ options:
   options:
     description:
     - List of format specific options in a name=value format.
+    default:
+    - preallocation=metadata
     type: list
   size:
     description:
@@ -123,7 +125,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             dest=dict(type='str', required=True),
-            options=dict(type='list', default='preallocation=metadata'),
+            options=dict(type='list', default=['preallocation=metadata']),
             format=dict(type='str', default='qcow2'),
             size=dict(type='str'),
             grow=dict(type="bool", default=True),
