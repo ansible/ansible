@@ -26,7 +26,7 @@ $spec = @{
         proxy_username = @{ type='str' }
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
-        checksum = @{ type='str' }
+        checksum = @{ type='str'; aliases=@( 'hash' ) }
         checksum_algorithm = @{ type='str'; default='sha1'}
         checksum_url = @{ type='str' }
     }

@@ -7,17 +7,6 @@
     - '{{ test_win_get_url_path }}'
     - '{{ remote_tmp_dir }}'
 
-- name: Install python3
-  win_chocolatey:
-    name: python3
-
-- name: Run simple http.server
-  win_command: python -m http.server {{ http_port }}
-  args:
-    chdir: '{{ test_win_get_url_path }}'
-  async: 90
-  poll: 0
-
 - name: create src file
   win_copy:
     dest: '{{ test_win_get_url_path }}/27617.txt'
@@ -196,32 +185,3 @@
     that:
       - result_sha1_failed is succeeded
       - result_sha256_failed is succeeded
-
-- name: Check if port is listened
-  win_command: powershell.exe -
-  args:
-    stdin: Get-NetTCPConnection -LocalPort {{ http_port }} -ErrorAction SilentlyContinue
-  register: tcp_connection
-  ignore_errors: yes
-  failed_when: tcp_connection.rc is not defined
-
-- name: Stop simple http.server
-  win_command: powershell.exe -
-  args:
-    stdin: >-
-      Stop-Process -Id (Get-NetTCPConnection
-      -LocalPort {{ http_port }}).OwningProcess -Force -ErrorAction SilentlyContinue
-  when: tcp_connection.rc == 0
-  register: stop_http_server
-  failed_when:
-    - stop_http_server != 0
-    - stop_http_server != 1
-  ignore_errors: yes
-
-- name: Remove testing folders
-  win_file:
-    path: '{{ item }}'
-    state: absent
-  loop:
-    - '{{ test_win_get_url_path }}'
-    - '{{ remote_tmp_dir }}'

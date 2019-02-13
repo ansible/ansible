@@ -84,6 +84,7 @@ options:
         checksum equals I(destination_checksum), the file download would be skipped
         (unless C(force) is C(true)).
     type: str
+    aliases: [ hash ]
     version_added: "2.8"
   checksum_algorithm:
     description:
