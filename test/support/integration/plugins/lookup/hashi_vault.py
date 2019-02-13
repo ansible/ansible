@@ -301,15 +301,16 @@ class HashiVault:
         self.client.auth_approle(role_id, secret_id)
 
     def auth_aws_iam(self, **kwargs):
-        access_key = kwargs.get('access_key', os.environ.get('AWS_ACCESS_KEY_ID'))
-        if access_key is None:
-            raise AnsibleError("Authentication method aws iam requires a access_key")
-
-        secret_key = kwargs.get('secret_key', os.environ.get('AWS_SECRET_ACCESS_KEY'))
-        if secret_key is None:
-            raise AnsibleError("Authentication method aws iam requires a secret_key")
-
+        access_key = kwargs.get('access_key')
+        secret_key = kwargs.get('secret_key')
         session_token = kwargs.get('session_token')
+
+        if access_key is None or secret_key is None:
+            import boto3
+            creds = boto3.Session().get_credentials()
+            if creds is None:
+                raise AnsibleError("Authentication method aws iam requires AWS credentials")
+            access_key, secret_key, session_token = creds.access_key, creds.secret_key, creds.token
 
         header_value = kwargs.get('header_value')
 
