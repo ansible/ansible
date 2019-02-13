@@ -93,7 +93,7 @@ options:
         default: cli
       use_ssl:
         description:
-          - Configures the I(transport) to use SSL if set to true only when the
+          - Configures the I(transport) to use SSL if set to C(yes) only when the
             C(transport=nxapi), otherwise this value is ignored.
         type: bool
         default: no
