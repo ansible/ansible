@@ -49,6 +49,9 @@ $proxy_password = $module.Params.proxy_password
 $force = $module.Params.force
 $checksum = $module.Params.checksum
 
+$module.Diff.before = @{}
+$module.Diff.after = @{}
+
 Add-CSharpType -AnsibleModule $module -References @'
     using System.Net;
     public class ExtendedWebClient : WebClient {
@@ -103,8 +106,8 @@ Function Get-Checksum-From-Url {
     Try {
          # TBD implement case for FTP
          $webResponse = $webRequest.GetResponse()
-         $requestStream = $webResponse.GetResponseStream()
-         $readStream = New-Object System.IO.StreamReader $requestStream
+         $responseStream = $webResponse.GetResponseStream()
+         $readStream = New-Object System.IO.StreamReader $responseStream
          $web_checksum=$readStream.ReadToEnd()
 
          $basename = (Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf)
@@ -128,6 +131,7 @@ Function Get-Checksum-From-Url {
         if($webResponse) {
            $webResponse.Close()
         }
+    }
     if ( [bool]([System.Uri]$url).isFile ) {
         $module.Result.status_code = 200
         $module.Result.msg = 'OK'
@@ -283,6 +287,7 @@ Function Download-File {
     param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
 
     $module_start = Get-Date
+    $diff = ""
 
     # Check $dest parent folder exists before attempting download, which avoids unhelpful generic error message.
     $dest_parent = Split-Path -LiteralPath $dest
@@ -332,6 +337,7 @@ Function Download-File {
     Try {
 
         $tmpDest = [System.IO.Path]::GetTempFileName()
+        $diff += "+$tmpDest`n"
         $extWebClient.DownloadFile($url, $tmpDest)
 
         $tmpDestHash = Get-NormaliseHash -dest $tmpDest -hashAlgorithm $checksum_algorithm
@@ -359,6 +365,7 @@ Function Download-File {
                     } else {
                         if (-not $module.CheckMode) {
                             Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
+                            $diff += "+$tmpDest`n"
                         }
                     }
                 }
@@ -370,6 +377,7 @@ Function Download-File {
                         throw "Source and recieved files size mismatch."
                     }
                     Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
+                    $diff += "+$tmpDest`n"
                 }
             }
 #        }
@@ -386,7 +394,9 @@ Function Download-File {
     Finally {
         if (Test-Path -LiteralPath $tmpDest) {
             Remove-Item -Path $tmpDest | Out-Null
-            $module.Warn("removed tmpDest='$tmpDest'")
+            $diff += "-$tmpDest`n"
+
+            $module.Diff.after.files = $diff
         }
     }
 
@@ -397,7 +407,6 @@ Function Download-File {
     $module.Result.checksum_src = $tmpDestHash
 #    $module.Result.checksum_dest = $destHash
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-
 }
 
 $module.Result.dest = $dest
@@ -503,5 +512,4 @@ if(Test-Path -LiteralPath $dest) {
         $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
     }
 }
-
 $module.ExitJson()

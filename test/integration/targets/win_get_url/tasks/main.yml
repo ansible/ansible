@@ -41,6 +41,9 @@
   - name: run FTP tests
     include_tasks: tests_ftp.yml
 
+  - name: run checksum tests
+    include_tasks: tests_checksum.yml
+
   always:
   - name: remove SlimFTPd service
     win_service:
