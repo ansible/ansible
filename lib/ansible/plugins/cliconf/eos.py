@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
-        if format and format is not 'text':
+        if format and format != 'text':
             cmd += '| %s ' % format
 
         cmd += ' '.join(to_list(flags))
