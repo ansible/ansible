@@ -1,0 +1,2 @@
+bugfixes:
+  - "tower modules: check that 'verify_ssl' defined in ~/.tower_cli.cfg isn't ignored"
