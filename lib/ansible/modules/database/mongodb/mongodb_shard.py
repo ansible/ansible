@@ -62,19 +62,19 @@ options:
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
     ssl_ca_certs:
-        version_added: "2.7"
+        version_added: "2.8"
         description:
             - The path to a file containing certificate(s) of CA(s) that may be trusted to create the SSL cert presented by the MongoDB server
             - Implies ssl=True
     ssl_certfile:
-        version_added: "2.7"
+        version_added: "2.8"
         description:
             - Path to the file containing a TLS client certificate and (optionally) private key, in PEM encoding
             - If the private key is not in this file, ssl_keyfile is required
             - Only required when using TLS client certificates for "TLS mutual authentication"
             - Implies ssl=True
     ssl_keyfile:
-        version_added: "2.7"
+        version_added: "2.8"
         description:
             - Path to the file containing the private key corresponding to the certificate specified via ssl_certfile, in PEM encoding
             - If the private key is already in the ssl_certfile, this parameter is optional
