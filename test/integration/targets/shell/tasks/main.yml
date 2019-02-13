@@ -1,0 +1,12 @@
+---
+- name: test that you can override shell by using ansible_shell_type
+  test_shell:
+  register: shell_type
+  failed_when: shell_type.shell != item
+  vars:
+    ansible_shell_type: '{{ item }}'
+  with_items:
+  - csh
+  - fish
+  - powershell
+  - sh
