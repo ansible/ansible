@@ -10,11 +10,11 @@
     ignore_errors: yes
     register: output
 
-  - name: assert failure when called when swarm is not in use
+  - name: assert failure when called when swarm is not in use or not run on mamager node
     assert:
       that:
          - 'output.failed'
-         - 'output.msg == "state is join but all of the following are missing: advertise_addr, remote_addrs, join_token"'
+         - 'output.msg == "Error running docker swarm module: must run on swarm manager node"'
 
 #  - name: Test parameters with state=remove
 #    docker_swarm:
