@@ -36,11 +36,16 @@ options:
   name:
     description:
      - Droplet name, must be a valid hostname or a FQDN in your domain.
+     - DigitalOcean will make a DNS PTR record for public IPv4 (and IPv6 if I(ipv6=yes)) on droplet creation if it's FQDN.
      - Required when I(state=present) and the droplet does not yet exist.
     type: str
   unique_name:
     description:
      - Deprecated and ignored parameter. Consider it always True.
+     - It contradicts FQDN use for name and my lead to unpredictable behaviour (i.e. bugs) in your plays.
+     - DigitalOcean does not enforce it at the moment but dropped it from API docs and may deprecate it soon.
+     - If droplet with I(name=mydroplet) exists in your account this module will return it
+       and will not create a new one with the same name.
   size:
     description:
      - Droplet configuration slug, e.g. C(s-1vcpu-1gb), C(2gb), C(c-32vcpu-64gb), or C(s-32vcpu-192gb).
@@ -56,16 +61,16 @@ options:
     aliases: ['image_id']
   region:
     description:
-     - Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(ams3), or C(sgp1).
+     - Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(sfo1), or C(sgp1).
      - Required when I(state=present) and the droplet does not yet exist.
-     - "New DO users be aware: due to limited capacity, NYC2, AMS2, and SFO1 are
+     - "New DO users be aware: due to limited capacity, C(nyc2), c(ams2), and C(sfo1) are
       currently available only to resource owners in respective datacenters."
     type: str
     aliases: ['region_id']
   ssh_keys:
     description:
      - 'List of DO registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
-     C(12345) or C("1e:f8:e3:b2:0d:dc:15:02:aa:54:15:23:bc:5c:ec:34").'
+       C(12345) or C("1e:f8:e3:b2:0d:dc:15:02:aa:54:15:23:bc:5c:ec:34").'
      - You may register keys with M(digital_ocean_sshkey) and list them with M(digital_ocean_sshkey_facts).
      - "Hint: compute fingerprint C(cut -f2 -d' ' ~/.ssh/do_key1.pub| base64 -d | md5sum -b | sed 's/../&:/g; s/: .*$//'),
      or grab it from M(digital_ocean_sshkey_facts), or from your tab U(https://cloud.digitalocean.com/account/security)"
@@ -132,6 +137,7 @@ options:
   rebuild:
     description:
      - force Droplet rebuild. You may supply I(image) id/slug if you want it changed or omit I(image) and just re-fresh your Droplet.
+     - 'WARNING: droplet own data will be lost!'
     default: False
     type: bool
 requirements:
@@ -198,12 +204,16 @@ data:
       type: complex
       contains:
         id:
+          type: int
           sample: 3164494
         name:
+          type: str
           sample: "mydroplet.example.com"
         locked:
+          type: bool
           sample: false
         status:
+          type: str
           sample: "active"
         tags:
           type: list
@@ -262,10 +272,13 @@ data:
           type: complex
           contains:
             available:
+              type: bool
               sample: True
             slug:
+              type: str
               sample: "fra1"
             name:
+              type: str
               sample: "Frankfurt 1"
             features:
               type: list
@@ -278,10 +291,13 @@ data:
           type: list
           sample: ["private_networking", "ipv6"]
         memory:
+          type: int
           sample: 1024
         vcpus:
+          type: int
           sample: 1
         disk:
+          type: int
           sample: 25
         kernel:
           sample: null
@@ -308,7 +324,7 @@ class DODroplet(object):
         self.timeout = self.module.params.pop('timeout')
         self.module.params.pop('oauth_token')
         if self.module.params.pop('unique_name', None) is not None:
-            self.module.warn("Parameter `unique_name` is deprecated. Consider it's always True.")
+            self.module.warn("Parameter `unique_name` is deprecated. Consider it always True.")
         if self._id and self._name:
             self.module.warn("Both id {0} and name {1} supplied. Your play may turn unexpectedly!".
                              format(self._id, self._name))
@@ -418,7 +434,7 @@ class DODroplet(object):
         if json_data and not self.same_size(json_data, _size):
             self.module.warn("Droplet found but of a different size!")
         if json_data and not self.same_image(json_data, _image) and not self.rebuild:
-            self.module.warn("Droplet found but its image differs!")
+            self.module.warn("Droplet found but its image differs! To re-image the droplet add rebuild=yes")
         if json_data and not self.rebuild:
             self.module.exit_json(changed=False, data=self.expose_addresses(json_data))
         elif self.rebuild and not json_data:
