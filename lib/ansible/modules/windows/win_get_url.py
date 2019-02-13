@@ -92,7 +92,7 @@ options:
         its integrity and verify that the transfer completed successfully.
         Format: <algorithm>, e.g. checksum_algorithm="sha256"'
     type: str
-    default: sha256
+    default: sha1
     version_added: "2.8"
   checksum_url:
     description:

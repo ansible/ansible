@@ -27,7 +27,7 @@ $spec = @{
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
         checksum = @{ type='str' }
-        checksum_algorithm = @{ type='str'; default='sha256'}
+        checksum_algorithm = @{ type='str'; default='sha1'}
         checksum_url = @{ type='str' }
     }
     mutually_exclusive = @(
