@@ -285,7 +285,6 @@ class Table(object):
                  "WHERE t.tablename = '%s' "
                  "AND n.nspname = 'public'" % self.name)
         res = self.__exec_sql(query)
-        print('RESULT:', res)
         if res:
             self.exists = True
             self.info = dict(
