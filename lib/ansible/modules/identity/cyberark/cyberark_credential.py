@@ -51,11 +51,11 @@ options:
         required: 'No'
             - A string containing the file location and name of the client certificate used for authentication
     client_key:
-	    description:
-		required: 'No'
-		    - A string containing the file location and name of the private key of the client certificate used for authentication
-	reason:
-	    description:
+        description:
+        required: 'No'
+            - A string containing the file location and name of the private key of the client certificate used for authentication
+        reason:
+        description:
         required: 'No'
             - Reason for requesting credential if required by policy
 '''
@@ -75,12 +75,12 @@ EXAMPLES = '''
 - name: Retrieve credential from CyberArk Vault using PAS Web Services SDK via Central Credential Provider
   cyberark_credential:
     api_base_url: "{{ web_services_base_url }}"
-	validate_certs: yes
-	client_cert: /etc/pki/ca-trust/source/client.pem
-	client_key: /etc/pki/ca-trust/source/priv-key.pem
+    validate_certs: yes
+    client_cert: /etc/pki/ca-trust/source/client.pem
+    client_key: /etc/pki/ca-trust/source/priv-key.pem
     app_id: "{{ application_id }}"
     query: "Safe=test&UserName=admin"
-	reason: "requesting credential for Ansible deployment"
+    reason: "requesting credential for Ansible deployment"
   register: cyberarkcredential
 
   result:
@@ -142,7 +142,7 @@ RETURN = '''
             returned: if CPM management is disabled and a reason is given
         },
         "status_code": 200
-	}
+    }
 }
 '''
 
@@ -169,15 +169,15 @@ def retrieveCredential(module):
     query = module.params["query"]
     client_cert = None
     client_key = None
-    
+
     if "client_cert" in module.params:
         client_cert = module.params["client_cert"]
     if "client_key" in module.params:
         client_key = module.params["client_key"]
 
     end_point = "/AIMWebService/api/Accounts?AppId=%s&Query=%s" % (urllib.quote(app_id), urllib.quote(query))
-    
-    if "reason" in module.params and module.params["reason"] != None:
+
+    if "reason" in module.params and module.params["reason"] is not None:
         reason = urllib.quote(module.params["reason"])
         end_point = end_point + "&reason=%s" % reason
 
@@ -255,4 +255,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
