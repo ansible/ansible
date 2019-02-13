@@ -1,25 +1,7 @@
-# test code
-# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
-- name: install required libraries
-  pip:
-    requirements: "{{ role_path }}/files/requirements.txt"
-  become: True
+# test code for filters
+# Copyright: (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+# Copyright: (c) 2019, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: a dummy task to test the changed and success filters
   shell: echo hi
@@ -282,5 +264,5 @@
       - "'192.168.0.1/24' | ipaddr('prefix') == 24"
       - "'192.168.0.1/24' | ipaddr('address') == '192.168.0.1'"
       - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
-      - "'::1/120' | ipaddr('broadcast') == '::0.0.0.255'"
+      - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
       - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
