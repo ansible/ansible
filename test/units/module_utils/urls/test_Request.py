@@ -399,4 +399,4 @@ def test_open_url(urlopen_mock, install_opener_mock, mocker):
                                      force=False, last_mod_time=None, timeout=10, validate_certs=True,
                                      url_username=None, url_password=None, http_agent=None,
                                      force_basic_auth=False, follow_redirects='urllib2',
-                                     client_cert=None, client_key=None, cookies=None)
+                                     client_cert=None, client_key=None, cookies=None, use_gssapi=False)

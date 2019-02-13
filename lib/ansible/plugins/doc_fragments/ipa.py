@@ -34,9 +34,11 @@ options:
     description:
     - Password of administrative user.
     - If the value is not specified in the task, the value of environment variable C(IPA_PASS) will be used instead.
-    - If both the environment variable C(IPA_PASS) and the value are not specified in the task, then default value is set.
+    - Note that if the 'urllib_gssapi' library is available, it is possible to use GSSAPI to authenticate to FreeIPA.
+    - If the environment variable C(KRB5CCNAME) is available, the module will use this kerberos credentials cache to authenticate to the FreeIPA server.
+    - If the environment variable C(KRB5_CLIENT_KTNAME) is available, and C(KRB5CCNAME) is not; the module will use this kerberos keytab to authenticate.
+    - If GSSAPI is not available, the usage of 'ipa_pass' is required.
     - 'Environment variable fallback mechanism is added in version 2.5.'
-    required: true
   ipa_prot:
     description:
     - Protocol used by IPA server.
