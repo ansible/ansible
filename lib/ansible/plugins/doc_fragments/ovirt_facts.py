@@ -20,7 +20,7 @@ options:
         description:
             - Specifies list of the attributes which should be fetched from the API.
             - This parameter apply only when C(fetch_nested) is I(true).
-         type: list
+        type: list
         version_added: "2.3"
     auth:
         description:
