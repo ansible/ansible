@@ -1,0 +1,2 @@
+bugfixes:
+  - openstack inventory plugin - send logs from sdk to stderr so they do not combine with output
