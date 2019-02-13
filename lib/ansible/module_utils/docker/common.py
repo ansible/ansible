@@ -20,7 +20,7 @@ import os
 import re
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, jsonify
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 
@@ -164,7 +164,11 @@ class AnsibleDockerClient(Client):
     def __init__(self, argument_spec=None, supports_check_mode=False, mutually_exclusive=None,
                  required_together=None, required_if=None, min_docker_version=MIN_DOCKER_VERSION,
                  min_docker_api_version=None, option_minimal_versions=None,
-                 option_minimal_versions_ignore_params=None):
+                 option_minimal_versions_ignore_params=None, fail_results=None):
+
+        # Modules can put information in here which will always be returned
+        # in case client.fail() is called.
+        self.fail_results = fail_results or {}
 
         merged_arg_spec = dict()
         merged_arg_spec.update(DOCKER_COMMON_ARGS)
@@ -249,8 +253,9 @@ class AnsibleDockerClient(Client):
         #     else:
         #         log_file.write(msg + u'\n')
 
-    def fail(self, msg):
-        self.module.fail_json(msg=msg)
+    def fail(self, msg, **kwargs):
+        self.fail_results.update(kwargs)
+        self.module.fail_json(msg=msg, **sanitize_result(self.fail_results))
 
     @staticmethod
     def _get_value(param_name, param_value, env_variable, default_value):
@@ -506,7 +511,7 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting container Id %s" % result['Id'])
                 result = self.inspect_container(container=result['Id'])
                 self.log("Completed container inspection")
-            except NotFound as exc:
+            except NotFound as dummy:
                 return None
             except Exception as exc:
                 self.fail("Error inspecting container: %s" % exc)
@@ -545,7 +550,7 @@ class AnsibleDockerClient(Client):
                 self.log("Inspecting network Id %s" % id)
                 result = self.inspect_network(id)
                 self.log("Completed network inspection")
-            except NotFound as exc:
+            except NotFound as dummy:
                 return None
             except Exception as exc:
                 self.fail("Error inspecting network: %s" % exc)
