@@ -230,7 +230,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
             from ordereddict import OrderedDict
         except ImportError as excep:
             module.fail_json(msg='Cannot import OrderedDict class. You can probably install with: pip install ordereddict: %s'
-                             % to_native(excep), exception=traceback.format_exc())
+                             % to_native(excep))
 
     members_dict_list = []
     index = 0
