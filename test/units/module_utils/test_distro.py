@@ -14,6 +14,7 @@
 
 import platform
 import pytest
+import sys
 
 from ansible.module_utils import distro
 from ansible.module_utils.common.sys_info import (get_distribution, get_distribution_version,
@@ -40,13 +41,11 @@ class TestDistro():
 # distro result is what we expect and special cased.
 class TestDistroCompat():
     '''Verify that distro.linux_distribution matches plain platform.linux_distribution'''
-
-    _platform_supported_dists = platform._supported_dists
-
+    @pytest.mark.skipif(sys.version_info >= (3, 8), reason="Python 3.8 and later do not have platform.linux_distribution().")
     def test_linux_distribution(self):
         distro_linux_dist = (get_distribution(), get_distribution_version(), get_distribution_codename())
 
-        platform_linux_dist = platform.linux_distribution(supported_dists=self._platform_supported_dists)
+        platform_linux_dist = platform.linux_distribution()
 
         assert isinstance(distro_linux_dist, type(platform_linux_dist)), \
             'linux_distribution() returned type (%s) which is different from platform.linux_distribution type (%s)' % \
