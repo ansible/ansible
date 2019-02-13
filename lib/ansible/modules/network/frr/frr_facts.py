@@ -1,21 +1,8 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2019 Ansible, Inc
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# (c) 2019, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -138,6 +125,13 @@ class FactsBase(object):
     def run(self, cmd):
         return run_commands(commands=cmd, check_rc=False)
 
+    def parse_facts(self, pattern, data):
+        value = None
+        match = re.search(pattern, data, re.M)
+        if match:
+            value = match.group(1)
+        return value
+
 
 class Default(FactsBase):
 
@@ -167,51 +161,6 @@ class Hardware(FactsBase):
 
     COMMANDS = ['show memory']
 
-    def _parse_total_heap_allocated(self, data):
-        match = re.search(r'Total heap allocated:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_holding_block_headers(self, data):
-        match = re.search(r'Holding block headers:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_used_small_blocks(self, data):
-        match = re.search(r'Used small blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_used_ordinary_blocks(self, data):
-        match = re.search(r'Used ordinary blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_free_small_blocks(self, data):
-        match = re.search(r'Free small blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_free_ordinary_blocks(self, data):
-        match = re.search(r'Free ordinary blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_ordinary_blocks(self, data):
-        match = re.search(r'Ordinary blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_small_blocks(self, data):
-        match = re.search(r'Small blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
-    def _parse_holding_blocks(self, data):
-        match = re.search(r'Holding blocks:(?:\s*)(.*)', data, re.M)
-        if match:
-            return match.group(1)
-
     def _parse_daemons(self, data):
         match = re.search(r'Memory statistics for (\w+)', data, re.M)
         if match:
@@ -220,16 +169,23 @@ class Hardware(FactsBase):
     def gather_memory_facts(self, data):
         mem_details = data.split('\n\n')
         mem_stats = {}
-        mem_counters = ['total_heap_allocated', 'holding_block_headers', 'used_small_blocks',
-                        'used_ordinary_blocks', 'free_small_blocks', 'free_ordinary_blocks',
-                        'ordinary_blocks', 'small_blocks', 'holding_blocks']
+        mem_counters = {
+            'total_heap_allocated': r'Total heap allocated:(?:\s*)(.*)',
+            'holding_block_headers': r'Holding block headers:(?:\s*)(.*)',
+            'used_small_blocks': r'Used small blocks:(?:\s*)(.*)',
+            'used_ordinary_blocks': r'Used ordinary blocks:(?:\s*)(.*)',
+            'free_small_blocks': r'Free small blocks:(?:\s*)(.*)',
+            'free_ordinary_blocks': r'Free ordinary blocks:(?:\s*)(.*)',
+            'ordinary_blocks': r'Ordinary blocks:(?:\s*)(.*)',
+            'small_blocks': r'Small blocks:(?:\s*)(.*)',
+            'holding_blocks': r'Holding blocks:(?:\s*)(.*)'
+        }
 
         for item in mem_details:
             daemon = self._parse_daemons(item)
             mem_stats[daemon] = {}
-            for x in mem_counters:
-                meth = getattr(self, '_parse_%s' % x, None)
-                mem_stats[daemon][x] = meth(item)
+            for fact, pattern in iteritems(mem_counters):
+                mem_stats[daemon][fact] = self.parse_facts(pattern, item)
 
         return mem_stats
 
@@ -296,55 +252,23 @@ class Interfaces(FactsBase):
 
     def populate_interfaces(self, interfaces):
         facts = dict()
-        counters = ['description', 'macaddress', 'type', 'vrf', 'mtu', 'bandwidth', 'lineprotocol',
-                    'operstatus']
+        counters = {
+            'description': r'Description: (.+)',
+            'macaddress': r'HWaddr: (\S+)',
+            'type': r'Type: (\S+)',
+            'vrf': r'vrf: (\S+)',
+            'mtu': r'mtu (\d+)',
+            'bandwidth': r'bandwidth (\d+)',
+            'lineprotocol': r'line protocol is (\S+)',
+            'operstatus': r'^(?:.+) is (.+),'
+        }
+
         for key, value in iteritems(interfaces):
             intf = dict()
-            for x in counters:
-                meth = getattr(self, 'parse_%s' % x, None)
-                intf[x] = meth(value)
+            for fact, pattern in iteritems(counters):
+                intf[fact] = self.parse_facts(pattern, value)
             facts[key] = intf
         return facts
-
-    def parse_description(self, data):
-        match = re.search(r'Description: (.+)', data)
-        if match:
-            return match.group(1)
-
-    def parse_macaddress(self, data):
-        match = re.search(r'HWaddr: (\S+)', data)
-        if match:
-            return match.group(1)
-
-    def parse_type(self, data):
-        match = re.search(r'Type: (\S+)', data)
-        if match:
-            return match.group(1)
-
-    def parse_vrf(self, data):
-        match = re.search(r'vrf: (\S+)', data)
-        if match:
-            return match.group(1)
-
-    def parse_mtu(self, data):
-        match = re.search(r'mtu (\d+)', data)
-        if match:
-            return int(match.group(1))
-
-    def parse_bandwidth(self, data):
-        match = re.search(r'bandwidth (\d+)', data)
-        if match:
-            return int(match.group(1))
-
-    def parse_lineprotocol(self, data):
-        match = re.search(r'line protocol is (\S+)', data)
-        if match:
-            return match.group(1)
-
-    def parse_operstatus(self, data):
-        match = re.search(r'^(?:.+) is (.+),', data, re.M)
-        if match:
-            return match.group(1)
 
     def populate_ipv4_interfaces(self, data):
         for key, value in data.items():
