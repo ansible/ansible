@@ -33,6 +33,10 @@ options:
     description:
       - The operating system.
       - Required if the server does not yet exist.
+  appid:
+    description:
+      - The appid of the application image.
+      - Required if os='Application'.
   firewall_group:
     description:
       - The firewall group to assign this server to.
@@ -355,6 +359,7 @@ class AnsibleVultrServer(Vultr):
             'network_v4': dict(key='v4_network'),
             'gateway_v4': dict(key='v4_gateway'),
             'os': dict(),
+            'appid': dict(),
             'pending_charges': dict(convert_to='float'),
             'power_status': dict(),
             'ram': dict(),
@@ -385,6 +390,10 @@ class AnsibleVultrServer(Vultr):
             resource='os',
             use_cache=True
         )
+
+    def get_appid(self):
+        appid = self.module.params.get('appid')
+        return appid
 
     def get_ssh_keys(self):
         ssh_key_names = self.module.params.get('ssh_keys')
@@ -509,6 +518,7 @@ class AnsibleVultrServer(Vultr):
                 'tag': self.module.params.get('tag'),
                 'reserved_ip_v4': self.module.params.get('reserved_ip_v4'),
                 'user_data': self.get_user_data(),
+                'APPID': self.get_appid(),
                 'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
             self.api_query(
@@ -847,6 +857,7 @@ def main():
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),
+        appid=dict(),
         reserved_ip_v4=dict(),
         firewall_group=dict(),
         startup_script=dict(),
