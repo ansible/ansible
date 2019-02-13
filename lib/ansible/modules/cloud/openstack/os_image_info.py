@@ -29,6 +29,12 @@ options:
      description:
         - Name or ID of the image
      required: false
+   properties:
+     description:
+        - Dict of properties of the images used for query
+     type: dict
+     required: false
+     version_added: '2.9'
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
@@ -55,6 +61,17 @@ EXAMPLES = '''
 - name: Retrieve all available Openstack images
   os_image_info:
   register: result
+
+- name: Show images
+  debug:
+    msg: "{{ result.openstack_image }}"
+
+# Show images matching requested properties
+- name: Retrieve images having properties with desired values
+  os_image_facts:
+    properties:
+      some_property: some_value
+      OtherProp: OtherVal
 
 - name: Show images
   debug:
@@ -145,6 +162,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         image=dict(required=False),
+        properties=dict(default=None, type='dict'),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -163,7 +181,7 @@ def main():
             else:
                 module.exit_json(changed=False, openstack_image=image)
         else:
-            images = cloud.list_images()
+            images = cloud.search_images(filters=module.params['properties'])
             if is_old_facts:
                 module.exit_json(changed=False, ansible_facts=dict(
                     openstack_image=images))
