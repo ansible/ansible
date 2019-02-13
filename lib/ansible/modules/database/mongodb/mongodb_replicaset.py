@@ -75,7 +75,7 @@ options:
     - Identifies the position of the member in the array that is an arbiter.
     type: str
   chainingAllowed:
-    description: >
+    description:
     - When I(settings.chainingAllowed=true), the replicaset allows secondary members to replicate from other
       secondary members.
     - When I(settings.chainingAllowed=false), secondaries can replicate only from the primary.
@@ -402,6 +402,7 @@ def main():
         module.fail_json(msg='Unable to create replica_set: %s' % to_native(e))
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
