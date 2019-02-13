@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mongodb_replicaset
-short_description: Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
+short_description: Initialises a MongoDB replicaset.
 description:
 - Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
 - Validation confirms the replicaset set name only.
@@ -74,27 +74,27 @@ options:
     description:
     - Identifies the position of the member in the array that is an arbiter.
     type: str
-  chainingAllowed:
+  chaining_allowed:
     description:
-    - When I(settings.chainingAllowed=true), the replicaset allows secondary members to replicate from other
+    - When I(settings.chaining_allowed=true), the replicaset allows secondary members to replicate from other
       secondary members.
-    - When I(settings.chainingAllowed=false), secondaries can replicate only from the primary.
+    - When I(settings.chaining_allowed=false), secondaries can replicate only from the primary.
     type: bool
     default: yes
-  heartbeatTimeoutSecs:
+  heartbeat_timeout_secs:
     description:
     - Number of seconds that the replicaset members wait for a successful heartbeat from each other.
     - If a member does not respond in time, other members mark the delinquent member as inaccessible.
-    - The setting only applies when using I(protocolVersion=0). When using I(protocolVersion=1) the relevant
-      setting is I(settings.electionTimeoutMillis).
+    - The setting only applies when using I(protocol_version=0). When using I(protocol_version=1) the relevant
+      setting is I(settings.election_timeout_millis).
     type: int
     default: 10
-  electionTimeoutMillis:
+  election_timeout_millis:
     description:
     - The time limit in milliseconds for detecting when a replicaset's primary is unreachable.
     type: int
     default: 10000
-  protocolVersion:
+  protocol_version:
     description: Version of the replicaset election protocol.
     type: int
     choices: [ 0, 1 ]
@@ -155,7 +155,6 @@ from copy import deepcopy
 
 import os
 import ssl as ssl_lib
-import traceback
 from distutils.version import LooseVersion
 
 try:
@@ -221,8 +220,8 @@ def replicaset_find(client):
     return False
 
 
-def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion,
-                   chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis):
+def replicaset_add(module, client, replica_set, members, arbiter_at_index, protocol_version,
+                   chaining_allowed, heartbeat_timeout_secs, election_timeout_millis):
 
     try:
         from collections import OrderedDict
@@ -236,12 +235,12 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
     members_dict_list = []
     index = 0
     settings = {
-        "chainingAllowed": bool(chainingAllowed),
+        "chainingAllowed": bool(chaining_allowed),
     }
-    if protocolVersion == 0:
-        settings['heartbeatTimeoutSecs'] = heartbeatTimeoutSecs
+    if protocol_version == 0:
+        settings['heartbeatTimeoutSecs'] = heartbeat_timeout_secs
     else:
-        settings['electionTimeoutMillis'] = electionTimeoutMillis
+        settings['electionTimeoutMillis'] = election_timeout_millis
     for member in members:
         if ':' not in member:  # No port supplied. Assume 27017
             member += ":27017"
@@ -251,7 +250,7 @@ def replicaset_add(module, client, replica_set, members, arbiter_at_index, proto
         index += 1
 
     conf = OrderedDict([("_id", replica_set),
-                        ("protocolVersion", protocolVersion),
+                        ("protocolVersion", protocol_version),
                         ("members", members_dict_list),
                         ("settings", settings)])
     client["admin"].command('replSetInitiate', conf)
@@ -305,10 +304,10 @@ def main():
             validate=dict(type='bool', default=True),
             ssl=dict(type='bool', default=False),
             ssl_cert_reqs=dict(type='str', default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
-            protocolVersion=dict(type='int', default=1, choices=[0, 1]),
-            chainingAllowed=dict(type='bool', default=True),
-            heartbeatTimeoutSecs=dict(type='int', default=10),
-            electionTimeoutMillis=dict(type='int', default=10000)
+            protocol_version=dict(type='int', default=1, choices=[0, 1]),
+            chaining_allowed=dict(type='bool', default=True),
+            heartbeat_timeout_secs=dict(type='int', default=10),
+            election_timeout_millis=dict(type='int', default=10000)
         ),
         supports_check_mode=True,
     )
@@ -326,16 +325,16 @@ def main():
     arbiter_at_index = module.params['arbiter_at_index']
     validate = module.params['validate']
     ssl = module.params['ssl']
-    protocolVersion = module.params['protocolVersion']
-    chainingAllowed = module.params['chainingAllowed']
-    heartbeatTimeoutSecs = module.params['heartbeatTimeoutSecs']
-    electionTimeoutMillis = module.params['electionTimeoutMillis']
+    protocol_version = module.params['protocol_version']
+    chaining_allowed = module.params['chaining_allowed']
+    heartbeat_timeout_secs = module.params['heartbeat_timeout_secs']
+    election_timeout_millis = module.params['election_timeout_millis']
 
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
-            raise UserWarning("MongoDB Replicaset validation failed. Invalid number of replicaset members.")
+            module.fail_json(msg="MongoDB Replicaset validation failed. Invalid number of replicaset members.")
         if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
-            raise UserWarning("MongoDB Replicaset validation failed. Invalid arbiter index.")
+            module.fail_json(msg="MongoDB Replicaset validation failed. Invalid arbiter index.")
 
     result = dict(
         changed=False,
@@ -389,8 +388,8 @@ def main():
     try:
         if not replicaset_find(client):
             if not module.check_mode:
-                replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion,
-                               chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+                replicaset_add(module, client, replica_set, members, arbiter_at_index, protocol_version,
+                               chaining_allowed, heartbeat_timeout_secs, election_timeout_millis)
             result['changed'] = True
         else:
             if not module.check_mode:

@@ -11,7 +11,6 @@ def main():
         'lib/ansible/modules/cloud/lxc/lxc_container.py',
         'lib/ansible/modules/cloud/rackspace/rax_files_objects.py',
         'lib/ansible/modules/database/mongodb/mongodb_parameter.py',
-        'lib/ansible/modules/database/mongodb/mongodb_shard.py',
         'lib/ansible/modules/database/mongodb/mongodb_replicaset.py',
         'lib/ansible/modules/database/mongodb/mongodb_shard.py',
         'lib/ansible/modules/database/mongodb/mongodb_user.py',
