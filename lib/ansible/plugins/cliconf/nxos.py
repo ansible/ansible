@@ -147,7 +147,7 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show {0} '.format(lookup[source])
-        if format and format is not 'text':
+        if format and format != 'text':
             cmd += '| %s ' % format
 
         if flags:
