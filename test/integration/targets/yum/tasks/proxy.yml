@@ -19,6 +19,9 @@
 
     - name: clear proxy logs
       shell: ': > /var/log/tinyproxy/tinyproxy.log'
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
 
     - name: install ninvaders with unauthenticated proxy
       yum:
@@ -75,6 +78,9 @@
 
     - name: clear proxy logs
       shell: ': > /var/log/tinyproxy/tinyproxy.log'
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
 
     - name: install ninvaders with authenticated proxy
       yum:
@@ -122,6 +128,9 @@
 
     - name: clear proxy logs
       shell: ': > /var/log/tinyproxy/tinyproxy.log'
+      changed_when: false
+      args:
+        executable: /usr/bin/bash
 
     - name: install ninvaders with proxy, proxy_username, and proxy_password config in yum.conf
       yum:
