@@ -5,9 +5,12 @@
 # Copyright: (c) 2013, Toshaan Bharvani <toshaan@vantosh.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+__metaclass__ = type
+from __future__ import absolute_import, division, print_function
+
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
-                    'metadata_version': '1.0'}
+                    'metadata_version': '1.1'}
 
 DOCUMENTATION = r'''
 ---
@@ -120,7 +123,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             dest=dict(type='str', required=True),
-            options=dict(type='list', default=['preallocation=metadata']),
+            options=dict(type='list', default='preallocation=metadata'),
             format=dict(type='str', default='qcow2'),
             size=dict(type='str'),
             grow=dict(type="bool", default=True),
@@ -175,7 +178,7 @@ def main():
                 size_descrease = True
                 size = size[1:]
             size = int(float(size) * float(unitmultiplier))
-            rc, stdout, _ = module.run_command('%s info "%s"' % (qemu_img, dest), check_rc=True)
+            rc, stdout, stderr = module.run_command('%s info "%s"' % (qemu_img, dest), check_rc=True)
             current_size = None
             for line in stdout.splitlines():
                 if 'virtual size' in line:
@@ -211,6 +214,7 @@ def main():
             result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
