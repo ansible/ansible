@@ -10,7 +10,6 @@
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #Requires -Module Ansible.ModuleUtils.AddType
 #Requires -Module Ansible.ModuleUtils.FileUtil
-#Requires -Module Ansible.ModuleUtils.Legacy
 
 $spec = @{
     options = @{
@@ -28,7 +27,12 @@ $spec = @{
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
         checksum = @{ type='str' }
+        checksum_algorithm = @{ type='str'; default='sha256'}
+        checksum_url = @{ type='str' }
     }
+    mutually_exclusive = @(
+        ,@('checksum', 'checksum_url')
+    )
     supports_check_mode = $true
 }
 
@@ -48,6 +52,8 @@ $proxy_username = $module.Params.proxy_username
 $proxy_password = $module.Params.proxy_password
 $force = $module.Params.force
 $checksum = $module.Params.checksum
+$checksum_algorithm = $module.Params.checksum_algorithm
+$checksum_url = $module.Params.checksum_url
 
 $module.Diff.before = @{}
 $module.Diff.after = @{}
@@ -252,35 +258,52 @@ Function CheckModified-File {
     }
 }
 
-Function Parse-Checksum {
-    param($checksum)
-    $checksum_parameter_splitted = $checksum.split(":", 2)
-    if ($checksum_parameter_splitted.Count -ne 2) {
-        throw
-    }
+Function Get-FileChecksum {
+    param($path, $algorithm = 'sha1')
+<#
+    .SYNOPSIS
+    Helper function to calculate a hash of a file in a way which PowerShell 3
+    and above can handle
+#>
+    If (Test-Path -Path $path -PathType Leaf)
+    {
+        switch ($algorithm)
+        {
+            'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+            'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+            'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+            'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+            'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+            default { 
+                $module.FailJson("Unsupported hash algorithm supplied '$algorithm'")
+            }
+        }
 
-    $checksum_algorithm = $checksum_parameter_splitted[0].Trim()
-    $checksum_hash = $checksum_parameter_splitted[1].Trim()
-
-    return @{algorithm = $checksum_algorithm; hash = $checksum_hash}
-}
-
-Function Get-NormaliseHash {
-    param($dest, $checksum = $null, $hashAlgorithm = $null)
-    if($checksum) {
-        $hashAlgorithm = $(Parse-Checksum -checksum $checksum).algorithm
+        if([bool](Get-Command 'Get-FileHash' -ea 0)) {
+            $raw_hash = Get-FileHash $path -Algorithm $algorithm
+            $hash = $raw_hash.Hash.ToLower()
+        } Else {
+            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
+            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+            $fp.Dispose();
+            $module.Warn("Your host uses legacy powershell. Please update.")
+        }
     }
-    if([string]::IsNullOrEmpty($hashAlgorithm)) {
-        $hashAlgorithm = "SHA1"
+    ElseIf (Test-Path -Path $path -PathType Container)
+    {
+        $hash = "3";
     }
-    return (Get-FileChecksum -Path $dest -Algorithm $hashAlgorithm)
+    Else
+    {
+        $hash = "1";
+    }
+    return $hash
 }
 
 Function CheckModifiedChecksum-File {
     param($dest, $checksum)
-    $normaliseHashDest = Get-NormaliseHash -dest $dest -checksum $checksum
-    $checksumHash = $(Parse-Checksum -checksum $checksum).hash
-    return [bool]($normaliseHashDest -ne $checksumHash)
+    $normaliseHashDest = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
+    return [bool]($normaliseHashDest -ne $checksum)
 }
 
 Function Download-File {
@@ -295,19 +318,6 @@ Function Download-File {
         $module.FailJson("The path '$dest_parent' does not exist for destination '$dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
     }
 
-    # checksum specified, parse for algorithm and checksum
-    if ($checksum) {
-        Try
-        {
-            $checksum_parameter_splitted = Parse-Checksum -checksum $checksum
-
-            $checksum_algorithm = $checksum_parameter_splitted.algorithm
-            $checksum_hash = $checksum_parameter_splitted.hash.ToLower()
-        }
-        Catch {
-            $module.FailJson("The 'checksum' parameter '$checksum' invalid.  Ensure format match: <algorithm>:<checksum|url>. url for checksum currently not supported.")
-        }
-    }
     # TODO: Replace this with WebRequest
     $extWebClient = New-Object ExtendedWebClient
 
@@ -340,47 +350,40 @@ Function Download-File {
         $diff += "+$tmpDest`n"
         $extWebClient.DownloadFile($url, $tmpDest)
 
-        $tmpDestHash = Get-NormaliseHash -dest $tmpDest -hashAlgorithm $checksum_algorithm
+        $tmpDestHash = Get-FileChecksum -path $tmpDest -algorithm $checksum_algorithm
 
-        #$module.Warn("tmpDest='$tmpDest' tmpDestHash='$tmpDestHash' checksum_hash='$checksum_hash'")
+        #$module.Warn("tmpDest='$tmpDest' tmpDestHash='$tmpDestHash' checksum='$checksum'")
 
-#        if (-not $module.CheckMode) {
-
-            # Checksum verification for downloaded file
-            if ($checksum) {
-                # Check both hashes are the same
-                if ($tmpDestHash -ne $checksum_hash) {
-                    throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum_hash, $tmpDestHash)
-                } else {
-                    if(Test-Path -LiteralPath $dest) {
-                        $destHash = Get-NormaliseHash -dest $dest -hashAlgorithm $checksum_algorithm
-                        if ($destHash -eq $checksum_hash) {
-                            $module.Result.status_code = 200
-                            $module.Result.msg = 'file already exists'
-                            $module.Result.checksum_src = $tmpDestHash
-#                            $module.Result.checksum_dest = $destHash
-                            $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-                            return
-                        }
-                    } else {
-                        if (-not $module.CheckMode) {
-                            Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
-                            $diff += "+$tmpDest`n"
-                        }
-                    }
-                }
+        # Checksum verification for downloaded file
+        if ($checksum) {
+            # Check both hashes are the same
+            if ($tmpDestHash -ne $checksum) {
+                throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum, $tmpDestHash)
             } else {
-                if (-not $module.CheckMode) {
-                    $is_modified = CheckModified-File -module $module -url $url -dest $tmpDest -credentials $credentials -headers $headers `
-                                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy -only_length $true
-                    if ($is_modified) {
-                        throw "Source and recieved files size mismatch."
+                if(Test-Path -LiteralPath $dest) {
+                    $destHash = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
+                    if ($destHash -eq $checksum) {
+                        $module.Result.status_code = 200
+                        $module.Result.msg = 'file already exists'
+                        $module.Result.checksum_src = $tmpDestHash
+                        # $module.Result.checksum_dest = $destHash
+                        $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+                        return
                     }
-                    Copy-Item -Path $tmpDest -Destination $dest -Force | Out-Null
-                    $diff += "+$tmpDest`n"
+                } else {
+                    Copy-Item -Path $tmpDest -Destination $dest -Force -WhatIf:$module.CheckMode | Out-Null
+                    $diff += "+$dest`n"
                 }
             }
-#        }
+        } else {
+            $is_modified = CheckModified-File -module $module -url $url -dest $tmpDest -credentials $credentials -headers $headers `
+                                                -timeout $timeout -use_proxy $use_proxy -proxy $proxy -only_length $true
+            if ($is_modified) {
+                throw "Source and recieved files size mismatch."
+            }
+            Copy-Item -Path $tmpDest -Destination $dest -Force -WhatIf:$module.CheckMode | Out-Null
+            $diff += "+$dest`n"
+        }
 
     } Catch [System.Net.WebException] {
         $module.Result.status_code = [int] $_.Exception.Response.StatusCode
@@ -388,7 +391,7 @@ Function Download-File {
         $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
     } Catch {
         $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-        $module.Result.checksum_dest = $hashDest
+        $module.Result.checksum_dest = $destHash
         $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
     }
     Finally {
@@ -405,13 +408,24 @@ Function Download-File {
     $module.Result.msg = 'OK'
     $module.Result.dest = $dest
     $module.Result.checksum_src = $tmpDestHash
-#    $module.Result.checksum_dest = $destHash
+    # $module.Result.checksum_dest = $destHash
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 }
 
 $module.Result.dest = $dest
 $module.Result.elapsed = 0
 $module.Result.url = $url
+
+# normalise values
+if ($checksum) {
+    $checksum = $checksum.Trim().toLower()
+}
+if ($checksum_algorithm) {
+    $checksum_algorithm = $checksum_algorithm.Trim().toLower()
+}
+if ($checksum_url) {
+    $checksum_url = $checksum_url.Trim().toLower()
+}
 
 if (-not $use_proxy -and ($proxy_url -or $proxy_username -or $proxy_password)) {
     $module.Warn("Not using a proxy on request, however a 'proxy_url', 'proxy_username' or 'proxy_password' was defined.")
@@ -469,16 +483,16 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
 # Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
-if ($checksum) {
-    $checksum_hash = $(Parse-Checksum -checksum $checksum).hash
+if ($checksum_url) {
 
-    if ($checksum_hash.startswith('http://', 1) -or $checksum_hash.startswith('https://', 1) -or `
-        $checksum_hash.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_hash).isFile) {
+    if ($checksum_url.startswith('http://', 1) -or $checksum_url.startswith('https://', 1) -or `
+        $checksum_url.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_url).isFile) {
         
-        $hash_from_file = Get-Checksum-From-Url -module $module -url $checksum_hash -credentials $credentials `
+        $checksum = Get-Checksum-From-Url -module $module -url $checksum_url -credentials $credentials `
                                                 -headers $headers -timeout $timeout -use_proxy $use_proxy `
                                                 -proxy $proxy -src_file_url $url
-        $checksum = $(Parse-Checksum -checksum $checksum).algorithm + ":" + $hash_from_file
+    } else {
+        $module.FailJson("Unsupported `checksum_url` value for '$dest': '$checksum_url'")
     }
 }
 
@@ -506,7 +520,7 @@ if(Test-Path -LiteralPath $dest) {
     $module.Result.size = (Get-AnsibleItem -Path $dest).Length
     Try {
         if(-not $module.Result.checksum_dest) {
-            $module.Result.checksum_dest = Get-NormaliseHash -dest $dest -checksum $checksum
+            $module.Result.checksum_dest = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
         }
     } Catch {
         $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)

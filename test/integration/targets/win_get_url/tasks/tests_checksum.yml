@@ -66,7 +66,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}'
-    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha1sum.txt'
+    checksum_algorithm: sha1
     force: True
   register: result_sha1
 
@@ -78,7 +79,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}/27617sha256.txt'
-    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha256sum.txt'
+    checksum_algorithm: sha256
     force: True
   register: result_sha256
 
@@ -90,7 +92,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}/27617sha256_with_dot.txt'
-    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+    checksum_algorithm: sha256
     force: True
   register: result_sha256_with_dot
 
@@ -114,7 +117,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}'
-    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha1sum.txt'
+    checksum_algorithm: sha1
     force: False
   register: result_sha1_no_force
 
@@ -122,7 +126,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}/27617sha256.txt'
-    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha256sum.txt'
+    checksum_algorithm: sha256
     force: False
   register: result_sha256_no_force
 
@@ -138,7 +143,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}'
-    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha1sum.txt'
+    checksum_algorithm: sha1
   check_mode: True
   register: result_sha1_check_mode
 
@@ -146,7 +152,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}/27617sha256.txt'
-    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+    checksum_url: 'http://localhost:{{ http_port }}/sha256sum.txt'
+    checksum_algorithm: sha256
   check_mode: True
   register: result_sha256_check_mode
 
@@ -164,7 +171,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}'
-    checksum: 'sha1:redacted'
+    checksum: 'redacted'
+    checksum_algorithm: sha1
   failed_when:
     - '"did not match" not in result_sha1_failed.msg'
     - '"The checksum" not in result_sha1_failed.msg'
@@ -175,7 +183,8 @@
   win_get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}/27617sha256.txt'
-    checksum: 'sha256:redacted'
+    checksum: 'redacted'
+    checksum_algorithm: sha256
   failed_when:
     - '"did not match" not in result_sha256_failed.msg'
     - '"The checksum" not in result_sha256_failed.msg'
@@ -188,10 +197,25 @@
       - result_sha1_failed is succeeded
       - result_sha256_failed is succeeded
 
-- name: Stop simplehttpserver
-  win_command: >-
-    powershell.exe -c "Stop-Process -Id (Get-NetTCPConnection
-    -LocalPort {{ http_port }} -ErrorAction SilentlyContinue).OwningProcess -Force"
+- name: Check if port is listened
+  win_command: powershell.exe -
+  args:
+    stdin: Get-NetTCPConnection -LocalPort {{ http_port }} -ErrorAction SilentlyContinue
+  register: tcp_connection
+  ignore_errors: yes
+  failed_when: tcp_connection.rc is not defined
+
+- name: Stop simple http.server
+  win_command: powershell.exe -
+  args:
+    stdin: >-
+      Stop-Process -Id (Get-NetTCPConnection
+      -LocalPort {{ http_port }}).OwningProcess -Force -ErrorAction SilentlyContinue
+  when: tcp_connection.rc == 0
+  register: stop_http_server
+  failed_when:
+    - stop_http_server != 0
+    - stop_http_server != 1
   ignore_errors: yes
 
 - name: Remove testing folders

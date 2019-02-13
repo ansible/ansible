@@ -78,9 +78,29 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
-        checksum="sha256:http://example.com/path/sha256sum.txt"'
+        Format: <checksum>, e.g. checksum="D98291AC[...]B6DC7B97"'
       - Additionally, if a checksum is passed to this parameter, and the file exist under
+        the C(dest) location, the I(destination_checksum) would be calculated, and if
+        checksum equals I(destination_checksum), the file download would be skipped
+        (unless C(force) is C(true)).
+    type: str
+    version_added: "2.8"
+  checksum_algorithm:
+    description:
+      - 'If a checksum_algorithm is passed to this parameter, the digest of the
+        destination file will be calculated after it is downloaded to ensure
+        its integrity and verify that the transfer completed successfully.
+        Format: <algorithm>, e.g. checksum_algorithm="sha256"'
+    type: str
+    default: sha256
+    version_added: "2.8"
+  checksum_url:
+    description:
+      - 'If a checksum_url is passed to this parameter, the digest of the
+        destination file will be calculated after it is downloaded to ensure
+        its integrity and verify that the transfer completed successfully.
+        Format: <url>, e.g. checksum_url="http://example.com/path/sha256sum.txt"'
+      - Additionally, if a checksum_url is passed to this parameter, and the file exist under
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
         (unless C(force) is C(true)).
