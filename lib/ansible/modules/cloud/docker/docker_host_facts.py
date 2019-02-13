@@ -21,10 +21,11 @@ short_description: Retrieves facts about docker host and lists of objects of the
 description:
   - Retrieves facts about a docker host.
   - Essentially returns the output of C(docker system info).
-  - Returns lists of objects names for the services - images, networks, volumes, containers.
-  - Returns disk usage information.
-  - The output differs depending on API version available on docker host.
-  - Must be executed on a host running a Docker, otherwise the module will fail.
+  - The module also allows to list object names for containers, images, networks and volumes.
+    It also allows to query information on disk usage.
+  - The output differs depending on API version of the docker daemon.
+  - If the docker daemon cannot be contacted or does not meet the API version requirements,
+    the module will fail.
 
 version_added: "2.8"
 
@@ -136,6 +137,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+can_talk_to_docker:
+    description:
+      - Will be C(true) if the module can talk to the docker daemon.
+    returned: both on success and on error
+    type: bool
+
 docker_host_facts:
     description:
       - Facts representing the basic state of the docker host. Matches the C(docker system info) output.
@@ -299,7 +306,11 @@ def main():
         supports_check_mode=True,
         min_docker_version='1.10.0',
         min_docker_api_version='1.21',
+        fail_results=dict(
+            can_talk_to_docker=False,
+        ),
     )
+    client.fail_results['can_talk_to_docker'] = True
 
     results = dict(
         changed=False,
