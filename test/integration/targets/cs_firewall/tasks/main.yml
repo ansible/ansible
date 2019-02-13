@@ -20,6 +20,9 @@
     networks:
       - "{{ net.name }}"
   register: instance
+  until: instance is success
+  retries: 10
+  delay: 5
 - name: verify instance setup
   assert:
     that:
