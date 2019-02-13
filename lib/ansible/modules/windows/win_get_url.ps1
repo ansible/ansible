@@ -185,7 +185,7 @@ Function CheckModified-File {
     } else {
 
         $webRequest = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
-        $webRequestPaired = = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        $webRequestPaired = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
         if ($webRequest -is [System.Net.FtpWebRequest]) {
             $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
