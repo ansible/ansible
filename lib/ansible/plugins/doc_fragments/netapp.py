@@ -29,13 +29,13 @@ options:
         For more information, please read the documentation U(https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/).
       type: str
       required: true
-      aliases: ['user']
+      aliases: [ user ]
   password:
       description:
       - Password for the specified user.
       type: str
       required: true
-      aliases: ['pass']
+      aliases: [ pass ]
   https:
       description:
       - Enable and disable https
