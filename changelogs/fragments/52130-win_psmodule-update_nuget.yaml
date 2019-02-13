@@ -1,0 +1,2 @@
+bugfixes:
+  - win_psmodule - the NuGet package provider will be updated, if needed, to avoid issue under adding a repository
