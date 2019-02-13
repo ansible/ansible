@@ -460,11 +460,8 @@ class Connection(ConnectionBase):
         if self._shell.SHELL_FAMILY == 'powershell':
             self.has_native_async = True
             self.always_pipeline_modules = True
-            self.become_methods = ['runas']
             self.module_implementation_preferences = ('.ps1', '.exe', '')
             self.allow_executable = False
-        else:
-            self.become_methods = frozenset(C.BECOME_METHODS).difference(['runas'])
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
