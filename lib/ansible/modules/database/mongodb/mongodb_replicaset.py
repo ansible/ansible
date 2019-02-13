@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, Rhys Campbell <rhys.james.campbell@googlemail.com>
+# Copyright: (c) 2018, Rhys Campbell <rhys.james.campbell@googlemail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,178 +10,145 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mongodb_replicaset
 short_description: Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
 description:
-    - Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
-    - Validation confirms the replicaset set name only.
+- Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
+- Validation confirms the replicaset set name only.
 author: Rhys Campbell (@rhysmeister)
 version_added: "2.8"
 options:
-    login_user:
-        description:
-            - The username to authenticate with.
-        required: false
-    login_password:
-        description:
-            - The password to authenticate with.
-        required: false
-    login_database:
-        description:
-            - The database where login credentials are stored.
-        required: false
-        default: "admin"
-    login_host:
-        description:
-            - The MongoDB hostname.
-        required: false
-        default: "localhost"
-    login_port:
-        description:
-            - The MongoDB port to login to.
-        required: false
-        default: 27017
-    replica_set:
-        description:
-            - Replicaset name.
-        required: false
-        default: rs0
-    members:
-        description:
-            - A comma-separated string or a yaml list consisting of the replicaset members.
-            - Supply as a simple csv string, i.e. mongodb1:27017,mongodb2:27017,mongodb3:27017.
-            - If a port number is not provided then 27017 is assumed.
-    validate:
-        description:
-            - Performs some basic validation on the provided replicaset config.
-        required: false
-        default: True
-        type: bool
-    ssl:
-        description:
-            - Whether to use an SSL connection when connecting to the database
-        default: False
-        type: bool
-    ssl_cert_reqs:
-        description:
-            - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
-        required: false
-        default: "CERT_REQUIRED"
-        choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
-    arbiter_at_index:
-        description:
-            - Identifies the position of the member in the array that is an arbiter.
-        required: false
-    chainingAllowed:
-        description: >
-            When I(settings.chainingAllowed=true), the replicaset allows secondary members to replicate from other
-            secondary members. When I(settings.chainingAllowed=false), secondaries can replicate only from the primary.
-        default: true
-        required: false
-        type: bool
-    heartbeatTimeoutSecs:
-        description: >
-            Number of seconds that the replicaset members wait for a successful heartbeat from each other.
-            If a member does not respond in time, other members mark the delinquent member as inaccessible.
-            The setting only applies when using I(protocolVersion=0). When using I(protocolVersion=1) the relevant
-            setting is I(settings.electionTimeoutMillis).
-        default: 10
-        required: false
-    electionTimeoutMillis:
-        description: The time limit in milliseconds for detecting when a replicaset's primary is unreachable.
-        default: 10000
-        required: false
-    protocolVersion:
-        description: Version of the replicaset election protocol.
-        default: 1
-        required: false
-        choices: [0,1]
+  login_user:
+    description:
+    - The username to authenticate with.
+    type: str
+  login_password:
+    description:
+    - The password to authenticate with.
+    type: str
+  login_database:
+    description:
+    - The database where login credentials are stored.
+    type: str
+    default: admin
+  login_host:
+    description:
+    - The MongoDB hostname.
+    type: str
+    default: localhost
+  login_port:
+    description:
+    - The MongoDB port to login to.
+    type: int
+    default: 27017
+  replica_set:
+    description:
+    - Replicaset name.
+    type: str
+    default: rs0
+  members:
+    description:
+    - A comma-separated string or a yaml list consisting of the replicaset members.
+    - Supply as a simple csv string, i.e. mongodb1:27017,mongodb2:27017,mongodb3:27017.
+    - If a port number is not provided then 27017 is assumed.
+    type: list
+  validate:
+    description:
+    - Performs some basic validation on the provided replicaset config.
+    type: bool
+    default: yes
+  ssl:
+    description:
+    - Whether to use an SSL connection when connecting to the database
+    type: bool
+    default: no
+  ssl_cert_reqs:
+    description:
+    - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
+    type: str
+    default: CERT_REQUIRED
+    choices: [ CERT_NONE, CERT_OPTIONAL, CERT_REQUIRED ]
+  arbiter_at_index:
+    description:
+    - Identifies the position of the member in the array that is an arbiter.
+    type: str
+  chainingAllowed:
+    description: >
+    - When I(settings.chainingAllowed=true), the replicaset allows secondary members to replicate from other
+      secondary members.
+    - When I(settings.chainingAllowed=false), secondaries can replicate only from the primary.
+    type: bool
+    default: yes
+  heartbeatTimeoutSecs:
+    description:
+    - Number of seconds that the replicaset members wait for a successful heartbeat from each other.
+    - If a member does not respond in time, other members mark the delinquent member as inaccessible.
+    - The setting only applies when using I(protocolVersion=0). When using I(protocolVersion=1) the relevant
+      setting is I(settings.electionTimeoutMillis).
+    type: int
+    default: 10
+  electionTimeoutMillis:
+    description:
+    - The time limit in milliseconds for detecting when a replicaset's primary is unreachable.
+    type: int
+    default: 10000
+  protocolVersion:
+    description: Version of the replicaset election protocol.
+    type: int
+    choices: [ 0, 1 ]
+    default: 1
 notes:
-    - Requires the pymongo Python package on the remote host, version 2.4.2+. This
-      can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html)
-requirements: [ "pymongo" ]
+- Requires the pymongo Python package on the remote host, version 2.4.2+. This
+  can be installed using pip or the OS package manager. @see U(http://api.mongodb.org/python/current/installation.html)
+requirements:
+- pymongo
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Create a replicaset called 'rs0' with the 3 provided members
 - name: Ensure replicaset rs0 exists
   mongodb_replicaset:
+    login_host: localhost
     login_user: admin
     login_password: admin
-    login_host: "localhost"
     replica_set: rs0
-    members: mongodb1:27017,mongodb2:27017,mongodb3:27017
+    members:
+    - mongodb1:27017
+    - mongodb2:27017
+    - mongodb3:27017
   when: groups.mongod.index(inventory_hostname) == 0
 
 # Create two single-node replicasets on the localhost for testing
 - name: Ensure replicaset rs0 exists
   mongodb_replicaset:
+    login_host: localhost
+    login_port: 3001
     login_user: admin
     login_password: secret
-    login_host: "localhost"
-    login_port: 3001
-    login_database: "admin"
-    replica_set: "rs0"
-    members: "localhost:3001"
-  validate: no
+    login_database: admin
+    replica_set: rs0
+    members: localhost:3001
+    validate: no
 
 - name: Ensure replicaset rs1 exists
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
-    login_host: "localhost"
+    login_host: localhost
     login_port: 3002
-    login_database: "admin"
-    replica_set: "rs1"
-    members: "localhost:3002"
-  validate: no
-
-# Use yaml list
-- name: Ensure replicaset exists
-  mongodb_replicaset:
     login_user: admin
     login_password: secret
-    login_host: "localhost"
-    login_port: 3001
-    login_database: "admin"
-    replica_set: "rs0"
-    members:
-     - "localhost:3001"
-     - "localhost:3002"
-     - "localhost:3003"
-
-# Another list format
-- name: Ensure replicaset exists
-  mongodb_replicaset:
-    login_user: admin
-    login_password: secret
-    login_host: "localhost"
-    login_port: 3001
-    login_database: "admin"
-    replica_set: "rs0"
-    members: [ "localhost:3001",
-               "localhost:3002",
-               "localhost:3003" ]
-
-# Using a variable
-- name: Ensure replicaset exists
-  mongodb_replicaset:
-    login_user: admin
-    login_password: secret
-    login_host: "localhost"
-    login_port: 3001
-    login_database: "admin"
-    replica_set: "rs0"
-    members: "{{ members }}"
+    login_database: admin
+    replica_set: rs1
+    members: localhost:3002
+    validate: no
 '''
 
-RETURN = '''
+RETURN = r'''
 mongodb_replicaset:
-    description: The name of the replicaset that has been created.
-    returned: success
-    type: str
+  description: The name of the replicaset that has been created.
+  returned: success
+  type: str
 '''
 
 from copy import deepcopy
@@ -196,15 +163,13 @@ try:
     from pymongo.errors import OperationFailure
     from pymongo import version as PyMongoVersion
     from pymongo import MongoClient
+    HAS_PYMONGO = True
 except ImportError:
     try:  # for older PyMongo 2.2
         from pymongo import Connection as MongoClient
+        HAS_PYMONGO = True
     except ImportError:
-        pymongo_found = False
-    else:
-        pymongo_found = True
-else:
-    pymongo_found = True
+        HAS_PYMONGO = False
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type, text_type
@@ -252,7 +217,7 @@ def replicaset_find(client):
         dict: when user exists, False otherwise.
     """
     for rs in client["local"].system.replset.find({}):
-                return rs["_id"]
+        return rs["_id"]
     return False
 
 
@@ -310,12 +275,13 @@ def load_mongocnf():
 
     try:
         config.readfp(open(mongocnf))
-        creds = dict(
-            user=config.get('client', 'user'),
-            password=config.get('client', 'pass')
-        )
     except (configparser.NoOptionError, IOError):
         return False
+
+    creds = dict(
+        user=config.get('client', 'user'),
+        password=config.get('client', 'pass')
+    )
 
     return creds
 
@@ -328,26 +294,26 @@ def load_mongocnf():
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_database=dict(default="admin"),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=27017),
-            replica_set=dict(default="rs0"),
-            members=dict(required=False, default=None, type='raw'),
-            arbiter_at_index=dict(required=False, default=None, type='int'),
-            validate=dict(required=False, default=True, type='bool'),
-            ssl=dict(default=False, type='bool'),
-            ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
-            protocolVersion=dict(required=False, default=1, type='int', choices=[0, 1]),
-            chainingAllowed=dict(required=False, default=True, type='bool'),
-            heartbeatTimeoutSecs=dict(required=False, default=10, type='int'),
-            electionTimeoutMillis=dict(required=False, default=10000, type='int')
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_database=dict(type='str', default="admin"),
+            login_host=dict(type='str', default="localhost"),
+            login_port=dict(type='int', default=27017),
+            replica_set=dict(type='str', default="rs0"),
+            members=dict(type='list'),
+            arbiter_at_index=dict(type='int'),
+            validate=dict(type='bool', default=True),
+            ssl=dict(type='bool', default=False),
+            ssl_cert_reqs=dict(type='str', default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
+            protocolVersion=dict(type='int', default=1, choices=[0, 1]),
+            chainingAllowed=dict(type='bool', default=True),
+            heartbeatTimeoutSecs=dict(type='int', default=10),
+            electionTimeoutMillis=dict(type='int', default=10000)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
-    if not pymongo_found:
+    if not HAS_PYMONGO:
         module.fail_json(msg='the python pymongo module is required')
 
     login_user = module.params['login_user']
@@ -360,20 +326,10 @@ def main():
     arbiter_at_index = module.params['arbiter_at_index']
     validate = module.params['validate']
     ssl = module.params['ssl']
-    protocolVersion = int(module.params['protocolVersion'])
+    protocolVersion = module.params['protocolVersion']
     chainingAllowed = module.params['chainingAllowed']
-    heartbeatTimeoutSecs = int(module.params['heartbeatTimeoutSecs'])
-    electionTimeoutMillis = int(module.params['electionTimeoutMillis'])
-
-    # convert members to python list if it's a commas seperated string
-    if isinstance(members, str):
-        temp = []
-        temp = members.strip("]['").split(',')
-        members = deepcopy(temp)
-    elif isinstance(members, list):
-        pass
-    else:
-        raise UserWarning("'members' must be a comma-separated string or a yaml list.")
+    heartbeatTimeoutSecs = module.params['heartbeatTimeoutSecs']
+    electionTimeoutMillis = module.params['electionTimeoutMillis']
 
     if validate:
         if len(members) <= 2 or len(members) % 2 == 0:
@@ -381,75 +337,71 @@ def main():
         if arbiter_at_index is not None and len(members) - 1 > arbiter_at_index:
             raise UserWarning("MongoDB Replicaset validation failed. Invalid arbiter index.")
 
+    result = dict(
+        changed=False,
+        replica_set=replica_set,
+    )
+
+    connection_params = dict(
+        host=login_host,
+        port=int(login_port),
+    )
+
+    if ssl:
+        connection_params["ssl"] = ssl
+        connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
+
     try:
-
-        connection_params = {
-            "host": login_host,
-            "port": int(login_port)
-        }
-
-        if ssl:
-            connection_params["ssl"] = ssl
-            connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
-
         client = MongoClient(**connection_params)
-
-        try:
-            check_compatibility(module, client)
-        except Exception as excep:
-            if "not authorized on" in str(excep) or "there are no users authenticated" in str(excep):
-                if login_user is not None and login_password is not None:
-                    client.admin.authenticate(login_user, login_password, source=login_database)
-                    check_compatibility(module, client)
-                else:
-                    raise excep
-            else:
-                raise excep
-
-        if login_user is None and login_password is None:
-            mongocnf_creds = load_mongocnf()
-            if mongocnf_creds is not False:
-                login_user = mongocnf_creds['user']
-                login_password = mongocnf_creds['password']
-        elif login_password is None or login_user is None:
-            module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
-
-        try:
-            client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
-        except Exception as excep:
-            if "not authorized on" in str(excep):
-                if login_user is not None and login_password is not None:
-                    client.admin.authenticate(login_user, login_password, source=login_database)
-                else:
-                    raise excep
-            else:
-                raise excep
-
     except Exception as e:
-        module.fail_json(msg='unable to connect to database: %s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg='Unable to connect to database: %s' % to_native(e))
+
+    try:
+        check_compatibility(module, client)
+    except Exception as excep:
+        if "not authorized on" not in str(excep) and "there are no users authenticated" not in str(excep):
+            raise excep
+        if login_user is None or login_password is None:
+            raise excep
+        client.admin.authenticate(login_user, login_password, source=login_database)
+        check_compatibility(module, client)
+
+    if login_user is None and login_password is None:
+        mongocnf_creds = load_mongocnf()
+        if mongocnf_creds is not False:
+            login_user = mongocnf_creds['user']
+            login_password = mongocnf_creds['password']
+    elif login_password is None or login_user is None:
+        module.fail_json(msg="When supplying login arguments, both 'login_user' and 'login_password' must be provided")
+
+    try:
+        client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
+    except Exception as excep:
+        if "not authorized on" not in str(excep):
+            raise excep
+        if login_user is None or login_password is None:
+            raise excep
+        client.admin.authenticate(login_user, login_password, source=login_database)
 
     if len(replica_set) == 0:
-        module.fail_json(msg='replica_set parameter must not be an empty string')
+        module.fail_json(msg="Parameter 'replica_set' must not be an empty string")
+
     try:
-        replicaset_created = False
-        if module.check_mode:
-            if not replicaset_find(client):
-                module.exit_json(changed=True, replica_set=replica_set)
-            else:
-                module.exit_json(changed=False, replica_set=replica_set)
         if not replicaset_find(client):
-            replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion,
-                           chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
-            replicaset_created = True
+            if not module.check_mode:
+                replicaset_add(module, client, replica_set, members, arbiter_at_index, protocolVersion,
+                               chainingAllowed, heartbeatTimeoutSecs, electionTimeoutMillis)
+            result['changed'] = True
         else:
-            rs = replicaset_find(client)
-            if rs is not None and rs != replica_set:
-                module.fail_json(msg='The replica_set name of \'{0}\' does not match the expected: \'{1}\''.format(rs, replica_set))
+            if not module.check_mode:
+                rs = replicaset_find(client)
+                if rs is not None and rs != replica_set:
+                    module.fail_json(msg="The replica_set name of '{0}' does not match the expected: '{1}'".format(rs, replica_set))
+            result['changed'] = False
     except Exception as e:
-        module.fail_json(msg='Unable to create replica_set: %s' % to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg='Unable to create replica_set: %s' % to_native(e))
 
-    module.exit_json(changed=replicaset_created, replica_set=replica_set)
-
+    module.exit_json(**result)
 
 if __name__ == '__main__':
     main()
