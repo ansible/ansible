@@ -14,5 +14,5 @@ options:
           - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
             See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
         type: str
-        aliases: [ 'aws_region', 'ec2_region' ]
+        aliases: [ aws_region, ec2_region ]
 '''
