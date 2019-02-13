@@ -19,7 +19,7 @@ options:
       - HTTP timeout to Vultr API.
       - The ENV variable C(VULTR_API_TIMEOUT) is used as default, when defined.
       - Fallback value is 60 seconds if not specified.
-    type: str
+    type: int
   api_retries:
     description:
       - Amount of retries in case of the Vultr API retuns an HTTP 503 code.
