@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - add two more error conditions to unarchive to present more accurate error message (https://github.com/ansible/ansible/issues/51848)
