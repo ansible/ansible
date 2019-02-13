@@ -118,6 +118,7 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.5',
     '3.6',
     '3.7',
+    '3.8',
 )
 
 HTTPTESTER_HOSTS = (
