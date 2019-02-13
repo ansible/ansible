@@ -60,19 +60,20 @@ class skydive_restclient(object):
             raise Exception('skydive-client is required but does not appear '
                             'to be installed.  It can be installed using the '
                             'command `pip install skydive-client`')
-            if not set(kwargs.keys()).issubset(SKYDIVE_PROVIDER_SPEC.keys()):
-                raise Exception('invalid or unsupported keyword argument for skydive_restclient connection.')
-            for key, value in iteritems(SKYDIVE_PROVIDER_SPEC):
-                if key not in kwargs:
-                    # apply default values from SKYDIVE_PROVIDER_SPEC since we cannot just
-                    # assume the provider values are coming from AnsibleModule
-                    if 'default' in value:
-                        kwargs[key] = value['default']
-                    # override any values with env variables unless they were
-                    # explicitly set
-                    env = ('SKYDIVE_%s' % key).upper()
-                    if env in os.environ:
-                        kwargs[key] = os.environ.get(env)
+
+        if not set(kwargs.keys()).issubset(SKYDIVE_PROVIDER_SPEC.keys()):
+            raise Exception('invalid or unsupported keyword argument for skydive_restclient connection.')
+        for key, value in iteritems(SKYDIVE_PROVIDER_SPEC):
+            if key not in kwargs:
+                # apply default values from SKYDIVE_PROVIDER_SPEC since we cannot just
+                # assume the provider values are coming from AnsibleModule
+                if 'default' in value:
+                    kwargs[key] = value['default']
+                # override any values with env variables unless they were
+                # explicitly set
+                env = ('SKYDIVE_%s' % key).upper()
+                if env in os.environ:
+                    kwargs[key] = os.environ.get(env)
         kwargs['scheme'] = "http"
         if 'ssl' in kwargs:
             if kwargs['ssl']:
