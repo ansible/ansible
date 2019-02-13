@@ -443,7 +443,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             name=dict(type='str', required=True),
-            gid=dict(type='str'),
+            gid=dict(type='int'),
             system=dict(type='bool', default=False),
             local=dict(type='bool', default=False)
         ),
