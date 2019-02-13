@@ -129,7 +129,6 @@ options:
             netscan-vulnerability:
                 description:
                     - Enable/disable netscan vulnerability event logging.
-                choices:
             severity:
                 description:
                     - Lowest severity level to log.
