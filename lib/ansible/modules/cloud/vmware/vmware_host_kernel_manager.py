@@ -15,14 +15,13 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: vmware_host_kernel_manager
-short_description: Configure kernel module options on an ESXi host or cluster.
+short_description: Manage kernel module options on ESXi hosts
 description:
->-
-    This module can be used to configure kernel module options on a single ESXi host or a cluster.
-    Users can specify an ESXi hostname or cluster name. All connected ESXi hosts in scope will be
-    configured when specified. If a host is not connected at time of configuration, it will be marked
-    as such in the output and be skipped. Kernel module options may require a reboot to take effect
-    which is not covered by this script.
+- This module can be used to manage kernel module options on ESXi hosts.
+- All connected ESXi hosts in scope will be configured when specified.
+- If a host is not connected at time of configuration, it will be marked as such in the output.
+- Kernel module options may require a reboot to take effect which is not covered here.
+- You can use M(reboot) or M(vmware_host_powerstate) module to reboot all ESXi host systems.
 version_added: '2.8'
 author:
 - Aaron Longchamps (@alongchamps)
@@ -34,30 +33,30 @@ requirements:
 options:
   esxi_hostname:
     description:
-    - Name of the ESXi host to work on
-    - This parameter is required if C(cluster_name) is not specified
+    - Name of the ESXi host to work on.
+    - This parameter is required if C(cluster_name) is not specified.
     type: str
   cluster_name:
     description:
-    - Name of the VMware cluster to work on
-    - All ESXi hosts in this cluster will be configured
-    - This parameter is required if C(esxi_hostname) is not specified
+    - Name of the VMware cluster to work on.
+    - All ESXi hosts in this cluster will be configured.
+    - This parameter is required if C(esxi_hostname) is not specified.
     type: str
   kernel_module_name:
     description:
-    - Name of the kernel module to be configured
+    - Name of the kernel module to be configured.
     required: true
     type: str
   kernel_module_option:
     description:
-    - Specified configurations will be applied to the given module
-    - These values are specified in key=value pairs and separated by a space when there are multiple options
+    - Specified configurations will be applied to the given module.
+    - These values are specified in key=value pairs and separated by a space when there are multiple options.
     required: true
     type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Configure IPv6 to be off via tcpip4 kernel module
   vmware_host_kernel_manager:
     hostname: '{{ vcenter_hostname }}'
@@ -80,7 +79,7 @@ EXAMPLES = '''
 RETURN = r'''
 results:
     description:
-    - dict with information on what was changed, by ESXi host
+    - dict with information on what was changed, by ESXi host in scope.
     returned: success
     type: dict
     sample: {
@@ -96,7 +95,7 @@ results:
 '''
 
 try:
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim
 except ImportError:
     pass
 
@@ -124,11 +123,9 @@ class VmwareKernelManager(PyVmomi):
         host_kernel_manager = host.configManager.kernelModuleSystem
 
         try:
-            configured_module_options = host_kernel_manager.QueryConfiguredModuleOptionString(self.kernel_module_name)
+            return host_kernel_manager.QueryConfiguredModuleOptionString(self.kernel_module_name)
         except vim.fault.NotFound as kernel_fault:
             self.module.fail_json(msg="Failed to find kernel module on host '%s'. More information: %s" % (host.name, to_native(kernel_fault.msg)))
-
-        return configured_module_options
 
     # configure the provided kernel module with the specified options
     def apply_kernel_module_option(self, host, kmod_name, kmod_option):
@@ -138,7 +135,6 @@ class VmwareKernelManager(PyVmomi):
             try:
                 if not self.module.check_mode:
                     host_kernel_manager.UpdateModuleOptionString(kmod_name, kmod_option)
-                    self.results[host.name]['changed'] = True
             except vim.fault.NotFound as kernel_fault:
                 self.module.fail_json(msg="Failed to find kernel module on host '%s'. More information: %s" % (host.name, to_native(kernel_fault)))
             except Exception as kernel_fault:
@@ -163,11 +159,11 @@ class VmwareKernelManager(PyVmomi):
 
                     # apply as needed, also depending on check mode
                     if original_options != desired_options:
+                        changed = True;
                         if self.module.check_mode:
                             msg = "Options would be changed on the kernel module"
                         else:
                             self.apply_kernel_module_option(host, self.kernel_module_name, desired_options)
-                            changed = True
                             msg = "Options have been changed on the kernel module"
                             self.results[host.name]['configured_options'] = desired_options
                     else:
@@ -210,7 +206,7 @@ def main():
         ],
         mutually_exclusive=[
             ['cluster_name', 'esxi_hostname'],
-        ]
+        ],
     )
 
     vmware_host_config = VmwareKernelManager(module)

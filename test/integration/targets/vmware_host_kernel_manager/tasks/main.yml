@@ -1,0 +1,49 @@
+  - name: store the vcenter container ip
+    set_fact:
+      vcsim: "{{ lookup('env', 'vcenter_host') }}"
+    - debug: var=vcsim
+
+  - name: Wait for Flask controller to come up online
+    wait_for:
+      host: "{{ vcsim }}"
+      port: 5000
+      state: started
+
+  - name: kill vcsim
+    uri:
+      url: "{{ 'http://' + vcsim + ':5000/killall' }}"
+  - name: start vcsim with no folders
+    uri:
+      url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1&host=1' }}" #TODO is this right with host=1?
+    register: vcsim_instance
+
+  - name: Wait for Flask controller to come up online
+    wait_for:
+      host: "{{ vcsim }}"
+      port: 443
+      state: started
+
+  - name: get a list of hosts from vcsim
+    uri:
+      url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=host' }}"
+    register: hostlist
+
+  - set_fact:
+    host1: "{{ hostlist['json'][0] }}"
+
+  - name: host connected, module exists, options exist, arguments different - test 01
+    vmware_host_kernel_manager:
+      hostname: '{{ vcenter_ip }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      validate_certs: False
+      esxi_hostname: '{{ virtual_host_name }}'
+      kernel_module_name: "tcpip4"
+      kernel_module_option: "ipv6=0"
+    delegate_to: localhost
+  register: my_results
+
+  -name: Check that the provided kernel_module_name has kernel_module_option set
+    assert:
+      that:
+        - "my_results.results['DC0_H0']['configured_options'] == 'ipv6=0'"
