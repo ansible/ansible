@@ -13,19 +13,19 @@ options:
     description:
       - Scaleway OAuth token.
     type: str
-    aliases: ['oauth_token']
+    aliases: [ oauth_token ]
   api_url:
     description:
       - Scaleway API URL.
     type: str
     default: https://api.scaleway.com
-    aliases: ['base_url']
+    aliases: [ base_url ]
   api_timeout:
     description:
       - HTTP timeout to Scaleway API in seconds.
     type: int
     default: 30
-    aliases: ['timeout']
+    aliases: [ timeout ]
   query_parameters:
     description:
     - List of parameters passed to the query string.
