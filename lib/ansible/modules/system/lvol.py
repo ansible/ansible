@@ -212,7 +212,7 @@ import locale
 
 from ansible.module_utils.basic import AnsibleModule
 
-decimal_point = re.compile(r"(\d+)")
+locale.setlocale(locale.LC_ALL, '')
 
 
 def mkversion(major, minor, patch):
@@ -340,7 +340,7 @@ def main():
                 size = size[0:-1]
 
             try:
-                float(size)
+                locale.atof(size)
                 if not size[0].isdigit():
                     raise ValueError()
             except ValueError:
