@@ -47,7 +47,7 @@ options:
             - Use a CA certificate when performing server verification by providing the path to a CA certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(ca.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
-        type: str
+        type: path
         aliases: [ tls_ca_cert ]
     cert_path:
         description:
