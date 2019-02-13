@@ -242,6 +242,31 @@
           - deploy.result.status.availableReplicas == deploy.result.status.replicas
           - updated_deploy_pods.resources[0].spec.containers[0].image.endswith(":2")
 
+    - name: pause a deployment
+      k8s:
+        definition:
+          apiVersion: extensions/v1beta1
+          kind: Deployment
+          metadata:
+            name: wait-deploy
+            namespace: "{{ wait_namespace }}"
+          spec:
+            paused: True
+        wait: yes
+        wait_condition:
+          type: Progressing
+          status: Unknown
+          reason: DeploymentPaused
+      register: pause_deploy
+
+    - name: check that paused deployment wait worked
+      assert:
+        that:
+          - condition.reason == "DeploymentPaused"
+          - condition.status == "Unknown"
+      vars:
+        condition: '{{ pause_deploy.result.status.conditions | selectattr("type", "Progressing")).0 }}'
+
     - name: add a service based on the deployment
       k8s:
         definition:
