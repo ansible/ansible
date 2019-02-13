@@ -109,11 +109,6 @@ options:
     type: int
     default: 120
     aliases: ['wait_timeout']
-  timeout:
-    description:
-     - DO API response timeout.
-    type: int
-    default: 30
   backups:
     description:
      - indicates whether automated backups should be enabled.
@@ -134,12 +129,6 @@ options:
      - "Note: a volume can only be attached to a single Droplet."
     type: list
     required: False
-  oauth_token:
-    description:
-     - DigitalOcean OAuth token. Can be specified in C(DO_API_KEY), C(DO_API_TOKEN), or C(DO_OAUTH_TOKEN) environment variables.
-    type: str
-    aliases: ['API_TOKEN']
-    required: True
   rebuild:
     description:
      - force Droplet rebuild. You may supply I(image) id/slug if you want it changed or omit I(image) and just re-fresh your Droplet.
@@ -147,6 +136,8 @@ options:
     type: bool
 requirements:
   - "python >= 2.6"
+
+extends_documentation_fragment: digital_ocean.documentation
 '''
 
 
@@ -385,28 +376,31 @@ class DODroplet(object):
 
     @staticmethod
     def same_dc(j, dc):
-        if (j and dc and
-                'droplet' in j and
-                'region' in j['droplet'] and
-                'slug' in j['droplet']['region']):
+        if (
+           j and dc and
+           'droplet' in j and
+           'region' in j['droplet'] and
+           'slug' in j['droplet']['region']):
             return j['droplet']['region']['slug'] == dc
         return None
 
     @staticmethod
     def same_size(j, size):
-        if (j and size and
-                'droplet' in j and
-                'size_slug' in j['droplet']):
+        if (
+           j and size and
+           'droplet' in j and
+           'size_slug' in j['droplet']):
             return j['droplet']['size_slug'] == size
         return None
 
     @staticmethod
     def same_image(j, image):
-        if (j and image and
-                'droplet' in j and
-                'image' in j['droplet'] and
-                'id' in j['droplet']['image'] and
-                'slug' in j['droplet']['image']):
+        if (
+           j and image and
+           'droplet' in j and
+           'image' in j['droplet'] and
+           'id' in j['droplet']['image'] and
+           'slug' in j['droplet']['image']):
             return (j['droplet']['image']['slug'] == image
                     or str(j['droplet']['image']['id']) == image)
         return None
@@ -513,37 +507,34 @@ class DODroplet(object):
 
 
 def main():
+    argument_spec = DigitalOceanHelper.digital_ocean_argument_spec()
+    argument_spec.update(
+        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str'),
+        size=dict(aliases=['size_id']),
+        image=dict(aliases=['image_id']),
+        rebuild=dict(type='bool', default=False),
+        region=dict(aliases=['region_id']),
+        ssh_keys=dict(type='list'),
+        private_networking=dict(type='bool', default=False),
+        backups=dict(type='bool', default=False),
+        monitoring=dict(type='bool', default=False),
+        id=dict(aliases=['droplet_id'], type='int'),
+        user_data=dict(default=None),
+        ipv6=dict(type='bool', default=False),
+        volumes=dict(type='list'),
+        tags=dict(type='list'),
+        wait=dict(type='bool', default=True),
+        wait_maximum=dict(default=120, type='int', aliases=['wait_timeout']),
+        wait_minimum=dict(default=2, type='int'),
+        wait_new=dict(default=30, type='int'),
+        unique_name=dict(),
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(choices=['present', 'absent'], default='present'),
-            oauth_token=dict(
-                aliases=['API_TOKEN'],
-                no_log=True,
-                fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN'])
-            ),
-            timeout=dict(default=30, type='int'),
-            name=dict(type='str'),
-            size=dict(aliases=['size_id']),
-            image=dict(aliases=['image_id']),
-            rebuild=dict(type='bool', default=False),
-            region=dict(aliases=['region_id']),
-            ssh_keys=dict(type='list'),
-            private_networking=dict(type='bool', default=False),
-            backups=dict(type='bool', default=False),
-            monitoring=dict(type='bool', default=False),
-            id=dict(aliases=['droplet_id'], type='int'),
-            user_data=dict(default=None),
-            ipv6=dict(type='bool', default=False),
-            volumes=dict(type='list'),
-            tags=dict(type='list'),
-            wait=dict(type='bool', default=True),
-            wait_maximum=dict(default=120, type='int', aliases=['wait_timeout']),
-            wait_minimum=dict(default=2, type='int'),
-            wait_new=dict(default=30, type='int'),
-            unique_name=dict(),
-        ),
+        argument_spec=argument_spec,
         required_one_of=(
             ['id', 'name'],
+            ['oauth_token', 'api_token'],  # FIXME: oauth_token docs should have 'required: yes'
         ),
         supports_check_mode=True,
     )
