@@ -395,8 +395,9 @@ Possible values (sample, not complete list)::
     Slackware
     Solaris
     Suse
+    Windows
 
-.. See `OS_FAMILY_MAP`
+.. See `OS_FAMILY_MAP` and python platform module.
 
 .. seealso::
 
