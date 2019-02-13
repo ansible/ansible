@@ -246,14 +246,25 @@ def get_laps_password(conn, cn, search_base):
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables=None, kdc=None, port=None, scheme='ldap', start_tls=False, validate_certs='demand',
-            cacert_file=None, search_base=None, username=None, password=None, auth='gssapi', allow_plaintext=False,
-            **kwargs):
-
+    def run(self, terms, variables=None, **kwargs):
         if not HAS_LDAP:
             msg = missing_required_lib("python-ldap", url="https://pypi.org/project/python-ldap/")
             msg += ". Import Error: %s" % LDAP_IMP_ERR
             raise AnsibleError(msg)
+
+        # Load the variables and direct args into the lookup options
+        self.set_options(var_options=variables, direct=kwargs)
+        kdc = self.get_option('kdc')
+        port = self.get_option('port')
+        scheme = self.get_option('scheme')
+        start_tls = self.get_option('start_tls')
+        validate_certs = self.get_option('validate_certs')
+        cacert_file = self.get_option('cacert_file')
+        search_base = self.get_option('search_base')
+        username = self.get_option('username')
+        password = self.get_option('password')
+        auth = self.get_option('auth')
+        allow_plaintext = self.get_option('allow_plaintext')
 
         # Validate and set input values
         # https://www.openldap.org/lists/openldap-software/200202/msg00456.html
