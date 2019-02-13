@@ -17,10 +17,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
-import json
 import os
+import copy
+import time
 import traceback
+from datetime import datetime
 
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
@@ -33,7 +34,7 @@ try:
     import kubernetes
     import openshift
     from openshift.dynamic import DynamicClient
-    from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError
+    from openshift.dynamic.exceptions import ResourceNotFoundError, ResourceNotUniqueError, NotFoundError
     HAS_K8S_MODULE_HELPER = True
     k8s_import_exception = None
 except ImportError as e:
@@ -239,6 +240,65 @@ class K8sAnsibleMixin(object):
             result['before'] = diff[0]
             result['after'] = diff[1]
         return not diff, result
+
+    def wait(self, resource, state='present', predicate=None, **kwargs):
+
+        def _deployment_ready(deployment):
+            # FIXME: frustratingly bool(deployment.status) is True even if status is empty
+            # Furthermore deployment.status.availableReplicas == deployment.status.replicas == None if status is empty
+            return (deployment.status and deployment.status.replicas is not None and
+                    deployment.status.availableReplicas == deployment.status.replicas and
+                    deployment.status.observedGeneration == deployment.metadata.generation)
+
+        def _pod_ready(pod):
+            return (pod.status and pod.status.containerStatuses is not None and
+                    all([container.ready for container in pod.status.containerStatuses]))
+
+        def _daemonset_ready(daemonset):
+            return (daemonset.status and daemonset.status.desiredNumberScheduled is not None and
+                    daemonset.status.numberReady == daemonset.status.desiredNumberScheduled and
+                    daemonset.status.observedGeneration == daemonset.metadata.generation)
+
+        def _resource_absent(resource):
+            return not resource
+
+        waiter = dict(
+            Deployment=_deployment_ready,
+            DaemonSet=_daemonset_ready,
+            Pod=_pod_ready
+        )
+        kind = resource.kind
+        if state == 'absent':
+            predicate = _resource_absent
+        elif state == 'present' and not predicate:
+            predicate = waiter.get(kind, lambda x: True)
+        return self._wait_for(resource, predicate, **kwargs)
+
+    def _wait_for(self, resource, predicate, timeout=120, name=None, namespace=None, label_selector=None, field_selector=None):
+        start = datetime.now()
+
+        def _wait_for_elapsed():
+            return (datetime.now() - start).seconds
+
+        response = None
+        while _wait_for_elapsed() < timeout:
+            try:
+                response = resource.get(name=name, namespace=namespace, label_selector=label_selector, field_selector=field_selector)
+                if response and response.kind.endswith('List'):
+                    if all([predicate(x) for x in response.items]) or predicate(response.items):
+                        return True, response.to_dict(), _wait_for_elapsed()
+                elif predicate(response):
+                    if response:
+                        return True, response.to_dict(), _wait_for_elapsed()
+                    else:
+                        return True, {}, _wait_for_elapsed()
+                time.sleep(timeout // 20)
+            except NotFoundError:
+                if predicate(None):
+                    return True, {}, _wait_for_elapsed()
+        if response:
+            response = response.to_dict()
+        return False, response, _wait_for_elapsed()
 
 
 class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
