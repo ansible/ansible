@@ -37,6 +37,6 @@ options:
     description:
     - The connection to protocol.
     type: str
-    choices: [ https, http ]
+    choices: [ http, https ]
     default: https
 '''
