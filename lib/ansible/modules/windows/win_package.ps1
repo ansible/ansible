@@ -25,6 +25,7 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 
 $result = @{
     changed = $false
@@ -326,10 +327,12 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are uninstalling an msi
-                $temp_path = [System.IO.Path]::GetTempPath()
-                $log_file = [System.IO.Path]::GetRandomFileName()
-                $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                $cleanup_artifacts += $log_path
+                if ( -Not $log_path ) { 
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
+                }
 
                 if ($program_metadata.product_id -ne $null) {
                     $id = $program_metadata.product_id
@@ -418,11 +421,13 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
-                $temp_path = [System.IO.Path]::GetTempPath()
-                $log_file = [System.IO.Path]::GetRandomFileName()
-                $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                if ( -Not $log_path ) { 
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
+                }
 
-                $cleanup_artifacts += $log_path
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
                 $log_path = $null
