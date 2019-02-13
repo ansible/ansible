@@ -1,127 +1,118 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Jeroen Hoekx <jeroen.hoekx@dsquare.be>
-#           Toshaan Bharvani <toshaan@vantosh.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Jeroen Hoekx <jeroen.hoekx@dsquare.be>
+# Copyright: (c) 2013, Toshaan Bharvani <toshaan@vantosh.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'status': ['preview'],
                     'supported_by': 'community',
                     'metadata_version': '1.0'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
-  - Jeroen Hoekx (@jhoekx)
-  - Toshaan Bharvani (@toshywoshy)
+- Jeroen Hoekx (@jhoekx)
+- Toshaan Bharvani (@toshywoshy)
 module: qemu_img
-short_description: Create qemu images
+short_description: Manage qemu images
 description:
-  - "This module creates images for qemu."
-version_added: "2.4"
+- This module creates images for qemu.
+version_added: '2.8'
 options:
   dest:
     description:
-    - The image file to create or remove
+    - The image file to create or remove.
+    type: str
     required: true
   format:
     description:
-    - The image format - default qcow2
+    - The image format.
+    type: str
     default: qcow2
   options:
     description:
-    - Comma separated list of format specific options in a name=value format.
+    - List of format specific options in a name=value format.
+    type: list
   size:
     description:
-    - The size of the image
+    - The size of the image.
+    type: str
   grow:
-    choices: [ "yes", "no" ]
-    default: "yes"
     description:
-    - Whether the image is allowed grow
+    - Whether the image is allowed grow.
+    type: bool
+    default: yes
   shrink:
-    choices: [ "yes", "no" ]
-    default: "no"
     description:
-    - Whether the image is allowed shrink
+    - Whether the image is allowed shrink.
+    type: bool
+    default: no
   state:
-    choices: [ "absent", "present"]
     description:
-    - If the image should be present or absent
+    - If the image should be present or absent.
+    type: str
     default: present
+    choices: [ absent, present ]
 notes:
-  - This module does not change the type/format of the image
-  - This module does not take snapshots, and should be implemented seperate
+  - This module does not change the type/format of the image.
+  - This module does not take snapshots, and should be implemented seperate.
 '''
 
-EXAMPLES = '''
-# Create a raw image of 5M.
-- qemu_img:
+EXAMPLES = r'''
+- name: Create a raw image of 5M.
+  qemu_img:
     dest: /tmp/testimg
     size: 5M
     format: raw
 
-# Enlarge the image to 6G.
-- qemu_img:
+- name: Enlarge the image to 6G.
+  qemu_img:
     dest: /tmp/testimg
     size: 6G
     format: qcow2
 
-# Shrink the image by 3G
-    code: qemu_img
+- name: Shrink the image by 3G
+  qemu_img:
     dest: /tmp/testing
     size: -3G
     shrink: yes
     format: qcow2
 
-# Remove the image
-- qemu_img:
+- name: Remove the image
+  qemu_img:
     dest: /tmp/testimg
     state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 # create qemu image
 present:
   description:
-    Returns the status of the qemu image that was created
-  type: string
-  sample: "success"
+  - Returns the status of the qemu image that was created
+  type: str
+  sample: success
   returned: success
 # remove qemu image
 absent:
   description:
-    Returns the status of the qemu image that was removed
-  type: string
-  sample: "success"
+  - Returns the status of the qemu image that was removed
+  type: str
+  sample: success
   returned: success
 # resize qemu image
 resize:
   description:
-    Returns the status of the qemu image that was resized
-  type: string
-  sample: "success"
+  - Returns the status of the qemu image that was resized
+  type: str
+  sample: success
   returned: success
 '''
 
 import os
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.pycompat24 import get_exception
+from ansible.module_utils._text import to_native
 
 
 def main():
@@ -134,9 +125,7 @@ def main():
             size=dict(type='str'),
             grow=dict(type="bool", default=True),
             shrink=dict(type="bool", default=False),
-            state=dict(
-                type='str', choices=['absent', 'present'], default='present'
-            ),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
         required_if=[
@@ -151,7 +140,7 @@ def main():
     state = module.params['state']
     dest = module.params['dest']
     img_format = module.params['format']
-    img_options = module.params['options']
+    img_options = ','.join(module.params['options'])
     size = module.params['size']
     grow = module.params['grow']
     shrink = module.params['shrink']
@@ -170,19 +159,19 @@ def main():
             try:
                 size_unit = str(size[-1:])
                 size = size[:-1]
-            except:
+            except Exception as e:
                 size_unit = 'b'
             try:
                 units = list(['b', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'])
                 unitmultiplier = 1024**units.index(size_unit)
-            except:
+            except Exception as e:
                 module.fail_json(msg='Unknown size unit : %s' % (size_unit))
             size_increase = False
             size_decrease = False
-            if(size[:1] == '+'):
+            if (size[:1] == '+'):
                 size_increase = True
                 size = size[1:]
-            elif(size[:1] == '-'):
+            elif (size[:1] == '-'):
                 size_descrease = True
                 size = size[1:]
             size = int(float(size) * float(unitmultiplier))
@@ -194,20 +183,20 @@ def main():
                     current_size = int(line.split('(')[1].split()[0])
             if not current_size:
                 module.fail_json(msg='Unable to read virtual disk size of %s' % (dest))
-            if(grow):
+            if (grow):
                 newsize = size - current_size
-                if(newsize > 0):
+                if (newsize > 0):
                     if not module.check_mode:
                         rc, stdout, stderr = module.run_command('%s resize "%s" %s' % (qemu_img, dest, size), check_rc=True)
                     result['changed'] = True
-            if(shrink):
-                if(img_format == 'qcow2'):
+            if (shrink):
+                if (img_format == 'qcow2'):
                     module.fail_json(msg="qemu-img does not support shrinking qcow2 images")
                 if (size[:1] == '-'):
                     newsize = current_size - size
                 else:
                     newsize = current_size - size
-                if(newsize > 0):
+                if (newsize > 0):
                     if not module.check_mode:
                         rc, stdout, stderr = module.run_command('%s resize "%s" %s' % (qemu_img, dest, size), check_rc=True)
                     result['changed'] = True
@@ -217,9 +206,8 @@ def main():
             if not module.check_mode:
                 try:
                     os.remove(dest)
-                except:
-                    e = get_exception()
-                    module.fail_json(msg=str(e))
+                except Exception as e:
+                    module.fail_json(msg=to_native(e))
             result['changed'] = True
 
     module.exit_json(**result)
