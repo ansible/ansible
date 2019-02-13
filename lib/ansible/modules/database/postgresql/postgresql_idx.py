@@ -1,18 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2018, Andrey Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
-
 
 DOCUMENTATION = r'''
 ---
@@ -110,7 +109,7 @@ requirements: [ psycopg2 ]
 author: "Andrew Klychkov (@Andersson007)"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Create btree index test_idx concurrently covering columns id and name of table products
 - postgresql_idx:
     db: acme
@@ -150,7 +149,7 @@ EXAMPLES = '''
     cond: id > 1
 '''
 
-RETURN = ''' # '''
+RETURN = r''' # '''
 
 
 import traceback
