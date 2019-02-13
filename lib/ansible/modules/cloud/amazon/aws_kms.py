@@ -76,31 +76,31 @@ options:
       - present
       - absent
     default: present
-    version_added: 2.7
+    version_added: 2.8
   enabled:
     description: Whether or not a key is enabled
     default: True
-    version_added: 2.7
+    version_added: 2.8
     type: bool
   description:
     description:
       A description of the CMK. Use a description that helps you decide
       whether the CMK is appropriate for a task.
-    version_added: 2.7
+    version_added: 2.8
   tags:
     description: A dictionary of tags to apply to a key.
-    version_added: 2.7
+    version_added: 2.8
   purge_tags:
     description: Whether the I(tags) argument should cause tags not in the list to
       be removed
-    version_added: 2.7
+    version_added: 2.8
     default: False
     type: bool
   purge_grants:
     description: Whether the I(grants) argument should cause grants not in the list to
       be removed
     default: False
-    version_added: 2.7
+    version_added: 2.8
     type: bool
   grants:
     description:
@@ -113,9 +113,14 @@ options:
         either or both being a dict specifying an encryption context match.
         See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
       - I(grantee_principal) and I(retiring_principal) must be ARNs
-    version_added: 2.7
+    version_added: 2.8
+  policy:
+    description:
+      - policy to apply to the KMS key
+      - See U(https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html)
+    version_added: 2.8
 author:
-  -  Ted Timmons (@tedder)
+  - Ted Timmons (@tedder)
   - Will Thames (@willthames)
 extends_documentation_fragment:
 - aws
@@ -159,7 +164,7 @@ EXAMPLES = '''
     key_id: abcd1234-abcd-1234-5678-ef1234567890
     grants:
       - name: billing_prod
-        grantee_principal: billing_prod
+        grantee_principal: arn:aws:iam::1234567890123:role/billing_prod
         constraints:
           encryption_context_equals:
             environment: production
