@@ -737,7 +737,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
                                                msg_format="Error starting project %s")
-                self.client.module.fail_json(**fail_reason)
+                self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
@@ -950,7 +950,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
                                                msg_format="Error stopping project %s")
-                self.client.module.fail_json(**fail_reason)
+                self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
@@ -985,7 +985,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
                                                msg_format="Error restarting project %s")
-                self.client.module.fail_json(**fail_reason)
+                self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result

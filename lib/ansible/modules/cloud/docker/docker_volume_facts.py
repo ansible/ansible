@@ -95,7 +95,7 @@ def get_existing_volume(client, volume_name):
     except NotFound as dummy:
         return None
     except Exception as exc:
-        client.module.fail_json(msg="Error inspecting volume: %s" % exc)
+        client.fail("Error inspecting volume: %s" % exc)
 
 
 def main():

@@ -152,9 +152,9 @@ class TaskParameters(DockerBaseClass):
 
         if self.force is not None:
             if self.recreate != 'never':
-                client.module.fail_json(msg='Cannot use the deprecated "force" '
-                                            'option when "recreate" is set. Please stop '
-                                            'using the force option.')
+                client.fail('Cannot use the deprecated "force" '
+                            'option when "recreate" is set. Please stop '
+                            'using the force option.')
             client.module.warn('The "force" option of docker_volume has been deprecated '
                                'in Ansible 2.8. Please use the "recreate" '
                                'option, which provides the same functionality as "force".')

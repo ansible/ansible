@@ -903,7 +903,7 @@ def is_volume_permissions(input):
     return True
 
 
-def parse_port_range(range_or_port, module):
+def parse_port_range(range_or_port, client):
     '''
     Parses a string containing either a single port or a range of ports.
 
@@ -912,13 +912,13 @@ def parse_port_range(range_or_port, module):
     if '-' in range_or_port:
         start, end = [int(port) for port in range_or_port.split('-')]
         if end < start:
-            module.fail_json(msg='Invalid port range: {0}'.format(range_or_port))
+            client.fail('Invalid port range: {0}'.format(range_or_port))
         return list(range(start, end + 1))
     else:
         return [int(range_or_port)]
 
 
-def split_colon_ipv6(input, module):
+def split_colon_ipv6(input, client):
     '''
     Split string by ':', while keeping IPv6 addresses in square brackets in one component.
     '''
@@ -933,7 +933,7 @@ def split_colon_ipv6(input, module):
             break
         j = input.find(']', i)
         if j < 0:
-            module.fail_json(msg='Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
+            client.fail('Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
         result.extend(input[start:i].split(':'))
         k = input.find(':', j)
         if k < 0:
@@ -1123,7 +1123,7 @@ class TaskParameters(DockerBaseClass):
                 self._process_rate_iops(option=param_name)
 
     def fail(self, msg):
-        self.client.module.fail_json(msg=msg)
+        self.client.fail(msg)
 
     @property
     def update_parameters(self):
@@ -1333,25 +1333,25 @@ class TaskParameters(DockerBaseClass):
 
         binds = {}
         for port in self.published_ports:
-            parts = split_colon_ipv6(str(port), self.client.module)
+            parts = split_colon_ipv6(str(port), self.client)
             container_port = parts[-1]
             protocol = ''
             if '/' in container_port:
                 container_port, protocol = parts[-1].split('/')
-            container_ports = parse_port_range(container_port, self.client.module)
+            container_ports = parse_port_range(container_port, self.client)
 
             p_len = len(parts)
             if p_len == 1:
                 port_binds = len(container_ports) * [(default_ip,)]
             elif p_len == 2:
-                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client.module)]
+                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client)]
             elif p_len == 3:
                 # We only allow IPv4 and IPv6 addresses for the bind address
                 if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
                     self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
                                'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
                 if parts[1]:
-                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client.module)]
+                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client)]
                 else:
                     port_binds = len(container_ports) * [(parts[0],)]
 
@@ -1696,7 +1696,7 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
 
     def fail(self, msg):
-        self.parameters.client.module.fail_json(msg=msg)
+        self.parameters.client.fail(msg)
 
     @property
     def exists(self):
@@ -2355,7 +2355,7 @@ class ContainerManager(DockerBaseClass):
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
-        self.client.module.fail_json(msg=msg, **sanitize_result(kwargs))
+        self.client.fail(msg, **kwargs)
 
     def _output_logs(self, msg):
         self.client.module.log(msg=msg)
