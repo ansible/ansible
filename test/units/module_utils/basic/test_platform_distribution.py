@@ -52,21 +52,21 @@ def test_get_distribution_not_linux():
 
 @pytest.mark.usefixtures("platform_linux")
 class TestGetDistribution:
-    """ Tests for get_distribution that have to find somethine"""
+    """Tests for get_distribution that have to find something"""
     def test_distro_known(self):
-        with patch('ansible.module_utils.distro.name', return_value="foo"):
+        with patch('ansible.module_utils.distro.id', return_value="foo"):
             assert get_distribution() == "Foo"
 
     def test_distro_unknown(self):
-        with patch('ansible.module_utils.distro.name', return_value=""):
+        with patch('ansible.module_utils.distro.id', return_value=""):
             assert get_distribution() == "OtherLinux"
 
-    def test_distro_amazon_part_of_another_name(self):
-        with patch('ansible.module_utils.distro.name', return_value="AmazonFooBar"):
-            assert get_distribution() == "Amazonfoobar"
+    def test_distro_amazon_linux_short(self):
+        with patch('ansible.module_utils.distro.id', return_value="amzn"):
+            assert get_distribution() == "Amazon"
 
-    def test_distro_amazon_linux(self):
-        with patch('ansible.module_utils.distro.name', return_value="Amazon Linux AMI"):
+    def test_distro_amazon_linux_long(self):
+        with patch('ansible.module_utils.distro.id', return_value="amazon"):
             assert get_distribution() == "Amazon"
 
 

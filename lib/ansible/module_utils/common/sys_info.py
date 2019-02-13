@@ -29,11 +29,9 @@ def get_distribution():
     distribution = None
 
     if platform.system() == 'Linux':
-        distribution = distro.name().capitalize()
+        distribution = distro.id().capitalize()
 
-        # FIXME: Would we need to normalize these if we used: id() instead of name()?
-        distribution_words = distribution.split()
-        if 'Amazon' in distribution_words:
+        if distribution == 'Amzn':
             distribution = 'Amazon'
         elif not distribution:
             distribution = 'OtherLinux'
