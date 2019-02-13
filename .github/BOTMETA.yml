@@ -246,10 +246,8 @@ files:
   $modules/net_tools/lldp.py:
     ignored: andyhky
   $modules/net_tools/nios/:
-    maintainers: $team_networking sganesh-infoblox
-    labels:
-      - networking
-      - infoblox
+    maintainers: $team_network sganesh-infoblox
+    labels: [ infoblox, network ]
   $modules/net_tools/netbox/: fragmentedpacket
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: $team_aci
@@ -271,23 +269,23 @@ files:
   $modules/network/eos/: trishnaguha
   $modules/network/exos/: rdvencioneck
   $modules/network/f5/:
-    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
+    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_network
     maintainers: caphrim007 wojtek0806
-  $modules/network/files/: $team_networking
+  $modules/network/files/: $team_network
   $modules/network/fortios/: bjolivot
   $modules/network/fortimanager/: $team_fortimanager
   $modules/network/illumos/: *solaris
-  $modules/network/interface/: $team_networking
+  $modules/network/interface/: $team_network
   $modules/network/ios/: rcarrillocruz
   $modules/network/iosxr/: rcarrillocruz gdpak
   $modules/network/ironware/: paulquack
   $modules/network/junos/: Qalthos ganeshrn
-  $modules/network/layer2/: $team_networking
-  $modules/network/layer3/: $team_networking
+  $modules/network/layer2/: $team_network
+  $modules/network/layer3/: $team_network
   $modules/network/meraki/: $team_meraki
-  $modules/network/netconf/netconf_config.py: userlerueda $team_networking
-  $modules/network/netconf/netconf_get.py: $team_networking
-  $modules/network/netconf/netconf_rpc.py: $team_networking
+  $modules/network/netconf/netconf_config.py: userlerueda $team_network
+  $modules/network/netconf/netconf_get.py: $team_network
+  $modules/network/netconf/netconf_rpc.py: $team_network
   $modules/network/netscaler/: $team_netscaler
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nos/: $team_extreme
@@ -300,12 +298,12 @@ files:
     ignored: stygstra
     maintainers: rcarrillocruz
   $modules/network/panos/: ivanbojer jtschichold shinmog
-  $modules/network/protocol/: $team_networking
+  $modules/network/protocol/: $team_network
   $modules/network/routeros/: heuels
-  $modules/network/routing/: $team_networking
+  $modules/network/routing/: $team_network
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
-  $modules/network/system/: $team_networking
+  $modules/network/system/: $team_network
   $modules/network/voss/: $team_extreme
   $modules/network/vyos/: Qalthos samdoran NilashishC
   $modules/notification/_osx_say.py: $team_ansible
@@ -456,7 +454,7 @@ files:
   bin/ansible-connection:
     keywords:
       - persistent connection
-    labels: networking
+    labels: network
   contrib/:
     support: community
   contrib/inventory:
@@ -488,8 +486,8 @@ files:
     labels:
       - ipam
       - nios
-      - networking
-    maintainers: $team_networking
+      - network
+    maintainers: $team_network
   contrib/inventory/azure_rm.py:
     keywords:
       - azure inventory
@@ -575,8 +573,7 @@ files:
     support: core
   $module_utils/service.py:
     support: core
-  $module_utils/cloudscale.py:
-    maintainers: $team_cloudscale
+  $module_utils/cloudscale.py: $team_cloudscale
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -620,139 +617,95 @@ files:
     maintainers: $team_google
     supershipit: $team_google
   $module_utils/gitlab.py: *gitlab
-  $module_utils/ipa.py:
-    maintainers: $team_ipa
+  $module_utils/ipa.py: $team_ipa
   $module_utils/k8s:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels:
       - clustering
       - k8s
-  $module_utils/keycloak.py:
-    maintainers: eikef
-  $module_utils/manageiq.py:
-    maintainers: $team_manageiq
+  $module_utils/keycloak.py: eikef
+  $module_utils/manageiq.py: $team_manageiq
   $module_utils/memset.py:
     maintainers: glitchcrab
     labels: cloud
   $module_utils/mysql.py: *mysql
   $module_utils/net_tools/nios/:
     support: core
-    labels:
-      - networking
-      - infoblox
-    maintainers: $team_networking sganesh-infoblox
-  $module_utils/netapp:
-    maintainers: $team_netapp
-  $module_utils/network:
-    labels: networking
-  $module_utils/network/a10:
-    maintainers: ericchou1 mischapeters
+    labels: [ infoblox, network ]
+    maintainers: $team_network sganesh-infoblox
+  $module_utils/netapp: $team_netapp
+  $module_utils/network/a10: ericchou1 mischapeters
   $module_utils/network/aci: &aci
     maintainers: $team_aci
-    labels:
-    - aci
-    - networking
-  $module_utils/network/aireos:
-    maintainers: jmighion
-  $module_utils/network/aos:
-    maintainers: dgarros jeremyschulman
-  $module_utils/network/aruba:
-    maintainers: jmighion
-  $module_utils/network/asa:
-    maintainers: ogenstad gdpak
-  $module_utils/network/avi:
-    maintainers: $team_avi
-  $module_utils/network/bigswitch:
-    maintainers: jayakody tedelhourani vuile
-  $module_utils/network/cloudengine:
-    maintainers: QijunPan
-  $module_utils/network/cnos:
-    maintainers: dkasberg amuraleedhar
+    labels: aci
+  $module_utils/network/aireos: jmighion
+  $module_utils/network/aos: dgarros jeremyschulman
+  $module_utils/network/aruba: jmighion
+  $module_utils/network/asa: ogenstad gdpak
+  $module_utils/network/avi: $team_avi
+  $module_utils/network/bigswitch: jayakody tedelhourani vuile
+  $module_utils/network/cloudengine: QijunPan
+  $module_utils/network/cnos: dkasberg amuraleedhar
   $module_utils/network/common:
     support: network
-    maintainers: $team_networking
-  $module_utils/network/dellos6:
-    maintainers: skg-net
-  $module_utils/network/dellos9:
-    maintainers: skg-net
-  $module_utils/network/dellos10:
-    maintainers: skg-net
-  $module_utils/network/edgeswitch:
-    maintainers: f-bor
-  $module_utils/network/enos:
-    maintainers: amuraleedhar
+    maintainers: $team_network
+  $module_utils/network/dellos6: skg-net
+  $module_utils/network/dellos9: skg-net
+  $module_utils/network/dellos10: skg-net
+  $module_utils/network/edgeswitch: f-bor
+  $module_utils/network/enos: amuraleedhar
   $module_utils/network/eos:
     support: network
-    maintainers: $team_networking
-  $module_utils/network/exos:
-    maintainers: rdvencioneck
-  $module_utils/network/f5:
-    maintainers: caphrim007 wojtek0806
+    maintainers: $team_network
+  $module_utils/network/exos: rdvencioneck
+  $module_utils/network/f5: caphrim007 wojtek0806
   $module_utils/f5_utils.py:
     maintainers: caphrim007 wojtek0806
-    labels:
-      - f5
-  $module_utils/network/fortios:
-    maintainers: bjolivot
+    labels: f5
+  $module_utils/network/fortios: bjolivot
   $module_utils/network/fortimanager:
     maintainers: $team_fortimanager
-    labels:
-      - fortimanager
-      - networking
+    labels: fortimanager
   $module_utils/network/ios:
     support: network
-    maintainers: $team_networking
+    maintainers: $team_network
   $module_utils/network/iosxr:
     support: network
-    maintainers: $team_networking
-  $module_utils/network/ironware:
-    maintainers: paulquack
+    maintainers: $team_network
+  $module_utils/network/ironware: paulquack
   $module_utils/network/junos:
     support: network
   $module_utils/network/meraki: &meraki
     maintainers: $team_meraki
-    labels:
-      - meraki
-      - networking
+    labels: meraki
   $module_utils/network/netconf:
     support: network
-    maintainers: $team_networking
-  $module_utils/network/netscaler:
-    maintainers: $team_netscaler
-  $module_utils/network/nos:
-    maintainers: $team_extreme
-  $module_utils/network/nso:
-    maintainers: $team_nso
+    maintainers: $team_network
+  $module_utils/network/netscaler: $team_netscaler
+  $module_utils/network/nos: $team_extreme
+  $module_utils/network/nso: $team_nso
   $module_utils/network/nxos:
     support: network
     maintainers: $team_nxos
-  $module_utils/network/onyx:
-    maintainers: $team_onyx
-  $module_utils/network/ordnance:
-    maintainers: alexanderturner djh00t
-  $module_utils/network/panos:
-    maintainers: ivanbojer jtschichold shinmog
-  $module_utils/network/routeros:
-    maintainers: heuels
-  $module_utils/network/slxos:
-    maintainers: $team_extreme
-  $module_utils/network/voss:
-    maintainers: $team_extreme
+  $module_utils/network/onyx: $team_onyx
+  $module_utils/network/ordnance: alexanderturner djh00t
+  $module_utils/network/panos: ivanbojer jtschichold shinmog
+  $module_utils/network/routeros: heuels
+  $module_utils/network/slxos: $team_extreme
+  $module_utils/network/voss: $team_extreme
   $module_utils/network/vyos:
     support: network
-    maintainers: $team_networking
+    maintainers: $team_network
   $module_utils/openstack.py:
     maintainers: $team_openstack
-    labels:
-      - cloud
+    labels: cloud
   $module_utils/ovirt.py: *virt
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
   $module_utils/pure.py:
     maintainers: $team_purestorage
     labels: pure_storage
-  $module_utils/redfish_utils.py:
-    maintainers: $team_redfish
+  $module_utils/redfish_utils.py: $team_redfish
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
@@ -760,14 +713,11 @@ files:
     maintainers: rajeevarakkal
   $module_utils/scaleway.py: &scaleway
     maintainers: $team_scaleway
-    labels:
-      - cloud
-  $module_utils/utm_utils.py:
-    maintainers: $team_e_spirit
+    labels: cloud
+  $module_utils/utm_utils.py: $team_e_spirit
   $module_utils/vmware: *vmware
   $module_utils/vultr.py: *vultr
-  $module_utils/xenserver.py:
-      maintainers: bvitnik
+  $module_utils/xenserver.py: bvitnik
 
 ###############################
 # playbook
@@ -864,61 +814,59 @@ files:
     support: core
   $plugins/action/asa:
     maintainers: ogenstad gdpak
-    labels: networking
+    labels: network
   $plugins/action/aireos:
     maintainers: jmighion
-    labels: networking
+    labels: network
   $plugins/action/aruba:
     maintainers: jmighion
-    labels: networking
+    labels: network
   $plugins/action/bigip:
     maintainers: caphrim007 wojtek0806
-    labels: networking
+    labels: network
   $plugins/action/bigiq:
     maintainers: caphrim007 wojtek0806
-    labels: networking
+    labels: network
   $plugins/action/dellos:
     maintainers: skg-net
-    labels: networking
+    labels: network
   $plugins/action/eos:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/action/ios:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/action/iosxr:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/action/ironware:
     maintainers: paulquack
-    labels: networking
+    labels: network
   $plugins/action/junos:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/action/net:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/action/nxos:
     support: network
-    maintainers: $team_networking
-    labels:
-      - networking
-      - nxos
+    maintainers: $team_network
+    labels: network
   $plugins/action/onyx_config.py:
     maintainers: $team_onyx
-    labels: networking
+    labels: network
   $plugins/action/sros:
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/action/vyos:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
 ###############################
 # plugins/cache
   $plugins/cache/__init__.py:
@@ -961,43 +909,36 @@ files:
 
 
   $plugins/cliconf/:
-    labels: networking
-  $plugins/cliconf/edgeswitch.py:
-    maintainers: f-bor
+    labels: network
+  $plugins/cliconf/edgeswitch.py: f-bor
   $plugins/cliconf/eos.py:
     support: network
-    maintainers: $team_networking
-  $plugins/cliconf/exos.py:
-    maintainers: rdvencioneck
+    maintainers: $team_network
+  $plugins/cliconf/exos.py: rdvencioneck
   $plugins/cliconf/ios.py:
     support: network
-    maintainers: $team_networking
+    maintainers: $team_network
   $plugins/cliconf/iosxr.py:
     support: network
-    maintainers: $team_networking
-  $plugins/cliconf/ironware.py:
-    maintainers: paulquack
+    maintainers: $team_network
+  $plugins/cliconf/ironware.py: paulquack
   $plugins/cliconf/junos.py:
     support: network
-    maintainers: $team_networking
-  $plugins/cliconf/nos.py:
-    maintainers: $team_extreme
+    maintainers: $team_network
+  $plugins/cliconf/nos.py: $team_extreme
   $plugins/cliconf/nxos.py:
     support: network
     maintainers: $team_nxos
     labels: nxos
-  $plugins/cliconf/onyx.py:
-    maintainers: $team_onyx
-  $plugins/cliconf/routeros.py:
-    maintainers: heuels
-  $plugins/cliconf/slxos.py:
-    maintainers: $team_extreme
+  $plugins/cliconf/onyx.py: $team_onyx
+  $plugins/cliconf/routeros.py: heuels
+  $plugins/cliconf/slxos.py: $team_extreme
   $plugins/cliconf/voss.py:
     maintainers: $team_extreme
-    labels: networking
+    labels: network
   $plugins/cliconf/vyos.py:
     support: network
-    maintainers: $team_networking
+    maintainers: $team_network
 ###############################
 # plugins/connection
   $plugins/connection/:
@@ -1007,24 +948,23 @@ files:
     support: community
   $plugins/connection/httpapi.py:
     support: network
-    maintainers: $team_networking
-    labels: networking
-  $plugins/connection/lxd.py:
-    maintainers: mattclay
+    maintainers: $team_network
+    labels: network
+  $plugins/connection/lxd.py: mattclay
   $plugins/connection/netconf.py:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/connection/oc.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
   $plugins/connection/network_cli.py:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/connection/persistent.py:
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/connection/psrp.py: *windows_core
   $plugins/connection/saltstack.py:
     support: community
@@ -1061,19 +1001,18 @@ files:
     support: core
   $plugins/filter/network.py:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
   $plugins/filter/urlsplit.py:
     support: core
 ###############################
 # plugins/httpapi
   $plugins/httpapi:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/httpapi/ftd.py:
     support: community
-    maintainers: annikulin $team_networking
+    maintainers: annikulin $team_network
 ###############################
 # plugins/inventory
   $plugins/inventory/__init__.py:
@@ -1105,8 +1044,7 @@ files:
     keywords:
       - openstack
       - inventory
-    labels:
-      - cloud
+    labels: cloud
   $plugins/inventory/scaleway.py: *scaleway
   $plugins/inventory/script.py:
     support: core
@@ -1132,10 +1070,8 @@ files:
     labels: k8s
   $plugins/lookup/nios:
     support: core
-    maintainers: $team_networking sganesh-infoblox
-    labels:
-      - networking
-      - infoblox
+    maintainers: $team_network sganesh-infoblox
+    labels: [ infoblox, network ]
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
@@ -1143,14 +1079,14 @@ files:
 # plugins/netconf
   $plugins/netconf/:
     support: network
-    maintainers: $team_networking
-    labels: networking
+    maintainers: $team_network
+    labels: network
   $plugins/lookup/rabbitmq.py:
     maintainers: Im0
     support: community
   $plugins/netconf/sros.py:
-    maintainers: wisotzky $team_networking
-    labels: networking
+    maintainers: wisotzky $team_network
+    labels: network
 ###############################
 # plugins/shell
   $plugins/shell/:
@@ -1163,51 +1099,39 @@ files:
 ###############################
 # plugins/terminal
   $plugins/terminal/:
-    labels: networking
+    labels: network
   $plugins/terminal/__init__.py:
     support: network
-  $plugins/terminal/asa.py:
-    maintainers: ogenstad gdpak
-  $plugins/terminal/dellos10:
-    maintainers: skg-net
-  $plugins/terminal/edgeos.py:
-    maintainers: samdoran
-  $plugins/terminal/edgeswitch.py:
-    maintainers: f-bor
+  $plugins/terminal/asa.py: ogenstad gdpak
+  $plugins/terminal/dellos10: skg-net
+  $plugins/terminal/edgeos.py: samdoran
+  $plugins/terminal/edgeswitch.py: f-bor
   $plugins/terminal/eos.py:
     support: network
-    maintainers: $team_networking
-  $plugins/terminal/exos.py:
-    maintainers: rdvencioneck
+    maintainers: $team_network
+  $plugins/terminal/exos.py: rdvencioneck
   $plugins/terminal/ios.py:
     support: network
-    maintainers: $team_networking
+    maintainers: $team_network
   $plugins/terminal/iosxr.py:
     support: network
-    maintainers: $team_networking
-  $plugins/terminal/ironware.py:
-    maintainers: paulquack
+    maintainers: $team_network
+  $plugins/terminal/ironware.py: paulquack
   $plugins/terminal/junos.py:
     support: network
-    maintainers: $team_networking
-  $plugins/terminal/nos.py:
-    maintainers: $team_extreme
+    maintainers: $team_network
+  $plugins/terminal/nos.py: $team_extreme
   $plugins/terminal/nxos.py:
     support: network
-    maintainers: $team_networking
-  $plugins/terminal/onyx.py:
-    maintainers: $team_onyx
-  $plugins/terminal/routeros.py:
-    maintainers: heuels
-  $plugins/terminal/slxos.py:
-    maintainers: $team_extreme
-  $plugins/terminal/sros.py:
-    maintainers: $team_networking
-  $plugins/terminal/voss.py:
-    maintainers: $team_extreme
+    maintainers: $team_network
+  $plugins/terminal/onyx.py: $team_onyx
+  $plugins/terminal/routeros.py: heuels
+  $plugins/terminal/slxos.py: $team_extreme
+  $plugins/terminal/sros.py: $team_network
+  $plugins/terminal/voss.py: $team_extreme
   $plugins/terminal/vyos.py:
     support: network
-    maintainers: $team_networking samdoran
+    maintainers: $team_network samdoran
 ###############################
 # plugins/test
   $plugins/test:
@@ -1228,26 +1152,16 @@ files:
       - jinja
       - jinja2
   test/sanity/validate-modules:
-    notified:
-      - mattclay
+    notified: mattclay
     keywords:
       - validate-modules
   test/sanity/validate-modules/schema.py:
-    notified:
-      - gundalow
-      - sivel
+    notified: gundalow sivel
   test/sanity/validate-modules/main.py:
-    notified:
-      - gundalow
-      - sivel
-  docs/:
-    maintainers:
-      - acozine
+    notified: gundalow sivel
+  docs/: acozine
   docs/docsite/rst/dev_guide/developing_modules_general_aci.rst: *aci
-  docs/docsite/rst/network/:
-    labels: networking
-    maintainers:
-      - samccann
+  docs/docsite/rst/network/: samccan
   docs/docsite/rst/scenario_guides/guide_aci.rst: *aci
   docs/docsite/rst/scenario_guides/guide_docker.rst: *docker
   docs/docsite/rst/user_guide/intro_bsd.rst: *bsd
@@ -1278,16 +1192,14 @@ files:
   test/integration/targets/mysql: *mysql
   test/integration/targets/nxos:
     maintainers: $team_nxos
-    labels:
-      - networking
+    labels: network
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/setup_acme: *crypto
   test/integration/targets/setup_docker: *docker
   test/integration/targets/setup_openssl: *crypto
   test/integration/targets/setup_mysql_db: *mysql
-  test/integration/targets/setup_zabbix:
-    maintainers: eikef D3DeFi
+  test/integration/targets/setup_zabbix: eikef D3DeFi
   test/integration/targets/ucs:
     maintainers: $team_ucs
     labels:
@@ -1306,13 +1218,8 @@ files:
   test/units/modules/cloud/docker:
     <<: *docker
     support: community
-  test/units/modules/network:
-    maintainers: $team_networking
-    labels: networking
-  test/units/modules/network/nxos:
-    maintainers: $team_nxos
-    labels:
-      - networking
+  test/units/modules/network: $team_network
+  test/units/modules/network/nxos: $team_nxos
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
@@ -1355,7 +1262,7 @@ macros:
   team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
-  team_networking: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
+  team_network: Qalthos ganeshrn rcarrillocruz trishnaguha gdpak justjais NilashishC
   team_nso: cmoberg cnasten tbjurman
   team_nxos: mikewiebe rahushen rcarrillocruz trishnaguha chrisvanheuveln
   team_onyx: anasbadaha samerd
