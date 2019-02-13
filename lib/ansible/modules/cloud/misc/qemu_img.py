@@ -14,9 +14,6 @@ ANSIBLE_METADATA = {'status': ['preview'],
 
 DOCUMENTATION = r'''
 ---
-author:
-- Jeroen Hoekx (@jhoekx)
-- Toshaan Bharvani (@toshywoshy)
 module: qemu_img
 short_description: Manage qemu images
 description:
@@ -35,7 +32,7 @@ options:
     default: qcow2
   options:
     description:
-    - List of format specific options in a name=value format.
+    - List of format specific options in a C(name=value) format.
     default:
     - preallocation=metadata
     type: list
@@ -45,12 +42,12 @@ options:
     type: str
   grow:
     description:
-    - Whether the image is allowed grow.
+    - Whether the image is allowed to grow.
     type: bool
     default: yes
   shrink:
     description:
-    - Whether the image is allowed shrink.
+    - Whether the image is allowed to shrink.
     type: bool
     default: no
   state:
@@ -62,6 +59,9 @@ options:
 notes:
   - This module does not change the type/format of the image.
   - This module does not take snapshots, and should be implemented seperate.
+author:
+- Jeroen Hoekx (@jhoekx)
+- Toshaan Bharvani (@toshywoshy)
 '''
 
 EXAMPLES = r'''
@@ -91,24 +91,24 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-# create qemu image
+# Create qemu image
 present:
   description:
-  - Returns the status of the qemu image that was created
+  - Returns the status of the qemu image that was created.
   type: str
   sample: success
   returned: success
-# remove qemu image
+# Remove qemu image
 absent:
   description:
-  - Returns the status of the qemu image that was removed
+  - Returns the status of the qemu image that was removed.
   type: str
   sample: success
   returned: success
-# resize qemu image
+# Resize qemu image
 resize:
   description:
-  - Returns the status of the qemu image that was resized
+  - Returns the status of the qemu image that was resized.
   type: str
   sample: success
   returned: success
@@ -128,8 +128,8 @@ def main():
             options=dict(type='list', default=['preallocation=metadata']),
             format=dict(type='str', default='qcow2'),
             size=dict(type='str'),
-            grow=dict(type="bool", default=True),
-            shrink=dict(type="bool", default=False),
+            grow=dict(type='bool', default=True),
+            shrink=dict(type='bool', default=False),
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
@@ -162,7 +162,7 @@ def main():
             result['changed'] = True
         else:
             try:
-                size_unit = str(size[-1:])
+                size_unit = size[-1:]
                 size = size[:-1]
             except Exception as e:
                 size_unit = 'b'
