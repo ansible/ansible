@@ -99,6 +99,14 @@ class PlaybookCLI(CLI):
         # create base objects
         loader, inventory, variable_manager = self._play_prereqs()
 
+        # (which is not returned in list_hosts()) is taken into account for
+        # warning if inventory is empty.  But it can't be taken into account for
+        # checking if limit doesn't match any hosts.  Instead we don't worry about
+        # limit if only implicit localhost was in inventory to start with.
+        #
+        # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
+        CLI.get_host_list(inventory, context.CLIARGS['subset'])
+
         # flush fact cache if requested
         if context.CLIARGS['flush_cache']:
             self._flush_cache(inventory, variable_manager)
