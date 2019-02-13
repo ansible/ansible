@@ -61,6 +61,25 @@ options:
         required: false
         default: "CERT_REQUIRED"
         choices: ["CERT_REQUIRED", "CERT_OPTIONAL", "CERT_NONE"]
+    ssl_ca_certs:
+        version_added: "2.7"
+        description:
+            - The path to a file containing certificate(s) of CA(s) that may be trusted to create the SSL cert presented by the MongoDB server
+            - Implies ssl=True
+    ssl_certfile:
+        version_added: "2.7"
+        description:
+            - Path to the file containing a TLS client certificate and (optionally) private key, in PEM encoding
+            - If the private key is not in this file, ssl_keyfile is required
+            - Only required when using TLS client certificates for "TLS mutual authentication"
+            - Implies ssl=True
+    ssl_keyfile:
+        version_added: "2.7"
+        description:
+            - Path to the file containing the private key corresponding to the certificate specified via ssl_certfile, in PEM encoding
+            - If the private key is already in the ssl_certfile, this parameter is optional
+            - Only required when using TLS client certificates for "TLS mutual authentication"
+            - Implies ssl=True
     state:
         description:
             - Whether the shard should be present or absent from the Cluster.
@@ -238,6 +257,9 @@ def main():
                                               login_port=dict(default=27017, type='int', required=False),
                                               ssl=dict(default=False, type='bool'),
                                               ssl_cert_reqs=dict(default='CERT_REQUIRED', choices=['CERT_NONE', 'CERT_OPTIONAL', 'CERT_REQUIRED']),
+                                              ssl_certfile=dict(default=None),
+                                              ssl_keyfile=dict(default=None),
+                                              ssl_ca_certs=dict(default=None),
                                               shard=dict(default=None),
                                               state=dict(required=False, default="present", choices=["present", "absent"])),
                            supports_check_mode=True)
@@ -253,6 +275,9 @@ def main():
     ssl = module.params['ssl']
     shard = module.params['shard']
     state = module.params['state']
+    ssl_certfile = module.params['ssl_certfile']
+    ssl_keyfile = module.params['ssl_keyfile']
+    ssl_ca_certs = module.params['ssl_ca_certs']
 
     try:
         connection_params = {
@@ -263,6 +288,12 @@ def main():
         if ssl:
             connection_params["ssl"] = ssl
             connection_params["ssl_cert_reqs"] = getattr(ssl_lib, module.params['ssl_cert_reqs'])
+        if ssl_certfile:
+            connection_params["ssl_certfile"] = ssl_certfile
+        if ssl_keyfile:
+            connection_params["ssl_keyfile"] = ssl_keyfile
+        if ssl_ca_certs:
+            connection_params["ssl_ca_certs"] = ssl_ca_certs
 
         client = MongoClient(**connection_params)
 
