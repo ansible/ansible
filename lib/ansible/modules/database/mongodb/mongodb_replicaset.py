@@ -386,19 +386,27 @@ def main():
         module.fail_json(msg="Parameter 'replica_set' must not be an empty string")
 
     try:
-        if not replicaset_find(client):
-            if not module.check_mode:
+        rs = replicaset_find(client)
+    except Exception as e:
+        module.fail_json(msg='Unable to query replica_set info: %s' % to_native(e))
+
+    if not rs:
+        if not module.check_mode:
+            try:
                 replicaset_add(module, client, replica_set, members, arbiter_at_index, protocol_version,
                                chaining_allowed, heartbeat_timeout_secs, election_timeout_millis)
-            result['changed'] = True
-        else:
-            if not module.check_mode:
+                result['changed'] = True
+            except Exception as e:
+                module.fail_json(msg='Unable to create replica_set: %s' % to_native(e))
+    else:
+        if not module.check_mode:
+            try:
                 rs = replicaset_find(client)
-                if rs is not None and rs != replica_set:
-                    module.fail_json(msg="The replica_set name of '{0}' does not match the expected: '{1}'".format(rs, replica_set))
-            result['changed'] = False
-    except Exception as e:
-        module.fail_json(msg='Unable to create replica_set: %s' % to_native(e))
+            except Exception as e:
+                module.fail_json(msg='Unable to query replica_set info: %s' % to_native(e))
+            if rs is not None and rs != replica_set:
+                module.fail_json(msg="The replica_set name of '{0}' does not match the expected: '{1}'".format(rs, replica_set))
+        result['changed'] = False
 
     module.exit_json(**result)
 
