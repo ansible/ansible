@@ -120,7 +120,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             dest=dict(type='str', required=True),
-            options=dict(type='str', default='preallocation=metadata'),
+            options=dict(type='list', default=['preallocation=metadata']),
             format=dict(type='str', default='qcow2'),
             size=dict(type='str'),
             grow=dict(type="bool", default=True),
