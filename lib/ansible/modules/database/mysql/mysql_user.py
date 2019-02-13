@@ -423,7 +423,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if version == "8":
                         full_priv = {}
                         full_priv[db_table] = privileges_get_all(cursor)
-                    priv_diff = set(full_priv[db_table]) ^ set(curr_priv[db_table])
+                        priv_diff = set(full_priv[db_table]) ^ set(curr_priv[db_table])
+                    else:
+                        priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 else:
                     priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 if priv_diff:
@@ -498,11 +500,11 @@ def privileges_get(cursor, user, host):
         db = res.group(2)
         if db in output.keys():
             privileges = res.group(1).split(",")
+            if "GRANT" in output[db]:
+                output[db].remove("GRANT")
             output[db] += privileges
 
         else:
-            if "GRANT" in privileges:
-                privileges.remove("GRANT")
             output[db] = privileges
     return output
 
