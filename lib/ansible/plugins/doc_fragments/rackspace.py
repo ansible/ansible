@@ -13,21 +13,19 @@ options:
     description:
       - Rackspace API key, overrides I(credentials).
     type: str
-    aliases:
-      - password
+    aliases: [ password ]
   credentials:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
         I(username) are provided.
     type: path
-    aliases:
-      - creds_file
+    aliases: [ creds_file ]
   env:
     description:
       - Environment as configured in I(~/.pyrax.cfg),
         see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration).
     type: str
-    version_added: 1.5
+    version_added: '1.5'
   region:
     description:
       - Region to create an instance in.
@@ -41,7 +39,7 @@ options:
     description:
       - Whether or not to require SSL validation of API endpoints.
     type: bool
-    version_added: 1.5
+    version_added: '1.5'
 requirements:
   - python >= 2.6
   - pyrax
@@ -61,29 +59,27 @@ options:
   api_key:
     description:
       - Rackspace API key, overrides I(credentials).
-    aliases:
-      - password
+    aliases: [ password ]
   auth_endpoint:
     description:
       - The URI of the authentication service.
     default: https://identity.api.rackspacecloud.com/v2.0/
-    version_added: 1.5
+    version_added: '1.5'
   credentials:
     description:
       - File to find the Rackspace credentials in. Ignored if I(api_key) and
         I(username) are provided.
-    aliases:
-      - creds_file
+    aliases: [ creds_file ]
   env:
     description:
       - Environment as configured in I(~/.pyrax.cfg),
         see U(https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration).
-    version_added: 1.5
+    version_added: '1.5'
   identity_type:
     description:
       - Authentication mechanism to use, such as rackspace or keystone.
     default: rackspace
-    version_added: 1.5
+    version_added: '1.5'
   region:
     description:
       - Region to create an instance in.
@@ -91,21 +87,21 @@ options:
   tenant_id:
     description:
       - The tenant ID used for authentication.
-    version_added: 1.5
+    version_added: '1.5'
   tenant_name:
     description:
       - The tenant name used for authentication.
-    version_added: 1.5
+    version_added: '1.5'
   username:
     description:
       - Rackspace username, overrides I(credentials).
   verify_ssl:
     description:
       - Whether or not to require SSL validation of API endpoints.
-    version_added: 1.5
+    version_added: '1.5'
     type: bool
 requirements:
-  - "python >= 2.6"
+  - python >= 2.6
   - pyrax
 notes:
   - The following environment variables can be used, C(RAX_USERNAME),
