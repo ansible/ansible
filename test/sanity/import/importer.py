@@ -173,8 +173,9 @@ def capture_report(path, capture, messages):
         lineno = warning.lineno
 
         import_dir = 'test/runner/.tox/import/'
+        minimal_dir = 'test/runner/.tox/minimal-'
 
-        if filepath.startswith('../'):
+        if filepath.startswith('../') or filepath.startswith(minimal_dir):
             # The warning occurred outside our source tree.
             # The best we can do is to report the file which was tested that triggered the warning.
             # If the responsible import is in shared code this warning will be repeated for each file tested which imports the shared code.
