@@ -328,9 +328,9 @@ def main():
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
         required_by=dict(
-            state=('name',),
-            enabled=('name',),
-            masked=('name',),
+            state=('name', ),
+            enabled=('name', ),
+            masked=('name', ),
         ),
         mutually_exclusive=[['scope', 'user']],
     )
