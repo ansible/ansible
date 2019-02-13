@@ -80,7 +80,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["openstacksdk"]
+requirements: ["openstacksdk", "shade"]
 '''
 
 EXAMPLES = '''
