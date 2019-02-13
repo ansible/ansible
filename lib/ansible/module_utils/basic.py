@@ -1868,7 +1868,7 @@ class AnsibleModule(object):
         if self._string_conversion_action == 'error':
             extra_msg = 'Quote the entire value to ensure it does not change.'
             msg = common_msg.format(value, to_text(value), extra_msg)
-            self.fail_json(msg=msg)
+            raise TypeError(msg)
         elif self._string_conversion_action == 'warn':
             extra_msg = 'If this does not look like what you expect, quote the entire value to ensure it does not change.'
             msg = common_msg.format(value, to_text(value), extra_msg)
