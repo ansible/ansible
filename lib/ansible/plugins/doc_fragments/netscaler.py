@@ -52,7 +52,7 @@ options:
             - When absent the resource will be deleted from the netscaler node.
         type: str
         choices: [ absent, present ]
-        default: present'
+        default: present
 
     save_config:
         description:
