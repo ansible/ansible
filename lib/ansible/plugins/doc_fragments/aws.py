@@ -19,17 +19,17 @@ options:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
     type: str
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
+    aliases: [ ec2_secret_key, secret_key ]
   aws_access_key:
     description:
       - AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
     type: str
-    aliases: [ 'ec2_access_key', 'access_key' ]
+    aliases: [ ec2_access_key, access_key ]
   security_token:
     description:
       - AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
     type: str
-    aliases: [ 'access_token' ]
+    aliases: [ access_token ]
     version_added: "1.6"
   validate_certs:
     description:

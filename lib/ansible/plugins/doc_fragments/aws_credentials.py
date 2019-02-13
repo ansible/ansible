@@ -12,7 +12,7 @@ options:
   aws_profile:
     description: The AWS profile
     type: str
-    aliases: ['boto_profile']
+    aliases: [ boto_profile ]
     env:
       - name: AWS_PROFILE
       - name: AWS_DEFAULT_PROFILE

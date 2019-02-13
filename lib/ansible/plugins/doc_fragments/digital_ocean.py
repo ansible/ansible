@@ -15,7 +15,7 @@ options:
      - "There are several other environment variables which can be used to provide this value."
      - "i.e., - 'DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN' and 'OAUTH_TOKEN'"
     type: str
-    aliases: ['api_token']
+    aliases: [ api_token ]
   timeout:
     description:
     - The timeout in seconds used for polling DigitalOcean's API.

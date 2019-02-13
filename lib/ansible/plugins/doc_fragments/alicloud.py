@@ -15,28 +15,28 @@ options:
     - If not set then the value of environment variable C(ALICLOUD_ACCESS_KEY),
       C(ALICLOUD_ACCESS_KEY_ID) will be used instead.
     type: str
-    aliases: ['access_key_id', 'access_key']
+    aliases: [ access_key_id, access_key ]
   alicloud_secret_key:
     description:
     - Aliyun Cloud secret key.
     - If not set then the value of environment variable C(ALICLOUD_SECRET_KEY),
       C(ALICLOUD_SECRET_ACCESS_KEY) will be used instead.
     type: str
-    aliases: ['secret_access_key', 'secret_key']
+    aliases: [ secret_access_key, secret_key ]
   alicloud_region:
     description:
     - The Aliyun Cloud region to use.
     - If not specified then the value of environment variable
       C(ALICLOUD_REGION), C(ALICLOUD_REGION_ID) will be used instead.
     type: str
-    aliases: ['region', 'region_id']
+    aliases: [ region, region_id ]
   alicloud_security_token:
     description:
     - The Aliyun Cloud security token.
     - If not specified then the value of environment variable
       C(ALICLOUD_SECURITY_TOKEN) will be used instead.
     type: str
-    aliases: ['security_token']
+    aliases: [ security_token ]
 author:
 - He Guimin (@xiaozhu36)
 requirements:
