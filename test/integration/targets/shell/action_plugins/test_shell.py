@@ -17,4 +17,3 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
         result['shell'] = self._connection._shell.SHELL_FAMILY
         return result
-
