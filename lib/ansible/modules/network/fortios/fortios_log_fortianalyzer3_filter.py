@@ -126,7 +126,6 @@ options:
             netscan-discovery:
                 description:
                     - Enable/disable netscan discovery event logging.
-                choices:
             netscan-vulnerability:
                 description:
                     - Enable/disable netscan vulnerability event logging.
@@ -339,10 +338,8 @@ def main():
                                   "choices": ["enable", "disable"]},
                 "multicast-traffic": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "netscan-discovery": {"required": False, "type": "str",
-                                      "choices": []},
-                "netscan-vulnerability": {"required": False, "type": "str",
-                                          "choices": []},
+                "netscan-discovery": {"required": False, "type": "str"},
+                "netscan-vulnerability": {"required": False, "type": "str"},
                 "severity": {"required": False, "type": "str",
                              "choices": ["emergency", "alert", "critical",
                                          "error", "warning", "notification",
