@@ -477,9 +477,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = InventoryManager(loader=loader, sources=options['inventory'])
-        subset = options.get('subset', False)
-        if subset:
-            inventory.subset(subset)
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
@@ -497,8 +494,10 @@ class CLI(with_metaclass(ABCMeta, object)):
                 display.warning("provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'")
             no_hosts = True
 
+        inventory.subset(subset)
+
         hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0 and no_hosts is False:
+        if not hosts and no_hosts is False:
             raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts
