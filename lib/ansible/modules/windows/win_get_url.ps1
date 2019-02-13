@@ -74,8 +74,9 @@ Add-CSharpType -AnsibleModule $module -References @'
         }
     }
 '@
-Function Get-Checksum-From-Url {
-    param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy, $src_file_url)
+
+Function GetWebRequest{
+    param($url, $headers, $credentials, $timeout, $use_proxy, $proxy) 
 
     $webRequest = [System.Net.WebRequest]::Create($url)
 
@@ -102,6 +103,15 @@ Function Get-Checksum-From-Url {
         }
     }
 
+    return $webRequest
+}
+
+
+Function Get-Checksum-From-Url {
+    param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy, $src_file_url)
+
+    $webRequest = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+
     if ($webRequest -is [System.Net.FtpWebRequest]) {
         $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::DownloadFile
     } else {
@@ -110,13 +120,13 @@ Function Get-Checksum-From-Url {
 
     # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
     Try {
-         # TBD implement case for FTP
          $webResponse = $webRequest.GetResponse()
          $responseStream = $webResponse.GetResponseStream()
          $readStream = New-Object System.IO.StreamReader $responseStream
          $web_checksum=$readStream.ReadToEnd()
 
          $basename = (Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf)
+         # TODO: FIXME: Check for the case when src_file_url do not contain Leaf, as file name
          $basename = [regex]::Escape($basename)
          $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+\.?\/?\\?" + $basename + "\s*$")
          if (-not $web_checksum_str) { 
@@ -175,34 +185,8 @@ Function CheckModified-File {
         $module.Result.msg = 'OK'
     } else {
 
-        $webRequest = [System.Net.WebRequest]::Create($url)
-        $webRequestPaired = [System.Net.WebRequest]::Create($url)
-
-        foreach ($header in $headers.GetEnumerator()) {
-            $webRequest.Headers.Add($header.Name, $header.Value)
-            $webRequestPaired.Headers.Add($header.Name, $header.Value)
-        }
-
-        if ($timeout) {
-            $webRequestPaired.Timeout = $webRequest.Timeout = $timeout * 1000
-        }
-
-        if (-not $use_proxy) {
-            # Ignore the system proxy settings
-            $webRequestPaired.Proxy = $webRequest.Proxy = $null
-        } elseif ($proxy) {
-            $webRequestPaired.Proxy = $webRequest.Proxy = $proxy
-        }
-
-        if ($credentials) {
-            if ($force_basic_auth) {
-                $webRequest.Headers.Add("Authorization", "Basic $credentials")
-                $webRequestPaired.Headers.Add("Authorization", "Basic $credentials")
-            } else {
-                $webRequest.Credentials = $credentials
-                $webRequestPaired.Credentials = $credentials
-            }
-        }
+        $webRequest = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        $webRequestPaired = = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
 
         if ($webRequest -is [System.Net.FtpWebRequest]) {
             $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
@@ -245,12 +229,14 @@ Function CheckModified-File {
         $module.Result.msg = [string] $webResponse.StatusDescription
     }
     
-    if(-not ($webFileLength -and ($webFileLength -eq $fileLength))) {
-        return $true
+    if($webFileLength) {
+        if($only_length -and ($webFileLength -eq -1 )){
+            return $false
+        }    
+        if(($webFileLength -ne -1 ) -and ($webFileLength -ne $fileLength)) {
+            return $true
+        }
     }
-    if($only_length){
-        return $false
-    } 
     if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
         return $false
     } else {
