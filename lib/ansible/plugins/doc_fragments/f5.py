@@ -100,7 +100,7 @@ options:
           - Configures the transport connection to use when connecting to the
             remote device.
         type: str
-        choices:[ cli, rest ]
+        choices: [ cli, rest ]
         default: rest
 notes:
   - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/integrations/networks/f5).
