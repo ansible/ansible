@@ -158,7 +158,7 @@ Function Get-Checksum-From-Url {
 }
 
 Function CheckModified-File {
-    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy, $only_length)
+    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy, $check_length)
     if ($checksum) {
         Try {
             $is_modified_checksum = CheckModifiedChecksum-File -dest $dest -checksum $checksum
@@ -228,18 +228,22 @@ Function CheckModified-File {
         $module.Result.msg = [string] $webResponse.StatusDescription
     }
     
-    if($webFileLength) {
-        if($only_length -and ($webFileLength -eq -1 )){
-            return $false
-        }    
-        if(($webFileLength -ne -1 ) -and ($webFileLength -ne $fileLength)) {
-            return $true
+    if ($check_length) {
+        if ($webFileLength) {
+            if($webFileLength -eq -1){
+                return $false
+            }
+            if($webFileLength -ne $fileLength) {
+                return $true
+            }
         }
-    }
-    if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
         return $false
     } else {
-        return $true
+        if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
+            return $false
+        } else {
+            return $true
+        }
     }
 }
 
@@ -362,7 +366,7 @@ Function Download-File {
             }
         } else {
             $is_modified = CheckModified-File -module $module -url $url -dest $tmpDest -credentials $credentials -headers $headers `
-                                                -timeout $timeout -use_proxy $use_proxy -proxy $proxy -only_length $true
+                                                -timeout $timeout -use_proxy $use_proxy -proxy $proxy -check_length $true
             if ($is_modified) {
                 throw "Source and recieved files size mismatch."
             }
@@ -490,7 +494,7 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
 } else {
 
     $is_modified = CheckModified-File -module $module -url $url -dest $dest -credentials $credentials -headers $headers `
-                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy -only_length $false
+                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy -check_length $false
 
     if ($is_modified) {
 
