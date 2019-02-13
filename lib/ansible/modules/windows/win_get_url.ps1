@@ -126,7 +126,6 @@ Function Get-Checksum-From-Url {
          $web_checksum=$readStream.ReadToEnd()
 
          $basename = (Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf)
-         # TODO: FIXME: Check for the case when src_file_url do not contain Leaf, as file name
          $basename = [regex]::Escape($basename)
          $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+\.?\/?\\?" + $basename + "\s*$")
          if (-not $web_checksum_str) { 
