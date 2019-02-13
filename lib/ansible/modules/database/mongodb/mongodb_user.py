@@ -178,6 +178,7 @@ import os
 import ssl as ssl_lib
 import traceback
 from distutils.version import LooseVersion
+from operator import itemgetter
 
 try:
     from pymongo.errors import ConnectionFailure
@@ -319,7 +320,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
     roles_as_list_of_dict = make_sure_roles_are_a_list_of_dict(roles, db_name)
     uinfo_roles = uinfo.get('roles', [])
 
-    if sorted(roles_as_list_of_dict) == sorted(uinfo_roles):
+    if sorted(roles_as_list_of_dict, key=itemgetter('db')) == sorted(uinfo_roles, key=itemgetter('db')):
         return False
     return True
 
