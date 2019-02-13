@@ -88,6 +88,7 @@ options:
     description:
       - Comma-separated list of existing role (user/group) names to set as the
         default permissions for database objects subsequently created by them.
+        I(target_roles) is only available with I(type=default_privs)."
     version_added: 2.8
   grant_option:
     description:
