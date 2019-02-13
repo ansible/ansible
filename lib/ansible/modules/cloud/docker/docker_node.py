@@ -183,16 +183,16 @@ class SwarmNodeManager(DockerBaseClass):
 
     def node_update(self):
         if not (self.client.check_if_swarm_node(node_id=self.parameters.hostname)):
-            self.client.fail(msg="This node is not part of a swarm.")
+            self.client.fail("This node is not part of a swarm.")
             return
 
         if self.client.check_if_swarm_node_is_down():
-            self.client.fail(msg="Can not update the node. The node is down.")
+            self.client.fail("Can not update the node. The node is down.")
 
         try:
             node_info = self.client.inspect_node(node_id=self.parameters.hostname)
         except APIError as exc:
-            self.client.fail(msg="Failed to get node information for %s" % to_native(exc))
+            self.client.fail("Failed to get node information for %s" % to_native(exc))
 
         changed = False
         node_spec = dict(
@@ -250,7 +250,7 @@ class SwarmNodeManager(DockerBaseClass):
                     self.client.update_node(node_id=node_info['ID'], version=node_info['Version']['Index'],
                                             node_spec=node_spec)
                 except APIError as exc:
-                    self.client.fail(msg="Failed to update node : %s" % to_native(exc))
+                    self.client.fail("Failed to update node : %s" % to_native(exc))
             self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
             self.results['changed'] = changed
         else:

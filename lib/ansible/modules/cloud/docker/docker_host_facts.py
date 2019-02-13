@@ -218,7 +218,7 @@ class DockerHostManager(DockerBaseClass):
         try:
             return self.client.info()
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
+            self.client.fail("Error inspecting docker host: %s" % to_native(exc))
 
     def get_docker_disk_usage_facts(self):
         try:
@@ -227,7 +227,7 @@ class DockerHostManager(DockerBaseClass):
             else:
                 return dict(LayerSize=self.client.df()['LayersSize'])
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker host: %s" % to_native(exc))
+            self.client.fail("Error inspecting docker host: %s" % to_native(exc))
 
     def get_docker_items_list(self, docker_object=None, filters=None, verbose=False):
         items = None
@@ -248,8 +248,8 @@ class DockerHostManager(DockerBaseClass):
             elif docker_object == 'volumes':
                 items = self.client.volumes(filters=filters)
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker host for object '%s': %s" %
-                                      (docker_object, to_native(exc)))
+            self.client.fail("Error inspecting docker host for object '%s': %s" %
+                             (docker_object, to_native(exc)))
 
         if self.verbose_output:
             if docker_object != 'volumes':

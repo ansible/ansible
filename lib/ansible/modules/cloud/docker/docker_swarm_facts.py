@@ -180,7 +180,7 @@ class DockerSwarmManager(DockerBaseClass):
         try:
             return self.client.inspect_swarm()
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker swarm: %s" % to_native(exc))
+            self.client.fail("Error inspecting docker swarm: %s" % to_native(exc))
 
     def get_docker_items_list(self, docker_object=None, filters=None):
         items = None
@@ -194,8 +194,8 @@ class DockerSwarmManager(DockerBaseClass):
             elif docker_object == 'services':
                 items = self.client.services(filters=filters)
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker swarm for object '%s': %s" %
-                                      (docker_object, to_native(exc)))
+            self.client.fail("Error inspecting docker swarm for object '%s': %s" %
+                             (docker_object, to_native(exc)))
 
         if self.verbose_output:
             return items
