@@ -213,8 +213,6 @@ def capture_output(capture):
     sys.stderr = capture.stderr
 
     with warnings.catch_warnings(record=True) as captured_warnings:
-        warnings.simplefilter('always')
-
         try:
             yield
         finally:
