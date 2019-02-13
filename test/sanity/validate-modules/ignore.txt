@@ -133,7 +133,7 @@ lib/ansible/modules/cloud/google/gc_storage.py E322
 lib/ansible/modules/cloud/google/gc_storage.py E324
 lib/ansible/modules/cloud/google/gc_storage.py E325
 lib/ansible/modules/cloud/google/gc_storage.py E326
-lib/ansible/modules/cloud/google/_gce.py E314
+lib/ansible/modules/cloud/google/_gce.py E326
 lib/ansible/modules/cloud/google/gce_eip.py E322
 lib/ansible/modules/cloud/google/gce_instance_template.py E322
 lib/ansible/modules/cloud/google/gce_instance_template.py E324
