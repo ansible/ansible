@@ -1415,14 +1415,13 @@ class DockerServiceManager(object):
                 resolve=module.params['resolve_image']
             )
         except DockerException as e:
-            return module.fail_json(
-                msg="Error looking for an image named %s: %s" % (image, e))
+            self.client.fail(
+                "Error looking for an image named %s: %s" % (image, e))
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
-            return module.fail_json(
-                msg='Error looking for service named %s: %s' %
-                    (module.params['name'], e))
+            self.client.fail(
+                "Error looking for service named %s: %s" % (module.params['name'], e))
         try:
             new_service = DockerService.from_ansible_params(
                 module.params,
@@ -1430,8 +1429,8 @@ class DockerServiceManager(object):
                 image_digest
             )
         except Exception as e:
-            return module.fail_json(
-                msg='Error parsing module parameters: %s' % e)
+            self.client.fail(
+                "Error parsing module parameters: %s" % e)
 
         changed = False
         msg = 'noop'
