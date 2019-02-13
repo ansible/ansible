@@ -77,7 +77,7 @@ options:
   storage_params:
     description:
     - Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc. Mutually exclusive with I(rename) and I(truncate).
-    type: str
+    type: list
   db:
     description:
     - Name of database to connect.
@@ -167,9 +167,14 @@ EXAMPLES = r'''
 - name: Create test_table with several columns in ssd tablespace with fillfactor=10 and autovacuum_analyze_threshold=1
   postgresql_table:
     name: test_table
-    columns: id bigserial primary key, num bigint, stories text
+    columns:
+    - id bigserial primary key
+    - num bigint
+    - stories text
     tablespace: ssd
-    storage_params: fillfactor=10, autovacuum_analyze_threshold=1
+    storage_params:
+    - fillfactor=10
+    - autovacuum_analyze_threshold=1
 
 - name: Create an unlogged table
   postgresql_table:
@@ -462,8 +467,8 @@ def main():
         including=dict(type='str'),
         rename=dict(type='str'),
         truncate=dict(type='bool'),
-        columns=dict(type='str'),
-        storage_params=dict(type='str'),
+        columns=dict(type='list'),
+        storage_params=dict(type='list'),
         session_role=dict(type='str'),
     )
     module = AnsibleModule(
@@ -552,6 +557,12 @@ def main():
             cursor.execute('SET ROLE %s' % session_role)
         except Exception as e:
             module.fail_json(msg="Could not switch role: %s" % to_native(e))
+
+    if storage_params:
+        storage_params = ','.join(storage_params)
+
+    if columns:
+        columns = ','.join(columns)
 
     ##############
     # Do main job:

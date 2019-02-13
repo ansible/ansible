@@ -173,8 +173,12 @@
     db: postgres
     login_user: "{{ pg_user }}"
     name: test3
-    columns: id int, name text
-    storage_params: fillfactor=10, autovacuum_analyze_threshold=1
+    columns:
+    - id int
+    - name text
+    storage_params:
+    - fillfactor=10
+    - autovacuum_analyze_threshold=1
   register: result
   ignore_errors: yes
 
@@ -182,7 +186,7 @@
     that:
       - result.changed == true
       - result.state == 'present'
-      - result.query == 'CREATE TABLE test3 (id int, name text) WITH (fillfactor=10, autovacuum_analyze_threshold=1)'
+      - result.query == 'CREATE TABLE test3 (id int,name text) WITH (fillfactor=10,autovacuum_analyze_threshold=1)'
       - result.storage_params == [ "fillfactor=10", "autovacuum_analyze_threshold=1" ]
   
 # Truncate a table. It always returns changed == true
