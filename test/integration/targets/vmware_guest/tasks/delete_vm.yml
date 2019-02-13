@@ -32,7 +32,7 @@
 
 - name: get a guest
   set_fact:
-    guest1: "{{ vmlist.json[0] }}"
+    guest1: "{{ vmlist.json[0] | basename }}"
 
 - vmware_vm_facts:
     hostname: "{{ vcsim }}"
@@ -43,7 +43,11 @@
 
 - name: store the vcenter container ip
   set_fact:
-    vm_powerstate: "{{ vm_details.virtual_machines[guest1|basename]['power_state'] }}"
+    vm_powerstate: "{{ item.power_state }}"
+  with_items:
+    - "{{ vm_details.virtual_machines| json_query(query) }}"
+  vars:
+    query: "[?guest_name == '{{ guest1 }}' ]"
 
 - debug: var=vm_powerstate
 
@@ -52,7 +56,7 @@
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
     validate_certs: no
-    name: "{{ guest1|basename }}"
+    name: "{{ guest1 }}"
     state: poweredon
   when: "vm_powerstate != 'poweredOn'"
   register: vmware_guest_poweron_state
@@ -65,8 +69,8 @@
     hostname: "{{ vcsim }}"
     username: "{{ vcsim_instance['json']['username'] }}"
     password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ guest1|basename }}"
-    datacenter: "{{ (guest1|basename).split('_')[0] }}"
+    name: "{{ guest1 }}"
+    datacenter: "{{ guest1.split('_')[0] }}"
     state: absent
   register: delete_vm
   ignore_errors: yes
