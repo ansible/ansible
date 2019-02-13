@@ -54,6 +54,7 @@ options:
         type: bool
         default: 'no'
     ssl_cert_reqs:
+        version_added: "2.8"
         description:
             - Specifies whether a certificate is required from the other side of the connection, and whether it will be validated if provided.
         required: false
