@@ -1,0 +1,54 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowAccessToUnspecifiedKMSResources",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListRoles",
+                "kms:CancelKeyDeletion",
+                "kms:CreateAlias",
+                "kms:CreateGrant",
+                "kms:CreateKey",
+                "kms:DeleteAlias",
+                "kms:Describe*",
+                "kms:DisableKey",
+                "kms:EnableKey",
+                "kms:GenerateRandom",
+                "kms:Get*",
+                "kms:List*",
+                "kms:RetireGrant",
+                "kms:ScheduleKeyDeletion",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:UpdateGrant",
+                "kms:UpdateKeyDescription"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowAccessToSpecifiedIAMResources",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:GetRole",
+                "iam:ListAttachedRolePolicies",
+                "iam:ListInstanceProfilesForRole",
+                "iam:PassRole",
+                "iam:UpdateAssumeRolePolicy"
+            ],
+            "Resource": "arn:aws:iam::{{aws_account}}:role/ansible-test-*"
+        },
+        {
+            "Sid": "AllowInstanceProfileCreation",
+            "Effect": "Allow",
+            "Action": [
+                "iam:AddRoleToInstanceProfile",
+                "iam:CreateInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+            ],
+            "Resource": "arn:aws:iam::{{aws_account}}:instance-profile/ansible-test-*"
+        }
+    ]
+}
