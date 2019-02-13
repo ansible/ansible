@@ -326,7 +326,7 @@ class NetAppONTAPNVMESubsystem(object):
         current = self.get_subsystem()
         add_host_map, remove_host_map = dict(), dict()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
-        if cd_action is not 'delete' and self.parameters['state'] == 'present':
+        if cd_action != 'delete' and self.parameters['state'] == 'present':
             add_host_map, remove_host_map = self.associate_host_map(types)
         if self.na_helper.changed:
             if self.module.check_mode:
