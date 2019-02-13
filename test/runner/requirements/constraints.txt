@@ -26,6 +26,7 @@ pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option
 xmltodict < 0.12.0 ; python_version < '2.7' # xmltodict 0.12.0 and later require python 2.7 or later
 lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 or later
 pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
+pytest < 3.10.0 ; python_version >= '2.7' # pytest 3.10.0+ causes some tests to crash, pytest 4.2.0+ causes internal errors in pytest-forked
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.0.4
