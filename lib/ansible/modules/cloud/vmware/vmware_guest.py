@@ -659,12 +659,15 @@ class PyVmomiDeviceHelper(object):
                     cdrom_device.connectable.startConnected and
                     (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
 
-    def create_scsi_disk(self, scsi_ctl, disk_index=None):
+    def create_scsi_disk(self, scsi_ctl, disk_index=None, filename = None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
         diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
-        diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+        if filename is None:
+            diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
+        if filename is not None:
+            diskspec.device.backing.fileName = filename
         diskspec.device.controllerKey = scsi_ctl.device.key
 
         if self.next_disk_unit_number == 7:
@@ -1755,7 +1758,7 @@ class PyVmomiHelper(PyVmomi):
                 diskspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
                 diskspec.device = disks[disk_index]
             else:
-                diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index)
+                diskspec = self.device_helper.create_scsi_disk(scsi_ctl, disk_index, expected_disk_spec.get('filename'))
                 disk_modified = True
 
             if 'disk_mode' in expected_disk_spec:
