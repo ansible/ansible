@@ -188,14 +188,17 @@ data:
   contains:
     ip_address:
       description: public IPv4 address
+      type: str
       returned: success and present
       sample: "139.59.144.10"
     ipv6_address:
       description: IPv6 address (public)
+      type: str
       returned: success and present and ipv6
       sample: "2A03:B0C0:0003:00D0:0000:0000:0424:0001"
     private_ipv4_address:
       description: private IPv4 address
+      type: str
       returned: success and present and private_networking
       sample: "10.135.133.25"
     droplet:
@@ -219,6 +222,7 @@ data:
           type: list
           sample: []
         created_at:
+          type: str
           sample: "2017-11-14T16:36:31Z"
         backup_ids:
           type: list
@@ -244,12 +248,16 @@ data:
           type: complex
           contains:
             transfer:
+              type: float
               sample: 1.0
             price_monthly:
+              type: float
               sample: 5.0
             price_hourly:
+              type: float
               sample: 0.00744
             slug:
+              type: str
               sample: "1gb"
         size_slug:
           sample: "1gb"
