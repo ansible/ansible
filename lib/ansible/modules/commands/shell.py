@@ -67,8 +67,13 @@ notes:
      are not supplied, the task will be skipped.
   -  To sanitize any variables passed to the shell module, you should use
      "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
-  - For Windows targets, use the M(win_shell) module instead.
-  - Rather than using here documents to create multi-line scripts inside playbooks,
+  - An alternative to using inline shell scripts with this module is to use
+    the M(script) module possibly together with the M(template) module.
+  - For rebooting systems, use the M(reboot) or M(win_reboot) module.
+seealso:
+- module: command
+- module: raw
+- module: script
     use the M(script) module instead.
 requirements: [ ]
 author:
