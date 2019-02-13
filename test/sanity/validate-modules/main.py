@@ -997,6 +997,8 @@ class ModuleValidator(Validator):
                     else:
                         doc_deprecated = False
 
+                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+
                     if os.path.islink(self.object_path):
                         # This module has an alias, which we can tell as it's a symlink
                         # Rather than checking for `module: $filename` we need to check against the true filename
@@ -1004,8 +1006,6 @@ class ModuleValidator(Validator):
                     else:
                         # This is the normal case
                         self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
-
-                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
 
                     existing_doc = self._check_for_new_args(doc, metadata)
                     self._check_version_added(doc, existing_doc)
