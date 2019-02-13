@@ -260,19 +260,19 @@ Migration Guides
 
 gce.py -> gcp_compute_instance.py
 `````````````````````````````````
-We're encouraging everyone to move from the `gce` module to the
-`gcp_compute_instance` module. The new `gcp_compute_instance` module has better
+As of Ansible 2.8, We're encouraging everyone to move from the `gce` module to the
+`gcp_compute_instance` module. The `gcp_compute_instance` module has better
 support for all of GCP's features, less dependencies, more flexibility, and
 better supports GCP's authentication systems.
 
-The new `gcp_compute_instance` module supports all of the features of the `gce`
+The `gcp_compute_instance` module supports all of the features of the `gce`
 module (and more!). Below is a mapping of `gce` fields over to
 `gcp_compute_instance` fields.
 
 ============================  ==========================================  ======================
  gce.py                        gcp_compute_instance.py                     Notes 
 ============================  ==========================================  ======================
- state                        status                                      State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is on, off, etc.
+ state                        state/status                                State on gce has multiple values: "present", "absent", "stopped", "started", "terminated". State on gcp_compute_instance is used to describe if the instance exists (present) or does not (absent). Status is used to describe if the instance is "started", "stopped" or "terminated".
  image                        disks[].initialize_params.source_image      You'll need to create a single disk using the disks[] parameter and set it to be the boot disk (disks[].boot = true)
  image_family                 disks[].initialize_params.source_image      See above.
  external_projects            disks[].initialize_params.source_image      The name of the source_image will include the name of the project.
