@@ -34,16 +34,41 @@ options:
     - Name of the datacenter.
     required: true
     type: str
+  show_network_policy:
+    description:
+    - Show or hide network policies of DVS portgroup.
+    type: bool
+    default: True
+  show_port_policy:
+    description:
+    - Show or hide port policies of DVS portgroup.
+    type: bool
+    default: True
+  show_teaming_policy:
+    description:
+    - Show or hide teaming policies of DVS portgroup.
+    type: bool
+    default: True
 extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = r'''
-- name: Gather DVS portgroup facts
+- name: Get facts about DVPG
   vmware_dvs_portgroup_facts:
-    hostname: '{{ vcenter_hostname }}'
-    username: '{{ vcenter_username }}'
-    password: '{{ vcenter_password }}'
-  delegate_to: localhost
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    validate_certs: no
+    datacenter: "{{ datacenter_name }}"
+  register: dvpg_facts
+
+- name: Get number of ports for portgroup 'dvpg_001' in 'dvs_001'
+  debug:
+    msg: "{{ item.num_ports }}"
+  with_items:
+    - "{{ dvpg_facts.dvs_portgroup_facts['dvs_001'] | json_query(query) }}"
+  vars:
+    query: "[?portgroup_name=='dvpg_001']"
 '''
 
 RETURN = r'''
@@ -52,10 +77,10 @@ dvs_portgroup_facts:
     returned: on success
     type: dict
     sample: {
-        "dvs_0": {
-            "dvpg_01": {
+        "dvs_0":[
+            {
                 "description": null,
-                "dvswitch_name": "dvs_0",
+                "dvswitch_name": "dvs_001",
                 "network_policy": {
                     "forged_transmits": false,
                     "mac_changes": false,
@@ -75,6 +100,7 @@ dvs_portgroup_facts:
                     "vendor_config_override": false,
                     "vlan_override": false
                 },
+                "portgroup_name": "dvpg_001",
                 "teaming_policy": {
                     "inbound_policy": true,
                     "notify_switches": true,
@@ -82,8 +108,8 @@ dvs_portgroup_facts:
                     "rolling_order": false
                 },
                 "type": "earlyBinding"
-            }
-        }
+            },
+        ]
     }
 '''
 
@@ -110,27 +136,28 @@ class DVSPortgroupFactsManager(PyVmomi):
 
         result = dict()
         for dvs in dvs_lists:
-            result[dvs.name] = dict()
+            result[dvs.name] = list()
             for dvs_pg in dvs.portgroup:
                 network_policy = dict()
-                if dvs_pg.config.defaultPortConfig.securityPolicy:
+                teaming_policy = dict()
+                port_policy = dict()
+
+                if self.module.params['show_network_policy'] and dvs_pg.config.defaultPortConfig.securityPolicy:
                     network_policy = dict(
                         forged_transmits=dvs_pg.config.defaultPortConfig.securityPolicy.forgedTransmits.value,
                         promiscuous=dvs_pg.config.defaultPortConfig.securityPolicy.allowPromiscuous.value,
                         mac_changes=dvs_pg.config.defaultPortConfig.securityPolicy.macChanges.value
                     )
-                result[dvs.name][dvs_pg.name] = dict(
-                    num_ports=dvs_pg.config.numPorts,
-                    dvswitch_name=dvs_pg.config.distributedVirtualSwitch.name,
-                    description=dvs_pg.config.description,
-                    type=dvs_pg.config.type,
-                    teaming_policy=dict(
+                if self.module.params['show_teaming_policy']:
+                    teaming_policy = dict(
                         policy=dvs_pg.config.defaultPortConfig.uplinkTeamingPolicy.policy.value,
                         inbound_policy=dvs_pg.config.defaultPortConfig.uplinkTeamingPolicy.reversePolicy.value,
                         notify_switches=dvs_pg.config.defaultPortConfig.uplinkTeamingPolicy.notifySwitches.value,
                         rolling_order=dvs_pg.config.defaultPortConfig.uplinkTeamingPolicy.rollingOrder.value,
-                    ),
-                    port_policy=dict(
+                    )
+
+                if self.params['show_port_policy']:
+                    port_policy = dict(
                         block_override=dvs_pg.config.policy.blockOverrideAllowed,
                         ipfix_override=dvs_pg.config.policy.ipfixOverrideAllowed,
                         live_port_move=dvs_pg.config.policy.livePortMovingAllowed,
@@ -142,16 +169,30 @@ class DVSPortgroupFactsManager(PyVmomi):
                         uplink_teaming_override=dvs_pg.config.policy.uplinkTeamingOverrideAllowed,
                         vendor_config_override=dvs_pg.config.policy.vendorConfigOverrideAllowed,
                         vlan_override=dvs_pg.config.policy.vlanOverrideAllowed
-                    ),
+                    )
+
+                dvpg_details = dict(
+                    portgroup_name=dvs_pg.name,
+                    num_ports=dvs_pg.config.numPorts,
+                    dvswitch_name=dvs_pg.config.distributedVirtualSwitch.name,
+                    description=dvs_pg.config.description,
+                    type=dvs_pg.config.type,
+                    teaming_policy=teaming_policy,
+                    port_policy=port_policy,
                     network_policy=network_policy,
                 )
+                result[dvs.name].append(dvpg_details)
+
         return result
 
 
 def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
-        datacenter=dict(type='str', required=True)
+        datacenter=dict(type='str', required=True),
+        show_network_policy=dict(type='bool', default=True),
+        show_teaming_policy=dict(type='bool', default=True),
+        show_port_policy=dict(type='bool', default=True),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
