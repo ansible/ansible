@@ -108,7 +108,8 @@ options:
         Each item can optionally contain I(retiring_principal), I(operations), I(constraints),
         I(name).
       - Valid operations are C(Decrypt), C(Encrypt), C(GenerateDataKey), C(GenerateDataKeyWithoutPlaintext),
-        C(ReEncryptFrom), C(ReEncryptTo), C(CreateGrant), C(RetireGrant), C(DescribeKey),
+        C(ReEncryptFrom), C(ReEncryptTo), C(CreateGrant), C(RetireGrant), C(DescribeKey), C(Verify) and
+        C(Sign)
       - Constraints is a dict containing C(encryption_context_subset) or C(encryption_context_equals),
         either or both being a dict specifying an encryption context match.
         See U(https://docs.aws.amazon.com/kms/latest/APIReference/API_GrantConstraints.html)
