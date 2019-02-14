@@ -159,7 +159,7 @@ class VmwareKernelManager(PyVmomi):
 
                     # apply as needed, also depending on check mode
                     if original_options != desired_options:
-                        changed = True;
+                        changed = True
                         if self.module.check_mode:
                             msg = "Options would be changed on the kernel module"
                         else:
