@@ -20,7 +20,7 @@ short_description: NetApp ONTAP user role configuration and management
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 
 description:
 - Create or destroy user roles
@@ -49,6 +49,12 @@ options:
     choices: ['none', 'readonly', 'all']
     default: all
 
+  query:
+    description:
+    - A query for the role. The query must apply to the specified command or directory name.
+    - Use double quotes "" for modifying a existing query to none.
+    version_added: '2.8'
+
   vserver:
     description:
     - The name of the vserver to use.
@@ -64,6 +70,19 @@ EXAMPLES = """
         name: ansibleRole
         command_directory_name: volume
         access_level: none
+        query: show
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: Modify User Role
+      na_ontap_user_role:
+        state: present
+        name: ansibleRole
+        command_directory_name: volume
+        access_level: none
+        query: ""
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -95,7 +114,8 @@ class NetAppOntapUserRole(object):
             command_directory_name=dict(required=True, type='str'),
             access_level=dict(required=False, type='str', default='all',
                               choices=['none', 'readonly', 'all']),
-            vserver=dict(required=True, type='str')
+            vserver=dict(required=True, type='str'),
+            query=dict(required=False, type='str')
         ))
 
         self.module = AnsibleModule(
@@ -150,7 +170,8 @@ class NetAppOntapUserRole(object):
             result = {
                 'name': role_info['role-name'],
                 'access_level': role_info['access-level'],
-                'command_directory_name': role_info['command-directory-name']
+                'command_directory_name': role_info['command-directory-name'],
+                'query': role_info['role-query']
             }
             return result
 
@@ -161,6 +182,8 @@ class NetAppOntapUserRole(object):
                    'role-name': self.parameters['name'],
                    'command-directory-name': self.parameters['command_directory_name'],
                    'access-level': self.parameters['access_level']}
+        if self.parameters.get('query'):
+            options['role-query'] = self.parameters['query']
         role_create = netapp_utils.zapi.NaElement.create_node_with_children('security-login-role-create', **options)
 
         try:
@@ -184,11 +207,36 @@ class NetAppOntapUserRole(object):
             self.module.fail_json(msg='Error removing role %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
+    def modify_role(self, modify):
+        options = {'vserver': self.parameters['vserver'],
+                   'role-name': self.parameters['name'],
+                   'command-directory-name': self.parameters['command_directory_name']}
+        if 'access_level' in modify.keys():
+            options['access-level'] = self.parameters['access_level']
+        if 'query' in modify.keys():
+            options['role-query'] = self.parameters['query']
+
+        role_modify = netapp_utils.zapi.NaElement.create_node_with_children('security-login-role-modify', **options)
+
+        try:
+            self.server.invoke_successfully(role_modify,
+                                            enable_tunneling=False)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error modifying role %s: %s' % (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
+
     def apply(self):
         self.asup_log_for_cserver('na_ontap_user_role')
         current = self.get_role()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
 
+        # if desired state specify empty quote query and current query is None, set desired query to None.
+        # otherwise na_helper.get_modified_attributes will detect a change.
+        if self.parameters.get('query') == '' and current is not None:
+            if current['query'] is None:
+                self.parameters['query'] = None
+
+        modify = self.na_helper.get_modified_attributes(current, self.parameters)
         if self.na_helper.changed:
             if self.module.check_mode:
                 pass
@@ -197,6 +245,8 @@ class NetAppOntapUserRole(object):
                     self.create_role()
                 elif cd_action == 'delete':
                     self.delete_role()
+                elif modify:
+                    self.modify_role(modify)
         self.module.exit_json(changed=self.na_helper.changed)
 
     def asup_log_for_cserver(self, event_name):
