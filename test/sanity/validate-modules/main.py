@@ -985,6 +985,8 @@ class ModuleValidator(Validator):
                                 msg='Unknown DOCUMENTATION error, see TRACE: %s' % e
                             )
 
+                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
                             path=self.object_path,
@@ -996,8 +998,6 @@ class ModuleValidator(Validator):
                         doc_deprecated = True
                     else:
                         doc_deprecated = False
-
-                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
 
                     if os.path.islink(self.object_path):
                         # This module has an alias, which we can tell as it's a symlink
