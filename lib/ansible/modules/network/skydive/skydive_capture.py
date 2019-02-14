@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2018, Ansible by Red Hat, inc
+# (c) 2019, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -31,18 +31,33 @@ requirements:
   - skydive-client
 extends_documentation_fragment: skydive
 options:
-  name:
+  query:
+    description:
+      - It's the complete gremlin query which the users can input,
+        I(G.V().Has('Name', 'eth0', 'Type', 'device')), to create
+        the capture. And, if the user directly inputs the gremlin
+        query then user is not required to input any other module
+        parameter as gremlin query takes care of creating the flow
+        capture.
+    required: false
+  interface_name:
+    description:
+      - To define flow capture interface name.
+    required: false
+  type:
+    description:
+      - To define flow capture interface type.
+    required: false
+  capture_name:
     description:
       - To define flow capture name.
-    required: true
-  capture_type:
-    description:
-      - To define flow capture type.
     required: false
+    default: ""
   description:
     description:
       - Configures a text string to be associated with the instance
         of this object.
+    default: ""
   extra_tcp_metric:
     description:
       - To define flow capture ExtraTCPMetric.
@@ -74,10 +89,29 @@ options:
 """
 
 EXAMPLES = """
-- name: start a new flow capture on the given node(s)
+- name: start a new flow capture directly from gremlin query
   skydive_capture:
-    name: Node1
-    capture_type: myhost
+    query: G.V().Has('Name', 'eth0', 'Type', 'device')
+    state: present
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
+
+- name: stop the flow capture directly from gremlin query
+  skydive_capture:
+    query: G.V().Has('Name', 'eth0', 'Type', 'device')
+    state: absent
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
+
+- name: start a new flow capture from user's input
+  skydive_capture:
+    interface_name: Node1
+    type: myhost
+    capture_name: test_capture
     description: test description
     extra_tcp_metric: true
     ip_defrag: true
@@ -90,8 +124,10 @@ EXAMPLES = """
 
 - name: stop the flow capture
   skydive_capture:
-    name: Node1
-    capture_type: myhost
+    interface_name: Node1
+    type: myhost
+    capture_name: test_capture
+    description: test description
     extra_tcp_metric: true
     ip_defrag: true
     reassemble_tcp: true
@@ -105,16 +141,18 @@ EXAMPLES = """
 RETURN = """ # """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.skydive.api import skydive_flow_topology
+from ansible.module_utils.network.skydive.api import skydive_flow_capture
 
 
 def main():
     ''' Main entry point for module execution
     '''
     ib_spec = dict(
-        name=dict(required=True, ib_req=True),
-        capture_type=dict(required=False, ib_req=True),
-        description=dict(),
+        query=dict(required=False, ib_req=True),
+        interface_name=dict(required=False, ib_req=True),
+        type=dict(required=False, ib_req=True),
+        capture_name=dict(required=False, default='', ib_req=True),
+        description=dict(default='', ib_req=True),
         extra_tcp_metric=dict(type='bool', required=False, ib_req=True, default=False),
         ip_defrag=dict(type='bool', required=False, ib_req=True, default=False),
         reassemble_tcp=dict(type='bool', required=False, ib_req=True, default=False),
@@ -127,12 +165,12 @@ def main():
     )
 
     argument_spec.update(ib_spec)
-    argument_spec.update(skydive_flow_topology.provider_spec)
+    argument_spec.update(skydive_flow_capture.provider_spec)
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    skydive_obj = skydive_flow_topology(module)
+    skydive_obj = skydive_flow_capture(module)
     result = skydive_obj.run(ib_spec)
 
     module.exit_json(**result)
