@@ -39,21 +39,60 @@ def test_get_distribution_not_linux():
 
 @pytest.mark.usefixtures("platform_linux")
 class TestGetDistribution:
-    """ Tests for get_distribution that have to find somethine"""
+    """Tests for get_distribution that have to find something"""
     def test_distro_known(self):
-        with patch('ansible.module_utils.distro.name', return_value="foo"):
+        with patch('ansible.module_utils.distro.id', return_value="alpine"):
+            assert get_distribution() == "Alpine"
+
+        with patch('ansible.module_utils.distro.id', return_value="arch"):
+            assert get_distribution() == "Arch"
+
+        with patch('ansible.module_utils.distro.id', return_value="centos"):
+            assert get_distribution() == "Centos"
+
+        with patch('ansible.module_utils.distro.id', return_value="clear-linux-os"):
+            assert get_distribution() == "Clear-linux-os"
+
+        with patch('ansible.module_utils.distro.id', return_value="coreos"):
+            assert get_distribution() == "Coreos"
+
+        with patch('ansible.module_utils.distro.id', return_value="debian"):
+            assert get_distribution() == "Debian"
+
+        with patch('ansible.module_utils.distro.id', return_value="linuxmint"):
+            assert get_distribution() == "Linuxmint"
+
+        with patch('ansible.module_utils.distro.id', return_value="opensuse"):
+            assert get_distribution() == "Opensuse"
+
+        with patch('ansible.module_utils.distro.id', return_value="oracle"):
+            assert get_distribution() == "Oracle"
+
+        with patch('ansible.module_utils.distro.id', return_value="raspian"):
+            assert get_distribution() == "Raspian"
+
+        with patch('ansible.module_utils.distro.id', return_value="rhel"):
+            assert get_distribution() == "Rhel"
+
+        with patch('ansible.module_utils.distro.id', return_value="ubuntu"):
+            assert get_distribution() == "Ubuntu"
+
+        with patch('ansible.module_utils.distro.id', return_value="virtuozzo"):
+            assert get_distribution() == "Virtuozzo"
+
+        with patch('ansible.module_utils.distro.id', return_value="foo"):
             assert get_distribution() == "Foo"
 
     def test_distro_unknown(self):
-        with patch('ansible.module_utils.distro.name', return_value=""):
+        with patch('ansible.module_utils.distro.id', return_value=""):
             assert get_distribution() == "OtherLinux"
 
-    def test_distro_amazon_part_of_another_name(self):
-        with patch('ansible.module_utils.distro.name', return_value="AmazonFooBar"):
-            assert get_distribution() == "Amazonfoobar"
+    def test_distro_amazon_linux_short(self):
+        with patch('ansible.module_utils.distro.id', return_value="amzn"):
+            assert get_distribution() == "Amazon"
 
-    def test_distro_amazon_linux(self):
-        with patch('ansible.module_utils.distro.name', return_value="Amazon Linux AMI"):
+    def test_distro_amazon_linux_long(self):
+        with patch('ansible.module_utils.distro.id', return_value="amazon"):
             assert get_distribution() == "Amazon"
 
 
