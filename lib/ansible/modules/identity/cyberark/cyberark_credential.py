@@ -10,13 +10,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
----
 module: cyberark_credential
-short_description: Module for retrieval of CyberArk vaulted credential using PAS Web Services SDK through the Central Credential Provider 
+short_description: Module for retrieval of CyberArk vaulted credential using PAS Web Services SDK through the Central Credential Provider
 author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
 version_added: 2.4
 description:
-    - Creates a URI for retrieving a credential from the Cyberark Vault through the Privileged 
+    - Creates a URI for retrieving a credential from the Cyberark Vault through the Privileged
       Account Security Web Services SDK by requesting access to a specific object through an Application ID
       It returns an Ansible fact called I(cyberarkcredential) as a JSON message with object information
       that can be used by other modules. Every module can use this fact as C(cyberarkcredential) parameter.
@@ -28,11 +27,11 @@ options:
             - A string containing the base URL of the server hosting the Central Credential Provider
     validate_certs:
         type: bool
-        default: 'No'
+        default: 'false'
         description:
             - If C(false), SSL certificate chain will not be validated.  This should only
               set to C(true) if you have a root CA certificate installed on each node.
-    app_id:        
+    app_id:
         description:
             - A string containing the Application ID authorized for retrieving the credential
     query:
@@ -93,7 +92,7 @@ RETURN = '''
     "failed": false,
     "result": {
         "Address": "string"
-            description: The target address of the credential being queried 
+            description: The target address of the credential being queried
             type: string
             returned: if required
         "Content": "string"
@@ -109,15 +108,15 @@ RETURN = '''
             type: string
             returned: always
         "Folder": "string"
-            description: The folder within the Safe where the credential is stored 
+            description: The folder within the Safe where the credential is stored
             type: string
             returned: always
         "Name": "string"
-            description: The Cyberark unique object ID of the credential being queried 
+            description: The Cyberark unique object ID of the credential being queried
             type: string
             returned: always
         "PasswordChangeInProcess": "bool"
-            description: If the password has a change flag placed by the CPM 
+            description: If the password has a change flag placed by the CPM
             type: bool
             returned: always
         "PolicyID": "string"
@@ -125,15 +124,15 @@ RETURN = '''
             type: string
             returned: if assigned to a policy
         "Safe": "string"
-            description: The safe where the queried credential is stored 
+            description: The safe where the queried credential is stored
             type: string
             returned: always
         "Username": "string"
-            description: The username of the credential being queried 
+            description: The username of the credential being queried
             type: string
             returned: if required
         "LogonDomain": "string"
-            description: The Address friendly name resolved by the CPM 
+            description: The Address friendly name resolved by the CPM
             type: string
             returned: if populated
         "CPMDisabled": "string"
@@ -224,6 +223,7 @@ def retrieveCredential(module):
         module.fail_json(
             msg="error in end_point=>" +
             end_point)
+
 
 def main():
 
