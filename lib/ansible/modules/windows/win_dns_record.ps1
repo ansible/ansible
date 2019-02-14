@@ -94,11 +94,9 @@ if ($records -ne $null)
             if ($record.TimeToLive -ne $ttl)
             {
                 $original_ttl_seconds = $record.TimeToLive.TotalSeconds
-                if (-not $check_mode)
-                {
-                    $record.TimeToLive = $ttl
-                    Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record
-                }
+
+                $record.TimeToLive = $ttl
+                Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode
 
                 $changes += "-[$zone] $($record.HostName) $original_ttl_seconds $type $record_value`n"
                 $changes += "+[$zone] $($record.HostName) $($ttl.TotalSeconds) $type $record_value`n"
@@ -111,10 +109,8 @@ if ($records -ne $null)
         else
         {
             # This record doesn't match any of the values, and must be removed
-            if (-not $check_mode)
-            {
-                $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force
-            }
+
+            $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$check_mode
 
             $changes += "-[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $($record.RecordData.$record_argument_name)`n"
             $result.changed = $true
@@ -130,11 +126,8 @@ if ($values -ne $null -and $values.Count -gt 0)
 {
     foreach ($value in $values)
     {
-        if (-not $check_mode)
-        {
-            $splat_args = @{ $type = $true; $record_argument_name = $value }
-            Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args
-        }
+        $splat_args = @{ $type = $true; $record_argument_name = $value }
+        Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$check_mode
 
         $changes += "+[$zone] $name $($ttl.TotalSeconds) $type $value`n"
     }
