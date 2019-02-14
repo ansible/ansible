@@ -9,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 module: cyberark_credential
 short_description: Module for retrieval of CyberArk vaulted credential using PAS Web Services SDK through the Central Credential Provider
 author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
@@ -19,58 +19,59 @@ description:
       Account Security Web Services SDK by requesting access to a specific object through an Application ID
       It returns an Ansible fact called I(cyberarkcredential) as a JSON message with object information
       that can be used by other modules. Every module can use this fact as C(cyberarkcredential) parameter.
-
-
 options:
     api_base_url:
         description:
             - A string containing the base URL of the server hosting the Central Credential Provider
     validate_certs:
         type: bool
-        default: 'false'
+        default: 'true'
         description:
             - If C(false), SSL certificate chain will not be validated.  This should only
               set to C(true) if you have a root CA certificate installed on each node.
     app_id:
         description:
-            - A string containing the Application ID authorized for retrieving the credential
+            - A string containing the Application ID authorized for retrieving the credential.
     query:
         description:
             - A string containing details of the object being queried
-        parameters:
-            Safe=<safe name>
-            Folder=<folder name within safe>
-            Object=<object name>
-            UserName=<username of object>
-            Address=<address listed for object>
-            Database=<optional file category for database objects>
-            PolicyID=<platform id managing object>
+              parameters
+                Safe=<safe name>
+                Folder=<folder name within safe>
+                Object=<object name>
+                UserName=<username of object>
+                Address=<address listed for object>
+                Database=<optional file category for database objects>
+                PolicyID=<platform id managing object>.
+        required: True
     client_cert:
+        required: False
         description:
-        required: 'No'
-            - A string containing the file location and name of the client certificate used for authentication
+            - A string containing the file location and name of the client certificate used for authentication.
     client_key:
+        required: False
         description:
-        required: 'No'
-            - A string containing the file location and name of the private key of the client certificate used for authentication
-        reason:
+            - A string containing the file location and name of the private key of the client certificate used for authentication.
+    reason:
+        required: False
         description:
-        required: 'No'
-            - Reason for requesting credential if required by policy
-'''
+            - Reason for requesting credential if required by policy.
+    state:
+        default: present
+        choices: [present]
+        description:
+            - Specifies the state.
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Retrieve credential from CyberArk Vault using PAS Web Services SDK via Central Credential Provider
   cyberark_credential:
     api_base_url: "{{ web_services_base_url }}"
     app_id: "{{ application_id }}"
     query: "Safe=test&UserName=admin"
   register: cyberarkcredential
-
   result:
      { api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }
-
-
 - name: Retrieve credential from CyberArk Vault using PAS Web Services SDK via Central Credential Provider
   cyberark_credential:
     api_base_url: "{{ web_services_base_url }}"
@@ -81,12 +82,11 @@ EXAMPLES = '''
     query: "Safe=test&UserName=admin"
     reason: "requesting credential for Ansible deployment"
   register: cyberarkcredential
-
   result:
      { api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }
-'''
+"""
 
-RETURN = '''
+RETURN = """
 "cyberark_credential": {
     "changed": false,
     "failed": false,
@@ -143,7 +143,7 @@ RETURN = '''
         "status_code": 200
     }
 }
-'''
+"""
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
