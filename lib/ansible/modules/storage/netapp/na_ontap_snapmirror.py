@@ -397,7 +397,7 @@ class NetAppONTAPSnapmirror(object):
         options = {'destination-location': self.parameters['destination_path']}
         snapmirror_modify = netapp_utils.zapi.NaElement.create_node_with_children(
             'snapmirror-modify', **options)
-        if modify.get('schedule'):
+        if modify.get('schedule') is not None:
             snapmirror_modify.add_new_child('schedule', modify.get('schedule'))
         if modify.get('policy'):
             snapmirror_modify.add_new_child('policy', modify.get('policy'))
@@ -444,6 +444,7 @@ class NetAppONTAPSnapmirror(object):
             self.parameters['destination_path'] = self.parameters['destination_vserver'] + ":"
 
     def get_destination(self):
+        result = None
         release_get = netapp_utils.zapi.NaElement('snapmirror-get-destination-iter')
         query = netapp_utils.zapi.NaElement('query')
         snapmirror_dest_info = netapp_utils.zapi.NaElement('snapmirror-destination-info')
@@ -471,7 +472,6 @@ class NetAppONTAPSnapmirror(object):
         current = self.snapmirror_get()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
         modify = self.na_helper.get_modified_attributes(current, self.parameters)
-
         if cd_action == 'create':
             self.snapmirror_create()
         elif cd_action == 'delete':
