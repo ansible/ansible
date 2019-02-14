@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
 description:
   - Create/Delete NVME subsystem
   - Associate(modify) host/map to NVME subsystem
@@ -84,18 +84,7 @@ EXAMPLES = """
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
-    - name: Associate hosts/paths with the subsystem
-      na_ontap_nvme_subsystem:
-        state: absent
-        subsystem: test_sub
-        vserver: test_dest
-        skip_host_check: True
-        skip_mapped_check: True
-        hostname: "{{ netapp_hostname }}"
-        username: "{{ netapp_username }}"
-        password: "{{ netapp_password }}"
-
-    - name: Add NVME Subsystem host/map (Idempotency)
+    - name: Associate NVME Subsystem host/map
       na_ontap_nvme_subsystem:
         state: present
         subsystem: "{{ subsystem }}"
@@ -106,6 +95,19 @@ EXAMPLES = """
         hostname: "{{ hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
+
+    - name: Modify NVME subsystem map
+      na_ontap_nvme_subsystem:
+        state: present
+        subsystem: test_sub
+        vserver: test_dest
+        skip_host_check: True
+        skip_mapped_check: True
+        paths: /vol/ansible/test
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
 """
 
 RETURN = """
@@ -326,7 +328,7 @@ class NetAppONTAPNVMESubsystem(object):
         current = self.get_subsystem()
         add_host_map, remove_host_map = dict(), dict()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
-        if cd_action != 'delete' and self.parameters['state'] == 'present':
+        if cd_action is not 'delete' and self.parameters['state'] == 'present':
             add_host_map, remove_host_map = self.associate_host_map(types)
         if self.na_helper.changed:
             if self.module.check_mode:
