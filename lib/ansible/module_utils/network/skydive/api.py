@@ -101,13 +101,13 @@ class skydive_lookup(skydive_restclient):
         return nodes[0].__dict__
 
 
-class skydive_flow_topology(skydive_restclient):
+class skydive_flow_capture(skydive_restclient):
     ''' Implements Skydive Flow capture modules '''
     def __init__(self, module):
         self.module = module
         provider = module.params['provider']
 
-        super(skydive_flow_topology, self).__init__(**provider)
+        super(skydive_flow_capture, self).__init__(**provider)
 
     def run(self, ib_spec):
         state = self.module.params['state']
@@ -122,41 +122,38 @@ class skydive_flow_topology(skydive_restclient):
             if self.module.params[key] is not None:
                 proposed_object[key] = self.module.params[key]
 
-        capture_str = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}', 'extra_tcp_metric', '{2}'\
-                                                 ,'ip_defrag', '{3}', 'reassemble_tcp',\
-                                                 '{4}', 'layer_key_mode', '{5}')".format(obj_filter['name'],
-                                                                                         obj_filter['capture_type'],
-                                                                                         obj_filter['extra_tcp_metric'],
-                                                                                         obj_filter['ip_defrag'],
-                                                                                         obj_filter['reassemble_tcp'],
-                                                                                         obj_filter['layer_key_mode'])
+        if obj_filter['query']:
+            cature_query = obj_filter['query']
+        elif obj_filter['interface_name'] and obj_filter['type']:
+            cature_query = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}')".format(
+                                                                                obj_filter['interface_name'],
+                                                                                obj_filter['type'])
+        else:
+            raise self.module.fail_json(msg="Interface name and Type is required if gremlin query is not defined!")
+
         # to check current object ref for idempotency
         captured_list_objs = self.restclient_object.capture_list()
-        current_ref = False
+        current_ref_uuid = None
         for each_capture in captured_list_objs:
-            if capture_str == each_capture.__dict__['query']:
-                current_ref = True
+            if cature_query == each_capture.__dict__['query']:
+                current_ref_uuid = each_capture.__dict__['uuid']
                 break
         if state == 'present':
-            if not current_ref:
+            if not current_ref_uuid:
                 try:
-                    self.restclient_object.capture_create(capture_str)
+                    self.restclient_object.capture_create(cature_query, obj_filter['capture_name'],
+                                                          obj_filter['description'], obj_filter['extra_tcp_metric'],
+                                                          obj_filter['ip_defrag'], obj_filter['reassemble_tcp'],
+                                                          obj_filter['layer_key_mode'])
                 except Exception as e:
                     self.module.fail_json(msg=to_text(e))
                 result['changed'] = True
         if state == 'absent':
-            if current_ref:
-                # iterating over the captured list and get capture uuid
-                uuid = None
-                for each_capture in captured_list_objs:
-                    if capture_str == each_capture.__dict__['query']:
-                        uuid = each_capture.__dict__['uuid']
-                        break
+            if current_ref_uuid:
                 try:
-                    if uuid:
-                        self.restclient_object.capture_delete(uuid)
-                except Exception:
-                    self.module.fail_json(msg="Capture UUID for the input Gremlin query is not found!")
+                    self.restclient_object.capture_delete(current_ref_uuid)
+                except Exception as e:
+                    self.module.fail_json(msg=to_text(e))
                 result['changed'] = True
 
         return result
