@@ -30,9 +30,10 @@
     dependencies:
     - tcpip
 
-- name: install python3
+- name: install python
   win_chocolatey:
-    name: python3
+    name: python
+    skip_scripts: True
   register: installed_python
   until: installed_python is succeeded
 
