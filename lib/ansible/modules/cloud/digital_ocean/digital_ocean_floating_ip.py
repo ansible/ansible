@@ -39,7 +39,6 @@ options:
     description:
      - DigitalOcean OAuth token.
     required: true
-
 notes:
   - Version 2 of DigitalOcean API is used.
 requirements:

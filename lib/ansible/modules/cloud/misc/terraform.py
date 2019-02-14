@@ -85,6 +85,7 @@ options:
       - Enable statefile locking, if you use a service that accepts locks (such
         as S3+DynamoDB) to store your statefile.
     required: false
+    type: bool
   lock_timeout:
     description:
       - How long to maintain the lock on the statefile, if you use a service
@@ -106,7 +107,7 @@ options:
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]
-author: "Ryan Scott Brown @ryansb"
+author: "Ryan Scott Brown (@ryansb)"
 '''
 
 EXAMPLES = """
@@ -138,19 +139,19 @@ outputs:
       returned: always
       description: Whether Terraform has marked this value as sensitive
     type:
-      type: string
+      type: str
       returned: always
       description: The type of the value (string, int, etc)
     value:
       returned: always
       description: The value of the output as interpolated by Terraform
 stdout:
-  type: string
+  type: str
   description: Full `terraform` command stdout, in case you want to display it or examine the event log
   returned: always
   sample: ''
 command:
-  type: string
+  type: str
   description: Full `terraform` command built by this module, in case you want to re-run the command outside the module or debug a problem.
   returned: always
   sample: terraform apply ...
@@ -177,7 +178,7 @@ def preflight_validation(bin_path, project_path, variables_args=None, plan_file=
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
-    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path)
+    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
     if rc != 0:
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
@@ -246,12 +247,12 @@ def build_plan(bin_path, project_path, variables_args, state_file, targets, plan
 
     command = [bin_path, 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
 
-    for t in (module.params.get('targets') or []):
+    for t in (targets or []):
         command.extend(['-target', t])
 
     command.extend(_state_args(state_file))
 
-    rc, out, err = module.run_command(command + variables_args, cwd=project_path)
+    rc, out, err = module.run_command(command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
     if rc == 0:
         # no changes
@@ -320,7 +321,7 @@ def main():
     for k, v in variables.items():
         variables_args.extend([
             '-var',
-            shlex_quote('{0}={1}'.format(k, v))
+            '{0}={1}'.format(k, v)
         ])
     if variables_file:
         variables_args.extend(['-var-file', variables_file])

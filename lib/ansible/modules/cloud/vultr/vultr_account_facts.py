@@ -42,7 +42,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -57,7 +57,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_account_facts:
   description: Response from Vultr API
@@ -77,7 +77,7 @@ vultr_account_facts:
     last_payment_date:
       description: Date of the last payment.
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     last_payment_amount:
       description: The amount of the last payment transaction.

@@ -31,12 +31,10 @@ options:
     secret_value:
         description:
             - Secret to be secured by keyvault.
-        required: false
     state:
         description:
             - Assert the state of the subnet. Use 'present' to create or update a secret and
               'absent' to delete a secret .
-        required: false
         default: present
         choices:
             - absent
@@ -47,7 +45,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Ian Philpot (@tripdubroot)"
+    - "Ian Philpot (@iphilpot)"
 
 '''
 
@@ -143,6 +141,7 @@ class AzureRMKeyVaultSecret(AzureRMModuleBase):
                 client_id=self.credentials['client_id'],
                 secret=self.credentials['secret'],
                 tenant=tenant,
+                cloud_environment=self._cloud_environment,
                 resource="https://vault.azure.net")
 
             token = authcredential.token

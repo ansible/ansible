@@ -21,12 +21,9 @@ from ansible.parsing.quoting import unquote
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.vault import VaultLib, b_HEADER, is_encrypted, is_encrypted_file, parse_vaulttext_envelope
 from ansible.utils.path import unfrackpath
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # Tries to determine if a path is inside a role, last dir must be 'tasks'
@@ -143,7 +140,7 @@ class DataLoader:
 
         :arg file_name: The name of the file to read.  If this is a relative
             path, it will be expanded relative to the basedir
-        :raises AnsibleFileNotFOund: if the file_name does not refer to a file
+        :raises AnsibleFileNotFound: if the file_name does not refer to a file
         :raises AnsibleParserError: if we were unable to read the file
         :return: Returns a byte string of the file contents
         '''

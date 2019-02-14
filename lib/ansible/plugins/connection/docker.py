@@ -22,10 +22,9 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to execute as inside the container
-        default: The set user as per docker's configuration
         vars:
             - name: ansible_user
-            - name: ansible_docker4_user
+            - name: ansible_docker_user
       docker_extra_args:
         description:
             - Extra arguments to pass to the docker command line
@@ -52,13 +51,9 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -66,7 +61,6 @@ class Connection(ConnectionBase):
 
     transport = 'docker'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

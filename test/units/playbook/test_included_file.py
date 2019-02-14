@@ -23,7 +23,7 @@ import os
 
 import pytest
 
-from ansible.compat.tests.mock import MagicMock
+from units.compat.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible.playbook.task import Task
@@ -65,6 +65,7 @@ def test_process_include_results(mock_iterator, mock_variable_manager):
 
     parent_task_ds = {'debug': 'msg=foo'}
     parent_task = Task.load(parent_task_ds)
+    parent_task._play = None
 
     task_ds = {'include': 'include_test.yml'}
     loaded_task = TaskInclude.load(task_ds, task_include=parent_task)
@@ -91,12 +92,15 @@ def test_process_include_diff_files(mock_iterator, mock_variable_manager):
 
     parent_task_ds = {'debug': 'msg=foo'}
     parent_task = Task.load(parent_task_ds)
+    parent_task._play = None
 
     task_ds = {'include': 'include_test.yml'}
     loaded_task = TaskInclude.load(task_ds, task_include=parent_task)
+    loaded_task._play = None
 
     child_task_ds = {'include': 'other_include_test.yml'}
     loaded_child_task = TaskInclude.load(child_task_ds, task_include=loaded_task)
+    loaded_child_task._play = None
 
     return_data = {'include': 'include_test.yml'}
     # The task in the TaskResult has to be a TaskInclude so it has a .static attr
@@ -128,6 +132,9 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
     parent_task_ds = {'debug': 'msg=foo'}
     parent_task1 = Task.load(parent_task_ds)
     parent_task2 = Task.load(parent_task_ds)
+
+    parent_task1._play = None
+    parent_task2._play = None
 
     task_ds = {'include': 'include_test.yml'}
     loaded_task1 = TaskInclude.load(task_ds, task_include=parent_task1)

@@ -10,8 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
-
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -492,8 +491,9 @@ def main():
         supports_check_mode=spec.supports_check_mode,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

@@ -23,22 +23,27 @@ options:
   name:
     description:
       - Name of the user to create, remove or modify.
+    type: str
     required: yes
   fullname:
     description:
       - Full name of the user.
+    type: str
     version_added: "1.9"
   description:
     description:
       - Description of the user.
+    type: str
     version_added: "1.9"
   password:
     description:
       - Optionally set the user's password to this (plain text) value.
+    type: str
   update_password:
     description:
       - C(always) will update passwords if they differ.  C(on_create) will
         only set the password for newly created users.
+    type: str
     choices: [ always, on_create ]
     default: always
     version_added: "1.9"
@@ -74,9 +79,9 @@ options:
   groups:
     description:
       - Adds or removes the user from this comma-separated lis of groups,
-        depending on the value of I(groups_action). When I(groups_action) is
-        C(replace) and I(groups) is set to the empty string ('groups='), the
-        user is removed from all groups.
+        depending on the value of I(groups_action).
+      - When I(groups_action) is C(replace) and I(groups) is set to the empty
+        string ('groups='), the user is removed from all groups.
     version_added: "1.9"
   groups_action:
     description:
@@ -85,6 +90,7 @@ options:
       - If C(replace), the user is added as a member of each group in
         I(groups) and removed from any other groups.
       - If C(remove), the user is removed from each group in I(groups).
+    type: str
     choices: [ add, replace, remove ]
     default: replace
     version_added: "1.9"
@@ -94,10 +100,16 @@ options:
       - When C(present), creates or updates the user account.
       - When C(query) (new in 1.9), retrieves the user account details
         without making any changes.
+    type: str
     choices: [ absent, present, query ]
     default: present
-notes:
-     - For non-Windows targets, use the M(user) module instead.
+seealso:
+- module: user
+- module: win_domain_membership
+- module: win_domain_user
+- module: win_group
+- module: win_group_membership
+- module: win_user_profile
 author:
     - Paul Durivage (@angstwad)
     - Chris Church (@cchurch)

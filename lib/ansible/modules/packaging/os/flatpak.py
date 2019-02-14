@@ -6,6 +6,27 @@
 # Copyright: (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+
+# ATTENTION CONTRIBUTORS!
+#
+# TL;DR: Run this module's integration tests manually before opening a pull request
+#
+# Long explanation:
+# The integration tests for this module are currently NOT run on the Ansible project's continuous
+# delivery pipeline. So please: When you make changes to this module, make sure that you run the
+# included integration tests manually for both Python 2 and Python 3:
+#
+#   Python 2:
+#       ansible-test integration -v --docker fedora28 --docker-privileged --allow-unsupported --python 2.7 flatpak
+#   Python 3:
+#       ansible-test integration -v --docker fedora28 --docker-privileged --allow-unsupported --python 3.6 flatpak
+#
+# Because of external dependencies, the current integration tests are somewhat too slow and brittle
+# to be included right now. I have plans to rewrite the integration tests based on a local flatpak
+# repository so that they can be included into the normal CI pipeline.
+# //oolongbrothers
+
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -22,7 +43,7 @@ description:
 - Allows users to add or remove flatpaks.
 - See the M(flatpak_remote) module for managing flatpak remotes.
 author:
-- John Kwiatkoski (@jaykayy)
+- John Kwiatkoski (@JayKayy)
 - Alexander Bethke (@oolongbrothers)
 requirements:
 - flatpak
@@ -82,7 +103,7 @@ EXAMPLES = r'''
   flatpak:
     name: org.gnome.gedit
     state: present
-  method: user
+    method: user
 
 - name: Install the Gnome Calendar flatpak from the gnome remote system-wide
   flatpak:
@@ -100,12 +121,12 @@ RETURN = r'''
 command:
   description: The exact flatpak command that was executed
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "/usr/bin/flatpak install --user -y flathub org.gnome.Calculator"
 msg:
   description: Module error message
   returned: failure
-  type: string
+  type: str
   sample: "Executable '/usr/local/bin/flatpak' was not found on the system."
 rc:
   description: Return code from flatpak binary
@@ -115,18 +136,19 @@ rc:
 stderr:
   description: Error output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "error: Error searching remote flathub: Can't find ref org.gnome.KDE"
 stdout:
   description: Output from flatpak binary
   returned: When a flatpak command has been executed
-  type: string
+  type: str
   sample: "org.gnome.Calendar/x86_64/stable\tcurrent\norg.gnome.gitg/x86_64/stable\tcurrent\n"
 '''
 
 import subprocess
 from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 
 
 def install_flat(module, binary, remote, name, method):
@@ -144,7 +166,7 @@ def uninstall_flat(module, binary, name, method):
     """Remove an existing flatpak."""
     global result
     installed_flat_name = _match_installed_flat_name(module, binary, name, method)
-    command = "{0} uninstall --{1} {2}".format(binary, method, installed_flat_name)
+    command = "{0} uninstall -y --{1} {2}".format(binary, method, installed_flat_name)
     _flatpak_command(module, module.check_mode, command)
     result['changed'] = True
 
@@ -203,7 +225,7 @@ def _flatpak_command(module, noop, command):
     result['stderr'] = stderr_data
     if result['rc'] != 0:
         module.fail_json(msg="Failed to execute flatpak command", **result)
-    return stdout_data
+    return to_native(stdout_data)
 
 
 def main():

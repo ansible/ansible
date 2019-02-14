@@ -1,0 +1,5 @@
+[local]
+testhost ansible_connection=local
+
+[nonexistent]
+testhost5 ansible_host=169.254.199.200

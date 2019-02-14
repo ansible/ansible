@@ -29,7 +29,7 @@ description:
    - This module allows you to search for Zabbix hostgroup entries.
 version_added: "2.6"
 author:
-    - "(@redwhitemiko)"
+    - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
@@ -104,7 +104,7 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']

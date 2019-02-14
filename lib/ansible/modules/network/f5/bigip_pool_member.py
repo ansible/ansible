@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
-# Copyright (c) 2013 Matt Hite <mhite@hotmail.com>
+# Copyright: (c) 2017, F5 Networks Inc.
+# Copyright: (c) 2013, Matt Hite <mhite@hotmail.com>
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -121,6 +121,7 @@ options:
       - When C(no), the system resolves a DNS query for the FQDN of the node
         with the single IP address associated with the FQDN.
       - When creating a new pool member, the default for this parameter is C(yes).
+      - Once set this parameter cannot be changed afterwards.
       - This parameter is ignored when C(reuse_nodes) is C(yes).
     type: bool
     version_added: 2.6
@@ -130,18 +131,64 @@ options:
     default: yes
     type: bool
     version_added: 2.6
+  monitors:
+    description:
+      - Specifies the health monitors that the system currently uses to monitor
+        this resource.
+    version_added: 2.8
+  availability_requirements:
+    description:
+      - Specifies, if you activate more than one health monitor, the number of health
+        monitors that must receive successful responses in order for the link to be
+        considered available.
+    suboptions:
+      type:
+        description:
+          - Monitor rule type when C(monitors) is specified.
+          - When creating a new pool, if this value is not specified, the default of
+            'all' will be used.
+        choices: ['all', 'at_least']
+      at_least:
+        description:
+          - Specifies the minimum number of active health monitors that must be successful
+            before the link is considered up.
+          - This parameter is only relevant when a C(type) of C(at_least) is used.
+          - This parameter will be ignored if a type of C(all) is used.
+    version_added: 2.8
+  ip_encapsulation:
+    description:
+      - Specifies the IP encapsulation using either IPIP (IP encapsulation within IP,
+        RFC 2003) or GRE (Generic Router Encapsulation, RFC 2784) on outbound packets
+        (from BIG-IP system to server-pool member).
+      - When C(none), disables IP encapsulation.
+      - When C(inherit), inherits IP encapsulation setting from the member's pool.
+      - When any other value, Options are None, Inherit from Pool, and Member Specific.
+    version_added: 2.8
+  aggregate:
+    description:
+      - List of pool member definitions to be created, modified or removed.
+    aliases:
+      - members
+    version_added: 2.8
+  replace_all_with:
+    description:
+      - Remove members not defined in the C(aggregate) parameter.
+      - This operation is all or none, meaning that it will stop if there are some pool members
+        that cannot be removed.
+    default: no
+    type: bool
+    aliases:
+      - purge
+    version_added: 2.8
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = '''
 - name: Add pool member
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: present
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
@@ -150,57 +197,64 @@ EXAMPLES = '''
     connection_limit: 100
     rate_limit: 50
     ratio: 2
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Modify pool member ratio and description
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
-    state: present
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
     ratio: 1
     description: nginx server
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Remove pool member from pool
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: absent
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Force pool member offline
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     state: forced_offline
     pool: my-pool
     partition: Common
     host: "{{ ansible_default_ipv4['address'] }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
 
 - name: Create members with priority groups
   bigip_pool_member:
-    server: lb.mydomain.com
-    user: admin
-    password: secret
     pool: my-pool
     partition: Common
     host: "{{ item.address }}"
     name: "{{ item.name }}"
     priority_group: "{{ item.priority_group }}"
     port: 80
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
   delegate_to: localhost
   loop:
     - host: 1.1.1.1
@@ -215,6 +269,69 @@ EXAMPLES = '''
     - host: 4.4.4.4
       name: web4
       priority_group: 1
+
+- name: Add pool members aggregate
+  bigip_pool_member:
+    pool: my-pool
+    aggregate:
+      - host: 192.168.1.1
+        partition: Common
+        port: 80
+        description: web server
+        connection_limit: 100
+        rate_limit: 50
+        ratio: 2
+      - host: 192.168.1.2
+        partition: Common
+        port: 80
+        description: web server
+        connection_limit: 100
+        rate_limit: 50
+        ratio: 2
+      - host: 192.168.1.3
+        partition: Common
+        port: 80
+        description: web server
+        connection_limit: 100
+        rate_limit: 50
+        ratio: 2
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Add pool members aggregate, remove non aggregates
+  bigip_pool_member:
+    pool: my-pool
+    aggregate:
+      - host: 192.168.1.1
+        partition: Common
+        port: 80
+        description: web server
+        connection_limit: 100
+        rate_limit: 50
+        ratio: 2
+      - host: 192.168.1.2
+        partition: Common
+        port: 80
+        description: web server
+        connection_limit: 100
+        rate_limit: 50
+        ratio: 2
+      - host: 192.168.1.3
+        partition: Common
+        port: 80
+        description: web server
+        connection_limit: 100
+        rate_limit: 50
+        ratio: 2
+    replace_all_with: yes
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -231,7 +348,7 @@ connection_limit:
 description:
   description: The new description of pool member.
   returned: changed
-  type: string
+  type: str
   sample: My pool member
 ratio:
   description: The new pool member ratio weight.
@@ -251,17 +368,35 @@ fqdn_auto_populate:
 fqdn:
   description: The FQDN of the pool member.
   returned: changed
-  type: string
+  type: str
   sample: foo.bar.com
 address:
   description: The address of the pool member.
   returned: changed
-  type: string
+  type: str
   sample: 1.2.3.4
+monitors:
+  description: The new list of monitors for the resource.
+  returned: changed
+  type: list
+  sample: ['/Common/monitor1', '/Common/monitor2']
+replace_all_with:
+  description: Purges all non-aggregate pool members from device
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
+import os
+import re
+
+from copy import deepcopy
+
+from ansible.module_utils.urls import urlparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import remove_default_spec
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
@@ -274,8 +409,11 @@ try:
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.common import f5_argument_spec
     from library.module_utils.network.f5.common import is_valid_hostname
+    from library.module_utils.network.f5.common import flatten_boolean
+    from library.module_utils.network.f5.compare import cmp_str_with_none
     from library.module_utils.network.f5.ipaddress import is_valid_ip
     from library.module_utils.network.f5.ipaddress import validate_ip_v6_address
+    from library.module_utils.network.f5.icontrol import TransactionContextManager
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -288,8 +426,11 @@ except ImportError:
     from ansible.module_utils.network.f5.common import f5_argument_spec
     from ansible.module_utils.network.f5.common import is_valid_hostname
     from ansible.module_utils.network.f5.common import f5_argument_spec
+    from ansible.module_utils.network.f5.common import flatten_boolean
+    from ansible.module_utils.network.f5.compare import cmp_str_with_none
     from ansible.module_utils.network.f5.ipaddress import is_valid_ip
     from ansible.module_utils.network.f5.ipaddress import validate_ip_v6_address
+    from ansible.module_utils.network.f5.icontrol import TransactionContextManager
 
 
 class Parameters(AnsibleF5Parameters):
@@ -297,21 +438,57 @@ class Parameters(AnsibleF5Parameters):
         'rateLimit': 'rate_limit',
         'connectionLimit': 'connection_limit',
         'priorityGroup': 'priority_group',
+        'monitor': 'monitors',
+        'inheritProfile': 'inherit_profile',
+        'profiles': 'ip_encapsulation',
     }
 
     api_attributes = [
-        'rateLimit', 'connectionLimit', 'description', 'ratio', 'priorityGroup',
-        'address', 'fqdn', 'session', 'state',
+        'rateLimit',
+        'connectionLimit',
+        'description',
+        'ratio',
+        'priorityGroup',
+        'address',
+        'fqdn',
+        'session',
+        'state',
+        'monitor',
+
+        # These two settings are for IP Encapsulation
+        'inheritProfile',
+        'profiles',
     ]
 
     returnables = [
-        'rate_limit', 'connection_limit', 'description', 'ratio', 'priority_group',
-        'fqdn_auto_populate', 'session', 'state', 'fqdn', 'address',
+        'rate_limit',
+        'connection_limit',
+        'description',
+        'ratio',
+        'priority_group',
+        'fqdn_auto_populate',
+        'session',
+        'state',
+        'fqdn',
+        'address',
+        'monitors',
+
+        # IP Encapsulation related
+        'inherit_profile',
+        'ip_encapsulation',
     ]
 
     updatables = [
-        'rate_limit', 'connection_limit', 'description', 'ratio', 'priority_group',
-        'fqdn_auto_populate', 'state',
+        'rate_limit',
+        'connection_limit',
+        'description',
+        'ratio',
+        'priority_group',
+        'fqdn_auto_populate',
+        'state',
+        'monitors',
+        'inherit_profile',
+        'ip_encapsulation',
     ]
 
 
@@ -367,6 +544,10 @@ class ModuleParameters(Parameters):
 
     @property
     def port(self):
+        if self._values['port'] is None:
+            raise F5ModuleError(
+                "Port value must be specified."
+            )
         if 0 > int(self._values['port']) or int(self._values['port']) > 65535:
             raise F5ModuleError(
                 "Valid ports must be in range 0 - 65535"
@@ -379,7 +560,8 @@ class ModuleParameters(Parameters):
             return None
         elif self._values['address'] == 'any6':
             return 'any6'
-        if is_valid_ip(self._values['address']):
+        address = self._values['address'].split('%')[0]
+        if is_valid_ip(address):
             return self._values['address']
         raise F5ModuleError(
             "The specified 'address' value is not a valid IP address."
@@ -391,8 +573,107 @@ class ModuleParameters(Parameters):
             return 'present'
         return self._values['state']
 
+    @property
+    def monitors_list(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            result.sort()
+            return result
+        except Exception:
+            return self._values['monitors']
+
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return None
+        if len(self._values['monitors']) == 1 and self._values['monitors'][0] in ['', 'none']:
+            return 'default'
+        monitors = [fq_name(self.partition, x) for x in self.monitors_list]
+        if self.availability_requirement_type == 'at_least':
+            if self.at_least > len(self.monitors_list):
+                raise F5ModuleError(
+                    "The 'at_least' value must not exceed the number of 'monitors'."
+                )
+            monitors = ' '.join(monitors)
+            result = 'min {0} of {{ {1} }}'.format(self.at_least, monitors)
+        else:
+            result = ' and '.join(monitors).strip()
+        return result
+
+    @property
+    def availability_requirement_type(self):
+        if self._values['availability_requirements'] is None:
+            return None
+        return self._values['availability_requirements']['type']
+
+    @property
+    def at_least(self):
+        return self._get_availability_value('at_least')
+
+    @property
+    def ip_encapsulation(self):
+        if self._values['ip_encapsulation'] is None:
+            return None
+        if self._values['ip_encapsulation'] == 'inherit':
+            return 'inherit'
+        if self._values['ip_encapsulation'] in ['', 'none']:
+            return ''
+        return fq_name(self.partition, self._values['ip_encapsulation'])
+
+    def _get_availability_value(self, type):
+        if self._values['availability_requirements'] is None:
+            return None
+        if self._values['availability_requirements'][type] is None:
+            return None
+        return int(self._values['availability_requirements'][type])
+
 
 class ApiParameters(Parameters):
+    @property
+    def ip_encapsulation(self):
+        """Returns a simple name for the tunnel.
+
+        The API stores the data like so
+
+            "profiles": [
+                {
+                    "name": "gre",
+                    "partition": "Common",
+                    "nameReference": {
+                        "link": "https://localhost/mgmt/tm/net/tunnels/gre/~Common~gre?ver=13.1.0.7"
+                    }
+                }
+            ]
+
+        This method returns that data as a simple profile name. For instance,
+
+            /Common/gre
+
+        This allows us to do comparisons of it in the Difference class and then,
+        as needed, translate it back to the more complex form in the UsableChanges
+        class.
+
+        Returns:
+            string: The simple form representation of the tunnel
+        """
+        if self._values['ip_encapsulation'] is None and self.inherit_profile == 'yes':
+            return 'inherit'
+        if self._values['ip_encapsulation'] is None and self.inherit_profile == 'no':
+            return ''
+        if self._values['ip_encapsulation'] is None:
+            return None
+
+        # There can be only one
+        tunnel = self._values['ip_encapsulation'][0]
+
+        return fq_name(tunnel['partition'], tunnel['name'])
+
+    @property
+    def inherit_profile(self):
+        return flatten_boolean(self._values['inherit_profile'])
+
     @property
     def allow(self):
         if self._values['allow'] is None:
@@ -416,12 +697,90 @@ class ApiParameters(Parameters):
     def state(self):
         if self._values['state'] in ['user-up', 'unchecked', 'fqdn-up-no-addr', 'fqdn-up'] and self._values['session'] in ['user-enabled']:
             return 'present'
-        elif self._values['state'] in ['down', 'up'] and self._values['session'] == 'monitor-enabled':
+        elif self._values['state'] in ['down', 'up', 'checking'] and self._values['session'] == 'monitor-enabled':
+            # monitor-enabled + checking:
+            #   Monitor is checking to see state of pool member. For instance,
+            #   whether it is up or down
+            #
+            # monitor-enabled + down:
+            #   Monitor returned and determined that pool member is down.
+            #
+            # monitor-enabled + up
+            #   Monitor returned and determined that pool member is up.
             return 'present'
         elif self._values['state'] in ['user-down'] and self._values['session'] in ['user-disabled']:
             return 'forced_offline'
         else:
             return 'disabled'
+
+    @property
+    def availability_requirement_type(self):
+        if self._values['monitors'] is None:
+            return None
+        if 'min ' in self._values['monitors']:
+            return 'at_least'
+        else:
+            return 'all'
+
+    @property
+    def monitors_list(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            result.sort()
+            return result
+        except Exception:
+            return self._values['monitors']
+
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return None
+        if self._values['monitors'] == 'default':
+            return 'default'
+        monitors = [fq_name(self.partition, x) for x in self.monitors_list]
+        if self.availability_requirement_type == 'at_least':
+            monitors = ' '.join(monitors)
+            result = 'min {0} of {{ {1} }}'.format(self.at_least, monitors)
+        else:
+            result = ' and '.join(monitors).strip()
+
+        return result
+
+    @property
+    def at_least(self):
+        """Returns the 'at least' value from the monitor string.
+        The monitor string for a Require monitor looks like this.
+            min 1 of { /Common/gateway_icmp }
+        This method parses out the first of the numeric values. This values represents
+        the "at_least" value that can be updated in the module.
+        Returns:
+             int: The at_least value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+(?P<least>\d+)\s+of\s+'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return matches.group('least')
+
+    @property
+    def fqdn_auto_populate(self):
+        if self._values['fqdn'] is None:
+            return None
+        if 'autopopulate' in self._values['fqdn']:
+            if self._values['fqdn']['autopopulate'] == 'enabled':
+                return True
+            return False
+
+    @property
+    def fqdn(self):
+        if self._values['fqdn'] is None:
+            return None
+        if 'tmName' in self._values['fqdn']:
+            return self._values['fqdn']['tmName']
 
 
 class NodeApiParameters(Parameters):
@@ -441,7 +800,16 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-    pass
+    @property
+    def monitors(self):
+        monitor_string = self._values['monitors']
+        if monitor_string is None:
+            return None
+        if '{' in monitor_string and '}':
+            tmp = monitor_string.strip('}').split('{')
+            monitor = ''.join(tmp).rstrip()
+            return monitor
+        return monitor_string
 
 
 class ReportableChanges(Changes):
@@ -473,12 +841,59 @@ class ReportableChanges(Changes):
     def state(self):
         if self._values['state'] in ['user-up', 'unchecked', 'fqdn-up-no-addr', 'fqdn-up'] and self._values['session'] in ['user-enabled']:
             return 'present'
-        elif self._values['state'] in ['down', 'up'] and self._values['session'] == 'monitor-enabled':
+        elif self._values['state'] in ['down', 'up', 'checking'] and self._values['session'] == 'monitor-enabled':
             return 'present'
         elif self._values['state'] in ['user-down'] and self._values['session'] in ['user-disabled']:
             return 'forced_offline'
         else:
             return 'disabled'
+
+    @property
+    def monitors(self):
+        if self._values['monitors'] is None:
+            return []
+        try:
+            result = re.findall(r'/\w+/[^\s}]+', self._values['monitors'])
+            result.sort()
+            return result
+        except Exception:
+            return self._values['monitors']
+
+    @property
+    def availability_requirement_type(self):
+        if self._values['monitors'] is None:
+            return None
+        if 'min ' in self._values['monitors']:
+            return 'at_least'
+        else:
+            return 'all'
+
+    @property
+    def at_least(self):
+        """Returns the 'at least' value from the monitor string.
+        The monitor string for a Require monitor looks like this.
+            min 1 of { /Common/gateway_icmp }
+        This method parses out the first of the numeric values. This values represents
+        the "at_least" value that can be updated in the module.
+        Returns:
+             int: The at_least value if found. None otherwise.
+        """
+        if self._values['monitors'] is None:
+            return None
+        pattern = r'min\s+(?P<least>\d+)\s+of\s+'
+        matches = re.search(pattern, self._values['monitors'])
+        if matches is None:
+            return None
+        return int(matches.group('least'))
+
+    @property
+    def availability_requirements(self):
+        if self._values['monitors'] is None:
+            return None
+        result = dict()
+        result['type'] = self.availability_requirement_type
+        result['at_least'] = self.at_least
+        return result
 
 
 class Difference(object):
@@ -522,14 +937,66 @@ class Difference(object):
                 'session': 'user-enabled'
             }
 
+    @property
+    def fqdn_auto_populate(self):
+        if self.want.fqdn_auto_populate is not None:
+            if self.want.fqdn_auto_populate != self.have.fqdn_auto_populate:
+                raise F5ModuleError(
+                    "The fqdn_auto_populate cannot be changed once it has been set."
+                )
+
+    @property
+    def monitors(self):
+        if self.want.monitors is None:
+            return None
+        if self.want.monitors == 'default' and self.have.monitors == 'default':
+            return None
+        if self.want.monitors == 'default' and self.have.monitors is None:
+            return None
+        if self.want.monitors == 'default' and len(self.have.monitors) > 0:
+            return 'default'
+        if self.have.monitors is None:
+            return self.want.monitors
+        if self.have.monitors != self.want.monitors:
+            return self.want.monitors
+
+    @property
+    def ip_encapsulation(self):
+        result = cmp_str_with_none(self.want.ip_encapsulation, self.have.ip_encapsulation)
+        if result is None:
+            return None
+        if result == 'inherit':
+            return dict(
+                inherit_profile='enabled',
+                ip_encapsulation=[]
+            )
+        elif result in ['', 'none']:
+            return dict(
+                inherit_profile='disabled',
+                ip_encapsulation=[]
+            )
+        else:
+            return dict(
+                inherit_profile='disabled',
+                ip_encapsulation=[
+                    dict(
+                        name=os.path.basename(result).strip('/'),
+                        partition=os.path.dirname(result)
+                    )
+                ]
+            )
+
 
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = ModuleParameters(params=self.module.params)
-        self.have = ApiParameters()
-        self.changes = UsableChanges()
+        self.want = None
+        self.have = None
+        self.changes = None
+        self.replace_all_with = False
+        self.purge_links = list()
+        self.on_device = None
 
     def _set_changed_options(self):
         changed = {}
@@ -557,16 +1024,115 @@ class ModuleManager(object):
             return True
         return False
 
-    def should_update(self):
-        result = self._update_changed_options()
-        if result:
-            return True
-        return False
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
 
     def exec_module(self):
+        wants = None
+        if self.module.params['replace_all_with']:
+            self.replace_all_with = True
+
+        if self.module.params['aggregate']:
+            wants = self.merge_defaults_for_aggregate(self.module.params)
+
+        result = dict()
+        changed = False
+
+        if self.replace_all_with and self.purge_links:
+            self.purge()
+            changed = True
+
+        if self.module.params['aggregate']:
+            result['aggregate'] = list()
+            for want in wants:
+                output = self.execute(want)
+                if output['changed']:
+                    changed = output['changed']
+                result['aggregate'].append(output)
+        else:
+            output = self.execute(self.module.params)
+            if output['changed']:
+                changed = output['changed']
+            result.update(output)
+        if changed:
+            result['changed'] = True
+        return result
+
+    def merge_defaults_for_aggregate(self, params):
+        defaults = deepcopy(params)
+        aggregate = defaults.pop('aggregate')
+
+        for i, j in enumerate(aggregate):
+            for k, v in iteritems(defaults):
+                if k != 'replace_all_with':
+                    if j.get(k, None) is None and v is not None:
+                        aggregate[i][k] = v
+
+        if self.replace_all_with:
+            self.compare_aggregate_names(aggregate)
+
+        return aggregate
+
+    def _filter_ephemerals(self):
+        on_device = self._read_purge_collection()
+        if not on_device:
+            self.on_device = []
+            return
+        self.on_device = [member for member in on_device if member['ephemeral'] != "true"]
+
+    def compare_fqdns(self, items):
+        if any('fqdn' in item for item in items):
+            aggregates = [item['fqdn'] for item in items if 'fqdn' in item and item['fqdn']]
+            collection = [member['fqdn']['tmName'] for member in self.on_device if 'tmName' in member['fqdn']]
+
+            diff = set(collection) - set(aggregates)
+
+            if diff:
+                fqdns = [
+                    member['selfLink'] for member in self.on_device if 'tmName' in member['fqdn'] and member['fqdn']['tmName'] in diff]
+                self.purge_links.extend(fqdns)
+                return True
+            return False
+        return False
+
+    def compare_addresses(self, items):
+        if any('address' in item for item in items):
+            aggregates = [item['address'] for item in items if 'address' in item and item['address']]
+            collection = [member['address'] for member in self.on_device]
+            diff = set(collection) - set(aggregates)
+
+            if diff:
+                addresses = [item['selfLink'] for item in self.on_device if item['address'] in diff]
+                self.purge_links.extend(addresses)
+                return True
+            return False
+        return False
+
+    def compare_aggregate_names(self, items):
+        self._filter_ephemerals()
+        if not self.on_device:
+            return False
+        fqdns = self.compare_fqdns(items)
+        addresses = self.compare_addresses(items)
+
+        if self.purge_links:
+            if fqdns:
+                if not addresses:
+                    self.purge_links.extend([item['selfLink'] for item in self.on_device if 'tmName' not in item['fqdn']])
+
+    def execute(self, params=None):
+        self.want = ModuleParameters(params=params)
+        self.have = ApiParameters()
+        self.changes = UsableChanges()
+
         changed = False
         result = dict()
-        state = self.want.state
+        state = params['state']
 
         if state in ['present', 'present', 'enabled', 'disabled', 'forced_offline']:
             changed = self.present()
@@ -580,28 +1146,89 @@ class ModuleManager(object):
         self._announce_deprecations(result)
         return result
 
-    def _announce_deprecations(self, result):
-        warnings = result.pop('__warnings', [])
-        for warning in warnings:
-            self.module.deprecate(
-                msg=warning['msg'],
-                version=warning['version']
-            )
-
     def present(self):
         if self.exists():
             return self.update()
         else:
             return self.create()
 
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        elif not self.want.preserve_node and self.node_exists():
+            return self.remove_node_from_device()
+        return False
+
+    def update(self):
+        self.have = self.read_current_from_device()
+        if not self.should_update():
+            return False
+        if self.module.check_mode:
+            return True
+        self.update_on_device()
+        return True
+
+    def should_update(self):
+        result = self._update_changed_options()
+        if result:
+            return True
+        return False
+
+    def remove(self):
+        if self.module.check_mode:
+            return True
+        self.remove_from_device()
+        if not self.want.preserve_node:
+            self.remove_node_from_device()
+        if self.exists():
+            raise F5ModuleError("Failed to delete the resource.")
+        return True
+
+    def purge(self):
+        if self.module.check_mode:
+            return True
+        if not self.pool_exist():
+            raise F5ModuleError('The specified pool does not exist')
+        self.purge_from_device()
+        return True
+
+    def create(self):
+        if self.want.reuse_nodes:
+            self._update_address_with_existing_nodes()
+
+        if self.want.name and not any(x for x in [self.want.address, self.want.fqdn_name]):
+            self._set_host_by_name()
+
+        if self.want.ip_encapsulation == '':
+            self.changes.update({'inherit_profile': 'enabled'})
+            self.changes.update({'profiles': []})
+        elif self.want.ip_encapsulation:
+            # Read the current list of tunnels so that IP encapsulation
+            # checking can take place.
+            tunnels_gre = self.read_current_tunnels_from_device('gre')
+            tunnels_ipip = self.read_current_tunnels_from_device('ipip')
+            tunnels = tunnels_gre + tunnels_ipip
+            if self.want.ip_encapsulation not in tunnels:
+                raise F5ModuleError(
+                    "The specified 'ip_encapsulation' tunnel was not found on the system."
+                )
+            self.changes.update({'inherit_profile': 'disabled'})
+
+        self._update_api_state_attributes()
+        self._set_changed_options()
+        if self.module.check_mode:
+            return True
+        self.create_on_device()
+        return True
+
     def exists(self):
         if not self.pool_exist():
-            F5ModuleError('The specified pool does not exist')
+            raise F5ModuleError('The specified pool does not exist')
 
         uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.full_name)
         )
         resp = self.client.api.get(uri)
@@ -614,10 +1241,16 @@ class ModuleManager(object):
         return True
 
     def pool_exist(self):
+        if self.replace_all_with:
+            pool_name = transform_name(name=fq_name(self.module.params['partition'], self.module.params['pool']))
+        else:
+            pool_name = transform_name(name=fq_name(self.want.partition, self.want.pool))
+
         uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.pool)
+            pool_name
+
         )
         resp = self.client.api.get(uri)
         try:
@@ -641,25 +1274,6 @@ class ModuleManager(object):
             return False
         if resp.status == 404 or 'code' in response and response['code'] == 404:
             return False
-        return True
-
-    def update(self):
-        self.have = self.read_current_from_device()
-        if not self.should_update():
-            return False
-        if self.module.check_mode:
-            return True
-        self.update_on_device()
-        return True
-
-    def remove(self):
-        if self.module.check_mode:
-            return True
-        self.remove_from_device()
-        if not self.want.preserve_node:
-            self.remove_node_from_device()
-        if self.exists():
-            raise F5ModuleError("Failed to delete the resource.")
         return True
 
     def _set_host_by_name(self):
@@ -716,18 +1330,29 @@ class ModuleManager(object):
         except Exception:
             return None
 
-    def create(self):
-        if self.want.reuse_nodes:
-            self._update_address_with_existing_nodes()
-        if self.want.name and not any(x for x in [self.want.address, self.want.fqdn_name]):
-            self._set_host_by_name()
+    def _read_purge_collection(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(name=fq_name(self.module.params['partition'], self.module.params['pool']))
+        )
 
-        self._update_api_state_attributes()
-        self._set_changed_options()
-        if self.module.check_mode:
-            return True
-        self.create_on_device()
-        return True
+        query = '?$select=name,selfLink,fqdn,address,ephemeral'
+        resp = self.client.api.get(uri + query)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'items' in response:
+            return response['items']
+        return []
 
     def create_on_device(self):
         params = self.changes.api_params()
@@ -736,7 +1361,7 @@ class ModuleManager(object):
         uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
 
         )
         resp = self.client.api.post(uri, json=params)
@@ -750,14 +1375,13 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
-        return response['selfLink']
 
     def update_on_device(self):
         params = self.changes.api_params()
         uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.full_name)
 
         )
@@ -773,18 +1397,11 @@ class ModuleManager(object):
             else:
                 raise F5ModuleError(resp.content)
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        elif not self.want.preserve_node and self.node_exists():
-            return self.remove_node_from_device()
-        return False
-
     def remove_from_device(self):
         uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.full_name)
 
         )
@@ -808,7 +1425,7 @@ class ModuleManager(object):
         uri = "https://{0}:{1}/mgmt/tm/ltm/pool/{2}/members/{3}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.pool),
+            transform_name(name=fq_name(self.want.partition, self.want.pool)),
             transform_name(self.want.partition, self.want.full_name)
 
         )
@@ -823,6 +1440,13 @@ class ModuleManager(object):
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
+
+        # Read the current list of tunnels so that IP encapsulation
+        # checking can take place.
+        tunnels_gre = self.read_current_tunnels_from_device('gre')
+        tunnels_ipip = self.read_current_tunnels_from_device('ipip')
+        response['tunnels'] = tunnels_gre + tunnels_ipip
+
         return ApiParameters(params=response)
 
     def read_current_node_from_device(self, node):
@@ -844,18 +1468,72 @@ class ModuleManager(object):
                 raise F5ModuleError(resp.content)
         return NodeApiParameters(params=response)
 
+    def read_current_tunnels_from_device(self, tunnel_type):
+        uri = "https://{0}:{1}/mgmt/tm/net/tunnels/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            tunnel_type
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'items' not in response:
+            return []
+        return [x['fullPath'] for x in response['items']]
+
+    def _prepare_links(self, collection):
+        # this is to ensure no duplicates are in the provided collection
+        no_dupes = list(set(collection))
+        links = list()
+        purge_paths = [urlparse(link).path for link in no_dupes]
+
+        for path in purge_paths:
+            link = "https://{0}:{1}{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                path
+            )
+            links.append(link)
+        return links
+
+    def purge_from_device(self):
+        links = self._prepare_links(self.purge_links)
+
+        with TransactionContextManager(self.client) as transact:
+            for link in links:
+                resp = transact.api.delete(link)
+
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+        return True
+
 
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
-        argument_spec = dict(
-            pool=dict(required=True),
+        element_spec = dict(
             address=dict(aliases=['host', 'ip']),
             fqdn=dict(
                 aliases=['hostname']
             ),
             name=dict(),
-            port=dict(type='int', required=True),
+            port=dict(type='int'),
             connection_limit=dict(type='int'),
             description=dict(),
             rate_limit=dict(type='int'),
@@ -866,21 +1544,67 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['absent', 'present', 'enabled', 'disabled', 'forced_offline']
             ),
+            fqdn_auto_populate=dict(type='bool'),
+            reuse_nodes=dict(type='bool', default=True),
+            availability_requirements=dict(
+                type='dict',
+                options=dict(
+                    type=dict(
+                        choices=['all', 'at_least'],
+                        required=True
+                    ),
+                    at_least=dict(type='int'),
+                ),
+                required_if=[
+                    ['type', 'at_least', ['at_least']],
+                ]
+            ),
+            monitors=dict(type='list'),
+            ip_encapsulation=dict(),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
             ),
-            fqdn_auto_populate=dict(type='bool'),
-            reuse_nodes=dict(type='bool', default=True),
         )
-        self.argument_spec = {}
+        aggregate_spec = deepcopy(element_spec)
+
+        # remove default in aggregate spec, to handle common arguments
+        remove_default_spec(aggregate_spec)
+
+        self.argument_spec = dict(
+            aggregate=dict(
+                type='list',
+                elements='dict',
+                options=aggregate_spec,
+                aliases=['members'],
+                mutually_exclusive=[
+                    ['address', 'fqdn']
+                ],
+                required_one_of=[
+                    ['address', 'fqdn']
+                ],
+            ),
+            replace_all_with=dict(
+                type='bool',
+                aliases=['purge'],
+                default='no'
+            ),
+            pool=dict(required=True),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            ),
+        )
+
+        self.argument_spec.update(element_spec)
         self.argument_spec.update(f5_argument_spec)
-        self.argument_spec.update(argument_spec)
+
         self.mutually_exclusive = [
-            ['address', 'fqdn']
+            ['address', 'aggregate'],
+            ['fqdn', 'aggregate']
         ]
         self.required_one_of = [
-            ['name', 'address', 'fqdn'],
+            ['address', 'fqdn', 'aggregate'],
         ]
 
 
@@ -890,6 +1614,8 @@ def main():
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive,
+        required_one_of=spec.required_one_of,
     )
 
     client = F5RestClient(**module.params)

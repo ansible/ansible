@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Author(s): Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2018, Christian Kotte <christian.kotte@gmx.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -24,6 +25,7 @@ description:
 version_added: 2.5
 author:
 - Abhijeet Kasurde (@Akasurde)
+- Christian Kotte (@ckotte)
 notes:
     - Tested on ESXi 6.5
     - Be sure that the ESXi user used for login, has the appropriate rights to create / delete / edit roles
@@ -124,20 +126,33 @@ EXAMPLES = '''
 '''
 
 RETURN = r'''
-local_role_name:
+role_name:
     description: Name of local role
     returned: always
-    type: string
+    type: str
 role_id:
     description: ESXi generated local role id
     returned: always
     type: int
-old_privileges:
-    description: List of privileges of role before update
+privileges:
+    description: List of privileges
+    returned: always
+    type: list
+privileges_previous:
+    description: List of privileges of role before the update
     returned: on update
     type: list
+# NOTE: the following keys are deprecated from 2.11 onwards
+local_role_name:
+    description: Name of local role
+    returned: always
+    type: str
 new_privileges:
-    description: List of privileges of role after update
+    description: List of privileges
+    returned: always
+    type: list
+old_privileges:
+    description: List of privileges of role before the update
     returned: on update
     type: list
 '''
@@ -152,6 +167,8 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
 class VMwareLocalRoleManager(PyVmomi):
+    """Class to manage local roles"""
+
     def __init__(self, module):
         super(VMwareLocalRoleManager, self).__init__(module)
         self.module = module
@@ -164,11 +181,13 @@ class VMwareLocalRoleManager(PyVmomi):
         self.action = self.params['action']
 
         if self.content.authorizationManager is None:
-            self.module.fail_json(msg="Failed to get local authorization manager settings.",
-                                  details="It seems that %s is a vCenter server "
-                                          "instead of an ESXi server" % self.params['hostname'])
+            self.module.fail_json(
+                msg="Failed to get local authorization manager settings.",
+                details="It seems that '%s' is a vCenter server instead of an ESXi server" % self.params['hostname']
+            )
 
     def process_state(self):
+        """Process the state of the local role"""
         local_role_manager_states = {
             'absent': {
                 'present': self.state_remove_role,
@@ -189,14 +208,15 @@ class VMwareLocalRoleManager(PyVmomi):
             self.module.fail_json(msg=str(e))
 
     def check_local_role_manager_state(self):
+        """Check local roles"""
         auth_role = self.find_authorization_role()
         if auth_role:
             self.current_role = auth_role
             return 'present'
-        else:
-            return 'absent'
+        return 'absent'
 
     def find_authorization_role(self):
+        """Find local role"""
         desired_role = None
         for role in self.content.authorizationManager.roleList:
             if role.name == self.role_name:
@@ -204,77 +224,99 @@ class VMwareLocalRoleManager(PyVmomi):
         return desired_role
 
     def state_create_role(self):
+        """Create local role"""
         role_id = None
-        try:
-            role_id = self.content.authorizationManager.AddAuthorizationRole(name=self.role_name,
-                                                                             privIds=self.priv_ids)
-        except vim.fault.AlreadyExists as e:
-            self.module.fail_json(msg="Failed to create a role %s as the user specified role name "
-                                      "already exists." % self.role_name,
-                                  details=e.msg)
-        except vim.fault.InvalidName as e:
-            self.module.fail_json(msg="Failed to create a role %s as the user specified role name "
-                                      "is empty" % self.role_name,
-                                  details=e.msg)
-        except vmodl.fault.InvalidArgument as e:
-            self.module.fail_json(msg="Failed to create a role %s as the user specified privileges "
-                                      "are unknown" % self.role_name,
-                                  details=e.msg)
-        result = {
-            'changed': True,
-            'role_id': role_id,
-            'privileges': self.priv_ids,
-            'local_role_name': self.role_name,
-        }
-        self.module.exit_json(**result)
+        results = dict()
+        results['role_name'] = self.role_name
+        results['privileges'] = self.priv_ids
+        # NOTE: the following code is deprecated from 2.11 onwards
+        results['local_role_name'] = self.role_name
+        results['new_privileges'] = self.priv_ids
+
+        if self.module.check_mode:
+            results['msg'] = "Role would be created"
+        else:
+            try:
+                role_id = self.content.authorizationManager.AddAuthorizationRole(
+                    name=self.role_name,
+                    privIds=self.priv_ids
+                )
+                results['role_id'] = role_id
+                results['msg'] = "Role created"
+            except vim.fault.AlreadyExists as already_exists:
+                self.module.fail_json(
+                    msg="Failed to create role '%s' as the user specified role name already exists." %
+                    self.role_name, details=already_exists.msg
+                )
+            except vim.fault.InvalidName as invalid_name:
+                self.module.fail_json(
+                    msg="Failed to create a role %s as the user specified role name is empty" %
+                    self.role_name, details=invalid_name.msg
+                )
+            except vmodl.fault.InvalidArgument as invalid_argument:
+                self.module.fail_json(
+                    msg="Failed to create a role %s as the user specified privileges are unknown" %
+                    self.role_name, etails=invalid_argument.msg
+                )
+        self.module.exit_json(changed=True, result=results)
 
     def state_remove_role(self):
-        try:
-            self.content.authorizationManager.RemoveAuthorizationRole(roleId=self.current_role.roleId,
-                                                                      failIfUsed=self.force)
-        except vim.fault.NotFound as e:
-            self.module.fail_json(msg="Failed to remove a role %s as the user specified role name "
-                                      "does not exist." % self.role_name,
-                                  details=e.msg)
-        except vim.fault.RemoveFailed as e:
-            msg = "Failed to remove a role %s as the user specified role name." % self.role_name
-            if self.force:
-                msg += " Use force_remove as True."
-
-            self.module.fail_json(msg=msg, details=e.msg)
-        except vmodl.fault.InvalidArgument as e:
-            self.module.fail_json(msg="Failed to remove a role %s as the user specified "
-                                      "role is a system role" % self.role_name,
-                                  details=e.msg)
-        result = {
-            'changed': True,
-            'role_id': self.current_role.roleId,
-            'local_role_name': self.role_name,
-        }
-        self.module.exit_json(**result)
+        """Remove local role"""
+        results = dict()
+        results['role_name'] = self.role_name
+        results['role_id'] = self.current_role.roleId
+        # NOTE: the following code is deprecated from 2.11 onwards
+        results['local_role_name'] = self.role_name
+        if self.module.check_mode:
+            results['msg'] = "Role would be deleted"
+        else:
+            try:
+                self.content.authorizationManager.RemoveAuthorizationRole(
+                    roleId=self.current_role.roleId,
+                    failIfUsed=self.force
+                )
+                results['msg'] = "Role deleted"
+            except vim.fault.NotFound as not_found:
+                self.module.fail_json(
+                    msg="Failed to remove a role %s as the user specified role name does not exist." %
+                    self.role_name, details=not_found.msg
+                )
+            except vim.fault.RemoveFailed as remove_failed:
+                msg = "Failed to remove role '%s' as the user specified role name." % self.role_name
+                if self.force:
+                    msg += " Use force_remove as True."
+                self.module.fail_json(msg=msg, details=remove_failed.msg)
+            except vmodl.fault.InvalidArgument as invalid_argument:
+                self.module.fail_json(
+                    msg="Failed to remove a role %s as the user specified role is a system role" %
+                    self.role_name, details=invalid_argument.msg
+                )
+        self.module.exit_json(changed=True, result=results)
 
     def state_exit_unchanged(self):
-        role = self.find_authorization_role()
-        result = dict(changed=False)
-
-        if role:
-            result['role_id'] = role.roleId
-            result['local_role_name'] = role.name
-            result['old_privileges'] = [priv_name for priv_name in role.privilege]
-            result['new_privileges'] = [priv_name for priv_name in role.privilege]
-
-        self.module.exit_json(**result)
+        """Don't do anything"""
+        results = dict()
+        results['role_name'] = self.role_name
+        # NOTE: the following code is deprecated from 2.11 onwards
+        results['local_role_name'] = self.role_name
+        results['msg'] = "Role not present"
+        self.module.exit_json(changed=False, result=results)
 
     def state_update_role(self):
-        current_privileges = self.current_role.privilege
-
-        result = {
-            'changed': False,
-            'old_privileges': current_privileges,
-        }
-
-        changed_privileges = []
+        """Update local role"""
         changed = False
+        changed_privileges = []
+        results = dict()
+        results['role_name'] = self.role_name
+        results['role_id'] = self.current_role.roleId
+        # NOTE: the following code is deprecated from 2.11 onwards
+        results['local_role_name'] = self.role_name
+
+        current_privileges = self.current_role.privilege
+        results['privileges'] = current_privileges
+        # NOTE: the following code is deprecated from 2.11 onwards
+        results['new_privileges'] = current_privileges
+
         if self.action == 'add':
             # Add to existing privileges
             for priv in self.params['local_privilege_ids']:
@@ -288,52 +330,59 @@ class VMwareLocalRoleManager(PyVmomi):
             # Add system-defined privileges, "System.Anonymous", "System.View", and "System.Read".
             self.params['local_privilege_ids'].extend(['System.Anonymous', 'System.Read', 'System.View'])
             changed_privileges = self.params['local_privilege_ids']
-
             changes_applied = list(set(current_privileges) ^ set(changed_privileges))
             if changes_applied:
                 changed = True
         elif self.action == 'remove':
+            changed_privileges = list(current_privileges)
             # Remove given privileges from existing privileges
             for priv in self.params['local_privilege_ids']:
                 if priv in current_privileges:
                     changed = True
-                    current_privileges.remove(priv)
-            if changed:
-                changed_privileges = current_privileges
+                    changed_privileges.remove(priv)
 
-        if not changed:
-            self.state_exit_unchanged()
+        if changed:
+            results['privileges'] = changed_privileges
+            results['privileges_previous'] = current_privileges
+            # NOTE: the following code is deprecated from 2.11 onwards
+            results['new_privileges'] = changed_privileges
+            results['old_privileges'] = current_privileges
+            if self.module.check_mode:
+                results['msg'] = "Role privileges would be updated"
+            else:
+                try:
+                    self.content.authorizationManager.UpdateAuthorizationRole(
+                        roleId=self.current_role.roleId,
+                        newName=self.current_role.name,
+                        privIds=changed_privileges
+                    )
+                    results['msg'] = "Role privileges updated"
+                except vim.fault.NotFound as not_found:
+                    self.module.fail_json(
+                        msg="Failed to update role. Please check privileges provided for update", details=not_found.msg
+                    )
+                except vim.fault.InvalidName as invalid_name:
+                    self.module.fail_json(
+                        msg="Failed to update role as role name is empty", details=invalid_name.msg
+                    )
+                except vim.fault.AlreadyExists as already_exists:
+                    self.module.fail_json(
+                        msg="Failed to update role", details=already_exists.msg
+                    )
+                except vmodl.fault.InvalidArgument as invalid_argument:
+                    self.module.fail_json(
+                        msg="Failed to update role as user specified role is system role which can not be changed",
+                        details=invalid_argument.msg
+                    )
+                except vim.fault.NoPermission as no_permission:
+                    self.module.fail_json(
+                        msg="Failed to update role as current session doesn't have any privilege to update specified role",
+                        details=no_permission.msg
+                    )
+        else:
+            results['msg'] = "Role priviledges are properly configured"
 
-        try:
-            self.content.authorizationManager.UpdateAuthorizationRole(roleId=self.current_role.roleId,
-                                                                      newName=self.current_role.name,
-                                                                      privIds=changed_privileges)
-        except vim.fault.NotFound as e:
-            self.module.fail_json(msg="Failed to update Role %s. Please check privileges "
-                                      "provided for update" % self.role_name,
-                                  details=e.msg)
-        except vim.fault.InvalidName as e:
-            self.module.fail_json(msg="Failed to update Role %s as role name is empty" % self.role_name,
-                                  details=e.msg)
-        except vim.fault.AlreadyExists as e:
-            self.module.fail_json(msg="Failed to update Role %s." % self.role_name,
-                                  details=e.msg)
-        except vmodl.fault.InvalidArgument as e:
-            self.module.fail_json(msg="Failed to update Role %s as user specified "
-                                      "role is system role which can not be changed" % self.role_name,
-                                  details=e.msg)
-        except vim.fault.NoPermission as e:
-            self.module.fail_json(msg="Failed to update Role %s as current session does not"
-                                      " have any privilege to update specified role" % self.role_name,
-                                  details=e.msg)
-
-        role = self.find_authorization_role()
-        result['role_id'] = role.roleId,
-        result['changed'] = changed
-        result['local_role_name'] = role.name
-        result['new_privileges'] = [priv_name for priv_name in role.privilege]
-
-        self.module.exit_json(**result)
+        self.module.exit_json(changed=changed, result=results)
 
 
 def main():
@@ -349,7 +398,7 @@ def main():
                               state=dict(default='present', choices=['present', 'absent'], type='str')))
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False)
+                           supports_check_mode=True)
 
     vmware_local_role_manager = VMwareLocalRoleManager(module)
     vmware_local_role_manager.process_state()

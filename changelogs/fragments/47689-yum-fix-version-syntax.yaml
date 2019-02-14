@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - fix "package == version" syntax (https://github.com/ansible/ansible/pull/47744)

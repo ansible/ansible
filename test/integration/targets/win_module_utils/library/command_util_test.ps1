@@ -34,7 +34,7 @@ try {
     $actual = Run-Command -command "C:\fakepath\$exe_filename arg1"
     Fail-Json -obj $result -message "Test $test_name failed`nCommand should have thrown an exception"
 } catch {
-    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"SearchPath`" with `"1`" argument(s): `"Could not locate the following executable C:\fakepath\$exe_filename`""
+    Assert-Equals -actual $_.Exception.Message -expected "Exception calling `"SearchPath`" with `"1`" argument(s): `"Could not find file 'C:\fakepath\$exe_filename'.`""
 }
 
 $test_name = "exe in current folder"
@@ -75,6 +75,12 @@ $actual = Run-Command -command "cmd.exe /c echo stdout && echo stderr 1>&2"
 Assert-Equals -actual $actual.rc -expected 0
 Assert-Equals -actual $actual.stdout -expected "stdout `r`n"
 Assert-Equals -actual $actual.stderr -expected "stderr `r`n"
+
+$test_name = "Test UTF8 output from stdout stream"
+$actual = Run-Command -command "powershell.exe -ExecutionPolicy ByPass -Command `"Write-Host '💩'`""
+Assert-Equals -actual $actual.rc -expected 0
+Assert-Equals -actual $actual.stdout -expected "💩`n"
+Assert-Equals -actual $actual.stderr -expected ""
 
 $test_name = "test default environment variable"
 Set-Item -Path env:TESTENV -Value "test"

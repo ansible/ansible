@@ -73,7 +73,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     snapshot_id: "{{ item.id }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?name=='big-data-snapshot1']"
 - debug: var=snapshot_id

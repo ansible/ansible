@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Hardware fact gathering now completes on Solaris 8.  Previously, it aborted with error `Argument 'args' to run_command must be list or string`.

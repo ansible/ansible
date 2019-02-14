@@ -90,32 +90,32 @@ gateway.customer_gateways:
             description: The Border Gateway Autonomous System Number.
             returned: when exists and gateway is available.
             sample: 65123
-            type: string
+            type: str
         customer_gateway_id:
             description: gateway id assigned by amazon.
             returned: when exists and gateway is available.
             sample: cgw-cb6386a2
-            type: string
+            type: str
         ip_address:
             description: ip address of your gateway device.
             returned: when exists and gateway is available.
             sample: 1.2.3.4
-            type: string
+            type: str
         state:
             description: state of gateway.
             returned: when gateway exists and is available.
             state: available
-            type: string
+            type: str
         tags:
             description: any tags on the gateway.
             returned: when gateway exists and is available, and when tags exist.
             state: available
-            type: string
+            type: str
         type:
             description: encryption type.
             returned: when gateway exists and is available.
             sample: ipsec.1
-            type: string
+            type: str
 '''
 
 try:

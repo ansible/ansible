@@ -8,26 +8,38 @@ __metaclass__ = type
 
 import atexit
 import os
+import re
 import ssl
 import time
+import traceback
 from random import randint
 
+REQUESTS_IMP_ERR = None
 try:
     # requests is required for exception handling of the ConnectionError
     import requests
+    HAS_REQUESTS = True
+except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
+    HAS_REQUESTS = False
+
+PYVMOMI_IMP_ERR = None
+try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
+    PYVMOMI_IMP_ERR = traceback.format_exc()
     HAS_PYVMOMI = False
 
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 
 class TaskError(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        super(TaskError, self).__init__(*args, **kwargs)
 
 
 def wait_for_task(task, max_backoff=64, timeout=3600):
@@ -51,12 +63,15 @@ def wait_for_task(task, max_backoff=64, timeout=3600):
             return True, task.info.result
         if task.info.state == vim.TaskInfo.State.error:
             error_msg = task.info.error
+            host_thumbprint = None
             try:
                 error_msg = error_msg.msg
+                if hasattr(task.info.error, 'thumbprint'):
+                    host_thumbprint = task.info.error.thumbprint
             except AttributeError:
                 pass
             finally:
-                raise_from(TaskError(error_msg), task.info.error)
+                raise_from(TaskError(error_msg, host_thumbprint), task.info.error)
         if task.info.state in [vim.TaskInfo.State.running, vim.TaskInfo.State.queued]:
             sleep_time = min(2 ** failure_counter + randint(1, 1000) / 1000, max_backoff)
             time.sleep(sleep_time)
@@ -101,17 +116,6 @@ def find_dvspg_by_name(dv_switch, portgroup_name):
         if pg.name == portgroup_name:
             return pg
 
-    return None
-
-
-# Maintain for legacy, or remove with 2.1 ?
-# Should be replaced with find_cluster_by_name
-def find_cluster_by_name_datacenter(datacenter, cluster_name):
-
-    host_folder = datacenter.hostFolder
-    for folder in host_folder.childEntity:
-        if folder.name == cluster_name:
-            return folder
     return None
 
 
@@ -315,15 +319,16 @@ def gather_vm_facts(content, vm):
             facts['hw_files'] = [files.vmPathName]
             for item in layout.snapshot:
                 for snap in item.snapshotFile:
-                    facts['hw_files'].append(files.snapshotDirectory + snap)
+                    if 'vmsn' in snap:
+                        facts['hw_files'].append(snap)
             for item in layout.configFile:
-                facts['hw_files'].append(os.path.dirname(files.vmPathName) + '/' + item)
+                facts['hw_files'].append(os.path.join(os.path.dirname(files.vmPathName), item))
             for item in vm.layout.logFile:
-                facts['hw_files'].append(files.logDirectory + item)
+                facts['hw_files'].append(os.path.join(files.logDirectory, item))
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
-    except BaseException:
+    except Exception:
         pass
 
     facts['hw_folder'] = PyVmomi.get_vm_path(content, vm)
@@ -347,13 +352,11 @@ def gather_vm_facts(content, vm):
         for device in vmnet:
             net_dict[device.macAddress] = list(device.ipAddress)
 
-    for dummy, v in iteritems(net_dict):
-        for ipaddress in v:
-            if ipaddress:
-                if '::' in ipaddress:
-                    facts['ipv6'] = ipaddress
-                else:
-                    facts['ipv4'] = ipaddress
+    if vm.guest.ipAddress:
+        if ':' in vm.guest.ipAddress:
+            facts['ipv6'] = vm.guest.ipAddress
+        else:
+            facts['ipv4'] = vm.guest.ipAddress
 
     ethernet_idx = 0
     for entry in vm.config.hardware.device:
@@ -777,8 +780,13 @@ class PyVmomi(object):
         """
         Constructor
         """
+        if not HAS_REQUESTS:
+            module.fail_json(msg=missing_required_lib('requests'),
+                             exception=REQUESTS_IMP_ERR)
+
         if not HAS_PYVMOMI:
-            module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
+            module.fail_json(msg=missing_required_lib('PyVmomi'),
+                             exception=PYVMOMI_IMP_ERR)
 
         self.module = module
         self.params = module.params
@@ -968,7 +976,7 @@ class PyVmomi(object):
                 folder_name = fp.name + '/' + folder_name
                 try:
                     fp = fp.parent
-                except BaseException:
+                except Exception:
                     break
             folder_name = '/' + folder_name
         return folder_name
@@ -984,8 +992,16 @@ class PyVmomi(object):
 
         """
         template_obj = None
+        if not template_name:
+            return template_obj
 
-        if template_name:
+        if "/" in template_name:
+            vm_obj_path = os.path.dirname(template_name)
+            vm_obj_name = os.path.basename(template_name)
+            template_obj = find_vm_by_id(self.content, vm_obj_name, vm_id_type="inventory_path", folder=vm_obj_path)
+            if template_obj:
+                return template_obj
+        else:
             template_obj = find_vm_by_id(self.content, vm_id=template_name, vm_id_type="uuid")
             if template_obj:
                 return template_obj
@@ -1006,6 +1022,7 @@ class PyVmomi(object):
                 self.module.fail_json(msg="Multiple virtual machines or templates with same name [%s] found." % template_name)
             elif templates:
                 template_obj = templates[0]
+
         return template_obj
 
     # Cluster related functions
@@ -1153,3 +1170,78 @@ class PyVmomi(object):
             if dsc.name == datastore_cluster_name:
                 return dsc
         return None
+
+    # VMDK stuff
+    def vmdk_disk_path_split(self, vmdk_path):
+        """
+        Takes a string in the format
+
+            [datastore_name] path/to/vm_name.vmdk
+
+        Returns a tuple with multiple strings:
+
+        1. datastore_name: The name of the datastore (without brackets)
+        2. vmdk_fullpath: The "path/to/vm_name.vmdk" portion
+        3. vmdk_filename: The "vm_name.vmdk" portion of the string (os.path.basename equivalent)
+        4. vmdk_folder: The "path/to/" portion of the string (os.path.dirname equivalent)
+        """
+        try:
+            datastore_name = re.match(r'^\[(.*?)\]', vmdk_path, re.DOTALL).groups()[0]
+            vmdk_fullpath = re.match(r'\[.*?\] (.*)$', vmdk_path).groups()[0]
+            vmdk_filename = os.path.basename(vmdk_fullpath)
+            vmdk_folder = os.path.dirname(vmdk_fullpath)
+            return datastore_name, vmdk_fullpath, vmdk_filename, vmdk_folder
+        except (IndexError, AttributeError) as e:
+            self.module.fail_json(msg="Bad path '%s' for filename disk vmdk image: %s" % (vmdk_path, to_native(e)))
+
+    def find_vmdk_file(self, datastore_obj, vmdk_fullpath, vmdk_filename, vmdk_folder):
+        """
+        Return vSphere file object or fail_json
+        Args:
+            datastore_obj: Managed object of datastore
+            vmdk_fullpath: Path of VMDK file e.g., path/to/vm/vmdk_filename.vmdk
+            vmdk_filename: Name of vmdk e.g., VM0001_1.vmdk
+            vmdk_folder: Base dir of VMDK e.g, path/to/vm
+
+        """
+
+        browser = datastore_obj.browser
+        datastore_name = datastore_obj.name
+        datastore_name_sq = "[" + datastore_name + "]"
+        if browser is None:
+            self.module.fail_json(msg="Unable to access browser for datastore %s" % datastore_name)
+
+        detail_query = vim.host.DatastoreBrowser.FileInfo.Details(
+            fileOwner=True,
+            fileSize=True,
+            fileType=True,
+            modification=True
+        )
+        search_spec = vim.host.DatastoreBrowser.SearchSpec(
+            details=detail_query,
+            matchPattern=[vmdk_filename],
+            searchCaseInsensitive=True,
+        )
+        search_res = browser.SearchSubFolders(
+            datastorePath=datastore_name_sq,
+            searchSpec=search_spec
+        )
+
+        changed = False
+        vmdk_path = datastore_name_sq + " " + vmdk_fullpath
+        try:
+            changed, result = wait_for_task(search_res)
+        except TaskError as task_e:
+            self.module.fail_json(msg=to_native(task_e))
+
+        if not changed:
+            self.module.fail_json(msg="No valid disk vmdk image found for path %s" % vmdk_path)
+
+        target_folder_path = datastore_name_sq + " " + vmdk_folder + '/'
+
+        for file_result in search_res.info.result:
+            for f in getattr(file_result, 'file'):
+                if f.path == vmdk_filename and file_result.folderPath == target_folder_path:
+                    return f
+
+        self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)

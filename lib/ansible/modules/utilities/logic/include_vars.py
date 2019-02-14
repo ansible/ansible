@@ -34,7 +34,8 @@ options:
     version_added: "2.2"
     description:
       - The directory name from which the variables should be loaded.
-      - If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
+      - If the path is relative and the task is inside a role, it will look inside the role's vars/ subdirectory.
+      - If the path is relative and not inside a role, it will be parsed relative to the playbook.
   name:
     version_added: "2.2"
     description:
@@ -122,6 +123,12 @@ EXAMPLES = """
     dir: vars
     ignore_files: [bastion.yaml]
     extensions: [yaml]
+
+- name: Ignore warnings raised for files with unknown extensions while loading (2.7)
+  include_vars:
+    dir: vars
+    ignore_unknown_extensions: True
+    extensions: ['', 'yaml', 'yml', 'json']
 """
 
 RETURN = '''

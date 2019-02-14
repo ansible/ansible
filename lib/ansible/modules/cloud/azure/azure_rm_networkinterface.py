@@ -12,7 +12,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -46,11 +46,9 @@ options:
         choices:
             - absent
             - present
-        required: false
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        required: false
     virtual_network:
         description:
             - An existing virtual network with which the network interface will be associated. Required
@@ -139,6 +137,9 @@ options:
             public_ip_address_name:
                 description:
                     - Name of the public ip address. None for disable ip address.
+                aliases:
+                    - public_ip_address
+                    - public_ip_name
             public_ip_allocation_method:
                 description:
                     - public ip allocation method.
@@ -408,7 +409,7 @@ def nic_to_dict(nic):
             internal_fqdn=nic.dns_settings.internal_fqdn
         ),
         ip_configurations=ip_configurations,
-        ip_configuration=ip_configurations[0] if len(ip_configurations) == 1 else None,  # for compatiable issue, keep this field
+        ip_configuration=ip_configurations[0] if len(ip_configurations) == 1 else None,  # for compatible issue, keep this field
         mac_address=nic.mac_address,
         enable_ip_forwarding=nic.enable_ip_forwarding,
         provisioning_state=nic.provisioning_state,
@@ -512,7 +513,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         self.security_group = self.parse_resource_to_dict(self.security_group or self.name)
 
         if self.state == 'present' and not self.ip_configurations:
-            # construct the ip_configurations array for compatiable
+            # construct the ip_configurations array for compatible
             self.deprecate('Setting ip_configuration flatten is deprecated and will be removed.'
                            ' Using ip_configurations list to define the ip configuration', version='2.9')
             self.ip_configurations = [
@@ -614,7 +615,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
         if changed:
             if self.state == 'present':
                 subnet = self.network_models.SubResource(
-                    '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}'.format(
+                    id='/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}'.format(
                         self.virtual_network['subscription_id'],
                         self.virtual_network['resource_group'],
                         self.virtual_network['name'],

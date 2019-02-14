@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
+from units.compat import unittest
+from units.compat.mock import Mock
 
 
 class BaseFactsTest(unittest.TestCase):

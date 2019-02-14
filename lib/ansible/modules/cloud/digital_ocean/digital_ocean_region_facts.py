@@ -41,7 +41,7 @@ EXAMPLES = '''
 - debug: var=resp_out
 - set_fact:
     region_slug: "{{ item.name }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?slug==`nyc1`]"
 - debug: var=region_slug

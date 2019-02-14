@@ -20,7 +20,10 @@
 - set_fact: db_file_name="{{tmp_dir}}/{{file}}"
 
 - name: state dump/import - create database
-  mysql_db: name={{ db_name }} state=present
+  mysql_db:
+    name: '{{ db_name }}'
+    state: present
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: state dump/import - create table department
   command: mysql {{ db_name }} '-e create table department(id int, name varchar(100));'
@@ -44,6 +47,7 @@
     target: "{{ db_file_name }}"
     ignore_tables:
         - "{{ db_name }}.department"
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert successful completion of dump operation
@@ -55,10 +59,17 @@
   file: name={{ db_file_name }} state=file
 
 - name: state dump/import - remove database
-  mysql_db: name={{ db_name }} state=absent
+  mysql_db:
+    name: '{{ db_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: test state=import to restore the database of type {{ format_type }} (expect changed=true)
-  mysql_db: name={{ db_name }} state=import target={{ db_file_name }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ db_file_name }}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: show the tables
@@ -71,7 +82,11 @@
        - "'department' not in result.stdout"
 
 - name: test state=dump to backup the database of type {{ format_type }} (expect changed=true)
-  mysql_db: name={{ db_name }} state=dump target={{ db_file_name }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: dump
+    target: '{{ db_file_name }}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message backup the database
@@ -91,7 +106,11 @@
   command: mysql {{ db_name }} "-e update employee set name='John Doe' where id=47;"
 
 - name: test state=import to restore the database of type {{ format_type }} (expect changed=true)
-  mysql_db: name={{ db_name }} state=import target={{ db_file_name }}
+  mysql_db:
+    name: '{{ db_name }}'
+    state: import
+    target: '{{ db_file_name }}'
+    login_unix_socket: '{{ mysql_socket }}'
   register: result
 
 - name: assert output message restore the database
@@ -108,7 +127,10 @@
        - "'Joe Smith' in result.stdout"
 
 - name: remove database name
-  mysql_db: name={{ db_name }} state=absent
+  mysql_db:
+    name: '{{ db_name }}'
+    state: absent
+    login_unix_socket: '{{ mysql_socket }}'
 
 - name: remove file name
   file: name={{ db_file_name }}  state=absent

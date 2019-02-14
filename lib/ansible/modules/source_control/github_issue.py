@@ -46,7 +46,7 @@ requirements:
 RETURN = '''
 get_status:
     description: State of the GitHub issue
-    type: string
+    type: str
     returned: success
     sample: open, closed
 '''
@@ -66,14 +66,17 @@ EXAMPLES = '''
   when: r.issue_status == 'open'
 '''
 
+import traceback
 
+GITHUB_IMP_ERR = None
 try:
     import github3
     HAS_GITHUB_PACKAGE = True
 except ImportError:
+    GITHUB_IMP_ERR = traceback.format_exc()
     HAS_GITHUB_PACKAGE = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def main():
@@ -88,8 +91,8 @@ def main():
     )
 
     if not HAS_GITHUB_PACKAGE:
-        module.fail_json(msg="Missing required github3 module. (check docs or "
-                             "install with: pip install github3.py==1.0.0a4)")
+        module.fail_json(msg=missing_required_lib('github3.py >= 1.0.0a4'),
+                         exception=GITHUB_IMP_ERR)
 
     organization = module.params['organization']
     repo = module.params['repo']

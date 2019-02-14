@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
       - azure
     description:
         - Query VM details from Azure Resource Manager
-        - Requires a YAML configuration file whose name ends with '.azure_rm.yaml'
+        - Requires a YAML configuration file whose name ends with 'azure_rm.(yml|yaml)'
         - By default, sets C(ansible_host) to the first public IP address found (preferring the primary NIC). If no
           public IPs are found, the first private IP (also preferring the primary NIC). The default may be overridden
           via C(hostvar_expressions); see examples.
@@ -143,6 +143,7 @@ exclude_host_filters:
 import hashlib
 import json
 import re
+import uuid
 
 try:
     from queue import Queue, Empty
@@ -156,7 +157,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMAuth
 from ansible.errors import AnsibleParserError, AnsibleError
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes
 from itertools import chain
 from msrest import ServiceClient, Serializer, Deserializer
 from msrestazure import AzureConfiguration
@@ -216,9 +217,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
             :return the contents of the config file
         '''
         if super(InventoryModule, self).verify_file(path):
-            if re.match(r'.+\.azure_rm\.y(a)?ml$', path):
+            if re.match(r'.{0,}azure_rm\.y(a)?ml$', path):
                 return True
-        # display.debug("azure_rm inventory filename must match '*.azure_rm.yml' or '*.azure_rm.yaml'")
+        # display.debug("azure_rm inventory filename must end with 'azure_rm.yml' or 'azure_rm.yaml'")
         return False
 
     def parse(self, inventory, loader, path, cache=True):
@@ -350,9 +351,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         if next_link:
             self._enqueue_get(url=next_link, api_version=self._compute_api_version, handler=self._on_vm_page_response)
 
-        for h in response['value']:
-            # FUTURE: add direct VM filtering by tag here (performance optimization)?
-            self._hosts.append(AzureHost(h, self, vmss=vmss))
+        if 'value' in response:
+            for h in response['value']:
+                # FUTURE: add direct VM filtering by tag here (performance optimization)?
+                self._hosts.append(AzureHost(h, self, vmss=vmss))
 
     def _on_vmss_page_response(self, response):
         next_link = response.get('nextLink')
@@ -372,16 +374,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         while True:
             batch_requests = []
             batch_item_index = 0
-            batch_response_handlers = []
+            batch_response_handlers = dict()
             try:
-                while batch_item_index < 500:
+                while batch_item_index < 100:
                     item = self._request_queue.get_nowait()
 
+                    name = str(uuid.uuid4())
                     query_parameters = {'api-version': item.api_version}
                     req = self._client.get(item.url, query_parameters)
-
-                    batch_requests.append(dict(httpMethod="GET", url=req.url))
-                    batch_response_handlers.append(item)
+                    batch_requests.append(dict(httpMethod="GET", url=req.url, name=name))
+                    batch_response_handlers[name] = item
                     batch_item_index += 1
             except Empty:
                 pass
@@ -391,15 +393,23 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
             batch_resp = self._send_batch(batch_requests)
 
-            for idx, r in enumerate(batch_resp['responses']):
+            key_name = None
+            if 'responses' in batch_resp:
+                key_name = 'responses'
+            elif 'value' in batch_resp:
+                key_name = 'value'
+            else:
+                raise AnsibleError("didn't find expected key responses/value in batch response")
+
+            for idx, r in enumerate(batch_resp[key_name]):
                 status_code = r.get('httpStatusCode')
+                returned_name = r['name']
+                result = batch_response_handlers[returned_name]
                 if status_code != 200:
                     # FUTURE: error-tolerant operation mode (eg, permissions)
-                    raise AnsibleError("a batched request failed with status code {0}, url {1}".format(status_code, batch_requests[idx].get('url')))
-
-                item = batch_response_handlers[idx]
+                    raise AnsibleError("a batched request failed with status code {0}, url {1}".format(status_code, result.url))
                 # FUTURE: store/handle errors from individual handlers
-                item.handler(r['content'], **item.handler_args)
+                result.handler(r['content'], **result.handler_args)
 
     def _send_batch(self, batched_requests):
         url = '/batch'
@@ -409,8 +419,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         body_content = self._serializer.body(body_obj, 'object')
 
+        header = {'x-ms-client-request-id': str(uuid.uuid4())}
+        header.update(self._default_header_parameters)
+
         request = self._client.post(url, query_parameters)
-        initial_response = self._client.send(request, self._default_header_parameters, body_content)
+        initial_response = self._client.send(request, header, body_content)
 
         # FUTURE: configurable timeout?
         poller = ARMPolling(timeout=2)
@@ -450,7 +463,7 @@ class AzureHost(object):
         self.nics = []
 
         # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
-        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(vm_model['id']).hexdigest()[0:4])
+        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(to_bytes(vm_model['id'])).hexdigest()[0:4])
 
         self._hostvars = {}
 
@@ -499,7 +512,7 @@ class AzureHost(object):
                 pip_id = ipc['properties'].get('publicIPAddress', {}).get('id')
                 if pip_id:
                     pip = nic.public_ips[pip_id]
-                    new_hostvars['public_ipv4_addresses'].append(pip._pip_model['properties']['ipAddress'])
+                    new_hostvars['public_ipv4_addresses'].append(pip._pip_model['properties'].get('ipAddress', None))
                     pip_fqdn = pip._pip_model['properties'].get('dnsSettings', {}).get('fqdn')
                     if pip_fqdn:
                         new_hostvars['public_dns_hostnames'].append(pip_fqdn)
@@ -514,8 +527,9 @@ class AzureHost(object):
                                  for s in vm_instanceview_model.get('statuses', []) if self._powerstate_regex.match(s.get('code', ''))), 'unknown')
 
     def _on_nic_response(self, nic_model, is_primary=False):
-        nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
-        self.nics.append(nic)
+        if nic_model.get('type') == 'Microsoft.Network/networkInterfaces':
+            nic = AzureNic(nic_model=nic_model, inventory_client=self._inventory_client, is_primary=is_primary)
+            self.nics.append(nic)
 
 
 class AzureNic(object):

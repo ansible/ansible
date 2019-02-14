@@ -27,6 +27,7 @@ author:
 notes:
     - Tested on ESXi 6.5
     - Be sure that the ESXi user used for login, has the appropriate rights to view roles
+    - The module returns a list of dict in version 2.8 and above.
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -53,8 +54,8 @@ local_role_facts:
     description: Facts about role present on ESXi host
     returned: always
     type: dict
-    sample: {
-        "AnsiUser1": {
+    sample: [
+        {
             "privileges": [
                 "Alarm.Acknowledge",
                 "Alarm.Create",
@@ -64,16 +65,18 @@ local_role_facts:
             "role_id": -12,
             "role_info_label": "Ansible User",
             "role_info_summary": "Ansible Automation user",
+            "role_name": "AnsiUser1",
             "role_system": true
         },
-        "NoAccess": {
+        {
             "privileges": [],
             "role_id": -5,
             "role_info_label": "No access",
             "role_info_summary": "Used for restricting granted access",
+            "role_name": "NoAccess",
             "role_system": true
         },
-        "View": {
+        {
             "privileges": [
                 "System.Anonymous",
                 "System.View"
@@ -81,9 +84,10 @@ local_role_facts:
             "role_id": -3,
             "role_info_label": "View",
             "role_info_summary": "Visibility access (cannot be granted)",
+            "role_name": "View",
             "role_system": true
         }
-    }
+    ]
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -91,31 +95,38 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
 class VMwareLocalRoleFacts(PyVmomi):
+    """Class to manage local role facts"""
     def __init__(self, module):
         super(VMwareLocalRoleFacts, self).__init__(module)
         self.module = module
         self.params = module.params
 
         if self.content.authorizationManager is None:
-            self.module.fail_json(msg="Failed to get local authorization manager settings.",
-                                  details="It seems that %s is a vCenter server "
-                                          "instead of an ESXi server" % self.params['hostname'])
+            self.module.fail_json(
+                msg="Failed to get local authorization manager settings.",
+                details="It seems that '%s' is a vCenter server instead of an ESXi server" % self.params['hostname']
+            )
 
     def gather_local_role_facts(self):
-        results = dict()
+        """Gather facts about local roles"""
+        results = list()
         for role in self.content.authorizationManager.roleList:
-            results[role.name] = dict(
-                role_id=role.roleId,
-                privileges=[priv_name for priv_name in role.privilege],
-                role_system=role.system,
-                role_info_label=role.info.label,
-                role_info_summary=role.info.summary,
+            results.append(
+                dict(
+                    role_name=role.name,
+                    role_id=role.roleId,
+                    privileges=[priv_name for priv_name in role.privilege],
+                    role_system=role.system,
+                    role_info_label=role.info.label,
+                    role_info_summary=role.info.summary,
+                )
             )
 
         self.module.exit_json(changed=False, local_role_facts=results)
 
 
 def main():
+    """Main"""
     argument_spec = vmware_argument_spec()
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

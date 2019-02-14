@@ -109,8 +109,6 @@ Function Get-ChocolateySources {
 }
 
 Function New-ChocolateySource {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingUserNameAndPassWordParams", "", Justification="We need to use the plaintext pass in the cmdline, also using a SecureString here doesn't make sense considering the source is not secure")]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "", Justification="See above")]
     param(
         $choco_app,
         $name,

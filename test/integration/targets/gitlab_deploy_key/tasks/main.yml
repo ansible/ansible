@@ -1,0 +1,36 @@
+- name: Install required libs
+  pip:
+    name: python-gitlab
+    state: present
+
+- name: Create {{ gitlab_project_name }}
+  gitlab_project:
+    server_url: "{{ gitlab_host }}"
+    validate_certs: False
+    login_token: "{{ gitlab_login_token }}"
+    name: "{{ gitlab_project_name }}"
+    state: present
+
+- name: Cleanup deploy key to {{ gitlab_project_name }}
+  gitlab_deploy_key:
+    login_token: "{{ gitlab_login_token }}"
+    project: "{{ gitlab_project_name }}"
+    server_url: "{{ gitlab_host }}"
+    title: "{{ gitlab_project_name }}"
+    key: "{{ gitlab_deploy_key }}"
+    state: absent
+
+
+- name: Add deploy key to {{ gitlab_project_name }}
+  gitlab_deploy_key:
+    login_token: "{{ gitlab_login_token }}"
+    project: "root/{{ gitlab_project_name }}"
+    server_url: "{{ gitlab_host }}"
+    title: "{{ gitlab_project_name }}"
+    key: "{{ gitlab_deploy_key }}"
+    state: present
+  register: deploy_key_status
+
+- assert:
+    that:
+      - deploy_key_status is changed

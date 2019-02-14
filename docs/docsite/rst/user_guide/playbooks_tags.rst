@@ -11,24 +11,24 @@ When you execute a playbook, you can filter tasks based on tags in two ways:
 - In Ansible configuration settings, with the ``TAGS_RUN`` and ``TAGS_SKIP`` options
 
 Tags can be applied to *many* structures in Ansible (see "tag inheritance",
-below), but its simplest use is with indivdual tasks. Here is an example
+below), but its simplest use is with individual tasks. Here is an example
 that tags two tasks with different tags::
 
     tasks:
-        - yum:
-            name: "{{ item }}"
-            state: installed
-          loop:
-             - httpd
-             - memcached
-          tags:
-             - packages
+    - yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+      - httpd
+      - memcached
+      tags:
+      - packages
 
-        - template:
-            src: templates/src.j2
-            dest: /etc/foo.conf
-          tags:
-             - configuration
+    - template:
+        src: templates/src.j2
+        dest: /etc/foo.conf
+      tags:
+      - configuration
 
 If you wanted to just run the "configuration" and "packages" part of a very long playbook, you can use the ``--tags`` option on the command line::
 
@@ -55,7 +55,7 @@ This example tags several tasks with one tag, "ntp"::
     - name: be sure ntp is installed
       yum:
         name: ntp
-        state: installed
+        state: present
       tags: ntp
 
     - name: be sure ntp is configured
@@ -63,7 +63,7 @@ This example tags several tasks with one tag, "ntp"::
         src: ntp.conf.j2
         dest: /etc/ntp.conf
       notify:
-        - restart ntpd
+      - restart ntpd
       tags: ntp
 
     - name: be sure ntpd is running and enabled
@@ -86,19 +86,19 @@ such as ``include_role`` and ``include_tasks``.
 When you apply ``tags:`` attributes to structures other than tasks,
 Ansible processes the tag attribute to apply ONLY to the tasks they contain.
 Applying tags anywhere other than tasks is just a convenience so you don't
-have to tag tasks indivdually.
+have to tag tasks individually.
 
 This example tags all tasks in the two plays. The first play has all its tasks
 tagged with 'bar', and the second has all its tasks tagged with 'foo'::
 
     - hosts: all
       tags:
-        - bar
+      - bar
       tasks:
         ...
 
     - hosts: all
-      tags: ['foo']
+      tags: [ foo ]
       tasks:
         ...
 
@@ -108,16 +108,16 @@ You may also apply tags to the tasks imported by ``roles``::
       - role: webserver
         vars:
           port: 5000
-        tags: [ 'web', 'foo' ]
+        tags: [ web, foo ]
 
 And to ``import_role:`` and ``import_tasks:`` statements::
 
     - import_role:
         name: myrole
-      tags: [web,foo]
+      tags: [ web, foo ]
 
     - import_tasks: foo.yml
-      tags: [web,foo]
+      tags: [ web, foo ]
 
 
 All of these apply the specified tags to EACH task inside the play, imported
@@ -133,7 +133,7 @@ There is no way to 'import only these tags'; you probably want to split into sma
 The above information does not apply to `include_tasks` or other dynamic includes,
 as the attributes applied to an include, only affect the include itself.
 
-You can see which tags are applied to tasks, roles, and static imports 
+You can see which tags are applied to tasks, roles, and static imports
 by running ``ansible-playbook`` with the ``--list-tasks`` option. You can
 display all tags applied to the tasks with the ``--list-tags`` option.
 
@@ -156,17 +156,17 @@ Playbook file::
       tasks:
       - include_role:
           name: myrole
-        tags: mytag  
+        tags: mytag
 
 Role tasks file::
 
     - block:
-        - name: First task to run
+      - name: First task to run
         ...
-        - name: Second task to run
+      - name: Second task to run
         ...
       tags:
-        - mytag
+      - mytag
 
 
 .. _special_tags:
@@ -179,16 +179,15 @@ There is a special ``always`` tag that will always run a task, unless specifical
 Example::
 
     tasks:
+    - debug:
+        msg: "Always runs"
+      tags:
+      - always
 
-        - debug:
-            msg: "Always runs"
-          tags:
-            - always
-
-        - debug:
-            msg: "runs when you use tag1"
-          tags:
-            - tag1
+    - debug:
+        msg: "runs when you use tag1"
+      tags:
+      - tag1
 
 .. versionadded:: 2.5
 
@@ -197,8 +196,8 @@ Another special tag is ``never``, which will prevent a task from running unless 
 Example::
 
     tasks:
-      - debug: msg='{{ showmevar}}'
-        tags: [ 'never', 'debug' ]
+      - debug: msg="{{ showmevar}}"
+        tags: [ never, debug ]
 
 In this example, the task will only run when the ``debug`` or ``never`` tag is explicitly requested.
 
@@ -218,7 +217,3 @@ By default, Ansible runs as if ``--tags all`` had been specified.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-
-

@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: aruba
+short_description: Use aruba cliconf to run command on Aruba platform
+description:
+  - This aruba plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Aruba network devices.
+version_added: 2.4
+"""
+
 import re
 import json
 
@@ -35,7 +45,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'aruba'
-        reply = self.get(b'show version')
+        reply = self.get('show version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'Version (\S+)', data)
@@ -46,7 +56,7 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_model'] = match.group(1)
 
-        reply = self.get(b'show hostname')
+        reply = self.get('show hostname')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'^Hostname is (.+)', data, re.M)
@@ -56,26 +66,23 @@ class Cliconf(CliconfBase):
         return device_info
 
     @enable_mode
-    def get_config(self, source='running', format='text'):
+    def get_config(self, source='running', format='text', flags=None):
         if source not in ('running', 'startup'):
             return self.invalid_params("fetching configuration from %s is not supported" % source)
         if source == 'running':
-            cmd = b'show running-config all'
+            cmd = 'show running-config all'
         else:
-            cmd = b'show startup-config'
+            cmd = 'show startup-config'
         return self.send_command(cmd)
 
     @enable_mode
     def edit_config(self, command):
-        for cmd in chain([b'configure terminal'], to_list(command), [b'end']):
+        for cmd in chain(['configure terminal'], to_list(command), ['end']):
             self.send_command(cmd)
 
-    def get(self, command, prompt=None, answer=None, sendonly=False):
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly)
+    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)

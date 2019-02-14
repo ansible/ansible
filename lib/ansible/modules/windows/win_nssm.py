@@ -24,12 +24,14 @@ options:
   name:
     description:
       - Name of the service to operate on.
+    type: str
     required: true
   state:
     description:
       - State of the service on the system.
       - Note that NSSM actions like "pause", "continue", "rotate" do not fit the declarative style of ansible, so these should be implemented via the
         ansible command module.
+    type: str
     choices: [ absent, present, started, stopped, restarted ]
     default: started
   application:
@@ -44,35 +46,45 @@ options:
   stdout_file:
     description:
       - Path to receive output.
+    type: str
   stderr_file:
     description:
       - Path to receive error output.
+    type: str
   app_parameters:
     description:
-      - Parameters to be passed to the application when it starts.
+      - A string representing a dictionary of parameters to be passed to the application when it starts.
       - Use either this or C(app_parameters_free_form), not both.
+    type: str
   app_parameters_free_form:
-    version_added: "2.3.0"
     description:
       - Single string of parameters to be passed to the service.
       - Use either this or C(app_parameters), not both.
+    type: str
+    version_added: "2.3"
   dependencies:
     description:
       - Service dependencies that has to be started to trigger startup, separated by comma.
+    type: list
   user:
     description:
       - User to be used for service startup.
+    type: str
   password:
     description:
       - Password to be used for service startup.
+    type: str
   start_mode:
     description:
       - If C(auto) is selected, the service will start at bootup.
       - C(delayed) causes a delayed but automatic start after boot (added in version 2.5).
       - C(manual) means that the service will start only when another service needs it.
       - C(disabled) means that the service will stay off, regardless if it is needed or not.
+    type: str
     choices: [ auto, delayed, disabled, manual ]
     default: auto
+seealso:
+- module: win_service
 author:
   - Adam Keech (@smadam813)
   - George Frank (@georgefrank)
@@ -87,37 +99,25 @@ EXAMPLES = r'''
     application: C:\windows\foo.exe
 
 # Install and start the foo service with a key-value pair argument
-# This will yield the following command: C:\windows\foo.exe bar "true"
+# This will yield the following command: C:\windows\foo.exe -bar true
 - win_nssm:
     name: foo
     application: C:\windows\foo.exe
-    app_parameters:
-      bar: 'true'
-
-# Install and start the foo service with a key-value pair argument, where the argument needs to start with a dash
-# This will yield the following command: C:\windows\\foo.exe -bar "true"
-- win_nssm:
-    name: foo
-    application: C:\windows\foo.exe
-    app_parameters:
-      "-bar": 'true'
+    app_parameters: -bar=true
 
 # Install and start the foo service with a single parameter
 # This will yield the following command: C:\windows\\foo.exe bar
 - win_nssm:
     name: foo
     application: C:\windows\foo.exe
-    app_parameters:
-      _: bar
+    app_parameters: _=bar
 
 # Install and start the foo service with a mix of single params, and key value pairs
-# This will yield the following command: C:\windows\\foo.exe bar -file output.bat
+# This will yield the following command: C:\windows\\foo.exe bar -file output.bat -foo false
 - win_nssm:
     name: foo
     application: C:\windows\foo.exe
-    app_parameters:
-      _: bar
-      "-file": "output.bat"
+    app_parameters: _=bar; -file=output.bat; -foo=false
 
 # Use the single line parameters option to specify an arbitrary string of parameters
 # for the service executable

@@ -25,6 +25,10 @@ from lib.import_analysis import (
     get_python_module_utils_imports,
 )
 
+from lib.csharp_import_analysis import (
+    get_csharp_module_utils_imports,
+)
+
 from lib.powershell_import_analysis import (
     get_powershell_module_utils_imports,
 )
@@ -168,6 +172,7 @@ class PathMapper(object):
         self.units_targets = list(walk_units_targets())
         self.sanity_targets = list(walk_sanity_targets())
         self.powershell_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.ps1']
+        self.csharp_targets = [t for t in self.sanity_targets if os.path.splitext(t.path)[1] == '.cs']
 
         self.units_modules = set(t.module for t in self.units_targets if t.module)
         self.units_paths = set(a for t in self.units_targets for a in t.aliases)
@@ -189,8 +194,51 @@ class PathMapper(object):
 
         self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
         self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+
+        self.paths_to_dependent_targets = {}
+
+        for target in self.integration_targets:
+            for path in target.needs_file:
+                if path not in self.paths_to_dependent_targets:
+                    self.paths_to_dependent_targets[path] = set()
+
+                self.paths_to_dependent_targets[path].add(target)
 
     def get_dependent_paths(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        unprocessed_paths = set(self.get_dependent_paths_non_recursive(path))
+        paths = set()
+
+        while unprocessed_paths:
+            queued_paths = list(unprocessed_paths)
+            paths |= unprocessed_paths
+            unprocessed_paths = set()
+
+            for queued_path in queued_paths:
+                new_paths = self.get_dependent_paths_non_recursive(queued_path)
+
+                for new_path in new_paths:
+                    if new_path not in paths:
+                        unprocessed_paths.add(new_path)
+
+        return sorted(paths)
+
+    def get_dependent_paths_non_recursive(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        paths = self.get_dependent_paths_internal(path)
+        paths += [t.path + '/' for t in self.paths_to_dependent_targets.get(path, set())]
+        paths = sorted(set(paths))
+
+        return paths
+
+    def get_dependent_paths_internal(self, path):
         """
         :type path: str
         :rtype: list[str]
@@ -203,6 +251,9 @@ class PathMapper(object):
 
             if ext == '.psm1':
                 return self.get_powershell_module_utils_usage(path)
+
+            if ext == '.cs':
+                return self.get_csharp_module_utils_usage(path)
 
         if path.startswith('test/integration/targets/'):
             return self.get_integration_target_usage(path)
@@ -246,6 +297,22 @@ class PathMapper(object):
         name = os.path.splitext(os.path.basename(path))[0]
 
         return sorted(self.powershell_module_utils_imports[name])
+
+    def get_csharp_module_utils_usage(self, path):
+        """
+        :type path: str
+        :rtype: list[str]
+        """
+        if not self.csharp_module_utils_imports:
+            display.info('Analyzing C# module_utils imports...')
+            before = time.time()
+            self.csharp_module_utils_imports = get_csharp_module_utils_imports(self.powershell_targets, self.csharp_targets)
+            after = time.time()
+            display.info('Processed %d C# module_utils in %d second(s).' % (len(self.csharp_module_utils_imports), after - before))
+
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        return sorted(self.csharp_module_utils_imports[name])
 
     def get_integration_target_usage(self, path):
         """
@@ -313,6 +380,17 @@ class PathMapper(object):
         if path.startswith('hacking/'):
             return minimal
 
+        if path.startswith('lib/ansible/executor/powershell/'):
+            units_path = 'test/units/executor/powershell/'
+
+            if units_path not in self.units_paths:
+                units_path = None
+
+            return {
+                'windows-integration': self.integration_all_target,
+                'units': units_path,
+            }
+
         if path.startswith('lib/ansible/modules/'):
             module_name = self.module_names_by_path.get(path)
 
@@ -320,7 +398,7 @@ class PathMapper(object):
                 return {
                     'units': module_name if module_name in self.units_modules else None,
                     'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
-                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext == '.ps1' else None,
+                    'windows-integration': self.windows_integration_by_module.get(module_name) if ext in ['.cs', '.ps1'] else None,
                     'network-integration': self.network_integration_by_module.get(module_name),
                     FOCUSED_TARGET: True,
                 }
@@ -328,6 +406,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('lib/ansible/module_utils/'):
+            if ext == '.cs':
+                return minimal  # already expanded using get_dependent_paths
+
             if ext == '.psm1':
                 return minimal  # already expanded using get_dependent_paths
 
@@ -478,7 +559,7 @@ class PathMapper(object):
                     'units': 'all',
                 }
 
-        if path.startswith('lib/ansible/utils/module_docs_fragments/'):
+        if path.startswith('lib/ansible/plugins/docs_fragments/'):
             return {
                 'sanity': 'all',
             }
@@ -512,6 +593,9 @@ class PathMapper(object):
             return minimal
 
         if path.startswith('test/legacy/'):
+            return minimal
+
+        if path.startswith('test/env/'):
             return minimal
 
         if path.startswith('test/integration/roles/'):
@@ -551,6 +635,14 @@ class PathMapper(object):
                 if filename == 'platform_agnostic.yaml':
                     return minimal  # network integration test playbook not used by ansible-test
 
+                if filename.startswith('inventory.') and filename.endswith('.template'):
+                    return minimal  # ansible-test does not use these inventory templates
+
+                if filename == 'inventory':
+                    return {
+                        'integration': self.integration_all_target,
+                    }
+
                 for command in (
                         'integration',
                         'windows-integration',
@@ -584,6 +676,11 @@ class PathMapper(object):
             if path in self.units_paths:
                 return {
                     'units': path,
+                }
+
+            if path.startswith('test/units/compat/'):
+                return {
+                    'units': 'test/units/',
                 }
 
             # changes to files which are not unit tests should trigger tests from the nearest parent directory

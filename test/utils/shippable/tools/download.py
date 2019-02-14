@@ -208,7 +208,7 @@ def main():
 
         if args.job_metadata:
             path = os.path.join(output_dir, '%s/job.json' % job_number)
-            contents = json.dumps(j, sort_keys=True, indent=4)
+            contents = json.dumps(j, sort_keys=True, indent=4).encode('utf-8')
 
             if args.verbose or args.test:
                 print(path)
@@ -219,7 +219,7 @@ def main():
                 if not os.path.exists(directory):
                     os.makedirs(directory)
 
-                with open(path, 'w') as metadata_fd:
+                with open(path, 'wb') as metadata_fd:
                     metadata_fd.write(contents)
 
         if args.console_logs:
@@ -266,10 +266,10 @@ def extract_contents(args, path, output_dir):
                     print(path)
 
                 if path.endswith('.json'):
-                    contents = json.dumps(json.loads(contents), sort_keys=True, indent=4)
+                    contents = json.dumps(json.loads(contents), sort_keys=True, indent=4).encode('utf-8')
 
                 if not os.path.exists(path):
-                    with open(path, 'w') as output_fd:
+                    with open(path, 'wb') as output_fd:
                         output_fd.write(contents)
 
 
@@ -294,7 +294,7 @@ def download(args, headers, path, url, is_json=True):
             path += '.error'
 
         if is_json:
-            content = json.dumps(response.json(), sort_keys=True, indent=4)
+            content = json.dumps(response.json(), sort_keys=True, indent=4).encode(response.encoding)
         else:
             content = response.content
 
@@ -303,7 +303,7 @@ def download(args, headers, path, url, is_json=True):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        with open(path, 'w') as content_fd:
+        with open(path, 'wb') as content_fd:
             content_fd.write(content)
 
 

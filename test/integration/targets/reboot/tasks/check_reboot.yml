@@ -1,0 +1,10 @@
+- name: Get current boot time
+  command: "{{ boot_time_command[ansible_facts['distribution'] | lower] | default('cat /proc/sys/kernel/random/boot_id') }}"
+  register: after_boot_time
+
+- name: Ensure system was actually rebooted
+  assert:
+    that:
+      - reboot_result is changed
+      - reboot_result.elapsed > 10
+      - before_boot_time.stdout != after_boot_time.stdout

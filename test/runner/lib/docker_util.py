@@ -83,6 +83,10 @@ def docker_pull(args, image):
     :type args: EnvironmentConfig
     :type image: str
     """
+    if ('@' in image or ':' in image) and docker_images(args, image):
+        display.info('Skipping docker pull of existing image with tag or digest: %s' % image, verbosity=2)
+        return
+
     if not args.docker_pull:
         display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
         return
@@ -149,6 +153,17 @@ def docker_run(args, image, options, cmd=None):
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
+def docker_images(args, image):
+    """
+    :param args: CommonConfig
+    :param image: str
+    :rtype: list[dict[str, any]]
+    """
+    stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
+    results = [json.loads(line) for line in stdout.splitlines()]
+    return results
+
+
 def docker_rm(args, container_id):
     """
     :type args: EnvironmentConfig
@@ -172,8 +187,8 @@ def docker_inspect(args, container_id):
     except SubprocessError as ex:
         try:
             return json.loads(ex.stdout)
-        except:
-            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+        except Exception:
+            raise ex
 
 
 def docker_network_disconnect(args, container_id, network):
@@ -200,8 +215,8 @@ def docker_network_inspect(args, network):
     except SubprocessError as ex:
         try:
             return json.loads(ex.stdout)
-        except:
-            raise ex  # pylint: disable=locally-disabled, raising-bad-type
+        except Exception:
+            raise ex
 
 
 def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None):
@@ -221,17 +236,36 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout)
 
 
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None):
+def docker_info(args):
     """
-    :type args: EnvironmentConfig
+    :param args: CommonConfig
+    :rtype: dict[str, any]
+    """
+    stdout, _dummy = docker_command(args, ['info', '--format', '{{json .}}'], capture=True, always=True)
+    return json.loads(stdout)
+
+
+def docker_version(args):
+    """
+    :param args: CommonConfig
+    :rtype: dict[str, any]
+    """
+    stdout, _dummy = docker_command(args, ['version', '--format', '{{json .}}'], capture=True, always=True)
+    return json.loads(stdout)
+
+
+def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False):
+    """
+    :type args: CommonConfig
     :type cmd: list[str]
     :type capture: bool
     :type stdin: file | None
     :type stdout: file | None
+    :type always: bool
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout)
+    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always)
 
 
 def docker_environment():

@@ -298,7 +298,7 @@ def write_on_file(content, filename, module):
         report = open(filepath, 'w')
         report.write(content)
         report.close()
-    except:
+    except Exception:
         module.fail_json(msg="Error while writing on file.")
 
     return filepath

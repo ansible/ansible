@@ -6,25 +6,27 @@ Blocks allow for logical grouping of tasks and in play error handling. Most of w
 
 .. code-block:: YAML
  :emphasize-lines: 3
- :caption: Block example
-
+ :caption: Block example with named tasks inside the block
 
   tasks:
-    - name: Install Apache
+    - name: Install, configure, and start Apache
       block:
-        - yum:
-            name: "{{ item }}"
-            state: installed
-          with_items:
-            - httpd
-            - memcached
-        - template:
-            src: templates/src.j2
-            dest: /etc/foo.conf
-        - service:
-            name: bar
-            state: started
-            enabled: True
+      - name: install httpd and memcached
+        yum:
+          name: "{{ item }}"
+          state: present
+        loop:
+          - httpd
+          - memcached
+      - name: apply the foo config template
+        template:
+          src: templates/src.j2
+          dest: /etc/foo.conf
+      - name: start service bar and enable it
+        service:
+          name: bar
+          state: started
+          enabled: True
       when: ansible_facts['distribution'] == 'CentOS'
       become: true
       become_user: root
@@ -33,9 +35,7 @@ In the example above, each of the 3 tasks will be executed after appending the `
 and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
 for all the enclosed tasks.
 
-.. versionadded:: 2.3
-
-    The ``name:`` keyword for ``block:`` was added in Ansible 2.3.
+Names for tasks within blocks have been available since Ansible 2.3. We recommend using names in all tasks, within blocks or elsewhere, for better visibility into the tasks being executed when you run the playbook.
 
 .. _block_error_handling:
 
@@ -159,6 +159,3 @@ ansible_failed_result
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-
-

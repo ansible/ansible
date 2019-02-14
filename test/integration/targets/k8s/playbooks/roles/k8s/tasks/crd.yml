@@ -7,7 +7,7 @@
 - block:
     - name: Create a namespace
       k8s:
-        name: testing
+        name: crd
         kind: namespace
 
     - name: install custom resource definitions
@@ -17,13 +17,13 @@
     - name: create custom resource definition
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing
+        namespace: crd
       register: create_crd
 
     - name: patch custom resource definition
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing
+        namespace: crd
       register: recreate_crd
       ignore_errors: yes
 
@@ -37,7 +37,7 @@
           k8s:
             definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
             merge_type: merge
-            namespace: testing
+            namespace: crd
           register: recreate_crd_with_merge
 
         - name: recreate custom resource definition with merge_type list
@@ -46,7 +46,7 @@
             merge_type:
               - strategic-merge
               - merge
-            namespace: testing
+            namespace: crd
           register: recreate_crd_with_merge_list
       when: recreate_crd is successful
 
@@ -54,23 +54,13 @@
     - name: remove crd
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing
+        namespace: crd
         state: absent
 
   always:
-    - name: remove crd
+    - name: remove crd namespace
       k8s:
-        definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: testing
+        kind: Namespace
+        name: crd
         state: absent
-      ignore_errors: yes
-
-    - name: Delete all namespaces
-      k8s:
-        state: absent
-        definition:
-          - kind: Namespace
-            apiVersion: v1
-            metadata:
-              name: testing1
       ignore_errors: yes

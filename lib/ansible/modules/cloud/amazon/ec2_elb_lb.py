@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = """
@@ -85,6 +85,7 @@ options:
       - Purge existing subnet on ELB that are not found in subnets
     default: 'no'
     version_added: "1.7"
+    type: bool
   scheme:
     description:
       - The scheme to use when creating the ELB. For a private VPC-visible ELB use 'internal'.
@@ -515,7 +516,7 @@ class ElbManager(object):
     def get_info(self):
         try:
             check_elb = self.elb_conn.get_all_load_balancers(self.name)[0]
-        except:
+        except Exception:
             check_elb = None
 
         if not check_elb:
@@ -527,11 +528,11 @@ class ElbManager(object):
         else:
             try:
                 lb_cookie_policy = check_elb.policies.lb_cookie_stickiness_policies[0].__dict__['policy_name']
-            except:
+            except Exception:
                 lb_cookie_policy = None
             try:
                 app_cookie_policy = check_elb.policies.app_cookie_stickiness_policies[0].__dict__['policy_name']
-            except:
+            except Exception:
                 app_cookie_policy = None
 
             info = {

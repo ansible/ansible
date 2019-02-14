@@ -61,7 +61,6 @@ Function SetPrivilegeTokens() {
         # This also sets us up for setting the owner as a feature.
         # See the following for details of each privilege
         # https://msdn.microsoft.com/en-us/library/windows/desktop/bb530716(v=vs.85).aspx
-        Import-PrivilegeUtil
         $privileges = @(
             "SeRestorePrivilege",  # Grants all write access control to any file, regardless of ACL.
             "SeBackupPrivilege",  # Grants all read access control to any file, regardless of ACL.

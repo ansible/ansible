@@ -67,8 +67,7 @@ requirements:
    - mysql (command line binary)
    - mysqldump (command line binary)
 notes:
-   - Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host,
-     as well as mysql and mysqldump binaries.
+   - Requires the mysql and mysqldump binaries on the remote host.
    - This module is B(not idempotent) when I(state) is C(import), and will import the dump file each time if run more than once.
 extends_documentation_fragment: mysql
 '''
@@ -144,7 +143,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --ssl-cert=%s" % pipes.quote(ssl_cert)
     if ssl_key is not None:
         cmd += " --ssl-key=%s" % pipes.quote(ssl_key)
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd += " --ssl-ca=%s" % pipes.quote(ssl_ca)
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
@@ -191,14 +190,14 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--user=%s" % pipes.quote(user))
     if password:
         cmd.append("--password=%s" % pipes.quote(password))
-    if socket is not None:
-        cmd.append("--socket=%s" % pipes.quote(socket))
     if ssl_cert is not None:
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
         cmd.append("--ssl-key=%s" % pipes.quote(ssl_key))
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd.append("--ssl-ca=%s" % pipes.quote(ssl_ca))
+    if socket is not None:
+        cmd.append("--socket=%s" % pipes.quote(socket))
     else:
         cmd.append("--host=%s" % pipes.quote(host))
         cmd.append("--port=%i" % port)

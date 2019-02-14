@@ -15,7 +15,7 @@ from lib.util import (
     run_command,
     import_plugins,
     load_plugins,
-    parse_to_dict,
+    parse_to_list_of_dict,
     ABC,
     is_binary_file,
     read_lines_without_comments,
@@ -58,14 +58,14 @@ def command_sanity(args):
     :type args: SanityConfig
     """
     changes = get_changes_filter(args)
-    require = (args.require or []) + changes
+    require = args.require + changes
     targets = SanityTargets(args.include, args.exclude, require)
 
     if not targets.include:
         raise AllTargetsSkipped()
 
     if args.delegate:
-        raise Delegate(require=changes)
+        raise Delegate(require=changes, exclude=args.exclude)
 
     install_command_requirements(args)
 
@@ -255,6 +255,7 @@ class SanityCodeSmellTest(SanityTest):
             files = self.config.get('files')
             always = self.config.get('always')
             text = self.config.get('text')
+            ignore_changes = self.config.get('ignore_changes')
 
             if output == 'path-line-column-message':
                 pattern = '^(?P<path>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+): (?P<message>.*)$'
@@ -263,7 +264,11 @@ class SanityCodeSmellTest(SanityTest):
             else:
                 pattern = ApplicationError('Unsupported output type: %s' % output)
 
-            paths = sorted(i.path for i in targets.include)
+            if ignore_changes:
+                paths = sorted(i.path for i in targets.targets)
+                always = False
+            else:
+                paths = sorted(i.path for i in targets.include)
 
             if always:
                 paths = []
@@ -305,7 +310,7 @@ class SanityCodeSmellTest(SanityTest):
 
         if stdout and not stderr:
             if pattern:
-                matches = [parse_to_dict(pattern, line) for line in stdout.splitlines()]
+                matches = parse_to_list_of_dict(pattern, stdout)
 
                 messages = [SanityMessage(
                     message=m['message'],

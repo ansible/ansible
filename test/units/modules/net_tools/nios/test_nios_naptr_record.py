@@ -22,7 +22,7 @@ __metaclass__ = type
 
 from ansible.modules.net_tools.nios import nios_naptr_record
 from ansible.module_utils.net_tools.nios import api
-from ansible.compat.tests.mock import patch, MagicMock, Mock
+from units.compat.mock import patch, MagicMock, Mock
 from .test_nios_module import TestNiosModule, load_fixture
 
 

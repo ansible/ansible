@@ -131,7 +131,7 @@ def main():
     # here we attempt to load those stats,
     try:
         stats = json.loads(stats_raw)
-    except:
+    except Exception:
         module.fail_json(msg='Could not parse Riak stats.')
 
     node_name = stats['nodename']

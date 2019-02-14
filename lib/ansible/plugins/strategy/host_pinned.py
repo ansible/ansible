@@ -33,13 +33,9 @@ DOCUMENTATION = '''
 '''
 
 from ansible.plugins.strategy.free import StrategyModule as FreeStrategyModule
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class StrategyModule(FreeStrategyModule):

@@ -1,0 +1,2 @@
+minor_changes:
+  - macports - add upgrade parameter and replace update_ports parameter with selfupdate (https://github.com/ansible/ansible/pull/45049)

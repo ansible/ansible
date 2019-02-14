@@ -12,7 +12,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -23,7 +23,7 @@ short_description: NetApp Element Software Configure Node Network Interfaces
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.7'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Configure Element SW Node Network Interfaces for Bond 1G and 10G IP address.
 
@@ -151,7 +151,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
 
 """
 import traceback
@@ -165,7 +165,7 @@ HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     from solidfire.models import Network, NetworkConfig
     HAS_SF_SDK = True
-except:
+except Exception:
     HAS_SF_SDK = False
 
 

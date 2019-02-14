@@ -6,8 +6,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook import Playbook
@@ -80,15 +80,12 @@ class TestStrategyLinear(unittest.TestCase):
             all_vars=dict(),
         )
 
-        mock_options = MagicMock()
-        mock_options.module_path = None
-
         tqm = TaskQueueManager(
             inventory=inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
-            options=mock_options,
             passwords=None,
+            forks=5,
         )
         tqm._initialize_processes(3)
         strategy = StrategyModule(tqm)

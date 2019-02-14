@@ -132,16 +132,16 @@ EXAMPLES = '''
 RETURN = '''
 id:
   description: Unique rule UUID.
-  type: string
+  type: str
   returned: state == present
 direction:
   description: The direction in which the security group rule is applied.
-  type: string
+  type: str
   sample: 'egress'
   returned: state == present
 ethertype:
   description: One of IPv4 or IPv6.
-  type: string
+  type: str
   sample: 'IPv4'
   returned: state == present
 port_range_min:
@@ -158,17 +158,17 @@ port_range_max:
   returned: state == present
 protocol:
   description: The protocol that is matched by the security group rule.
-  type: string
+  type: str
   sample: 'tcp'
   returned: state == present
 remote_ip_prefix:
   description: The remote IP prefix to be associated with this security group rule.
-  type: string
+  type: str
   sample: '0.0.0.0/0'
   returned: state == present
 security_group_id:
   description: The security group ID to associate with this security group rule.
-  type: string
+  type: str
   returned: state == present
 '''
 
@@ -359,7 +359,7 @@ def main():
                 cloud.delete_security_group_rule(rule['id'])
                 changed = True
 
-            module.exit_json(changed=changed)
+        module.exit_json(changed=changed)
 
     except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))

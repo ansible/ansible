@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_user - create pretty error message when creating a user without an encrypted password on newer PostgreSQL versions

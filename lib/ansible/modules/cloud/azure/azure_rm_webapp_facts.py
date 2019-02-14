@@ -33,7 +33,7 @@ options:
             - Limit results by resource group.
     return_publish_profile:
         description:
-            - Indicate wheather to return publishing profile of the web app.
+            - Indicate whether to return publishing profile of the web app.
         default: False
         type: bool
     tags:
@@ -127,14 +127,14 @@ webapps:
             description: Outbound ip address of the web app.
             type: str
         ftp_publish_url:
-            description: Publishing url of the web app when depeloyment type is FTP.
+            description: Publishing url of the web app when deployment type is FTP.
             type: str
             sample: ftp://xxxx.ftp.azurewebsites.windows.net
         state:
             description: State of the web app.  eg. running.
             type: str
         publishing_username:
-            description: Publishing profle user name.
+            description: Publishing profile user name.
             returned: only when I(return_publish_profile) is True.
             type: str
         publishing_password:
@@ -150,7 +150,7 @@ try:
     from msrestazure.azure_exceptions import CloudError
     from msrestazure.azure_operation import AzureOperationPoller
     from azure.common import AzureMissingResourceHttpError, AzureHttpError
-except:
+except Exception:
     # This is handled in azure_rm_common
     pass
 

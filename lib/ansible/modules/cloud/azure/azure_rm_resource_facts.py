@@ -102,28 +102,22 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         # define user inputs into argument
         self.module_arg_spec = dict(
             url=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             provider=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             resource_group=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             resource_type=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             resource_name=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             subresource=dict(
                 type='list',
-                required=False,
                 default=[]
             ),
             api_version=dict(
@@ -190,7 +184,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
         header_parameters = {}
         header_parameters['Content-Type'] = 'application/json; charset=utf-8'
 
-        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404])
+        response = self.mgmt_client.query(self.url, "GET", query_parameters, header_parameters, None, [200, 404], 0, 0)
 
         try:
             response = json.loads(response.text)
@@ -198,7 +192,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 self.results['response'] = response
             else:
                 self.results['response'] = [response]
-        except:
+        except Exception:
             self.results['response'] = []
 
         return self.results

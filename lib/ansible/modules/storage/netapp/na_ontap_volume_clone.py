@@ -16,7 +16,7 @@ short_description: NetApp ONTAP manage volume clones.
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Create NetApp ONTAP volume clones.
 - A FlexClone License is required to use this module
@@ -150,7 +150,7 @@ class NetAppOntapVolumeClone(object):
         clone_obj.add_new_child("volume", self.volume)
         try:
             results = self.server.invoke_successfully(clone_obj, True)
-        except:
+        except Exception:
             return False
         attributes = results.get_child_by_name('attributes')
         info = attributes.get_child_by_name('volume-clone-info')

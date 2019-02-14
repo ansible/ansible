@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages Layer 2 switchport interfaces on HUAWEI CloudEngine switches.
 description:
     - Manages Layer 2 switchport interfaces on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - When C(state=absent), VLANs can be added/removed from trunk links and
       the existing access VLAN can be 'unconfigured' to just having VLAN 1
@@ -141,7 +141,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

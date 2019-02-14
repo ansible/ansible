@@ -140,6 +140,8 @@ groupings:
   - aws
   ec2_key:
   - aws
+  ec2_launch_template:
+  - aws
   ec2_lc:
   - aws
   ec2_lc_facts:
@@ -592,3 +594,11 @@ groupings:
   - azure
   azure_rm_webapp:
   - azure
+  k8s:
+  - k8s
+  k8s_facts:
+  - k8s
+  k8s_service:
+  - k8s
+  k8s_scale:
+  - k8s

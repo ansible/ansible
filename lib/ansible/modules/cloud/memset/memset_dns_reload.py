@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: memset_dns_reload
-author: "Simon Weald (@analbeard)"
+author: "Simon Weald (@glitchcrab)"
 version_added: "2.6"
 short_description: Request reload of Memset's DNS infrastructure,
 notes:
@@ -71,17 +71,17 @@ memset_api:
     id:
       description: Job ID.
       returned: always
-      type: string
+      type: str
       sample: "c9cc8ad2a3e3fb8c63ed83c424928ef8"
     status:
       description: Job status.
       returned: always
-      type: string
+      type: str
       sample: "DONE"
     type:
       description: Job type.
       returned: always
-      type: string
+      type: str
       sample: "dns"
 '''
 

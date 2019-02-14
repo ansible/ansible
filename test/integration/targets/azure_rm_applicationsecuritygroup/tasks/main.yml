@@ -1,0 +1,85 @@
+- name: Prepare random number
+  set_fact:
+    name: "asg{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+  run_once: yes
+
+
+- name: Create application security group(check mode)
+  azure_rm_applicationsecuritygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ name }}"
+      tags:
+          testing: testing
+  check_mode: yes
+  register: output
+
+- name: Assert check mode creation
+  assert:
+    that:
+      - output.changed
+
+- name: Create application security group
+  azure_rm_applicationsecuritygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ name }}"
+      tags:
+          testing: testing
+  register: output
+
+- name: Assert the application security group is well created
+  assert:
+    that:
+      - output.changed
+      - output.id != ''
+
+- name: Create application security group (idempotent)
+  azure_rm_applicationsecuritygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ name }}"
+      tags:
+          testing: testing
+  register: output
+
+- name: Assert idempotent
+  assert:
+    that:
+      - not output.changed
+
+- name: Update application security group
+  azure_rm_applicationsecuritygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ name }}"
+      tags:
+          testing: testing
+          foo: bar
+  register: output
+
+- name: Assert Update
+  assert:
+    that:
+      - output.changed
+
+- name: Delete the application security group (check mode)
+  azure_rm_applicationsecuritygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ name }}"
+      state: absent
+  check_mode: yes
+  register: output
+
+- name: Assert delete check mode
+  assert:
+      that:
+        - output.changed
+
+- name: Delete the application security group
+  azure_rm_applicationsecuritygroup:
+      resource_group: "{{ resource_group }}"
+      name: "{{ name }}"
+      state: absent
+  register: output
+
+- name: Assert the deletion
+  assert:
+      that:
+        - output.changed

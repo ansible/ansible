@@ -1,0 +1,2 @@
+bugfixes:
+- win_copy - Fix copy of a dir that contains an empty directory - https://github.com/ansible/ansible/issues/50077

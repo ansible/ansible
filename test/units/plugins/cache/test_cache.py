@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest, mock
+from units.compat import unittest, mock
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import FactCache
 from ansible.plugins.cache.base import BaseCacheModule

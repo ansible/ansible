@@ -168,9 +168,9 @@ If you want to run under Python 3 instead of Python 2 you may want to change tha
 
 .. code-block:: shell
 
-    $ virtualenv ansible
+    $ virtualenv -p python3 ansible
     $ source ./ansible/bin/activate
-    $ pip3 install ansible
+    $ pip install ansible
 
 If you need to use any libraries which are not available via pip (for instance, SELinux Python
 bindings on systems such as Red Hat Enterprise Linux or Fedora that have SELinux enabled) then you
@@ -221,6 +221,40 @@ is likely the problem. There are several workarounds:
     solaris1 ansible_shell_executable=/usr/xpg4/bin/sh
 
   (bash, ksh, and zsh should also be POSIX compatible if you have any of those installed).
+
+Running on z/OS
+---------------
+
+There are a few common errors that one might run into when trying to execute Ansible on z/OS as a target.
+
+* Version 2.7.6 of python for z/OS will not work with Ansible because it represents strings internally as EBCDIC.
+
+  To get around this limitation, download and install a later version of `python for z/OS <https://www.rocketsoftware.com/zos-open-source>`_ (2.7.13 or 3.6.1) that represents strings internally as ASCII.  Version 2.7.13 is verified to work.
+
+* When ``pipelining = False`` in `/etc/ansible/ansible.cfg` then Ansible modules are transferred in binary mode via sftp however execution of python fails with 
+
+  .. error::
+      SyntaxError: Non-UTF-8 code starting with \'\\x83\' in file /a/user1/.ansible/tmp/ansible-tmp-1548232945.35-274513842609025/AnsiballZ_stat.py on line 1, but no encoding declared; see http://python.org/dev/peps/pep-0263/ for details
+  
+  To fix it set ``pipelining = True`` in `/etc/ansible/ansible.cfg`.
+
+* Python interpret cannot be found in default location ``/usr/bin/python`` on target host.
+
+  .. error::
+      /usr/bin/python: EDC5129I No such file or directory
+
+  To fix this set the path to the python installation in your inventory like so::
+
+    zos1 ansible_python_interpreter=/usr/lpp/python/python-2017-04-12-py27/python27/bin/python
+
+* Start of python fails with ``The module libpython2.7.so was not found.``
+
+  .. error::
+    EE3501S The module libpython2.7.so was not found.
+
+  On z/OS, you must execute python from gnu bash.  If gnu bash is installed at ``/usr/lpp/bash``, you can fix this in your inventory by specifying an ``ansible_shell_executable``::
+
+    zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
 
 .. _use_roles:
@@ -401,14 +435,14 @@ For environment variables on the TARGET machines, they are available via facts i
 
    {{ ansible_env.SOME_VARIABLE }}
 
-If you need to set environment variables for TASK execution, see the Advanced Playbooks section about environments.
-There is no set way to set environment variables on your target machines, you can use template/replace/other modules to do so,
-but the exact files to edit vary depending on your OS and distribution and local configuration.
+If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
+There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.
+The exact files to edit vary depending on your OS and distribution and local configuration.
 
 .. _user_passwords:
 
-How do I generate crypted passwords for the user module?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How do I generate encrypted passwords for the user module?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Ansible ad-hoc command is the easiest option:
 
@@ -594,6 +628,19 @@ Why don't you ship in X format?
 
 Several reasons, in most cases it has to do with maintainability, there are tons of ways to ship software and it is a herculean task to try to support them all.
 In other cases there are technical issues, for example, for python wheels, our dependencies are not present so there is little to no gain.
+
+
+.. _ansible_host_delegated:
+
+How do I get the original ansible_host when I delegate a task?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+As the documentation states, connection variables are taken from the ``delegate_to`` host so ``ansible_host`` is overwritten,
+but you can still access the original via ``hostvars``::
+
+   original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+
+This works for all overriden connection variables, like ``ansible_user``, ``ansible_port``, etc.
 
 
 .. _i_dont_see_my_question:

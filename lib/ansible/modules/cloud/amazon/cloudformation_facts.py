@@ -29,22 +29,27 @@ options:
     all_facts:
         description:
             - Get all stack information for the stack
+        type: bool
         default: 'no'
     stack_events:
         description:
             - Get stack events for the stack
+        type: bool
         default: 'no'
     stack_template:
         description:
             - Get stack template body for the stack
+        type: bool
         default: 'no'
     stack_resources:
         description:
             - Get stack resources for the stack
+        type: bool
         default: 'no'
     stack_policy:
         description:
             - Get stack policy for the stack
+        type: bool
         default: 'no'
 extends_documentation_fragment:
     - aws

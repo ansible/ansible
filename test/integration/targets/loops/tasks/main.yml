@@ -23,6 +23,25 @@
     that:
     - '(after.stdout |int) - (before.stdout|int) >= 4'
 
+- name: test subsecond pause
+  block:
+    - name: Measure time before loop with .5s pause
+      set_fact:
+        times: "{{times|default([]) + [ lookup('pipe','date +%s.%3N') ]}}"
+      with_sequence: count=3
+      loop_control:
+        pause: 0.6
+
+    - name: ensure lag, since there is 3 rounds, and 0.5 seconds between, it should last 1.2 seconds, but allowing leeway due to CI lag
+      assert:
+        that:
+            - tdiff|float >= 1.2
+            - tdiff|int < 3
+      vars:
+        tdiff: '{{ times[2]|float - times[0]|float }}'
+  when:
+    - ansible_facts['distribution'] not in ("MacOSX", "FreeBSD")
+
 #
 # Tests of loop syntax with args
 #
@@ -252,3 +271,82 @@
   loop: "{{ fake_var }}"
   register: result
   failed_when: result is not skipped
+
+- name: Loop on literal empty list
+  debug:
+  loop: []
+  register: literal_empty_list
+  failed_when: literal_empty_list is not skipped
+
+# https://github.com/ansible/ansible/issues/47372
+- name: Loop unsafe list
+  debug:
+    var: item
+  with_items: "{{ things|list|unique }}"
+  vars:
+    things:
+      - !unsafe foo
+      - !unsafe bar
+
+- name: extended loop info
+  assert:
+    that:
+      - ansible_loop.nextitem == 'orange'
+      - ansible_loop.index == 1
+      - ansible_loop.index0 == 0
+      - ansible_loop.first
+      - not ansible_loop.last
+      - ansible_loop.previtem is undefined
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 3
+      - ansible_loop.revindex0 == 2
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'apple'
+
+- name: extended loop info 2
+  assert:
+    that:
+      - ansible_loop.nextitem == 'banana'
+      - ansible_loop.index == 2
+      - ansible_loop.index0 == 1
+      - not ansible_loop.first
+      - not ansible_loop.last
+      - ansible_loop.previtem == 'apple'
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 2
+      - ansible_loop.revindex0 == 1
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'orange'
+
+- name: extended loop info 3
+  assert:
+    that:
+      - ansible_loop.nextitem is undefined
+      - ansible_loop.index == 3
+      - ansible_loop.index0 == 2
+      - not ansible_loop.first
+      - ansible_loop.last
+      - ansible_loop.previtem == 'orange'
+      - ansible_loop.allitems == ['apple', 'orange', 'banana']
+      - ansible_loop.revindex == 1
+      - ansible_loop.revindex0 == 0
+      - ansible_loop.length == 3
+  loop:
+    - apple
+    - orange
+    - banana
+  loop_control:
+    extended: true
+  when: item == 'banana'

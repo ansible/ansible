@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: false
+  vars:
+    thisshouldwarn: noreally
+  tasks:
+    - name: template in register warns
+      debug: msg=unimportant
+      register: '{{ thisshouldwarn }}'

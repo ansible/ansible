@@ -332,8 +332,8 @@ As a simple example we are going to make a hybrid ``fileglob`` lookup plugin.
         from ansible.utils import (listify_lookup_plugin_terms, path_dwim, warning)
     except ImportError:
         # ansible-2.0
-        from __main__ import display
-        warning = display.warning
+        from ansible.utils.display import Display
+        warning = Display().warning
 
     class LookupModule(LookupBase):
 

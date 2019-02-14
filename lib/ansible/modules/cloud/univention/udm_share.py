@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_share
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage samba shares on a univention corporate server
 description:
     - "This module allows to manage samba shares on a univention corporate
@@ -513,7 +514,7 @@ def main():
                     obj.create()
                 elif changed:
                     obj.modify()
-        except BaseException as err:
+        except Exception as err:
             module.fail_json(
                 msg='Creating/editing share {} in {} failed: {}'.format(
                     name,
@@ -528,7 +529,7 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except BaseException as err:
+        except Exception as err:
             module.fail_json(
                 msg='Removing share {} in {} failed: {}'.format(
                     name,

@@ -55,7 +55,7 @@ EXAMPLES = r'''
 
 - set_fact:
     category_id: "{{ item.category_id }}"
-  with_items: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
+  loop: "{{ tag_category_results.tag_category_facts|json_query(query) }}"
   vars:
     query: "[?category_name==`Category0001`]"
 - debug: var=category_id

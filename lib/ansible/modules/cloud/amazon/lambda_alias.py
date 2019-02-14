@@ -120,22 +120,22 @@ RETURN = '''
 alias_arn:
     description: Full ARN of the function, including the alias
     returned: success
-    type: string
+    type: str
     sample: arn:aws:lambda:us-west-2:123456789012:function:myFunction:dev
 description:
     description: A short description of the alias
     returned: success
-    type: string
+    type: str
     sample: The development stage for my hot new app
 function_version:
     description: The qualifier that the alias refers to
     returned: success
-    type: string
+    type: str
     sample: $LATEST
 name:
     description: The name of the alias assigned
     returned: success
-    type: string
+    type: str
     sample: dev
 '''
 

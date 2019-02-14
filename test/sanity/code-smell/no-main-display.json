@@ -1,0 +1,10 @@
+{
+    "extensions": [
+        ".py"
+    ],
+    "prefixes": [
+        "bin/",
+        "lib/ansible/"
+    ],
+    "output": "path-line-column-message"
+}

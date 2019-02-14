@@ -17,8 +17,6 @@ the play as fast as it can.::
       ...
 
 
-.. _strategy_plugins:
-
 Strategy Plugins
 `````````````````
 

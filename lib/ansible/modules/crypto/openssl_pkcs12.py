@@ -129,28 +129,31 @@ RETURN = '''
 filename:
     description: Path to the generate PKCS#12 file.
     returned: changed or success
-    type: string
+    type: str
     sample: /opt/certs/ansible.p12
 privatekey:
     description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/private/ansible.com.pem
 '''
 
 import stat
 import os
+import traceback
 
+PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 
 
 class PkcsError(crypto_utils.OpenSSLObjectError):
@@ -231,7 +234,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                         self.certificate_path))
 
         if self.friendly_name:
-            self.pkcs12.set_friendlyname(self.friendly_name)
+            self.pkcs12.set_friendlyname(to_bytes(self.friendly_name))
 
         if self.privatekey_path:
             self.pkcs12.set_privatekey(crypto_utils.load_privatekey(
@@ -255,8 +258,9 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
         try:
             self.remove()
-
-            p12 = crypto.load_pkcs12(open(self.src, 'rb').read(),
+            with open(self.src, 'rb') as pkcs12_fh:
+                pkcs12_content = pkcs12_fh.read()
+            p12 = crypto.load_pkcs12(pkcs12_content,
                                      self.passphrase)
             pkey = crypto.dump_privatekey(crypto.FILETYPE_PEM,
                                           p12.get_privatekey())
@@ -266,7 +270,7 @@ class Pkcs(crypto_utils.OpenSSLObject):
             pkcs12_file = os.open(self.path,
                                   os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
                                   self.mode)
-            os.write(pkcs12_file, '%s%s' % (pkey, crt))
+            os.write(pkcs12_file, b'%s%s' % (pkey, crt))
             os.close(pkcs12_file)
 
         except IOError as exc:
@@ -278,7 +282,7 @@ def main():
     argument_spec = dict(
         action=dict(type='str', default='export',
                     choices=['parse', 'export']),
-        ca_certificates=dict(type='list'),
+        ca_certificates=dict(type='list', elements='path'),
         certificate_path=dict(type='path'),
         force=dict(type='bool', default=False),
         friendly_name=dict(type='str', aliases=['name']),
@@ -310,9 +314,9 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='The python pyOpenSSL library is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

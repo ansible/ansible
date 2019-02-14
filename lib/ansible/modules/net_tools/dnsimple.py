@@ -140,17 +140,20 @@ EXAMPLES = '''
 RETURN = r"""# """
 
 import os
+import traceback
 from distutils.version import LooseVersion
 
+DNSIMPLE_IMP_ERR = None
 try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import __version__ as dnsimple_version
     from dnsimple.dnsimple import DNSimpleException
     HAS_DNSIMPLE = True
 except ImportError:
+    DNSIMPLE_IMP_ERR = traceback.format_exc()
     HAS_DNSIMPLE = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 def main():
@@ -176,7 +179,7 @@ def main():
     )
 
     if not HAS_DNSIMPLE:
-        module.fail_json(msg="dnsimple required for this module")
+        module.fail_json(msg=missing_required_lib('dnsimple'), exception=DNSIMPLE_IMP_ERR)
 
     if LooseVersion(dnsimple_version) < LooseVersion('1.0.0'):
         module.fail_json(msg="Current version of dnsimple Python module [%s] uses 'v1' API which is deprecated."
@@ -244,13 +247,13 @@ def main():
             if not value:
                 module.fail_json(msg="Missing the record value")
 
-            rr = next((r for r in records if r['name'] == record and r['record_type'] == record_type and r['content'] == value), None)
+            rr = next((r for r in records if r['name'] == record and r['type'] == record_type and r['content'] == value), None)
 
             if state == 'present':
                 changed = False
                 if is_solo:
                     # delete any records that have the same name and record type
-                    same_type = [r['id'] for r in records if r['name'] == record and r['record_type'] == record_type]
+                    same_type = [r['id'] for r in records if r['name'] == record and r['type'] == record_type]
                     if rr:
                         same_type = [rid for rid in same_type if rid != rr['id']]
                     if same_type:
@@ -260,12 +263,12 @@ def main():
                         changed = True
                 if rr:
                     # check if we need to update
-                    if rr['ttl'] != ttl or rr['prio'] != priority:
+                    if rr['ttl'] != ttl or rr['priority'] != priority:
                         data = {}
                         if ttl:
                             data['ttl'] = ttl
                         if priority:
-                            data['prio'] = priority
+                            data['priority'] = priority
                         if module.check_mode:
                             module.exit_json(changed=True)
                         else:
@@ -276,13 +279,13 @@ def main():
                     # create it
                     data = {
                         'name': record,
-                        'record_type': record_type,
+                        'type': record_type,
                         'content': value,
                     }
                     if ttl:
                         data['ttl'] = ttl
                     if priority:
-                        data['prio'] = priority
+                        data['priority'] = priority
                     if module.check_mode:
                         module.exit_json(changed=True)
                     else:

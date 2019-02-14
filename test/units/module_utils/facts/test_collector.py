@@ -24,7 +24,7 @@ from collections import defaultdict
 import pprint
 
 # for testing
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.module_utils.facts import collector
 

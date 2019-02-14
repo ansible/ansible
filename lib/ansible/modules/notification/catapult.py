@@ -86,7 +86,7 @@ RETURN = '''
 changed:
     description: Whether the api accepted the message.
     returned: always
-    type: boolean
+    type: bool
     sample: True
 '''
 

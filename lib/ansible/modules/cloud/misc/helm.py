@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 module: helm
 short_description: Manages Kubernetes packages with the Helm package manager
 version_added: "2.4"
-author: "Flavio Percoco (flaper87)"
+author: "Flavio Percoco (@flaper87)"
 description:
    - Install, upgrade, delete and list packages with the Helm package manager.
 requirements:
@@ -79,6 +79,29 @@ EXAMPLES = '''
     host: localhost
     state: absent
     name: my-memcached
+
+- name: Install helm chart from a git repo
+  helm:
+    host: localhost
+    chart:
+      source:
+        type: git
+        location: https://github.com/user/helm-chart.git
+    state: present
+    name: my-example
+    namespace: default
+
+- name: Install helm chart from a git repo specifying path
+  helm:
+    host: localhost
+    chart:
+      source:
+        type: git
+        location: https://github.com/helm/charts.git
+        path: stable/memcached
+    state: present
+    name: my-memcached
+    namespace: default
 '''
 
 try:

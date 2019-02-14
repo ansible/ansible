@@ -46,13 +46,9 @@ from ansible.module_utils.basic import is_executable
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -63,7 +59,7 @@ class Connection(ConnectionBase):
     # su currently has an undiagnosed issue with calculating the file
     # checksums (so copy, for instance, doesn't work right)
     # Have to look into that before re-enabling this
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    has_tty = False
 
     default_user = 'root'
 
@@ -158,7 +154,7 @@ class Connection(ConnectionBase):
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
                     stdout, stderr = p.communicate()
-                except:
+                except Exception:
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
@@ -183,7 +179,7 @@ class Connection(ConnectionBase):
                 while chunk:
                     out_file.write(chunk)
                     chunk = p.stdout.read(BUFSIZE)
-            except:
+            except Exception:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()

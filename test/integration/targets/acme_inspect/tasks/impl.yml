@@ -1,0 +1,150 @@
+---
+- name: Generate account key
+  command: openssl ecparam -name prime256v1 -genkey -out {{ output_dir }}/accountkey.pem
+
+- name: Parse account key (to ease debugging some test failures)
+  command: openssl ec -in {{ output_dir }}/accountkey.pem -noout -text
+
+- name: Get directory
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    method: directory-only
+  register: directory
+- debug: var=directory
+
+- name: Create an account
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    url: "{{ directory.directory.newAccount}}"
+    method: post
+    content: '{"termsOfServiceAgreed":true}'
+  register: account_creation
+  # account_creation.headers.location contains the account URI
+  # if creation was successful
+- debug: var=account_creation
+
+- name: Get account information
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ account_creation.headers.location }}"
+    method: get
+  register: account_get
+- debug: var=account_get
+
+- name: Update account contacts
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ account_creation.headers.location }}"
+    method: post
+    content: '{{ account_info | to_json }}'
+  vars:
+    account_info:
+      # For valid values, see
+      # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.3
+      contact:
+      - mailto:me@example.com
+  register: account_update
+- debug: var=account_update
+
+- name: Create certificate order
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ directory.directory.newOrder }}"
+    method: post
+    content: '{{ create_order | to_json }}'
+  vars:
+    create_order:
+      # For valid values, see
+      # https://tools.ietf.org/html/draft-ietf-acme-acme-16#section-7.4
+      identifiers:
+      - type: dns
+        value: example.com
+      - type: dns
+        value: example.org
+  register: new_order
+- debug: var=new_order
+
+- name: Get order information
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ new_order.headers.location }}"
+    method: get
+  register: order
+- debug: var=order
+
+- name: Get authzs for order
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ item }}"
+    method: get
+  loop: "{{ order.output_json.authorizations }}"
+  register: authz
+- debug: var=authz
+
+- name: Get HTTP-01 challenge for authz
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ (item.challenges | selectattr('type', 'equalto', 'http-01') | list)[0].url }}"
+    method: get
+  register: http01challenge
+  loop: "{{ authz.results | map(attribute='output_json') | list }}"
+- debug: var=http01challenge
+
+- name: Activate HTTP-01 challenge manually
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ item.url }}"
+    method: post
+    content: '{}'
+  register: activation
+  loop: "{{ http01challenge.results | map(attribute='output_json') | list }}"
+- debug: var=activation
+
+- name: Get HTTP-01 challenge results
+  acme_inspect:
+    acme_directory: https://{{ acme_host }}:14000/dir
+    acme_version: 2
+    validate_certs: no
+    account_key_src: "{{ output_dir }}/accountkey.pem"
+    account_uri: "{{ account_creation.headers.location }}"
+    url: "{{ item.url }}"
+    method: get
+  register: validation_result
+  loop: "{{ http01challenge.results | map(attribute='output_json') | list }}"
+  until: "validation_result.output_json.status != 'pending'"
+  retries: 20
+  delay: 1
+- debug: var=validation_result

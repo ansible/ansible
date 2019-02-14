@@ -35,36 +35,41 @@ options:
     required: true
     description:
       - Base URI of OOB controller
-  user:
+  username:
     required: true
     description:
       - User for authentication with OOB controller
+    version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
-  userid:
+  id:
     required: false
     description:
       - ID of user to add/delete/modify
-  username:
+    version_added: "2.8"
+  new_username:
     required: false
     description:
       - name of user to add/delete/modify
-  userpswd:
+    version_added: "2.8"
+  new_password:
     required: false
     description:
       - password of user to add/delete/modify
-  userrole:
+    version_added: "2.8"
+  roleid:
     required: false
     description:
       - role of user to add/delete/modify
+    version_added: "2.8"
   bootdevice:
     required: false
     description:
       - bootdevice when setting boot configuration
 
-author: "Jose Delarosa (github: jose-delarosa)"
+author: "Jose Delarosa (@jose-delarosa)"
 '''
 
 EXAMPLES = '''
@@ -73,7 +78,7 @@ EXAMPLES = '''
       category: Systems
       command: PowerGracefulRestart
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Set one-time boot device to {{ bootdevice }}
@@ -82,7 +87,7 @@ EXAMPLES = '''
       command: SetOneTimeBoot
       bootdevice: "{{ bootdevice }}"
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 
   - name: Add and enable user
@@ -90,38 +95,38 @@ EXAMPLES = '''
       category: Accounts
       command: AddUser,EnableUser
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
-      password: "{{ password }}"
-      userid: "{{ userid }}"
       username: "{{ username }}"
-      userpswd: "{{ userpswd }}"
-      userrole: "{{ userrole }}"
+      password: "{{ password }}"
+      id: "{{ id }}"
+      new_username: "{{ new_username }}"
+      new_password: "{{ new_password }}"
+      roleid: "{{ roleid }}"
 
   - name: Disable and delete user
     redfish_command:
       category: Accounts
       command: ["DisableUser", "DeleteUser"]
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
-      userid: "{{ userid }}"
+      id: "{{ id }}"
 
   - name: Update user password
     redfish_command:
       category: Accounts
       command: UpdateUserPassword
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
-      userid: "{{ userid }}"
-      userpswd: "{{ userpswd }}"
+      id: "{{ id }}"
+      new_password: "{{ new_password }}"
 
   - name: Clear Manager Logs
     redfish_command:
       category: Manager
       command: ClearLogs
       baseuri: "{{ baseuri }}"
-      user: "{{ user }}"
+      username: "{{ username }}"
       password: "{{ password }}"
 '''
 
@@ -129,7 +134,7 @@ RETURN = '''
 msg:
     description: Message with action result or error description
     returned: always
-    type: string
+    type: str
     sample: "Action was successful"
 '''
 
@@ -141,8 +146,7 @@ from ansible.module_utils._text import to_native
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
-                "PowerGracefulShutdown", "SetOneTimeBoot",
-                "CreateBiosConfigJob"],
+                "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
                  "UpdateUserRole", "UpdateUserPassword"],
     "Manager": ["GracefulRestart", "ClearLogs"],
@@ -156,12 +160,12 @@ def main():
             category=dict(required=True),
             command=dict(required=True, type='list'),
             baseuri=dict(required=True),
-            user=dict(required=True),
+            username=dict(required=True),
             password=dict(required=True, no_log=True),
-            userid=dict(),
-            username=dict(),
-            userpswd=dict(no_log=True),
-            userrole=dict(),
+            id=dict(),
+            new_username=dict(),
+            new_password=dict(no_log=True),
+            roleid=dict(),
             bootdevice=dict(),
         ),
         supports_check_mode=False
@@ -171,14 +175,14 @@ def main():
     command_list = module.params['command']
 
     # admin credentials used for authentication
-    creds = {'user': module.params['user'],
+    creds = {'user': module.params['username'],
              'pswd': module.params['password']}
 
     # user to add/modify/delete
-    user = {'userid': module.params['userid'],
-            'username': module.params['username'],
-            'userpswd': module.params['userpswd'],
-            'userrole': module.params['userrole']}
+    user = {'userid': module.params['id'],
+            'username': module.params['new_username'],
+            'userpswd': module.params['new_password'],
+            'userrole': module.params['roleid']}
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
@@ -225,12 +229,6 @@ def main():
                 result = rf_utils.manage_system_power(command)
             elif command == "SetOneTimeBoot":
                 result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
-            elif command == "CreateBiosConfigJob":
-                # execute only if we find a Managers resource
-                result = rf_utils._find_managers_resource(rf_uri)
-                if result['ret'] is False:
-                    module.fail_json(msg=to_native(result['msg']))
-                result = rf_utils.create_bios_config_job()
 
     elif category == "Manager":
         MANAGER_COMMANDS = {
@@ -249,7 +247,6 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        result['changed'] = True
         module.exit_json(changed=True, msg='Action was successful')
     else:
         module.fail_json(msg=to_native(result['msg']))

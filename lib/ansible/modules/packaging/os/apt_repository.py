@@ -184,7 +184,6 @@ class SourcesList(object):
             for n, valid, enabled, source, comment in sources:
                 if valid:
                     yield file, n, enabled, source, comment
-        raise StopIteration
 
     def _expand_path(self, filename):
         if '/' in filename:
@@ -282,6 +281,11 @@ class SourcesList(object):
         for filename, sources in list(self.files.items()):
             if sources:
                 d, fn = os.path.split(filename)
+                try:
+                    os.makedirs(d)
+                except OSError as err:
+                    if not os.path.isdir(d):
+                        self.module.fail_json("Failed to create directory %s: %s" % (d, to_native(err)))
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
 
                 f = os.fdopen(fd, 'w')
@@ -426,7 +430,7 @@ class UbuntuSourcesList(SourcesList):
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
                 if not self._key_already_exists(info['signing_key_fingerprint']):
-                    command = ['apt-key', 'adv', '--recv-keys', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
+                    command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))

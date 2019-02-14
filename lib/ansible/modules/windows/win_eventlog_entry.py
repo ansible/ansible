@@ -53,6 +53,8 @@ options:
       - Value must be a comma-separated array of 8-bit unsigned integers (0 to 255).
 notes:
     - This module will always report a change when writing an event entry.
+seealso:
+- module: win_eventlog
 author:
     - Andrew Saraceni (@andrewsaraceni)
 '''

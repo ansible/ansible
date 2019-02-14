@@ -1,5 +1,5 @@
 **********************************
-Using Ansible with the Packet host
+Packet.net Guide
 **********************************
 
 Introduction
@@ -178,7 +178,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
           port: 22
           state: started
           timeout: 500
-        loop: "{{ newhosts.devices }}"
+        loop: "{{ newhosts.results[0].devices }}"
 
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.

@@ -28,11 +28,13 @@ options:
       - A user with I(active) set to C(False) will be tracked in the database,
         but will be never loaded in the in-memory data structures. If omitted
         the proxysql database default for I(active) is C(True).
+    type: bool
   use_ssl:
     description:
       - If I(use_ssl) is set to C(True), connections by this user will be made
         using SSL connections. If omitted the proxysql database default for
         I(use_ssl) is C(False).
+    type: bool
   default_hostgroup:
     description:
       - If there is no matching rule for the queries sent by this user, the
@@ -49,22 +51,26 @@ options:
          rules.
          If omitted the proxysql database default for I(transaction_persistent)
          is C(False).
+    type: bool
   fast_forward:
     description:
       - If I(fast_forward) is set to C(True), I(fast_forward) will bypass the
         query processing layer (rewriting, caching) and pass through the query
         directly as is to the backend server. If omitted the proxysql database
         default for I(fast_forward) is C(False).
+    type: bool
   backend:
     description:
       -  If I(backend) is set to C(True), this (username, password) pair is
          used for authenticating to the ProxySQL instance.
     default: True
+    type: bool
   frontend:
     description:
       - If I(frontend) is set to C(True), this (username, password) pair is
         used for authenticating to the mysqld servers against any hostgroup.
     default: True
+    type: bool
   max_connections:
     description:
       - The maximum number of connections ProxySQL will open to the backend for

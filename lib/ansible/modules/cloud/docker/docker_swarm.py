@@ -133,15 +133,11 @@ options:
         type: bool
         default: 'no'
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_2_documentation
 requirements:
-    - python >= 2.7
-    - "docker-py >= 2.6.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       Version 2.1.0 or newer is only available with the C(docker) module."
-    - Docker API >= 1.35
+  - "docker >= 2.6.0"
+  - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
 '''
@@ -151,7 +147,6 @@ EXAMPLES = '''
 - name: Init a new swarm with default parameters
   docker_swarm:
     state: present
-    advertise_addr: 192.168.1.1
 
 - name: Update swarm configuration
   docker_swarm:
@@ -219,10 +214,13 @@ from time import sleep
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DockerBaseClass,
+)
 from ansible.module_utils._text import to_native
 
 
@@ -330,14 +328,11 @@ class SwarmManager(DockerBaseClass):
             return
 
         try:
-            if self.parameters.advertise_addr is None:
-                self.client.fail(msg="advertise_addr is required to initialize a swarm cluster.")
-
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
         except APIError as exc:
-            self.client.fail(msg="Can not create a new Swarm Cluster: %s" % to_native(exc))
+            self.client.fail("Can not create a new Swarm Cluster: %s" % to_native(exc))
 
         self.__isSwarmManager()
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info['ID']))
@@ -396,7 +391,7 @@ class SwarmManager(DockerBaseClass):
                 version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
                 rotate_manager_token=self.parameters.rotate_manager_token)
         except APIError as exc:
-            self.client.fail(msg="Can not update a Swarm Cluster: %s" % to_native(exc))
+            self.client.fail("Can not update a Swarm Cluster: %s" % to_native(exc))
             return
 
         self.inspect_swarm()
@@ -421,7 +416,7 @@ class SwarmManager(DockerBaseClass):
                 remote_addrs=self.parameters.remote_addrs, join_token=self.parameters.join_token, listen_addr=self.parameters.listen_addr,
                 advertise_addr=self.parameters.advertise_addr)
         except APIError as exc:
-            self.client.fail(msg="Can not join the Swarm Cluster: %s" % to_native(exc))
+            self.client.fail("Can not join the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("New node is added to swarm cluster")
         self.results['changed'] = True
 
@@ -432,8 +427,8 @@ class SwarmManager(DockerBaseClass):
         try:
             self.client.leave_swarm(force=self.parameters.force)
         except APIError as exc:
-            self.client.fail(msg="This node can not leave the Swarm Cluster: %s" % to_native(exc))
-        self.results['actions'].append("Node has leaved the swarm cluster")
+            self.client.fail("This node can not leave the Swarm Cluster: %s" % to_native(exc))
+        self.results['actions'].append("Node has left the swarm cluster")
         self.results['changed'] = True
 
     def __get_node_info(self):
@@ -455,7 +450,7 @@ class SwarmManager(DockerBaseClass):
 
     def remove(self):
         if not(self.__isSwarmManager()):
-            self.client.fail(msg="This node is not a manager.")
+            self.client.fail("This node is not a manager.")
 
         try:
             status_down = self.__check_node_is_down()
@@ -463,12 +458,12 @@ class SwarmManager(DockerBaseClass):
             return
 
         if not(status_down):
-            self.client.fail(msg="Can not remove the node. The status node is ready and not down.")
+            self.client.fail("Can not remove the node. The status node is ready and not down.")
 
         try:
             self.client.remove_node(node_id=self.parameters.node_id, force=self.parameters.force)
         except APIError as exc:
-            self.client.fail(msg="Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
+            self.client.fail("Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node is removed from swarm cluster.")
         self.results['changed'] = True
 
@@ -479,7 +474,7 @@ def main():
         state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
-        remote_addrs=dict(type='list'),
+        remote_addrs=dict(type='list', elements='str'),
         join_token=dict(type='str'),
         snapshot_interval=dict(type='int'),
         task_history_retention_limit=dict(type='int'),
@@ -505,10 +500,19 @@ def main():
         ('state', 'remove', ['node_id'])
     ]
 
+    option_minimal_versions = dict(
+        signing_ca_cert=dict(docker_api_version='1.30'),
+        signing_ca_key=dict(docker_api_version='1.30'),
+        ca_force_rotate=dict(docker_api_version='1.30'),
+    )
+
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_version='2.6.0',
+        min_docker_api_version='1.25',
+        option_minimal_versions=option_minimal_versions,
     )
 
     results = dict(

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -10,9 +10,10 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
+---
 module: bigip_static_route
 short_description: Manipulate static routes on a BIG-IP
 description:
@@ -91,10 +92,11 @@ EXAMPLES = r'''
     netmask: 255.255.255.255
     gateway_address: 10.2.2.3
     name: test-route
-    password: secret
-    server: lb.mydomain.come
-    user: admin
-    validate_certs: no
+    provider:
+      password: secret
+      server: lb.mydomain.come
+      user: admin
+      validate_certs: no
   delegate_to: localhost
 '''
 
@@ -102,17 +104,17 @@ RETURN = r'''
 vlan:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 gateway_address:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 destination:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 route_domain:
   description: Route domain of the static route.
@@ -122,27 +124,27 @@ route_domain:
 netmask:
   description: Netmask of the destination.
   returned: changed
-  type: string
+  type: str
   sample: 255.255.255.255
 pool:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 partition:
   description: The partition that the static route was created on.
   returned: changed
-  type: string
+  type: str
   sample: Common
 description:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 reject:
   description: Whether the banner is enabled or not.
   returned: changed
-  type: string
+  type: str
   sample: true
 '''
 
@@ -166,6 +168,7 @@ try:
     from library.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
     from library.module_utils.compat.ipaddress import ip_address
     from library.module_utils.compat.ipaddress import ip_network
+    from library.module_utils.compat.ipaddress import ip_interface
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -180,6 +183,7 @@ except ImportError:
     from ansible.module_utils.network.f5.ipaddress import ipv6_netmask_to_cidr
     from ansible.module_utils.compat.ipaddress import ip_address
     from ansible.module_utils.compat.ipaddress import ip_network
+    from ansible.module_utils.compat.ipaddress import ip_interface
 
 
 class Parameters(AnsibleF5Parameters):
@@ -249,8 +253,12 @@ class ModuleParameters(Parameters):
         if self._values['gateway_address'] is None:
             return None
         try:
-            ip = ip_network(u'%s' % str(self._values['gateway_address']))
-            return str(ip.network_address)
+            if '%' in self._values['gateway_address']:
+                addr = self._values['gateway_address'].split('%')[0]
+            else:
+                addr = self._values['gateway_address']
+            ip_interface(u'%s' % str(addr))
+            return str(self._values['gateway_address'])
         except ValueError:
             raise F5ModuleError(
                 "The provided gateway_address is not an IP address"
@@ -274,7 +282,7 @@ class ModuleParameters(Parameters):
         try:
             ip = ip_network(u'%s' % str(self.destination_ip))
             if self.route_domain:
-                return '{0}%{2}/{1}'.format(str(ip.network_address), ip.prefixlen, self.route_domain)
+                return '{0}%{1}/{2}'.format(str(ip.network_address), self.route_domain, ip.prefixlen)
             else:
                 return '{0}/{1}'.format(str(ip.network_address), ip.prefixlen)
         except ValueError:
@@ -678,8 +686,9 @@ def main():
         mutually_exclusive=spec.mutually_exclusive,
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)

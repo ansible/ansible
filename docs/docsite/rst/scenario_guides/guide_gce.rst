@@ -29,11 +29,11 @@ used, but you may experience issues trying to use them together.
 
 While the community GCP modules are not going away, Google is investing effort
 into the new "gcp_*" modules. Google is committed to ensuring the Ansible
-community has a great experience with GCP and therefore recommends that begin
-adopting these new modules if possible.
+community has a great experience with GCP and therefore recommends adopting 
+these new modules if possible.
 
 
-Introduction
+Requisites
 ---------------
 The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 ``google-auth`` libraries to be installed.
@@ -42,6 +42,12 @@ The Google Cloud Platform (GCP) modules require both the ``requests`` and the
 
     $ pip install requests google-auth
 
+Alternatively for RHEL / CentOS, the ``python-requests`` package is also 
+available to satisfy ``requests`` libraries.
+
+.. code-block:: bash
+
+    $ yum install python-requests
 
 Credentials
 -----------
@@ -121,8 +127,16 @@ GCE Dynamic Inventory
 
 The best way to interact with your hosts is to use the gcp_compute inventory plugin, which dynamically queries GCE and tells Ansible what nodes can be managed.
 
-To use the gcp_compute inventory plugin, create a file that ends in .gcp.yml file in your root directory. The gcp_compute inventory script takes in the same authentication
-information as any module.
+To be able to use this GCE dynamic inventory plugin, you need to enable it first by specifying the following in the ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+  [inventory]
+  enable_plugins = gcp_compute
+
+Then, create a file that ends in ``.gcp.yml`` in your root directory.
+
+The gcp_compute inventory script takes in the same authentication information as any module.
 
 Here's an example of a valid inventory file:
 
@@ -130,8 +144,7 @@ Here's an example of a valid inventory file:
 
     plugin: gcp_compute
     projects:
-      - google.com:graphite-playground
-    filters:
+      - graphite-playground
     auth_kind: serviceaccount
     service_account_file: /home/alexstephen/my_account.json
 

@@ -50,12 +50,14 @@ options:
   update:
     description:
       - Updates the OS to the latest version.
+    type: bool
   url:
     description:
       - Overrides both I(contenturl) and I(versionurl).
   verify:
     description:
       - Verify content for OS version.
+    type: bool
   versionurl:
     description:
       - URL for version string download.
@@ -90,11 +92,11 @@ RETURN = '''
 stdout:
   description: stdout of swupd
   returned: always
-  type: string
+  type: str
 stderr:
   description: stderr of swupd
   returned: always
-  type: string
+  type: str
 '''
 
 import os
@@ -195,10 +197,6 @@ class Swupd(object):
         if self.rc == 0:
             self.changed = True
             self.msg = "Bundle %s installed" % bundle
-            return
-
-        if self.rc == 18:
-            self.msg = "Bundle name %s is invalid" % bundle
             return
 
         self.failed = True

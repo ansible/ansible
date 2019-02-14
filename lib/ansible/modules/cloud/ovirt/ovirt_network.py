@@ -58,6 +58,10 @@ options:
     vlan_tag:
         description:
             - "Specify VLAN tag."
+    external_provider:
+        description:
+            - "Name of external network provider."
+        version_added: 2.8
     vm_network:
         description:
             - "If I(True) network will be marked as network for VM."
@@ -103,6 +107,12 @@ EXAMPLES = '''
     id: 00000000-0000-0000-0000-000000000000
     name: "new_network_name"
     data_center: mydatacenter
+
+# Add network from external provider
+- ovirt_networks:
+    data_center: mydatacenter
+    name: mynetwork
+    external_provider: ovirt-provider-ovn
 '''
 
 RETURN = '''
@@ -134,10 +144,20 @@ from ansible.module_utils.ovirt import (
     equal,
     ovirt_full_argument_spec,
     search_by_name,
+    get_id_by_name,
+    get_dict_of_struct,
+    get_entity
 )
 
 
 class NetworksModule(BaseModule):
+    def import_external_network(self):
+        ons_service = self._connection.system_service().openstack_network_providers_service()
+        on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
+        networks_service = on_service.networks_service()
+        network_service = networks_service.network_service(get_id_by_name(networks_service, self.param('name')))
+        network_service.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
+        return {"network": get_dict_of_struct(network_service.get()), "changed": True}
 
     def build_entity(self):
         return otypes.Network(
@@ -180,6 +200,7 @@ class NetworksModule(BaseModule):
         return (
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
+            equal(self._module.params.get('external_provider'), entity.external_provider) and
             equal(self._module.params.get('description'), entity.description) and
             equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
@@ -193,6 +214,10 @@ class ClusterNetworksModule(BaseModule):
         super(ClusterNetworksModule, self).__init__(*args, **kwargs)
         self._network_id = network_id
         self._cluster_network = cluster_network
+        self._old_usages = []
+        self._cluster_network_entity = get_entity(self._service.network_service(network_id))
+        if self._cluster_network_entity is not None:
+            self._old_usages = self._cluster_network_entity.usages
 
     def build_entity(self):
         return otypes.Network(
@@ -200,11 +225,12 @@ class ClusterNetworksModule(BaseModule):
             name=self._module.params['name'],
             required=self._cluster_network.get('required'),
             display=self._cluster_network.get('display'),
-            usages=[
+            usages=list(set([
                 otypes.NetworkUsage(usage)
                 for usage in ['display', 'gluster', 'migration']
                 if self._cluster_network.get(usage, False)
-            ] if (
+            ] + self._old_usages))
+            if (
                 self._cluster_network.get('display') is not None or
                 self._cluster_network.get('gluster') is not None or
                 self._cluster_network.get('migration') is not None
@@ -242,6 +268,7 @@ def main():
         name=dict(required=True),
         description=dict(default=None),
         comment=dict(default=None),
+        external_provider=dict(default=None),
         vlan_tag=dict(default=None, type='int'),
         vm_network=dict(default=None, type='bool'),
         mtu=dict(default=None, type='int'),
@@ -272,8 +299,10 @@ def main():
             'datacenter': module.params['data_center'],
         }
         if state == 'present':
-            ret = networks_module.create(search_params=search_params)
-
+            if module.params.get('external_provider'):
+                ret = networks_module.import_external_network()
+            else:
+                ret = networks_module.create(search_params=search_params)
             # Update clusters networks:
             if module.params.get('clusters') is not None:
                 for param_cluster in module.params.get('clusters'):

@@ -427,14 +427,14 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("GRANT (.+) ON (.+) TO '.*'@'.*'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
+        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\5)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
         privileges = [pick(x) for x in privileges]
-        if "WITH GRANT OPTION" in res.group(4):
+        if "WITH GRANT OPTION" in res.group(7):
             privileges.append('GRANT')
-        if "REQUIRE SSL" in res.group(4):
+        if "REQUIRE SSL" in res.group(7):
             privileges.append('REQUIRESSL')
         db = res.group(2)
         output[db] = privileges
@@ -461,12 +461,20 @@ def privileges_unpack(priv, mode):
     for item in priv.strip().split('/'):
         pieces = item.strip().rsplit(':', 1)
         dbpriv = pieces[0].rsplit(".", 1)
+
+        # Check for FUNCTION or PROCEDURE object types
+        parts = dbpriv[0].split(" ", 1)
+        object_type = ''
+        if len(parts) > 1 and (parts[0] == 'FUNCTION' or parts[0] == 'PROCEDURE'):
+            object_type = parts[0] + ' '
+            dbpriv[0] = parts[1]
+
         # Do not escape if privilege is for database or table, i.e.
         # neither quote *. nor .*
         for i, side in enumerate(dbpriv):
             if side.strip('`') != '*':
                 dbpriv[i] = '%s%s%s' % (quote, side.strip('`'), quote)
-        pieces[0] = '.'.join(dbpriv)
+        pieces[0] = object_type + '.'.join(dbpriv)
 
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
@@ -580,7 +588,7 @@ def main():
             try:
                 cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db,
                                        connect_timeout=connect_timeout)
-            except:
+            except Exception:
                 pass
 
         if not cursor:

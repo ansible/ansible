@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: timezone
 short_description: Configure timezone setting
@@ -21,26 +21,28 @@ description:
   - Several different tools are used depending on the OS/Distribution involved.
     For Linux it can use C(timedatectl) or edit C(/etc/sysconfig/clock) or C(/etc/timezone) and C(hwclock).
     On SmartOS, C(sm-set-timezone), for macOS, C(systemsetup), for BSD, C(/etc/localtime) is modified.
-  - As of version 2.3 support was added for SmartOS and BSDs.
-  - As of version 2.4 support was added for macOS.
+  - As of Ansible 2.3 support was added for SmartOS and BSDs.
+  - As of Ansible 2.4 support was added for macOS.
   - Windows, AIX and HPUX are not supported, please let us know if you find any other OS/distro in which this fails.
 version_added: "2.2"
 options:
   name:
     description:
       - Name of the timezone for the system clock.
-        Default is to keep current setting. B(At least one of name and
-        hwclock are required.)
+      - Default is to keep current setting.
+      - B(At least one of name and hwclock are required.)
+    type: str
   hwclock:
     description:
       - Whether the hardware clock is in UTC or in local timezone.
-        Default is to keep current setting.
-        Note that this option is recommended not to change and may fail
+      - Default is to keep current setting.
+      - Note that this option is recommended not to change and may fail
         to configure, especially on virtual environments such as AWS.
-        B(At least one of name and hwclock are required.)
-        I(Only used on Linux.)
+      - B(At least one of name and hwclock are required.)
+      - I(Only used on Linux.)
+    type: str
     aliases: [ rtc ]
-    choices: [ "UTC", "local" ]
+    choices: [ local, UTC ]
 notes:
   - On SmartOS the C(sm-set-timezone) utility (part of the smtools package) is required to set the zone timezone
 author:
@@ -49,7 +51,7 @@ author:
   - Indrajit Raychaudhuri (@indrajitr)
 '''
 
-RETURN = '''
+RETURN = r'''
 diff:
   description: The differences about the given arguments.
   returned: success
@@ -63,8 +65,8 @@ diff:
       type: dict
 '''
 
-EXAMPLES = '''
-- name: set timezone to Asia/Tokyo
+EXAMPLES = r'''
+- name: Set timezone to Asia/Tokyo
   timezone:
     name: Asia/Tokyo
 '''
@@ -546,7 +548,7 @@ class NosystemdTimezone(Timezone):
                     try:
                         if not filecmp.cmp('/etc/localtime', '/usr/share/zoneinfo/' + planned):
                             return 'n/a'
-                    except:
+                    except Exception:
                         return 'n/a'
         else:
             self.abort('unknown parameter "%s"' % key)
@@ -610,7 +612,7 @@ class SmartOSTimezone(Timezone):
                     m = re.match('^TZ=(.*)$', line.strip())
                     if m:
                         return m.groups()[0]
-            except:
+            except Exception:
                 self.module.fail_json(msg='Failed to read /etc/default/init')
         else:
             self.module.fail_json(msg='%s is not a supported option on target platform' % key)
@@ -745,7 +747,7 @@ class BSDTimezone(Timezone):
             try:
                 if not os.path.isfile(zonefile):
                     self.module.fail_json(msg='%s is not a recognized timezone' % value)
-            except:
+            except Exception:
                 self.module.fail_json(msg='Failed to stat %s' % zonefile)
 
             # Now (somewhat) atomically update the symlink by creating a new
@@ -759,7 +761,7 @@ class BSDTimezone(Timezone):
             try:
                 os.symlink(zonefile, new_localtime)
                 os.rename(new_localtime, '/etc/localtime')
-            except:
+            except Exception:
                 os.remove(new_localtime)
                 self.module.fail_json(msg='Could not update /etc/localtime')
         else:
