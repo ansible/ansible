@@ -1,12 +1,4 @@
 ---
-- name: Create directory structure
-  win_file:
-    path: '{{ item }}'
-    state: directory
-  loop:
-    - '{{ test_win_get_url_path }}'
-    - '{{ remote_tmp_dir }}'
-
 - name: create src file
   win_copy:
     dest: '{{ test_win_get_url_path }}/27617.txt'
@@ -56,7 +48,6 @@
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}'
     checksum_url: 'http://localhost:{{ http_port }}/sha1sum.txt'
-    checksum_algorithm: sha1
     force: True
   register: result_sha1
 
@@ -94,6 +85,7 @@
   assert:
     that:
       - result_sha1 is changed
+      - result_sha1.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
       - result_sha256 is changed
       - result_sha256_with_dot is changed
       - "stat_result_sha1.stat.exists == true"
@@ -126,7 +118,7 @@
       - result_sha1_no_force is not changed
       - result_sha256_no_force is not changed
 
-# check mode
+# Check download with check_mode: True
 
 - name: download src with sha1 checksum url | checkmode
   win_get_url:
@@ -154,7 +146,7 @@
       - result_sha1_check_mode.checksum_src | length
       - result_sha256_check_mode.checksum_src | length
 
-# check wrong checksum
+# Check download with wrong checksum
 
 - name: download src with sha1 checksum value | fail
   win_get_url:

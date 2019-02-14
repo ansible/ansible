@@ -1,8 +1,11 @@
 ---
 - name: ensure testing folder is present
   win_file:
-    path: '{{test_win_get_url_path}}'
+    path: '{{ item }}'
     state: directory
+  loop:
+    - '{{ test_win_get_url_path }}'
+    - '{{ remote_tmp_dir }}'
 
 - name: copy across testing files
   win_copy:
@@ -27,11 +30,13 @@
     dependencies:
     - tcpip
 
-- name: Install python3
+- name: install python3
   win_chocolatey:
     name: python3
+  register: installed_python
+  until: installed_python is succeeded
 
-- name: Run simple http.server
+- name: start simple http.server
   win_command: python -m http.server {{ http_port }}
   args:
     chdir: '{{ test_win_get_url_path }}'
@@ -74,8 +79,7 @@
         Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
     register: stop_http_server
     failed_when:
-      - stop_http_server.rc != 0
-      - stop_http_server.rc != 1
+      - stop_http_server.rc not in [0, 1]
     ignore_errors: yes
 
   - name: remove testing folders
