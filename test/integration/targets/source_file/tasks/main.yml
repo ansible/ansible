@@ -1,0 +1,86 @@
+---
+
+- name: make a new file
+  copy:
+    src: foo.sh
+    dest: "{{ output_dir }}/foo.sh"
+    mode: 0644
+
+- name: basic source
+  register: sf_basic_result
+  source_file:
+    path: "{{ output_dir }}/foo.sh"
+
+- assert:
+    that:
+        - "'changed' in sf_basic_result"
+        - "sf_basic_result.changed == true"
+        - "'ansible_facts' in sf_basic_result"
+        - "'MY_VAR_STR' in sf_basic_result.ansible_facts"
+        - "'MY_VAR_STR_DOUBLE_QUOTES' in sf_basic_result.ansible_facts"
+        - "sf_basic_result.ansible_facts.MY_VAR_STR_DOUBLE_QUOTES == 'my_quoted_str_value'"
+        - "'MY_VAR_STR_SINGLE_QUOTES' in sf_basic_result.ansible_facts"
+        - "sf_basic_result.ansible_facts.MY_VAR_STR_SINGLE_QUOTES == 'my_quoted_str_value'"
+        - "'MY_VAR_LIST' in sf_basic_result.ansible_facts"
+        - "'a' in sf_basic_result.ansible_facts.MY_VAR_LIST"
+        - "'b' in sf_basic_result.ansible_facts.MY_VAR_LIST"
+        - "'c' in sf_basic_result.ansible_facts.MY_VAR_LIST"
+        - "'d' not in sf_basic_result.ansible_facts.MY_VAR_LIST"
+        - "'MY_VAR_DICT' in sf_basic_result.ansible_facts"
+        - "sf_basic_result.ansible_facts.MY_VAR_DICT['a'] == '1'"
+        - "sf_basic_result.ansible_facts.MY_VAR_DICT['b'] == '2'"
+        - "sf_basic_result.ansible_facts.MY_VAR_DICT['c'] == '3'"
+
+- name: prefix source
+  register: sf_prefix_result
+  source_file:
+    path: "{{ output_dir }}/foo.sh"
+    prefix: integration_
+
+- assert:
+    that:
+        - "'changed' in sf_prefix_result"
+        - "sf_prefix_result.changed == true"
+        - "'ansible_facts' in sf_prefix_result"
+        - "'integration_MY_VAR_STR' in sf_prefix_result.ansible_facts"
+        - "'integration_MY_VAR_STR_DOUBLE_QUOTES' in sf_prefix_result.ansible_facts"
+        - "sf_prefix_result.ansible_facts.integration_MY_VAR_STR_DOUBLE_QUOTES == 'my_quoted_str_value'"
+        - "'integration_MY_VAR_STR_SINGLE_QUOTES' in sf_prefix_result.ansible_facts"
+        - "sf_prefix_result.ansible_facts.integration_MY_VAR_STR_SINGLE_QUOTES == 'my_quoted_str_value'"
+        - "'integration_MY_VAR_LIST' in sf_prefix_result.ansible_facts"
+        - "'a' in sf_prefix_result.ansible_facts.integration_MY_VAR_LIST"
+        - "'b' in sf_prefix_result.ansible_facts.integration_MY_VAR_LIST"
+        - "'c' in sf_prefix_result.ansible_facts.integration_MY_VAR_LIST"
+        - "'d' not in sf_prefix_result.ansible_facts.integration_MY_VAR_LIST"
+        - "'integration_MY_VAR_DICT' in sf_prefix_result.ansible_facts"
+        - "sf_prefix_result.ansible_facts.integration_MY_VAR_DICT['a'] == '1'"
+        - "sf_prefix_result.ansible_facts.integration_MY_VAR_DICT['b'] == '2'"
+        - "sf_prefix_result.ansible_facts.integration_MY_VAR_DICT['c'] == '3'"
+
+- name: lower source
+  register: sf_lower_result
+  source_file:
+    path: "{{ output_dir }}/foo.sh"
+    lower: true
+
+- assert:
+    that:
+        - "'changed' in sf_lower_result"
+        - "sf_lower_result.changed == true"
+        - "'ansible_facts' in sf_lower_result"
+        - "'my_var_str' in sf_lower_result.ansible_facts"
+        - "'my_var_str_double_quotes' in sf_lower_result.ansible_facts"
+        - "sf_lower_result.ansible_facts.my_var_str_double_quotes == 'my_quoted_str_value'"
+        - "'my_var_str_single_quotes' in sf_lower_result.ansible_facts"
+        - "sf_lower_result.ansible_facts.my_var_str_single_quotes == 'my_quoted_str_value'"
+        - "'my_var_list' in sf_lower_result.ansible_facts"
+        - "'a' in sf_lower_result.ansible_facts.my_var_list"
+        - "'b' in sf_lower_result.ansible_facts.my_var_list"
+        - "'c' in sf_lower_result.ansible_facts.my_var_list"
+        - "'d' not in sf_lower_result.ansible_facts.my_var_list"
+        - "'my_var_dict' in sf_lower_result.ansible_facts"
+        - "sf_lower_result.ansible_facts.my_var_dict['a'] == '1'"
+        - "sf_lower_result.ansible_facts.my_var_dict['b'] == '2'"
+        - "sf_lower_result.ansible_facts.my_var_dict['c'] == '3'"
+
+...
