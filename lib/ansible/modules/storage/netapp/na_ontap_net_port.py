@@ -36,7 +36,6 @@ options:
     description:
     - Specifies the name of port(s).
     required: true
-    version_added: '2.8'
   mtu:
     description:
     - Specifies the maximum transmission unit (MTU) reported by the port.
