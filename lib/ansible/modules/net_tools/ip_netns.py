@@ -101,7 +101,7 @@ class Namespace(object):
         changed = False
 
         if self.state == 'present' and self.exists():
-                changed = True
+            changed = True
 
         elif self.state == 'absent' and self.exists():
             changed = True

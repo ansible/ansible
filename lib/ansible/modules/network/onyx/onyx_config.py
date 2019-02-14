@@ -196,7 +196,7 @@ def run(module, result):
         result['updates'] = total_commands
 
     if module.params['save']:
-            total_commands.append('configuration write')
+        total_commands.append('configuration write')
     if total_commands:
         result['changed'] = True
         if not module.check_mode:
