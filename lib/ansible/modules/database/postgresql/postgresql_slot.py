@@ -33,9 +33,9 @@ options:
       - Optional parameter the when True specifies that the LSN for this replication slot be reserved
       - immediately, otherwise the default, False, specifies that the LSN is reserved on the first connection
       - from a streaming replication client.
-    required: False
-    default: False
-    choices: [ True, False ]
+    required: "False"
+    default: "False"
+    choices: [ "True", "False" ]
   db:
     description:
       - Name of the database where you're connecting in order to add or remove only the logical slot to/from
@@ -63,7 +63,7 @@ options:
   login_unix_socket:
     description:
       - Specifies the directory of the Unix-domain socket(s) on which the server is to listen for connections from client applications.
-    default: None
+    default: "None"
   ssl_mode:
     description:
       - Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
@@ -71,12 +71,11 @@ options:
       - Default of C(prefer) matches libpq default.
     default: prefer
     choices: ["disable", "allow", "prefer", "require", verify-ca", "verify-full"]
-    version added: '2.3'
   ssl_rootcert:
     description:
       - Specifies the name of a file containing the SSL certificate authority (CA) certificate(s).
       - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    default: None
+    default: "None"
     version_added: '2.3'
   session_role:
     description:
@@ -84,7 +83,7 @@ options:
       - The specified session_role must be a role that the current login_user is a member.
       - Permissions checking for SQL commands is carried out as though the session_role were the one
       - that had logged in originally.
-    default: None
+    default: "None"
     version_added: '2.8'
   state:
     description:
@@ -201,15 +200,15 @@ def main():
             login_user=dict(default="postgres"),
             login_password=dict(default="", no_log=True),
             login_host=dict(default="localhost"),
-            login_unix_socket=dict(default=None),
+            login_unix_socket=dict(default="None"),
             port=dict(default="5432"),
             db=dict(required=False),
             ssl_mode=dict(default="prefer", choices=["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]),
-            ssl_rootcert=dict(default=None),
+            ssl_rootcert=dict(default="None"),
             slot_name=dict(required=True),
             slot_type=dict(default="physical", choices=["physical", "logical"]),
-            immediately_reserve=dict(default=False),
-            session_role=dict(required=False, default=None),
+            immediately_reserve=dict(default="False"),
+            session_role=dict(required=False, default="None"),
             output_plugin=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
         ),
