@@ -33,9 +33,9 @@ options:
       - Optional parameter the when True specifies that the LSN for this replication slot be reserved
       - immediately, otherwise the default, False, specifies that the LSN is reserved on the first connection
       - from a streaming replication client.
-    required: "False"
-    default: "False"
-    choices: [ "True", "False" ]
+    required: False
+    default: False
+    choices: [ True, False ]
   db:
     description:
       - Name of the database where you're connecting in order to add or remove only the logical slot to/from
@@ -207,7 +207,7 @@ def main():
             ssl_rootcert=dict(default="None"),
             slot_name=dict(required=True),
             slot_type=dict(default="physical", choices=["physical", "logical"]),
-            immediately_reserve=dict(default="False"),
+            immediately_reserve=dict(default=False),
             session_role=dict(required=False, default="None"),
             output_plugin=dict(default="test_decoding"),
             state=dict(default="present", choices=["absent", "present"]),
