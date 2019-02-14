@@ -30,19 +30,24 @@
     dependencies:
     - tcpip
 
-- name: install python
-  win_chocolatey:
-    name: python
-    skip_scripts: True
-  register: installed_python
-  until: installed_python is succeeded
+- name: gathering facts
+  setup:
 
-- name: start simple http.server
-  win_command: python -m http.server {{ http_port }}
-  args:
-    chdir: '{{ test_win_get_url_path }}'
-  async: 90
-  poll: 0
+- block:
+  # unable install python package on Win2008 due to bug in win_chocolatey module (it wants interactive input)
+  - name: install python
+    win_chocolatey:
+      name: python
+    register: installed_python
+    until: installed_python is succeeded
+
+  - name: start simple http.server
+    win_command: python -m http.server {{ http_port }}
+    args:
+      chdir: '{{ test_win_get_url_path }}'
+    async: 90
+    poll: 0
+  when: ansible_facts['distribution_version'] is version('6.1', '>=')
 
 - name: create env var for win_get_url tests
   win_environment:
@@ -60,6 +65,7 @@
 
   - name: run checksum tests
     include_tasks: tests_checksum.yml
+    when: ansible_facts['distribution_version'] is version('6.1', '>=')
 
   always:
   - name: remove SlimFTPd service
