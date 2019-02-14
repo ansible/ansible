@@ -1,49 +1,58 @@
-  - name: store the vcenter container ip
-    set_fact:
-      vcsim: "{{ lookup('env', 'vcenter_host') }}"
-    - debug: var=vcsim
+# test code for the vmware_host_kernel_manager module
+# Copyright: (c) 2019, Aaron Longchamps <a.j.longchamps@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-  - name: Wait for Flask controller to come up online
-    wait_for:
-      host: "{{ vcsim }}"
-      port: 5000
-      state: started
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
 
-  - name: kill vcsim
-    uri:
-      url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-  - name: start vcsim with no folders
-    uri:
-      url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=1&host=1' }}" #TODO is this right with host=1?
-    register: vcsim_instance
+- debug: var=vcsim
 
-  - name: Wait for Flask controller to come up online
-    wait_for:
-      host: "{{ vcsim }}"
-      port: 443
-      state: started
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
 
-  - name: get a list of hosts from vcsim
-    uri:
-      url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=host' }}"
-    register: hostlist
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
 
-  - set_fact:
-    host1: "{{ hostlist['json'][0] }}"
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&host=1
+  register: vcsim_instance
 
-  - name: host connected, module exists, options exist, arguments different - test 01
-    vmware_host_kernel_manager:
-      hostname: '{{ vcenter_ip }}'
-      username: '{{ vcenter_username }}'
-      password: '{{ vcenter_password }}'
-      validate_certs: False
-      esxi_hostname: '{{ virtual_host_name }}'
-      kernel_module_name: "tcpip4"
-      kernel_module_option: "ipv6=0"
-    delegate_to: localhost
+- debug: var=vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of hosts from vcsim
+  uri:
+    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=host' }}"
+  register: hostlist
+
+- set_fact:
+  host1: "{{ hostlist['json'][0] }}"
+
+- name: host connected, module exists, options exist, arguments different - test 01
+  vmware_host_kernel_manager:
+    hostname: '{{ vcsim }}'
+    username: '{{ vcsim_instance.json.username }}'
+    password: '{{ vcsim_instance.json.password }}'
+    validate_certs: False
+    esxi_hostname: '{{ host1 }}'
+    kernel_module_name: "tcpip4"
+    kernel_module_option: "ipv6=0"
   register: my_results
 
-  -name: Check that the provided kernel_module_name has kernel_module_option set
-    assert:
-      that:
-        - "my_results.results['DC0_H0']['configured_options'] == 'ipv6=0'"
+- name: Check that the provided kernel_module_name has kernel_module_option set
+  assert:
+    that:
+      - "my_results.results['DC0_H0']['configured_options'] == 'ipv6=0'"
+
+#TODO: add my other tests from the playbook
