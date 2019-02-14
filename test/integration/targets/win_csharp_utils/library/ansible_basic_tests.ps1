@@ -503,6 +503,51 @@ $tests = @{
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $expected_module_args}
     }
 
+    "Parse module args with case insensitive input" = {
+        $spec = @{
+            options = @{
+                option1 = @{ type = "int"; required = $true }
+            }
+        }
+        $complex_args = @{
+            _ansible_module_name = "win_test"
+            Option1 = "1"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        # Verifies the case of the params key is set to the module spec not actual input
+        $m.Params.Keys | Assert-Equals -Expected @("option1")
+        $m.Params.option1 | Assert-Equals -Expected 1
+
+        # Verifies the type conversion happens even on a case insensitive match
+        $m.Params.option1.GetType().FullName | Assert-Equals -Expected "System.Int32"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected_warnings = "Parameters for (win_test) was a case insensitive match: Option1. "
+        $expected_warnings += "Module options will become case sensitive in a future Ansible release. "
+        $expected_warnings += "Supported parameters include: option1"
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = 1
+                }
+            }
+            warnings = @($expected_warnings)
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
     "No log values" = {
         $spec = @{
             options = @{

@@ -809,13 +809,18 @@ namespace Ansible.Basic
         private void CheckUnsupportedArguments(IDictionary param, List<string> legalInputs)
         {
             HashSet<string> unsupportedParameters = new HashSet<string>();
+            HashSet<string> caseUnsupportedParameters = new HashSet<string>();
             List<string> removedParameters = new List<string>();
 
             foreach (DictionaryEntry entry in param)
             {
                 string paramKey = (string)entry.Key;
-                if (!legalInputs.Contains(paramKey))
+                if (!legalInputs.Contains(paramKey, StringComparer.OrdinalIgnoreCase))
                     unsupportedParameters.Add(paramKey);
+                else if (!legalInputs.Contains(paramKey))
+                    // For backwards compatibility we do not care about the case but we need to warn the users as this will
+                    // change in a future Ansible release.
+                    caseUnsupportedParameters.Add(paramKey);
                 else if (paramKey.StartsWith("_ansible_"))
                 {
                     removedParameters.Add(paramKey);
@@ -851,6 +856,24 @@ namespace Ansible.Basic
                 string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
                 msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputs));
                 FailJson(msg);
+            }
+
+            if (caseUnsupportedParameters.Count > 0)
+            {
+                legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
+                string msg = String.Format("Parameters for ({0}) was a case insensitive match: {1}", ModuleName, String.Join(", ", caseUnsupportedParameters));
+                msg = String.Format("{0}. Module options will become case sensitive in a future Ansible release. Supported parameters include: {1}",
+                    FormatOptionsContext(msg), String.Join(", ", legalInputs));
+                Warn(msg);
+            }
+
+            // Make sure we convert all the incorrect case params to the ones set by the module spec
+            foreach (string key in caseUnsupportedParameters)
+            {
+                string correctKey = legalInputs[legalInputs.FindIndex(s => s.Equals(key, StringComparison.OrdinalIgnoreCase))];
+                object value = param[key];
+                param.Remove(key);
+                param.Add(correctKey, value);
             }
         }
 
