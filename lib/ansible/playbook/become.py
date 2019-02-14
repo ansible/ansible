@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
@@ -30,9 +31,9 @@ display = Display()
 class Become:
 
     # Privilege escalation
-    _become = FieldAttribute(isa='bool')
-    _become_method = FieldAttribute(isa='string')
-    _become_user = FieldAttribute(isa='string')
+    _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
+    _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
+    _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
     _become_flags = FieldAttribute(isa='string')
 
     def __init__(self):

@@ -23,11 +23,14 @@ import json
 import os
 import re
 import sys
+import time
 
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
+
+from ansible.module_utils._text import to_text
 from ansible.module_utils.six import iteritems
-
 from ansible.module_utils.basic import bytes_to_human
-
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
 
@@ -443,51 +446,82 @@ class LinuxHardware(Hardware):
             mtab_entries.append(fields)
         return mtab_entries
 
-    @timeout.timeout()
+    def get_mount_info(self, mount, device, uuids):
+
+        mount_size = get_mount_size(mount)
+
+        # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
+        # see _run_lsblk() above
+        # https://github.com/ansible/ansible/issues/36077
+        uuid = uuids.get(device, self._udevadm_uuid(device))
+
+        return mount_size, uuid
+
     def get_mount_facts(self):
-        mount_facts = {}
 
-        mount_facts['mounts'] = []
+        mounts = []
 
+        # gather system lists
         bind_mounts = self._find_bind_mounts()
         uuids = self._lsblk_uuid()
         mtab_entries = self._mtab_entries()
 
-        mounts = []
+        # start threads to query each mount
+        results = {}
+        pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
+
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
 
-            if not device.startswith('/') and ':/' not in device:
+            if not device.startswith('/') and ':/' not in device or fstype == 'none':
                 continue
-
-            if fstype == 'none':
-                continue
-
-            mount_statvfs_info = get_mount_size(mount)
-
-            if mount in bind_mounts:
-                # only add if not already there, we might have a plain /etc/mtab
-                if not self.MTAB_BIND_MOUNT_RE.match(options):
-                    options += ",bind"
-
-            # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
-            # see _run_lsblk() above
-            # https://github.com/ansible/ansible/issues/36077
-            uuid = uuids.get(device, self._udevadm_uuid(device))
 
             mount_info = {'mount': mount,
                           'device': device,
                           'fstype': fstype,
-                          'options': options,
-                          'uuid': uuid}
+                          'options': options}
 
-            mount_info.update(mount_statvfs_info)
+            if mount in bind_mounts:
+                # only add if not already there, we might have a plain /etc/mtab
+                if not self.MTAB_BIND_MOUNT_RE.match(options):
+                    mount_info['options'] += ",bind"
 
-            mounts.append(mount_info)
+            results[mount] = {'info': mount_info,
+                              'extra': pool.apply_async(self.get_mount_info, (mount, device, uuids)),
+                              'timelimit': time.time() + maxtime}
 
-        mount_facts['mounts'] = mounts
+        pool.close()  # done with new workers, start gc
 
-        return mount_facts
+        # wait for workers and get results
+        while results:
+            for mount in results:
+                res = results[mount]['extra']
+                if res.ready():
+                    if res.successful():
+                        mount_size, uuid = res.get()
+                        if mount_size:
+                            results[mount]['info'].update(mount_size)
+                        results[mount]['info']['uuid'] = uuid or 'N/A'
+                    else:
+                        # give incomplete data
+                        errmsg = to_text(res.get())
+                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
+                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (errmsg)
+
+                    mounts.append(results[mount]['info'])
+                    del results[mount]
+                    break
+                elif time.time() > results[mount]['timelimit']:
+                    results[mount]['info']['note'] = 'Timed out while attempting to get extra information.'
+                    mounts.append(results[mount]['info'])
+                    del results[mount]
+                    break
+            else:
+                # avoid cpu churn
+                time.sleep(0.1)
+
+        return {'mounts': mounts}
 
     def get_device_links(self, link_dir):
         if not os.path.exists(link_dir):

@@ -6,16 +6,21 @@ import sys
 
 
 def main():
-    allowed = set([
+    standard_shebangs = set([
         b'#!/bin/bash -eu',
         b'#!/bin/bash -eux',
-        b'#!/bin/bash',
         b'#!/bin/sh',
         b'#!/usr/bin/env bash',
         b'#!/usr/bin/env fish',
         b'#!/usr/bin/env pwsh',
         b'#!/usr/bin/env python',
         b'#!/usr/bin/make -f',
+    ])
+
+    integration_shebangs = set([
+        b'#!/bin/sh',
+        b'#!/usr/bin/env bash',
+        b'#!/usr/bin/env python',
     ])
 
     module_shebangs = {
@@ -28,6 +33,7 @@ def main():
         'test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1',
         'test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1',
         'test/utils/shippable/timing.py',
+        'test/integration/targets/old_style_modules_posix/library/helloworld.sh',
     ])
 
     # see https://unicode.org/faq/utf_bom.html#bom1
@@ -60,6 +66,7 @@ def main():
                 continue
 
             is_module = False
+            is_integration = False
 
             if path.startswith('lib/ansible/modules/'):
                 is_module = True
@@ -72,6 +79,8 @@ def main():
 
                 continue
             elif path.startswith('test/integration/targets/'):
+                is_integration = True
+
                 dirname = os.path.dirname(path)
 
                 if dirname.endswith('/library') or dirname in (
@@ -97,6 +106,11 @@ def main():
                 else:
                     print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
             else:
+                if is_integration:
+                    allowed = integration_shebangs
+                else:
+                    allowed = standard_shebangs
+
                 if shebang not in allowed:
                     print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
 

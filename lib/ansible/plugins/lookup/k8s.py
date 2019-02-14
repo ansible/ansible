@@ -135,7 +135,7 @@ EXAMPLES = """
 
 - name: Fetch all deployments
   set_fact:
-    deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing') }}"
+    deployments: "{{ lookup('k8s', kind='Deployment') }}"
 
 - name: Fetch all deployments in a namespace
   set_fact:
@@ -203,8 +203,10 @@ try:
     from openshift.dynamic import DynamicClient
     from openshift.dynamic.exceptions import NotFoundError
     HAS_K8S_MODULE_HELPER = True
-except ImportError as exc:
+    k8s_import_exception = None
+except ImportError as e:
     HAS_K8S_MODULE_HELPER = False
+    k8s_import_exception = e
 
 try:
     import yaml
@@ -219,7 +221,7 @@ class KubernetesLookup(K8sAnsibleMixin):
 
         if not HAS_K8S_MODULE_HELPER:
             raise Exception(
-                "Requires the OpenShift Python client. Try `pip install openshift`"
+                "Requires the OpenShift Python client. Try `pip install openshift`. Detail: {0}".format(k8s_import_exception)
             )
 
         if not HAS_YAML:

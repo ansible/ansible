@@ -25,10 +25,11 @@
     - install_local_msi_check.reboot_required == False
     - install_local_msi_actual_check.exists == False
 
-- name: install local msi
+- name: install local msi with log
   win_package:
     path: '{{test_win_package_path}}\good.msi'
     state: present
+    log_path: "{{test_win_package_log_path_install}}"
   register: install_local_msi
 
 - name: get result of install local msi
@@ -43,6 +44,16 @@
     - install_local_msi.reboot_required == False
     - install_local_msi.rc == 0
     - install_local_msi_actual.exists == True
+
+- name: get result of install local msi log_path
+  win_stat:
+    path: "{{test_win_package_log_path_install}}"
+  register: install_local_msi_actual_log_path
+
+- name: assert install local msi log path
+  assert:
+    that:
+    - install_local_msi_actual_log_path.stat.exists == True
 
 - name: install local msi (idempotent)
   win_package:
@@ -78,6 +89,7 @@
   win_package:
     path: '{{test_win_package_path}}\good.msi'
     state: absent
+    log_path: "{{test_win_package_log_path_uninstall}}"
   register: uninstall_path_local_msi
 
 - name: get result of uninstall local msi with path
@@ -92,6 +104,16 @@
     - uninstall_path_local_msi.reboot_required == False
     - uninstall_path_local_msi.rc == 0
     - uninstall_path_local_msi_actual.exists == False
+
+- name: get result of uninstall local msi with path
+  win_stat:
+    path: "{{test_win_package_log_path_uninstall}}"
+  register: uninstall_path_local_msi_actual_log_path
+
+- name: assert uninstall local msi with path
+  assert:
+    that:
+    - uninstall_path_local_msi_actual_log_path.stat.exists == True  # we expect log to remain
 
 - name: uninstall local msi with path (idempotent)
   win_package:

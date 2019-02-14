@@ -56,7 +56,7 @@ options:
 
 author:
     - Victor Carceler (@vcarceler) <vcarceler@iespuigcastellar.xeill.net>
-    - Stanislas Lange (@angristan) <<angristan@pm.me>
+    - Stanislas Lange (@angristan) <angristan@pm.me>
 '''
 
 EXAMPLES = '''

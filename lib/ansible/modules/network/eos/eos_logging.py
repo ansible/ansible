@@ -259,7 +259,7 @@ def parse_name(line, dest):
 def parse_level(line, dest):
     level = None
 
-    if dest is not 'host':
+    if dest != 'host':
 
         # Line for buffer logging entry in running-config is of the form:
         # logging buffered <size> <level>

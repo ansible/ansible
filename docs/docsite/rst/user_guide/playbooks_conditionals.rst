@@ -278,6 +278,8 @@ Often in a playbook it may be useful to store the result of a given command in a
 it later.  Use of the command module in this way can in many ways eliminate the need to write site specific facts, for
 instance, you could test for the existence of a particular program.
 
+.. note:: Registration happens even when a task is skipped due to the conditional. This way you can query the variable for `` is skipped`` to know if task was attempted or not.
+
 The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
     - name: test play

@@ -31,3 +31,16 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_host:
+    name: test-host
+    description: Host Description
+    inventory: test-non-existing-inventory
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update host, inventory not found: The requested object could not be found.'"

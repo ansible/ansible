@@ -23,36 +23,44 @@ options:
   name:
     description:
       - Name of the repository to work with.
+    type: str
     required: yes
   source:
     description:
       - Specifies the URI for discovering and installing modules from this repository.
       - A URI can be a NuGet server feed (most common situation), HTTP, HTTPS, FTP or file location.
+    type: str
   state:
     description:
       - If C(present) a new repository is added or updated.
       - If C(absent) a repository is removed.
+    type: str
     choices: [ absent, present ]
     default: present
   installation_policy:
     description:
       - Sets the C(InstallationPolicy) of a repository.
       - Will default to C(trusted) when creating a new repository.
+    type: str
     choices: [ trusted, untrusted ]
 notes:
-  - The PowerShellGet module (version 1.6.0 or newer) and the NuGet package provider (version 2.8.5.201 or newer) are required.
+  - PowerShell modules needed
+      - PowerShellGet >= 1.6.0
+      - PackageManagement >= 1.1.7
+  - PowerShell package provider needed
+      - NuGet >= 2.8.5.201
   - See the examples on how to update the NuGet package provider.
-  - You can't use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
+  - You can not use C(win_psrepository) to re-register (add) removed PSGallery, use the command C(Register-PSRepository -Default) instead.
 seealso:
 - module: win_psmodule
 author:
 - Wojciech Sciesinski (@it-praktyk)
 '''
 
-EXAMPLES = r'''
+EXAMPLES = '''
 ---
 - name: Ensure the required NuGet package provider version is installed
-  win_shell: Install-PackageProvider -Name NuGet -RequiredVersion 2.8.5.201 -Force
+  win_shell: Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
 
 - name: Add a PowerShell module and register a repository
   win_psrepository:
@@ -66,5 +74,5 @@ EXAMPLES = r'''
     state: absent
 '''
 
-RETURN = r'''
+RETURN = '''
 '''

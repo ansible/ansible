@@ -25,6 +25,7 @@ options:
     description:
       - The C(win_command) module takes a free form command to run.
       - There is no parameter actually named 'free form'. See the examples!
+    type: str
     required: yes
   creates:
     description:
@@ -41,6 +42,7 @@ options:
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.
+    type: str
     version_added: '2.5'
 notes:
     - If you want to run a command through a shell (say you are using C(<),
@@ -49,7 +51,6 @@ notes:
       environment.
     - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
       exist, use this.
-    - For non-Windows targets, use the M(command) module instead.
 seealso:
 - module: command
 - module: psexec
@@ -82,7 +83,7 @@ msg:
     description: changed
     returned: always
     type: bool
-    sample: True
+    sample: true
 start:
     description: The command execution start time
     returned: always

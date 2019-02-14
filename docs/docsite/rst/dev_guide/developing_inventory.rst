@@ -50,7 +50,7 @@ Here are some plugins and the type of source they use:
 Inventory plugins
 =================
 
-Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_machine_requirements`.
+Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_node_requirements`.
 
 Most of the documentation in :ref:`developing_plugins` also applies here, so as to not repeat ourselves, you should read that document first and we'll include inventory plugin specifics next.
 
@@ -164,7 +164,7 @@ To facilitate this there are a few of helper functions used in the example below
 
             # this method will parse 'common format' inventory sources and
             # update any options declared in DOCUMENTATION as needed
-            config = self._read_config_data(self, path)
+            config = self._read_config_data(path)
 
             # if NOT using _read_config_data you should call set_options directly,
             # to process any defined configuration for this plugin,
@@ -198,7 +198,7 @@ Inventory source common format
 ------------------------------
 
 To simplify development, most plugins use a mostly standard configuration file as the inventory source, YAML based and with just one required field ``plugin`` which should contain the name of the plugin that is expected to consume the file.
-Depending on other common features used, other fields might be needed, but each plugin can also add it's own custom options as needed.
+Depending on other common features used, other fields might be needed, but each plugin can also add its own custom options as needed.
 For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeout`` and other cache related fields could be present.
 
 .. _inventory_development_auto:

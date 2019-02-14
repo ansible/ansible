@@ -44,7 +44,10 @@
   when: ansible_pkg_mgr  ==  'yum'
 
 - name: install mysqldb_test rpm dependencies
-  dnf: name={{ item }} state=latest
+  dnf:
+    name: '{{ item }}'
+    state: latest
+    install_weak_deps: False  # mariadb-server has a weak dep on python2 which break Python 3 test environments
   with_items: "{{mysql_packages}}"
   when: ansible_pkg_mgr  ==  'dnf'
 

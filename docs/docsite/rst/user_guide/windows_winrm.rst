@@ -1,3 +1,5 @@
+.. _windows_winrm:
+
 Windows Remote Management
 =========================
 Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
@@ -578,7 +580,8 @@ in the host vars.
 
 A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
-from Ansible can viewed by anyone on the network. To disable the encryption
+from Ansible can be viewed, manipulated and also the remote session can completely
+be taken over by anyone on the same network. To disable the encryption
 requirement, run the following from PowerShell on the target host:
 
 .. comment: Pygments powershell lexer does not support colons (i.e. URLs)

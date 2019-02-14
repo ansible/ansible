@@ -12,6 +12,7 @@ import sys
 
 from lib.util import (
     ApplicationError,
+    display,
     read_lines_without_comments,
 )
 
@@ -342,6 +343,8 @@ def analyze_integration_target_dependencies(integration_targets):
     :type integration_targets: list[IntegrationTarget]
     :rtype: dict[str,set[str]]
     """
+    real_target_root = os.path.realpath('test/integration/targets') + '/'
+
     role_targets = [t for t in integration_targets if t.type == 'role']
     hidden_role_target_names = set(t.name for t in role_targets if 'hidden/' in t.aliases)
 
@@ -352,9 +355,37 @@ def analyze_integration_target_dependencies(integration_targets):
         for setup_target_name in target.setup_always + target.setup_once:
             dependencies[setup_target_name].add(target.name)
 
+    # handle target dependencies
+    for target in integration_targets:
+        for need_target in target.needs_target:
+            dependencies[need_target].add(target.name)
+
+    # handle symlink dependencies between targets
+    # this use case is supported, but discouraged
+    for target in integration_targets:
+        for root, _dummy, file_names in os.walk(target.path):
+            for name in file_names:
+                path = os.path.join(root, name)
+
+                if not os.path.islink(path):
+                    continue
+
+                real_link_path = os.path.realpath(path)
+
+                if not real_link_path.startswith(real_target_root):
+                    continue
+
+                link_target = real_link_path[len(real_target_root):].split('/')[0]
+
+                if link_target == target.name:
+                    continue
+
+                dependencies[link_target].add(target.name)
+
     # intentionally primitive analysis of role meta to avoid a dependency on pyyaml
-    for role_target in role_targets:
-        meta_dir = os.path.join(role_target.path, 'meta')
+    # script based targets are scanned as they may execute a playbook with role dependencies
+    for target in integration_targets:
+        meta_dir = os.path.join(target.path, 'meta')
 
         if not os.path.isdir(meta_dir):
             continue
@@ -375,7 +406,7 @@ def analyze_integration_target_dependencies(integration_targets):
 
                     for hidden_target_name in hidden_role_target_names:
                         if hidden_target_name in meta_line:
-                            dependencies[hidden_target_name].add(role_target.name)
+                            dependencies[hidden_target_name].add(target.name)
 
     while True:
         changes = 0
@@ -389,10 +420,20 @@ def analyze_integration_target_dependencies(integration_targets):
                         if new_target_name not in dependent_target_names:
                             dependent_target_names.add(new_target_name)
                             changes += 1
-                    dependent_target_names.remove(dependent_target_name)
 
         if not changes:
             break
+
+    for target_name in sorted(dependencies):
+        consumers = dependencies[target_name]
+
+        if not consumers:
+            continue
+
+        display.info('%s:' % target_name, verbosity=4)
+
+        for consumer in sorted(consumers):
+            display.info('  %s' % consumer, verbosity=4)
 
     return dependencies
 
@@ -525,7 +566,7 @@ class IntegrationTarget(CompletionTarget):
         elif os.path.isdir(os.path.join(path, 'tasks')) or os.path.isdir(os.path.join(path, 'defaults')):
             self.type = 'role'
         else:
-            self.type = 'unknown'
+            self.type = 'role'  # ansible will consider these empty roles, so ansible-test should as well
 
         # static_aliases
 
@@ -585,6 +626,11 @@ class IntegrationTarget(CompletionTarget):
         if self.type not in ('script', 'role'):
             groups.append('hidden')
 
+        # Collect file paths before group expansion to avoid including the directories.
+        # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
+        self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if
+                                           g.startswith('needs/file/') and not g.startswith('needs/file/test/integration/targets/'))))
+
         for group in itertools.islice(groups, 0, len(groups)):
             if '/' in group:
                 parts = group.split('/')
@@ -609,6 +655,7 @@ class IntegrationTarget(CompletionTarget):
 
         self.setup_once = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/once/'))))
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
+        self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
 
 
 class TargetPatternsNotMatched(ApplicationError):

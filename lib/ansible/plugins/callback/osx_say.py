@@ -10,7 +10,7 @@ DOCUMENTATION = '''
     callback: osx_say
     type: notification
     requirements:
-      - whitelising in configuration
+      - whitelisting in configuration
       - the '/usr/bin/say' command line program (standard on macOS)
     short_description: oneline Ansible screen output
     version_added: historical

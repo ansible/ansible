@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -147,11 +146,12 @@ options:
       networks/my-network projects/myproject/global/networks/my-network global/networks/default
       .'
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. You can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}" Alternatively,
-      you can set this network to a dictionary with the selfLink key where the value
-      is the selfLink of your Network'
-    required: true
+      in two ways. First, you can place in the selfLink of the resource here as a
+      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
+      task and then set this network field to "{{ name-of-resource }}"'
+    required: false
+    default:
+      selfLink: global/networks/default
   priority:
     description:
     - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -341,7 +341,7 @@ network:
     networks/my-network projects/myproject/global/networks/my-network global/networks/default
     .'
   returned: success
-  type: dict
+  type: str
 priority:
   description:
   - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -412,6 +412,7 @@ targetTags:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 import time
 
 ################################################################################
@@ -425,27 +426,30 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            allowed=dict(type='list', elements='dict', options=dict(
-                ip_protocol=dict(required=True, type='str'),
-                ports=dict(type='list', elements='str')
-            )),
-            denied=dict(type='list', elements='dict', options=dict(
-                ip_protocol=dict(required=True, type='str'),
-                ports=dict(type='list', elements='str')
-            )),
+            allowed=dict(type='list', elements='dict', options=dict(ip_protocol=dict(required=True, type='str'), ports=dict(type='list', elements='str'))),
+            denied=dict(type='list', elements='dict', options=dict(ip_protocol=dict(required=True, type='str'), ports=dict(type='list', elements='str'))),
             description=dict(type='str'),
             destination_ranges=dict(type='list', elements='str'),
             direction=dict(type='str', choices=['INGRESS', 'EGRESS']),
             disabled=dict(type='bool'),
             name=dict(required=True, type='str'),
-            network=dict(required=True, type='dict'),
+            network=dict(default=dict(selfLink='global/networks/default')),
             priority=dict(default=1000, type='int'),
             source_ranges=dict(type='list', elements='str'),
             source_service_accounts=dict(type='list', elements='str'),
             source_tags=dict(type='list', elements='str'),
             target_service_accounts=dict(type='list', elements='str'),
-            target_tags=dict(type='list', elements='str')
-        )
+            target_tags=dict(type='list', elements='str'),
+        ),
+        mutually_exclusive=[
+            ['allowed', 'denied'],
+            ['destination_ranges', 'source_ranges', 'source_tags'],
+            ['destination_ranges', 'source_ranges'],
+            ['source_service_accounts', 'source_tags', 'target_tags'],
+            ['destination_ranges', 'source_service_accounts', 'source_tags', 'target_service_accounts'],
+            ['source_tags', 'target_service_accounts', 'target_tags'],
+            ['source_service_accounts', 'target_service_accounts', 'target_tags'],
+        ],
     )
 
     if not module.params['scopes']:
@@ -510,11 +514,12 @@ def resource_to_request(module):
         u'sourceServiceAccounts': module.params.get('source_service_accounts'),
         u'sourceTags': module.params.get('source_tags'),
         u'targetServiceAccounts': module.params.get('target_service_accounts'),
-        u'targetTags': module.params.get('target_tags')
+        u'targetTags': module.params.get('target_tags'),
     }
+    request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -545,8 +550,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -591,7 +596,7 @@ def response_to_hash(module, response):
         u'sourceServiceAccounts': response.get(u'sourceServiceAccounts'),
         u'sourceTags': response.get(u'sourceTags'),
         u'targetServiceAccounts': response.get(u'targetServiceAccounts'),
-        u'targetTags': response.get(u'targetTags')
+        u'targetTags': response.get(u'targetTags'),
     }
 
 
@@ -617,9 +622,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -628,6 +633,16 @@ def raise_if_errors(response, err_path, module):
     errors = navigate_hash(response, err_path)
     if errors is not None:
         module.fail_json(msg=errors)
+
+
+def encode_request(request, module):
+    if 'network' in request and request['network'] is not None:
+        if not re.match(r'https://www.googleapis.com/compute/v1/projects/.*', request['network']):
+            request['network'] = 'https://www.googleapis.com/compute/v1/projects/{project}/{network}'.format(
+                project=module.params['project'], network=request['network']
+            )
+
+    return request
 
 
 class FirewallAllowedArray(object):
@@ -651,16 +666,10 @@ class FirewallAllowedArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get('ip_protocol'),
-            u'ports': item.get('ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get('ip_protocol'), u'ports': item.get('ports')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get(u'ip_protocol'),
-            u'ports': item.get(u'ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
 
 
 class FirewallDeniedArray(object):
@@ -684,16 +693,10 @@ class FirewallDeniedArray(object):
         return items
 
     def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get('ip_protocol'),
-            u'ports': item.get('ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get('ip_protocol'), u'ports': item.get('ports')})
 
     def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'IPProtocol': item.get(u'ip_protocol'),
-            u'ports': item.get(u'ports')
-        })
+        return remove_nones_from_dict({u'IPProtocol': item.get(u'IPProtocol'), u'ports': item.get(u'ports')})
 
 
 if __name__ == '__main__':

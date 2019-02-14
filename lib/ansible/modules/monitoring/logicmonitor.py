@@ -601,7 +601,7 @@ class LogicMonitor(object):
         resp = self.rpc("getAgents", {})
         resp_json = json.loads(resp)
 
-        if resp_json["status"] is 200:
+        if resp_json["status"] == 200:
             self.module.debug("RPC call succeeded")
             return resp_json["data"]
         else:
@@ -1063,7 +1063,7 @@ class Collector(LogicMonitor):
                 self.module.debug("Making RPC call to 'addAgent'")
                 create = (json.loads(self.rpc("addAgent", h)))
 
-                if create["status"] is 200:
+                if create["status"] == 200:
                     self.module.debug("RPC call succeeded")
                     self.info = create["data"]
                     self.id = create["data"]["id"]
@@ -1100,7 +1100,7 @@ class Collector(LogicMonitor):
             delete = json.loads(self.rpc("deleteAgent",
                                          {"id": self.id}))
 
-            if delete["status"] is 200:
+            if delete["status"] == 200:
                 self.module.debug("RPC call succeeded")
                 return delete
             else:

@@ -65,9 +65,9 @@ options:
     default: system-default(public)
   permanent:
     description:
-      - >
-        Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
-        operate on firewalld configs when it's not running (requires firewalld >= 3.0.9). (NOTE: If this is false, immediate is assumed true.)
+      - Should this configuration be in the running firewalld configuration or persist across reboots.
+      - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 3.0.9).
+      - Note that if this is C(no), immediate is assumed C(yes).
     type: bool
   immediate:
     description:
@@ -679,8 +679,11 @@ def main():
     zone = module.params['zone']
 
     if module.params['port'] is not None:
-        port, protocol = module.params['port'].strip().split('/')
-        if protocol is None:
+        if '/' in module.params['port']:
+            port, protocol = module.params['port'].strip().split('/')
+        else:
+            protocol = None
+        if not protocol:
             module.fail_json(msg='improper port format (missing protocol?)')
     else:
         port = None

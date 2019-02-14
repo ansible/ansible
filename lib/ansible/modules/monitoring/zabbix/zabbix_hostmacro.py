@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_hostmacro
-short_description: Zabbix host macro creates/updates/deletes
+short_description: Create/update/delete Zabbix host macros
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
@@ -33,7 +33,7 @@ options:
         required: true
     macro_name:
         description:
-            - Name of the host macro.
+            - Name of the host macro without the enclosing curly braces and the leading dollar sign.
         required: true
     macro_value:
         description:
@@ -66,7 +66,7 @@ EXAMPLES = '''
     login_user: username
     login_password: password
     host_name: ExampleHost
-    macro_name: Example macro
+    macro_name: EXAMPLE.MACRO
     macro_value: Example value
     state: present
 '''

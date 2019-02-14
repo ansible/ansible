@@ -26,6 +26,13 @@ description:
       provides a simple way to generate the required certificates."
    - "The C(tls-alpn-01) implementation is based on
       L(the draft-05 version of the specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05)."
+seealso:
+  - name: Automatic Certificate Management Environment (ACME)
+    description: The current draft specification of the ACME protocol.
+    link: https://tools.ietf.org/html/draft-ietf-acme-acme-18
+  - name: ACME TLS ALPN Challenge Extension
+    description: The current draft specification of the C(tls-alpn-01) challenge.
+    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
 requirements:
    - "cryptography >= 1.3"
 options:
@@ -118,13 +125,15 @@ from ansible.module_utils.acme import (
     read_file,
 )
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_text
 
 import base64
 import datetime
 import sys
+import traceback
 
+CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     import cryptography.hazmat.backends
@@ -140,6 +149,7 @@ try:
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.3'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
 except ImportError as e:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     HAS_CRYPTOGRAPHY = False
 
 
@@ -172,7 +182,7 @@ def main():
         ),
     )
     if not HAS_CRYPTOGRAPHY:
-        module.fail(msg='cryptography >= 1.3 is required for this module.')
+        module.fail_json(msg=missing_required_lib('cryptography >= 1.3'), exception=CRYPTOGRAPHY_IMP_ERR)
 
     try:
         # Get parameters

@@ -180,6 +180,12 @@
       - git_verify is failed
       - git_verify.msg is match("Failed to verify GPG signature of commit/tag.+")
 
+- name: GPG-VERIFICATION | Stop gpg-agent so we can remove any locks on the GnuPG dir
+  command: gpgconf --kill gpg-agent
+  when: ansible_os_family != 'Suse'  # OpenSUSE ships with an older version of gpg-agent that doesn't support this
+  environment:
+    GNUPGHOME: "{{ git_gpg_gpghome }}"
+
 - name: GPG-VERIFICATION | Remove GnuPG verification workdir
   file:
     path: "{{ git_gpg_workdir.path }}"

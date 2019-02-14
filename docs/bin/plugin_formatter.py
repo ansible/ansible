@@ -1,22 +1,9 @@
 #!/usr/bin/env python
-# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-# (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
-# (c) 2017 Ansible Project
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# Copyright: (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
+# Copyright: (c) 2017, Ansible Project
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -47,6 +34,7 @@ except ImportError:
 import jinja2
 import yaml
 from jinja2 import Environment, FileSystemLoader
+from jinja2.runtime import Undefined
 from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
@@ -157,6 +145,22 @@ def rst_xline(width, char="="):
     ''' return a restructured text line of a given length '''
 
     return char * width
+
+
+def documented_type(text):
+    ''' Convert any python type to a type for documentation '''
+
+    if isinstance(text, Undefined):
+        return '-'
+    if text == 'str':
+        return 'string'
+    if text == 'bool':
+        return 'boolean'
+    if text == 'int':
+        return 'integer'
+    if text == 'dict':
+        return 'dictionary'
+    return text
 
 
 test_list = partial(is_sequence, include_strings=False)
@@ -289,13 +293,17 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         # use ansible core library to parse out doc metadata YAML and plaintext examples
         doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
 
-        if metadata and 'removed' in metadata.get('status'):
+        if metadata and 'removed' in metadata.get('status', []):
             continue
 
         category = categories
 
         # Start at the second directory because we don't want the "vendor"
         mod_path_only = os.path.dirname(module_path[len(module_dir):])
+
+        # Find the subcategory for each module
+        relative_dir = mod_path_only.split('/')[1]
+        sub_category = mod_path_only[len(relative_dir) + 2:]
 
         primary_category = ''
         module_categories = []
@@ -334,6 +342,7 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
                                'returndocs': returndocs,
                                'categories': module_categories,
                                'primary_category': primary_category,
+                               'sub_category': sub_category,
                                }
 
     # keep module tests out of becoming module docs
@@ -388,6 +397,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
         env.filters['html_ify'] = html_ify
         env.filters['fmt'] = rst_fmt
         env.filters['xline'] = rst_xline
+        env.filters['documented_type'] = documented_type
         env.tests['list'] = test_list
         templates['plugin'] = env.get_template('plugin.rst.j2')
 
@@ -486,14 +496,14 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
             for (k, v) in iteritems(doc['options']):
                 # Error out if there's no description
                 if 'description' not in doc['options'][k]:
-                    raise AnsibleError("Missing required description for option %s in %s " % (k, module))
+                    raise AnsibleError("Missing required description for parameter '%s' in '%s' " % (k, module))
 
                 # Error out if required isn't a boolean (people have been putting
                 # information on when something is required in here.  Those need
                 # to go in the description instead).
                 required_value = doc['options'][k].get('required', False)
                 if not isinstance(required_value, bool):
-                    raise AnsibleError("Invalid required value '%s' for option '%s' in '%s' (must be truthy)" % (required_value, k, module))
+                    raise AnsibleError("Invalid required value '%s' for parameter '%s' in '%s' (must be truthy)" % (required_value, k, module))
 
                 # Strip old version_added information for options
                 if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
@@ -582,7 +592,7 @@ def process_categories(plugin_info, categories, templates, output_dir, output_na
         write_data(text, output_dir, category_filename)
 
 
-def process_support_levels(plugin_info, templates, output_dir, plugin_type):
+def process_support_levels(plugin_info, categories, templates, output_dir, plugin_type):
     supported_by = {'Ansible Core Team': {'slug': 'core_supported',
                                           'modules': [],
                                           'output': 'core_maintained.rst',
@@ -645,9 +655,24 @@ These modules are currently shipped with Ansible, but will most likely be shippe
         else:
             raise AnsibleError('Unknown supported_by value: %s' % info['metadata']['supported_by'])
 
-    # Render the module lists
+    # Render the module lists based on category and subcategory
     for maintainers, data in supported_by.items():
+        subcategories = {}
+        subcategories[''] = {}
+        for module in data['modules']:
+            new_cat = plugin_info[module]['sub_category']
+            category = plugin_info[module]['primary_category']
+            if category not in subcategories:
+                subcategories[category] = {}
+                subcategories[category][''] = {}
+                subcategories[category]['']['_modules'] = []
+            if new_cat not in subcategories[category]:
+                subcategories[category][new_cat] = {}
+                subcategories[category][new_cat]['_modules'] = []
+            subcategories[category][new_cat]['_modules'].append(module)
+
         template_data = {'maintainers': maintainers,
+                         'subcategories': subcategories,
                          'modules': data['modules'],
                          'slug': data['slug'],
                          'module_info': plugin_info,
@@ -742,7 +767,7 @@ def main():
         process_categories(plugin_info, categories, templates, output_dir, category_list_name_template, plugin_type)
 
         # Render all the categories for modules
-        process_support_levels(plugin_info, templates, output_dir, plugin_type)
+        process_support_levels(plugin_info, categories, templates, output_dir, plugin_type)
 
 
 if __name__ == '__main__':

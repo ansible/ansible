@@ -7,9 +7,10 @@
  - name: Clearing (if) previous disks were created
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "{{item }}"
+       name: "{{ item }}"
        state: absent
    with_items:
+     - "md{{ rpfx }}os"
      - "md{{ rpfx }}2"
      - "md{{ rpfx }}1"
 
@@ -17,6 +18,7 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
+       storage_account_type: "Standard_LRS"
        disk_size_gb: 1
        tags:
            testing: testing
@@ -59,13 +61,52 @@
      that:
        - output.changed
        - output.state.id is defined
+       - output.state.os_type == None
+
+ - name: Change the operating system type of the managed disk to linux
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}1"
+       disk_size_gb: 1
+       os_type: linux
+       storage_account_type: "Standard_LRS"
+       tags:
+           testing: testing
+           delete: never
+   register: output
+
+ - assert:
+     that:
+       - output.changed
+       - output.state.os_type == 'linux'
+
+ - name: Create new managed disk with an os_type specified at creation
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}os"
+       storage_account_type: "Standard_LRS"
+       disk_size_gb: 1
+       os_type: windows
+   register: win
+
+ - name: Assert status of os_type specified at creation
+   assert:
+     that:
+       - win.changed
+       - win.state.os_type == 'windows'
+
+ - name: Clean up managed disk created with os_type
+   azure_rm_managed_disk:
+       resource_group: "{{ resource_group }}"
+       name: "md{{ rpfx }}os"
+       state: absent
 
  - name: Copy disk to a new managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}2"
        create_option: "copy"
-       source_resource_uri: "{{ output.state.id }}"
+       source_uri: "{{ output.state.id }}"
        disk_size_gb: 1
    register: copy
 
@@ -175,11 +216,13 @@
    azure_rm_managed_disk_facts:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
-   register: fact
 
  - assert:
        that:
            - "azure_managed_disk | length == 1"
+           - azure_managed_disk[0].storage_account_type == "Premium_LRS"
+           - azure_managed_disk[0].disk_size_gb == 2
+           - "azure_managed_disk[0].os_type == 'linux'"
 
  - name: Gather facts
    azure_rm_managed_disk_facts:
@@ -192,7 +235,7 @@
  - set_fact:
      parameter: "{{parameter |combine({item.key: item.value})}}"
    when: "{{item.key not in ['id', 'changed'] and item.value != None}}"
-   with_dict: "{{ fact.ansible_facts.azure_managed_disk[0] }}"
+   with_dict: "{{ azure_managed_disk[0] }}"
 
  - name: Create disk with facts return value
    azure_rm_managed_disk:
@@ -294,7 +337,6 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
-       managed_by: "tr{{ rpfx }}"
        tags:
            testing: testing
            delete: never
@@ -310,6 +352,7 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
+       managed_by: ''
        tags:
            testing: testing
            delete: never
@@ -325,6 +368,7 @@
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
        disk_size_gb: 2
+       managed_by: ''
        tags:
            testing: testing
            delete: never
@@ -339,6 +383,7 @@
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
        name: "md{{ rpfx }}1"
+       managed_by: ''
        disk_size_gb: 2
        tags:
            testing: testing
@@ -406,20 +451,15 @@
        - output.changed
        - output.state
 
- - name: Delete managed disk
+ - name: Delete all managed disk
    azure_rm_managed_disk:
        resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}2"
+       name: "md{{ rpfx }}{{ item }}"
+       managed_by: ''
        state: absent
-   check_mode: no
-
- - name: Delete copied managed disk
-   azure_rm_managed_disk:
-       resource_group: "{{ resource_group }}"
-       name: "md{{ rpfx }}1"
-       disk_size_gb: 2
-       state: absent
-   check_mode: no
+   with_items:
+       - 1
+       - 2
 
  - name: Delete virtual machine
    azure_rm_virtualmachine:

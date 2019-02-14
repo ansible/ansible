@@ -111,7 +111,7 @@ connections:
 import json
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER
+from ansible.module_utils.k8s.common import K8sAnsibleMixin, HAS_K8S_MODULE_HELPER, k8s_import_exception
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
@@ -151,7 +151,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
 
         if not HAS_K8S_MODULE_HELPER:
             raise K8sInventoryException(
-                "This module requires the OpenShift Python client. Try `pip install openshift`"
+                "This module requires the OpenShift Python client. Try `pip install openshift`. Detail: {0}".format(k8s_import_exception)
             )
 
         source_data = None
@@ -165,7 +165,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
             self.fetch_objects(connections)
 
     def fetch_objects(self, connections):
-        client = self.get_api_client()
 
         if connections:
             if not isinstance(connections, list):
@@ -184,6 +183,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable, K8sAnsibleM
                     self.get_pods_for_namespace(client, name, namespace)
                     self.get_services_for_namespace(client, name, namespace)
         else:
+            client = self.get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
             for namespace in namespaces:

@@ -614,12 +614,12 @@ def get_vm_by_id(client, vm_id):
     # -2: All vms user can Use
     # -1: Vms belonging to the user and any of his groups - default
     # >= 0: UID User's vms
-    pool.info(filter=-2)
+    pool.info(filter=-2, range_start=int(vm_id), range_end=int(vm_id))
 
-    for vm in pool:
-        if str(vm.id) == str(vm_id):
-            return vm
-    return None
+    if len(pool) == 1:
+        return pool[0]
+    else:
+        return None
 
 
 def get_vms_by_ids(module, client, state, ids):

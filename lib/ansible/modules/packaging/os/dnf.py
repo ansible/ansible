@@ -184,6 +184,12 @@ options:
     default: 0
     type: int
     version_added: "2.8"
+  install_weak_deps:
+    description:
+      - Will also install all packages linked by a weak dependency relation.
+    type: bool
+    default: "yes"
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -497,6 +503,17 @@ class DnfModule(YumDnf):
 
         conf = base.conf
 
+        # Change the configuration file path if provided, this must be done before conf.read() is called
+        if conf_file:
+            # Fail if we can't read the configuration file.
+            if not os.access(conf_file, os.R_OK):
+                self.module.fail_json(
+                    msg="cannot read configuration file", conf_file=conf_file,
+                    results=[],
+                )
+            else:
+                conf.config_file_path = conf_file
+
         # Read the configuration file
         conf.read()
 
@@ -512,6 +529,9 @@ class DnfModule(YumDnf):
 
         # Set installroot
         conf.installroot = installroot
+
+        # Load substitutions from the filesystem
+        conf.substitutions.update_from_etc(installroot)
 
         # Handle different DNF versions immutable mutable datatypes and
         # dnf v1/v2/v3
@@ -545,19 +565,11 @@ class DnfModule(YumDnf):
         if self.download_only:
             conf.downloadonly = True
 
-        # Change the configuration file path if provided
-        if conf_file:
-            # Fail if we can't read the configuration file.
-            if not os.access(conf_file, os.R_OK):
-                self.module.fail_json(
-                    msg="cannot read configuration file", conf_file=conf_file,
-                    results=[],
-                )
-            else:
-                conf.config_file_path = conf_file
-
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
+
+        # Default in dnf (and module default) is True
+        conf.install_weak_deps = self.install_weak_deps
 
     def _specify_repositories(self, base, disablerepo, enablerepo):
         """Enable and disable repositories matching the provided patterns."""
@@ -588,6 +600,15 @@ class DnfModule(YumDnf):
         except AttributeError:
             pass  # older versions of dnf didn't require this and don't have these methods
         try:
+            if self.update_cache:
+                try:
+                    base.update_cache()
+                except dnf.exceptions.RepoError as e:
+                    self.module.fail_json(
+                        msg="{0}".format(to_text(e)),
+                        results=[],
+                        rc=1
+                    )
             base.fill_sack(load_system_repo='auto')
         except dnf.exceptions.RepoError as e:
             self.module.fail_json(
@@ -601,15 +622,6 @@ class DnfModule(YumDnf):
         if self.security:
             key = {'advisory_type__eq': 'security'}
             base._update_security_filters = [base.sack.query().filter(**key)]
-        if self.update_cache:
-            try:
-                base.update_cache()
-            except dnf.exceptions.RepoError as e:
-                self.module.fail_json(
-                    msg="{0}".format(to_text(e)),
-                    results=[],
-                    rc=1
-                )
 
         return base
 
@@ -738,6 +750,13 @@ class DnfModule(YumDnf):
                     "results": []
                 }
 
+    def _whatprovides(self, filepath):
+        available = self.base.sack.query().available()
+        pkg_spec = available.filter(provides=filepath).run()
+
+        if pkg_spec:
+            return pkg_spec[0].name
+
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
         already_loaded_comps = False  # Only load this if necessary, it's slow
@@ -749,6 +768,13 @@ class DnfModule(YumDnf):
             elif name.endswith(".rpm"):
                 filenames.append(name)
             elif name.startswith("@") or ('/' in name):
+                # like "dnf install /usr/bin/vi"
+                if '/' in name:
+                    pkg_spec = self._whatprovides(name)
+                    if pkg_spec:
+                        pkg_specs.append(pkg_spec)
+                        continue
+
                 if not already_loaded_comps:
                     self.base.read_comps()
                     already_loaded_comps = True
@@ -811,7 +837,7 @@ class DnfModule(YumDnf):
                         if self.allow_downgrade:
                             self.base.package_install(pkg)
                     else:
-                            self.base.package_install(pkg)
+                        self.base.package_install(pkg)
                 except Exception as e:
                     self.module.fail_json(
                         msg="Error occured attempting remote rpm operation: {0}".format(to_native(e)),

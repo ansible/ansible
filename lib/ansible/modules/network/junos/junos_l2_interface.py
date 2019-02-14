@@ -59,6 +59,14 @@ options:
       - Logical interface number. Value of C(unit) should be of type
         integer.
     default: 0
+  filter_input:
+    description:
+      - The name of input filter of ethernet-switching.
+    version_added: "2.8"
+  filter_output:
+    description:
+      - The name of output filter of ethernet-switching.
+    version_added: "2.8"
   state:
     description:
       - State of the Layer-2 Interface configuration.
@@ -177,6 +185,8 @@ def main():
         native_vlan=dict(type='int'),
         trunk_vlans=dict(type='list'),
         unit=dict(default=0, type='int'),
+        filter_input=dict(),
+        filter_output=dict(),
         description=dict(),
         enhanced_layer=dict(default=True, type='bool'),
         state=dict(default='present', choices=['present', 'absent']),
@@ -225,6 +235,8 @@ def main():
         ('mode', {'xpath': 'interface-mode', 'top': 'unit/family/ethernet-switching'}),
         ('access_vlan', {'xpath': 'members', 'top': 'unit/family/ethernet-switching/vlan'}),
         ('trunk_vlans', {'xpath': 'members', 'top': 'unit/family/ethernet-switching/vlan'}),
+        ('filter_input', {'xpath': 'input', 'top': 'unit/family/ethernet-switching/filter'}),
+        ('filter_output', {'xpath': 'output', 'top': 'unit/family/ethernet-switching/filter'}),
         ('native_vlan', {'xpath': 'native-vlan-id'}),
         ('description', 'description')
     ])

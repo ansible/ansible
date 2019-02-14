@@ -20,11 +20,17 @@
     name: "{{ vname }}"
   register: create_2
 
-- name: Create a volume (force)
+- name: "Create a volume (recreate: options-changed)"
   docker_volume:
     name: "{{ vname }}"
-    force: yes
+    recreate: options-changed
   register: create_3
+
+- name: "Create a volume (recreate: always)"
+  docker_volume:
+    name: "{{ vname }}"
+    recreate: always
+  register: create_4
 
 - name: Remove a volume
   docker_volume:
@@ -42,7 +48,8 @@
     that:
     - create_1 is changed
     - create_2 is not changed
-    - create_3 is changed
+    - create_3 is not changed
+    - create_4 is changed
     - absent_1 is changed
     - absent_2 is not changed
 
@@ -80,6 +87,17 @@
       o: size=200m,uid=1000
   register: driver_options_3
 
+- name: "Create a volume with options (changed, recreate: options-changed)"
+  docker_volume:
+    name: "{{ vname }}"
+    driver: local
+    driver_options:
+      type: tempfs
+      device: tmpfs
+      o: size=200m,uid=1000
+    recreate: options-changed
+  register: driver_options_4
+
 - name: Cleanup
   docker_volume:
     name: "{{ vname }}"
@@ -89,7 +107,8 @@
     that:
     - driver_options_1 is changed
     - driver_options_2 is not changed
-    - driver_options_3 is changed
+    - driver_options_3 is not changed
+    - driver_options_4 is changed
 
 ####################################################################
 ## labels ##########################################################
@@ -118,13 +137,30 @@
       ansible.test.1: hello
   register: driver_labels_3
 
+- name: "Create a volume with labels (less, recreate: options-changed)"
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+    recreate: options-changed
+  register: driver_labels_4
+
 - name: Create a volume with labels (more)
   docker_volume:
     name: "{{ vname }}"
     labels:
       ansible.test.1: hello
       ansible.test.3: ansible
-  register: driver_labels_4
+  register: driver_labels_5
+
+- name: "Create a volume with labels (more, recreate: options-changed)"
+  docker_volume:
+    name: "{{ vname }}"
+    labels:
+      ansible.test.1: hello
+      ansible.test.3: ansible
+    recreate: options-changed
+  register: driver_labels_6
 
 - name: Cleanup
   docker_volume:
@@ -136,4 +172,6 @@
     - driver_labels_1 is changed
     - driver_labels_2 is not changed
     - driver_labels_3 is not changed
-    - driver_labels_4 is changed
+    - driver_labels_4 is not changed
+    - driver_labels_5 is not changed
+    - driver_labels_6 is changed

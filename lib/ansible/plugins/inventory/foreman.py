@@ -19,7 +19,7 @@ DOCUMENTATION = '''
         - inventory_cache
     options:
       plugin:
-        description: the name of this plugin, it should alwys be set to 'foreman' for this plugin to recognize it as it's own.
+        description: the name of this plugin, it should always be set to 'foreman' for this plugin to recognize it as it's own.
         required: True
         choices: ['foreman']
       url:
@@ -75,7 +75,7 @@ try:
     if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
         raise ImportError
 except ImportError:
-        raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
+    raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
 
 from requests.auth import HTTPBasicAuth
 
@@ -166,8 +166,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         url = "%s/api/v2/hosts/%s" % (self.foreman_url, hid)
         ret = self._get_json(url, [404])
         if not ret or not isinstance(ret, MutableMapping) or not ret.get('all_parameters', False):
-            ret = {'all_parameters': [{}]}
-        return ret.get('all_parameters')[0]
+            ret = []
+        return ret.get('all_parameters')
 
     def _get_facts_by_id(self, hid):
         url = "%s/api/v2/hosts/%s/facts" % (self.foreman_url, hid)
@@ -220,11 +220,11 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
                 # set host vars from params
                 if self.get_option('want_params'):
-                    for k, v in self._get_all_params_by_id(host['id']).items():
+                    for p in self._get_all_params_by_id(host['id']):
                         try:
-                            self.inventory.set_variable(host['name'], k, v)
+                            self.inventory.set_variable(host['name'], p['name'], p['value'])
                         except ValueError as e:
-                            self.display.warning("Could not set parameter hostvar for %s, skipping %s: %s" % (host, k, to_native(e)))
+                            self.display.warning("Could not set parameter hostvar for %s, skipping %s: %s" % (host, p['name'], to_native(p['value'])))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):

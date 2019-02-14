@@ -395,7 +395,7 @@ You can run from your fork something like:
 
 .. code-block:: bash
 
-    $ ./test/runner/ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
+    $ ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
 
 .. seealso::
 
@@ -409,11 +409,11 @@ You can run this:
 
 .. code-block:: bash
 
-    $ ./test/runner/ansible-test network-integration --continue-on-error --allow-unsupported --diff -v aci_tenant
+    $ ansible-test network-integration --continue-on-error --allow-unsupported --diff -v aci_tenant
 
 .. note:: You may need to add ``--python 2.7`` or ``--python 3.6`` in order to use the correct python version for performing tests.
 
-You may want to edit the used inventory at *./test/integration/inventory.networking* and add something like:
+You may want to edit the used inventory at *test/integration/inventory.networking* and add something like:
 
 .. code-block:: ini
 
@@ -439,5 +439,5 @@ You can run this:
 
 .. code-block:: bash
 
-    $ ./test/runner/ansible-test integration --python 2.7 --coverage aci_tenant
-    $ ./test/runner/ansible-test coverage report
+    $ ansible-test network-integration --python 2.7 --allow-unsupported --coverage aci_tenant
+    $ ansible-test coverage report

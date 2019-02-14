@@ -86,8 +86,7 @@ function cleanup
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
-        # HACK: Only upload certain results to codecov to avoid overloading it
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [[ "$T" =~ /1$ ]] ; then
+        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
@@ -116,5 +115,7 @@ function cleanup
 }
 
 trap cleanup EXIT
+
+ansible-test env --dump --show --color -v
 
 "test/utils/shippable/${script}.sh" "${test}"

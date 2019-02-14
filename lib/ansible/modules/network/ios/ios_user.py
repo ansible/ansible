@@ -102,8 +102,9 @@ options:
     aliases: ['role']
   sshkey:
     description:
-      - Specifies the SSH public key to configure
-        for the given username.  This argument accepts a valid SSH key value.
+      - Specifies one or more SSH public key(s) to configure
+        for the given username.
+      - This argument accepts a valid SSH key value.
     version_added: "2.7"
   nopassword:
     description:
@@ -137,6 +138,14 @@ EXAMPLES = """
     name: ansible
     nopassword: True
     sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+    state: present
+
+- name: create a new user with multiple keys
+  ios_user:
+    name: ansible
+    sshkey:
+      - "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      - "{{ lookup('file', '~/path/to/public_key') }}"
     state: present
 
 - name: remove all users except admin
@@ -210,20 +219,17 @@ commands:
     - username ansible secret password
     - username admin secret admin
 """
-from copy import deepcopy
-
-import re
-import ast
 import base64
 import hashlib
-
+import re
+from copy import deepcopy
 from functools import partial
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
+from ansible.module_utils.six import iteritems
 
 
 def validate_privilege(value, module):
@@ -269,14 +275,15 @@ def map_obj_to_commands(updates, module):
         command.append('username %s %s' % (want['name'], x))
 
     def add_hashed_password(command, want, x):
-        command.append('username %s secret %s %s' % (want['name'], ast.literal_eval(x)['type'],
-                                                     ast.literal_eval(x)['value']))
+        command.append('username %s secret %s %s' % (want['name'], x.get('type'),
+                                                     x.get('value')))
 
     def add_ssh(command, want, x=None):
         command.append('ip ssh pubkey-chain')
         if x:
             command.append('username %s' % want['name'])
-            command.append('key-hash %s' % x)
+            for item in x:
+                command.append('key-hash %s' % item)
             command.append('exit')
         else:
             command.append('no username %s' % want['name'])
@@ -325,10 +332,15 @@ def parse_view(data):
         return match.group(1)
 
 
-def parse_sshkey(data):
-    match = re.search(r'key-hash (\S+ \S+(?: .+)?)$', data, re.M)
-    if match:
-        return match.group(1)
+def parse_sshkey(data, user):
+    sshregex = r'username %s(\n\s+key-hash .+$)+' % user
+    sshcfg = re.search(sshregex, data, re.M)
+    key_list = []
+    if sshcfg:
+        match = re.findall(r'key-hash (\S+ \S+(?: .+)?)$', sshcfg.group(), re.M)
+        if match:
+            key_list = match
+    return key_list
 
 
 def parse_privilege(data):
@@ -345,7 +357,7 @@ def parse_password_type(data):
 
 
 def map_config_to_obj(module):
-    data = get_config(module, flags=['| section username'])
+    data = get_config(module, flags=['| include username'])
 
     match = re.findall(r'(?:^(?:u|\s{2}u))sername (\S+)', data, re.M)
     if not match:
@@ -357,9 +369,6 @@ def map_config_to_obj(module):
         regex = r'username %s .+$' % user
         cfg = re.findall(regex, data, re.M)
         cfg = '\n'.join(cfg)
-        sshregex = r'username %s\n\s+key-hash .+$' % user
-        sshcfg = re.findall(sshregex, data, re.M)
-        sshcfg = '\n'.join(sshcfg)
         obj = {
             'name': user,
             'state': 'present',
@@ -367,7 +376,7 @@ def map_config_to_obj(module):
             'configured_password': None,
             'hashed_password': None,
             'password_type': parse_password_type(cfg),
-            'sshkey': parse_sshkey(sshcfg),
+            'sshkey': parse_sshkey(data, user),
             'privilege': parse_privilege(cfg),
             'view': parse_view(cfg)
         }
@@ -424,11 +433,19 @@ def map_params_to_obj(module):
         item['nopassword'] = get_value('nopassword')
         item['privilege'] = get_value('privilege')
         item['view'] = get_value('view')
-        item['sshkey'] = sshkey_fingerprint(get_value('sshkey'))
+        item['sshkey'] = render_key_list(get_value('sshkey'))
         item['state'] = get_value('state')
         objects.append(item)
 
     return objects
+
+
+def render_key_list(ssh_keys):
+    key_list = []
+    if ssh_keys:
+        for item in ssh_keys:
+            key_list.append(sshkey_fingerprint(item))
+    return key_list
 
 
 def update_objects(want, have):
@@ -456,7 +473,7 @@ def main():
         name=dict(),
 
         configured_password=dict(no_log=True),
-        hashed_password=dict(no_log=True, elements='dict', options=hashed_password_spec),
+        hashed_password=dict(no_log=True, type='dict', options=hashed_password_spec),
         nopassword=dict(type='bool'),
         update_password=dict(default='always', choices=['on_create', 'always']),
         password_type=dict(default='secret', choices=['secret', 'password']),
@@ -464,7 +481,7 @@ def main():
         privilege=dict(type='int'),
         view=dict(aliases=['role']),
 
-        sshkey=dict(),
+        sshkey=dict(type='list'),
 
         state=dict(default='present', choices=['present', 'absent'])
     )

@@ -1,2 +1,0 @@
-bugfixes:
-- host execution order - Fix ``reverse_inventory`` to work on python3
