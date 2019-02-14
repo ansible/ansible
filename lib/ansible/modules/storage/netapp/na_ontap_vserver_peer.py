@@ -123,7 +123,7 @@ class NetAppONTAPVserverPeer(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
             if self.parameters.get('dest_hostname'):
                 self.module.params['hostname'] = self.parameters['dest_hostname']
                 if self.parameters.get('dest_username'):
