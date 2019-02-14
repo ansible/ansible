@@ -106,7 +106,6 @@ Function GetWebRequest{
     return $webRequest
 }
 
-
 Function Get-ChecksumFromUrl {
     param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy, $src_file_url)
 
@@ -401,6 +400,7 @@ Function Invoke-DownloadFile {
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 }
 
+$module.Result.checksum_algorithm = $checksum_algorithm
 $module.Result.dest = $dest
 $module.Result.elapsed = 0
 $module.Result.url = $url

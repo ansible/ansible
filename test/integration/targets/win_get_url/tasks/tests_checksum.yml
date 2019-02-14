@@ -86,6 +86,7 @@
     that:
       - result_sha1 is changed
       - result_sha1.checksum_dest == 'a97e6837f60cec6da4491bab387296bbcd72bdba'
+      - result_sha1.checksum_algorithm == 'sha1'
       - result_sha256 is changed
       - result_sha256_with_dot is changed
       - "stat_result_sha1.stat.exists == true"

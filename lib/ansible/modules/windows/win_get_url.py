@@ -188,10 +188,15 @@ checksum_dest:
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 checksum_src:
-    description: sha1 checksum of the file
+    description: <algorithm> checksum of the file
     returned: success
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
+checksum_algorithm:
+    description: <algorithm> checksum of the file
+    returned: success and if checksum or checksum_url is defined
+    type: str
+    sample: sha1
 elapsed:
     description: The elapsed seconds between the start of poll and the end of the module.
     returned: always
