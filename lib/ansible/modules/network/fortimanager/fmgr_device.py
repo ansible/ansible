@@ -84,7 +84,6 @@ options:
     description:
       - The serial number of the device being added to FortiManager.
     required: false
-
 '''
 
 

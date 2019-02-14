@@ -54,7 +54,7 @@ class FortiManagerHandler(object):
         self._check_mode = check_mode
         self._tools = FMGRCommon
 
-    def process_request(self, url, datagram, method):
+    def process_request(self, url, datagram, paramgram, method):
         """
         Formats and Runs the API Request via Connection Plugin. Streamlined for use FROM Modules.
 
@@ -72,7 +72,7 @@ class FortiManagerHandler(object):
         response = self._conn.send_request(method, data)
         if HAS_FMGR_DEBUG:
             try:
-                debug_dump(response, datagram, url, method)
+                debug_dump(response, datagram, paramgram, url, method)
             except BaseException:
                 pass
 
