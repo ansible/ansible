@@ -138,7 +138,11 @@ def run_module():
 
             # handle dict value
             if ";" in v and "=" in v:
-                v = {i.split("=")[0]: i.split("=")[1] for i in v.split(";")}
+                v_items = v.split(";")
+                v = {}
+                for i in v_items:
+                    k_item, v_item = i.split("=")
+                    v.update({k_item: v_item})
 
             # handle bool value
             if isinstance(v, string_types) and v.lower() in BOOLEANS:
