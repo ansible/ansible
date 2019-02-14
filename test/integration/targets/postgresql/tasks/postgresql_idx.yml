@@ -38,6 +38,7 @@
   become: yes
   shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLESPACE ssd LOCATION '/mnt/ssd';"
   ignore_errors: yes
+  register: tablespace
 
 # Create a test schema:
 - name: postgresql_idx - create test schema
@@ -138,6 +139,7 @@
     - result.storage_params == [ "fillfactor=90" ]
     - result.schema == 'foo'
     - result.query == 'CREATE INDEX CONCURRENTLY foo_test_idx ON foo.foo_table USING BTREE (id,story) WITH (fillfactor=90) TABLESPACE ssd'
+  when: tablespace.rc == 0
 
 # Create brin index not in concurrently mode
 - name: postgresql_idx - create brin index not concurrently
@@ -218,6 +220,7 @@
     - result.state == 'absent'
     - result.schema == 'foo'
     - result.query == 'DROP INDEX foo.foo_test_idx CASCADE'
+  when: tablespace.rc == 0
 
 # Try to drop not existing index
 - name: postgresql_idx - try to drop not existing index
