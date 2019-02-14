@@ -353,9 +353,9 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
 
 ANSIBALLZ_RLIMIT_TEMPLATE = '''
     import resource
-    
+
     existing_soft, existing_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
-    
+
     # adjust both limits subject to existing hard limit
     requested_limit = min(existing_hard, %(rlimit_nofile)d)
     try:
@@ -781,7 +781,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
         # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
-        rlimit_nofile = int(C.config.get_config_value('ANSIBALLZ_RLIMIT_NOFILE', variables=task_vars))
+        rlimit_nofile = int(C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars))
 
         if rlimit_nofile:
             rlimit = ANSIBALLZ_RLIMIT_TEMPLATE % dict(

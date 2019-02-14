@@ -13,18 +13,6 @@ ALLOW_WORLD_READABLE_TMPFILES:
   type: boolean
   yaml: {key: defaults.allow_world_readable_tmpfiles}
   version_added: "2.1"
-ANSIBALLZ_RLIMIT_NOFILE:
-  name: Adjust maximum file descriptor limit during Python module execution
-  description:
-  - Attempts to set RLIMIT_NOFILE to the specified value in the AnsiballZ wrapper (can speed up subprocess usage on
-    Python 2.x. See https://bugs.python.org/issue11284). Default value of 0 does not attempt to adjust existing system-defined limits.
-  default: 0
-  env:
-  - {name: ANSIBLE_ANSIBALLZ_RLIMIT_NOFILE}
-  ini:
-  - {key: ansiballz_rlimit_nofile, section: defaults}
-  vars:
-  - {name: ansible_ansiballz_rlimit_nofile}
 ANSIBLE_CONNECTION_PATH:
   name: Path of ansible-connection script
   default: null
@@ -1634,6 +1622,19 @@ PLUGIN_FILTERS_CFG:
   - key: plugin_filters_cfg
     section: defaults
   type: path
+PYTHON_MODULE_RLIMIT_NOFILE:
+  name: Adjust maximum file descriptor limit during Python module execution
+  description:
+  - Attempts to set RLIMIT_NOFILE to the specified value in the AnsiballZ wrapper (can speed up subprocess usage on
+    Python 2.x. See https://bugs.python.org/issue11284). Default value of 0 does not attempt to adjust existing system-defined limits.
+  default: 0
+  env:
+  - {name: ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE}
+  ini:
+  - {key: python_module_rlimit_nofile, section: defaults}
+  vars:
+  - {name: ansible_python_module_rlimit_nofile}
+  version_added: '2.8'
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True

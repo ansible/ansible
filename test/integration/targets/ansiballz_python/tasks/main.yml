@@ -1,6 +1,6 @@
 - check_rlimit_and_maxfd:
   vars:
-    ansible_ansiballz_rlimit_nofile: 123
+    ansible_python_module_rlimit_nofile: 123
   register: rlimit_return
 
 - assert:
