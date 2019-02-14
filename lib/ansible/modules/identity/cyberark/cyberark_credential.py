@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 module: cyberark_credential
 short_description: Module for retrieval of CyberArk vaulted credential using PAS Web Services SDK through the Central Credential Provider
-author: Edward Nunez @ CyberArk BizDev(@enunez-cyberark, @cyberark-bizdev, @erasmix)
+author: Edward Nunez @ CyberArk BizDev('@enunez-cyberark, @cyberark-bizdev, @erasmix, @jammyjamcabd')
 version_added: 2.8
 description:
     - Creates a URI for retrieving a credential from the Cyberark Vault through the Privileged
