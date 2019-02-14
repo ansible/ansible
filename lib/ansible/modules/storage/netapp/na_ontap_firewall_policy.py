@@ -22,7 +22,7 @@ extends_documentation_fragment:
 options:
   state:
     description:
-      - Whether to set up a fire policy or not
+      - Whether to set up a firewall policy or not
     choices: ['present', 'absent']
     default: present
   allow_list:
