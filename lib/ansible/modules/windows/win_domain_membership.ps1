@@ -123,7 +123,7 @@ Function Join-Domain {
 
     if($domain_ou_path){
         Write-DebugLog "adding OU destination arg to Add-Computer args"
-        if([System.DirectoryServices.DirectoryEntry]::Exists(("LDPA://$domain_ou_path")){
+        if([System.DirectoryServices.DirectoryEntry]::Exists("LDPA://$domain_ou_path")){
             $add_args["OUPath"] = $domain_ou_path
         }
         else {
