@@ -105,7 +105,12 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
 from ansible.module_utils.netapp_module import NetAppModule
-import ipaddress
+try:
+    import ipaddress
+    HAS_IPADDRESS_LIB = True
+except ImportError:
+    HAS_IPADDRESS_LIB = False
+
 import sys
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
@@ -141,6 +146,9 @@ class NetAppONTAPFirewallPolicy(object):
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
             self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
+
+        if HAS_IPADDRESS_LIB is False:
+            self.module.fail_json(msg="the python ipaddress lib is required for this module")
         return
 
     def validate_ip_addresses(self):
