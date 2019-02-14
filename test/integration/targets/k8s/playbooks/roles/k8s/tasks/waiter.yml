@@ -266,7 +266,7 @@
           reason: DeploymentPaused
         field:
           name: replicas
-          operator: =
+          operator: eq
           value: 2
       register: pause_deploy
 

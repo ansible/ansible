@@ -77,12 +77,12 @@ class KubernetesWaitModule(KubernetesAnsibleModule):
 
         def _field_func(resource):
             operators = {
-                '=': lambda x, y: x == y,
-                '!=': lambda x, y: x != y,
-                '>': lambda x, y: x > y,
-                '<': lambda x, y: x < y,
-                '>=': lambda x, y: x >= y,
-                '<=': lambda x, y: x <= y
+                'eq': lambda x, y: x == y,
+                'neq': lambda x, y: x != y,
+                'gt': lambda x, y: x > y,
+                'lt': lambda x, y: x < y,
+                'gte': lambda x, y: x >= y,
+                'lte': lambda x, y: x <= y
             }
             if not resource.status:
                 return False
