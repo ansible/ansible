@@ -17,7 +17,13 @@ $ttl = Get-AnsibleParam -obj $params -name "ttl" -type "int" -default 3600
 $type = Get-AnsibleParam -obj $params -name "type" -type "str" -failifempty $true -validateset "A","AAAA","CNAME","MX","NS","TXT","PTR"
 $values = Get-AnsibleParam -obj $params -name "value" -type "list" -default @() -aliases @("values")
 $zone = Get-AnsibleParam -obj $params -name "zone" -type "str" -failifempty $true
+$dns_computer_name = Get-AnsibleParam -obj $params -Name "computer_name" -failifempty $false
 
+
+$extra_args = @{}
+if ($domain_server -ne $null) {
+    $extra_args.ComputerName = $dns_computer_name
+}
 
 if ($state -eq 'present')
 {
@@ -71,7 +77,7 @@ $record_argument_name = @{
 $changes = New-Object -Typename System.Collections.ArrayList
 
 
-$records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore
+$records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args
 if ($records -ne $null)
 {
     # We use [Hashtable]$required_values below as a set rather than a map.
@@ -96,7 +102,7 @@ if ($records -ne $null)
                 $original_ttl_seconds = $record.TimeToLive.TotalSeconds
 
                 $record.TimeToLive = $ttl
-                Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode
+                Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode @extra_args
 
                 $changes += "-[$zone] $($record.HostName) $original_ttl_seconds $type $record_value`n"
                 $changes += "+[$zone] $($record.HostName) $($ttl.TotalSeconds) $type $record_value`n"
@@ -110,7 +116,7 @@ if ($records -ne $null)
         {
             # This record doesn't match any of the values, and must be removed
 
-            $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$check_mode
+            $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$check_mode @extra_args
 
             $changes += "-[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $($record.RecordData.$record_argument_name)`n"
             $result.changed = $true
@@ -127,7 +133,7 @@ if ($values -ne $null -and $values.Count -gt 0)
     foreach ($value in $values)
     {
         $splat_args = @{ $type = $true; $record_argument_name = $value }
-        Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$check_mode
+        Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$check_mode @extra_args
 
         $changes += "+[$zone] $name $($ttl.TotalSeconds) $type $value`n"
     }
