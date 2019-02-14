@@ -516,10 +516,10 @@ def main():
     try:
         db_connection = psycopg2.connect(**kw)
         if concurrent:
-            if psycopg2.__version__ < '2.4.2':
-                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-            else:
+            if psycopg2.__version__ >= '2.4.2':
                 db_connection.set_session(autocommit=True)
+            else:
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
         cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
     except TypeError as e:
