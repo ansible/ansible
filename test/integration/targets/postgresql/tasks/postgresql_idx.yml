@@ -165,6 +165,7 @@
     - result.storage_params == []
     - result.schema == 'public'
     - result.query == 'CREATE INDEX test_brin_idx ON public.test_table USING brin (id)'
+  when: postgres_version_resp.stdout is version('9.5', '>=')
 
 
 # Create index where column id > 1
