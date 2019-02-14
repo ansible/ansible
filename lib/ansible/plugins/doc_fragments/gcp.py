@@ -3,8 +3,8 @@
 
 
 class ModuleDocFragment(object):
-        # GCP doc fragment.
-        DOCUMENTATION = '''
+    # GCP doc fragment.
+    DOCUMENTATION = '''
 options:
     project:
         description:

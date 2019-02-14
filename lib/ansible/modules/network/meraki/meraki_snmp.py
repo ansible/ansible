@@ -181,7 +181,7 @@ def set_snmp(meraki, org_id):
                 meraki.params['v3_auth_pass'] is None or
                 meraki.params['v3_priv_mode'] is None or
                 meraki.params['v3_priv_pass'] is None):
-                    meraki.fail_json(msg='v3_auth_mode, v3_auth_pass, v3_priv_mode, and v3_auth_pass are required')
+            meraki.fail_json(msg='v3_auth_mode, v3_auth_pass, v3_priv_mode, and v3_auth_pass are required')
         payload = {'v3Enabled': meraki.params['v3_enabled'],
                    'v3AuthMode': meraki.params['v3_auth_mode'].upper(),
                    'v3AuthPass': meraki.params['v3_auth_pass'],

@@ -315,7 +315,7 @@ def create_scalable_target(connection, module):
             ScalableDimension=module.params.get('scalable_dimension')
         )
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
-            module.fail_json_aws(e, msg="Failed to describe scalable targets")
+        module.fail_json_aws(e, msg="Failed to describe scalable targets")
 
     # Scalable target registration will occur if:
     # 1. There is no scalable target registered for this service

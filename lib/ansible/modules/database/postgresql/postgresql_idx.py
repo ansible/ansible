@@ -349,9 +349,9 @@ def main():
             msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     if module.check_mode and concurrent:
-            module.fail_json(msg="Cannot concurrently create or drop index %s "
-                                 "inside the transaction block. The check is possible "
-                                 "in not concurrent mode only" % idxname)
+        module.fail_json(msg="Cannot concurrently create or drop index %s "
+                             "inside the transaction block. The check is possible "
+                             "in not concurrent mode only" % idxname)
 
     try:
         db_connection = psycopg2.connect(**kw)
