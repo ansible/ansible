@@ -1038,7 +1038,10 @@ class VaultEditor:
 
         try:
             if filename == '-':
-                data = sys.stdin.read()
+                if PY3:
+                    data = sys.stdin.buffer.read()
+                else:
+                    data = sys.stdin.read()
             else:
                 with open(filename, "rb") as fh:
                     data = fh.read()
