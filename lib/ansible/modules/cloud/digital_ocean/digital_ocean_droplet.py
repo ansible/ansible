@@ -87,7 +87,6 @@ options:
     description:
      - string data >64KB, e.g. a 'cloud-config' file or a Bash script to configure the Droplet on first boot.
     type: str
-    required: False
   ipv6:
     description:
      - Enable IPv6 for new droplet if C(True).
@@ -98,22 +97,23 @@ options:
      - Wait for the droplet IPv4 address, ensure the droplet is usable (locked=false).
     default: True
     type: bool
-  wait_new:
+  wait_build:
     description:
-     - 'When I(wait: True) and this is a new or I(rebuild: yes), wait I(wait_new) seconds before checking droplet status.'
+     - 'When I(wait: True) and this droplet is built/rebuilt, wait I(wait_build) seconds before checking droplet status.'
     type: int
     default: 30
-  wait_minimum:
+  wait_step:
     description:
-     - 'When I(wait: True) wait I(wait_minimum) seconds before checking droplet status. In other words, how often to spam DO API.'
+     - 'When I(wait: True) after I(wait_build) seconds passed, query DO API
+      every I(wait_step) seconds if I(wait_timeout) is not exceeded'
     type: int
     default: 2
-  wait_maximum:
+  wait_timeout:
     description:
-     - How long before wait gives up, in seconds, when creating a droplet.
+     - How long before wait gives up, in seconds, when creating/rebuilding a droplet.
+     - I(wait_build) always takes precedence, so if I(wait_build=150) and I(wait_timeout=120) timeout may happen only after 150 s.
     type: int
     default: 120
-    aliases: ['wait_timeout']
   backups:
     description:
      - indicates whether automated backups should be enabled.
@@ -133,7 +133,6 @@ options:
      - A list of Block Storage volume identifiers to attach to new Droplet.
      - "Note: a volume can only be attached to a single Droplet."
     type: list
-    required: False
   rebuild:
     description:
      - force Droplet rebuild. You may supply I(image) id/slug if you want it changed or omit I(image) and just re-fresh your Droplet.
@@ -157,7 +156,7 @@ EXAMPLES = '''
     region: sfo1
     image: ubuntu-16-04-x64
     tags: [ 'foo', 'bar' ]
-    wait_maximum: 500
+    wait_timeout: 500
   register: my_droplet
 
 - debug:
@@ -175,7 +174,8 @@ EXAMPLES = '''
     oauth_token: "{{ lookup('file', '~/.do/api-key1') }}"
     rebuild: yes
     image: debian-9-x64  # may be omitted.
-    wait_maximum: 240
+    wait_step: 3
+    wait_build: 20  # wait 20 seconds, then GET DO API droplet status every 3 s, unless default wait_timeout (120 s) is reached.
   register: my_droplet
 '''
 
@@ -312,7 +312,7 @@ data:
 '''
 
 import time
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
 
@@ -326,9 +326,9 @@ class DODroplet(object):
         # pop all the parameters which we never POST as data
         self.rebuild = self.module.params.pop('rebuild')
         self.wait = self.module.params.pop('wait')
-        self.wait_maximum = self.module.params.pop('wait_maximum')
-        self.wait_minimum = self.module.params.pop('wait_minimum')
-        self.wait_new = self.module.params.pop('wait_new')
+        self.wait_timeout = self.module.params.pop('wait_timeout')
+        self.wait_step = self.module.params.pop('wait_step')
+        self.wait_build = self.module.params.pop('wait_build')
         self.module.params.pop('timeout')
         self.module.params.pop('validate_certs')
         self.module.params.pop('oauth_token')
@@ -511,7 +511,7 @@ class DODroplet(object):
             self.module.fail_json(changed=False, msg=response.json['message'])
         self.module.exit_json(  # wait for rebuild to finish, enrich received JSON, then return it.
             changed=True, data=self.expose_addresses(
-                self.ready(droplet_id, action="rebuild")))
+                self.ready(droplet_id, action="rebuild", new=True)))
 
     def delete(self):
         json_data = self.find_droplet()
@@ -527,8 +527,8 @@ class DODroplet(object):
 
     def ready(self, droplet_id, action, new=False):
         if new:
-            time.sleep(self.wait_new)
-        end_time = time.time() + self.wait_maximum
+            time.sleep(self.wait_build)
+        end_time = time.time() + self.wait_timeout
         while time.time() < end_time:
             response = self.rest.get('droplets/{0}'.format(droplet_id))
             rj = response.json
@@ -543,8 +543,9 @@ class DODroplet(object):
             # self.module.warn(resp1)   ## debug end
             if not rj['droplet']['locked'] and len(rj['droplet']['networks']['v4']):
                 return rj
-            time.sleep(min(self.wait_minimum, end_time - time.time()))
-        self.module.fail_json(msg='Droplet {0} action "{1}" `wait_maximum` exceeded.'.format(self._droplet, action))
+            time.sleep(min(self.wait_step, end_time - time.time()))
+        timeout = "wait_timeout" if self.wait_timeout > self.wait_build else self.wait_build
+        self.module.fail_json(msg='Droplet {0} action "{1}" `{2}` exceeded.'.format(self._droplet, action, timeout))
 
 
 def main():
@@ -566,9 +567,9 @@ def main():
         volumes=dict(type='list'),
         tags=dict(type='list'),
         wait=dict(type='bool', default=True),
-        wait_maximum=dict(default=120, type='int', aliases=['wait_timeout']),
-        wait_minimum=dict(default=2, type='int'),
-        wait_new=dict(default=30, type='int'),
+        wait_timeout=dict(default=120, type='int'),
+        wait_step=dict(default=2, type='int'),
+        wait_build=dict(default=30, type='int'),
         unique_name=dict(),
     )
     module = AnsibleModule(
