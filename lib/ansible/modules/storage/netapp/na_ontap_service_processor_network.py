@@ -64,6 +64,7 @@ options:
     - For asynchronous, execution exits as soon as the request is sent, without checking SP status
     type: bool
     default: false
+    version_added: '2.8'
 '''
 
 EXAMPLES = """
@@ -73,7 +74,6 @@ EXAMPLES = """
         address_type: ipv4
         is_enabled: true
         dhcp: v4
-        node: FPaaS-A300-01
         node: "{{ netapp_node }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
