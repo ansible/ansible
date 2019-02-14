@@ -12,8 +12,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 module: cyberark_credential
 short_description: Module for retrieval of CyberArk vaulted credential using PAS Web Services SDK through the Central Credential Provider
-author: Edward Nunez @ CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @erasmix)
-version_added: 2.4
+author: Edward Nunez @ CyberArk BizDev(@enunez-cyberark, @cyberark-bizdev, @erasmix)
+version_added: 2.8
 description:
     - Creates a URI for retrieving a credential from the Cyberark Vault through the Privileged
       Account Security Web Services SDK by requesting access to a specific object through an Application ID
@@ -71,7 +71,7 @@ EXAMPLES = """
     query: "Safe=test&UserName=admin"
   register: cyberarkcredential
   result:
-     { api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }
+    '{ api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }'
 - name: Retrieve credential from CyberArk Vault using PAS Web Services SDK via Central Credential Provider
   cyberark_credential:
     api_base_url: "{{ web_services_base_url }}"
@@ -83,7 +83,7 @@ EXAMPLES = """
     reason: "requesting credential for Ansible deployment"
   register: cyberarkcredential
   result:
-     { api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }
+    '{ api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }'
 """
 
 RETURN = """
@@ -142,7 +142,6 @@ RETURN = """
         },
         "status_code": 200
     }
-}
 """
 
 from ansible.module_utils._text import to_text
