@@ -359,11 +359,11 @@ ANSIBALLZ_RLIMIT_TEMPLATE = '''
     # adjust both limits subject to existing hard limit
     requested_limit = min(existing_hard, %(rlimit_nofile)d)
     try:
-        resource.setrlimit(resource.RLIMIT_NOFILE, (requested_limit, requested_limit))
+        resource.setrlimit(resource.RLIMIT_NOFILE, (requested_limit, existing_hard))
     except ValueError:
         # some platforms (eg macOS) lie about their hard limit; try staying within the existing soft limit instead
         requested_limit = min(existing_soft, %(rlimit_nofile)d)
-        resource.setrlimit(resource.RLIMIT_NOFILE, (requested_limit, requested_limit))
+        resource.setrlimit(resource.RLIMIT_NOFILE, (requested_limit, existing_hard))
 '''
 
 

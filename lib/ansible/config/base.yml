@@ -1623,10 +1623,11 @@ PLUGIN_FILTERS_CFG:
     section: defaults
   type: path
 PYTHON_MODULE_RLIMIT_NOFILE:
-  name: Adjust maximum file descriptor limit during Python module execution
+  name: Adjust maximum file descriptor soft limit during Python module execution
   description:
-  - Attempts to set RLIMIT_NOFILE to the specified value in the AnsiballZ wrapper (can speed up subprocess usage on
-    Python 2.x. See https://bugs.python.org/issue11284). Default value of 0 does not attempt to adjust existing system-defined limits.
+  - Attempts to set RLIMIT_NOFILE soft limit to the specified value when executing Python modules (can speed up subprocess usage on
+    Python 2.x. See https://bugs.python.org/issue11284). The value will be limited by the existing hard limit. Default
+    value of 0 does not attempt to adjust existing system-defined limits.
   default: 0
   env:
   - {name: ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE}
