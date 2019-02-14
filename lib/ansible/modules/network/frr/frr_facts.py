@@ -53,7 +53,7 @@ EXAMPLES = """
   frr_facts:
     gather_subset:
       - config
-      - hardware  
+      - hardware
 
 - name: Do not collect hardware facts
   frr_facts:
