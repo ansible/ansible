@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# Copyright (c) 2016, Adfinis SyGroup AG
+# Copyright: (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -114,18 +114,18 @@ def main():
     changed = False
 
     groups = list(ldap_search(
-        '(&(objectClass=posixGroup)(cn={}))'.format(name),
+        '(&(objectClass=posixGroup)(cn={0}))'.format(name),
         attr=['cn']
     ))
     if position != '':
         container = position
     else:
         if ou != '':
-            ou = 'ou={},'.format(ou)
+            ou = 'ou={0},'.format(ou)
         if subpath != '':
-            subpath = '{},'.format(subpath)
-        container = '{}{}{}'.format(subpath, ou, base_dn())
-    group_dn = 'cn={},{}'.format(name, container)
+            subpath = '{0},'.format(subpath)
+        container = '{0}{1}{2}'.format(subpath, ou, base_dn())
+    group_dn = 'cn={0},{1}'.format(name, container)
 
     exists = bool(len(groups))
 
@@ -146,7 +146,7 @@ def main():
                     grp.modify()
         except Exception:
             module.fail_json(
-                msg="Creating/editing group {} in {} failed".format(name, container)
+                msg="Creating/editing group {0} in {1} failed".format(name, container)
             )
 
     if state == 'absent' and exists:
@@ -157,7 +157,7 @@ def main():
             changed = True
         except Exception:
             module.fail_json(
-                msg="Removing group {} failed".format(name)
+                msg="Removing group {0} failed".format(name)
             )
 
     module.exit_json(

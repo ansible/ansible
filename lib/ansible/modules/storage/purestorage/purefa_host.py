@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# Copyright: (c) 2017, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -341,7 +341,7 @@ def main():
         try:
             array.get_volume(module.params['volume'])
         except Exception:
-            module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
+            module.fail_json(msg='Volume {0} not found'.format(module.params['volume']))
 
     if host is None and state == 'present':
         make_host(module, array)

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
+# Copyright: (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -155,7 +155,7 @@ def main():
     filesystem = get_filesystem(module, system)
 
     if pool is None:
-        module.fail_json(msg='Pool {} not found'.format(module.params['pool']))
+        module.fail_json(msg='Pool {0} not found'.format(module.params['pool']))
 
     if state == 'present' and not filesystem:
         create_filesystem(module, system)
