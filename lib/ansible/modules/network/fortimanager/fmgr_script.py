@@ -30,7 +30,10 @@ module: fmgr_script
 version_added: "2.8"
 notes:
     - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
-author: Andrew Welsh (@Ghilli3)
+author:
+    - Luke Weighall (@lweighall)
+    - Andrew Welsh (@Ghilli3)
+    - Jim Huber (@p4r4n0y1ng)
 short_description: Add/Edit/Delete and execute scripts
 description: Create/edit/delete scripts and execute the scripts on the FortiManager using jsonrpc API
 

@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fmgr_provisioning
-version_added: "2.7"
+version_added: "2.8"
 author: Andrew Welsh (@Ghilli3)
 short_description: Provision devices via FortiMananger
 description:
