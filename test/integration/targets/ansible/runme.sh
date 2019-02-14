@@ -5,8 +5,6 @@ set -eux -o pipefail
 ansible --version
 ansible --help
 
-ansible testhost -i ../../inventory -m shell -a "ulimit -n" "$@"
-
 ansible testhost -i ../../inventory -m ping  "$@"
 ansible testhost -i ../../inventory -m setup "$@"
 

@@ -1,0 +1,9 @@
+- check_rlimit_and_maxfd:
+  vars:
+    ansible_ansiballz_rlimit_nofile: 123
+  register: rlimit_return
+
+- assert:
+    that:
+    - rlimit_return.rlimit_nofile[0] <= 123
+    - rlimit_return.maxfd <= 123

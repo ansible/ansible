@@ -40,7 +40,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         raise ApplicationError('Configuration not found: %s' % ansible_config)
 
     ansible = dict(
-        _ANSIBLE_RLIMIT_NOFILE='1024',
+        ANSIBLE_ANSIBALLZ_RLIMIT_NOFILE='1024',
         ANSIBLE_FORCE_COLOR='%s' % 'true' if args.color and color else 'false',
         ANSIBLE_DEPRECATION_WARNINGS='false',
         ANSIBLE_HOST_KEY_CHECKING='false',
