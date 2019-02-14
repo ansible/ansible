@@ -41,7 +41,9 @@ options:
   quiet:
     version_added: "2.8"
     description:
-      - "Set this to true to avoid verbose output"
+      - "Set this to C(true) to avoid verbose output"
+    type: bool
+    default: false
 notes:
      - This module is also supported for Windows targets.
 author:
@@ -77,5 +79,5 @@ EXAMPLES = '''
     that:
       - "my_param <= 100"
       - "my_param >= 0"
-    quiet: True
+    quiet: true
 '''
