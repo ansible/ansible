@@ -271,7 +271,7 @@ switch($program_metadata.action_state)
                 $local_path = [System.IO.Path]::GetRandomFileName()
                 Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode                                                
                 $cleanup_artifacts += $local_path
-            } elseif ($program_metadata.location_type -eq [LocationType]::Http -and $program_metadata.msi -ne $true) {
+            } elseif ($program_metadata.location_type -eq [LocationType]::Http) {
                 $local_path = [System.IO.Path]::GetRandomFileName()
 
                 if (-not $check_mode) {

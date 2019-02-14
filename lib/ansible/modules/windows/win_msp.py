@@ -96,12 +96,8 @@ options:
 notes:
 - By default all MSP installs and uninstalls will be run with the options
   C(/L*V /log, /qn, /norestart).
-- It is recommended you download the package first from the URL using the
-  M(win_get_url) module as it opens up more flexibility with what must be set
-  when calling C(win_package).
 - Packages will be temporarily downloaded or copied locally when path is a
-  network location and credential delegation is not set, or path is a URL
-  and the file is not an MSI.
+  network location and credential delegation is not set, or path is a URL.
 author:
 - Rodric Vos (@finzzownt)
 '''
@@ -142,7 +138,7 @@ rc:
     type: int
     sample: 0
 exit_code:
-    description: destination file/path
+    description: msiexec.exe return code
     returned: changed
     type: int
     sample: 0
