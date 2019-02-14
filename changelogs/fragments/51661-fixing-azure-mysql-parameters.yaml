@@ -1,0 +1,2 @@
+bugfixes:
+  - fixed issues with passing parameters while updating existing mysql
