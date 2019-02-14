@@ -53,6 +53,16 @@ options:
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
+  environment:
+    type: dict
+    description:
+      - Set these environment variables before running the command.
+      - Using this option does not unset existing environment variables.
+    sample:
+      environment:
+        DISPLAY: ":1.0"
+        LANG: C
+    version_added: "2.8"
   warn:
     description:
       - Enable or disable task warnings.
@@ -212,6 +222,7 @@ def main():
             _uses_shell=dict(type='bool', default=False),
             argv=dict(type='list'),
             chdir=dict(type='path'),
+            environment=dict(type='dict'),
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
@@ -225,6 +236,7 @@ def main():
     )
     shell = module.params['_uses_shell']
     chdir = module.params['chdir']
+    environment = module.params['environment']
     executable = module.params['executable']
     args = module.params['_raw_params']
     argv = module.params['argv']
@@ -288,7 +300,7 @@ def main():
     startd = datetime.datetime.now()
 
     if not module.check_mode:
-        rc, out, err = module.run_command(args, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin, binary_data=(not stdin_add_newline))
+        rc, out, err = module.run_command(args, environ_update=environment, executable=executable, use_unsafe_shell=shell, encoding=None, data=stdin, binary_data=(not stdin_add_newline))
     elif creates or removes:
         rc = 0
         out = err = b'Command would have run if not in check mode'
