@@ -16,18 +16,6 @@
          - 'output.failed'
          - 'output.msg == "Error running docker swarm module: must run on swarm manager node"'
 
-#  - name: Test parameters with state=remove
-#    docker_swarm:
-#      state: remove
-#    ignore_errors: yes
-#    register: output
-#
-#  - name: assert failure when called with state=remove and no node_id
-#    assert:
-#      that:
-#         - 'output.failed'
-#         - 'output.msg == "state is remove but all of the following are missing: node_id"'
-#
   - name: Create a Swarm cluster
     docker_swarm:
       state: present
@@ -45,18 +33,6 @@
     docker_swarm_facts:
     ignore_errors: yes
     register: output
-#
-#  - name: Remove a Swarm cluster
-#    docker_swarm:
-#      state: absent
-#      force: true
-#    register: output
-#
-#  - name: assert changed when remove a swarm cluster
-#    assert:
-#      that:
-#         - 'output.changed'
-#         - 'output.actions[0] == "Node has left the swarm cluster"'
 
   always:
   - name: Cleanup
