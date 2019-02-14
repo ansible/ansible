@@ -26,9 +26,8 @@ description:
     To create shared runners, you need to ask your administrator to give you this token.
     It can be found at U(https://$GITLAB_URL/admin/runners/).
 notes:
-  - Instead of the private_token parameter, the GITLAB_PRIVATE_TOKEN environment variable can be used.
-  - To create a new runner at least the C(private_token), C(registration_token), C(name) and C(url) options are required.
-  - Runners need to have unique names.
+  - To create a new runner at least the C(api_token), C(description) and C(url) options are required.
+  - Runners need to have unique descriptions.
 version_added: 2.8
 author:
   - Samy Coenen (@SamyCoenen)
