@@ -50,6 +50,13 @@ options:
     - The name of the zone to manage (eg "example.com"). The zone must already
       exist.
     required: yes
+  computer_name:
+    description:
+      - Specifies a DNS server. You can specify an IP address or any value that
+        resolves to an IP address, such as a fully qualified domain name
+        (FQDN), host name, or NETBIOS name.
+    required: false
+
 '''
 
 EXAMPLES = r'''
