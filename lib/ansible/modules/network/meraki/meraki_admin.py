@@ -209,7 +209,7 @@ def get_admin_id(meraki, data, name=None, email=None):
                     admin_id = a['id']
         elif meraki.params['email']:
             if meraki.params['email'] == a['email']:
-                    return a['id']
+                return a['id']
     if admin_id is None:
         meraki.fail_json(msg='No admin_id found')
     return admin_id

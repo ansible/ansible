@@ -168,7 +168,7 @@ def main():
     cli += ' %s community-string %s ' % (command, comm_str)
 
     if command != 'snmp-community-delete' and community_type:
-            cli += ' community-type ' + community_type
+        cli += ' community-type ' + community_type
 
     run_cli(module, cli, state_map)
 
