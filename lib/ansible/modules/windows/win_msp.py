@@ -19,8 +19,6 @@ description:
 - Installs or uninstalls a package in MSP format.
 - These packages can be sources from the local file system, network file share
   or a url.
-author:
-- Rodric Vos (@finzzownt)
 options:
   expected_return_code:
     description:
