@@ -141,7 +141,6 @@ options:
             severity:
                 description:
                     - Severity.
-                choices:
             status:
                 description:
                     - Enable/disable status.
@@ -344,8 +343,7 @@ def main():
                 "rev": {"required": False, "type": "int"},
                 "rule-id": {"required": False, "type": "int"},
                 "service": {"required": False, "type": "str"},
-                "severity": {"required": False, "type": "str",
-                             "choices": []},
+                "severity": {"required": False, "type": "str"},
                 "status": {"required": False, "type": "str",
                            "choices": ["disable", "enable"]}
 
