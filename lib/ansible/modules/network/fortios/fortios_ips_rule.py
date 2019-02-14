@@ -96,7 +96,6 @@ options:
             location:
                 description:
                     - Vulnerable location.
-                choices:
             log:
                 description:
                     - Enable/disable logging.
@@ -329,8 +328,7 @@ def main():
                 "application": {"required": False, "type": "str"},
                 "date": {"required": False, "type": "int"},
                 "group": {"required": False, "type": "str"},
-                "location": {"required": False, "type": "str",
-                             "choices": []},
+                "location": {"required": False, "type": "str"},
                 "log": {"required": False, "type": "str",
                         "choices": ["disable", "enable"]},
                 "log-packet": {"required": False, "type": "str",
