@@ -11,6 +11,23 @@
     that:
     - net is successful
 
+- name: setup instance to get network in implementation state
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-cs-firewall"
+    template: "{{ cs_common_template }}"
+    service_offering: "{{ cs_common_service_offering }}"
+    zone: "{{ cs_common_zone_adv }}"
+    networks:
+      - "{{ net.name }}"
+  register: instance
+  until: instance is success
+  retries: 10
+  delay: 5
+- name: verify instance setup
+  assert:
+    that:
+    - instance is successful
+
 - name: public ip address setup
   cs_ip_address:
     network: ansible test
@@ -443,6 +460,17 @@
     that:
     - fw is successful
     - fw is not changed
+
+- name: cleanup instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-cs-firewall"
+    zone: "{{ cs_common_zone_adv }}"
+    state: expunged
+  register: instance
+- name: verify instance cleanup
+  assert:
+    that:
+    - instance is successful
 
 - name: network cleanup
   cs_network:
