@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# Copyright: (c) 2017, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -320,14 +320,14 @@ def main():
             for hst in module.params['host']:
                 array.get_host(hst)
         except Exception:
-            module.fail_json(msg='Host {} not found'.format(hst))
+            module.fail_json(msg='Host {0} not found'.format(hst))
 
     if module.params['hostgroup']:
         try:
             for hstg in module.params['hostgroup']:
                 array.get_hgroup(hstg)
         except Exception:
-            module.fail_json(msg='Hostgroup {} not found'.format(hstg))
+            module.fail_json(msg='Hostgroup {0} not found'.format(hstg))
 
     if pgroup and state == 'present':
         update_pgroup(module, array)
