@@ -11,11 +11,10 @@
 
 # Create a directory for test tablespace:
 - name: postgresql_idx - create dir for test tablespace
-  become_user: "{{ pg_user }}"
-  become: yes
   file:
     path: /tmp/ssd
     state: directory
+    owner: "{{ pg_user }}"
     mode: 0700
   ignore_errors: yes
 
