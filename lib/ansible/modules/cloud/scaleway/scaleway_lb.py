@@ -70,15 +70,15 @@ options:
     type: bool
     default: 'no'
 
-  wait_timeout:
+  until:
     description:
-    - Time to wait for the load-balancer to reach the expected state
+    - Time to wait for the load-balancer to reach the expected state (in seconds)
     required: false
     default: 300
 
-  wait_sleep_time:
+  delay:
     description:
-    - Time to wait before every attempt to check the state of the load-balancer
+    - Time to wait before every attempt to check the state of the load-balancer (in seconds)
     required: false
     default: 3
 '''
@@ -191,11 +191,11 @@ def wait_to_complete_state_transition(api, lb, force_wait=False):
     wait = api.module.params["wait"]
     if not (wait or force_wait):
         return
-    wait_timeout = api.module.params["wait_timeout"]
-    wait_sleep_time = api.module.params["wait_sleep_time"]
+    until = api.module.params["until"]
+    delay = api.module.params["delay"]
 
     start = datetime.datetime.utcnow()
-    end = start + datetime.timedelta(seconds=wait_timeout)
+    end = start + datetime.timedelta(seconds=until)
     while datetime.datetime.utcnow() < end:
         api.module.debug("We are going to wait for the load-balancer to finish its transition")
         state = fetch_state(api, lb)
@@ -203,7 +203,7 @@ def wait_to_complete_state_transition(api, lb, force_wait=False):
             api.module.debug("It seems that the load-balancer is not in transition anymore.")
             api.module.debug("load-balancer in state: %s" % fetch_state(api, lb))
             break
-        time.sleep(wait_sleep_time)
+        time.sleep(delay)
     else:
         api.module.fail_json(msg="Server takes too long to finish its transition")
 
@@ -337,8 +337,8 @@ def main():
         tags=dict(type="list", default=[]),
         organization_id=dict(required=True),
         wait=dict(type="bool", default=False),
-        wait_timeout=dict(type="int", default=300),
-        wait_sleep_time=dict(type="int", default=3),
+        until=dict(type="int", default=300),
+        delay=dict(type="int", default=3),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
