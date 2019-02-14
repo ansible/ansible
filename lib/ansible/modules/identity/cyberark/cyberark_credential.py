@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 module: cyberark_credential
 short_description: Module for retrieval of CyberArk vaulted credential using PAS Web Services SDK through the Central Credential Provider
-author: "CyberArk BizDev (@enunez-cyberark, @cyberark-bizdev, @jimmyjamcabd)"
+author: BizDev @ CyberArk('@enunez-cyberark, @cyberark-bizdev, @jimmyjamcabd')
 version_added: 2.8
 description:
     - Creates a URI for retrieving a credential from the Cyberark Vault through the Privileged
@@ -92,53 +92,53 @@ RETURN = """
     failed: false
     result:
       Address: string
-        description: The target address of the credential being queried
-        type: string
-        returned: if required
+        description= The target address of the credential being queried
+        type= string
+        returned= if required
       Content: string
-        description: The password for the object being queried
-        type: string
-        returned: always
+        description= The password for the object being queried
+        type= string
+        returned= always
       CreationMethod: string
-        description: This is how the object was created in the Vault
-        type: string
-        returned: always
+        description= This is how the object was created in the Vault
+        type= string
+        returned= always
       DeviceType: string
-        description: An internal File Category for more granular management of Platforms
-        type: string
-        returned: always
+        description= An internal File Category for more granular management of Platforms
+        type= string
+        returned= always
       Folder: string
-        description: The folder within the Safe where the credential is stored
-        type: string
-        returned: always
+        description= The folder within the Safe where the credential is stored
+        type= string
+        returned= always
       Name: string
-        description: The Cyberark unique object ID of the credential being queried
-        type: string
-        returned: always
+        description= The Cyberark unique object ID of the credential being queried
+        type= string
+        returned= always
       PasswordChangeInProcess: bool
-        description: If the password has a change flag placed by the CPM
-        type: bool
-        returned: always
+        description= If the password has a change flag placed by the CPM
+        type= bool
+        returned= always
       PolicyID: string
-        description: Whether or not SSL certificates should be validated.
-        type: string
-        returned: if assigned to a policy
+        description= Whether or not SSL certificates should be validated.
+        type= string
+        returned= if assigned to a policy
       Safe: string
-        description: The safe where the queried credential is stored
-        type: string
-        returned: always
+        description= The safe where the queried credential is stored
+        type= string
+        returned= always
       Username: string
-        description: The username of the credential being queried
-        type: string
-        returned: if required
+        description= The username of the credential being queried
+        type= string
+        returned= if required
       LogonDomain: string
-        description: The Address friendly name resolved by the CPM
-        type: string
-        returned: if populated
+        description= The Address friendly name resolved by the CPM
+        type= string
+        returned= if populated
       CPMDisabled: string
-        description: A description of why this vaulted credential is not being managed by the CPM
-        type: string
-         returned: if CPM management is disabled and a reason is given
+        description= A description of why this vaulted credential is not being managed by the CPM
+        type= string
+        returned= if CPM management is disabled and a reason is given
       status_code: 200
 """
 
