@@ -150,7 +150,7 @@ def discover_device(fmgr, paramgram):
 
     url = '/dvm/cmd/discover/device/'
 
-    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
+    response = fmgr.process_request(url, datagram, paramgram, FMGRMethods.EXEC)
     return response
 
 
@@ -177,7 +177,7 @@ def add_device(fmgr, paramgram):
     }
 
     url = '/dvm/cmd/add/device/'
-    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
+    response = fmgr.process_request(url, datagram, paramgram, FMGRMethods.EXEC)
     return response
 
 
@@ -200,7 +200,7 @@ def delete_device(fmgr, paramgram):
     }
 
     url = '/dvm/cmd/del/device/'
-    response = fmgr.process_request(url, datagram, FMGRMethods.EXEC)
+    response = fmgr.process_request(url, datagram, paramgram, FMGRMethods.EXEC)
     return response
 
 
@@ -223,7 +223,7 @@ def get_device(fmgr, paramgram):
 
     url = '/dvmdb/adom/{adom}/device/{name}'.format(adom=paramgram["adom"],
                                                     name=paramgram["device_unique_name"])
-    response = fmgr.process_request(url, datagram, FMGRMethods.GET)
+    response = fmgr.process_request(url, datagram, paramgram, FMGRMethods.GET)
     return response
 
 
