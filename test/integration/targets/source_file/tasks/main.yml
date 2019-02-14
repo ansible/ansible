@@ -2,14 +2,14 @@
 
 - name: make a new file
   copy:
-    src: foo.sh
-    dest: "{{ output_dir }}/foo.sh"
+    src: foo
+    dest: "{{ output_dir }}/foo"
     mode: 0644
 
 - name: basic source
   register: sf_basic_result
   source_file:
-    path: "{{ output_dir }}/foo.sh"
+    path: "{{ output_dir }}/foo"
 
 - assert:
     that:
@@ -34,7 +34,7 @@
 - name: prefix source
   register: sf_prefix_result
   source_file:
-    path: "{{ output_dir }}/foo.sh"
+    path: "{{ output_dir }}/foo"
     prefix: integration_
 
 - assert:
@@ -60,7 +60,7 @@
 - name: lower source
   register: sf_lower_result
   source_file:
-    path: "{{ output_dir }}/foo.sh"
+    path: "{{ output_dir }}/foo"
     lower: true
 
 - assert:

@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 # This is a comment
 
 if true; then
