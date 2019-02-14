@@ -295,22 +295,12 @@ def add_runas_options(parser):
     """
     runas_group = parser.add_argument_group("Privilege Escalation Options", "control how and which user you become as on target hosts")
 
-    # priv user defaults to root later on to enable detecting when this option was given here
-    runas_group.add_argument("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
-                             help="run operations with sudo (nopasswd) (deprecated, use become)")
-    runas_group.add_argument('-U', '--sudo-user', dest='sudo_user', default=None,
-                             help='desired sudo user (default=root) (deprecated, use become)')
-    runas_group.add_argument('-S', '--su', default=C.DEFAULT_SU, action='store_true',
-                             help='run operations with su (deprecated, use become)')
-    runas_group.add_argument('-R', '--su-user', default=None,
-                             help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
-
     # consolidated privilege escalation (become)
     runas_group.add_argument("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
                              help="run operations with become (does not imply password prompting)")
     runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, choices=C.BECOME_METHODS,
-                             help="privilege escalation method to use (default=%s), valid choices: [ %s ]" %
-                             (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
+                             help="privilege escalation method to use (default=%(default)s), use "
+                                  "`ansible-doc -t become -l` to list valid choices.")
     runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
                              help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
@@ -328,10 +318,6 @@ def add_runas_prompt_options(parser, runas_group=None):
         runas_group = parser.add_argument_group("Privilege Escalation Options",
                                                 "control how and which user you become as on target hosts")
 
-    runas_group.add_argument('--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
-                             help='ask for sudo password (deprecated, use become)')
-    runas_group.add_argument('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
-                             help='ask for su password (deprecated, use become)')
     runas_group.add_argument('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
                              help='ask for privilege escalation password')
 
