@@ -45,10 +45,10 @@ options:
   field:
     description:
     - Specifies a field, operator, and comparison value to wait for on the status field of a resource.
-    - Comparison is done like: C(name) C(operator) C(value)
+    - Comparison is processed as C(name) C(operator) C(value)
     - For example, to check that there are more than two replicas in a stateful set, C(name) would be replicas,
       C(operator) would be gt, and C(value) would be 2
-    - The comparison then would be processed as: status.replicas > 2
+    - This would be processed as status.replicas > 2
     suboptions:
       name:
         description:
