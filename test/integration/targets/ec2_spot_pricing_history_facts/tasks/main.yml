@@ -1,0 +1,54 @@
+---
+# ============================================================
+# Smoke test
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- name: Get an az
+  register: azs
+  aws_az_facts:
+    <<: *aws_connection_info
+
+- set_fact:
+    az: "{{ azs.availability_zones[0].zone_name }}"
+    one_day_ago: >
+      {{ "%Y-%m-%d" | strftime((ansible_date_time.epoch | int ) - 86400 ) }}
+
+- name: Gather spot_pricing facts
+  ec2_spot_pricing_history_facts:
+    <<: *aws_connection_info
+    availability_zone: "{{ az }}"
+    instance_types: ["t3.medium"]
+    product_descriptions: ["Linux/UNIX"]
+    start_time: "{{ one_day_ago }}"
+    end_time: "{{ ansible_date_time.iso8601 }}"
+    max_results: 2
+
+- name: Format check
+  assert:
+    that:
+      - "ec2_spot_pricing_history | length                == 2"
+      - "ec2_spot_pricing_history[0].availability_zone    == az"
+      - "ec2_spot_pricing_history[0].instance_type        == 't3.medium'"
+      - "ec2_spot_pricing_history[0].product_description  == 'Linux/UNIX'"
+      - "ec2_spot_pricing_history[0].spot_price           is defined"
+      - "ec2_spot_pricing_history[0].timestamp            is defined"
+
+# ============================================================
+# Invalid date test
+- name: Invalid date test
+  register: invalid_start_date
+  failed_when: invalid_start_date is not failed
+  ec2_spot_pricing_history_facts:
+    <<: *aws_connection_info
+    start_time: "foo"
+
+- name: Assert that the msg is correct
+  assert:
+    that:
+      - "invalid_start_date.msg == 'start_time=foo is not a valid date'"
