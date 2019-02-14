@@ -1,4 +1,5 @@
-- check_rlimit_and_maxfd:
+- name: set a very low file descriptor limit
+  check_rlimit_and_maxfd:
   vars:
     ansible_python_module_rlimit_nofile: 123
   register: rlimit_return
@@ -7,3 +8,16 @@
     that:
     - rlimit_return.rlimit_nofile[0] <= 123
     - rlimit_return.maxfd <= 123
+
+- debug: msg='{{ rlimit_return.rlimit_nofile[1] + 1000 }}'
+
+- name: attempt to set a value higher than existing hard limit
+  check_rlimit_and_maxfd:
+  vars:
+    ansible_python_module_rlimit_nofile: '{{ rlimit_return.rlimit_nofile[1] + 1000 }}'
+  register: rlimit_limited_return
+
+- assert:
+    that:
+    # ensure that both limits are equal to the previously found hard limit
+    - rlimit_limited_return.rlimit_nofile[0] == rlimit_limited_return.rlimit_nofile[1] == rlimit_return.rlimit_nofile[1]
