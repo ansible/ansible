@@ -103,7 +103,7 @@ options:
        Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
        Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
        Protocol values of none, iscsi or fcp can't be combined with any other data protocol(s).
-    
+
   force_subnet_association:
     description:
        Set this to true to acquire the address from the named subnet and assign the subnet to the LIF.
@@ -251,7 +251,6 @@ class NetAppOntapInterface(object):
             options['administrative-status'] = parameters['admin_status']
         if parameters.get('force_subnet_association') is not None:
             options['force-subnet-association'] = 'true' if parameters['force_subnet_association'] is True else 'false'
-
 
     def create_interface(self):
         ''' calling zapi to create interface '''
