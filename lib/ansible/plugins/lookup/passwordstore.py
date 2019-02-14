@@ -55,7 +55,7 @@ DOCUMENTATION = """
         description: use alphanumeric characters
         type: bool
         default: 'no'
-        version_added: 2.7
+        version_added: 2.8
 """
 EXAMPLES = """
 # Debug is used for examples, BAD IDEA to show passwords on screen
