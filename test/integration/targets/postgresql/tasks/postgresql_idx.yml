@@ -18,23 +18,23 @@
 
 - name: postgresql_idx - drop dir for test tablespace
   file:
-    path: /ssd
+    path: /mnt/ssd
     state: absent
   ignore_errors: yes
 
 - name: postgresql_idx - create dir for test tablespace
   file:
-    path: /ssd
+    path: /mnt/ssd
     state: directory
     owner: "{{ pg_user }}"
-    mode: 0700
+    mode: 0755
   ignore_errors: yes
 
 # Then create a test tablespace:
 - name: postgresql_idx - create test tablespace called ssd
   become_user: "{{ pg_user }}"
   become: yes
-  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLESPACE ssd LOCATION '/ssd';"
+  shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLESPACE ssd LOCATION '/mnt/ssd';"
   ignore_errors: yes
 
 # Create a test schema:
