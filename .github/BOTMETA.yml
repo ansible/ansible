@@ -164,6 +164,7 @@ files:
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: vmware
     maintainers: $team_vmware
+    notified: lparkes
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
   $modules/cloud/vultr/: &vultr
     labels: [ cloud, vultr ]
@@ -448,8 +449,9 @@ files:
   $modules/windows/: &windows
     ignored: angstwad georgefrank h0nIg
     keywords: [ credssp, hyperv, powershell, psrp, winrm ]
-    maintainers: $team_windows
     labels: windows
+    maintainers: $team_windows
+    notified: if-meaton
   $modules/windows/win_security_policy.py:
     <<: *windows
     maintainers: defionscode
@@ -1330,7 +1332,7 @@ macros:
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_bsd: AMDmi3 bcoca dagwieers jasperla JoergFiedler mekanix opoplawski overhacked tuxillo
+  team_bsd: AMDmi3 bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
@@ -1361,7 +1363,7 @@ macros:
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
-  team_postgresql: amenonsen Andersson007 andytom dagwieers Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul
+  team_postgresql: amenonsen Andersson007 andytom dagwieers Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
