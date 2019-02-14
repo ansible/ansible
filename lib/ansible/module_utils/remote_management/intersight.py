@@ -36,6 +36,7 @@ import re
 import json
 import hashlib
 from ansible.module_utils.six.moves.urllib.parse import urlparse, urlencode, quote
+from ansible.module_utils.urls import fetch_url
 
 try:
     from cryptography.hazmat.primitives import serialization, hashes
@@ -45,17 +46,11 @@ try:
 except ImportError:
     HAS_CRYPTOGRAPHY = False
 
-try:
-    import requests
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-
 intersight_argument_spec = dict(
     api_private_key=dict(type='path', required=True),
     api_uri=dict(type='str', default='https://intersight.com/api/v1'),
     api_key_id=dict(type='str', required=True),
-    secure=dict(type='bool', default=True),
+    validate_certs=dict(type='bool', default=True),
     use_proxy=dict(type='bool', default=True),
 )
 
@@ -114,13 +109,9 @@ class IntersightModule():
         self.result = dict(changed=False)
         if not HAS_CRYPTOGRAPHY:
             self.module.fail_json(msg='cryptography is required for this module')
-        if not HAS_REQUESTS:
-            self.module.fail_json(msg='Requests is required for this module')
         self.host = self.module.params['api_uri']
         self.public_key = self.module.params['api_key_id']
         self.private_key = open(self.module.params['api_private_key'], 'r').read()
-        self.secure = self.module.params['secure']
-        self.use_proxy = self.module.params['use_proxy']
         self.digest_algorithm = 'rsa-sha256'
         self.response_list = []
 
@@ -193,13 +184,13 @@ class IntersightModule():
         """
 
         try:
-            api_response = self.intersight_call(**options)
-            if not re.match(r'2..', str(api_response.status_code)):
-                raise RuntimeError(api_response.status_code, api_response.text)
+            response, info = self.intersight_call(**options)
+            if not re.match(r'2..', str(info['status'])):
+                raise RuntimeError(info['status'], info['msg'])
         except Exception as e:
             self.module.fail_json(msg="API error: %s " % str(e))
 
-        return api_response.json()
+        return json.loads(response.read())
 
     def intersight_call(self, http_method="", resource_path="", query_params=None, body=None, moid=None, name=None):
         """
@@ -235,12 +226,6 @@ class IntersightModule():
         if(body is not None and not isinstance(body, dict)):
             raise TypeError('The *body* value must be of type "<dict>"')
 
-        if self.use_proxy:
-            # use system defined proxy
-            https_proxy = requests.utils.get_environ_proxies(self.host)
-        else:
-            https_proxy = {}
-
         # Verify the MOID is not null & of proper length
         if(moid is not None and len(moid.encode('utf-8')) != 24):
             raise ValueError('Invalid *moid* value!')
@@ -269,7 +254,7 @@ class IntersightModule():
             bodyString = json.dumps(body)
 
         # Concatenate URLs for headers
-        target_url = self.host + resource_path
+        target_url = self.host + resource_path + query_path
         request_target = method + " " + target_path + resource_path + query_path
 
         # Get the current GMT Date/Time
@@ -299,19 +284,6 @@ class IntersightModule():
             'Authorization': '{0}'.format(auth_header),
         }
 
-        # Format HTTP request
-        http_request = requests.Request(
-            method=method,
-            url=target_url,
-            headers=request_header,
-            data=bodyString,
-            params=urlencode(query_params)
-        )
+        response, info = fetch_url(self.module, target_url, data=bodyString, headers=request_header, method=method, use_proxy=self.module.params['use_proxy'])
 
-        # Prepare & send HTTP request
-        prepared_request = http_request.prepare()
-        http_session = requests.Session()
-        response = http_session.send(prepared_request, proxies=https_proxy, verify=self.secure)
-
-        # Return requests.Response
-        return response
+        return response, info
