@@ -1,2 +1,2 @@
 bugfixes:
-  - Added missing implementation of listing managed disk facts by resource group
+  - "azure_rm_managed_disk_facts: added missing implementation of listing managed disks by resource group"
