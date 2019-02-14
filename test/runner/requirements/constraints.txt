@@ -11,6 +11,9 @@ ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
 idna < 2.6 # requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
 pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
+pytest < 3.10.0 ; python_version >= '2.7' # pytest 3.10.0+ causes some tests to crash
+pytest-forked < 1.0.2 ; python_version < '2.7' # pytest-forked 1.0.2 and later require python 2.7 or later
+pytest-forked >= 1.0.2 ; python_version >= '2.7' # pytest-forked before 1.0.2 does not work with pytest 4.2.0+ (which requires python 2.7+)
 ntlm-auth >= 1.0.6 # message encryption support
 requests < 2.20.0 ; python_version < '2.7' # requests 2.20.0 drops support for python 2.6
 requests-ntlm >= 1.1.0 # message encryption support
@@ -26,7 +29,6 @@ pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option
 xmltodict < 0.12.0 ; python_version < '2.7' # xmltodict 0.12.0 and later require python 2.7 or later
 lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 or later
 pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
-pytest < 3.10.0 ; python_version >= '2.7' # pytest 3.10.0+ causes some tests to crash, pytest 4.2.0+ causes internal errors in pytest-forked
 pyone == 1.1.9 # newer versions do not pass current integration tests
 
 # freeze pylint and its requirements for consistent test results
