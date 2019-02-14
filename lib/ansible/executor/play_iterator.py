@@ -26,13 +26,10 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
+from ansible.utils.display import Display
 
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 __all__ = ['PlayIterator']
@@ -154,19 +151,9 @@ class PlayIterator:
         self._variable_manager = variable_manager
 
         # Default options to gather
-        gather_subset = play_context.gather_subset
-        gather_timeout = play_context.gather_timeout
-        fact_path = play_context.fact_path
-
-        # Retrieve subset to gather
-        if self._play.gather_subset is not None:
-            gather_subset = self._play.gather_subset
-        # Retrieve timeout for gather
-        if self._play.gather_timeout is not None:
-            gather_timeout = self._play.gather_timeout
-        # Retrieve fact_path
-        if self._play.fact_path is not None:
-            fact_path = self._play.fact_path
+        gather_subset = self._play.gather_subset
+        gather_timeout = self._play.gather_timeout
+        fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
@@ -175,10 +162,14 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
         setup_task.name = 'Gathering Facts'
-        setup_task.tags = ['always']
         setup_task.args = {
             'gather_subset': gather_subset,
         }
+
+        # Unless play is specifically tagged, gathering should 'always' run
+        if not self._play.tags:
+            setup_task.tags = ['always']
+
         if gather_timeout:
             setup_task.args['gather_timeout'] = gather_timeout
         if fact_path:
@@ -189,18 +180,13 @@ class PlayIterator:
             setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
-        setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
+        setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
-        self.cache_block_tasks(setup_block)
 
         for block in self._play.compile():
-            new_block = block.filter_tagged_tasks(play_context, all_vars)
+            new_block = block.filter_tagged_tasks(all_vars)
             if new_block.has_tasks():
-                self.cache_block_tasks(new_block)
                 self._blocks.append(new_block)
-
-        for handler_block in self._play.handlers:
-            self.cache_block_tasks(handler_block)
 
         self._host_states = {}
         start_at_matched = False

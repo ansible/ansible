@@ -11,11 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 
 DOCUMENTATION = '''
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
   - Update ONTAP software
 extends_documentation_fragment:
-  - netapp.ontap
+  - netapp.na_ontap
 module: na_ontap_software_update
 options:
   state:
@@ -77,7 +77,7 @@ class NetAppONTAPSoftwareUpdate(object):
 
     def __init__(self):
 
-        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+        self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
             node=dict(required=False, type='list'),
@@ -97,7 +97,7 @@ class NetAppONTAPSoftwareUpdate(object):
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_ontap_zapi(module=self.module)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def cluster_image_get_iter(self):
         """

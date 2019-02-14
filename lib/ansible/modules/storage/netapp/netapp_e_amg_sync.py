@@ -38,6 +38,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     ssid:
         description:
             - The ID of the storage array containing the AMG you wish to target
@@ -80,7 +81,7 @@ RETURN = """
 json:
     description: The object attributes of the AMG.
     returned: success
-    type: string
+    type: str
     example:
         {
             "changed": false,
@@ -142,7 +143,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

@@ -1,0 +1,19 @@
+{
+    "kind": "tm:net:dns-resolver:dns-resolverstate",
+    "name": "foo",
+    "partition": "Common",
+    "fullPath": "/Common/foo",
+    "generation": 173,
+    "selfLink": "https://localhost/mgmt/tm/net/dns-resolver/~Common~foo?ver=13.1.0.8",
+    "answerDefaultZones": "no",
+    "cacheSize": 5767168,
+    "randomizeQueryNameCase": "yes",
+    "routeDomain": "/Common/0",
+    "routeDomainReference": {
+        "link": "https://localhost/mgmt/tm/net/route-domain/~Common~0?ver=13.1.0.8"
+    },
+    "useIpv4": "no",
+    "useIpv6": "yes",
+    "useTcp": "yes",
+    "useUdp": "yes"
+}

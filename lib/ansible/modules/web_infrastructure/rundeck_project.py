@@ -71,13 +71,13 @@ RETURN = '''
 rundeck_response:
     description: Rundeck response when a failure occurs
     returned: failed
-    type: string
+    type: str
 before:
-    description: dictionnary containing project informations before modification
+    description: dictionary containing project information before modification
     returned: success
     type: dict
 after:
-    description: dictionnary containing project informations after modification
+    description: dictionary containing project information after modification
     returned: success
     type: dict
 '''

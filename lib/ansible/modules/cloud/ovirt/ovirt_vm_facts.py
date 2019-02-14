@@ -54,6 +54,13 @@ options:
     max:
       description:
         - "The maximum number of results to return."
+    next_run:
+      description:
+        - "Indicates if the returned result describes the virtual machine as it is currently running or if describes
+           the virtual machine with the modifications that have already been performed but that will only come into
+           effect when the virtual machine is restarted. By default the value is set by engine."
+      type: bool
+      version_added: "2.8"
 extends_documentation_fragment: ovirt_facts
 '''
 
@@ -67,6 +74,13 @@ EXAMPLES = '''
     pattern: name=centos* and cluster=west
 - debug:
     var: ovirt_vms
+
+# Gather info about next run configuration of virtual machine named myvm
+- ovirt_vm_facts:
+    pattern: name=myvm
+    next_run: true
+- debug:
+    var: ovirt_vms[0]
 '''
 
 RETURN = '''
@@ -92,6 +106,7 @@ def main():
     argument_spec = ovirt_facts_full_argument_spec(
         pattern=dict(default='', required=False),
         all_content=dict(default=False, type='bool'),
+        next_run=dict(default=None, type='bool'),
         case_sensitive=dict(default=True, type='bool'),
         max=dict(default=None, type='int'),
     )
@@ -109,6 +124,9 @@ def main():
             case_sensitive=module.params['case_sensitive'],
             max=module.params['max'],
         )
+        if module.params['next_run']:
+            vms = [vms_service.vm_service(vm.id).get(next_run=True) for vm in vms]
+
         module.exit_json(
             changed=False,
             ansible_facts=dict(

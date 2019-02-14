@@ -14,7 +14,7 @@ License:   GPLv3+
 Group:     Development/Libraries
 Source:    https://releases.ansible.com/ansible/%{name}-%{upstream_version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-%{!?__python2: %global __python2 /usr/bin/python2.6}
+%{!?__python2: %global __python2 /usr/bin/python2.7}
 %{!?python_sitelib: %global python_sitelib %(%{__python2} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")}
 
 BuildArch: noarch
@@ -124,7 +124,8 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
-%{python_sitelib}/ansible*
+%{python_sitelib}/ansible/
+%{python_sitelib}/ansible-*.egg-info
 %{_bindir}/ansible*
 %dir %{_datadir}/ansible
 %config(noreplace) %{_sysconfdir}/ansible

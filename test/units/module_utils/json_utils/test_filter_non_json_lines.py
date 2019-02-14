@@ -22,7 +22,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.json_utils import _filter_non_json_lines
 
 

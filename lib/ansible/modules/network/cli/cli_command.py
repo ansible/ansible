@@ -19,6 +19,7 @@ author: "Nathaniel Case (@qalthos)"
 short_description: Run a cli command on cli-based network devices
 description:
   - Sends a command to a network device and returns the result read from the device.
+extends_documentation_fragment: network_agnostic
 options:
   command:
     description:
@@ -99,7 +100,7 @@ RETURN = """
 stdout:
   description: The response from the command
   returned: when sendonly is false
-  type: string
+  type: str
   sample: 'Version:      VyOS 1.1.7[...]'
 
 json:

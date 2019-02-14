@@ -8,15 +8,12 @@ __metaclass__ = type
 
 import os
 import json
+import pytest
 import sys
 
-from nose.plugins.skip import SkipTest
 if sys.version_info < (2, 7):
-    raise SkipTest("F5 Ansible modules require Python >= 2.7")
+    pytestmark = pytest.mark.skip("F5 Ansible modules require Python >= 2.7")
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import Mock
-from ansible.compat.tests.mock import patch
 from ansible.module_utils.basic import AnsibleModule
 
 try:
@@ -24,20 +21,26 @@ try:
     from library.modules.bigip_virtual_server import ApiParameters
     from library.modules.bigip_virtual_server import ModuleManager
     from library.modules.bigip_virtual_server import ArgumentSpec
-    from library.module_utils.network.f5.common import F5ModuleError
-    from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    from test.unit.modules.utils import set_module_args
+
+    # In Ansible 2.8, Ansible changed import paths.
+    from test.units.compat import unittest
+    from test.units.compat.mock import Mock
+    from test.units.compat.mock import patch
+
+    from test.units.modules.utils import set_module_args
 except ImportError:
-    try:
-        from ansible.modules.network.f5.bigip_virtual_server import ApiParameters
-        from ansible.modules.network.f5.bigip_virtual_server import ModuleParameters
-        from ansible.modules.network.f5.bigip_virtual_server import ModuleManager
-        from ansible.modules.network.f5.bigip_virtual_server import ArgumentSpec
-        from ansible.module_utils.network.f5.common import F5ModuleError
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-        from units.modules.utils import set_module_args
-    except ImportError:
-        raise SkipTest("F5 Ansible modules require the f5-sdk Python library")
+    from ansible.modules.network.f5.bigip_virtual_server import ApiParameters
+    from ansible.modules.network.f5.bigip_virtual_server import ModuleParameters
+    from ansible.modules.network.f5.bigip_virtual_server import ModuleManager
+    from ansible.modules.network.f5.bigip_virtual_server import ArgumentSpec
+
+    # Ansible 2.8 imports
+    from units.compat import unittest
+    from units.compat.mock import Mock
+    from units.compat.mock import patch
+
+    from units.modules.utils import set_module_args
+
 
 fixture_path = os.path.join(os.path.dirname(__file__), 'fixtures')
 fixture_data = {}
@@ -183,9 +186,6 @@ class TestParameters(unittest.TestCase):
         assert p.name == 'my-virtual-server'
         assert p.partition == 'Common'
         assert p.port == 443
-        assert p.server == 'localhost'
-        assert p.user == 'admin'
-        assert p.password == 'secret'
         assert p.destination == '/Common/10.10.10.10:443'
         assert p.pool == '/Common/my-pool'
         assert p.snat == {'type': 'automap'}
@@ -220,9 +220,6 @@ class TestParameters(unittest.TestCase):
         assert p.name == 'my-virtual-server'
         assert p.partition == 'Common'
         assert p.port == 443
-        assert p.server == 'localhost'
-        assert p.user == 'admin'
-        assert p.password == 'secret'
         assert p.destination == '/Common/10.10.10.10:443'
         assert p.pool == '/Common/my-pool'
         assert p.snat == {'type': 'automap'}
@@ -357,6 +354,40 @@ class TestManager(unittest.TestCase):
 
     def setUp(self):
         self.spec = ArgumentSpec()
+
+        try:
+            self.p1 = patch('library.modules.bigip_virtual_server.modules_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = ['ltm', 'gtm', 'asm']
+            self.p2 = patch(
+                'library.modules.bigip_virtual_server.Parameters._read_current_clientssl_profiles_from_device'
+            )
+            self.p3 = patch(
+                'library.modules.bigip_virtual_server.Parameters._read_current_serverssl_profiles_from_device'
+            )
+            self.m2 = self.p2.start()
+            self.m3 = self.p3.start()
+            self.m2.return_value = ['asda', 'clientssl', 'cs_foobar.star.local']
+            self.m3.return_value = ['baz', 'serverssl', 'ss_foobar.star.local']
+        except Exception:
+            self.p1 = patch('ansible.modules.network.f5.bigip_virtual_server.modules_provisioned')
+            self.m1 = self.p1.start()
+            self.m1.return_value = ['ltm', 'gtm', 'asm']
+            self.p2 = patch(
+                'ansible.modules.network.f5.bigip_virtual_server.Parameters._read_current_clientssl_profiles_from_device'
+            )
+            self.p3 = patch(
+                'ansible.modules.network.f5.bigip_virtual_server.Parameters._read_current_serverssl_profiles_from_device'
+            )
+            self.m2 = self.p2.start()
+            self.m3 = self.p3.start()
+            self.m2.return_value = ['asda', 'clientssl', 'cs_foobar.star.local']
+            self.m3.return_value = ['baz', 'serverssl', 'ss_foobar.star.local']
+
+    def tearDown(self):
+        self.p1.stop()
+        self.p2.stop()
+        self.p3.stop()
 
     def test_create_virtual_server(self, *args):
         set_module_args(dict(
@@ -573,7 +604,6 @@ class TestManager(unittest.TestCase):
         # Configure the parameters that would be returned by querying the
         # remote device
         current = ApiParameters(params=load_fixture('load_ltm_virtual_2.json'))
-
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
             supports_check_mode=self.spec.supports_check_mode

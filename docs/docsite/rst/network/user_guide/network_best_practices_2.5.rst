@@ -80,7 +80,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    ansible_become_method=enable
    ansible_network_os=eos
    ansible_user=my_eos_user
-   ansible_ssh_pass= !vault |
+   ansible_password= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      37373735393636643261383066383235363664386633386432343236663533343730353361653735
                      6131363539383931353931653533356337353539373165320a316465383138636532343463633236
@@ -98,7 +98,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    ansible_become_method=enable
    ansible_network_os=ios
    ansible_user=my_ios_user
-   ansible_ssh_pass= !vault |
+   ansible_password= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      34623431313336343132373235313066376238386138316466636437653938623965383732373130
                      3466363834613161386538393463663861636437653866620a373136356366623765373530633735
@@ -114,7 +114,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    [vyos:vars]
    ansible_network_os=vyos
    ansible_user=my_vyos_user
-   ansible_ssh_pass= !vault |
+   ansible_password= !vault |
                      $ANSIBLE_VAULT;1.1;AES256
                      39336231636137663964343966653162353431333566633762393034646462353062633264303765
                      6331643066663534383564343537343334633031656538370a333737656236393835383863306466
@@ -122,7 +122,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
                      3665626431626532630a353564323566316162613432373738333064366130303637616239396438
                      9853
 
-If you use ssh-agent, you do not need the ``ansible_ssh_pass`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see the :ref:`behavioral_parameters`.
+If you use ssh-agent, you do not need the ``ansible_password`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see the :ref:`behavioral_parameters`.
 
 .. FIXME FUTURE Gundalow - Link to network auth & proxy page (to be written)
 
@@ -137,7 +137,7 @@ The "Vault" feature of Ansible allows you to keep sensitive data such as passwor
   Informs Ansible which Network platform this hosts corresponds to. This is required when using ``network_cli`` or ``netconf``.
 :ansible_user: The user to connect to the remote device (switch) as. Without this the user that is running ``ansible-playbook`` would be used.
   Specifies which user on the network device the connection
-:ansible_ssh_pass:
+:ansible_password:
   The corresponding password for ``ansible_user`` to log in as. If not specified SSH key will be used.
 :ansible_become:
   If enable mode (privilege mode) should be used, see the next section.
@@ -157,7 +157,7 @@ Certain network platforms, such as eos and ios, have the concept of different pr
    ansible_become=yes
    ansible_become_method=enable
 
-For more information, see the :ref:`using become with network modules<become-network>` guide.
+For more information, see the :ref:`using become with network modules<become_network>` guide.
 
 
 Jump hosts

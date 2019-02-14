@@ -92,6 +92,7 @@ options:
             - A boolean indicating whether this monitor needs a full window of data before it's evaluated. We highly recommend you set this to False for
               sparse metrics, otherwise some evaluations will be skipped.
         version_added: "2.3"
+        type: bool
     new_host_delay:
         description: ["A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
         This gives the host time to fully initialize."]
@@ -140,13 +141,15 @@ EXAMPLES = '''
 import traceback
 
 # Import Datadog
+DATADOG_IMP_ERR = None
 try:
     from datadog import initialize, api
     HAS_DATADOG = True
-except:
+except Exception:
+    DATADOG_IMP_ERR = traceback.format_exc()
     HAS_DATADOG = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -179,7 +182,7 @@ def main():
 
     # Prepare Datadog
     if not HAS_DATADOG:
-        module.fail_json(msg='datadogpy required for this module')
+        module.fail_json(msg=missing_required_lib('datadogpy'), exception=DATADOG_IMP_ERR)
 
     options = {
         'api_key': module.params['api_key'],

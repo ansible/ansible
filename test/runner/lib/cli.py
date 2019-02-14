@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function
 
 import errno
 import os
+import resource
 import sys
 
 from lib.util import (
@@ -40,6 +41,11 @@ from lib.config import (
     SanityConfig,
     UnitsConfig,
     ShellConfig,
+)
+
+from lib.env import (
+    EnvConfig,
+    command_env,
 )
 
 from lib.sanity import (
@@ -84,6 +90,17 @@ def main():
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
 
+        # to achieve a consistent nofile ulimit, set to 16k here, this can affect performance in subprocess.Popen when
+        # being called with close_fds=True on Python (8x the time on some environments)
+        nofile_limit = 16 * 1024
+        current_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        new_limit = (nofile_limit, nofile_limit)
+        if current_limit > new_limit:
+            display.info('RLIMIT_NOFILE: %s -> %s' % (current_limit, new_limit), verbosity=2)
+            resource.setrlimit(resource.RLIMIT_NOFILE, (nofile_limit, nofile_limit))
+        else:
+            display.info('RLIMIT_NOFILE: %s' % (current_limit, ), verbosity=2)
+
         try:
             args.func(config)
         except Delegate as ex:
@@ -91,10 +108,10 @@ def main():
 
         display.review_warnings()
     except ApplicationWarning as ex:
-        display.warning(str(ex))
+        display.warning(u'%s' % ex)
         exit(0)
     except ApplicationError as ex:
-        display.error(str(ex))
+        display.error(u'%s' % ex)
         exit(1)
     except KeyboardInterrupt:
         exit(2)
@@ -168,6 +185,11 @@ def parse_args():
                       metavar='TARGET',
                       nargs='*',
                       help='test the specified target').completer = complete_target
+
+    test.add_argument('--include',
+                      metavar='TARGET',
+                      action='append',
+                      help='include the specified target').completer = complete_target
 
     test.add_argument('--exclude',
                       metavar='TARGET',
@@ -261,9 +283,22 @@ def parse_args():
                              default='all',
                              help='target to run when all tests are needed')
 
+    integration.add_argument('--changed-all-mode',
+                             metavar='MODE',
+                             choices=('default', 'include', 'exclude'),
+                             help='include/exclude behavior with --changed-all-target: %(choices)s')
+
     integration.add_argument('--list-targets',
                              action='store_true',
                              help='list matching targets instead of running tests')
+
+    integration.add_argument('--no-temp-workdir',
+                             action='store_true',
+                             help='do not run tests from a temporary directory (use only for verifying broken tests)')
+
+    integration.add_argument('--no-temp-unicode',
+                             action='store_true',
+                             help='avoid unicode characters in temporary directory (use only for verifying broken tests)')
 
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
@@ -311,6 +346,7 @@ def parse_args():
                                      config=WindowsIntegrationConfig)
 
     add_extra_docker_options(windows_integration, integration=False)
+    add_httptester_options(windows_integration, argparse)
 
     windows_integration.add_argument('--windows',
                                      metavar='VERSION',
@@ -386,6 +422,10 @@ def parse_args():
     shell.set_defaults(func=command_shell,
                        config=ShellConfig)
 
+    shell.add_argument('--raw',
+                       action='store_true',
+                       help='direct to shell with no setup')
+
     add_environments(shell, tox_version=True)
     add_extra_docker_options(shell)
     add_httptester_options(shell, argparse)
@@ -455,6 +495,21 @@ def parse_args():
                               config=lib.cover.CoverageConfig)
 
     add_extra_coverage_options(coverage_xml)
+
+    env = subparsers.add_parser('env',
+                                parents=[common],
+                                help='show information about the test environment')
+
+    env.set_defaults(func=command_env,
+                     config=EnvConfig)
+
+    env.add_argument('--show',
+                     action='store_true',
+                     help='show environment on stdout')
+
+    env.add_argument('--dump',
+                     action='store_true',
+                     help='dump environment to disk')
 
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)

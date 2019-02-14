@@ -50,10 +50,12 @@ options:
         description:
             - Whether or not to add default route with router learned via DHCP.
         default: "false"
+        type: bool
     commit:
         description:
             - Commit if changed
         default: true
+        type: bool
 extends_documentation_fragment: panos
 '''
 

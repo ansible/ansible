@@ -25,6 +25,7 @@ import re
 import collections
 
 from ansible import constants as C
+from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.netconf import remove_namespaces
 from ansible.module_utils.network.iosxr.iosxr import build_xml, etree_find
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
@@ -108,10 +109,10 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj._play_context.timeout
+                timeout=obj.get_option('persistent_connect_timeout')
             )
         except SSHUnknownHostError as exc:
-            raise AnsibleConnectionFailure(str(exc))
+            raise AnsibleConnectionFailure(to_native(exc))
 
         guessed_os = None
         for c in m.server_capabilities:
@@ -124,56 +125,80 @@ class Netconf(NetconfBase):
 
     # TODO: change .xml to .data_xml, when ncclient supports data_xml on all platforms
     @ensure_connected
-    def get(self, filter=None):
+    def get(self, filter=None, remove_ns=False):
         if isinstance(filter, list):
             filter = tuple(filter)
         try:
-            response = self.m.get(filter=filter)
-            return remove_namespaces(response)
+            resp = self.m.get(filter=filter)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def get_config(self, source=None, filter=None):
+    def get_config(self, source=None, filter=None, remove_ns=False):
         if isinstance(filter, list):
             filter = tuple(filter)
         try:
-            response = self.m.get_config(source=source, filter=filter)
-            return remove_namespaces(response)
+            resp = self.m.get_config(source=source, filter=filter)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None):
+    def edit_config(self, config=None, format='xml', target='candidate', default_operation=None, test_option=None, error_option=None, remove_ns=False):
         if config is None:
             raise ValueError('config value must be provided')
         try:
-            response = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
-                                          error_option=error_option)
-            return remove_namespaces(response)
+            resp = self.m.edit_config(config, format=format, target=target, default_operation=default_operation, test_option=test_option,
+                                      error_option=error_option)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def commit(self, confirmed=False, timeout=None, persist=None):
+    def commit(self, confirmed=False, timeout=None, persist=None, remove_ns=False):
         try:
-            response = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
-            return remove_namespaces(response)
+            resp = self.m.commit(confirmed=confirmed, timeout=timeout, persist=persist)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def validate(self, source="candidate"):
+    def validate(self, source="candidate", remove_ns=False):
         try:
-            response = self.m.validate(source=source)
-            return remove_namespaces(response)
+            resp = self.m.validate(source=source)
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))
 
     @ensure_connected
-    def discard_changes(self):
+    def discard_changes(self, remove_ns=False):
         try:
-            response = self.m.discard_changes()
-            return remove_namespaces(response)
+            resp = self.m.discard_changes()
+            if remove_ns:
+                response = remove_namespaces(resp)
+            else:
+                response = resp.data_xml if hasattr(resp, 'data_xml') else resp.xml
+            return response
         except RPCError as exc:
             raise Exception(to_xml(exc.xml))

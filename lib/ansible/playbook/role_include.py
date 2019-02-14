@@ -1,4 +1,3 @@
-
 #
 # This file is part of Ansible
 #
@@ -27,14 +26,11 @@ from ansible.playbook.block import Block
 from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 __all__ = ['IncludeRole']
+
+display = Display()
 
 
 class IncludeRole(TaskInclude):
@@ -45,7 +41,7 @@ class IncludeRole(TaskInclude):
     """
 
     BASE = ('name', 'role')  # directly assigned
-    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from')  # used to populate from dict in role
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
     OTHER_ARGS = ('apply', 'public', 'allow_duplicates')  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 

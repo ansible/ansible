@@ -85,15 +85,23 @@ options:
             - Digest algorithm to be used when self-signing the certificate
 
     selfsigned_not_before:
+        default: +0s
         description:
-            - The timestamp at which the certificate starts being valid. The timestamp is formatted as an ASN.1 TIME.
-              If this value is not specified, certificate will start being valid from now.
+            - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will start being valid from now."
         aliases: [ selfsigned_notBefore ]
 
     selfsigned_not_after:
+        default: +3650d
         description:
-            - The timestamp at which the certificate stops being valid. The timestamp is formatted as an ASN.1 TIME.
-              If this value is not specified, certificate will stop being valid 10 years from now.
+            - "The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will stop being valid 10 years from now."
         aliases: [ selfsigned_notAfter ]
 
     ownca_path:
@@ -124,15 +132,23 @@ options:
         version_added: "2.7"
 
     ownca_not_before:
+        default: +0s
         description:
-            - The timestamp at which the certificate starts being valid. The timestamp is formatted as an ASN.1 TIME.
-              If this value is not specified, certificate will start being valid from now.
+            - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will start being valid from now."
         version_added: "2.7"
 
     ownca_not_after:
+        default: +3650d
         description:
-            - The timestamp at which the certificate stops being valid. The timestamp is formatted as an ASN.1 TIME.
-              If this value is not specified, certificate will stop being valid 10 years from now.
+            - "The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will stop being valid 10 years from now."
         version_added: "2.7"
 
     acme_accountkey_path:
@@ -209,7 +225,10 @@ options:
 
     valid_in:
         description:
-            - The certificate must still be valid in I(valid_in) seconds from now.
+            - "The certificate must still be valid at this relative time offset from now.
+               Valid formats are: C([+-]timespec | number_of_seconds)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using this parameter, this module is NOT idempotent."
 
     key_usage:
         description:
@@ -391,7 +410,7 @@ RETURN = '''
 filename:
     description: Path to the generated Certificate
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/crt/www.ansible.com.crt
 '''
 
@@ -399,15 +418,18 @@ filename:
 from random import randint
 import datetime
 import os
+import traceback
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes
 
+PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
@@ -435,6 +457,19 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.csr = None
         self.module = module
+
+    def get_relative_time_option(self, input_string, input_name):
+        """Return an ASN1 formatted string if a relative timespec
+           or an ASN1 formatted string is provided."""
+        result = input_string
+        if result.startswith("+") or result.startswith("-"):
+            result = crypto_utils.convert_relative_to_datetime(
+                result).strftime("%Y%m%d%H%M%SZ")
+        if result is None:
+            raise CertificateError(
+                'The timespec "%s" for %s is not valid' %
+                input_string, input_name)
+        return result
 
     def check(self, module, perms_required=True):
         """Ensure the resource is in its desired state."""
@@ -495,8 +530,8 @@ class SelfSignedCertificate(Certificate):
 
     def __init__(self, module):
         super(SelfSignedCertificate, self).__init__(module)
-        self.notBefore = module.params['selfsigned_notBefore']
-        self.notAfter = module.params['selfsigned_notAfter']
+        self.notBefore = self.get_relative_time_option(module.params['selfsigned_not_before'], 'selfsigned_not_before')
+        self.notAfter = self.get_relative_time_option(module.params['selfsigned_not_after'], 'selfsigned_not_after')
         self.digest = module.params['selfsigned_digest']
         self.version = module.params['selfsigned_version']
         self.serial_number = randint(1000, 99999)
@@ -520,16 +555,8 @@ class SelfSignedCertificate(Certificate):
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
-            if self.notBefore:
-                cert.set_notBefore(self.notBefore)
-            else:
-                cert.gmtime_adj_notBefore(0)
-            if self.notAfter:
-                cert.set_notAfter(self.notAfter)
-            else:
-                # If no NotAfter specified, expire in
-                # 10 years. 315360000 is 10 years in seconds.
-                cert.gmtime_adj_notAfter(315360000)
+            cert.set_notBefore(to_bytes(self.notBefore))
+            cert.set_notAfter(to_bytes(self.notAfter))
             cert.set_subject(self.csr.get_subject())
             cert.set_issuer(self.csr.get_subject())
             cert.set_version(self.version - 1)
@@ -561,11 +588,9 @@ class SelfSignedCertificate(Certificate):
         }
 
         if check_mode:
-            now = datetime.datetime.utcnow()
-            ten = now.replace(now.year + 10)
             result.update({
-                'notBefore': self.notBefore if self.notBefore else now.strftime("%Y%m%d%H%M%SZ"),
-                'notAfter': self.notAfter if self.notAfter else ten.strftime("%Y%m%d%H%M%SZ"),
+                'notBefore': self.notBefore,
+                'notAfter': self.notAfter,
                 'serial_number': self.serial_number,
             })
         else:
@@ -583,8 +608,8 @@ class OwnCACertificate(Certificate):
 
     def __init__(self, module):
         super(OwnCACertificate, self).__init__(module)
-        self.notBefore = module.params['ownca_not_before']
-        self.notAfter = module.params['ownca_not_after']
+        self.notBefore = self.get_relative_time_option(module.params['ownca_not_before'], 'ownca_not_before')
+        self.notAfter = self.get_relative_time_option(module.params['ownca_not_after'], 'ownca_not_after')
         self.digest = module.params['ownca_digest']
         self.version = module.params['ownca_version']
         self.serial_number = randint(1000, 99999)
@@ -617,16 +642,8 @@ class OwnCACertificate(Certificate):
         if not self.check(module, perms_required=False) or self.force:
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
-            if self.notBefore:
-                cert.set_notBefore(self.notBefore.encode())
-            else:
-                cert.gmtime_adj_notBefore(0)
-            if self.notAfter:
-                cert.set_notAfter(self.notAfter.encode())
-            else:
-                # If no NotAfter specified, expire in
-                # 10 years. 315360000 is 10 years in seconds.
-                cert.gmtime_adj_notAfter(315360000)
+            cert.set_notBefore(to_bytes(self.notBefore))
+            cert.set_notAfter(to_bytes(self.notAfter))
             cert.set_subject(self.csr.get_subject())
             cert.set_issuer(self.ca_cert.get_subject())
             cert.set_version(self.version - 1)
@@ -660,11 +677,9 @@ class OwnCACertificate(Certificate):
         }
 
         if check_mode:
-            now = datetime.datetime.utcnow()
-            ten = now.replace(now.year + 10)
             result.update({
-                'notBefore': self.notBefore if self.notBefore else now.strftime("%Y%m%d%H%M%SZ"),
-                'notAfter': self.notAfter if self.notAfter else ten.strftime("%Y%m%d%H%M%SZ"),
+                'notBefore': self.notBefore,
+                'notAfter': self.notAfter,
                 'serial_number': self.serial_number,
             })
         else:
@@ -854,15 +869,22 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_valid_in():
             if self.valid_in:
-                valid_in_date = datetime.datetime.utcnow() + datetime.timedelta(seconds=self.valid_in)
-                valid_in_date = to_bytes(valid_in_date.strftime('%Y%m%d%H%M%SZ'), errors='surrogate_or_strict')
-                if not (self.cert.get_notBefore() <= valid_in_date <= self.cert.get_notAfter()):
+                if not self.valid_in.startswith("+") and not self.valid_in.startswith("-"):
+                    try:
+                        int(self.valid_in)
+                    except ValueError:
+                        raise CertificateError(
+                            'The supplied value for "valid_in" (%s) is not an integer or a valid timespec' % self.valid_in)
+                    self.valid_in = "+" + self.valid_in + "s"
+                valid_in_asn1 = self.get_relative_time_option(self.valid_in, "valid_in")
+                valid_in_date = to_bytes(valid_in_asn1, errors='surrogate_or_strict')
+                if not (self.cert.get_notBefore() <= valid_in_date <=
+                        self.cert.get_notAfter()):
                     self.message.append(
-                        'Certificate is not valid in %s seconds from now (%s) - notBefore: %s - notAfter: %s' % (self.valid_in,
-                                                                                                                 valid_in_date,
-                                                                                                                 self.cert.get_notBefore(),
-                                                                                                                 self.cert.get_notAfter())
-                    )
+                        'Certificate is not valid in %s from now (that would be %s) - notBefore: %s - notAfter: %s'
+                        % (self.valid_in, valid_in_date,
+                           self.cert.get_notBefore(),
+                           self.cert.get_notAfter()))
 
         for validation in ['signature_algorithms', 'subject', 'issuer',
                            'has_expired', 'version', 'keyUsage',
@@ -987,30 +1009,32 @@ def main():
             # General properties of a certificate
             privatekey_path=dict(type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
-            signature_algorithms=dict(type='list'),
+            signature_algorithms=dict(type='list', elements='str'),
             subject=dict(type='dict'),
             subject_strict=dict(type='bool', default=False),
             issuer=dict(type='dict'),
             issuer_strict=dict(type='bool', default=False),
             has_expired=dict(type='bool', default=False),
             version=dict(type='int'),
-            keyUsage=dict(type='list', aliases=['key_usage']),
+            keyUsage=dict(type='list', aliases=['key_usage'], elements='str'),
             keyUsage_strict=dict(type='bool', default=False, aliases=['key_usage_strict']),
-            extendedKeyUsage=dict(type='list', aliases=['extended_key_usage'], ),
+            extendedKeyUsage=dict(type='list', aliases=['extended_key_usage'], elements='str'),
             extendedKeyUsage_strict=dict(type='bool', default=False, aliases=['extended_key_usage_strict']),
-            subjectAltName=dict(type='list', aliases=['subject_alt_name']),
+            subjectAltName=dict(type='list', aliases=['subject_alt_name'], elements='str'),
             subjectAltName_strict=dict(type='bool', default=False, aliases=['subject_alt_name_strict']),
             notBefore=dict(type='str', aliases=['not_before']),
             notAfter=dict(type='str', aliases=['not_after']),
             valid_at=dict(type='str'),
             invalid_at=dict(type='str'),
-            valid_in=dict(type='int'),
+            valid_in=dict(type='str'),
 
             # provider: selfsigned
             selfsigned_version=dict(type='int', default='3'),
             selfsigned_digest=dict(type='str', default='sha256'),
-            selfsigned_notBefore=dict(type='str', aliases=['selfsigned_not_before']),
-            selfsigned_notAfter=dict(type='str', aliases=['selfsigned_not_after']),
+            selfsigned_not_before=dict(
+                type='str', default='+0s', aliases=['selfsigned_notBefore']),
+            selfsigned_not_after=dict(
+                type='str', default='+3650d', aliases=['selfsigned_notAfter']),
 
             # provider: ownca
             ownca_path=dict(type='path'),
@@ -1018,8 +1042,8 @@ def main():
             ownca_privatekey_passphrase=dict(type='path', no_log=True),
             ownca_digest=dict(type='str', default='sha256'),
             ownca_version=dict(type='int', default='3'),
-            ownca_not_before=dict(type='str'),
-            ownca_not_after=dict(type='str'),
+            ownca_not_before=dict(type='str', default='+0s'),
+            ownca_not_after=dict(type='str', default='+3650d'),
 
             # provider: acme
             acme_accountkey_path=dict(type='path'),
@@ -1031,7 +1055,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='The python pyOpenSSL library is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
     if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
         try:
             getattr(crypto.X509Req, 'get_extensions')
@@ -1041,7 +1065,7 @@ def main():
     if module.params['provider'] != 'assertonly' and module.params['csr_path'] is None:
         module.fail_json(msg='csr_path is required when provider is not assertonly')
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

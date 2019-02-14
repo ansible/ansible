@@ -60,6 +60,7 @@ options:
         required: False
         description:
             - "A boolean flag that indicates if the server TLS certificate and host name should be checked."
+        type: bool
     ca_file:
         required: False
         description:
@@ -82,12 +83,13 @@ options:
                the server to send compressed responses. The default is I(True).
                Note that this is a hint for the server, and that it may return
                uncompressed data even when this parameter is set to I(True)."
+        type: bool
     kerberos:
         required: False
         description:
             - "A boolean flag indicating if Kerberos authentication
                should be used instead of the default basic authentication."
-
+        type: bool
     headers:
         required: False
         description:
@@ -157,12 +159,12 @@ ovirt_auth:
         token:
             description: SSO token which is used for connection to oVirt/RHV engine.
             returned: success
-            type: string
+            type: str
             sample: "kdfVWp9ZgeewBXV-iq3Js1-xQJZPSEQ334FLb3eksoEPRaab07DhZ8ED8ghz9lJd-MQ2GqtRIeqhvhCkrUWQPw"
         url:
             description: URL of the oVirt/RHV engine API endpoint.
             returned: success
-            type: string
+            type: str
             sample: "https://ovirt.example.com/ovirt-engine/api"
         ca_file:
             description: CA file, which is used to verify SSL/TLS connection.

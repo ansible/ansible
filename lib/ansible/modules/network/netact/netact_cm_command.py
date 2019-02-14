@@ -193,16 +193,16 @@ RETURN = '''
 original_message:
     description: The original name param that was passed in
     returned: Command line
-    type: string
+    type: str
     sample: '/opt/oss/bin/racclimx.sh -op Upload -opsName Uploading_testi -DN PLMN-PLMN/MRBTS-746'
 message:
     description: The output message that the netact_cm_command module generates
     returned: Command output message
-    type: string
+    type: str
 changed:
     description: data changed
     returned: true if data is changed
-    type: boolean
+    type: bool
 '''
 
 from ansible.module_utils.basic import AnsibleModule

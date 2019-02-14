@@ -63,6 +63,7 @@ else:
 BLACKLIST_DIRS = frozenset(('.git', 'test', '.github', '.idea'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 TYPE_REGEX = re.compile(r'.*(if|or)(\s+[^"\']*|\s+)(?<!_)(?<!str\()type\(.*')
+SYS_EXIT_REGEX = re.compile(r'[^#]*sys.exit\s*\(.*')
 BLACKLIST_IMPORTS = {
     'requests': {
         'new_only': True,
@@ -371,13 +372,20 @@ class ModuleValidator(Validator):
                 )
 
     def _check_for_sys_exit(self):
-        if 'sys.exit(' in self.text:
-            # TODO: Add line/col
-            self.reporter.error(
-                path=self.object_path,
-                code=205,
-                msg='sys.exit() call found. Should be exit_json/fail_json'
-            )
+        # Optimize out the happy path
+        if 'sys.exit' not in self.text:
+            return
+
+        for line_no, line in enumerate(self.text.splitlines()):
+            sys_exit_usage = SYS_EXIT_REGEX.match(line)
+            if sys_exit_usage:
+                # TODO: add column
+                self.reporter.error(
+                    path=self.object_path,
+                    code=205,
+                    msg='sys.exit() call found. Should be exit_json/fail_json',
+                    line=line_no + 1
+                )
 
     def _check_gpl3_header(self):
         header = '\n'.join(self.text.split('\n')[:20])
@@ -702,6 +710,7 @@ class ModuleValidator(Validator):
         # check "shape" of each module name
 
         module_requires = r'(?im)^#\s*requires\s+\-module(?:s?)\s*(Ansible\.ModuleUtils\..+)'
+        csharp_requires = r'(?im)^#\s*ansiblerequires\s+\-csharputil\s*(Ansible\..+)'
         found_requires = False
 
         for req_stmt in re.finditer(module_requires, self.text):
@@ -725,12 +734,33 @@ class ModuleValidator(Validator):
                     msg='Module #Requires should not end in .psm1: "%s"' % module_name
                 )
 
+        for req_stmt in re.finditer(csharp_requires, self.text):
+            found_requires = True
+            # this will bomb on dictionary format - "don't do that"
+            module_list = [x.strip() for x in req_stmt.group(1).split(',')]
+            if len(module_list) > 1:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=210,
+                    msg='Ansible C# util requirements do not support multiple utils per statement: "%s"' % req_stmt.group(0)
+                )
+                continue
+
+            module_name = module_list[0]
+
+            if module_name.lower().endswith('.cs'):
+                self.reporter.error(
+                    path=self.object_path,
+                    code=211,
+                    msg='Module #AnsibleRequires -CSharpUtil should not end in .cs: "%s"' % module_name
+                )
+
         # also accept the legacy #POWERSHELL_COMMON replacer signal
         if not found_requires and REPLACER_WINDOWS not in self.text:
             self.reporter.error(
                 path=self.object_path,
                 code=207,
-                msg='No Ansible.ModuleUtils module requirements/imports found'
+                msg='No Ansible.ModuleUtils or C# Ansible util requirements/imports found'
             )
 
     def _find_ps_docs_py_file(self):
@@ -823,10 +853,15 @@ class ModuleValidator(Validator):
             else:
                 error_message = error
 
+            if path:
+                combined_path = '%s.%s' % (name, '.'.join(path))
+            else:
+                combined_path = name
+
             self.reporter.error(
                 path=self.object_path,
                 code=error_code,
-                msg='%s.%s: %s' % (name, '.'.join(path), error_message)
+                msg='%s: %s' % (combined_path, error_message)
             )
 
     def _validate_docs(self):
@@ -846,6 +881,7 @@ class ModuleValidator(Validator):
             filename_deprecated_or_removed = True
 
         # Have to check the metadata first so that we know if the module is removed or deprecated
+        metadata = None
         if not bool(doc_info['ANSIBLE_METADATA']['value']):
             self.reporter.error(
                 path=self.object_path,
@@ -853,7 +889,6 @@ class ModuleValidator(Validator):
                 msg='No ANSIBLE_METADATA provided'
             )
         else:
-            metadata = None
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict):
                 metadata = ast.literal_eval(
                     doc_info['ANSIBLE_METADATA']['value']
@@ -970,8 +1005,10 @@ class ModuleValidator(Validator):
                         # This is the normal case
                         self._validate_docs_schema(doc, doc_schema(self.object_name.split('.')[0]), 'DOCUMENTATION', 305)
 
-                    self._check_version_added(doc)
-                    self._check_for_new_args(doc)
+                    add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+
+                    existing_doc = self._check_for_new_args(doc, metadata)
+                    self._check_version_added(doc, existing_doc)
 
             if not bool(doc_info['EXAMPLES']['value']):
                 self.reporter.error(
@@ -980,7 +1017,6 @@ class ModuleValidator(Validator):
                     msg='No EXAMPLES provided'
                 )
             else:
-                examples_exists = True
                 _, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                                doc_info['EXAMPLES']['lineno'],
                                                self.name, 'EXAMPLES', load_all=True)
@@ -997,7 +1033,6 @@ class ModuleValidator(Validator):
                     )
 
             if not bool(doc_info['RETURN']['value']):
-                returns_exists = True
                 if self._is_new_module():
                     self.reporter.error(
                         path=self.object_path,
@@ -1014,9 +1049,7 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                if data:
-                    for ret_key in data:
-                        self._validate_docs_schema(data[ret_key], return_schema(data[ret_key]), 'RETURN.%s' % ret_key, 319)
+                self._validate_docs_schema(data, return_schema, 'RETURN', 319)
 
                 for error in errors:
                     self.reporter.error(
@@ -1051,19 +1084,29 @@ class ModuleValidator(Validator):
 
         return doc_info, doc
 
-    def _check_version_added(self, doc):
-        if not self._is_new_module():
-            return
-
+    def _check_version_added(self, doc, existing_doc):
+        version_added_raw = doc.get('version_added')
         try:
             version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
+            if self._is_new_module() or version_added != 'historical':
+                self.reporter.error(
+                    path=self.object_path,
+                    code=306,
+                    msg='version_added is not a valid version number: %r' % version_added
+                )
+                return
+
+        if existing_doc and version_added_raw != existing_doc.get('version_added'):
             self.reporter.error(
                 path=self.object_path,
-                code=306,
-                msg='version_added is not a valid version number: %r' % version_added
+                code=307,
+                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
+                                                                  version_added_raw)
             )
+
+        if not self._is_new_module():
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
@@ -1074,7 +1117,7 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
-                msg='version_added should be %s. Currently %s' % (should_be, version_added)
+                msg='version_added should be %r. Currently %r' % (should_be, version_added_raw)
             )
 
     def _validate_ansible_module_call(self, docs):
@@ -1286,13 +1329,13 @@ class ModuleValidator(Validator):
                     msg='"%s" is listed in DOCUMENTATION.options, but not accepted by the module' % arg
                 )
 
-    def _check_for_new_args(self, doc):
+    def _check_for_new_args(self, doc, metadata):
         if not self.base_branch or self._is_new_module():
             return
 
         with CaptureStd():
             try:
-                existing_doc = get_docstring(self.base_module, fragment_loader, verbose=True)[0]
+                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(self.base_module, fragment_loader, verbose=True)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -1323,6 +1366,16 @@ class ModuleValidator(Validator):
         except ValueError:
             mod_version_added = StrictVersion('0.0')
 
+        if self.base_branch and 'stable-' in self.base_branch:
+            metadata.pop('metadata_version', None)
+            metadata.pop('version', None)
+            if metadata != existing_metadata:
+                self.reporter.error(
+                    path=self.object_path,
+                    code=334,
+                    msg=('ANSIBLE_METADATA cannot be changed in a point release for a stable branch')
+                )
+
         options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
@@ -1336,6 +1389,19 @@ class ModuleValidator(Validator):
                 continue
 
             if any(name in existing_options for name in names):
+                for name in names:
+                    existing_version = existing_options.get(name, {}).get('version_added')
+                    if existing_version:
+                        break
+                current_version = details.get('version_added')
+                if current_version != existing_version:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=309,
+                        msg=('version_added for new option (%s) should '
+                             'be %r. Currently %r' %
+                             (option, existing_version, current_version))
+                    )
                 continue
 
             try:
@@ -1365,9 +1431,11 @@ class ModuleValidator(Validator):
                     path=self.object_path,
                     code=309,
                     msg=('version_added for new option (%s) should '
-                         'be %s. Currently %s' %
+                         'be %r. Currently %r' %
                          (option, should_be, version_added))
                 )
+
+        return existing_doc
 
     @staticmethod
     def is_blacklisted(path):
@@ -1418,7 +1486,7 @@ class ModuleValidator(Validator):
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
+            if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict) and 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
                 end_of_deprecation_should_be_removed_only = True
             elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
                 try:

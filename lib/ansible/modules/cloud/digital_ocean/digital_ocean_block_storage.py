@@ -59,7 +59,7 @@ notes:
   - If snapshot_id is used, region and block_size will be ignored and changed to null.
 
 author:
-    - "Harnek Sidhu (github: @harneksidhu)"
+    - "Harnek Sidhu (@harneksidhu)"
 '''
 
 EXAMPLES = '''
@@ -100,7 +100,7 @@ RETURN = '''
 id:
     description: Unique identifier of a Block Storage volume returned during creation.
     returned: changed
-    type: string
+    type: str
     sample: "69b25d9a-494c-12e6-a5af-001f53126b44"
 '''
 

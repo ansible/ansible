@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -130,32 +130,32 @@ RETURN = '''
 creation_time:
     description: timestamp of creation date
     returned: always
-    type: string
+    type: str
     sample: "2015-11-16 07:30:57-05:00"
 creation_token:
     description: EFS creation token
     returned: always
-    type: string
+    type: str
     sample: "console-88609e04-9a0e-4a2e-912c-feaa99509961"
 file_system_id:
     description: ID of the file system
     returned: always
-    type: string
+    type: str
     sample: "fs-xxxxxxxx"
 life_cycle_state:
     description: state of the EFS file system
     returned: always
-    type: string
+    type: str
     sample: "creating, available, deleting, deleted"
 mount_point:
     description: url of file system with leading dot from the time when AWS EFS required to add a region suffix to the address
     returned: always
-    type: string
+    type: str
     sample: ".fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 filesystem_address:
     description: url of file system valid for use with mount
     returned: always
-    type: string
+    type: str
     sample: "fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/"
 mount_targets:
     description: list of mount targets
@@ -180,7 +180,7 @@ mount_targets:
 name:
     description: name of the file system
     returned: always
-    type: string
+    type: str
     sample: "my-efs"
 number_of_mount_targets:
     description: the number of targets mounted
@@ -190,7 +190,7 @@ number_of_mount_targets:
 owner_id:
     description: AWS account ID of EFS owner
     returned: always
-    type: string
+    type: str
     sample: "XXXXXXXXXXXX"
 size_in_bytes:
     description: size of the file system in bytes as of a timestamp
@@ -204,7 +204,7 @@ size_in_bytes:
 performance_mode:
     description: performance mode of the file system
     returned: always
-    type: string
+    type: str
     sample: "generalPurpose"
 tags:
     description: tags on the efs instance
@@ -274,7 +274,7 @@ class EFSConnection(object):
             AWS updated it and now there is no need to add a suffix. MountPoint is left for back-compatibility purpose
             And new FilesystemAddress variable is introduced for direct use with other modules (e.g. mount)
             AWS documentation is available here:
-            http://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
+            https://docs.aws.amazon.com/efs/latest/ug/gs-step-three-connect-to-ec2-instance.html
             """
             item['MountPoint'] = '.%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)
             item['FilesystemAddress'] = '%s.efs.%s.amazonaws.com:/' % (item['FileSystemId'], self.region)

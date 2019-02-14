@@ -39,11 +39,13 @@ options:
               setting another policy in the future.
         required: false
         default: false
+        type: bool
     delete_policy:
         description:
             - if yes, remove the policy from the repository
         required: false
         default: false
+        type: bool
     state:
         description:
             - create or destroy the repository
@@ -97,15 +99,15 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    type: string
+    type: str
     description: The asserted state of the repository (present, absent)
     returned: always
 created:
-    type: boolean
+    type: bool
     description: If true, the repository was created
     returned: always
 name:
-    type: string
+    type: str
     description: The name of the repository
     returned: "when state == 'absent'"
 repository:
@@ -304,7 +306,7 @@ def run(ecr, params, verbosity):
                         ecr.set_repository_policy(
                             registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
-                except:
+                except Exception:
                     # Some failure w/ the policy. It's helpful to know what the
                     # policy is.
                     result['policy'] = policy_text

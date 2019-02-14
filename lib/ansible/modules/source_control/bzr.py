@@ -89,7 +89,7 @@ class Bzr(object):
         dest_dirname = os.path.dirname(self.dest)
         try:
             os.makedirs(dest_dirname)
-        except:
+        except Exception:
             pass
         if self.version.lower() != 'head':
             args_list = ["branch", "-r", self.version, self.parent, self.dest]

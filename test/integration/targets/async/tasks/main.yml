@@ -239,7 +239,7 @@
       state: absent
 
   - name: run fire and forget async task with custom dir
-    command: sleep 1
+    command: echo moo
     register: async_fandf_custom_dir
     async: 5
     poll: 0
@@ -273,9 +273,7 @@
       - async_fandf_custom_dir_fail is failed
       - async_fandf_custom_dir_fail.msg == "could not find job"
       - async_fandf_custom_dir_result is successful
-      - async_fandf_custom_dir_result is finished
       - async_fandf_custom_dir_dep_result is successful
-      - async_fandf_custom_dir_dep_result is finished
 
   always:
   - name: remove custom tmp dir after test

@@ -127,6 +127,13 @@ options:
     - Time to wait before every attempt to check the state of the server
     required: false
     default: 3
+
+  security_group:
+    description:
+    - Security group unique identifier
+    - If no value provided, the default security group or current security group will be used
+    required: false
+    version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -138,6 +145,19 @@ EXAMPLES = '''
     organization: 951df375-e094-4d26-97c1-ba548eeb9c42
     region: ams1
     commercial_type: VC1S
+    tags:
+      - test
+      - www
+
+- name: Create a server attached to a security group
+  scaleway_compute:
+    name: foobar
+    state: present
+    image: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
+    organization: 951df375-e094-4d26-97c1-ba548eeb9c42
+    region: ams1
+    commercial_type: VC1S
+    security_group: 4a31b633-118e-4900-bd52-facf1085fc8d
     tags:
       - test
       - www
@@ -203,6 +223,17 @@ SCALEWAY_TRANSITIONS_STATES = (
     "starting",
     "pending"
 )
+
+
+def check_image_id(compute_api, image_id):
+    response = compute_api.get(path="images")
+
+    if response.ok and response.json:
+        image_ids = [image["id"] for image in response.json["images"]]
+        if image_id not in image_ids:
+            compute_api.module.fail_json(msg='Error in getting image %s on %s' % (image_id, compute_api.module.params.get('api_url')))
+    else:
+        compute_api.module.fail_json(msg="Error in getting images from: %s" % compute_api.module.params.get('api_url'))
 
 
 def fetch_state(compute_api, server):
@@ -272,16 +303,19 @@ def public_ip_payload(compute_api, public_ip):
 def create_server(compute_api, server):
     compute_api.module.debug("Starting a create_server")
     target_server = None
-    payload = {"enable_ipv6": server["enable_ipv6"],
-               "tags": server["tags"],
-               "commercial_type": server["commercial_type"],
-               "image": server["image"],
-               "dynamic_ip_required": server["dynamic_ip_required"],
-               "name": server["name"],
-               "organization": server["organization"]}
+    data = {"enable_ipv6": server["enable_ipv6"],
+            "tags": server["tags"],
+            "commercial_type": server["commercial_type"],
+            "image": server["image"],
+            "dynamic_ip_required": server["dynamic_ip_required"],
+            "name": server["name"],
+            "organization": server["organization"]
+            }
 
-    response = compute_api.post(path="servers",
-                                data=payload)
+    if server["security_group"]:
+        data["security_group"] = server["security_group"]
+
+    response = compute_api.post(path="servers", data=data)
 
     if not response.ok:
         msg = 'Error during server creation: (%s) %s' % (response.status_code, response.json)
@@ -354,7 +388,7 @@ def present_strategy(compute_api, wished_server):
         if compute_api.module.check_mode:
             return changed, {"status": "Server %s attributes would be changed." % target_server["id"]}
 
-        server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
+        target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     return changed, target_server
 
@@ -376,7 +410,7 @@ def absent_strategy(compute_api, wished_server):
         return changed, {"status": "Server %s would be made absent." % target_server["id"]}
 
     # A server MUST be stopped to be deleted.
-    while not fetch_state(compute_api=compute_api, server=target_server) == "stopped":
+    while fetch_state(compute_api=compute_api, server=target_server) != "stopped":
         wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
         response = stop_server(compute_api=compute_api, server=target_server)
 
@@ -417,7 +451,7 @@ def running_strategy(compute_api, wished_server):
         if compute_api.module.check_mode:
             return changed, {"status": "Server %s attributes would be changed before running it." % target_server["id"]}
 
-        server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
+        target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     current_state = fetch_state(compute_api=compute_api, server=target_server)
     if current_state not in ("running", "starting"):
@@ -461,7 +495,7 @@ def stop_strategy(compute_api, wished_server):
             return changed, {
                 "status": "Server %s attributes would be changed before stopping it." % target_server["id"]}
 
-        server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
+        target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
 
@@ -508,7 +542,7 @@ def restart_strategy(compute_api, wished_server):
             return changed, {
                 "status": "Server %s attributes would be changed before rebooting it." % target_server["id"]}
 
-        server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
+        target_server = server_change_attributes(compute_api=compute_api, target_server=target_server, wished_server=wished_server)
 
     changed = True
     if compute_api.module.check_mode:
@@ -547,8 +581,8 @@ state_strategy = {
 def find(compute_api, wished_server, per_page=1):
     compute_api.module.debug("Getting inside find")
     # Only the name attribute is accepted in the Compute query API
-    url = 'servers?name=%s&per_page=%d' % (urlquote(wished_server["name"]), per_page)
-    response = compute_api.get(url)
+    response = compute_api.get("servers", params={"name": wished_server["name"],
+                                                  "per_page": per_page})
 
     if not response.ok:
         msg = 'Error during server search: (%s) %s' % (response.status_code, response.json)
@@ -564,6 +598,7 @@ PATCH_MUTABLE_SERVER_ATTRIBUTES = (
     "tags",
     "name",
     "dynamic_ip_required",
+    "security_group",
 )
 
 
@@ -575,29 +610,51 @@ def server_attributes_should_be_changed(compute_api, target_server, wished_serve
                       for x in PATCH_MUTABLE_SERVER_ATTRIBUTES
                       if x in target_server and x in wished_server)
     compute_api.module.debug("Debug dict %s" % debug_dict)
-
     try:
-        return any([target_server[x] != wished_server[x]
-                    for x in PATCH_MUTABLE_SERVER_ATTRIBUTES
-                    if x in target_server and x in wished_server])
+        for key in PATCH_MUTABLE_SERVER_ATTRIBUTES:
+            if key in target_server and key in wished_server:
+                # When you are working with dict, only ID matter as we ask user to put only the resource ID in the playbook
+                if isinstance(target_server[key], dict) and wished_server[key] and "id" in target_server[key].keys(
+                ) and target_server[key]["id"] != wished_server[key]:
+                    return True
+                # Handling other structure compare simply the two objects content
+                elif not isinstance(target_server[key], dict) and target_server[key] != wished_server[key]:
+                    return True
+        return False
     except AttributeError:
         compute_api.module.fail_json(msg="Error while checking if attributes should be changed")
 
 
 def server_change_attributes(compute_api, target_server, wished_server):
     compute_api.module.debug("Starting patching server attributes")
-    patch_payload = dict((x, wished_server[x])
-                         for x in PATCH_MUTABLE_SERVER_ATTRIBUTES
-                         if x in wished_server and x in target_server)
+    patch_payload = dict()
+
+    for key in PATCH_MUTABLE_SERVER_ATTRIBUTES:
+        if key in target_server and key in wished_server:
+            # When you are working with dict, only ID matter as we ask user to put only the resource ID in the playbook
+            if isinstance(target_server[key], dict) and "id" in target_server[key] and wished_server[key]:
+                # Setting all key to current value except ID
+                key_dict = dict((x, target_server[key][x]) for x in target_server[key].keys() if x != "id")
+                # Setting ID to the user specified ID
+                key_dict["id"] = wished_server[key]
+                patch_payload[key] = key_dict
+            elif not isinstance(target_server[key], dict):
+                patch_payload[key] = wished_server[key]
+
     response = compute_api.patch(path="servers/%s" % target_server["id"],
                                  data=patch_payload)
     if not response.ok:
         msg = 'Error during server attributes patching: (%s) %s' % (response.status_code, response.json)
         compute_api.module.fail_json(msg=msg)
 
+    try:
+        target_server = response.json["server"]
+    except KeyError:
+        compute_api.module.fail_json(msg="Error in getting the server information from: %s" % response.json)
+
     wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
 
-    return response
+    return target_server
 
 
 def core(module):
@@ -609,11 +666,14 @@ def core(module):
         "commercial_type": module.params["commercial_type"],
         "enable_ipv6": module.params["enable_ipv6"],
         "tags": module.params["tags"],
-        "organization": module.params["organization"]
+        "organization": module.params["organization"],
+        "security_group": module.params["security_group"]
     }
     module.params['api_url'] = SCALEWAY_LOCATION[region]["api_endpoint"]
 
     compute_api = Scaleway(module=module)
+
+    check_image_id(compute_api, wished_server["image"])
 
     # IP parameters of the wished server depends on the configuration
     ip_payload = public_ip_payload(compute_api=compute_api, public_ip=module.params["public_ip"])
@@ -638,6 +698,7 @@ def main():
         wait=dict(type="bool", default=False),
         wait_timeout=dict(type="int", default=300),
         wait_sleep_time=dict(type="int", default=3),
+        security_group=dict(),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,

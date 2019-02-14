@@ -18,6 +18,9 @@
 
 import re
 
+from ansible.module_utils._text import to_text
+from ansible.module_utils.common.collections import is_string
+
 INVALID_IDENTIFIER_SYMBOLS = r'[^a-zA-Z0-9_]'
 
 IDENTITY_PROPERTIES = ['id', 'version', 'ruleId']
@@ -38,7 +41,10 @@ class ResponseParams:
 
 
 class FtdConfigurationError(Exception):
-    pass
+    def __init__(self, msg, obj=None):
+        super(FtdConfigurationError, self).__init__(msg)
+        self.msg = msg
+        self.obj = obj
 
 
 class FtdServerError(Exception):
@@ -46,6 +52,11 @@ class FtdServerError(Exception):
         super(FtdServerError, self).__init__(response)
         self.response = response
         self.code = code
+
+
+class FtdUnexpectedResponse(Exception):
+    """The exception to be raised in case of unexpected responses from 3d parties."""
+    pass
 
 
 def construct_ansible_facts(response, params):
@@ -149,6 +160,11 @@ def equal_values(v1, v2):
     :return: True if types and content of passed values are equal. Otherwise, returns False.
     :rtype: bool
     """
+
+    # string-like values might have same text but different types, so checking them separately
+    if is_string(v1) and is_string(v2):
+        return to_text(v1) == to_text(v2)
+
     if type(v1) != type(v2):
         return False
     value_type = type(v1)

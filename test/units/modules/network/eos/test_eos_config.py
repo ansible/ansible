@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat.mock import patch, MagicMock
 from ansible.modules.network.eos import eos_config
 from ansible.plugins.cliconf.eos import Cliconf
 from units.modules.utils import set_module_args
@@ -199,9 +199,9 @@ class TestEosConfigModule(TestEosModule):
         self.assertEqual(self.get_config.call_count, 0)
         self.assertEqual(self.load_config.call_count, 0)
 
-    def test_eos_config_save(self):
+    def test_eos_config_save_always(self):
         self.run_commands.return_value = "hostname foo"
-        set_module_args(dict(save=True))
+        set_module_args(dict(save_when='always'))
         self.execute_module(changed=True)
         self.assertEqual(self.run_commands.call_count, 1)
         self.assertEqual(self.get_config.call_count, 0)

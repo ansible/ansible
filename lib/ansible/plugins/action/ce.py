@@ -1,21 +1,8 @@
 #
-# (c) 2016 Red Hat Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2016, Red Hat Inc.
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -25,25 +12,22 @@ import copy
 from ansible import constants as C
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection
-from ansible.plugins.action.normal import ActionModule as _ActionModule
+from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 CLI_SUPPORTED_MODULES = ['ce_config', 'ce_command']
 
 
-class ActionModule(_ActionModule):
+class ActionModule(ActionNetworkModule):
 
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
+        self._config_module = True if self._task.action == 'ce_config' else False
         socket_path = None
 
         if self._play_context.connection == 'local':
@@ -87,7 +71,7 @@ class ActionModule(_ActionModule):
         elif self._play_context.connection in ('netconf', 'network_cli'):
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
-                display.warning('provider is unnessary whene using %s and will be ignored' % self._play_context.connection)
+                display.warning('provider is unnecessary when using %s and will be ignored' % self._play_context.connection)
                 del self._task.args['provider']
 
             if (self._play_context.connection == 'network_cli' and self._task.action not in CLI_SUPPORTED_MODULES) or \
@@ -97,7 +81,7 @@ class ActionModule(_ActionModule):
 
         if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
                 or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context whitch should be
+            # make sure we are in the right cli context which should be
             # enable mode and not config module
             if socket_path is None:
                 socket_path = self._connection.socket_path

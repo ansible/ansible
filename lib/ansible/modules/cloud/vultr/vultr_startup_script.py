@@ -73,7 +73,7 @@ vultr_api:
     api_account:
       description: Account used in the ini file to select the key
       returned: success
-      type: string
+      type: str
       sample: default
     api_timeout:
       description: Timeout used for the API requests
@@ -88,7 +88,7 @@ vultr_api:
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
-      type: string
+      type: str
       sample: "https://api.vultr.com"
 vultr_startup_script:
   description: Response from Vultr API
@@ -98,32 +98,32 @@ vultr_startup_script:
     id:
       description: ID of the startup script.
       returned: success
-      type: string
+      type: str
       sample: 249395
     name:
       description: Name of the startup script.
       returned: success
-      type: string
+      type: str
       sample: my startup script
     script:
       description: The source code of the startup script.
       returned: success
-      type: string
+      type: str
       sample: "#!/bin/bash\necho Hello World > /root/hello"
     script_type:
       description: The type of the startup script.
       returned: success
-      type: string
+      type: str
       sample: pxe
     date_created:
       description: Date the startup script was created.
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
     date_modified:
       description: Date the startup script was modified.
       returned: success
-      type: string
+      type: str
       sample: "2017-08-26 12:47:48"
 '''
 

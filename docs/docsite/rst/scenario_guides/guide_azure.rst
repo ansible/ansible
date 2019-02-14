@@ -93,13 +93,13 @@ To pass Active Directory username/password in ADFS via the environment, define t
 * AZURE_TENANT
 * AZURE_ADFS_AUTHORITY_URL
 
-"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
+"AZURE_ADFS_AUTHORITY_URL" is optional. It's necessary only when you have own ADFS authority like https://yourdomain.com/adfs.
 
 Storing in a File
 `````````````````
 
 When working in a development environment, it may be desirable to store credentials in a file. The modules will look
-for credentials in $HOME/.azure/credentials. This file is an ini style file. It will look as follows:
+for credentials in ``$HOME/.azure/credentials``. This file is an ini style file. It will look as follows:
 
 .. code-block:: ini
 
@@ -136,7 +136,7 @@ Or, pass the following parameters for ADFS username/pasword:
 * tenant
 * adfs_authority_url
 
-"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://xxx.com/adfs.
+"adfs_authority_url" is optional. It's necessary only when you have own ADFS authority like https://yourdomain.com/adfs.
 
 
 Other Cloud Environments
@@ -258,9 +258,9 @@ Dynamic Inventory Script
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
-The Azure Resource Manager inventory script is called azure_rm.py. It authenticates with the Azure API exactly the same as the
+The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
-create a $HOME/.azure/credentials file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
+create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash

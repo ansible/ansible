@@ -56,7 +56,7 @@ To create a new module:
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean, concise module code.
 
-.. code:: python
+.. code-block:: python
 
     #!/usr/bin/python
 
@@ -156,7 +156,7 @@ To create a new module:
         # want to make any changes to the environment, just return the current
         # state with no modifications
         if module.check_mode:
-            return result
+            module.exit_json(**result)
 
         # manipulate or modify the state as needed (this is going to be the
         # part where your module will do what it needs to do)
@@ -194,7 +194,7 @@ Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exer
 Exercising module code locally
 ------------------------------
 
-If you module does not need to target a remote host, you can quickly and easily exercise you code locally like this:
+If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
 -  Create an arguments file, a basic JSON config file that passes parameters to your module so you can run it. Name the arguments file ``/tmp/args.json`` and add the following content:
 
@@ -213,7 +213,7 @@ If you module does not need to target a remote host, you can quickly and easily 
 -  Run your test module locally and directly:
    ``$ python -m ansible.modules.cloud.azure.my_new_test_module /tmp/args.json``
 
-This should return output something like this:
+This should return output like this:
 
 .. code:: json
 
@@ -246,7 +246,7 @@ Testing basics
 ====================
 
 These two examples will get you started with testing your module code. Please review our :ref:`testing <developing_testing>` section for more detailed
-information, including instructions for :ref:`testing documentation <testing_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
+information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 Sanity tests
 ------------

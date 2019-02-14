@@ -6,7 +6,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.onyx import onyx_bgp
 from units.modules.utils import set_module_args
 from .onyx_module import TestOnyxModule, load_fixture
@@ -68,7 +68,8 @@ class TestOnyxBgpModule(TestOnyxModule):
 
     def test_bgp_del_neighbor(self):
         set_module_args(dict(as_number=172,
-                             networks=['172.16.1.0/24']))
+                             networks=['172.16.1.0/24'],
+                             purge=True))
         commands = ['router bgp 172 no neighbor 10.2.3.4 remote-as 173']
         self.execute_module(changed=True, commands=commands)
 

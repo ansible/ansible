@@ -426,7 +426,7 @@ def main():
     if module.params['event_source'].lower() in ('stream', 'sqs'):
         results = lambda_event_stream(module, aws)
     else:
-        module.fail_json('Please select `stream` or `sqs` as the event type')
+        module.fail_json(msg='Please select `stream` or `sqs` as the event type')
 
     module.exit_json(**results)
 

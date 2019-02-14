@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages VLAN resources and attributes on Huawei CloudEngine switches.
 description:
     - Manages VLAN configurations on Huawei CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     vlan_id:
         description:
@@ -37,10 +37,10 @@ options:
             - Range of VLANs such as C(2-10) or C(2,5,10-15), etc.
     name:
         description:
-            - Name of VLAN, in the range from 1 to 31.
+            - Name of VLAN, minimum of 1 character, maximum of 31 characters.
     description:
         description:
-            - Specify VLAN description, in the range from 1 to 80.
+            - Specify VLAN description, minimum of 1 character, maximum of 80 characters.
     state:
         description:
             - Manage the state of the resource.
@@ -125,7 +125,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

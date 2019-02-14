@@ -1,0 +1,2 @@
+minor_changes:
+  - Add configurable backup path option support for network config modules

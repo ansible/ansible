@@ -74,7 +74,7 @@ EXAMPLES = '''
 RETURN = '''
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
 
 
@@ -134,7 +134,7 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     if not HAS_INFINISDK:
-        module.fail_json(msg='infinisdk is required for this module')
+        module.fail_json(msg=missing_required_lib('infinisdk'))
 
     state = module.params['state']
     system = get_system(module)
@@ -143,7 +143,7 @@ def main():
     if module.params['volume']:
         try:
             system.volumes.get(name=module.params['volume'])
-        except:
+        except Exception:
             module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
 
     if host and state == 'present':

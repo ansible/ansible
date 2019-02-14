@@ -16,13 +16,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: zabbix_host
-short_description: Zabbix host creates/updates/deletes
+short_description: Create/update/delete Zabbix hosts
 description:
    - This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
 version_added: "2.0"
 author:
-    - "(@cove)"
-    - Tony Minfei Ding
+    - "Cove (@cove)"
+    - Tony Minfei Ding (!UNKNOWN)
     - Harrison Gu (@harrisongu)
     - Werner Dijkerman (@dj-wasabi)
     - Eike Frost (@eikef)
@@ -814,12 +814,12 @@ def main():
                                          description, host_name, inventory_mode, inventory_zabbix,
                                          tls_accept, tls_psk_identity, tls_psk, tls_issuer, tls_subject, tls_connect,
                                          ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password):
-                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
-                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
-                                            ipmi_username, ipmi_password)
                 host.update_host(host_name, group_ids, status, host_id,
                                  interfaces, exist_interfaces, proxy_id, visible_name, description, tls_connect, tls_accept,
                                  tls_psk_identity, tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege, ipmi_username, ipmi_password)
+                host.link_or_clear_template(host_id, template_ids, tls_connect, tls_accept, tls_psk_identity,
+                                            tls_psk, tls_issuer, tls_subject, ipmi_authtype, ipmi_privilege,
+                                            ipmi_username, ipmi_password)
                 host.update_inventory_mode(host_id, inventory_mode)
                 host.update_inventory_zabbix(host_id, inventory_zabbix)
 

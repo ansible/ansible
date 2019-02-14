@@ -128,8 +128,8 @@ requirements:
   - cron
 author:
     - Dane Summers (@dsummersl)
-    - Mike Grozak
-    - Patrick Callahan
+    - Mike Grozak (@rhaido)
+    - Patrick Callahan (@dirtyharrycallahan)
     - Evan Kaufman (@EvanK)
     - Luca Berruti (@lberruti)
 """
@@ -157,13 +157,13 @@ EXAMPLES = '''
   cron:
     name: PATH
     env: yes
-    value: /opt/bin
+    job: /opt/bin
 
 - name: Creates an entry like "APP_HOME=/srv/app" and insert it after PATH declaration
   cron:
     name: APP_HOME
     env: yes
-    value: /srv/app
+    job: /srv/app
     insertafter: PATH
 
 - name: Creates a cron file under /etc/cron.d
@@ -246,7 +246,7 @@ class CronTab(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -371,7 +371,7 @@ class CronTab(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
     def find_job(self, name, job=None):
@@ -698,7 +698,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and not crontab.existing == '':
+    if not changed and crontab.existing != '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 

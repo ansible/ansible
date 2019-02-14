@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.compat.tests.mock import patch, MagicMock, mock_open
+from units.compat.mock import patch, MagicMock, mock_open
 from ansible.plugins.action.win_updates import ActionModule
 from ansible.playbook.task import Task
 
@@ -16,14 +16,6 @@ from ansible.playbook.task import Task
 class TestWinUpdatesActionPlugin(object):
 
     INVALID_OPTIONS = (
-        (
-            {"category_names": ["fake category"]},
-            False,
-            "Unknown category_name fake category, must be one of (Application,"
-            "Connectors,CriticalUpdates,DefinitionUpdates,DeveloperKits,"
-            "FeaturePacks,Guidance,SecurityUpdates,ServicePacks,Tools,"
-            "UpdateRollups,Updates)"
-        ),
         (
             {"state": "invalid"},
             False,

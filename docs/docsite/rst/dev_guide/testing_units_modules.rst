@@ -23,9 +23,9 @@ please open a bug or ask for help on Ansible IRC.
 What Are Unit Tests?
 ====================
 
-Ansible includes a set of unit tests in the :file:`test/unit` directory. These tests primarily cover the
+Ansible includes a set of unit tests in the :file:`test/units` directory. These tests primarily cover the
 internals but can also can cover Ansible modules.  The structure of the unit tests matches
-the structure of the code base, so the tests that reside in the :file:`test/unit/modules/` directory
+the structure of the code base, so the tests that reside in the :file:`test/units/modules/` directory
 are organized by module groups.
 
 Integration tests can be used for most modules, but there are situations where
@@ -76,7 +76,7 @@ with integration tests, such as:
   failures and exceptions
 * Extensive testing of slow configuration APIs
 * Situations where the integration tests cannot be run as part of the main Ansible
-  continuous integraiton running in Shippable.
+  continuous integration running in Shippable.
 
 
 
@@ -110,7 +110,7 @@ Example:
 
 Another related use is in the situation where an API has versions which behave
 differently. A programmer working on a new version may change the module to work with the
-new API version and unintentially break the old version.  A test case
+new API version and unintentionally break the old version.  A test case
 which checks that the call happens properly for the old version can help avoid the
 problem.  In this situation it is very important to include version numbering in the test case
 name (see `Naming unit tests`_ below).

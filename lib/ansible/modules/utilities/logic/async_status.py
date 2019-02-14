@@ -42,6 +42,7 @@ author:
 import json
 import os
 
+from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 
@@ -76,8 +77,8 @@ def main():
 
     data = None
     try:
-        data = open(log_path).read()
-        data = json.loads(data)
+        with open(log_path) as f:
+            data = json.loads(f.read())
     except Exception:
         if not data:
             # file not written yet?  That means it is running
@@ -93,7 +94,7 @@ def main():
         data['finished'] = 0
 
     # Fix error: TypeError: exit_json() keywords must be strings
-    data = dict([(str(k), v) for k, v in iteritems(data)])
+    data = dict([(to_native(k), v) for k, v in iteritems(data)])
 
     module.exit_json(**data)
 

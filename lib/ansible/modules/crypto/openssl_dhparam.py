@@ -76,7 +76,7 @@ size:
 filename:
     description: Path to the generated Diffie-Hellman parameters
     returned: changed or success
-    type: string
+    type: str
     sample: /etc/ssl/dhparams.pem
 '''
 
@@ -191,7 +191,7 @@ def main():
         add_file_common_args=True,
     )
 
-    base_dir = os.path.dirname(module.params['path'])
+    base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,

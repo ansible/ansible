@@ -36,6 +36,7 @@ options:
   pending_deletion:
     description: Whether to get full details (tags, grants etc.) of keys pending deletion
     default: False
+    type: bool
 extends_documentation_fragment:
     - aws
     - ec2
@@ -45,7 +46,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Gather facts about all KMS keys
-- aws_kms_facts
+- aws_kms_facts:
 
 # Gather facts about all keys with a Name tag
 - aws_kms_facts:

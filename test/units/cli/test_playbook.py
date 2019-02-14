@@ -19,9 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from units.mock.loader import DictDataLoader
 
+from ansible import context
 from ansible.inventory.manager import InventoryManager
 from ansible.vars.manager import VariableManager
 
@@ -32,7 +33,7 @@ class TestPlaybookCLI(unittest.TestCase):
     def test_flush_cache(self):
         cli = PlaybookCLI(args=["ansible-playbook", "--flush-cache", "foobar.yml"])
         cli.parse()
-        self.assertTrue(cli.options.flush_cache)
+        self.assertTrue(context.CLIARGS['flush_cache'])
 
         variable_manager = VariableManager()
         fake_loader = DictDataLoader({'foobar.yml': ""})

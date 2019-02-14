@@ -41,7 +41,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See \
-      U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSnapshots.html) for possible filters. Filter \
+      U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSnapshots.html) for possible filters. Filter \
       names and values are case sensitive.
     required: false
     default: {}
@@ -95,44 +95,44 @@ EXAMPLES = '''
 RETURN = '''
 snapshot_id:
     description: The ID of the snapshot. Each snapshot receives a unique identifier when it is created.
-    type: string
+    type: str
     returned: always
     sample: snap-01234567
 volume_id:
     description: The ID of the volume that was used to create the snapshot.
-    type: string
+    type: str
     returned: always
     sample: vol-01234567
 state:
     description: The snapshot state (completed, pending or error).
-    type: string
+    type: str
     returned: always
     sample: completed
 state_message:
     description: Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy operation fails (for example, if the proper
                  AWS Key Management Service (AWS KMS) permissions are not obtained) this field displays error state details to help you diagnose why the
                  error occurred.
-    type: string
+    type: str
     returned: always
     sample:
 start_time:
     description: The time stamp when the snapshot was initiated.
-    type: string
+    type: str
     returned: always
     sample: "2015-02-12T02:14:02+00:00"
 progress:
     description: The progress of the snapshot, as a percentage.
-    type: string
+    type: str
     returned: always
     sample: "100%"
 owner_id:
     description: The AWS account ID of the EBS snapshot owner.
-    type: string
+    type: str
     returned: always
     sample: "099720109477"
 description:
     description: The description for the snapshot.
-    type: string
+    type: str
     returned: always
     sample: "My important backup"
 volume_size:
@@ -142,7 +142,7 @@ volume_size:
     sample: 8
 owner_alias:
     description: The AWS account alias (for example, amazon, self) or AWS account ID that owns the snapshot.
-    type: string
+    type: str
     returned: always
     sample: "033440102211"
 tags:
@@ -152,19 +152,19 @@ tags:
     sample: "{ 'my_tag_key': 'my_tag_value' }"
 encrypted:
     description: Indicates whether the snapshot is encrypted.
-    type: boolean
+    type: bool
     returned: always
     sample: "True"
 kms_key_id:
     description: The full ARN of the AWS Key Management Service (AWS KMS) customer master key (CMK) that was used to \
     protect the volume encryption key for the parent volume.
-    type: string
+    type: str
     returned: always
     sample: "74c9742a-a1b2-45cb-b3fe-abcdef123456"
 data_encryption_key_id:
     description: The data encryption key identifier for the snapshot. This value is a unique identifier that \
     corresponds to the data encryption key that was used to encrypt the original volume or snapshot copy.
-    type: string
+    type: str
     returned: always
     sample: "arn:aws:kms:ap-southeast-2:012345678900:key/74c9742a-a1b2-45cb-b3fe-abcdef123456"
 

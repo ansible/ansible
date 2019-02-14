@@ -151,15 +151,17 @@ modlist:
 
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.module_utils.ldap import LdapGeneric, gen_specs
 
+LDAP_IMP_ERR = None
 try:
     import ldap
 
     HAS_LDAP = True
 except ImportError:
+    LDAP_IMP_ERR = traceback.format_exc()
     HAS_LDAP = False
 
 
@@ -173,12 +175,12 @@ class LdapAttr(LdapGeneric):
 
         # Normalize values
         if isinstance(self.module.params['values'], list):
-            self.values = map(to_bytes, self.module.params['values'])
+            self.values = list(map(to_bytes, self.module.params['values']))
         else:
             self.values = [to_bytes(self.module.params['values'])]
 
     def add(self):
-        values_to_add = filter(self._is_value_absent, self.values)
+        values_to_add = list(filter(self._is_value_absent, self.values))
 
         if len(values_to_add) > 0:
             modlist = [(ldap.MOD_ADD, self.name, values_to_add)]
@@ -188,7 +190,7 @@ class LdapAttr(LdapGeneric):
         return modlist
 
     def delete(self):
-        values_to_delete = filter(self._is_value_present, self.values)
+        values_to_delete = list(filter(self._is_value_present, self.values))
 
         if len(values_to_delete) > 0:
             modlist = [(ldap.MOD_DELETE, self.name, values_to_delete)]
@@ -246,8 +248,8 @@ def main():
     )
 
     if not HAS_LDAP:
-        module.fail_json(
-            msg="Missing required 'ldap' module (pip install python-ldap)")
+        module.fail_json(msg=missing_required_lib('python-ldap'),
+                         exception=LDAP_IMP_ERR)
 
     # Update module parameters with user's parameters if defined
     if 'params' in module.params and isinstance(module.params['params'], dict):

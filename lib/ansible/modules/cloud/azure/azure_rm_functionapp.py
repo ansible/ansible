@@ -48,7 +48,6 @@ options:
         description:
             - Assert the state of the Function App. Use 'present' to create or update a Function App and
               'absent' to delete.
-        required: false
         default: present
         choices:
             - absent
@@ -67,11 +66,13 @@ EXAMPLES = '''
   azure_rm_functionapp:
       resource_group: ansible-rg
       name: myfunctionapp
+      storage_account: mystorageaccount
 
 - name: create a function app with app settings
   azure_rm_functionapp:
       resource_group: ansible-rg
       name: myfunctionapp
+      storage_account: mystorageaccount
       app_settings:
           setting1: value1
           setting2: value2
@@ -143,10 +144,9 @@ class AzureRMFunctionApp(AzureRMModuleBase):
             resource_group=dict(type='str', required=True, aliases=['resource_group_name']),
             name=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            location=dict(type='str', required=False),
+            location=dict(type='str'),
             storage_account=dict(
                 type='str',
-                required=False,
                 aliases=['storage', 'storage_account_name']
             ),
             app_settings=dict(type='dict')

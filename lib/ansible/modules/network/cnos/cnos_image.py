@@ -48,9 +48,6 @@ description:
      The results of the operation will be placed in a directory named 'results'
      that must be created by the user in their local directory to where the
      playbook is run.
-     For more information about this module from Lenovo and customizing it
-     usage for your use cases, please visit
-     U(http://systemx.lenovofiles.com/help/index.jsp?topic=%2Fcom.lenovo.switchmgt.ansible.doc%2Fcnos_image.html)
 version_added: "2.3"
 extends_documentation_fragment: cnos
 options:
@@ -94,11 +91,7 @@ Tasks : The following are examples of using the module cnos_image. These are
 ---
 - name: Test Image transfer
   cnos_image:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_image_{{ inventory_hostname }}_output.txt"
       protocol: "sftp"
       serverip: "10.241.106.118"
@@ -109,11 +102,7 @@ Tasks : The following are examples of using the module cnos_image. These are
 
 - name: Test Image tftp
   cnos_image:
-      host: "{{ inventory_hostname }}"
-      username: "{{ hostvars[inventory_hostname]['ansible_ssh_user'] }}"
-      password: "{{ hostvars[inventory_hostname]['ansible_ssh_pass'] }}"
       deviceType: "{{ hostvars[inventory_hostname]['deviceType'] }}"
-      enablePassword: "{{ hostvars[inventory_hostname]['enablePassword'] }}"
       outputfile: "./results/test_image_{{ inventory_hostname }}_output.txt"
       protocol: "tftp"
       serverip: "10.241.106.118"
@@ -126,7 +115,7 @@ RETURN = '''
 msg:
   description: Success or failure message
   returned: always
-  type: string
+  type: str
   sample: "Image file tranferred to device"
 '''
 
@@ -141,7 +130,7 @@ import os
 try:
     from ansible.module_utils.network.cnos import cnos
     HAS_LIB = True
-except:
+except Exception:
     HAS_LIB = False
 from ansible.module_utils.basic import AnsibleModule
 from collections import defaultdict
@@ -186,7 +175,7 @@ def doImageDownload(module, prompt, answer):
     elif(protocol == "tftp"):
         command = "copy " + protocol + " " + protocol + "://" + server
         command = command + "/" + imgPath + " system-image " + imgType
-        command = command + + " vrf management"
+        command = command + " vrf management"
         prompt = ['Confirm download operation',
                   'Do you want to change that to the standby image']
         answer = ['y', 'y']
@@ -205,9 +194,9 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             outputfile=dict(required=True),
-            host=dict(required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
+            host=dict(required=False),
+            username=dict(required=False),
+            password=dict(required=False, no_log=True),
             enablePassword=dict(required=False, no_log=True),
             deviceType=dict(required=True),
             protocol=dict(required=True),

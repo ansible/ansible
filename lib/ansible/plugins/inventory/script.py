@@ -35,18 +35,17 @@ DOCUMENTATION = '''
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
-        - It takes the place of the previously hardcoded script inventory.
-        - In order to function, it requires being whitelisted in configuration, which is true by default.
+        - Whitelisted in configuration by default.
 '''
 
 import os
 import subprocess
-from collections import Mapping
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 

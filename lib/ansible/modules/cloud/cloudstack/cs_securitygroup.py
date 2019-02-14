@@ -65,17 +65,17 @@ RETURN = '''
 id:
   description: UUID of the security group.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of security group.
   returned: success
-  type: string
+  type: str
   sample: app
 description:
   description: Description of security group.
   returned: success
-  type: string
+  type: str
   sample: application security group
 tags:
   description: List of resource tags associated with the security group.
@@ -85,17 +85,17 @@ tags:
 project:
   description: Name of project the security group is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 domain:
   description: Domain the security group is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the security group is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 '''
 

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages MTU settings on HUAWEI CloudEngine switches.
 description:
     - Manages MTU settings on HUAWEI CloudEngine switches.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - Either C(sysmtu) param is required or C(interface) AND C(mtu) params are req'd.
     - C(state=absent) unconfigures a given MTU if that value is currently present.
@@ -128,7 +128,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

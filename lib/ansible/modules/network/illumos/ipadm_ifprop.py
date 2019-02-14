@@ -46,6 +46,7 @@ options:
               property values do not persist across reboots.
         required: false
         default: false
+        type: bool
     state:
         description:
             - Set or reset the property value.
@@ -87,7 +88,7 @@ interface:
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: present
 value:
     description: property's value

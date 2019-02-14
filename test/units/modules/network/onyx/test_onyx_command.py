@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.onyx import onyx_command
 from units.modules.utils import set_module_args
 from .onyx_module import TestOnyxModule, load_fixture

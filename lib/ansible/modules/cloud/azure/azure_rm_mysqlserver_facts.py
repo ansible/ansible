@@ -106,6 +106,24 @@ servers:
                     returned: always
                     type: int
                     sample: 2
+        storage_mb:
+            description:
+                - The maximum storage allowed for a server.
+            returned: always
+            type: int
+            sample: 128000
+        enforce_ssl:
+            description:
+                - Enable SSL enforcement.
+            returned: always
+            type: bool
+            sample: False
+        admin_username:
+            description:
+                - "The administrator's login name of a server."
+            returned: always
+            type: str
+            sample: serveradmin
         version:
             description:
                 - Server version.
@@ -134,7 +152,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from azure.mgmt.rdbms.mysql import MySQLManagementClient
     from msrest.serialization import Model
 except ImportError:

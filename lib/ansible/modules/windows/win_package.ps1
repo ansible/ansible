@@ -16,6 +16,7 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 $arguments = Get-AnsibleParam -obj $params -name "arguments"
 $expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_code" -type "list" -default @(0, 3010)
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
+$chdir = Get-AnsibleParam -obj $params -name "chdir" -type "path"
 $product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -aliases "productid"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present" -aliases "ensure"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
@@ -24,6 +25,7 @@ $validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bo
 $creates_path = Get-AnsibleParam -obj $params -name "creates_path" -type "path"
 $creates_version = Get-AnsibleParam -obj $params -name "creates_version" -type "str"
 $creates_service = Get-AnsibleParam -obj $params -name "creates_service" -type "str"
+$log_path = Get-AnsibleParam -obj $params -name "log_path" -type "path"
 
 $result = @{
     changed = $false
@@ -325,10 +327,12 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are uninstalling an msi
-                $temp_path = [System.IO.Path]::GetTempPath()
-                $log_file = [System.IO.Path]::GetRandomFileName()
-                $log_path = Join-Path -Path $temp_path -ChildPath $log_file
-                $cleanup_artifacts += $log_path
+                if ( -Not $log_path ) { 
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
+                }
 
                 if ($program_metadata.product_id -ne $null) {
                     $id = $program_metadata.product_id
@@ -343,15 +347,20 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $uninstall_command = Argv-ToString -arguments $uninstall_arguments
+                $command_args = @{
+                    command = Argv-ToString -arguments $uninstall_arguments
+                }
                 if ($arguments -ne $null) {
-                    $uninstall_command += " $arguments"
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $uninstall_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run uninstall process ($uninstall_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run uninstall process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
@@ -412,11 +421,13 @@ if ($state -eq "absent") {
 
             if ($program_metadata.msi -eq $true) {
                 # we are installing an msi
-                $temp_path = [System.IO.Path]::GetTempPath()
-                $log_file = [System.IO.Path]::GetRandomFileName()
-                $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                if ( -Not $log_path ) { 
+                    $temp_path = [System.IO.Path]::GetTempPath()
+                    $log_file = [System.IO.Path]::GetRandomFileName()
+                    $log_path = Join-Path -Path $temp_path -ChildPath $log_file
+                    $cleanup_artifacts += $log_path
+                }
 
-                $cleanup_artifacts += $log_path
                 $install_arguments = @("$env:windir\system32\msiexec.exe", "/i", $local_path, "/L*V", $log_path, "/qn", "/norestart")
             } else {
                 $log_path = $null
@@ -424,15 +435,20 @@ if ($state -eq "absent") {
             }
 
             if (-not $check_mode) {
-                $install_command = Argv-ToString -arguments $install_arguments
+                $command_args = @{
+                    command = Argv-ToString -arguments $install_arguments
+                }
                 if ($arguments -ne $null) {
-                    $install_command += " $arguments"
+                    $command_args['command'] += " $arguments"
+                }
+                if ($chdir) {
+                    $command_args['working_directory'] = $chdir
                 }
 
                 try {
-                    $process_result = Run-Command -command $install_command
+                    $process_result = Run-Command @command_args
                 } catch {
-                    Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
+                    Fail-Json -obj $result -message "failed to run install process ($($command_args['command'])): $($_.Exception.Message)"
                 }
 
                 if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {

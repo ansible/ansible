@@ -48,7 +48,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"unknown command"),
         re.compile(br"user not present"),
         re.compile(br"invalid (.+?)at '\^' marker", re.I),
-        re.compile(br"baud rate of console should be (\d*) to increase severity level", re.I),
+        re.compile(br"[B|b]aud rate of console should be.* (\d*) to increase [a-z]* level", re.I),
     ]
 
     def on_become(self, passwd=None):
@@ -62,6 +62,9 @@ class TerminalModule(TerminalBase):
 
         # if already at privilege level 15 return
         if '15' in out:
+            return
+
+        if self.validate_user_role():
             return
 
         cmd = {u'command': u'enable'}
@@ -98,3 +101,16 @@ class TerminalModule(TerminalBase):
                 self._exec_cli_command(cmd)
         except AnsibleConnectionFailure:
             raise AnsibleConnectionFailure('unable to set terminal parameters')
+
+    def validate_user_role(self):
+        user = self._connection._play_context.remote_user
+
+        out = self._exec_cli_command('show user-account %s' % user)
+        out = to_text(out, errors='surrogate_then_replace').strip()
+
+        match = re.search(r'roles:(.+)$', out, re.M)
+        if match:
+            roles = match.group(1).split()
+            if 'network-admin' in roles:
+                return True
+            return False

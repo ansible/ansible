@@ -123,7 +123,7 @@ RETURN = '''
 lambda_policy_action:
     description: describes what action was taken
     returned: success
-    type: string
+    type: str
 '''
 
 import json
@@ -134,7 +134,7 @@ from ansible.module_utils.ec2 import get_aws_connection_info, boto3_conn
 
 try:
     from botocore.exceptions import ClientError
-except:
+except Exception:
     pass  # will be protected by AnsibleAWSModule
 
 

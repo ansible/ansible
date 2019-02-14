@@ -266,7 +266,7 @@ def parse_rpcs(module):
     items = list()
 
     for rpc in (module.params['rpcs'] or list()):
-        parts = split(rpc)
+        parts = shlex.split(rpc)
 
         name = parts.pop(0)
         args = dict()
@@ -400,7 +400,7 @@ def main():
                     json_resp = jxmlease.parse(resp)
                     transformed.append(json_resp)
                     output.append(json_resp)
-                except:
+                except Exception:
                     raise ValueError(resp)
             else:
                 transformed.append(resp)

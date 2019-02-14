@@ -24,6 +24,7 @@ import os
 import tempfile
 
 from ansible import constants as C
+from ansible import context
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
@@ -38,15 +39,12 @@ from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+from ansible.utils.display import Display
 
 
 __all__ = ['TaskQueueManager']
+
+display = Display()
 
 
 class TaskQueueManager:
@@ -68,34 +66,30 @@ class TaskQueueManager:
     RUN_FAILED_BREAK_PLAY = 8
     RUN_UNKNOWN_ERROR = 255
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
+    def __init__(self, inventory, variable_manager, loader, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False, forks=None):
 
         self._inventory = inventory
         self._variable_manager = variable_manager
         self._loader = loader
-        self._options = options
         self._stats = AggregateStats()
         self.passwords = passwords
         self._stdout_callback = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
         self._run_tree = run_tree
+        self._forks = forks or 5
 
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done = False
 
         # make sure any module paths (if specified) are added to the module_loader
-        if options.module_path:
-            for path in options.module_path:
+        if context.CLIARGS.get('module_path', False):
+            for path in context.CLIARGS['module_path']:
                 if path:
                     module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
-
-        # this dictionary is used to keep track of notified handlers
-        self._notified_handlers = dict()
-        self._listening_handlers = dict()
 
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
@@ -115,48 +109,6 @@ class TaskQueueManager:
 
         for i in range(num):
             self._workers.append(None)
-
-    def _initialize_notified_handlers(self, play):
-        '''
-        Clears and initializes the shared notified handlers dict with entries
-        for each handler in the play, which is an empty array that will contain
-        inventory hostnames for those hosts triggering the handler.
-        '''
-
-        # Zero the dictionary first by removing any entries there.
-        # Proxied dicts don't support iteritems, so we have to use keys()
-        self._notified_handlers.clear()
-        self._listening_handlers.clear()
-
-        def _process_block(b):
-            temp_list = []
-            for t in b.block:
-                if isinstance(t, Block):
-                    temp_list.extend(_process_block(t))
-                else:
-                    temp_list.append(t)
-            return temp_list
-
-        handler_list = []
-        for handler_block in play.handlers:
-            handler_list.extend(_process_block(handler_block))
-        # then initialize it with the given handler list
-        self.update_handler_list(handler_list)
-
-    def update_handler_list(self, handler_list):
-        for handler in handler_list:
-            if handler._uuid not in self._notified_handlers:
-                display.debug("Adding handler %s to notified list" % handler.name)
-                self._notified_handlers[handler._uuid] = []
-            if handler.listen:
-                listeners = handler.listen
-                if not isinstance(listeners, list):
-                    listeners = [listeners]
-                for listener in listeners:
-                    if listener not in self._listening_handlers:
-                        self._listening_handlers[listener] = []
-                    display.debug("Adding handler %s to listening list" % handler.name)
-                    self._listening_handlers[listener].append(handler._uuid)
 
     def load_callbacks(self):
         '''
@@ -243,15 +195,16 @@ class TaskQueueManager:
             loader=self._loader,
         )
 
-        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
+        play_context = PlayContext(new_play, self.passwords, self._connection_lockfile.fileno())
+        if (self._stdout_callback and
+                hasattr(self._stdout_callback, 'set_play_context')):
+            self._stdout_callback.set_play_context(play_context)
+
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
-
-        # initialize the shared dictionary containing the notified handlers
-        self._initialize_notified_handlers(new_play)
 
         # build the iterator
         iterator = PlayIterator(
@@ -264,7 +217,7 @@ class TaskQueueManager:
         )
 
         # adjust to # of workers to configured forks or size of batch, whatever is lower
-        self._initialize_processes(min(self._options.forks, iterator.batch_size))
+        self._initialize_processes(min(self._forks, iterator.batch_size))
 
         # load the specified strategy (or the default linear one)
         strategy = strategy_loader.get(new_play.strategy, self)
@@ -284,7 +237,7 @@ class TaskQueueManager:
         # during initialization, the PlayContext will clear the start_at_task
         # field to signal that a matching task was found, so check that here
         # and remember it so we don't try to skip tasks on future plays
-        if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
+        if context.CLIARGS.get('start_at_task') is not None and play_context.start_at_task is None:
             self._start_at_done = True
 
         # and run the play using the strategy and cleanup on way out

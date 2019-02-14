@@ -47,7 +47,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: query redis for somekey (default or configured settings used)
-  debug: msg="{{ lookup('redis', 'somekey'}}"
+  debug: msg="{{ lookup('redis', 'somekey') }}"
 
 - name: query redis for list of keys and non-default host and port
   debug: msg="{{ lookup('redis', item, host='myredis.internal.com', port=2121) }}"

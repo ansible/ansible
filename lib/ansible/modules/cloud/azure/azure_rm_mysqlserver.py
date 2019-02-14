@@ -95,9 +95,8 @@ EXAMPLES = '''
       resource_group: TestGroup
       name: testserver
       sku:
-        name: GP_Gen4_2
-        tier: GeneralPurpose
-        capacity: 2
+        name: B_Gen5_1
+        tier: Basic
       location: eastus
       storage_mb: 1024
       enforce_ssl: True

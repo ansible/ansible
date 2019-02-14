@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -56,6 +56,7 @@ options:
 author: Nick Aslanidis (@naslanidis)
 extends_documentation_fragment:
   - ec2
+  - aws
 '''
 
 EXAMPLES = '''
@@ -103,7 +104,7 @@ RETURN = '''
 result:
   description: The result of the create, or delete action.
   returned: success
-  type: dictionary
+  type: dict
 '''
 
 import time

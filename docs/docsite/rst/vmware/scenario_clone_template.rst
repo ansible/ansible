@@ -24,8 +24,6 @@ Scenario Requirements
 
 * Hardware
 
-    * At least one standalone ESXi server or
-
     * vCenter Server with at least one ESXi server
 
 * Access / Credentials
@@ -36,14 +34,32 @@ Scenario Requirements
 
     * Administrator user with following privileges
 
-        - Virtual machine.Provisioning.Clone virtual machine on the virtual machine you are cloning
-        - Virtual machine.Inventory.Create from existing on the datacenter or virtual machine folder
-        - Virtual machine.Configuration.Add new disk on the datacenter or virtual machine folder
-        - Resource.Assign virtual machine to resource pool on the destination host, cluster, or resource pool
-        - Datastore.Allocate space on the destination datastore or datastore folder
-        - Network.Assign network on the network to which the virtual machine will be assigned
-        - Virtual machine.Provisioning.Customize on the virtual machine or virtual machine folder if you are customizing the guest operating system
-        - Virtual machine.Provisioning.Read customization specifications on the root vCenter Server if you are customizing the guest operating system
+        - ``Datastore.AllocateSpace`` on the destination datastore or datastore folder
+        - ``Network.Assign`` on the network to which the virtual machine will be assigned
+        - ``Resource.AssignVMToPool`` on the destination host, cluster, or resource pool
+        - ``VirtualMachine.Config.AddNewDisk`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.AddRemoveDevice`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.PowerOn`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Inventory.CreateFromExisting`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Provisioning.Clone`` on the virtual machine you are cloning
+        - ``VirtualMachine.Provisioning.Customize`` on the virtual machine or virtual machine folder if you are customizing the guest operating system
+        - ``VirtualMachine.Provisioning.DeployTemplate`` on the template you are using
+        - ``VirtualMachine.Provisioning.ReadCustSpecs`` on the root vCenter Server if you are customizing the guest operating system
+        
+        Depending on your requirements, you could also need one or more of the following privileges: 
+
+        - ``VirtualMachine.Config.CPUCount`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Memory`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.DiskExtend`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Annotation`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.AdvancedConfig`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.EditDevice`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Resource`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.Settings`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Config.UpgradeVirtualHardware`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.SetCDMedia`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.SetFloppyMedia`` on the datacenter or virtual machine folder
+        - ``VirtualMachine.Interact.DeviceConnection`` on the datacenter or virtual machine folder
 
 Assumptions
 ===========

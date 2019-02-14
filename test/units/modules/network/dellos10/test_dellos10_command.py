@@ -23,7 +23,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.compat.tests.mock import patch
+from units.compat.mock import patch
 from ansible.modules.network.dellos10 import dellos10_command
 from units.modules.utils import set_module_args
 from .dellos10_module import TestDellos10Module, load_fixture

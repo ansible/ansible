@@ -108,6 +108,7 @@ fail_on_errors: yes
 '''
 
 import collections
+import sys
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -172,8 +173,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # TODO(mordred) Integrate shade's logging with ansible's logging
-            sdk.enable_logging()
+            # Redict logging to stderr so it does not mix with output
+            # particular ansible-inventory JSON output
+            # TODO(mordred) Integrate openstack's logging with ansible's logging
+            sdk.enable_logging(stream=sys.stderr)
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,
@@ -196,7 +199,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             source_data = cloud_inventory.list_hosts(
                 expand=expand_hostvars, fail_on_cloud_config=fail_on_errors)
 
-            self.cache.set(cache_key, source_data)
+            if self.cache is not None:
+                self.cache.set(cache_key, source_data)
 
         self._populate_from_source(source_data)
 
@@ -239,7 +243,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # create composite vars
             self._set_composite_vars(
-                self._config_data.get('compose'), hostvars, host)
+                self._config_data.get('compose'), hostvars[host], host)
 
             # actually update inventory
             for key in hostvars[host]:
@@ -247,7 +251,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # constructed groups based on conditionals
             self._add_host_to_composed_groups(
-                self._config_data.get('groups'), hostvars, host)
+                self._config_data.get('groups'), hostvars[host], host)
+
+            # constructed groups based on jinja expressions
+            self._add_host_to_keyed_groups(
+                self._config_data.get('keyed_groups'), hostvars[host], host)
 
         for group_name, group_hosts in groups.items():
             self.inventory.add_group(group_name)

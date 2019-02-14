@@ -216,7 +216,10 @@ class ActionModule(ActionBase):
             if self._play_context.no_log:
                 result['invocation'] = "CENSORED: no_log is set"
             else:
-                result["invocation"] = self._task.args.copy()
+                # NOTE: Should be removed in the future. For now keep this broken
+                # behaviour, have a look in the PR 51582
+                result['invocation'] = self._task.args.copy()
+                result['invocation']['module_args'] = self._task.args.copy()
 
         if isinstance(result['invocation'], dict) and 'content' in result['invocation']:
             result['invocation']['content'] = 'CENSORED: content is a no_log parameter'

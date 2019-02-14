@@ -98,7 +98,7 @@ RETURN = '''
 changed:
     description: If module has modified a host
     returned: success
-    type: string
+    type: str
 lease:
     description: dictionary containing host information
     returned: success
@@ -107,12 +107,12 @@ lease:
         ip-address:
             description: IP address, if there is.
             returned: success
-            type: string
+            type: str
             sample: '192.168.1.5'
         hardware-address:
             description: MAC address
             returned: success
-            type: string
+            type: str
             sample: '00:11:22:33:44:55'
         hardware-type:
             description: hardware type, generally '1'
@@ -122,7 +122,7 @@ lease:
         name:
             description: hostname
             returned: success
-            type: string
+            type: str
             sample: 'mydesktop'
 '''
 
@@ -131,15 +131,17 @@ import socket
 import struct
 import traceback
 
+PUREOMAPI_IMP_ERR = None
 try:
     from pypureomapi import Omapi, OmapiMessage, OmapiError, OmapiErrorNotFound
     from pypureomapi import pack_ip, unpack_ip, pack_mac, unpack_mac
     from pypureomapi import OMAPI_OP_STATUS, OMAPI_OP_UPDATE
     pureomapi_found = True
 except ImportError:
+    PUREOMAPI_IMP_ERR = traceback.format_exc()
     pureomapi_found = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -290,7 +292,7 @@ def main():
     )
 
     if not pureomapi_found:
-        module.fail_json(msg="pypureomapi library is required by this module.")
+        module.fail_json(msg=missing_required_lib('pypureomapi'), exception=PUREOMAPI_IMP_ERR)
 
     if module.params['key'] is None or len(module.params["key"]) == 0:
         module.fail_json(msg="'key' parameter cannot be empty.")

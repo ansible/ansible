@@ -143,7 +143,7 @@ RETURN = """
 msg:
     description: Success message
     returned: on success
-    type: string
+    type: str
     sample: The interface settings have been updated.
 enabled:
     description:
@@ -226,20 +226,20 @@ class IscsiInterface(object):
             self.module.fail_json(msg="The provided mtu is invalid, it must be > 1500 and < 9000 bytes.")
 
         if self.config_method == 'dhcp' and any([self.address, self.subnet_mask, self.gateway]):
-            self.module.fail_json(
-                'A config_method of dhcp is mutually exclusive with the address, subnet_mask, and gateway options.')
+            self.module.fail_json(msg='A config_method of dhcp is mutually exclusive with the address,'
+                                      ' subnet_mask, and gateway options.')
 
         # A relatively primitive regex to validate that the input is formatted like a valid ip address
         address_regex = re.compile(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
         if self.address and not address_regex.match(self.address):
-            self.module.fail_json("An invalid ip address was provided for address.")
+            self.module.fail_json(msg="An invalid ip address was provided for address.")
 
         if self.subnet_mask and not address_regex.match(self.subnet_mask):
-            self.module.fail_json("An invalid ip address was provided for subnet_mask.")
+            self.module.fail_json(msg="An invalid ip address was provided for subnet_mask.")
 
         if self.gateway and not address_regex.match(self.gateway):
-            self.module.fail_json("An invalid ip address was provided for gateway.")
+            self.module.fail_json(msg="An invalid ip address was provided for gateway.")
 
     @property
     def interfaces(self):

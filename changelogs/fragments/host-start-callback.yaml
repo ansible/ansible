@@ -1,0 +1,2 @@
+minor_changes:
+- callbacks - New ``v2_runner_on_start`` callback added to indicate the start of execution for a host in a specific task (https://github.com/ansible/ansible/pull/47684)

@@ -28,7 +28,7 @@ short_description: Manages gateway for the VXLAN network on HUAWEI CloudEngine d
 description:
     - Configuring Centralized All-Active Gateways or Distributed Gateway for
       the VXLAN Network on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 notes:
     - Ensure All-Active Gateways or Distributed Gateway for the VXLAN Network can not configure at the same time.
 options:
@@ -170,7 +170,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

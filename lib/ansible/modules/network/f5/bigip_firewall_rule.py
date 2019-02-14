@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -289,7 +289,7 @@ param1:
 param2:
   description: The new param2 value of the resource.
   returned: changed
-  type: string
+  type: str
   sample: Foo is bar
 '''
 
@@ -485,6 +485,8 @@ class ModuleParameters(Parameters):
                 result += [('vlan', fq_name(self.partition, x['vlan']))]
             elif 'port' in x and x['port'] is not None:
                 result += [('port', str(x['port']))]
+            elif 'port_range' in x and x['port_range'] is not None:
+                result += [('port', x['port_range'])]
             elif 'port_list' in x and x['port_list'] is not None:
                 result += [('port_list', fq_name(self.partition, x['port_list']))]
         if result:
@@ -507,6 +509,8 @@ class ModuleParameters(Parameters):
                 result += [('geo', x['country'])]
             elif 'port' in x and x['port'] is not None:
                 result += [('port', str(x['port']))]
+            elif 'port_range' in x and x['port_range'] is not None:
+                result += [('port', x['port_range'])]
             elif 'port_list' in x and x['port_list'] is not None:
                 result += [('port_list', fq_name(self.partition, x['port_list']))]
         if result:
@@ -1098,12 +1102,15 @@ def main():
         required_one_of=spec.required_one_of
     )
 
+    client = F5RestClient(**module.params)
+
     try:
-        client = F5RestClient(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
+        cleanup_tokens(client)
         exit_json(module, results, client)
     except F5ModuleError as ex:
+        cleanup_tokens(client)
         fail_json(module, ex, client)
 
 

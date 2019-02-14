@@ -37,7 +37,7 @@ options:
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
-        See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
+        See U(https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
 extends_documentation_fragment:
     - aws
     - ec2
@@ -69,15 +69,15 @@ vpcs:
         id:
             description: The ID of the VPC (for backwards compatibility).
             returned: always
-            type: string
+            type: str
         vpc_id:
             description: The ID of the VPC .
             returned: always
-            type: string
+            type: str
         state:
             description: The state of the VPC.
             returned: always
-            type: string
+            type: str
         tags:
             description: A dict of tags associated with the VPC.
             returned: always
@@ -85,31 +85,31 @@ vpcs:
         instance_tenancy:
             description: The instance tenancy setting for the VPC.
             returned: always
-            type: string
+            type: str
         is_default:
             description: True if this is the default VPC for account.
             returned: always
-            type: boolean
+            type: bool
         cidr_block:
             description: The IPv4 CIDR block assigned to the VPC.
             returned: always
-            type: string
+            type: str
         classic_link_dns_supported:
             description: True/False depending on attribute setting for classic link DNS support.
             returned: always
-            type: boolean
+            type: bool
         classic_link_enabled:
             description: True/False depending on if classic link support is enabled.
             returned: always
-            type: boolean
+            type: bool
         enable_dns_hostnames:
             description: True/False depending on attribute setting for DNS hostnames support.
             returned: always
-            type: boolean
+            type: bool
         enable_dns_support:
             description: True/False depending on attribute setting for DNS support.
             returned: always
-            type: boolean
+            type: bool
         ipv6_cidr_block_association_set:
             description: An array of IPv6 cidr block association set information.
             returned: always
@@ -118,11 +118,11 @@ vpcs:
                 association_id:
                     description: The association ID
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block:
                     description: The IPv6 CIDR block that is associated with the VPC.
                     returned: always
-                    type: string
+                    type: str
                 ipv6_cidr_block_state:
                     description: A hash/dict that contains a single item. The state of the cidr block association.
                     returned: always
@@ -131,7 +131,7 @@ vpcs:
                         state:
                             description: The CIDR block association state.
                             returned: always
-                            type: string
+                            type: str
 '''
 
 import traceback

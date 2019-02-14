@@ -99,19 +99,19 @@ def main():
     # new build
 
     data = dict(
-        globalEnv=['%s=%s' % (kp[0], kp[1]) for kp in args.env or []]
+        globalEnv=dict((kp[0], kp[1]) for kp in args.env or [])
     )
 
     if args.branch:
-        data['branch'] = args.branch
+        data['branchName'] = args.branch
     elif args.run:
         data['runId'] = args.run
 
     url = 'https://api.shippable.com/projects/%s/newBuild' % project_id
-    response = requests.post(url, data, headers=headers)
+    response = requests.post(url, json=data, headers=headers)
 
     if response.status_code != 200:
-        raise Exception(response.content)
+        raise Exception("HTTP %s: %s\n%s" % (response.status_code, response.reason, response.content))
 
     print(json.dumps(response.json(), indent=4, sort_keys=True))
 
