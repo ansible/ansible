@@ -127,7 +127,7 @@ Function Join-Domain {
             $add_args["OUPath"] = $domain_ou_path
         }
         else {
-            Fail-Json -obj $result -message "The OU $domain_ou_path object was not found."
+            Throw "The specified OU $domain_ou_path was not found."
         }
     }
     $argstr = $add_args | Out-String
