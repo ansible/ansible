@@ -35,7 +35,7 @@
   become_user: "{{ pg_user }}"
   become: yes
   shell: psql postgres -U "{{ pg_user }}" -t -c "CREATE TABLESPACE ssd LOCATION '/mnt/ssd';"
-  ignore_errors: yes
+  #ignore_errors: yes
 
 # Create a test schema:
 - name: postgresql_idx - create test schema
