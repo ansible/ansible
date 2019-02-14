@@ -10,6 +10,18 @@
   ignore_errors: yes
 
 # Create a directory for test tablespace:
+- name: postgresql_idx - drop test tablespace called ssd if exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: psql postgres -U "{{ pg_user }}" -t -c "DROP TABLESPACE IF EXISTS ssd LOCATION;"
+  ignore_errors: yes
+
+- name: postgresql_idx - drop dir for test tablespace
+  file:
+    path: /tmp/ssd
+    state: absent
+  ignore_errors: yes
+
 - name: postgresql_idx - create dir for test tablespace
   file:
     path: /tmp/ssd
