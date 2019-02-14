@@ -116,16 +116,16 @@ class LockTimeout(Exception):
 
 class FileLock:
     '''
-    Currently FileLock is implemented via fcntl.flock on a lock file, however this
-    behaviour may change in the future. Avoid mixing lock types fcntl.flock,
-    fcntl.flock and module_utils.common.file.FileLock as it will certainly cause
-    unwanted and/or unexpected behaviour
+    Currently FileLock is implemented via fcntl.flock however this behaviour
+    may change in the future. Avoid mixing lock types fcntl.flock, fcntl.lockf
+    and module_utils.common.file.FileLock as it will certainly cause unwanted
+    and/or unexpected behaviour
     '''
     def __init__(self):
         self.lockfd = None
 
     @contextmanager
-    def lock_file(self, path, lock_timeout=None):
+    def lock_file(self, path, lock_timeout=15):
         '''
         Context for lock acquisition
         '''
@@ -135,7 +135,7 @@ class FileLock:
         finally:
             self.unlock()
 
-    def set_lock(self, path, lock_timeout=None):
+    def set_lock(self, path, lock_timeout=15):
         '''
         Set lock on given path via fcntl.flock(), note that using
         locks does not guarantee exclusiveness unless all accessing
@@ -145,7 +145,8 @@ class FileLock:
         :kw lock_timeout:
             Wait n seconds for lock acquisition, fail if timeout is reached.
             0 = Do not wait, fail if lock cannot be acquired immediately,
-            Default is None, wait indefinitely until lock is released.
+            Less than 0 or None = wait indefinitely until lock is released
+            Default is wait 15s.
         :returns: True
         '''
         b_lock_path = to_bytes(path, errors='surrogate_or_strict')
