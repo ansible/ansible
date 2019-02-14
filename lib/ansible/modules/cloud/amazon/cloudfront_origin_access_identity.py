@@ -147,7 +147,7 @@ class CloudFrontOriginAccessIdentityServiceManager(object):
             region, ec2_url, aws_connect_kwargs = get_aws_connection_info(self.module, boto3=True)
             self.client = boto3_conn(self.module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except (ClientError, BotoCoreError) as e:
-                self.module.fail_json_aws(e, msg="Unable to establish connection.")
+            self.module.fail_json_aws(e, msg="Unable to establish connection.")
 
     def create_origin_access_identity(self, caller_reference, comment):
         try:

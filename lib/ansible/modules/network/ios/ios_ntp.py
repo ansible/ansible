@@ -144,7 +144,7 @@ def parse_key_id(line, dest):
 
 def parse_auth(dest):
     if dest == 'authenticate':
-            return dest
+        return dest
 
 
 def map_config_to_obj(module):
