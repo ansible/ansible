@@ -1,11 +1,11 @@
 ---
 - name: Create cryptfile
-  command: dd if=/dev/zero of={{ output_dir }}/cryptfile bs=1M count=32
+  command: dd if=/dev/zero of={{ output_dir.replace('~', ansible_env.HOME) }}/cryptfile bs=1M count=32
 - name: Create lookback device
-  command: losetup -f {{ output_dir }}/cryptfile
+  command: losetup -f {{ output_dir.replace('~', ansible_env.HOME) }}/cryptfile
   become: yes
 - name: Determine loop device name
-  command: losetup -j {{ output_dir }}/cryptfile --output name --raw
+  command: losetup -j {{ output_dir.replace('~', ansible_env.HOME) }}/cryptfile --output name --raw
   become: yes
   register: cryptfile_device_output
 - set_fact:
@@ -24,5 +24,5 @@
   - command: losetup -d "{{ cryptfile_device }}"
     become: yes
   - file:
-      dest: cryptfile
+      dest: "{{ output_dir }}/cryptfile"
       state: absent
