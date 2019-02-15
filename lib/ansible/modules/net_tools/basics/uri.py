@@ -159,6 +159,17 @@ options:
     type: bool
     default: no
     version_added: '2.7'
+  force:
+    description:
+      - If C(yes) do not get a cached copy.
+    type: bool
+    default: no
+    aliases: [ thirsty ]
+  use_proxy:
+    description:
+      - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+    type: bool
+    default: yes
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
@@ -489,7 +500,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 
 def main():
     argument_spec = url_argument_spec()
-    argument_spec.update(dict(
+    argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
@@ -503,8 +514,8 @@ def main():
         removes=dict(type='path'),
         status_code=dict(type='list', default=[200]),
         timeout=dict(type='int', default=30),
-        headers=dict(type='dict', default={})
-    ))
+        headers=dict(type='dict', default={}),
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
