@@ -167,6 +167,19 @@ cur_val:
   returned: always
   type: str
   sample: '64MB'
+setting:
+  description:
+  - Dictionary that contains the current parameter value (at the time of playbook finish).
+  - Pay attention that for real change some parameters restart of PostgreSQL server is required.
+  returned: always
+  type: dict
+  sample: { "value": 67108864, "unit": "b" }
+context:
+  description:
+  - PostgreSQL setting context.
+  returned: always
+  type: str
+  sample: user
 '''
 
 PG_REQ_VER = 9.4
@@ -203,12 +216,25 @@ def param_get(cursor, module, name):
         info = cursor.fetchall()
         cursor.execute("SHOW %s" % name)
         val = cursor.fetchone()
-    except SQLParseError as e:
-        module.fail_json(msg=to_native(e))
-    except psycopg2.ProgrammingError as e:
+    except Exception as e:
         module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)))
 
-    return (val, info)
+    raw_val = info[0][1]
+    unit = info[0][2]
+    context = info[0][3]
+    boot_val = info[0][4]
+
+    if unit == 'kB':
+        raw_val = int(raw_val) * 1024
+        boot_val = int(boot_val) * 1024
+        unit = 'b'
+
+    elif unit == 'MB':
+        raw_val = int(raw_val) * 1024 * 1024
+        boot_val = int(boot_val) * 1024 * 1024
+        unit = 'b'
+
+    return (val[0], raw_val, unit, boot_val, context)
 
 
 def param_set(cursor, module, name, value):
@@ -219,10 +245,9 @@ def param_set(cursor, module, name, value):
             query = "ALTER SYSTEM SET %s = '%s'" % (name, value)
         cursor.execute(query)
         cursor.execute("SELECT pg_reload_conf()")
-    except SQLParseError as e:
-        module.fail_json(msg=to_native(e))
-    except psycopg2.ProgrammingError as e:
+    except Exception as e:
         module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)))
+
     return True
 
 # ===========================================
@@ -285,6 +310,8 @@ def main():
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
 
+    kw2 = deepcopy(kw)
+
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] is None or kw["host"] == "localhost"
     if is_localhost and module.params["login_unix_socket"] != "":
@@ -316,6 +343,7 @@ def main():
             restart_required=False,
             cur_val="",
             prev_val="",
+            setting={"value": "", "unit": ""},
         )
         kw['name'] = name
         db_connection.close()
@@ -336,13 +364,15 @@ def main():
 
     # Get info about param state:
     res = param_get(cursor, module, name)
-    current_value = res[0][0]
-    raw_val = res[1][0][1]
-    boot_val = res[1][0][4]
-    context = res[1][0][3]
+    current_value = res[0]
+    raw_val = res[1]
+    unit = res[2]
+    boot_val = res[3]
+    context = res[4]
 
     kw['prev_val'] = current_value
     kw['cur_val'] = deepcopy(kw['prev_val'])
+    kw['context'] = context
 
     # Do job
     if context == "internal":
@@ -354,23 +384,36 @@ def main():
     # Set param:
     if value and value != current_value:
         changed = param_set(cursor, module, name, value)
-        kw['prev_val'] = current_value
+
         kw['cur_val'] = value
+
     # Reset param:
     elif reset:
         if raw_val == boot_val:
             # nothing to change, exit:
+            kw['setting'] = dict(
+                value=raw_val,
+                unit=unit,
+            )
             module.exit_json(**kw)
+
         changed = param_set(cursor, module, name, boot_val)
 
-        kw['prev_val'] = current_value
         kw['cur_val'] = boot_val
 
-    if changed:
-        if not restart_required:
-            new_value = param_get(cursor, module, name)[0][0]
-            kw['prev_val'] = current_value
-            kw['cur_val'] = new_value
+    if restart_required:
+        module.warn("Restart of PostgreSQL is required for setting %s" % name)
+
+    # Recheck current value:
+    db_connection.close()
+    db_connection = psycopg2.connect(**kw2)
+    db_connection.set_session(autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    kw['setting'] = dict(
+        value=param_get(cursor, module, name)[1],
+        unit=unit,
+    )
 
     kw['changed'] = changed
     kw['restart_required'] = restart_required
