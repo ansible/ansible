@@ -60,6 +60,37 @@
       - output.changed == false
       - output.state == 'Ready'
 
+- name: Update instance of PostgreSQL Server, change storage size
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 128000
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+- debug:
+    var: output
+
+- name: Gather facts postgresql Server
+  azure_rm_postgresqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that storage size is correct
+  assert:
+    that:
+      - output.servers[0]['storage_mb'] == 128000
+
 - name: Create second instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
