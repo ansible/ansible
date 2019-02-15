@@ -200,7 +200,8 @@ def main():
             login_host=dict(type='str', default='localhost'),
             login_port=dict(type='int', default=3306),
             login_unix_socket=dict(type='str'),
-            mode=dict(type='str', default='getslave', choices=['getmaster', 'getslave', 'changemaster', 'stopslave', 'startslave', 'resetslave', 'resetslaveall']),
+            mode=dict(type='str', default='getslave', choices=[
+                'getmaster', 'getslave', 'changemaster', 'stopslave', 'startslave', 'resetslave', 'resetslaveall']),
             master_auto_position=dict(type='bool', default=False),
             master_host=dict(type='str'),
             master_user=dict(type='str'),
