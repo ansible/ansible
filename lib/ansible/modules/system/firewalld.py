@@ -647,7 +647,11 @@ def main():
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_by=dict(
+            interface=('zone'),
+            source=('permanent'),
+        ),
     )
 
     permanent = module.params['permanent']
