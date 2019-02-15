@@ -184,7 +184,7 @@ def subnet_to_dict(subnet):
         result['route_table']['name'] = id_keys['routeTables']
         result['route_table']['resource_group'] = id_keys['resourceGroups']
     if subnet.service_endpoints:
-        result['service_endpoints'] = [{'service': item.service, 'locations': item.locations} for item in subnet.service_endpoints]
+        result['service_endpoints'] = [{'service': item.service, 'locations': item.locations or []} for item in subnet.service_endpoints]
     return result
 
 
