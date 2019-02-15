@@ -449,7 +449,6 @@ class JenkinsPlugin(object):
                         self.params['name'],
                         self.params['version']))
 
-            sha1sum_old = base64.b64encode(sha1_old.digest())
             if (
                     self.params['updates_expiration'] == 0 or
                     self.params['version'] not in [None, 'latest'] or
@@ -470,14 +469,7 @@ class JenkinsPlugin(object):
                     data = r.read()
 
                     # Make new checksum
-                    try:
-                        sha1_new = hashlib.sha1(data)
-                    except Exception as err:
-                        self.module.fail_json(
-                            msg="Cannot calculate SHA1 of the downloaded plugin.",
-                            details="SHA1 calculation failed with: {0}".format(err)
-                        )
-                    sha1sum_new = base64.b64encode(sha1_new.digest())
+                    sha1sum_new = hashlib.sha1(data).hexdigest()
 
                     # If the checksum is different from the currently installed
                     # plugin, store the new plugin
