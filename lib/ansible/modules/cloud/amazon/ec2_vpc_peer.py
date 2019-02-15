@@ -408,8 +408,8 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')
     state = module.params.get('state')
-    peering_id = modules.params.get('peering_id')
-    vpc_id = modules.params.get('vpc_id')
+    peering_id = module.params.get('peering_id')
+    vpc_id = module.params.get('vpc_id')
     peer_vpc_id = module.params.get('peer_vpc_id')
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
