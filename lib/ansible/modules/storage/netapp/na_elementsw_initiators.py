@@ -23,7 +23,7 @@ short_description: Manage Element SW initiators
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.8'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Manage Element Software initiators that allow external clients access to volumes.
 
