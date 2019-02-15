@@ -82,7 +82,7 @@ public enum ActionState {
 }
 "@
 
-function Download-File($url, $path) {
+function Get-FileFromUrl($url, $path) {
     $web_client = New-Object -TypeName System.Net.WebClient
     try {
         $web_client.DownloadFile($url, $path)
@@ -275,7 +275,7 @@ switch($program_metadata.action_state)
                 $local_path = [System.IO.Path]::GetRandomFileName()
 
                 if (-not $check_mode) {
-                    Download-File -url $path -path $local_path
+                    Get-FileFromUrl -url $path -path $local_path
                 }
                 $cleanup_artifacts += $local_path
             } else {
