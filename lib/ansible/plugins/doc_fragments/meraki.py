@@ -13,14 +13,14 @@ notes:
 options:
     auth_key:
         description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        - Authentication key provided by the dashboard. Required if environmental variable C(MERAKI_KEY) is not set.
         type: str
     host:
         description:
         - Hostname for Meraki dashboard.
         - Only useful for internal Meraki developers.
         type: str
-        default: 'api.meraki.com'
+        default: api.meraki.com
     use_proxy:
         description:
         - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
@@ -33,7 +33,7 @@ options:
         default: yes
     output_level:
         description:
-        - Set amount of debug output during module execution
+        - Set amount of debug output during module execution.
         type: str
         choices: [ debug, normal ]
         default: normal

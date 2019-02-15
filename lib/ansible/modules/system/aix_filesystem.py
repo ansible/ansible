@@ -33,7 +33,7 @@ options:
   attributes:
     description:
       - Specifies attributes for files system separated by comma.
-    type: str
+    type: list
     default: agblksize='4096',isnapshot='no'
   auto_mount:
     description:

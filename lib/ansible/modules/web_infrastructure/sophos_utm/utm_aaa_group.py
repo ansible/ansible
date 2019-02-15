@@ -31,6 +31,7 @@ options:
     name:
         description:
           - The name of the object. Will be used to identify the entry.
+        type: str
         required: true
     adirectory_groups:
         description:
@@ -39,11 +40,11 @@ options:
     adirectory_groups_sids:
         description:
           - Dictionary of group sids.
-        type: list
+        type: dict
     backend_match:
         description:
           - The backend for the group.
-        default: none
+        type: str
         choices:
           - none
           - adirectory
@@ -51,15 +52,16 @@ options:
           - radius
           - tacacs
           - ldap
+        default: none
     comment:
         description:
             - Comment that describes the AAA group.
-        default: ''
         type: str
-        required: false
+        default: ''
     dynamic:
         description:
           - Group type. Is static if none is selected.
+        type: str
         default: none
         choices:
           - none
@@ -84,18 +86,22 @@ options:
     members:
         description:
           - A list of user ref names (aaa/user).
+        type: list
         default: []
     network:
         description:
           - The network reference name. The objects contains the known ip addresses for the authentication object (network/aaa).
+        type: str
         default: ""
     radius_groups:
         description:
           - A list of radius group strings.
+        type: list
         default: []
     tacacs_groups:
         description:
           - A list of tacacs group strings.
+        type: list
         default: []
 
 extends_documentation_fragment:

@@ -248,7 +248,7 @@ swap_spec = dict(
         type='str'
     ),
     preserve_vnet=dict(
-        type=bool,
+        type='bool',
         default=True
     )
 )

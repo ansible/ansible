@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template.
-    type: list
+    type: str
     required: yes
   bd:
     description:
@@ -43,7 +43,7 @@ options:
   vrf:
     description:
     - The VRF associated to this BD.
-    type: str
+    type: dict
   subnets:
     description:
     - The subnets associated to this BD.

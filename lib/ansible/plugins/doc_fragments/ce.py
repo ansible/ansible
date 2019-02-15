@@ -62,6 +62,7 @@ options:
             remote device.  The transport argument supports connectivity to the
             device over cli (ssh).
         required: true
+        choices: [ cli, netconf ]
         default: cli
 
 """
