@@ -34,6 +34,8 @@
       - set_wm.cur_val == '12MB'
       - set_wm.cur_val != set_wm.prev_val
       - set_wm.restart_required == false
+      - set_wm.setting.value == 12582912
+      - set_wm.setting.unit == 'b'
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != "FreeBSD"
 
 - assert:
@@ -60,13 +62,14 @@
       - reset_wm.changed == true
       - reset_wm.cur_val != reset_wm.prev_val
       - reset_wm.restart_required == false
+      - reset_wm.setting.value != '12582912' 
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != "FreeBSD"
 
 - assert:
     that:
-      - set_wm.name == 'work_mem'
-      - set_wm.changed == true
-      - set_wm.restart_required == false
+      - reset_wm.name == 'work_mem'
+      - reset_wm.changed == true
+      - reset_wm.restart_required == false
   when: ansible_distribution == "Ubuntu" and ansible_distribution_major_version == '16'
 
 - name: postgresql_set - reset work_mem again to check that nothing changed (restart is not required)
@@ -122,6 +125,7 @@
       - def_wm.changed == true
       - def_wm.cur_val != def_wm.prev_val
       - def_wm.restart_required == false
+      - def_wm.setting.value != '14680064' 
   when: ansible_distribution != "Ubuntu" and ansible_distribution_major_version != '16' and ansible_distribution != 'FreeBSD'
 
 - assert:
@@ -147,3 +151,22 @@
       - set_shb.name == 'shared_buffers'
       - set_shb.changed == true
       - set_shb.restart_required == true
+
+# We don't check setting.utin because it is none
+- name: postgresql_set - set autovacuum (enabled by default, restart is not required)
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_set:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: autovacuum
+    value: off
+  register: set_aut
+  ignore_errors: yes
+
+- assert:
+    that:
+      - set_aut.name == 'autovacuum'
+      - set_aut.changed == true
+      - set_aut.restart_required == false
+      - set_aut.setting.value == 'off'

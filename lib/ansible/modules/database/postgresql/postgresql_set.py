@@ -25,8 +25,8 @@ description:
    - It can be more convenient than the traditional method of manually editing the postgresql.conf file.
    - ALTER SYSTEM writes the given parameter setting to the $PGDATA/postgresql.auto.conf file,
      which is read in addition to postgresql.conf U(https://www.postgresql.org/docs/current/sql-altersystem.html).
-   - The module allows to reset parameter to boot_val (cluster initial value) or remove parameter
-     string from postgresql.auto.conf and reload.
+   - The module allows to reset parameter to boot_val (cluster initial value) by I(reset=yes) or remove parameter
+     string from postgresql.auto.conf and reload I(value=default).
    - After change you can see in ansible output the previous and
      the new parameter value and other information using returned values and M(debug) module.
 version_added: "2.8"
@@ -38,8 +38,10 @@ options:
     required: true
   value:
     description:
-    - Parameter value to set. To remove parameter string from postgresql.auto.conf and
+    - Parameter value to set.
+    - To remove parameter string from postgresql.auto.conf and
       reload the server configuration you must pass I(value=default).
+      With I(value=default) the playbook always returns changed is true.
     type: str
     required: true
   reset:
@@ -100,6 +102,12 @@ notes:
 - Check_mode is not supported because ALTER SYSTEM can't be run inside a transaction block
   U(https://www.postgresql.org/docs/current/sql-altersystem.html).
 - Supported version of PostgreSQL is 9.4 and later.
+- Pay attention, change setting with 'postmaster' context can return changed is true
+  when actually nothing changes because the same value may be presented in
+  several different form, for example, 1024MB, 1GB, etc. However in pg_settings
+  system view it can be defined like 131072 number of 8kB pages.
+  The final check of the parameter value cannot compare it because the server was
+  not restarted and the value in pg_settings is not updated yet.
 - For some parameters restart of PostgreSQL server is required.
   See official documentation U(https://www.postgresql.org/).
 - The default authentication assumes that you are either logging in as or
@@ -133,7 +141,7 @@ EXAMPLES = r'''
   when: set_value.changed
 # Ensure that the restart of PostgreSQL serever must be required for some parameters.
 # In this situation you see the same parameter in prev_val and cur_value, but 'changed=True'
-# (Of course, if you passed the value that was different from the current server setting).
+# (If you passed the value that was different from the current server setting).
 
 - name: Set log_min_duration_statement parameter to 1 second
   postgresql_set:
@@ -216,6 +224,7 @@ def param_get(cursor, module, name):
         info = cursor.fetchall()
         cursor.execute("SHOW %s" % name)
         val = cursor.fetchone()
+
     except Exception as e:
         module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)))
 
@@ -223,6 +232,11 @@ def param_get(cursor, module, name):
     unit = info[0][2]
     context = info[0][3]
     boot_val = info[0][4]
+
+    if val[0] == 'True':
+        val[0] = 'on'
+    elif val[0] == 'False':
+        val[0] = 'off'
 
     if unit == 'kB':
         raw_val = int(raw_val) * 1024
@@ -249,6 +263,22 @@ def param_set(cursor, module, name, value):
         module.fail_json(msg="Unable to get %s value due to : %s" % (name, to_native(e)))
 
     return True
+
+
+def connect_to_db(module, kw, autocommit=False):
+    try:
+        db_connection = psycopg2.connect(**kw)
+        if autocommit:
+            db_connection.set_session(autocommit=True)
+
+    except TypeError as e:
+        if 'sslrootcert' in e.args[0]:
+            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+    except Exception as e:
+        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+
+    return db_connection
 
 # ===========================================
 # Module execution.
@@ -310,6 +340,7 @@ def main():
     kw = dict((params_map[k], v) for (k, v) in iteritems(module.params)
               if k in params_map and v != '' and v is not None)
 
+    # Store connection parameters for the final check:
     kw2 = deepcopy(kw)
 
     # If a login_unix_socket is specified, incorporate it here.
@@ -321,16 +352,8 @@ def main():
         module.fail_json(msg='psycopg2 must be at least 2.4.3 '
                              'in order to user the ssl_rootcert parameter')
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        db_connection.set_session(autocommit=True)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+    db_connection = connect_to_db(module, kw, autocommit=True)
+    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Check server version (needs 9.4 or later):
     cursor.execute('SELECT version()')
@@ -370,6 +393,11 @@ def main():
     boot_val = res[3]
     context = res[4]
 
+    if value == 'True':
+        value = 'on'
+    elif value == 'False':
+        value = 'off'
+
     kw['prev_val'] = current_value
     kw['cur_val'] = deepcopy(kw['prev_val'])
     kw['context'] = context
@@ -399,21 +427,36 @@ def main():
 
         changed = param_set(cursor, module, name, boot_val)
 
-        kw['cur_val'] = boot_val
-
     if restart_required:
         module.warn("Restart of PostgreSQL is required for setting %s" % name)
 
-    # Recheck current value:
+    cursor.close()
     db_connection.close()
-    db_connection = psycopg2.connect(**kw2)
-    db_connection.set_session(autocommit=True)
-    cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    kw['setting'] = dict(
-        value=param_get(cursor, module, name)[1],
-        unit=unit,
-    )
+    # Reconnect and recheck current value:
+    if context in ('sighup', 'superuser-backend', 'backend', 'superuser', 'user'):
+        db_connection = connect_to_db(module, kw2, autocommit=True)
+        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        res = param_get(cursor, module, name)
+        # f_ means 'final'
+        f_value = res[0]
+        f_raw_val = res[1]
+
+        if raw_val == f_raw_val:
+            changed = False
+
+        else:
+            changed = True
+
+        kw['cur_val'] = f_value
+        kw['setting'] = dict(
+            value=f_raw_val,
+            unit=unit,
+        )
+
+        cursor.close()
+        db_connection.close()
 
     kw['changed'] = changed
     kw['restart_required'] = restart_required
