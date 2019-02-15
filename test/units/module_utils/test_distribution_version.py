@@ -1110,7 +1110,53 @@ PRIVACY_POLICY_URL="http://www.intel.com/privacy"
             "os_family": "Archlinux",
             "distribution_version": "NA"
         }
-    }
+    },
+    {
+        'name': "Cumulus Linux 3.7.3",
+        'input': {
+            '/etc/os-release': """NAME="Cumulus Linux"
+VERSION_ID=3.7.3
+VERSION="Cumulus Linux 3.7.3"
+PRETTY_NAME="Cumulus Linux"
+ID=cumulus-linux
+ID_LIKE=debian
+CPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:3.7.3
+HOME_URL="http://www.cumulusnetworks.com/"
+SUPPORT_URL="http://support.cumulusnetworks.com/"
+"""
+        },
+        'platform.dist': ('debian', '8.11', ''),
+        'result': {
+            'distribution': 'Cumulus Linux',
+            'distribution_major_version': '3',
+            'distribution_release': 'Cumulus Linux 3.7.3',
+            'os_family': 'Debian',
+            'distribution_version': '3.7.3',
+        }
+    },
+    {
+        'name': "Cumulus Linux 2.5.4",
+        'input': {
+            '/etc/os-release': """NAME="Cumulus Linux"
+VERSION_ID=2.5.4
+VERSION="2.5.4-6dc6e80-201510091936-build"
+PRETTY_NAME="Cumulus Linux"
+ID=cumulus-linux
+ID_LIKE=debian
+CPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:2.5.4-6dc6e80-201510091936-build
+HOME_URL="http://www.cumulusnetworks.com/"
+SUPPORT_URL="http://support.cumulusnetworks.com/"
+"""
+        },
+        'platform.dist': ('', '', ''),
+        'result': {
+            'distribution': 'Cumulus Linux',
+            'distribution_major_version': '2',
+            'distribution_release': '2.5.4-6dc6e80-201510091936-build',
+            'os_family': 'Debian',
+            'distribution_version': '2.5.4',
+        }
+    },
 ]
 
 
