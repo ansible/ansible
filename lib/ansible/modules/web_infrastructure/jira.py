@@ -263,7 +263,8 @@ def request(url, user, passwd, timeout, data=None, method=None):
     body = response.read()
 
     if body:
-        return json.loads(body.decode('utf-8'))
+        return json.loads(to_text(body, errors='surrogate_or_strict'))
+        
     else:
         return {}
 
