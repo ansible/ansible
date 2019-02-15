@@ -877,8 +877,8 @@ class AzureRMModuleBase(object):
         self.log('Getting container service client')
         if not self._managedcluster_client:
             self._managedcluster_client = self.get_mgmt_svc_client(ContainerServiceClient,
-                                                                     base_url=self._cloud_environment.endpoints.resource_manager,
-                                                                     api_version='2018-03-31')
+                                                                   base_url=self._cloud_environment.endpoints.resource_manager,
+                                                                   api_version='2018-03-31')
         return self._managedcluster_client
 
     @property

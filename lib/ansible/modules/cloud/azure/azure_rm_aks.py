@@ -180,7 +180,7 @@ options:
                         type: bool
                     subnet_resource_id:
                         description:
-                            - Subnet associdated to the cluster. 
+                            - Subnet associdated to the cluster.
         version_added: 2.8
 
 extends_documentation_fragment:
@@ -373,7 +373,7 @@ def create_addon_profiles_spec():
         )
         configs = values.get('config') or {}
         for item in configs.keys():
-            addon_spec[item] = dict(type='str', aliases=[configs[item]], required=True)       
+            addon_spec[item] = dict(type='str', aliases=[configs[item]], required=True)
         spec[key] = dict(type='dict', options=addon_spec, aliases=[values['name']])
     return spec
 
@@ -582,7 +582,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     if response['kubernetes_version'] != self.kubernetes_version:
                         upgrade_versions = available_versions.get(response['kubernetes_version'])
                         if upgrade_versions and self.kubernetes_version not in upgrade_versions:
-                            self.fail('Cannot upgrade kubernetes version to {0}, supported value are {1}'.format(self.kubernetes_version,  upgrade_versions))
+                            self.fail('Cannot upgrade kubernetes version to {0}, supported value are {1}'.format(self.kubernetes_version, upgrade_versions))
                         to_be_updated = True
 
                     if response['enable_rbac'] != self.enable_rbac:
@@ -761,8 +761,8 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         :return: AKS instance kubeconfig
         '''
         access_profile = self.managedcluster_client.managed_clusters.get_access_profile(resource_group_name=self.resource_group,
-                                                                                          resource_name=self.name,
-                                                                                          role_name="clusterUser")
+                                                                                        resource_name=self.name,
+                                                                                        role_name="clusterUser")
         return access_profile.kube_config.decode('utf-8')
 
     def create_agent_pool_profile_instance(self, agentpoolprofile):
