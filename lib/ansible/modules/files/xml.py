@@ -831,16 +831,14 @@ def main():
             insertafter=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
-        # TODO: Implement this as soon as #28662 (required_by functionality) is merged
-        # required_by=dict(
-        #    add_children=['xpath'],
-        #    attribute=['value'],
-        #    set_children=['xpath'],
-        #    value=['xpath'],
-        # ),
+        required_by=dict(
+            add_children=['xpath'],
+            attribute=['value'],
+            content=['xpath'],
+            set_children=['xpath'],
+            value=['xpath'],
+        ),
         required_if=[
-            ['content', 'attribute', ['xpath']],
-            ['content', 'text', ['xpath']],
             ['count', True, ['xpath']],
             ['print_match', True, ['xpath']],
             ['insertbefore', True, ['xpath']],
