@@ -15,7 +15,7 @@ options:
             - Dictionary of string:string pairs to assign as metadata to the object.
             - Metadata tags on the object will be updated with any provided values.
             - To remove tags set append_tags option to false.
-        type: str
+        type: dict
     append_tags:
         description:
             - Use to control if tags field is canonical or just appends to existing tags.
