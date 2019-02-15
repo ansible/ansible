@@ -1,2 +1,4 @@
 ---
-- { include: node.yml, tags: ['node'] }
+- { include: node.yml }
+- { include: pkg.yml }
+- { include: facts.yml }

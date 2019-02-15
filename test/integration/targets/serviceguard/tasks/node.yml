@@ -3,52 +3,51 @@
 # Test cases:
 #   Prerequisites: 1 node cluster with tetsnode1 running, testpkg1 running
 # 
-# 001 - Stop testnode1 (This should fail without force)
-# 002 - Stop testnode1 forcefully
-# 003 - Start testnode1
-
-- serviceguard_node:
-    name: testnode1
+# Test cases
+# - DONE 000 - Start all packages
+# - DONE 001 - Stop all nodes
+# - DONE 002 - Start all nodes
+- name: 010 Start all the nodes (Pre-requisite for 020)
+  serviceguard_node:
+    name: "{{ ansible_hostname }}"
     state: started
-    get_facts: true
-  register: state
 
-- name: Make sure environment is setup coorectly before testing
-  assert:
-    that:
-      - state.nodes[testnode1].state == "running"
-    fail_msg: Node {{ testnode1 }} seems to be stopped. Please start it
-
-- name: 001 - Stop testnode1 (This should fail without force)
-  serviceguard_node:
-    name: "{{ testnode1 }}"
-    state: stopped
-  ignore_errors: true
-  register: state
+- serviceguard_facts:
+  register: facts
 
 - assert:
     that:
-      - state.failed
+      - facts.nodes[ansible_hostname].state == 'running'
 
-- name: 002 - Stop testnode1 forcefully
-  serviceguard_node:
-    name: "{{ testnode1 }}"
+- name: 020 Stop all the pacakges before stopping all the nodes
+  serviceguard_pkg:
+    name: "*"
+    node: "{{ ansible_hostname }}"
     state: stopped
-    force: true
   register: state
 
+- name: 021 Stop all the nodes
+  serviceguard_node:
+    name: "{{ ansible_hostname }}"
+    state: stopped 
+  register: state
+
+- serviceguard_facts:
+  register: facts
 - assert:
     that:
-      - state.changed
-      - state.nodes[testnode1].status == "down"
+      - state.nodes[ansible_hostname].status == 'unknown'
+      - state.changed == True
 
-- name: 003 - Start testnode1
+- name: 030 Start all the nodes
   serviceguard_node:
-    name: "{{ testnode1 }}"
+    name: "{{ ansible_hostname }}"
     state: started
   register: state
 
+- serviceguard_facts:
+  register: facts
 - assert:
     that:
-      - state.changed
-      - state.nodes[testnode1].state == "running"
+      - facts.nodes[ansible_hostname].state == 'running'
+      - state.changed == True

@@ -1,0 +1,249 @@
+---
+
+# Test cases
+# - DONE 000 - Stop all packages
+# - DONE 001 - Start testpkg1 on its default node (testnode1)
+# - DONE 002 - Stop testpkg1
+# - DONE 003 - Start testpkg1 on testnode2
+# - DONE 004 - Start testpkg1 on testnode2 (Should not change anything)
+# - DONE 005 - Failover testpkg1 to testnode1 
+# - DONE 006 - Stop all packages of node testnode1 (Schould stop testpkg1 but not testpkg2)
+# - DONE 007 - Start all packages on ansible_hostname that were stopped before 
+# - DONE 008 - Enable testpkg1
+# - DONE 009 - Enable testpkg1 (should not change) 
+# - DONE 010 - Disable testpkg1 
+# - DONE 011 - Start testpkg1 when halted and gets enabled
+# - DONE 012 - Start and enable package on testnode1
+- name: Display status information
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    get_facts: true
+  register: state
+
+- debug:
+    msg: "{{ state }}"
+
+#######
+# Start tests
+#######
+
+- name: 000 - Stop all packages
+  serviceguard_pkg:
+      name: "*"
+      state: stopped
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'halted'
+      - state.pkgs[testpkg2].state == 'halted'
+
+- name: 001 - Start testpkg1 on its default node (testnode1)
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: started
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].owner == testnode1
+      - state.changed == True
+
+- name: 002 - Stop testpkg1
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: stopped
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'halted'
+      - state.changed
+
+- name: 003 - Start pkg on defined node (testnode2)
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: started
+    node: "{{ testnode2 }}"
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].owner == testnode2
+      - state.changed == True
+
+- name: 004 - Start testpkg1 on testnode2 (Should not change anything)
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: started
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].owner == testnode2
+      - state.changed == False
+
+- name: 005 - Failover testpkg1 to testnode1
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: started
+    node: "{{ testnode1 }}"
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].owner == testnode1
+      - state.changed == True
+
+- serviceguard_pkg:
+    name: testpkg2
+    state: started
+    node: "{{ testnode2 }}"
+
+- name: 006 - Stop all packages of node testnode1 (Schould stop testpkg1 but not testpkg2)
+  serviceguard_pkg:
+    name: "*"
+    state: stopped
+    node: "{{ testnode1 }}"
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'halted'
+      - state.pkgs[testpkg2].state == 'running'
+      - state.pkgs[testpkg2].owner == testnode2
+      - "testpkg1 in state.stopped_packages"
+      - "state.stopped_packages | length == 1"
+      - state.changed == True
+
+- name: 007 - Start all packages on ansible_hostname that were stopped before
+  serviceguard_pkg:
+    name: "{{ item }}"
+    state: started
+    node: "{{ ansible_hostname }}"
+  with_items: "{{ state.stopped_packages }}"
+  register: state_start
+
+# This needs to be done as state_start returns a different dic if applied to multiple nodes 
+- serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    get_facts: true
+  register: state    
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].owner == testnode1
+      - state_start.changed == True
+
+- name: 008 - Enable testpkg1
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    autorun: enabled
+  register: state
+
+- assert: 
+    that:
+      - state.pkgs[testpkg1].autorun == 'enabled'
+      - state.changed == True
+
+- name: 009 - Enable testpkg1 (should not change)
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    autorun: enabled
+  register: state
+
+- assert: 
+    that:
+      - state.pkgs[testpkg1].autorun == 'enabled'
+      - state.changed == False
+
+- name: 010 - Disable testpkg1 
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    autorun: disabled
+  register: state
+
+- assert: 
+    that:
+      - state.pkgs[testpkg1].autorun == 'disabled'
+      - state.changed == True
+
+- serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: stopped
+
+- name: 011 - Start testpkg1 when halted and gets enabled
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    autorun: enabled
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].autorun == 'enabled'
+      - state.changed == True
+
+- serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: stopped
+
+- name:  012 - Start and enable package on testnode1
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: started
+    autorun: enabled
+    node: "{{ testnode1 }}"
+  register: state
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'running'
+      - state.pkgs[testpkg1].autorun == 'enabled'
+      - state.pkgs[testpkg1].owner == testnode1
+      - state.changed == True
+
+### Multinode tests
+- name: Start testpkg1 on testnode1
+  run_once: true
+  serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    state: started
+    node: testnode1
+
+- name: Start testpkg2 on testnode1 
+  run_once: true
+  serviceguard_pkg:
+    name: "{{ testpkg2 }}"
+    state: started
+    node: testnode1
+
+- name: 100 - Stop all the packages on all the nodes
+  serviceguard_pkg:
+    name: "*"
+    node: "{{ ansible_hostname }}"
+    state: stopped
+  register: state_stopped
+
+- serviceguard_pkg:
+    name: "{{ testpkg1 }}"
+    get_facts: true
+  register: state    
+
+- assert:
+    that:
+      - state.pkgs[testpkg1].state == 'halted'
+      - state.pkgs[testpkg2].state == 'halted'
+
+- name: 110 - Start all the packages previously stopped on their respective nodes
+  serviceguard_pkg:
+    name: "{{ item }}"
+    node: "{{ ansible_hostname }}"
+    state: started
+  with_items: "{{ state_stopped.stopped_packages }}"
+  register: state
