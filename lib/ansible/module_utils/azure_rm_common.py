@@ -789,7 +789,10 @@ class AzureRMModuleBase(object):
 
     @property
     def storage_models(self):
-        return StorageManagementClient.models("2018-07-01")
+        try:
+            return StorageManagementClient.models("2018-07-01")
+        except NotImplementedError:
+            raise KeyError("Cannot import APIVersion 2018-07-01 from StorageManagementClient")
 
     @property
     def network_client(self):
