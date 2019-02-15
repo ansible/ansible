@@ -1,0 +1,2 @@
+bugfixes:
+  - azure_rm_postgresqlserver - fixed issues with passing parameters while updating existing server instance
