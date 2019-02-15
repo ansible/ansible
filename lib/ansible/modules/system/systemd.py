@@ -327,6 +327,11 @@ def main():
         ),
         supports_check_mode=True,
         required_one_of=[['state', 'enabled', 'masked', 'daemon_reload']],
+        required_by=dict(
+            state=('name', ),
+            enabled=('name', ),
+            masked=('name', ),
+        ),
         mutually_exclusive=[['scope', 'user']],
     )
 
@@ -363,10 +368,6 @@ def main():
         changed=False,
         status=dict(),
     )
-
-    for requires in ('state', 'enabled', 'masked'):
-        if module.params[requires] is not None and unit is None:
-            module.fail_json(msg="name is also required when specifying %s" % requires)
 
     # Run daemon-reload first, if requested
     if module.params['daemon_reload'] and not module.check_mode:
