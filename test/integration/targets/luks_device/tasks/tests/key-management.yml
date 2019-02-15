@@ -62,6 +62,9 @@
     device: "{{ cryptfile_device }}"
     state: closed
 
+- name: Dump LUKS header
+  command: "cryptsetup luksDump {{ cryptfile_device }}"
+
 - name: Remove access from keyfile1
   luks_device:
     device: "{{ cryptfile_device }}"
@@ -99,6 +102,9 @@
   luks_device:
     device: "{{ cryptfile_device }}"
     state: closed
+
+- name: Dump LUKS header
+  command: "cryptsetup luksDump {{ cryptfile_device }}"
 
 - name: Remove access from keyfile2
   luks_device:
