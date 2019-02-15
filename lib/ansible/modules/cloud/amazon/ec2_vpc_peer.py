@@ -408,6 +408,9 @@ def main():
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')
     state = module.params.get('state')
+    peering_id = modules.params.get('peering_id')
+    vpc_id = modules.params.get('vpc_id')
+    peer_vpc_id = module.params.get('peer_vpc_id')
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2',
@@ -416,11 +419,20 @@ def main():
         module.fail_json(msg="Can't authorize connection - " + str(e))
 
     if state == 'present':
+        if not vpc_id and not peer_vpc_id:
+            module.fail_json(msg='vpc_id and peer_vpc_id parameters are required for creating peering connection')
+
         (changed, results) = create_peer_connection(client, module)
         module.exit_json(changed=changed, peering_id=results)
     elif state == 'absent':
+        if not peering_id or (not vpc_id and not peer_vpc_id):
+            module.fail_json(msg='peering_id or vpc_id and peer_vpc_id parameters are required for removing peering connection')
+
         remove_peer_connection(client, module)
     else:
+        if not peering_id:
+            module.fail_json(msg='peering_id parameter is required to accept or reject peering connection')
+
         (changed, results) = accept_reject(state, client, module)
         module.exit_json(changed=changed, peering_id=results)
 
