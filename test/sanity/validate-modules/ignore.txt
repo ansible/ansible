@@ -4,7 +4,6 @@ lib/ansible/modules/cloud/amazon/aws_acm_facts.py E322
 lib/ansible/modules/cloud/amazon/aws_acm_facts.py E323
 lib/ansible/modules/cloud/amazon/aws_api_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E322
-lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E324
 lib/ansible/modules/cloud/amazon/aws_application_scaling_policy.py E326
 lib/ansible/modules/cloud/amazon/aws_direct_connect_gateway.py E322
 lib/ansible/modules/cloud/amazon/aws_direct_connect_gateway.py E324
@@ -30,7 +29,6 @@ lib/ansible/modules/cloud/amazon/ec2_eip.py E322
 lib/ansible/modules/cloud/amazon/ec2_eip.py E324
 lib/ansible/modules/cloud/amazon/ec2_elb.py E326
 lib/ansible/modules/cloud/amazon/ec2_elb_facts.py E323
-lib/ansible/modules/cloud/amazon/ec2_elb_lb.py E324
 lib/ansible/modules/cloud/amazon/ec2_group.py E322
 lib/ansible/modules/cloud/amazon/ec2_instance.py E324
 lib/ansible/modules/cloud/amazon/ec2_lc.py E322
@@ -720,7 +718,6 @@ lib/ansible/modules/notification/sendgrid.py E322
 lib/ansible/modules/notification/slack.py E324
 lib/ansible/modules/notification/snow_record.py E317
 lib/ansible/modules/packaging/language/bundler.py E324
-lib/ansible/modules/packaging/language/cpanm.py E324
 lib/ansible/modules/packaging/language/easy_install.py E324
 lib/ansible/modules/packaging/language/maven_artifact.py E324
 lib/ansible/modules/packaging/language/pear.py E322
@@ -762,7 +759,6 @@ lib/ansible/modules/packaging/os/pulp_repo.py E322
 lib/ansible/modules/packaging/os/pulp_repo.py E324
 lib/ansible/modules/packaging/os/rhn_channel.py E322
 lib/ansible/modules/packaging/os/rhn_channel.py E326
-lib/ansible/modules/packaging/os/rhn_register.py E324
 lib/ansible/modules/packaging/os/rhsm_repository.py E324
 lib/ansible/modules/packaging/os/slackpkg.py E322
 lib/ansible/modules/packaging/os/slackpkg.py E324
@@ -885,7 +881,6 @@ lib/ansible/modules/system/selinux_permissive.py E322
 lib/ansible/modules/system/seport.py E324
 lib/ansible/modules/system/service.py E323
 lib/ansible/modules/system/service.py E210
-lib/ansible/modules/system/systemd.py E324
 lib/ansible/modules/system/solaris_zone.py E324
 lib/ansible/modules/system/ufw.py E322
 lib/ansible/modules/system/ufw.py E326

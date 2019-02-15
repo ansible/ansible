@@ -60,7 +60,7 @@ options:
         description:
             - Determines if the portgroup should be present or not.
         required: True
-        type: bool
+        type: str
         choices:
             - 'present'
             - 'absent'

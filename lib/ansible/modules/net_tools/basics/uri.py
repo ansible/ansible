@@ -101,7 +101,7 @@ options:
   status_code:
     description:
       - A list of valid, numeric, HTTP status codes that signifies success of the request.
-    type: int
+    type: list
     default: 200
   timeout:
     description:

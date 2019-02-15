@@ -54,7 +54,7 @@ options:
   permissions:
     description:
       - The list of permission(s) to delegate (required if C(state) is C(present)).
-    type: str
+    type: list
     choices: [ allow, clone, create, destroy, mount, promote, readonly, receive, rename, rollback, send, share, snapshot, unallow ]
   local:
     description:
