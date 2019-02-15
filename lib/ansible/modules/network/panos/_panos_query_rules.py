@@ -85,6 +85,9 @@ options:
     protocol:
         description:
             - The protocol used to be queried.  Must be either I(tcp) or I(udp).
+        choices:
+            - tcp
+            - udp
     tag_name:
         description:
             - Name of the rule tag to be queried.

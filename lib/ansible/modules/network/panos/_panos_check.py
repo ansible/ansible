@@ -39,12 +39,12 @@ options:
         description:
             - timeout of API calls
         required: false
-        default: "0"
+        default: 0
     interval:
         description:
             - time waited between checks
         required: false
-        default: "0"
+        default: 0
 extends_documentation_fragment: panos
 '''
 

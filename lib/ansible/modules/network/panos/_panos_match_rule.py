@@ -61,7 +61,10 @@ options:
     rule_type:
         description:
             - Type of rule. Valid types are I(security) or I(nat).
-        default: "security"
+        required: true
+        choices:
+            - security
+            - nat
     source_zone:
         description:
             - The source zone.

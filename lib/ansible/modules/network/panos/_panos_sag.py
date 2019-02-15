@@ -43,10 +43,10 @@ options:
         description:
             - name of the dynamic address group
         required: true
-    static_match_filter:
+    sag_match_filter:
         description:
             - Static filter user by the address group
-        required: true
+        type: list
     devicegroup:
         description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined
@@ -66,6 +66,10 @@ options:
         description:
             - The operation to perform Supported values are I(add)/I(list)/I(delete).
         required: true
+        choices:
+            - add
+            - list
+            - delete
 extends_documentation_fragment: panos
 '''
 
