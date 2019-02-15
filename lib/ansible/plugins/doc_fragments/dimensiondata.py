@@ -1,20 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Dimension Data
-#
-# This module is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This software is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this software.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2016, Dimension Data
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 # Authors:
 #   - Adam Friedman  <tintoy@tintoy.io>
 
@@ -22,7 +10,7 @@
 class ModuleDocFragment(object):
 
     # Dimension Data doc fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 
 options:
   region:
@@ -33,27 +21,28 @@ options:
       - They are also listed in U(https://libcloud.readthedocs.io/en/latest/compute/drivers/dimensiondata.html)
       - Note that the default value "na" stands for "North America".
       - The module prepends 'dd-' to the region choice.
+    type: str
     default: na
   mcp_user:
     description:
       - The username used to authenticate to the CloudControl API.
       - If not specified, will fall back to C(MCP_USER) from environment variable or C(~/.dimensiondata).
-    required: false
+    type: str
   mcp_password:
     description:
       - The password used to authenticate to the CloudControl API.
       - If not specified, will fall back to C(MCP_PASSWORD) from environment variable or C(~/.dimensiondata).
       - Required if I(mcp_user) is specified.
-    required: false
+    type: str
   location:
     description:
       - The target datacenter.
+    type: str
     required: true
   validate_certs:
     description:
       - If C(false), SSL certificates will not be validated.
       - This should only be used on private instances of the CloudControl API that use self-signed certificates.
-    required: false
-    default: true
     type: bool
-    '''
+    default: yes
+'''

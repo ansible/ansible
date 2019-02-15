@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-#
 
-# Copyright (c) 2018, KubeVirt Team <@kubevirt>
+# Copyright: (c) 2018, KubeVirt Team <@kubevirt>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard oVirt documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
     disks:
         description:
