@@ -86,7 +86,7 @@ options:
     - Index state.
     type: str
     default: present
-    choices: [ present, absent ]
+    choices: [ absent, present ]
   table:
     description:
     - Table to create index on it.
