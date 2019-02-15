@@ -510,22 +510,22 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            force=dict(default=False, type=bool),
-            type=dict(choices=['host', 'user'], type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            force=dict(type='bool', default=False),
+            type=dict(type='str', choices=['host', 'user']),
             signing_key=dict(type='path'),
             public_key=dict(type='path'),
-            path=dict(required=True, type='path'),
+            path=dict(type='path', required=True),
             identifier=dict(type='str'),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
-            principals=dict(type=list),
-            options=dict(type=list),
+            principals=dict(type='list'),
+            options=dict(type='list'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])]
+        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])],
     )
 
     def isBaseDir(path):
