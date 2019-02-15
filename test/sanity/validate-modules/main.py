@@ -1235,18 +1235,25 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code=324,
-                    msg=('Value for "default" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (arg_default, arg, doc_default))
+                    msg=("argument_spec for '%s' defines default as '%s' but documentation defines default as '%s'" % (arg, arg_default, doc_default))
                 )
 
             # TODO: needs to recursively traverse suboptions
-            doc_type = docs.get('options', {}).get(arg, {}).get('type', 'str')
-            if 'type' in data and data['type'] == 'bool' and doc_type != 'bool':
-                self.reporter.error(
-                    path=self.object_path,
-                    code=325,
-                    msg='argument_spec for "%s" defines type="bool" but documentation does not' % (arg,)
-                )
+            doc_type = docs.get('options', {}).get(arg, {}).get('type')
+            if 'type' in data:
+                if data['type'] != doc_type and doc_type is not None:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=325,
+                        msg="argument_spec for '%s' defines type as '%s' but documentation defines type as '%s'" % (arg, data['type'], doc_type)
+                    )
+            else:
+                if doc_type != 'str' and doc_type is not None:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=335,
+                        msg="argument_spec for '%s' implies type as 'str' but documentation defines as '%s'" % (arg, doc_type)
+                    )
 
             # TODO: needs to recursively traverse suboptions
             doc_choices = []
@@ -1287,8 +1294,7 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code=326,
-                    msg=('Value for "choices" from the argument_spec (%r) for "%s" does not match the '
-                         'documentation (%r)' % (arg_choices, arg, doc_choices))
+                    msg=("argument_spec for '%s' defines choices as '%s' but documentation defines choices as '%s'" % (arg, arg_choices, doc_choices))
                 )
 
         if docs:
