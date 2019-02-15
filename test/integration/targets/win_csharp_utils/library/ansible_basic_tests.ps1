@@ -708,6 +708,206 @@ test_no_log - Invoked with:
         $actual | Assert-DictionaryEquals -Expected $expected
     }
 
+    "Required by - single value" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+            option2 = "option2"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                    option2 = "option2"
+                    option3 = $null
+                }
+            }
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by - multiple values" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2", "option3"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+            option2 = "option2"
+            option3 = "option3"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                    option2 = "option2"
+                    option3 = "option3"
+                }
+            }
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by explicit null" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+            option2 = $null
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                    option2 = $null
+                    option3 = $null
+                }
+            }
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by failed - single value" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+        }
+
+        $failed = $false
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            failed = $true
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                }
+            }
+            msg = "missing parameter(s) required by 'option1': option2"
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
+    "Required by failed - multiple values" = {
+        $spec = @{
+            options = @{
+                option1 = @{type = "str"}
+                option2 = @{type = "str"}
+                option3 = @{type = "str"}
+            }
+            required_by = @{
+                option1 = "option2", "option3"
+            }
+        }
+        $complex_args = @{
+            option1 = "option1"
+        }
+
+        $failed = $false
+        try {
+            $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            failed = $true
+            invocation = @{
+                module_args = @{
+                    option1 = "option1"
+                }
+            }
+            msg = "missing parameter(s) required by 'option1': option2, option3"
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
+    }
+
     "Debug without debug set" = {
         $complex_args = @{
             _ansible_debug = $false
@@ -1184,7 +1384,7 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_if, required_one_of, required_together, supports_check_mode, type"
+        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1216,7 +1416,7 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_if, required_one_of, required_together, supports_check_mode, type - "
+        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type - "
         $expected_msg += "found in option_key -> sub_option_key"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
