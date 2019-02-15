@@ -1,30 +1,29 @@
 # -*- coding: utf-8 -*-
-#
 
-# Copyright (c) 2018, KubeVirt Team <@kubevirt>
+# Copyright: (c) 2018, KubeVirt Team <@kubevirt>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard oVirt documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
     wait:
         description:
             - "I(True) if the module should wait for the resource to get into desired state."
-        default: true
         type: bool
+        default: yes
     force:
        description:
-            - If set to C(True), and I(state) is C(present), an existing object will be replaced.
-       default: false
+            - If set to C(no), and I(state) is C(present), an existing object will be replaced.
        type: bool
+       default: no
     wait_timeout:
         description:
-            - "The amount of time in seconds the module should wait for the resource to get into desired state."
-        default: 120
+            - The amount of time in seconds the module should wait for the resource to get into desired state.
         type: int
+        default: 120
     api_version:
         description:
             - "Specify the API version to be used."
@@ -35,8 +34,8 @@ options:
             - version
     memory:
         description:
-            - "The amount of memory to be requested by virtual machine."
-            - "For example 1024Mi."
+            - The amount of memory to be requested by virtual machine.
+            - For example 1024Mi.
         type: str
     machine_type:
         description:
@@ -54,11 +53,8 @@ options:
             - If openshift >= 0.6.2, this defaults to C(['strategic-merge', 'merge']), which is ideal for using the same parameters
               on resource kinds that combine Custom Resources and built-in resources. For openshift < 0.6.2, the default
               is simply C(strategic-merge).
-        choices:
-            - json
-            - merge
-            - strategic-merge
         type: list
+        choices: [ json, merge, strategic-merge ]
 
 requirements:
     - python >= 2.7

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # This code is part of Ansible, but is an independent component.
 # This particular file snippet, and this file snippet only, is BSD licensed.
 # Modules you write using this snippet, which is embedded dynamically by
@@ -31,7 +33,7 @@
 
 class ModuleDocFragment(object):
     # Standard Pylxca documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 author:
   - Naval Patel (@navalkp)
   - Prashant Bhosale (@prabhosa)
@@ -39,18 +41,20 @@ author:
 options:
   login_user:
     description:
-      The username for use in HTTP basic authentication.
-
+    - The username for use in HTTP basic authentication.
+    type: str
     required: true
 
   login_password:
     description:
-      The password for use in HTTP basic authentication.
+    - The password for use in HTTP basic authentication.
+    type: str
     required: true
 
   auth_url:
     description:
-      lxca https full web address
+    - lxca https full web address
+    type: str
     required: true
 
 requirements:

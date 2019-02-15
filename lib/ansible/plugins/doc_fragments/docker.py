@@ -47,21 +47,21 @@ options:
             - Use a CA certificate when performing server verification by providing the path to a CA certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(ca.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
-        type: str
+        type: path
         aliases: [ tls_ca_cert ]
     cert_path:
         description:
             - Path to the client's TLS certificate file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(cert.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
-        type: str
+        type: path
         aliases: [ tls_client_cert ]
     key_path:
         description:
             - Path to the client's TLS key file.
             - If the value is not specified in the task and the environment variable C(DOCKER_CERT_PATH) is set,
               the file C(key.pem) from the directory specified in the environment variable C(DOCKER_CERT_PATH) will be used.
-        type: str
+        type: path
         aliases: [ tls_client_key ]
     ssl_version:
         description:
@@ -76,19 +76,19 @@ options:
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS) will be used
               instead. If the environment variable is not set, the default value will be used.
         type: bool
-        default: false
+        default: no
     tls_verify:
         description:
             - Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
             - If the value is not specified in the task, the value of environment variable C(DOCKER_TLS_VERIFY) will be
               used instead. If the environment variable is not set, the default value will be used.
         type: bool
-        default: false
+        default: no
     debug:
         description:
             - Debug mode
         type: bool
-        default: false
+        default: no
 
 notes:
   - Connect to the Docker daemon by providing parameters with each task or by defining environment variables.
