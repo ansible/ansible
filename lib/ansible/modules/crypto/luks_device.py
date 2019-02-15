@@ -306,14 +306,22 @@ class CryptHandler(Handler):
                                  % (device, ))
             keyslot_count = 0
             keyslot_area = False
+            keyslot_re = re.compile(r'^Key Slot [0-9]+: ENABLED')
             for line in result[STDOUT].splitlines():
                 if line.startswith('Keyslots:'):
                     keyslot_area = True
                 elif line.startswith('  '):
+                    # LUKS2 header dumps use human-readable indented output.
+                    # Thus we have to look out for 'Keyslots:' and count the
+                    # number of indented keyslot numbers.
                     if keyslot_area and line[2] in '0123456789':
                         keyslot_count += 1
                 elif line.startswith('\t'):
                     pass
+                elif keyslot_re.match(line):
+                    # LUKS1 header dumps have one line per keyslot with ENABLED
+                    # or DISABLED in them. We count such lines with ENABLED.
+                    keyslot_count += 1
                 else:
                     keyslot_area = False
             if keyslot_count < 2:
