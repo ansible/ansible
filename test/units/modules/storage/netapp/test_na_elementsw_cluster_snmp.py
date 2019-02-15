@@ -1,3 +1,6 @@
+# (c) 2019, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ''' unit test for Ansible module: na_elementsw_cluster_snmp.py '''
 
 from __future__ import print_function
