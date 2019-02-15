@@ -265,7 +265,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
     if len(iface_lines) < 1:
         # interface not found
         module.fail_json(msg="Error: interface %s not found" % iface)
-        return changed
+        return changed, None
 
     iface_options = list(filter(lambda i: i['line_type'] == 'option', iface_lines))
     target_options = list(filter(lambda i: i['option'] == option, iface_options))
@@ -275,12 +275,11 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
             changed = True
             # add new option
             last_line_dict = iface_lines[-1]
-            lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family)
+            changed, lines = addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family)
         else:
             if option in ["pre-up", "up", "down", "post-up"]:
                 if len(list(filter(lambda i: i['value'] == value, target_options))) < 1:
-                    changed = True
-                    lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options, address_family)
+                    changed, lines = addOptionAfterLine(option, value, iface, lines, target_options[-1], iface_options, address_family)
             else:
                 # if more than one option found edit the last one
                 if target_options[-1]['value'] != value:
@@ -316,11 +315,13 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
 def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_options, address_family):
     # Changing method of interface is not an addition
     if option == 'method':
+        changed = False
         for ln in lines:
-            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface:
+            if ln.get('line_type', '') == 'iface' and ln.get('iface', '') == iface and value != ln.get('params', {}).get('method', ''):
+                changed = True
                 ln['line'] = re.sub(ln.get('params', {}).get('method', '') + '$', value, ln.get('line'))
                 ln['params']['method'] = value
-        return lines
+        return changed, lines
 
     last_line = last_line_dict['line']
     prefix_start = last_line.find(last_line.split()[0])
@@ -335,7 +336,7 @@ def addOptionAfterLine(option, value, iface, lines, last_line_dict, iface_option
     option_dict = optionDict(line, iface, option, value, address_family)
     index = len(lines) - lines[::-1].index(last_line_dict)
     lines.insert(index, option_dict)
-    return lines
+    return True, lines
 
 
 def write_changes(module, lines, dest):

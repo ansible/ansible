@@ -205,9 +205,9 @@ class TestInterfacesFileModule(unittest.TestCase):
         testcases = {
             "change_method": [
                 {
-                    'iface': 'eth0',
+                    'iface': 'eth1',
                     'option': 'method',
-                    'value': 'manual',
+                    'value': 'dhcp',
                     'state': 'present',
                 }
             ],
@@ -223,7 +223,15 @@ class TestInterfacesFileModule(unittest.TestCase):
                     options = options_list[0]
                     fail_json_iterations = []
                     try:
-                        _, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'], options['option'], options['value'], options['state'])
+                        changed, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'], options['option'],
+                                                                            options['value'], options['state'])
+                        # When a changed is made try running it again for proper idempotency
+                        if changed:
+                            changed_again, lines = interfaces_file.setInterfaceOption(module, lines, options['iface'],
+                                                                                      options['option'], options['value'], options['state'])
+                            self.assertFalse(changed_again,
+                                             msg='Second request for change should return false for {0} running on {1}'.format(testname,
+                                                                                                                               testfile))
                     except AnsibleFailJson as e:
                         fail_json_iterations.append("fail_json message: %s\noptions:\n%s" %
                                                     (str(e), json.dumps(options, sort_keys=True, indent=4, separators=(',', ': '))))
