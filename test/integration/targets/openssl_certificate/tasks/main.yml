@@ -1,3 +1,4 @@
+---
 - block:
 
     - import_tasks: selfsigned.yml

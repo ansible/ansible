@@ -109,27 +109,44 @@ As originally designed, Ansible modules are shipped to and run on the remote tar
 For this very reason, the modules need to run on the local Ansible controller (or are delegated to another system that *can* connect to the APIC).
 
 
+Gathering facts
+```````````````
+Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play.
+
+.. code-block:: yaml
+   :emphasize-lines: 3
+
+    - name: Another play in my playbook
+      hosts: my-apic-1
+      gather_facts: no
+      tasks:
+      - name: Create a tenant
+        aci_tenant:
+          ...
+
 Delegating to localhost
 ```````````````````````
 So let us assume we have our target configured in the inventory using the FQDN name as the ``ansible_host`` value, as shown below.
 
 .. code-block:: yaml
+   :emphasize-lines: 3
 
     apics:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
 
 One way to set this up is to add to every task the directive: ``delegate_to: localhost``.
 
 .. code-block:: yaml
+   :emphasize-lines: 8
 
     - name: Query all tenants
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       delegate_to: localhost
@@ -145,12 +162,13 @@ Another option frequently used, is to tie the ``local`` connection method to thi
 In this case the inventory may look like this:
 
 .. code-block:: yaml
+   :emphasize-lines: 6
 
     apics:
       my-apic-1:
         ansible_host: apic01.fqdn.intra
         ansible_user: admin
-        ansible_pass: my-password
+        ansible_password: my-password
         ansible_connection: local
 
 But used tasks do not need anything special added.
@@ -161,7 +179,7 @@ But used tasks do not need anything special added.
       aci_tenant:
         host: '{{ ansible_host }}'
         username: '{{ ansible_user }}'
-        password: '{{ ansible_pass }}'
+        password: '{{ ansible_password }}'
     
         state: query
       register: all_tenants
@@ -343,6 +361,7 @@ Use signature-based authentication with Ansible
 You need the following parameters with your ACI module(s) for it to work:
 
 .. code-block:: yaml
+   :emphasize-lines: 2,3
 
     username: admin
     private_key: pki/admin.key
@@ -439,7 +458,7 @@ For instance, if you would like to ensure a specific tenant exists on ACI, these
         state: present
 
 
-.. hint:: The XML format is more practical when there is a need to template the REST payload (inline), but the YAML format is more convenient for maintaing your infrastructure-as-code and feels more naturely integrated with Ansible playbooks. The dedicated modules offer a more simple, abstracted, but also a more limited experience. Use what feels best for your use-case.
+.. hint:: The XML format is more practical when there is a need to template the REST payload (inline), but the YAML format is more convenient for maintaining your infrastructure-as-code and feels more naturally integrated with Ansible playbooks. The dedicated modules offer a more simple, abstracted, but also a more limited experience. Use what feels best for your use-case.
 
 
 More information
@@ -498,7 +517,6 @@ The below example waits until the cluster is fully-fit. In this example you know
         infrawinode.imdata[0].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[1].infraWiNode.attributes.health == 'fully-fit' and
         infrawinode.imdata[2].infraWiNode.attributes.health == 'fully-fit'
-    #    all(apic.infraWiNode.attributes.health == 'fully-fit' for apic in infrawinode.imdata)
       retries: 30
       delay: 30
 
@@ -530,7 +548,7 @@ The :ref:`aci_rest <aci_rest_module>` module is a wrapper around the APIC REST A
 All below issues either have been reported to the vendor, and most can simply be avoided.
 
     Too many consecutive API calls may result in connection throttling
-        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this treshold within the nginx configuration, but using signature-based authentication is recommended.
+        Starting with ACI v3.1 the APIC will actively throttle password-based authenticated connection rates over a specific treshold. This is as part of an anti-DDOS measure but can act up when using Ansible with ACI using password-based authentication. Currently, one solution is to increase this threshold within the nginx configuration, but using signature-based authentication is recommended.
 
         **NOTE:** It is advisable to use signature-based authentication with ACI as it not only prevents connection-throttling, but also improves general performance when using the ACI modules.
 

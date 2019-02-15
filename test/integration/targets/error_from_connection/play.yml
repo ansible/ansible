@@ -1,0 +1,20 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: "use a connection plugin raising an exception, exception message contains Jinja template."
+      connection: dummy
+      command: /bin/true  # command won't be executed
+      register: result
+      ignore_errors: True
+
+    - name: "check that Jinja template embedded in exception message isn't rendered"
+      debug:
+        msg: 'ok'
+      when: result is failed
+      register: debug_task
+
+    - assert:
+        that:
+          - result is failed
+          - "'an error with' in result.msg"  # makes sure plugin was found
+          - debug_task is success

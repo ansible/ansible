@@ -47,6 +47,7 @@ MODULE_UTILS_BASIC_IMPORTS = frozenset((('_text',),
                                         ('common', 'file'),
                                         ('common', 'process'),
                                         ('common', 'sys_info'),
+                                        ('common', '_utils'),
                                         ('distro', '__init__'),
                                         ('distro', '_distro'),
                                         ('parsing', '__init__'),
@@ -55,19 +56,20 @@ MODULE_UTILS_BASIC_IMPORTS = frozenset((('_text',),
                                         ('six', '__init__'),
                                         ))
 
-MODULE_UTILS_BASIC_FILES = frozenset(('ansible/module_utils/parsing/__init__.py',
-                                      'ansible/module_utils/common/process.py',
+MODULE_UTILS_BASIC_FILES = frozenset(('ansible/module_utils/_text.py',
                                       'ansible/module_utils/basic.py',
-                                      'ansible/module_utils/six/__init__.py',
-                                      'ansible/module_utils/_text.py',
-                                      'ansible/module_utils/common/_collections_compat.py',
-                                      'ansible/module_utils/parsing/convert_bool.py',
                                       'ansible/module_utils/common/__init__.py',
+                                      'ansible/module_utils/common/_collections_compat.py',
                                       'ansible/module_utils/common/file.py',
+                                      'ansible/module_utils/common/process.py',
                                       'ansible/module_utils/common/sys_info.py',
+                                      'ansible/module_utils/common/_utils.py',
                                       'ansible/module_utils/distro/__init__.py',
                                       'ansible/module_utils/distro/_distro.py',
+                                      'ansible/module_utils/parsing/__init__.py',
+                                      'ansible/module_utils/parsing/convert_bool.py',
                                       'ansible/module_utils/pycompat24.py',
+                                      'ansible/module_utils/six/__init__.py',
                                       ))
 
 ONLY_BASIC_IMPORT = frozenset((('basic',),))
@@ -109,6 +111,20 @@ class TestRecursiveFinder(object):
         assert finder_containers.py_module_names == set(()).union(MODULE_UTILS_BASIC_IMPORTS)
         assert finder_containers.py_module_cache == {}
         assert frozenset(finder_containers.zf.namelist()) == MODULE_UTILS_BASIC_FILES
+
+    def test_module_utils_with_syntax_error(self, finder_containers):
+        name = 'fake_module'
+        data = b'#!/usr/bin/python\ndef something(:\n   pass\n'
+        with pytest.raises(ansible.errors.AnsibleError) as exec_info:
+            recursive_finder(name, data, *finder_containers)
+        assert 'Unable to import fake_module due to invalid syntax' in str(exec_info)
+
+    def test_module_utils_with_identation_error(self, finder_containers):
+        name = 'fake_module'
+        data = b'#!/usr/bin/python\n    def something():\n    pass\n'
+        with pytest.raises(ansible.errors.AnsibleError) as exec_info:
+            recursive_finder(name, data, *finder_containers)
+        assert 'Unable to import fake_module due to unexpected indent' in str(exec_info)
 
     def test_from_import_toplevel_package(self, finder_containers, mocker):
         if PY2:

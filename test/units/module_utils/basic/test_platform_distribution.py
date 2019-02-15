@@ -16,11 +16,11 @@ from units.compat.mock import patch
 from ansible.module_utils.six.moves import builtins
 
 # Functions being tested
-from ansible.module_utils.common.sys_info import get_all_subclasses
-from ansible.module_utils.common.sys_info import get_distribution
-from ansible.module_utils.common.sys_info import get_distribution_version
-from ansible.module_utils.common.sys_info import get_platform
-from ansible.module_utils.common.sys_info import load_platform_subclass
+from ansible.module_utils.basic import get_platform
+from ansible.module_utils.basic import get_all_subclasses
+from ansible.module_utils.basic import get_distribution
+from ansible.module_utils.basic import get_distribution_version
+from ansible.module_utils.basic import load_platform_subclass
 
 
 realimport = builtins.__import__
@@ -104,7 +104,7 @@ class TestLoadPlatformSubclass:
 
     def test_not_linux(self):
         # if neither match, the fallback should be the top-level class
-        with patch('ansible.module_utils.common.sys_info.get_platform', return_value="Foo"):
+        with patch('platform.system', return_value="Foo"):
             with patch('ansible.module_utils.common.sys_info.get_distribution', return_value=None):
                 assert isinstance(load_platform_subclass(self.LinuxTest), self.LinuxTest)
 

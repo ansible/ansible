@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -43,7 +42,7 @@ requirements:
 options:
   filters:
     description:
-    - A list of filter value pairs. Available filters are listed here U(U(https://cloud.google.com/sdk/gcloud/reference/topic/filters).)
+    - A list of filter value pairs. Available filters are listed here U(https://cloud.google.com/sdk/gcloud/reference/topic/filters.)
     - Each additional filter in the list will act be added as an AND condition (filter1
       and filter2) .
 extends_documentation_fragment: gcp
@@ -170,7 +169,7 @@ items:
         networks/my-network projects/myproject/global/networks/my-network global/networks/default
         .'
       returned: success
-      type: dict
+      type: str
     priority:
       description:
       - Priority for this rule. This is an integer between 0 and 65535, both inclusive.
@@ -248,11 +247,7 @@ import json
 
 
 def main():
-    module = GcpModule(
-        argument_spec=dict(
-            filters=dict(type='list', elements='str')
-        )
-    )
+    module = GcpModule(argument_spec=dict(filters=dict(type='list', elements='str')))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/compute']
@@ -262,9 +257,7 @@ def main():
         items = items.get('items')
     else:
         items = []
-    return_value = {
-        'items': items
-    }
+    return_value = {'items': items}
     module.exit_json(**return_value)
 
 

@@ -28,7 +28,7 @@ Although it's tempting to get straight into coding, there are a few things to be
 * Starting with Ansible version 2.7, all new modules must :ref:`support Python 2.7+ and Python 3.5+ <developing_python_3>`. If this is an issue, please contact us (see the "Speak to us" section later in this document to learn how).
 * Have a look at the existing modules and how they've been named in the :ref:`all_modules`, especially in the same functional area (such as cloud, networking, databases).
 * Shared code can be placed into ``lib/ansible/module_utils/``
-* Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/utils/module_docs_fragments/``.
+* Shared documentation (for example describing common arguments) can be placed in ``lib/ansible/plugins/doc_fragments/``.
 * With great power comes great responsibility: Ansible module maintainers have a duty to help keep modules up to date. As with all successful community projects, module maintainers should keep a watchful eye for reported issues and contributions.
 * Although not required, unit and/or integration tests are strongly recommended. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :doc:`testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
   * Starting with Ansible 2.4 all :ref:`network_modules` MUST have unit tests.
@@ -81,7 +81,7 @@ The first PR is slightly different to the rest because it:
 
 * defines the namespace
 * provides a basis for detailed review that will help shape your future PRs
-* may include shared documentation (`docs_fragments`) that multiple modules require
+* may include shared documentation (`doc_fragments`) that multiple modules require
 * may include shared code (`module_utils`) that multiple modules require
 
 
@@ -89,7 +89,7 @@ The first PR should include the following files:
 
 * ``lib/ansible/modules/$category/$topic/__init__.py`` - An empty file to initialize namespace and allow Python to import the files. *Required new file*
 * ``lib/ansible/modules/$category/$topic/$yourfirstmodule.py`` - A single module. *Required new file*
-* ``lib/ansible/utils/module_docs_fragments/$topic.py`` - Code documentation, such as details regarding common arguments. *Optional new file*
+* ``lib/ansible/plugins/doc_fragments/$topic.py`` - Code documentation, such as details regarding common arguments. *Optional new file*
 * ``lib/ansible/module_utils/$topic.py`` - Code shared between more than one module, such as common arguments. *Optional new file*
 *  ``docs/docsite/rst/dev_guide/developing_module_utilities.rst`` - Document your new `module_utils` file. *Optional update to existing file*
 

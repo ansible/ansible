@@ -61,6 +61,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_httpapi_pass
+      - name: ansible_httpapi_password
   use_ssl:
     type: boolean
     description:
@@ -128,6 +129,8 @@ options:
         key: connect_timeout
     env:
       - name: ANSIBLE_PERSISTENT_CONNECT_TIMEOUT
+    vars:
+      - name: ansible_connect_timeout
   persistent_command_timeout:
     type: int
     description:
@@ -135,7 +138,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -143,6 +146,22 @@ options:
       - name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT
     vars:
       - name: ansible_command_timeout
+  persistent_log_messages:
+    type: boolean
+    description:
+      - This flag will enable logging the command executed and response received from
+        target device in the ansible log file. For this option to work 'log_path' ansible
+        configuration option is required to be set to a file path with write access.
+      - Be sure to fully understand the security implications of enabling this
+        option as it could create a security vulnerability by logging sensitive information in log file.
+    default: False
+    ini:
+      - section: persistent_connection
+        key: log_messages
+    env:
+      - name: ANSIBLE_PERSISTENT_LOG_MESSAGES
+    vars:
+      - name: ansible_persistent_log_messages
 """
 
 from io import BytesIO
@@ -248,7 +267,9 @@ class Connection(NetworkConnectionBase):
             url_kwargs['url_password'] = self.get_option('password')
 
         try:
-            response = open_url(self._url + path, data=data, **url_kwargs)
+            url = self._url + path
+            self._log_messages("send url '%s' with data '%s' and kwargs '%s'" % (url, data, url_kwargs))
+            response = open_url(url, data=data, **url_kwargs)
         except HTTPError as exc:
             is_handled = self.handle_httperror(exc)
             if is_handled is True:
@@ -261,9 +282,13 @@ class Connection(NetworkConnectionBase):
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
         response_buffer = BytesIO()
-        response_buffer.write(response.read())
+        resp_data = response.read()
+        self._log_messages("received response: '%s'" % resp_data)
+        response_buffer.write(resp_data)
 
         # Try to assign a new auth token if one is given
         self._auth = self.update_auth(response, response_buffer) or self._auth
+
+        response_buffer.seek(0)
 
         return response, response_buffer

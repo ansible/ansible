@@ -73,6 +73,43 @@ azure_managed_disk:
     description: List of managed disk dicts.
     returned: always
     type: list
+    contains:
+        id:
+            description:
+                - Resource id.
+        name:
+            description:
+                - Name of the managed disk.
+        location:
+            description:
+                - Valid Azure location.
+        storage_account_type:
+            description:
+                - Type of storage for the managed disk
+            sample: Standard_LRS
+            type: str
+        create_option:
+            description:
+                - Create option of the disk
+            sample: copy
+            type: str
+        source_uri:
+            description:
+                - URI to a valid VHD file to be used or the resource ID of the managed disk to copy.
+        os_type:
+            description:
+                - "Type of Operating System: C(linux) or C(windows)."
+        disk_size_gb:
+            description:
+                - Size in GB of the managed disk to be created.
+        managed_by:
+            description:
+                - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
+        tags:
+            description:
+                - Tags to assign to the managed disk.
+            sample: { "tag": "value" }
+            type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -92,12 +129,11 @@ def managed_disk_to_dict(managed_disk):
         name=managed_disk.name,
         location=managed_disk.location,
         tags=managed_disk.tags,
-        create_option=create_data.create_option.value.lower(),
-        source_uri=create_data.source_uri,
-        source_resource_uri=create_data.source_resource_id,
+        create_option=create_data.create_option.lower(),
+        source_uri=create_data.source_uri or create_data.source_resource_id,
         disk_size_gb=managed_disk.disk_size_gb,
-        os_type=managed_disk.os_type.value if managed_disk.os_type else None,
-        storage_account_type=managed_disk.sku.name.value if managed_disk.sku else None,
+        os_type=managed_disk.os_type.lower() if managed_disk.os_type else None,
+        storage_account_type=managed_disk.sku.name if managed_disk.sku else None,
         managed_by=managed_disk.managed_by
     )
 
@@ -108,16 +144,13 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             resource_group=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             name=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             tags=dict(
-                type='str',
-                required=False
+                type='str'
             ),
         )
         self.results = dict(
@@ -142,7 +175,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
 
         self.results['ansible_facts']['azure_managed_disk'] = (
             self.get_item() if self.name
-            else self.list_items()
+            else (self.list_items_by_resource_group() if self.resource_group else self.list_items())
         )
 
         return self.results
@@ -170,6 +203,19 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
             response = self.compute_client.disks.list()
         except CloudError as exc:
             self.fail('Failed to list all items - {}'.format(str(exc)))
+
+        results = []
+        for item in response:
+            if self.has_tags(item.tags, self.tags):
+                results.append(managed_disk_to_dict(item))
+        return results
+
+    def list_items_by_resource_group(self):
+        """Get managed disks in a resource group"""
+        try:
+            response = self.compute_client.disks.list_by_resource_group(resource_group_name=self.resource_group)
+        except CloudError as exc:
+            self.fail('Failed to list items by resource group - {}'.format(str(exc)))
 
         results = []
         for item in response:

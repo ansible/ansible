@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 RETURN = '''
 ---
 hosts:
-  description: List of Zabbix host. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
+  description: List of Zabbix hosts. See https://www.zabbix.com/documentation/3.4/manual/api/reference/host/get for list of host values.
   returned: success
   type: dict
   sample: [ { "available": "1", "description": "", "disable_until": "0", "error": "", "flags": "0", "groups": ["1"], "host": "Host A", ... } ]
@@ -30,7 +30,7 @@ description:
    - This module allows you to search for Zabbix host entries.
 version_added: "2.7"
 author:
-    - "Michael Miko (@redwhitemiko)"
+    - "Michael Miko (@RedWhiteMiko)"
 requirements:
     - "python >= 2.6"
     - zabbix-api
@@ -103,7 +103,7 @@ class Host(object):
         search_key = 'search'
         if exact_match:
             search_key = 'filter'
-        host_list = self._zapi.host.get({'output': 'extend', search_key: {'host': [host_name]}})
+        host_list = self._zapi.host.get({'output': 'extend', 'selectParentTemplates': ['name'], search_key: {'host': [host_name]}})
         if len(host_list) < 1:
             self._module.fail_json(msg="Host not found: %s" % host_name)
         else:
@@ -124,6 +124,7 @@ class Host(object):
             host = self._zapi.host.get({
                 'output': 'extend',
                 'selectGroups': 'extend',
+                'selectParentTemplates': ['name'],
                 'hostids': hostinterface['hostid']
             })
             host[0]['hostinterfaces'] = hostinterface

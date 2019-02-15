@@ -338,15 +338,17 @@ ids:
 
 # import time
 # import sys
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.alicloud_ecs import get_acs_connection_info, ecs_argument_spec, ecs_connect
 
 HAS_FOOTMARK = False
-
+FOOTMARK_IMP_ERR = None
 try:
     from footmark.exception import ECSResponseError
     HAS_FOOTMARK = True
 except ImportError:
+    FOOTMARK_IMP_ERR = traceback.format_exc()
     HAS_FOOTMARK = False
 
 
@@ -362,7 +364,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
 
     if HAS_FOOTMARK is False:
-        module.fail_json(msg='footmark required for the module ali_instance_facts')
+        module.fail_json(msg=missing_required_lib('footmark'), exception=FOOTMARK_IMP_ERR)
 
     ecs = ecs_connect(module)
 

@@ -1,5 +1,5 @@
 - name: download and install old version of hello
-  apt: "deb=https://launchpad.net/ubuntu/+archive/primary/+files/hello_{{ hello_old_version }}_amd64.deb"
+  apt: "deb=https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/dpkg_selections/hello_{{ hello_old_version }}_amd64.deb"
 
 - name: freeze version for hello
   dpkg_selections:
@@ -30,7 +30,7 @@
 - name: ensure hello was not upgraded
   assert:
     that:
-      - "{{ hello_version.stdout }} == {{ hello_old_version }}"
+    - hello_version.stdout == hello_old_version
 
 - name: remove version freeze
   dpkg_selections:
@@ -49,7 +49,7 @@
 - name: check that old version upgraded correctly
   assert:
     that:
-      - "{{ hello_version.stdout }}!={{ hello_old_version }}"
+    - hello_version.stdout != hello_old_version
 
 - name: set hello to deinstall
   dpkg_selections:

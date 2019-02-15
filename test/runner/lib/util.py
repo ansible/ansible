@@ -737,10 +737,13 @@ class MissingEnvironmentVariable(ApplicationError):
 
 class CommonConfig(object):
     """Configuration common to all commands."""
-    def __init__(self, args):
+    def __init__(self, args, command):
         """
         :type args: any
+        :type command: str
         """
+        self.command = command
+
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
@@ -751,6 +754,8 @@ class CommonConfig(object):
         if is_shippable():
             self.redact = True
 
+        self.cache = {}
+
 
 def docker_qualify_image(name):
     """
@@ -760,6 +765,29 @@ def docker_qualify_image(name):
     config = get_docker_completion().get(name, {})
 
     return config.get('name', name)
+
+
+@contextlib.contextmanager
+def named_temporary_file(args, prefix, suffix, directory, content):
+    """
+    :param args: CommonConfig
+    :param prefix: str
+    :param suffix: str
+    :param directory: str
+    :param content: str | bytes | unicode
+    :rtype: str
+    """
+    if not isinstance(content, bytes):
+        content = content.encode('utf-8')
+
+    if args.explain:
+        yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
+    else:
+        with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
+            tempfile_fd.write(content)
+            tempfile_fd.flush()
+
+            yield tempfile_fd.name
 
 
 def parse_to_list_of_dict(pattern, value):

@@ -6,19 +6,26 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import traceback
+
+REQUESTS_IMP_ERR = None
 try:
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
+PYVMOMI_IMP_ERR = None
 try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
+    PYVMOMI_IMP_ERR = traceback.format_exc()
     HAS_PYVMOMI = False
 
+VCLOUD_IMP_ERR = None
 try:
     from vmware.vapi.lib.connect import get_requests_connector
     from vmware.vapi.security.session import create_session_security_context
@@ -27,16 +34,19 @@ try:
     from com.vmware.vapi.std_client import DynamicID
     HAS_VCLOUD = True
 except ImportError:
+    VCLOUD_IMP_ERR = traceback.format_exc()
     HAS_VCLOUD = False
 
+VSPHERE_IMP_ERR = None
 try:
     from vmware.vapi.stdlib.client.factories import StubConfigurationFactory
     HAS_VSPHERE = True
 except ImportError:
+    VSPHERE_IMP_ERR = traceback.format_exc()
     HAS_VSPHERE = False
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 
 class VmwareRestClient(object):
@@ -56,18 +66,21 @@ class VmwareRestClient(object):
 
         """
         if not HAS_REQUESTS:
-            self.module.fail_json(msg="Unable to find 'requests' Python library which is required."
-                                      " Please install using 'pip install requests'")
+            self.module.fail_json(msg=missing_required_lib('requests'),
+                                  exception=REQUESTS_IMP_ERR)
         if not HAS_PYVMOMI:
-            self.module.fail_json(msg="PyVmomi Python module required. Install using 'pip install PyVmomi'")
+            self.module.fail_json(msg=missing_required_lib('PyVmomi'),
+                                  exception=PYVMOMI_IMP_ERR)
         if not HAS_VSPHERE:
-            self.module.fail_json(msg="Unable to find 'vSphere Automation SDK' Python library which is required."
-                                      " Please refer this URL for installation steps"
-                                      " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
+            self.module.fail_json(
+                msg=missing_required_lib('vSphere Automation SDK',
+                                         url='https://code.vmware.com/web/sdk/65/vsphere-automation-python'),
+                exception=VSPHERE_IMP_ERR)
         if not HAS_VCLOUD:
-            self.module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."
-                                      " Please refer this URL for installation steps"
-                                      " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
+            self.module.fail_json(
+                msg=missing_required_lib('vCloud Suite SDK',
+                                         url='https://code.vmware.com/web/sdk/60/vcloudsuite-python'),
+                exception=VCLOUD_IMP_ERR)
 
     def connect_to_rest(self):
         """
@@ -172,3 +185,23 @@ class VmwareRestClient(object):
         for t in temp_tags_model:
             tags.append(t.name)
         return tags
+
+    @staticmethod
+    def search_svc_object_by_name(service, svc_obj_name=None):
+        """
+        Return service object by name
+        Args:
+            service: Service object
+            svc_obj_name: Name of service object to find
+
+        Returns: Service object if found else None
+
+        """
+        if not svc_obj_name:
+            return None
+
+        for svc_object in service.list():
+            svc_obj = service.get(svc_object)
+            if svc_obj.name == svc_obj_name:
+                return svc_obj
+        return None

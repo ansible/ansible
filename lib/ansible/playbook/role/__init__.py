@@ -31,7 +31,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins.loader import get_all_plugin_loaders
+from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.vars import combine_vars
 
 
@@ -149,6 +149,9 @@ class Role(Base, Become, Conditional, Taggable):
                 params['from_files'] = from_files
             if role_include.vars:
                 params['vars'] = role_include.vars
+
+            params['from_include'] = from_include
+
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
@@ -180,26 +183,19 @@ class Role(Base, Become, Conditional, Taggable):
         if parent_role:
             self.add_parent(parent_role)
 
-        # copy over all field attributes, except for when and tags, which
-        # are special cases and need to preserve pre-existing values
+        # copy over all field attributes from the RoleInclude
+        # update self._attributes directly, to avoid squashing
         for (attr_name, _) in iteritems(self._valid_attrs):
-            if attr_name not in ('when', 'tags'):
-                setattr(self, attr_name, getattr(role_include, attr_name))
+            if attr_name in ('when', 'tags'):
+                self._attributes[attr_name] = self._extend_value(
+                    self._attributes[attr_name],
+                    role_include._attributes[attr_name],
+                )
+            else:
+                self._attributes[attr_name] = role_include._attributes[attr_name]
 
-        current_when = getattr(self, 'when')[:]
-        current_when.extend(role_include.when)
-        setattr(self, 'when', current_when)
-
-        current_tags = getattr(self, 'tags')[:]
-        current_tags.extend(role_include.tags)
-        setattr(self, 'tags', current_tags)
-
-        # dynamically load any plugins from the role directory
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join(self._role_path, obj.subdir)
-                if os.path.isdir(plugin_path):
-                    obj.add_directory(plugin_path)
+        # ensure all plugins dirs for this role are added to plugin search path
+        add_all_plugin_dirs(self._role_path)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)

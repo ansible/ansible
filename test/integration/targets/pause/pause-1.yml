@@ -1,5 +1,5 @@
 - name: Test pause module in default state
-  hosts: testhost
+  hosts: localhost
   become: no
   gather_facts: no
 

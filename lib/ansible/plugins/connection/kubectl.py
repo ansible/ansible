@@ -103,6 +103,7 @@ DOCUMENTATION = """
         default: ''
         vars:
           - name: ansible_kubectl_username
+          - name: ansible_kubectl_user
         env:
           - name: K8S_AUTH_USERNAME
       kubectl_password:
@@ -143,7 +144,7 @@ DOCUMENTATION = """
           - Path to a CA certificate used to authenticate with the API.
         default: ''
         vars:
-          - name: ansible_kubectl_cert_file
+          - name: ansible_kubectl_ssl_ca_cert
         env:
           - name: K8S_AUTH_SSL_CA_CERT
       kubectl_verify_ssl:
@@ -153,7 +154,7 @@ DOCUMENTATION = """
         vars:
           - name: ansible_kubectl_verify_ssl
         env:
-          - name: K8s_AUTH_VERIFY_SSL
+          - name: K8S_AUTH_VERIFY_SSL
 """
 
 import distutils.spawn
@@ -197,7 +198,6 @@ class Connection(ConnectionBase):
     connection_options = CONNECTION_OPTIONS
     documentation = DOCUMENTATION
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
     transport_cmd = None
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):

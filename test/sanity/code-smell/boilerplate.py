@@ -30,7 +30,7 @@ def main():
         'lib/ansible/modules/network/panos/',
         'lib/ansible/modules/network/vyos/',
         'lib/ansible/modules/windows/',
-        'lib/ansible/utils/module_docs_fragments/',
+        'lib/ansible/plugins/doc_fragments/',
         'test/'
     ]
 

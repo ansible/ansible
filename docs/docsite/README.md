@@ -5,7 +5,7 @@ This project hosts the source behind [docs.ansible.com](https://docs.ansible.com
 
 Contributions to the documentation are welcome. To make changes, submit a pull request that changes the reStructuredText files in the `rst/` directory only, and the core team can do a docs build and push the static files.
 
-If you wish to verify output from the markup such as link references, you may install sphinx and build the documentation by running `make webdocs` from the `ansible/docsite` directory.
+If you wish to verify output from the markup such as link references, you may install sphinx and build the documentation by running `make webdocs` from the `ansible/docs/docsite` directory.
 
 To include module documentation you'll need to run `make webdocs` at the top level of the repository. The generated html files are in `docsite/htmlout/`.
 

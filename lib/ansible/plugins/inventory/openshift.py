@@ -123,9 +123,11 @@ class InventoryModule(K8sInventoryModule):
 
     def fetch_objects(self, connections):
         super(InventoryModule, self).fetch_objects(connections)
-        client = self.get_api_client()
 
         if connections:
+            if not isinstance(connections, list):
+                raise K8sInventoryException("Expecting connections to be a list.")
+
             for connection in connections:
                 client = self.get_api_client(**connection)
                 name = connection.get('name', self.get_default_host_name(client.configuration.host))
@@ -136,6 +138,7 @@ class InventoryModule(K8sInventoryModule):
                 for namespace in namespaces:
                     self.get_routes_for_namespace(client, name, namespace)
         else:
+            client = self.get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
             for namespace in namespaces:

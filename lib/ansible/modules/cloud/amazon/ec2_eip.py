@@ -385,7 +385,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_together=[
+            ['device_id', 'private_ip_address'],
+        ],
     )
 
     if not HAS_BOTO:
@@ -403,10 +406,6 @@ def main():
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
     allow_reassociation = module.params.get('allow_reassociation')
-
-    # Parameter checks
-    if private_ip_address is not None and device_id is None:
-        module.fail_json(msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
         warnings = ["instance_id is no longer used, please use device_id going forward"]

@@ -332,40 +332,40 @@ def map_obj_to_commands(updates, module):
                 add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_import_ipv4'):
-                cmd = 'address-family ipv4'
+            cmd = 'address-family ipv4'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_import_ipv4']:
+                cmd = 'route-target import %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_import_ipv4']:
-                    cmd = 'route-target import %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_export_ipv4'):
-                cmd = 'address-family ipv4'
+            cmd = 'address-family ipv4'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_export_ipv4']:
+                cmd = 'route-target export %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_export_ipv4']:
-                    cmd = 'route-target export %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_import_ipv6'):
-                cmd = 'address-family ipv6'
+            cmd = 'address-family ipv6'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_import_ipv6']:
+                cmd = 'route-target import %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_import_ipv6']:
-                    cmd = 'route-target import %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if needs_update(want, have, 'route_export_ipv6'):
-                cmd = 'address-family ipv6'
+            cmd = 'address-family ipv6'
+            add_command_to_vrf(want['name'], cmd, commands)
+            for route in want['route_export_ipv6']:
+                cmd = 'route-target export %s' % route
                 add_command_to_vrf(want['name'], cmd, commands)
-                for route in want['route_export_ipv6']:
-                    cmd = 'route-target export %s' % route
-                    add_command_to_vrf(want['name'], cmd, commands)
-                cmd = 'exit-address-family'
-                add_command_to_vrf(want['name'], cmd, commands)
+            cmd = 'exit-address-family'
+            add_command_to_vrf(want['name'], cmd, commands)
 
         if want['interfaces'] is not None:
             # handle the deletes

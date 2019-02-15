@@ -234,7 +234,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
     .. code-block:: yaml+jinja
 
-        seealso::
+        seealso:
 
         # Reference by module name
         - module: aci_tenant
@@ -272,7 +272,14 @@ You can link from your module documentation to other module docs, other resource
 Documentation fragments
 -----------------------
 
-If you're writing multiple related modules, they may share common documentation, such as authentication details or file mode settings. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a fragment and use it in each module's documentation. Shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/utils/module_docs_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/utils/module_docs_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
+If you're writing multiple related modules, they may share common documentation, such as authentication details or file mode settings. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
+
+.. _note:
+  * in 2.8 the Ansible directories for doc fragments changed, see documentation of previous versions to find the old locations.
+
+.. versionadded:: 2.8
+
+Since version 2.8, you can have user supplied doc_fragments by using a ``doc_fragments`` directory adjacent to play or role, just like any other plugin.
 
 For example, all AWS modules should include::
 

@@ -65,7 +65,7 @@ options:
       - URL of the Update Centre.
       - Used as the base URL to download the plugins and the
         I(update-center.json) JSON file.
-    default: https://updates.jenkins-ci.org
+    default: https://updates.jenkins.io
   url:
     description:
       - URL of the Jenkins server.
@@ -387,7 +387,7 @@ class JenkinsPlugin(object):
                 self.params['jenkins_home'],
                 self.params['name']))
 
-        if not self.is_installed and self.params['version'] is None:
+        if not self.is_installed and self.params['version'] in [None, 'latest']:
             if not self.module.check_mode:
                 # Install the plugin (with dependencies)
                 install_script = (
@@ -430,8 +430,9 @@ class JenkinsPlugin(object):
             sha1sum_old = None
             if os.path.isfile(plugin_file):
                 # Make the checksum of the currently installed plugin
-                sha1sum_old = hashlib.sha1(
-                    open(plugin_file, 'rb').read()).hexdigest()
+                with open(plugin_file, 'rb') as sha1_plugin_fh:
+                    sha1_plugin_content = sha1_plugin_fh.read()
+                sha1sum_old = hashlib.sha1(sha1_plugin_content).hexdigest()
 
             if self.params['version'] in [None, 'latest']:
                 # Take latest version
@@ -480,6 +481,17 @@ class JenkinsPlugin(object):
             else:
                 # Check for update from the updates JSON file
                 plugin_data = self._download_updates()
+
+                try:
+                    with open(plugin_file, 'rb') as sha1_plugin_fh:
+                        sha1_plugin_content = sha1_plugin_fh.read()
+                    sha1_old = hashlib.sha1(sha1_plugin_content)
+                except Exception as e:
+                    self.module.fail_json(
+                        msg="Cannot calculate SHA1 of the old plugin.",
+                        details=to_native(e))
+
+                sha1sum_old = base64.b64encode(sha1_old.digest())
 
                 # If the latest version changed, download it
                 if sha1sum_old != to_bytes(plugin_data['sha1']):
@@ -709,7 +721,7 @@ def main():
             default='present'),
         timeout=dict(default=30, type="int"),
         updates_expiration=dict(default=86400, type="int"),
-        updates_url=dict(default='https://updates.jenkins-ci.org'),
+        updates_url=dict(default='https://updates.jenkins.io'),
         url=dict(default='http://localhost:8080'),
         url_password=dict(no_log=True),
         version=dict(),

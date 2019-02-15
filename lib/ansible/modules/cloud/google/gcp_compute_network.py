@@ -18,15 +18,14 @@
 # ----------------------------------------------------------------------------
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ################################################################################
 # Documentation
 ################################################################################
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ["preview"],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {'metadata_version': '1.1', 'status': ["preview"], 'supported_by': 'community'}
 
 DOCUMENTATION = '''
 ---
@@ -216,10 +215,9 @@ def main():
             ipv4_range=dict(type='str'),
             name=dict(required=True, type='str'),
             auto_create_subnetworks=dict(type='bool'),
-            routing_config=dict(type='list', elements='dict', options=dict(
-                routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL'])
-            ))
-        )
+            routing_config=dict(type='dict', options=dict(routing_mode=dict(required=True, type='str', choices=['REGIONAL', 'GLOBAL']))),
+        ),
+        mutually_exclusive=[['auto_create_subnetworks', 'ipv4_range']],
     )
 
     if not module.params['scopes']:
@@ -234,7 +232,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
-                update(module, self_link(module), kind, fetch)
+                update(module, self_link(module), kind)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
         else:
@@ -258,29 +256,9 @@ def create(module, link, kind):
     return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
-def update(module, link, kind, fetch):
-    update_fields(module, resource_to_request(module),
-                  response_to_hash(module, fetch))
+def update(module, link, kind):
     auth = GcpSession(module, 'compute')
     return wait_for_operation(module, auth.patch(link, resource_to_request(module)))
-
-
-def update_fields(module, request, response):
-    if response.get('routingConfig') != request.get('routingConfig'):
-        routing_config_update(module, request, response)
-
-
-def routing_config_update(module, request, response):
-    auth = GcpSession(module, 'compute')
-    auth.patch(
-        ''.join([
-            "https://www.googleapis.com/compute/v1/",
-            "projects/{project}/regions/{region}/subnetworks/{name}"
-        ]).format(**module.params),
-        {
-            u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
-        }
-    )
 
 
 def delete(module, link, kind):
@@ -295,11 +273,11 @@ def resource_to_request(module):
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
-        u'routingConfig': NetworkRoutingconfigArray(module.params.get('routing_config', []), module).to_request()
+        u'routingConfig': NetworkRoutingconfig(module.params.get('routing_config', {}), module).to_request(),
     }
     return_vals = {}
     for k, v in request.items():
-        if v:
+        if v or v is False:
             return_vals[k] = v
 
     return return_vals
@@ -330,8 +308,8 @@ def return_if_object(module, response, kind, allow_not_found=False):
     try:
         module.raise_for_status(response)
         result = response.json()
-    except getattr(json.decoder, 'JSONDecodeError', ValueError) as inst:
-        module.fail_json(msg="Invalid JSON response with error: %s" % inst)
+    except getattr(json.decoder, 'JSONDecodeError', ValueError):
+        module.fail_json(msg="Invalid JSON response with error: %s" % response.text)
 
     if navigate_hash(result, ['error', 'errors']):
         module.fail_json(msg=navigate_hash(result, ['error', 'errors']))
@@ -362,14 +340,14 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'description': module.params.get('description'),
-        u'gatewayIPv4': response.get(u'gateway_ipv4'),
+        u'gatewayIPv4': response.get(u'gatewayIPv4'),
         u'id': response.get(u'id'),
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
         u'subnetworks': response.get(u'subnetworks'),
         u'autoCreateSubnetworks': module.params.get('auto_create_subnetworks'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
-        u'routingConfig': NetworkRoutingconfigArray(response.get(u'routingConfig', []), module).from_response()
+        u'routingConfig': NetworkRoutingconfig(response.get(u'routingConfig', {}), module).from_response(),
     }
 
 
@@ -395,9 +373,9 @@ def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
     while status != 'DONE':
-        raise_if_errors(op_result, ['error', 'errors'], 'message')
+        raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation')
+        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
         status = navigate_hash(op_result, ['status'])
     return op_result
 
@@ -408,35 +386,19 @@ def raise_if_errors(response, err_path, module):
         module.fail_json(msg=errors)
 
 
-class NetworkRoutingconfigArray(object):
+class NetworkRoutingconfig(object):
     def __init__(self, request, module):
         self.module = module
         if request:
             self.request = request
         else:
-            self.request = []
+            self.request = {}
 
     def to_request(self):
-        items = []
-        for item in self.request:
-            items.append(self._request_for_item(item))
-        return items
+        return remove_nones_from_dict({u'routingMode': self.request.get('routing_mode')})
 
     def from_response(self):
-        items = []
-        for item in self.request:
-            items.append(self._response_from_item(item))
-        return items
-
-    def _request_for_item(self, item):
-        return remove_nones_from_dict({
-            u'routingMode': item.get('routing_mode')
-        })
-
-    def _response_from_item(self, item):
-        return remove_nones_from_dict({
-            u'routingMode': item.get(u'routingMode')
-        })
+        return remove_nones_from_dict({u'routingMode': self.request.get(u'routingMode')})
 
 
 if __name__ == '__main__':

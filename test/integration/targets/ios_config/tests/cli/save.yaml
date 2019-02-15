@@ -9,21 +9,16 @@
     parents:
       - interface Loopback999
     match: none
+    save_when: modified
 
-
-- name: save config
+- name: save should always run
   ios_config:
-    save: true
+    save_when: always
   register: result
 
 - assert:
     that:
       - "result.changed == true"
-
-- name: save should always run
-  ios_config:
-    save: true
-  register: result
 
 - name: delete config (setup)
   ios_config:
@@ -33,7 +28,7 @@
     save_when: modified
   register: result
 
-- name: save should always run
+- name: save should run when changed
   ios_config:
     replace: line
     lines:

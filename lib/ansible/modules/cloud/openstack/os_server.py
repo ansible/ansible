@@ -382,6 +382,20 @@ EXAMPLES = '''
           ifdown eth0 && ifup eth0
           {% endraw %}
 
+# Create a new instance with server group for (anti-)affinity
+# server group ID is returned from os_server_group module.
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        state: present
+        name: vm1
+        image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+        flavor: 4
+        scheduler_hints:
+          group: f5c8c61a-9230-400a-8ed2-3b023c190a7f
+
 # Deletes an instance via its ID
 - name: remove an instance
   hosts: localhost

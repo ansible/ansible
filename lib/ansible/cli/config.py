@@ -10,6 +10,7 @@ import subprocess
 import sys
 import yaml
 
+from ansible import context
 from ansible.cli import CLI
 from ansible.config.manager import ConfigManager, Setting, find_ini_config_file
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -33,38 +34,45 @@ class ConfigCLI(CLI):
         self.config = None
         super(ConfigCLI, self).__init__(args, callback)
 
-    def parse(self):
+    def init_parser(self):
 
-        self.parser = CLI.base_parser(
+        super(ConfigCLI, self).init_parser(
             usage="usage: %%prog [%s] [--help] [options] [ansible.cfg]" % "|".join(sorted(self.VALID_ACTIONS)),
             epilog="\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0]),
             desc="View, edit, and manage ansible configuration.",
         )
-        self.parser.add_option('-c', '--config', dest='config_file', help="path to configuration file, defaults to first file found in precedence.")
+        self.parser.add_option('-c', '--config', dest='config_file',
+                               help="path to configuration file, defaults to first file found in precedence.")
 
         self.set_action()
 
         # options specific to self.actions
         if self.action == "list":
             self.parser.set_usage("usage: %prog list [options] ")
-        if self.action == "dump":
+
+        elif self.action == "dump":
             self.parser.add_option('--only-changed', dest='only_changed', action='store_true',
                                    help="Only show configurations that have changed from the default")
+
         elif self.action == "update":
             self.parser.add_option('-s', '--setting', dest='setting', help="config setting, the section defaults to 'defaults'")
             self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] -s '[section.]setting=value'")
+
         elif self.action == "search":
             self.parser.set_usage("usage: %prog update [options] [-c ansible.cfg] <search term>")
 
-        self.options, self.args = self.parser.parse_args()
-        display.verbosity = self.options.verbosity
+    def post_process_args(self, options, args):
+        options, args = super(ConfigCLI, self).post_process_args(options, args)
+        display.verbosity = options.verbosity
+
+        return options, args
 
     def run(self):
 
         super(ConfigCLI, self).run()
 
-        if self.options.config_file:
-            self.config_file = unfrackpath(self.options.config_file, follow=False)
+        if context.CLIARGS['config_file']:
+            self.config_file = unfrackpath(context.CLIARGS['config_file'], follow=False)
             self.config = ConfigManager(self.config_file)
         else:
             self.config = ConfigManager()
@@ -96,10 +104,10 @@ class ConfigCLI(CLI):
         raise AnsibleError("Option not implemented yet")
 
         # pylint: disable=unreachable
-        if self.options.setting is None:
+        if context.CLIARGS['setting'] is None:
             raise AnsibleOptionsError("update option requires a setting to update")
 
-        (entry, value) = self.options.setting.split('=')
+        (entry, value) = context.CLIARGS['setting'].split('=')
         if '.' in entry:
             (section, option) = entry.split('.')
         else:
@@ -164,7 +172,7 @@ class ConfigCLI(CLI):
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))
-            if not self.options.only_changed or color == 'yellow':
+            if not context.CLIARGS['only_changed'] or color == 'yellow':
                 text.append(stringc(msg, color))
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))

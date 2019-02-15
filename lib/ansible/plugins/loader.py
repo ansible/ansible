@@ -18,17 +18,66 @@ from collections import defaultdict
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
+from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import get_docstring
+from ansible.utils.plugin_docs import add_fragments
+
 
 display = Display()
 
 
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in globals().items() if isinstance(obj, PluginLoader)]
+
+
+def add_all_plugin_dirs(path):
+    ''' add any existing plugin dirs in the path provided '''
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+    if os.path.isdir(b_path):
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(b_path, to_bytes(obj.subdir))
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(to_text(plugin_path))
+    else:
+        display.warning("Ignoring invalid path provided to plugin path: %s is not a directory" % to_native(path))
+
+
+def get_shell_plugin(shell_type=None, executable=None):
+
+    if not shell_type:
+        # default to sh
+        shell_type = 'sh'
+
+        # mostly for backwards compat
+        if executable:
+            if isinstance(executable, string_types):
+                shell_filename = os.path.basename(executable)
+                try:
+                    shell = shell_loader.get(shell_filename)
+                except Exception:
+                    shell = None
+
+                if shell is None:
+                    for shell in shell_loader.all():
+                        if shell_filename in shell.COMPATIBLE_SHELLS:
+                            shell_type = shell.SHELL_FAMILY
+                            break
+        else:
+            raise AnsibleError("Either a shell type or a shell executable must be provided ")
+
+    shell = shell_loader.get(shell_type)
+    if not shell:
+        raise AnsibleError("Could not find the shell plugin required (%s)." % shell_type)
+
+    if executable:
+        setattr(shell, 'executable', executable)
+
+    return shell
 
 
 class PluginLoader:
@@ -199,7 +248,7 @@ class PluginLoader:
         self._paths = reordered_paths
         return reordered_paths
 
-    def _load_config_defs(self, name, path):
+    def _load_config_defs(self, name, module, path):
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
 
         # plugins w/o class name don't support config
@@ -208,7 +257,9 @@ class PluginLoader:
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS:
-                dstring = get_docstring(path, fragment_loader, verbose=False, ignore_errors=True)[0]
+                dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
+                if dstring:
+                    add_fragments(dstring, path, fragment_loader=fragment_loader)
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
                     C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
@@ -350,8 +401,9 @@ class PluginLoader:
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            with open(path, 'rb') as module_file:
-                module = imp.load_source(full_name, path, module_file)
+            with open(to_bytes(path), 'rb') as module_file:
+                # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
+                module = imp.load_source(to_native(full_name), to_native(path), module_file)
         return module
 
     def _update_object(self, obj, name, path):
@@ -373,6 +425,7 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
+            self._load_config_defs(name, self._module_cache[path], path)
             found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
@@ -389,6 +442,7 @@ class PluginLoader:
                 return None
 
         self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+
         if not class_only:
             try:
                 obj = obj(*args, **kwargs)
@@ -399,23 +453,21 @@ class PluginLoader:
                     return None
                 raise
 
-        # load plugin config data
-        if not found_in_cache:
-            self._load_config_defs(name, path)
-
         self._update_object(obj, name, path)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
-        msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
+        ''' formats data to display debug info for plugin loading, also avoids processing unless really needed '''
+        if C.DEFAULT_DEBUG:
+            msg = 'Loading %s \'%s\' from %s' % (class_name, os.path.basename(name), path)
 
-        if len(searched_paths) > 1:
-            msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
+            if len(searched_paths) > 1:
+                msg = '%s (searched paths: %s)' % (msg, self.format_paths(searched_paths))
 
-        if found_in_cache or class_only:
-            msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
+            if found_in_cache or class_only:
+                msg = '%s (found_in_cache=%s, class_only=%s)' % (msg, found_in_cache, class_only)
 
-        display.debug(msg)
+            display.debug(msg)
 
     def all(self, *args, **kwargs):
         '''
@@ -485,6 +537,7 @@ class PluginLoader:
             if path not in self._module_cache:
                 try:
                     module = self._load_module_source(name, path)
+                    self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 self._module_cache[path] = module
@@ -509,15 +562,12 @@ class PluginLoader:
                     continue
 
             self._display_plugin_load(self.class_name, basename, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
+
             if not class_only:
                 try:
                     obj = obj(*args, **kwargs)
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
-
-            # load plugin config data
-            if not found_in_cache:
-                self._load_config_defs(basename, path)
 
             self._update_object(obj, basename, path)
             yield obj
@@ -621,7 +671,7 @@ def _load_plugin_filter():
     if 'stat' in filters['ansible.modules']:
         raise AnsibleError('The stat module was specified in the module blacklist file, {0}, but'
                            ' Ansible will not function without the stat module.  Please remove stat'
-                           ' from the blacklist.'.format(filter_cfg))
+                           ' from the blacklist.'.format(to_native(filter_cfg)))
     return filters
 
 
@@ -633,11 +683,10 @@ _PLUGIN_FILTERS = _load_plugin_filter()
 # doc fragments first
 fragment_loader = PluginLoader(
     'ModuleDocFragment',
-    'ansible.utils.module_docs_fragments',
-    os.path.join(os.path.dirname(__file__), 'module_docs_fragments'),
-    '',
+    'ansible.plugins.doc_fragments',
+    C.DOC_FRAGMENT_PLUGIN_PATH,
+    'doc_fragments',
 )
-
 
 action_loader = PluginLoader(
     'ActionModule',
@@ -773,4 +822,12 @@ httpapi_loader = PluginLoader(
     'ansible.plugins.httpapi',
     C.DEFAULT_HTTPAPI_PLUGIN_PATH,
     'httpapi_plugins',
+    required_base_class='HttpApiBase',
+)
+
+become_loader = PluginLoader(
+    'BecomeModule',
+    'ansible.plugins.become',
+    C.DEFAULT_BECOME_PLUGIN_PATH,
+    'become_plugins'
 )

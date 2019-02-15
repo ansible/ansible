@@ -20,8 +20,8 @@ options:
   dns_domain_name:
     description:
     - The DNS name of the domain which should exist and be reachable or reside on the target Windows host.
-    required: yes
     type: str
+    required: yes
   domain_netbios_name:
     description:
     - The NetBIOS name for the root domain in the new forest.
@@ -32,8 +32,8 @@ options:
   safe_mode_password:
     description:
     - Safe mode password for the domain controller.
-    required: yes
     type: str
+    required: yes
   database_path:
     description:
     - The path to a directory on a fixed disk of the Windows host where the

@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<business type="bar">
+  <name>Tasty Beverage Co.</name>
+  <beers>
+    <beer>Rochefort 10</beer>
+    <beer>Old Rasputin</beer>
+    <beer>Old Motor Oil</beer>
+    <beer>Old Curmudgeon</beer>
+    <beer>St. Bernardus Abbot 12</beer>
+    <beer>Schlitz</beer>
+  </beers>
+  <rating subjective="true">10</rating>
+  <website>
+    <mobilefriendly/>
+    <address>http://tastybeverageco.com</address>
+  </website>
+</business>

@@ -21,8 +21,10 @@ __metaclass__ = type
 
 import fnmatch
 import os
+import sys
 import re
 import itertools
+import traceback
 
 from operator import attrgetter
 from random import shuffle
@@ -273,10 +275,12 @@ class InventoryManager(object):
                         break
                     except AnsibleParserError as e:
                         display.debug('%s was not parsable by %s' % (source, plugin_name))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e})
+                        tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': e, 'tb': tb})
                     except Exception as e:
-                        display.debug('%s failed to parse %s' % (plugin_name, source))
-                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e)})
+                        display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
+                        tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
+                        failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
                     display.vvv("%s declined parsing %s as it did not pass it's verify_file() method" % (plugin_name, source))
             else:
@@ -284,8 +288,8 @@ class InventoryManager(object):
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
                         display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
-                        if hasattr(fail['exc'], 'tb'):
-                            display.vvv(to_text(fail['exc'].tb))
+                        if 'tb' in fail:
+                            display.vvv(to_text(fail['tb']))
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                         raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
         if not parsed:
@@ -549,7 +553,13 @@ class InventoryManager(object):
 
         # Display warning if specified host pattern did not match any groups or hosts
         if not results and not matching_groups and pattern != 'all':
-            display.warning("Could not match supplied host pattern, ignoring: %s" % pattern)
+            msg = "Could not match supplied host pattern, ignoring: %s" % pattern
+            display.debug(msg)
+            if C.HOST_PATTERN_MISMATCH == 'warning':
+                display.warning(msg)
+            elif C.HOST_PATTERN_MISMATCH == 'error':
+                raise AnsibleError(msg)
+            # no need to write 'ignore' state
 
         return results
 

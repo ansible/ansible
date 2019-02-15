@@ -1,3 +1,4 @@
+---
 - name: Validate ownca certificate (test - verify CA)
   shell: 'openssl verify -CAfile {{ output_dir }}/ca_cert.pem {{ output_dir }}/ownca_cert.pem | sed "s/.*: \(.*\)/\1/g"'
   register: ownca_verify_ca
@@ -65,3 +66,18 @@
   assert:
     that:
       - ownca_cert3_notAfter.stdout == 'Oct 23 13:37:42 2019'
+
+- name: Validate ownca ECC certificate (test - ownca certificate pubkey)
+  shell: 'openssl x509 -noout -pubkey -in {{ output_dir }}/ownca_cert_ecc.pem'
+  register: ownca_cert_ecc_pubkey
+
+- name: Validate ownca ECC certificate (test - ownca issuer value)
+  shell: 'openssl x509 -noout  -in {{ output_dir}}/ownca_cert_ecc.pem -text | grep "Issuer" | sed "s/.*: \(.*\)/\1/g"'
+  register: ownca_cert_ecc_issuer
+
+- name: Validate ownca ECC certificate (assert)
+  assert:
+    that:
+      - ownca_cert_ecc_pubkey.stdout == privatekey_ecc_pubkey.stdout
+      # openssl 1.1.x adds a space between the output
+      - ownca_cert_ecc_issuer.stdout in ['CN=Example CA', 'CN = Example CA']

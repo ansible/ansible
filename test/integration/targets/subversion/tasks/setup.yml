@@ -1,11 +1,23 @@
 ---
 - name: load OS specific vars
-  include_vars: '{{ ansible_os_family }}.yml'
+  include_vars: '{{ item }}'
+  with_first_found:
+  - files:
+    - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_os_family }}.yml'
+    paths: '../vars'
 
 - name: install SVN pre-reqs
   package:
     name: '{{ subversion_packages }}'
     state: present
+
+- name: upgrade SVN pre-reqs
+  package:
+    name: '{{ upgrade_packages }}'
+    state: latest
+  when:
+    - upgrade_packages | default([])
 
 - name: create SVN home folder
   file:

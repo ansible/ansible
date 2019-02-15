@@ -127,7 +127,7 @@ EXAMPLES = '''
     idxname: test_gist_idx
 
 # Create gin index gin0_idx not concurrently on column comment of table test
-# (Note: pg_trgm extention must be installed for gin_trgm_ops)
+# (Note: pg_trgm extension must be installed for gin_trgm_ops)
 - postgresql_idx:
     idxname: gin0_idx
     table: test
@@ -154,18 +154,19 @@ RETURN = ''' # '''
 
 
 import traceback
-from hashlib import md5
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
     postgresqldb_found = False
 else:
     postgresqldb_found = True
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
@@ -217,9 +218,6 @@ def index_create(cursor, module, idxname, tblname, idxtype,
     else:
         condition = 'WHERE %s' % cond
 
-    if cond is not None:
-        cond = " WHERE %s" % cond
-
     for column in columns.split(','):
         column.strip()
 
@@ -240,7 +238,6 @@ def index_create(cursor, module, idxname, tblname, idxtype,
             # ERROR:  cannot execute ALTER ROLE in a read-only transaction
             changed = False
             module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
-            return changed
         else:
             raise psycopg2.InternalError(e)
     return changed
@@ -266,7 +263,6 @@ def index_drop(cursor, module, idxname, concurrent=True):
             # ERROR:  cannot execute ALTER ROLE in a read-only transaction
             changed = False
             module.fail_json(msg=e.pgerror, exception=traceback.format_exc())
-            return changed
         else:
             raise psycopg2.InternalError(e)
     return changed
@@ -298,7 +294,6 @@ def main():
     )
 
     idxname = module.params["idxname"]
-    db = module.params["db"]
     state = module.params["state"]
     concurrent = module.params["concurrent"]
     table = module.params["table"]
@@ -327,7 +322,7 @@ def main():
                                  "make sense to pass an index type" % idxname)
 
     if not postgresqldb_found:
-        module.fail_json(msg="the python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -354,9 +349,9 @@ def main():
             msg='psycopg2 must be at least 2.4.3 in order to user the ssl_rootcert parameter')
 
     if module.check_mode and concurrent:
-            module.fail_json(msg="Cannot concurrently create or drop index %s "
-                                 "inside the transaction block. The check is possible "
-                                 "in not concurrent mode only" % idxname)
+        module.fail_json(msg="Cannot concurrently create or drop index %s "
+                             "inside the transaction block. The check is possible "
+                             "in not concurrent mode only" % idxname)
 
     try:
         db_connection = psycopg2.connect(**kw)
@@ -377,6 +372,7 @@ def main():
 
     if state == 'present' and index_exists(cursor, idxname):
         kw['changed'] = False
+        del kw['login_password']
         module.exit_json(**kw)
 
     changed = False
@@ -419,6 +415,7 @@ def main():
             module.fail_json(msg="Index %s is invalid!" % idxname)
 
     kw['changed'] = changed
+    del kw['login_password']
     module.exit_json(**kw)
 
 

@@ -94,6 +94,11 @@ options:
     required: false
     version_added: "2.1"
     type: bool
+  network:
+    description:
+      - The network to use for C(RUN) build instructions.
+    required: false
+    version_added: "2.8"
   nocache:
     description:
       - Do not use cache when building an image.
@@ -170,19 +175,11 @@ options:
     version_added: "2.0"
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 requirements:
-  - "python >= 2.6"
   - "docker-py >= 1.8.0"
-  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-     module has been superseded by L(docker,https://pypi.org/project/docker/)
-     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-     For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-     install the C(docker) Python module. Note that both modules should I(not)
-     be installed at the same time. Also note that when both modules are installed
-     and one of them is uninstalled, the other might no longer function and a
-     reinstall of it is required."
   - "Docker API >= 1.20"
 
 author:
@@ -199,17 +196,23 @@ EXAMPLES = '''
 
 - name: Tag and push to docker hub
   docker_image:
-    name: pacur/centos-7
-    repository: dcoppenhagan/myimage
-    tag: 7.0
+    name: pacur/centos-7:56
+    repository: dcoppenhagan/myimage:7.56
     push: yes
 
 - name: Tag and push to local registry
   docker_image:
+     # Image will be centos:7
      name: centos
+     # Will be pushed to localhost:5000/centos:7
      repository: localhost:5000/centos
      tag: 7
      push: yes
+
+- name: Add tag latest to image
+  docker_image:
+    name: myimage:7.1.2
+    repository: myimage:latest
 
 - name: Remove image
   docker_image:
@@ -265,7 +268,7 @@ image:
 import os
 import re
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     HAS_DOCKER_PY_2, HAS_DOCKER_PY_3, AnsibleDockerClient, DockerBaseClass, is_image_name_id,
 )
 from ansible.module_utils._text import to_native
@@ -299,6 +302,7 @@ class ImageManager(DockerBaseClass):
         self.force = parameters.get('force')
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
+        self.network = parameters.get('network')
         self.nocache = parameters.get('nocache')
         self.path = parameters.get('path')
         self.pull = parameters.get('pull')
@@ -552,6 +556,8 @@ class ImageManager(DockerBaseClass):
             params['buildargs'] = self.buildargs
         if self.cache_from:
             params['cache_from'] = self.cache_from
+        if self.network:
+            params['network_mode'] = self.network
 
         for line in self.client.build(**params):
             # line = json.loads(line)
@@ -613,6 +619,7 @@ def main():
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
+        network=dict(type='str'),
         nocache=dict(type='bool', default=False),
         path=dict(type='path', aliases=['build_path']),
         pull=dict(type='bool', default=True),
@@ -627,6 +634,7 @@ def main():
 
     option_minimal_versions = dict(
         cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        network=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
     )
 
     client = AnsibleDockerClient(

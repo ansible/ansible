@@ -99,7 +99,7 @@ Each role in the file will have one or more of the following attributes:
    scm
      Specify the SCM. As of this writing only *git* or *hg* are supported. See the examples below. Defaults to *git*.
    version:
-     The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to *master*.
+     The version of the role to download. Provide a release tag value, commit hash, or branch name. Defaults to the branch set as a default in the repository, otherwise defaults to the *master*.
    name:
      Download the role to a specific name. Defaults to the Galaxy name when downloading from Galaxy, otherwise it defaults
      to the name of the repository.
@@ -167,6 +167,8 @@ Content of the *webserver.yml* file:
     # from Bitbucket
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
+
+.. _galaxy_dependencies:
 
 Dependencies
 ============
@@ -380,7 +382,7 @@ The following shows authenticating with the Galaxy website using a GitHub userna
 
     Use --github-token if you do not want to enter your password.
 
-    Github Username: dsmith
+    GitHub Username: dsmith
     Password for dsmith:
     Successfully logged into Galaxy as dsmith
 

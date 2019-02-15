@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+author: Ansible Networking Team
+cliconf: vyos
+short_description: Use vyos cliconf to run command on VyOS platform
+description:
+  - This vyos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from VyOS network devices.
+version_added: "2.4"
+"""
+
 import re
 import json
 
@@ -241,10 +252,8 @@ class Cliconf(CliconfBase):
         }
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc() + ['commit', 'discard_changes', 'get_diff', 'run_commands']
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
+        result['rpc'] += ['commit', 'discard_changes', 'get_diff', 'run_commands']
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
