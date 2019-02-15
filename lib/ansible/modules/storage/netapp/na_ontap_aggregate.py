@@ -131,7 +131,7 @@ options:
       - time to wait for aggregate creation in seconds
       - default is set to 100 seconds
     default: 100
-version_added: "2.8"
+    version_added: "2.8"
 '''
 
 EXAMPLES = """
