@@ -20,7 +20,7 @@ short_description: Manage MySQL global variables
 description:
     - Query / Set MySQL variables.
 version_added: 1.3
-author: 
+author:
 - Balazs Pocze (@banyek)
 options:
     variable:
