@@ -1,17 +1,15 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) James Laska
-#
+# Copyright: (c) James Laska
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -24,47 +22,47 @@ author:
 - James Laska (@jlaska)
 notes:
     - This is for older Red Hat products. You probably want the M(redhat_subscription) module instead.
-    - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
+    - In order to register a system, C(rhnreg_ks) requires either a username and password, or an activationkey.
 requirements:
     - rhnreg_ks
     - either libxml2 or lxml
 options:
     state:
         description:
-          - whether to register (C(present)), or unregister (C(absent)) a system
+          - Whether to register (C(present)), or unregister (C(absent)) a system.
         type: str
         choices: [ absent, present ]
         default: present
     username:
         description:
-            - Red Hat Network username
+            - Red Hat Network username.
         type: str
     password:
         description:
-            - Red Hat Network password
+            - Red Hat Network password.
         type: str
     server_url:
         description:
-            - Specify an alternative Red Hat Network server URL
+            - Specify an alternative Red Hat Network server URL.
             - The default is the current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date).
         type: str
     activationkey:
         description:
-            - supply an activation key for use with registration
+            - Supply an activation key for use with registration.
         type: str
     profilename:
         description:
-            - supply an profilename for use with registration
+            - Supply an profilename for use with registration.
         type: str
         version_added: "2.0"
     sslcacert:
         description:
-            - supply a custom ssl CA certificate file for use with registration
-        type: str
+            - Supply a custom ssl CA certificate file for use with registration.
+        type: path
         version_added: "2.1"
     systemorgid:
         description:
-            - supply an organizational id for use with registration
+            - Supply an organizational id for use with registration.
         type: str
         version_added: "2.1"
     channels:
@@ -79,7 +77,7 @@ options:
         default: no
     nopackages:
         description:
-            - If C(yes), the registered node will not upload its installed packages information to Satellite server
+            - If C(yes), the registered node will not upload its installed packages information to Satellite server.
         type: bool
         default: no
         version_added: "2.5"
@@ -102,7 +100,7 @@ EXAMPLES = r'''
   rhn_register:
     state: present
     activationkey: 1-222333444
-    enable_eus: true
+    enable_eus: yes
 
 - name: Register with activationkey and set a profilename which may differ from the hostname
   rhn_register:
@@ -114,7 +112,7 @@ EXAMPLES = r'''
   rhn_register:
     state: present
     username: joe_user
-    password: somepass'
+    password: somepass
     server_url: https://xmlrpc.my.satellite/XMLRPC
 
 - name: Register as user with password and enable channels
@@ -125,7 +123,7 @@ EXAMPLES = r'''
     channels: rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
-RETURN = '''
+RETURN = r'''
 # Default return values
 '''
 
