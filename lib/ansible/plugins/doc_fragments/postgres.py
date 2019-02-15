@@ -23,7 +23,7 @@ options:
   login_unix_socket:
     description:
       - Path to a Unix domain socket for local connections.
-    type: path
+    type: str
   port:
     description:
       - Database port to connect to.
@@ -42,7 +42,7 @@ options:
     description:
       - Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
       - If the file exists, the server's certificate will be verified to be signed by one of these authorities.
-    type: path
+    type: str
     version_added: '2.3'
 notes:
 - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.

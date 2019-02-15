@@ -8,11 +8,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -201,13 +199,13 @@ options:
         description:
             - A list of algorithms that you would accept the certificate to be signed with
               (e.g. ['sha256WithRSAEncryption', 'sha512WithRSAEncryption']).
-        type: str
+        type: list
 
     issuer:
         description:
             - The key/value pairs that must be present in the issuer name field of the certificate.
             - If you need to specify more than one value with the same key, use a list as value.
-        type: str
+        type: dict
 
     issuer_strict:
         description:
@@ -220,7 +218,7 @@ options:
         description:
             - The key/value pairs that must be present in the subject name field of the certificate.
             - If you need to specify more than one value with the same key, use a list as value.
-        type: str
+        type: dict
 
     subject_strict:
         description:
@@ -1092,7 +1090,7 @@ def main():
             # provider: ownca
             ownca_path=dict(type='path'),
             ownca_privatekey_path=dict(type='path'),
-            ownca_privatekey_passphrase=dict(type='path', no_log=True),
+            ownca_privatekey_passphrase=dict(type='str', no_log=True),
             ownca_digest=dict(type='str', default='sha256'),
             ownca_version=dict(type='int', default=3),
             ownca_not_before=dict(type='str', default='+0s'),

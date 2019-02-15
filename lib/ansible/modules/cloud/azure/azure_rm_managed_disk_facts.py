@@ -12,13 +12,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: azure_rm_managed_disk_facts
 
 version_added: "2.4"
 
-short_description: Get managed disk facts.
+short_description: Get managed disk facts
 
 description:
     - Get facts for a specific managed disk or all managed disks.
@@ -26,38 +26,42 @@ description:
 options:
     name:
         description:
-            - Limit results to a specific managed disk
+            - Limit results to a specific managed disk.
+        type: str
     resource_group:
         description:
-            - Limit results to a specific resource group
+            - Limit results to a specific resource group.
+        type: str
     tags:
         description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+            - Limit results by providing a list of tags.
+            - Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Bruno Medina (@brusMX)"
+    - Bruno Medina (@brusMX)
 '''
 
-EXAMPLES = '''
-    - name: Get facts for one managed disk
-      azure_rm_managed_disk_facts:
-        name: Testing
-        resource_group: TestRG
+EXAMPLES = r'''
+- name: Get facts for one managed disk
+  azure_rm_managed_disk_facts:
+    name: Testing
+    resource_group: TestRG
 
-    - name: Get facts for all managed disks
-      azure_rm_managed_disk_facts:
+- name: Get facts for all managed disks
+  azure_rm_managed_disk_facts:
 
-    - name: Get facts by tags
-      azure_rm_managed_disk_facts:
-        tags:
-          - testing
+- name: Get facts by tags
+  azure_rm_managed_disk_facts:
+    tags:
+    - testing
 '''
 
-RETURN = '''
+RETURN = r'''
 azure_managed_disk:
     description: List of managed disk dicts.
     returned: always
@@ -66,39 +70,46 @@ azure_managed_disk:
         id:
             description:
                 - Resource id.
+            type: str
         name:
             description:
                 - Name of the managed disk.
+            type: str
         location:
             description:
                 - Valid Azure location.
+            type: str
         storage_account_type:
             description:
                 - Type of storage for the managed disk
-            sample: Standard_LRS
             type: str
+            sample: Standard_LRS
         create_option:
             description:
                 - Create option of the disk
-            sample: copy
             type: str
+            sample: copy
         source_uri:
             description:
                 - URI to a valid VHD file to be used or the resource ID of the managed disk to copy.
+            type: str
         os_type:
             description:
                 - "Type of Operating System: C(linux) or C(windows)."
+            type: str
         disk_size_gb:
             description:
                 - Size in GB of the managed disk to be created.
+            type: str
         managed_by:
             description:
                 - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
+            type: str
         tags:
             description:
                 - Tags to assign to the managed disk.
-            sample: { "tag": "value" }
             type: dict
+            sample: { "tag": "value" }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -204,7 +215,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.disks.list_by_resource_group(resource_group_name=self.resource_group)
         except CloudError as exc:
-            self.fail('Failed to list items by resource group - {}'.format(str(exc)))
+            self.fail('Failed to list items by resource group - {0}'.format(str(exc)))
 
         results = []
         for item in response:
