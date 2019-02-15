@@ -116,7 +116,7 @@ def packages_installed(module, names):
     ''' Check if each package is installed and return list of the ones present '''
     pkgs = []
     for pkg in names:
-        if pkg.startswith('CSW'):
+        if not pkg.startswith('CSW'):
             continue
         rc, out, err = run_command(module, ['pkginfo', '-q', pkg])
         if rc == 0:
