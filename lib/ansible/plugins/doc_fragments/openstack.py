@@ -18,7 +18,7 @@ options:
         or if OpenStack OS_* environment variables are present.
         If I(cloud) is a dict, it contains a complete cloud configuration like
         would be in a section of clouds.yaml.
-    type: str
+    type: raw
   auth:
     description:
       - Dictionary containing auth information as needed by the cloud's auth
@@ -28,7 +28,7 @@ options:
         this param will need to contain whatever parameters that auth plugin
         requires. This parameter is not needed if a named cloud is provided or
         OpenStack OS_* environment variables are present.
-    type: str
+    type: dict
   auth_type:
     description:
       - Name of the auth plugin to use. If the cloud uses something other than
@@ -65,15 +65,15 @@ options:
     description:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
-    type: path
+    type: str
   cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction.
-    type: path
+    type: str
   key:
     description:
       - A path to a client key to use as part of the SSL transaction.
-    type: path
+    type: str
   interface:
     description:
         - Endpoint URL type to fetch from the service catalog.

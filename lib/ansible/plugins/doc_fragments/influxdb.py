@@ -72,6 +72,6 @@ options:
   proxies:
     description:
     - HTTP(S) proxy to use for Requests to connect to InfluxDB server.
-    type: str
+    type: dict
     version_added: "2.5"
 '''

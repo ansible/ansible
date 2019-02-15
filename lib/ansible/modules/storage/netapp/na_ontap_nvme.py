@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) 2019, NetApp, Inc
+# Copyright: (c) 2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -10,64 +11,65 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'certified'}
 
 
-DOCUMENTATION = '''
-author: NetApp Ansible Team (@carchi8py) (ng-ansibleteam@netapp.com)
+DOCUMENTATION = r'''
+module: na_ontap_nvme
+short_description: NetApp ONTAP Manage NVMe Service
 description:
   - Create/Delete NVMe Service
 extends_documentation_fragment:
   - netapp.na_ontap
-module: na_ontap_nvme
+author:
+- NetApp Ansible Team (@carchi8py) (ng-ansibleteam@netapp.com)
 options:
   state:
-    choices: ['present', 'absent']
     description:
       - Whether the specified NVMe should exist or not.
+    type: str
+    choices: [ absent, present ]
     default: present
   vserver:
     description:
       - Name of the vserver to use.
+    type: str
     required: true
   status_admin:
     description:
-      - Whether the status of NVMe should be up or down
+      - Whether the status of NVMe should be up or down.
     type: bool
-short_description: "NetApp ONTAP Manage NVMe Service"
 version_added: "2.8"
 '''
 
-EXAMPLES = """
+EXAMPLES = r'''
+- name: Create NVMe
+  na_ontap_nvme:
+    hostname: '{{ hostname }}'
+    username: '{{ username }}'
+    password: '{{ password }}'
+    vserver: '{{ vserver }}'
+    status_admin: no
+    state: present
 
-    - name: Create NVMe
-      na_ontap_nvme:
-        state: present
-        status_admin: False
-        vserver: "{{ vserver }}"
-        hostname: "{{ hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+- name: Modify NVMe
+  na_ontap_nvme:
+    vserver: '{{ vserver }}'
+    hostname: '{{ hostname }}'
+    username: '{{ username }}'
+    password: '{{ password }}'
+    status_admin: yes
+    state: present
 
-    - name: Modify NVMe
-      na_ontap_nvme:
-        state: present
-        status_admin: True
-        vserver: "{{ vserver }}"
-        hostname: "{{ hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+- name: Delete NVMe
+  na_ontap_nvme:
+    hostname: '{{ hostname }}'
+    username: '{{ username }}'
+    password: '{{ password }}'
+    vserver: '{{ vserver }}'
+    state: absent
+'''
 
-    - name: Delete NVMe
-      na_ontap_nvme:
-        state: absent
-        vserver: "{{ vserver }}"
-        hostname: "{{ hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
-"""
+RETURN = r'''
+'''
 
-RETURN = """
-"""
-
-import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
@@ -84,15 +86,15 @@ class NetAppONTAPNVMe(object):
     def __init__(self):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
-        self.argument_spec.update(dict(
-            state=dict(required=False, type='str', choices=['present', 'absent'], default='present'),
-            vserver=dict(required=True, type='str'),
-            status_admin=dict(required=False, type=bool)
-        ))
+        self.argument_spec.update(
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            vserver=dict(type='str', required=True),
+            status_admin=dict(type='bool'),
+        )
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
         )
 
         self.na_helper = NetAppModule()
@@ -120,8 +122,7 @@ class NetAppONTAPNVMe(object):
         try:
             result = self.server.invoke_successfully(nvme_get, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error fetching nvme info: %s' % to_native(error),
-                                  exception=traceback.format_exc())
+            self.module.fail_json(msg='Error fetching nvme info: %s' % to_native(error))
         if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
             attributes_list = result.get_child_by_name('attributes-list')
             nvme_info = attributes_list.get_child_by_name('nvme-target-service-info')
@@ -141,8 +142,7 @@ class NetAppONTAPNVMe(object):
             self.server.invoke_successfully(nvme_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error creating nvme for vserver %s: %s'
-                                  % (self.parameters['vserver'], to_native(error)),
-                                  exception=traceback.format_exc())
+                                  % (self.parameters['vserver'], to_native(error)))
 
     def delete_nvme(self):
         """
@@ -153,8 +153,7 @@ class NetAppONTAPNVMe(object):
             self.server.invoke_successfully(nvme_delete, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error deleting nvme for vserver %s: %s'
-                                  % (self.parameters['vserver'], to_native(error)),
-                                  exception=traceback.format_exc())
+                                  % (self.parameters['vserver'], to_native(error)))
 
     def modify_nvme(self, status=None):
         """
@@ -169,8 +168,7 @@ class NetAppONTAPNVMe(object):
             self.server.invoke_successfully(nvme_modify, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg='Error modifying nvme for vserver %s: %s'
-                                  % (self.parameters['vserver'], to_native(error)),
-                                  exception=traceback.format_exc())
+                                  % (self.parameters['vserver'], to_native(error)))
 
     def apply(self):
         """

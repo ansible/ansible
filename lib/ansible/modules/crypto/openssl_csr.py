@@ -67,7 +67,7 @@ options:
         description:
             - Key/value pairs that will be present in the subject name field of the certificate signing request.
             - If you need to specify more than one value with the same key, use a list as value.
-        type: str
+        type: dict
         version_added: '2.5'
     country_name:
         description:

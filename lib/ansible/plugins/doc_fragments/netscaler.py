@@ -42,7 +42,7 @@ options:
     nitro_timeout:
         description:
             - Time in seconds until a timeout error is thrown when establishing a new session with Netscaler
-        type: int
+        type: float
         default: 310
 
     state:

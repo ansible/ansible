@@ -15,7 +15,7 @@ options:
              template file and each response from the device are saved here.
              Usually the location is the results folder, but you can
              choose another location based on your write permission.
-        type: path
+        type: str
         required: true
         version_added: '2.3'
     host:

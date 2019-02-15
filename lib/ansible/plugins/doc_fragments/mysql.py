@@ -25,7 +25,7 @@ options:
   login_port:
     description:
       - Port of the MySQL server. Requires I(login_host) be defined as other than localhost if login_port is used.
-    type: str
+    type: int
     default: 3306
   login_unix_socket:
     description:
