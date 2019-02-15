@@ -91,7 +91,15 @@ function Get-FileFromUrl($url, $path) {
     }
 }
 
-function Get-ProgramMetadata($state, $path, $product_id, $patch_id, $credential) {
+function Get-ProgramMetadata {
+    param(
+        [string]$state,
+        [string]$path,
+        [string]$product_id,
+        [string]$patch_id,
+        [System.Management.Automation.PSCredential]
+        [System.Management.Automation.Credential()]$credential
+    )
     # will get some metadata about the program we are trying to install or remove
     $metadata = @{
         installed = $false
@@ -103,7 +111,7 @@ function Get-ProgramMetadata($state, $path, $product_id, $patch_id, $credential)
     $drive = $null
     try {
         $drive = New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT
-        $patchguid_key = "HKCR:\Installer\Patches\$($metadata.patch_id)"
+        $patchguid_key = "HKCR:\Installer\Patches\$patch_id"
         if (Test-Path -Path $patchguid_key) {
             $metadata.installed = $true
         }
