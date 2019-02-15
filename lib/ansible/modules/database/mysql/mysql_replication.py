@@ -105,10 +105,10 @@ options:
         version_added: "2.0"
     master_use_gtid:
         description:
-            - MariaDB Global Transaction ID parameter
+            - MariaDB Global Transaction ID parameter.
+            - By default no GTID is used.
         type: str
-        choices: [ current_pos, 'no', slave_pos ]
-        default: 'no'
+        choices: [ current_pos, slave_pos ]
         version_added: "2.8"
 
 extends_documentation_fragment: mysql
@@ -217,7 +217,7 @@ def main():
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall"]),
             master_auto_position=dict(default=False, type='bool'),
             master_host=dict(default=None),
-            master_use_gtid=dict(type='str', choices=["current_pos", "no", "slave_pos"]),
+            master_use_gtid=dict(type='str', choices=['current_pos', 'slave_pos']),
             master_user=dict(default=None),
             master_password=dict(default=None, no_log=True),
             master_port=dict(default=None, type='int'),
@@ -348,7 +348,7 @@ def main():
             chm_params['master_ssl_cipher'] = master_ssl_cipher
         if master_auto_position:
             chm.append("MASTER_AUTO_POSITION = 1")
-        if master_use_gtid != 'no':
+        if master_use_gtid is not None:
             chm.append("MASTER_USE_GTID=%s" % master_use_gtid)
         try:
             changemaster(cursor, chm, chm_params)
