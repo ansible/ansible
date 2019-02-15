@@ -14,7 +14,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 
 DOCUMENTATION = '''
@@ -41,13 +41,14 @@ options:
         description:
         - ID or Name of the access group to rename.
         - Required to create a new access group called 'name' by renaming 'from_name'.
+        - version_added: '2.8'
 
     name:
         description:
         - Name for the access group for create, modify and delete operations.
         required: True
         aliases:
-        - access_group_name
+        - src_access_group_id 
 
     initiators:
         description:
@@ -148,7 +149,7 @@ class ElementSWAccessGroup(object):
         self.argument_spec.update(dict(
             state=dict(required=True, choices=['present', 'absent']),
             from_name=dict(required=False, type='str'),
-            name=dict(required=True, aliases=["access_group_name"], type='str'),
+            name=dict(required=True, aliases=["src_access_group_id"], type='str'),
             initiators=dict(required=False, type='list'),
             volumes=dict(required=False, type='list'),
             account_id=dict(required=False, type='str'),
