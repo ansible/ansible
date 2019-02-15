@@ -20,9 +20,9 @@ from units.mock.loader import DictDataLoader
 
 # https://github.com/ansible/ansible/issues/52158
 def test_undefined_variable():
-    fake_loader = DictDataLoader(dict())
-    variables = dict()
+    fake_loader = DictDataLoader({})
+    variables = {}
     templar = Templar(loader=fake_loader, variables=variables)
 
     with pytest.raises(AnsibleUndefinedVariable):
-        res = templar.template("{{ missing }}")
+        templar.template("{{ missing }}")
