@@ -5,7 +5,7 @@
   command: losetup -f {{ output_dir.replace('~', ansible_env.HOME) }}/cryptfile
   become: yes
 - name: Determine loop device name
-  command: losetup -j {{ output_dir.replace('~', ansible_env.HOME) }}/cryptfile --output name --raw
+  command: losetup -j {{ output_dir.replace('~', ansible_env.HOME) }}/cryptfile --output name
   become: yes
   register: cryptfile_device_output
 - set_fact:
