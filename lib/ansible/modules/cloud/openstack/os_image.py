@@ -80,7 +80,8 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["openstacksdk", "shade"]
+requirements: ["openstacksdk"]
+requirements: ["shade (if ansible < 2.6.0)"]
 '''
 
 EXAMPLES = '''
