@@ -1,0 +1,28 @@
+---
+- name: Create cryptfile
+  command: dd if=/dev/zero of={{ output_dir }}/cryptfile bs=1M count=32
+- name: Create lookback device
+  command: losetup -f {{ output_dir }}/cryptfile
+  become: yes
+- name: Determine loop device name
+  command: losetup -j {{ output_dir }}/cryptfile --output name --raw
+  become: yes
+  register: cryptfile_device_output
+- set_fact:
+    cryptfile_device: "{{ cryptfile_device_output.stdout_lines[1] }}"
+- block:
+  - include_tasks: run-test.yml
+    with_fileglob:
+    - "tests/*.yml"
+  always:
+  - name: Make sure LUKS device is gone
+    luks_device:
+      device: "{{ cryptfile_device }}"
+      state: absent
+    become: yes
+    ignore_errors: yes
+  - command: losetup -d "{{ cryptfile_device }}"
+    become: yes
+  - file:
+      dest: cryptfile
+      state: absent
