@@ -74,10 +74,7 @@ $record_argument_name = @{
 }[$type]
 
 
-$changes = New-Object -Typename System.Collections.ArrayList
-
-
-$records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args
+$records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 if ($records -ne $null)
 {
     # We use [Hashtable]$required_values below as a set rather than a map.
@@ -103,10 +100,6 @@ if ($records -ne $null)
 
                 $record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode @extra_args
-
-                $changes += "-[$zone] $($record.HostName) $original_ttl_seconds $type $record_value`n"
-                $changes += "+[$zone] $($record.HostName) $($ttl.TotalSeconds) $type $record_value`n"
-                $result.changed = $true
             }
 
             # Cross this one off the list, so we don't try adding it later
@@ -117,9 +110,6 @@ if ($records -ne $null)
             # This record doesn't match any of the values, and must be removed
 
             $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$check_mode @extra_args
-
-            $changes += "-[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $($record.RecordData.$record_argument_name)`n"
-            $result.changed = $true
         }
     }
 
@@ -134,18 +124,29 @@ if ($values -ne $null -and $values.Count -gt 0)
     {
         $splat_args = @{ $type = $true; $record_argument_name = $value }
         Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$check_mode @extra_args
-
-        $changes += "+[$zone] $name $($ttl.TotalSeconds) $type $value`n"
     }
-
-    $result.changed = $true
 }
 
+$records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 
-if ($diff_mode)
-{
-    $result.diff = @{ prepared = ($changes -Join '') }
+$before = @($records |% { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+$after = @($records_end |% { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+
+if ($diff_mode) {
+  $diff = @{
+    before = $before
+    after = $after
+  }
+  $result.diff = $diff
 }
+
+function are_different ($x,$y) {
+  if ($x) { $a=$x | ConvertTo-Json } else { $a="" }
+  if ($y) { $b=$y | ConvertTo-Json } else { $b="" }
+  return [bool](Compare-Object -DifferenceObject $a -ReferenceObject $b)
+}
+
+$result.changed = are_different $after $before
 
 
 Exit-Json -obj $result
