@@ -23,7 +23,7 @@ short_description: Configure Element SW Cluster
 extends_documentation_fragment:
     - netapp.solidfire
 version_added: '2.8'
-author: NetApp Ansible Team (ng-ansibleteam@netapp.com)
+author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 description:
 - Configure Element Software cluster.
 
