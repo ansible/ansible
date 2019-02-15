@@ -39,5 +39,9 @@ def parse_cluster_state(module):
                         retval['pkgs'][pkgTempName] = {}
                     else:
                         retval['pkgs'][pkgTempName][subExec.group(4)] = subExec.group(5).replace('"', '')
+                elif subExec.group(3).startswith("node"):
+                  if subExec.group(5) == 'Primary':
+                    primaryNode = re.search(r'(\w+):(\w+)|$',subExec.group(3))
+                    retval['pkgs'][pkgTempName]['primary_node'] = primaryNode.group(2)
 
     return retval

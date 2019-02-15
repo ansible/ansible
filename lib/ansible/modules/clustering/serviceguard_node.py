@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {
-    'metadata_version': '0.1',
+    'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -18,7 +18,7 @@ short_description: HP ServiceGuard node package
 version_added: "2.7"
 
 description:
-	- This package controls nodes of a HP ServiceGuard cluster
+  - This package controls nodes of a HP ServiceGuard cluster. It allows to start / stop a cluster node
 
 options:
     name:
@@ -27,8 +27,8 @@ options:
         required: true
     state:
         description:
-	        - Desired state of the node
-	    choices: ["running","halted"]
+          - Desired state of the node
+        choices: ["running","halted"]
         required: true
     path:
         description:
@@ -40,13 +40,10 @@ options:
             - Forces the shutdown of the node, even if packages are running on it
         required: false
         default: false
-    get_facts:
-        description:
-            - Returns cluster facts
-        required: false
         
 author:
     - Christian Sandrini (@sandrich)
+    - Sergio Pérez Fernández (@sergioperez)
 '''
 
 EXAMPLES = '''
@@ -71,6 +68,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+See M(serviceguard_facts) module
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -80,18 +78,18 @@ from ansible.module_utils.serviceguard import parse_cluster_state
 def start_node(module):
     state = parse_cluster_state(module)
 
-    node = module.params['name']
-    node_status = state['nodes'][node]['status']
-    cmd_params = [module.params['path'] + '/cmrunnode', node]
+    node_name = module.params['name']
+    current_state = state['nodes'][node_name]['state']
+    cmd_params = [module.params['path'] + '/cmrunnode', node_name]
 
     # Start if system is halted and started is requested
-    if node_status == 'down':
+    if current_state == 'unknown':
         (rc, out, err) = module.run_command(cmd_params)
 
         if rc != 0:
             module.fail_json(msg="Node could not be started: %s%s" % (out, err))
 
-    return True
+    return node_name
 
 
 def stop_node(module):
@@ -118,20 +116,15 @@ def main():
         name=dict(type='str', required=True),
         state=dict(type='str', required=True, choices=['started', 'stopped']),
         path=dict(type='str', required=False, default='/usr/local/cmcluster/bin'),
-        force=(dict(type='bool', required=False, default=False)),
-        get_facts=(dict(type='bool', required=False))
+        force=(dict(type='bool', required=False, default=False))
     )
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     state = parse_cluster_state(module)
-
-    if module.params['get_facts']:
-        state['changed'] = False
-        module.exit_json(**state)
 
     if module.params['state'] == 'started':
         start_node(module)
