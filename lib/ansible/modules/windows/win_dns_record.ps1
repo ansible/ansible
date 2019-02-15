@@ -96,8 +96,6 @@ if ($records -ne $null)
             # This record matches one of the values; but does it match the TTL?
             if ($record.TimeToLive -ne $ttl)
             {
-                $original_ttl_seconds = $record.TimeToLive.TotalSeconds
-
                 $record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode @extra_args
             }
@@ -129,8 +127,8 @@ if ($values -ne $null -and $values.Count -gt 0)
 
 $records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 
-$before = @($records |% { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
-$after = @($records_end |% { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+$before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+$after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
 
 if ($diff_mode) {
   $diff = @{
