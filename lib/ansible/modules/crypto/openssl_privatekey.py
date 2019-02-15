@@ -60,7 +60,7 @@ options:
             - We use the curve names as defined in the
               L(IANA registry for TLS,https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8).
         type: str
-        choices: 
+        choices:
             - secp384r1
             - secp521r1
             - secp224r1
