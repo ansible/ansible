@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Rodric Vos <rodric@vosenterprises.eu>, and others
+# Copyright: (c) 2019, Rodric Vos <rodric@vosenterprises.eu>, and others
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub. Actual code lives in the .ps1
