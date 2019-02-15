@@ -38,6 +38,7 @@ options:
       - Description of a crontab entry or, if env is set, the name of environment variable.
         Required if state=absent. Note that if name is not set and state=present, then a
         new crontab entry will always be created, regardless of existing ones.
+        This parameter will always be required in future releases.
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -608,6 +609,17 @@ def main():
     crontab = CronTab(module, user, cron_file)
 
     module.debug('cron instantiated - name: "%s"' % name)
+
+    if not name:
+        module.deprecate(
+            msg="The 'name' parameter will be required in future releases.",
+            version='2.10'
+        )
+    if reboot:
+        module.deprecate(
+            msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
+            version='2.10'
+        )
 
     if module._diff:
         diff = dict()
