@@ -416,12 +416,16 @@ class AzureRMServiceBus(AzureRMModuleBase):
             pass
         if not ns:
             try:
-                poller = self.servicebus_client.namespaces.create_or_update(self.resource_group,
-                                                                            self.namespace,
-                                                                            self.servicebus_models.SBNamespace(location=self.location))
-                ns = self.get_poller_result(poller)
+                check_name = self.servicebus_client.namespaces.check_name_availability_method(self.namespace)
+                if check_name and check_name.name_available:
+                    poller = self.servicebus_client.namespaces.create_or_update(self.resource_group,
+                                                                                self.namespace,
+                                                                                self.servicebus_models.SBNamespace(location=self.location))
+                    ns = self.get_poller_result(poller)
+                else:
+                    self.fail("Error creating namespace {0} - {1}".format(self.namespace, check_name.message or str(check_name)))
             except Exception as exc:
-                self.fail('Error creating namespace {0}'.format(exc.message) or str(exc))
+                self.fail('Error creating namespace {0} - {1}'.format(self.namespace, exc.message or str(exc)))
         return ns
 
     def create_or_update(self, param):
