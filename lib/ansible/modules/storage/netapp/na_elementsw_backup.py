@@ -125,7 +125,7 @@ import time
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except Exception:
+except:
     HAS_SF_SDK = False
 
 
@@ -136,7 +136,8 @@ class ElementSWBackup(object):
         """
             Setup Ansible parameters and SolidFire connection
         """
-        self.argument_spec = {}
+        self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
+
         self.argument_spec.update(dict(
 
             src_hostname=dict(aliases=['hostname'], required=True, type='str'),
