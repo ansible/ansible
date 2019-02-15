@@ -30,12 +30,12 @@ options:
         - If C(no), it will use HTTP. Otherwise it will use HTTPS.
         - Only useful for internal Meraki developers.
         type: bool
-        default: 'yes'
+        default: yes
     output_level:
         description:
         - Set amount of debug output during module execution
         type: str
-        choices: [ normal, debug ]
+        choices: [ debug, normal ]
         default: normal
     timeout:
         description:
@@ -46,7 +46,7 @@ options:
         description:
         - Whether to validate HTTP certificates.
         type: bool
-        default: 'yes'
+        default: yes
     org_name:
         description:
         - Name of organization.
