@@ -18,12 +18,13 @@ def main():
     )
 
     rlimit_nofile = resource.getrlimit(resource.RLIMIT_NOFILE)
+
     try:
         maxfd = subprocess.MAXFD
     except AttributeError:
         maxfd = -1
 
-    module.exit_json(rlimit_nofile=rlimit_nofile, maxfd=maxfd)
+    module.exit_json(rlimit_nofile=rlimit_nofile, maxfd=maxfd, infinity=resource.RLIM_INFINITY)
 
 
 if __name__ == '__main__':
