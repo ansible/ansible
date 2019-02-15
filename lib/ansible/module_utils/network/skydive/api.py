@@ -98,7 +98,12 @@ class skydive_lookup(skydive_restclient):
         query_key = filter_data.keys()[0]
         self.query_str = filter_data[query_key]
         nodes = self.restclient_object.lookup_nodes(self.query_str)
-        return nodes[0].__dict__
+        result = []
+        for each in nodes:
+            result.append(each.__dict__)
+        if len(result) == 0:
+            raise Exception("Cannot find any entry for the input Gremlin query!")
+        return result
 
 
 class skydive_flow_capture(skydive_restclient):
@@ -125,9 +130,8 @@ class skydive_flow_capture(skydive_restclient):
         if obj_filter['query']:
             cature_query = obj_filter['query']
         elif obj_filter['interface_name'] and obj_filter['type']:
-            cature_query = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}')".format(
-                                                                                obj_filter['interface_name'],
-                                                                                obj_filter['type'])
+            cature_query = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}')".format(obj_filter['interface_name'],
+                                                                                           obj_filter['type'])
         else:
             raise self.module.fail_json(msg="Interface name and Type is required if gremlin query is not defined!")
 
