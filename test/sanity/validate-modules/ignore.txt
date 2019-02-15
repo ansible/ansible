@@ -360,8 +360,6 @@ lib/ansible/modules/clustering/znode.py E326
 lib/ansible/modules/commands/command.py E322
 lib/ansible/modules/commands/command.py E323
 lib/ansible/modules/commands/command.py E325
-lib/ansible/modules/crypto/openssl_certificate.py E325
-lib/ansible/modules/crypto/openssl_csr.py E325
 lib/ansible/modules/database/influxdb/influxdb_database.py E324
 lib/ansible/modules/database/influxdb/influxdb_database.py E325
 lib/ansible/modules/database/influxdb/influxdb_query.py E324
