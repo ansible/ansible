@@ -3,6 +3,9 @@
 # Copyright: (c) 2019, Christian Sandrini <mail@chrissandrini.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -28,7 +31,7 @@ options:
     state:
         description:
           - Desired state of the node
-        choices: ["running","halted"]
+        choices: ["started","stopped"]
         required: true
     path:
         description:
@@ -39,11 +42,11 @@ options:
         description:
             - Forces the shutdown of the node, even if packages are running on it
         required: false
-        default: false
-        
+        type: bool
+
 author:
     - Christian Sandrini (@sandrich)
-    - Sergio Pérez Fernández (@sergioperez)
+    - Sergio Perez Fernandez (@sergioperez)
 '''
 
 EXAMPLES = '''
@@ -68,7 +71,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-See M(serviceguard_facts) module
+#
 '''
 
 from ansible.module_utils.basic import AnsibleModule

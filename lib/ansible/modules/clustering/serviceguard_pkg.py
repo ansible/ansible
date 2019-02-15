@@ -3,6 +3,9 @@
 # Copyright: (c) 2018, Christian Sandrini <mail@chrissandrini.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
@@ -39,7 +42,7 @@ options:
         description:
             - Specifies whether a package should failover automatically
         required: false
-        choces: [ enabled, disabled ]
+        choices: [ enabled, disabled ]
         default: true
     path:
         description:
@@ -49,7 +52,7 @@ options:
 
 author:
     - Christian Sandrini (@sandrich)
-    - Sergio Pérez Fernández (@sergioperez)
+    - Sergio Perez Fernandez (@sergioperez)
 '''
 
 EXAMPLES = '''
@@ -81,7 +84,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-See M(serviceguard_facts) module
+#
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -98,7 +101,7 @@ def stop_package(module, pkg_name):
         module.fail_json(msg="Package %s does not exist" % pkg_name)
     elif not (state['pkgs'][pkg_name]['state'] == 'halted'):
         # Halt package
-        (rc, out, _) = module.run_command([module.params['path'] + '/cmhaltpkg', pkg_name])
+        (rc, out, dummy) = module.run_command([module.params['path'] + '/cmhaltpkg', pkg_name])
         stopped_package = pkg_name
 
         if rc != 0:
@@ -113,7 +116,7 @@ def stop_all_packages(module, node):
     stopped_packages = []
 
     if state['pkgs']:
-        if node == None:
+        if node is None:
             stopped_packages = filter(lambda x: state['pkgs'][x]['state'] == 'running', state['pkgs'].keys())
         else:
             stopped_packages = filter(lambda x: state['pkgs'][x]['owner'] == node, state['pkgs'].keys())
@@ -139,7 +142,7 @@ def set_autorun(module, desired_autorun_state, pkg_name):
     else:
         opt = '-d'
 
-    (rc, out, _) = module.run_command([module.params['path'] + '/cmmodpkg', opt, pkg_name])
+    (rc, out, dummy) = module.run_command([module.params['path'] + '/cmmodpkg', opt, pkg_name])
 
     if rc != 0:
         module.fail_json(msg="Failure %d to modify package %s autorun state with error: %s" % (rc, pkg_name, out))
@@ -154,7 +157,7 @@ def set_autorun(module, desired_autorun_state, pkg_name):
 
 def is_pkg_eligible_on_node(module, pkg, node):
         # Test if node is eligble
-    (rc, out, _) = module.run_command([module.params['path'] + '/cmviewcl', '-f', 'line', '-p', pkg])
+    (rc, out, dummy) = module.run_command([module.params['path'] + '/cmviewcl', '-f', 'line', '-p', pkg])
 
     return rc == 0 and out.find("node:%s" % node) > -1
 
@@ -164,7 +167,7 @@ def cmrunpkg(module, options):
     cmd = [module.params['path'] + '/cmrunpkg']
 
     # Start package
-    (rc, out, _) = module.run_command(cmd + options)
+    (rc, out, dummy) = module.run_command(cmd + options)
 
     if rc == 1:
         module.fail_json(msg="Failure %d running cmviewcl with error: %s" % (rc, out))
@@ -181,13 +184,13 @@ def start_package(module):
 
     if current_pkg_state == 'running':
         # Do not move it unless a node name
-        if target_node != None and target_node != pkg_owner_node:
+        if target_node is not None and target_node != pkg_owner_node:
             # Stop and start package on new node
             stop_package(module, pkg_name)
             start_package(module)
 
     elif current_pkg_state == 'halted':
-        if target_node == None:
+        if target_node is None:
             # No node => start on default
             cmrunpkg(module, [pkg_name])
 
@@ -219,7 +222,7 @@ def main():
         name=dict(type='str', required=True),
         state=dict(type='str', required=False, choices=['started', 'stopped', 'restarted'], default='started'),
         node=dict(type='str', required=False),
-        autorun=dict(type='str', required=False, choices=['enabled', 'disabled']),
+        autorun=dict(type='str', required=False, choices=['enabled', 'disabled'], default=True),
         path=dict(type='str', required=False, default='/usr/local/cmcluster/bin')
     )
 
@@ -248,7 +251,7 @@ def main():
 
         start_package(module)
 
-    if module.params['autorun'] != None:
+    if module.params['autorun'] is not None:
         set_autorun(module, module.params['autorun'], module.params['name'])
 
     final_state = parse_cluster_state(module)
