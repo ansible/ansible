@@ -18,14 +18,14 @@ module: ec2_spot_pricing_history_facts
 short_description: Gather facts about ec2 spot pricing history in AWS
 description:
   - Gather historical facts on the spot prices of different instance types
-version_added: "2.7"
+version_added: "2.8"
 requirements: [ boto3 ]
 author: "Dani Hodovic (@danihodovic)"
 options:
   availability_zone:
     description:
       - >
-        Availability zone for which prices should be returned. Returns prices
+        availability zone for which prices should be returned. Returns prices
         for all availability zones by default.
     default: ""
 
@@ -52,16 +52,16 @@ options:
   start_time:
     description:
       - >
-        The date and time, up to the past 90 days, from which to start
-        retrieving the price history data.
-    default: ansible_date_time.iso8601
+        the date and time, up to the past 90 days, from which to start
+        retrieving the price history data. Defaults to the time right now.
+    default: "now"
 
   end_time:
     description:
       - >
-        The date and time, up to the current date, from which to stop retrieving
-        the price history data.
-    default: ansible_date_time.iso8601
+        the date and time, up to the current date, from which to stop retrieving
+        the price history data. Defaults to the time right now.
+    default: "now"
 
   max_results:
     description:
@@ -79,8 +79,9 @@ extends_documentation_fragment:
 """
 
 EXAMPLES = """
-# Find the most recent spot price for t3.medium in eu-west-1a
-- ec2_spot_price_history_facts:
+# Find the most recent spot price for t3.medium in eu-west-1a.
+# Facts are published as `ec2_spot_pricing_history`
+- ec2_spot_pricing_history_facts:
     instance_types: ["t3.medium"]
     availability_zone: "eu-west-1a"
     product_descriptions: ["Linux/UNIX"]
@@ -89,20 +90,33 @@ EXAMPLES = """
 
 # Create an instance using the spot price
 - ec2:
-   spot_price: "{{ spot_pricing_history[0].spot_price }}"
-   vpc_subnet_id: "subnet-07b18fbad727f2444"
-   image: "ami-00035f41c82244dab"
-   instance_type: "t3.medium"
-   group: "my-security-group"
-   wait: true
-   instance_tags:
-     Name: "my spot instance"
+    spot_price: "{{ ec2_spot_pricing_history[0].spot_price }}"
+    vpc_subnet_id: "subnet-07b18fbad727f2444"
+    image: "ami-00035f41c82244dab"
+    instance_type: "t3.medium"
+    group: "my-security-group"
+    wait: true
+    instance_tags:
+      Name: "my spot instance"
+
+
+# Get the spot prices between a week ago and now
+- set_fact:
+    one_week_ago: >-
+      {{ "%Y-%m-%dT%H:%M:%SZ" | strftime((ansible_date_time.epoch | int ) - (86400 * 7 ) }}
+
+- ec2_spot_pricing_history_facts:
+    availability_zone: "eu-west-1a"
+    instance_types: ["t3.small"]
+    product_descriptions: ["Linux/UNIX"]
+    start_time: "{{ one_week_ago }}"
+    end_time: "{{ ansible_date_time.iso8601 }}"
 """
 
 RETURN = """
 ---
-ec2_spot_pricing_history_facts:
-  description: The Amazon Resource Name of the ASG
+ec2_spot_pricing_history:
+  description: the spot pricing history
   returned: success
   type: list
   sample: [
@@ -126,22 +140,18 @@ from ansible.module_utils.ec2 import (
     camel_dict_to_snake_dict,
 )
 
-try:
-    import dateutil.parser
-
-    HAS_DATEUTIL = True
-except ImportError:
-    HAS_DATEUTIL = False
-
 
 def parse_date(module, key):
     value = module.params[key]
+    if value == "now":
+        return datetime.datetime.now()
     try:
-        start_time = dateutil.parser.parse(value)
-        return start_time
+        return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
     except ValueError:
+        msg = ("{key}={value} is not a valid date. Dates must be specified in " +
+               "ISO8601 format")
         module.fail_json(
-            msg="{key}={value} is not a valid date".format(key=key, value=value)
+            msg=msg.format(key=key, value=value)
         )
 
 
@@ -164,22 +174,13 @@ def main():
             ),
             instance_types=dict(type="list", default=[]),
             filters=dict(type="list", default=[]),
-            start_time=dict(
-                type="str",
-                default=datetime.datetime.now().replace(microsecond=0).isoformat(),
-            ),
-            end_time=dict(
-                type="str",
-                default=datetime.datetime.now().replace(microsecond=0).isoformat(),
-            ),
+            start_time=dict(type="str", default="now"),
+            end_time=dict(type="str", default="now"),
             max_results=dict(type="int", default=1000),
         )
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec, check_boto3=True)
-
-    if not HAS_DATEUTIL:
-        module.fail_json(msg="dateutil required for this module")
 
     if not module.boto3_at_least("1.9.0"):
         module.fail_json(msg="ec2_spot_price_history_facts requires boto3 > 1.9.0")

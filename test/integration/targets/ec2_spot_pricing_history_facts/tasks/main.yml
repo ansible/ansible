@@ -1,6 +1,6 @@
 ---
 # ============================================================
-# Smoke test
+# Test by providing all the parameters
 - name: Set up AWS connection info
   set_fact:
     aws_connection_info: &aws_connection_info
@@ -16,8 +16,8 @@
 
 - set_fact:
     az: "{{ azs.availability_zones[0].zone_name }}"
-    one_day_ago: >
-      {{ "%Y-%m-%d" | strftime((ansible_date_time.epoch | int ) - 86400 ) }}
+    one_day_ago: >-
+      {{ "%Y-%m-%dT%H:%M:%SZ" | strftime((ansible_date_time.epoch | int ) - 86400 ) }}
 
 - name: Gather spot_pricing facts
   ec2_spot_pricing_history_facts:
@@ -51,4 +51,4 @@
 - name: Assert that the msg is correct
   assert:
     that:
-      - "invalid_start_date.msg == 'start_time=foo is not a valid date'"
+      - "invalid_start_date.msg == 'start_time=foo is not a valid date. Dates must be specified in ISO8601 format'"
