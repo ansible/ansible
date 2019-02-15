@@ -1,0 +1,8 @@
+---
+# Test cases
+# - 000 - Get facts
+- serviceguard_facts:
+  register: state    
+
+- debug:
+    msg: "{{ state }}"
