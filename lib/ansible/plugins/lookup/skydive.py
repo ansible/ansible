@@ -36,14 +36,14 @@ options:
       description: a dict object that is used to filter the return objects
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 - name: return skydive metdata if present based on Name
   set_fact:
-    skydive_meta: "{{ lookup('skydive_lookup', filter={'query': \"G.V().Has('Name', 'sumit-VirtualBox')\"}) }}"
+    skydive_meta: "{{ lookup('skydive', filter={'query': \"G.V().Has('Name', 'sumit-VirtualBox')\"}) }}"
 
 - name: return skydive metdata if present based on TID
   set_fact:
-    skydive: "{{ lookup('skydive_lookup', filter={'query': \"G.V().Has('Name', 'sumit-VirtualBox')\"},
+    skydive: "{{ lookup('skydive', filter={'query': \"G.V().Has('Name')\"},
                             provider={'endpoint': 'localhost:8082', 'username': 'admin', 'password': 'password'}) }}"
 """
 
