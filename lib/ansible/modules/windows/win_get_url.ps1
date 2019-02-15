@@ -400,11 +400,6 @@ Function Invoke-DownloadFile {
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 }
 
-$module.Result.checksum_algorithm = $checksum_algorithm
-$module.Result.dest = $dest
-$module.Result.elapsed = 0
-$module.Result.url = $url
-
 # normalise values
 if ($checksum) {
     $checksum = $checksum.Trim().toLower()
@@ -415,6 +410,11 @@ if ($checksum_algorithm) {
 if ($checksum_url) {
     $checksum_url = $checksum_url.Trim().toLower()
 }
+
+$module.Result.checksum_algorithm = $checksum_algorithm
+$module.Result.dest = $dest
+$module.Result.elapsed = 0
+$module.Result.url = $url
 
 if (-not $use_proxy -and ($proxy_url -or $proxy_username -or $proxy_password)) {
     $module.Warn("Not using a proxy on request, however a 'proxy_url', 'proxy_username' or 'proxy_password' was defined.")
