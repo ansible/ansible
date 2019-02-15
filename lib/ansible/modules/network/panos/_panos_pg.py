@@ -29,6 +29,10 @@ author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - pan-python
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.11"
+    why: Consolidating code base.
 options:
     pg_name:
         description:
@@ -80,7 +84,7 @@ RETURN = '''
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 

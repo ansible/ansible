@@ -34,6 +34,10 @@ requirements:
     - pan-python
     - requests
     - requests_toolbelt
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.11"
+    why: Consolidating code base.
 options:
     category:
         description:
@@ -71,7 +75,7 @@ RETURN = '''
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 

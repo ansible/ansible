@@ -30,6 +30,10 @@ author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - paramiko
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.11"
+    why: Consolidating code base.
 options:
     ip_address:
         description:
@@ -74,7 +78,7 @@ status:
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
