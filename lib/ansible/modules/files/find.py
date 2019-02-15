@@ -50,6 +50,15 @@ options:
         type: list
         aliases: [ exclude ]
         version_added: "2.5"
+    exclude_paths:
+        description:
+            - One or more relative paths (e.g. C(./nginx/upload)) to exclude. The paths can be patterns
+              as described at U(https://docs.python.org/3/library/fnmatch.html).
+            - Mimics C(prune) option of C(find) from GNU Find Utilities. Multiple patterns can be
+              specified using a list.
+        type: list
+        aliases: [ prune ]
+        version_added: "2.8"
     contains:
         description:
             - One or more regex patterns which should be matched against the file content.
@@ -358,6 +367,7 @@ def main():
             paths=dict(type='list', required=True, aliases=['name', 'path']),
             patterns=dict(type='list', default=['*'], aliases=['pattern']),
             excludes=dict(type='list', aliases=['exclude']),
+            exclude_paths=dict(type='list', aliases=['prune']),
             contains=dict(type='str'),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
@@ -414,6 +424,13 @@ def main():
                     if depth > params['depth']:
                         del(dirs[:])
                         continue
+
+                if params['exclude_paths']:
+                    for d in dirs[:]:
+                        relpath = os.path.join(root, d).replace(npath.rstrip(os.path.sep), '.')
+                        if any(fnmatch.fnmatch(relpath, epath) for epath in params['exclude_paths']):
+                            dirs.remove(d)
+
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
