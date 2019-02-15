@@ -90,6 +90,7 @@ options:
             device over cli (ssh) or nxapi.
         type: str
         required: true
+        choices: [ cli, nxapi ]
         default: cli
       use_ssl:
         description:

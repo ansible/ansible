@@ -662,7 +662,7 @@ def main():
         argument_spec=dict(
             user=dict(type='str', required=True),
             key=dict(type='str', required=True),
-            path=dict(type='str'),
+            path=dict(type='path'),
             manage_dir=dict(type='bool', default=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             key_options=dict(type='str'),

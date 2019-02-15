@@ -86,7 +86,7 @@ options:
   policy_package:
     description:
       - Package policy name to be installed.
-    type: bool
+    type: str
     default: 'standard'
   targets:
     description:

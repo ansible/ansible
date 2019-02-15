@@ -120,10 +120,10 @@ options:
   headers:
     description:
         - Add custom HTTP headers to a request in hash/dict format.
-        - The hash/dict format was added in 2.6.
+        - The hash/dict format was added in Ansible 2.6.
         - Previous versions used a C("key:value,key:value") string format.
         - The C("key:value,key:value") string format is deprecated and will be removed in version 2.10.
-    type: str
+    type: raw
     version_added: '2.0'
   url_username:
     description:
@@ -154,13 +154,13 @@ options:
     description:
       - PEM formatted certificate chain file to be used for SSL client authentication.
       - This file can also include the key as well, and if the key is included, C(client_key) is not required.
-    type: str
+    type: path
     version_added: '2.4'
   client_key:
     description:
       - PEM formatted file that contains your private key to be used for SSL client authentication.
       - If C(client_cert) contains both the certificate and key, this option is not required.
-    type: str
+    type: path
     version_added: '2.4'
 # informational: requirements for nodes
 extends_documentation_fragment:
