@@ -363,15 +363,11 @@ lib/ansible/modules/commands/command.py E325
 lib/ansible/modules/crypto/openssl_certificate.py E325
 lib/ansible/modules/crypto/openssl_csr.py E325
 lib/ansible/modules/database/influxdb/influxdb_database.py E324
-lib/ansible/modules/database/influxdb/influxdb_database.py E325
 lib/ansible/modules/database/influxdb/influxdb_query.py E324
-lib/ansible/modules/database/influxdb/influxdb_query.py E325
 lib/ansible/modules/database/influxdb/influxdb_retention_policy.py E324
 lib/ansible/modules/database/influxdb/influxdb_retention_policy.py E325
 lib/ansible/modules/database/influxdb/influxdb_user.py E324
-lib/ansible/modules/database/influxdb/influxdb_user.py E325
 lib/ansible/modules/database/influxdb/influxdb_write.py E324
-lib/ansible/modules/database/influxdb/influxdb_write.py E325
 lib/ansible/modules/database/misc/riak.py E324
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E317
 lib/ansible/modules/database/mongodb/mongodb_parameter.py E323
