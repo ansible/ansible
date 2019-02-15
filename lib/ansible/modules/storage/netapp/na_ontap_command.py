@@ -29,6 +29,7 @@ options:
         - privilege level at which to run the command.
         choices: ['admin', 'advanced']
         default: admin
+        version_added: "2.8"
 '''
 
 EXAMPLES = """
