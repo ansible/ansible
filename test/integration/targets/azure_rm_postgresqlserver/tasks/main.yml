@@ -210,6 +210,19 @@
       - output.changed == false
       - output.name == 'testdatabase'
 
+- name: Try to update PostgreSQL Database with force_update
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: testdatabase
+    force_update: yes
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed == false
+      - output.name == 'testdatabase'
+
 - name: Create second instance of PostgreSQL Database
   azure_rm_postgresqldatabase:
     resource_group: "{{ resource_group }}"
