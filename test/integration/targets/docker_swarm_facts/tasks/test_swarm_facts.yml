@@ -15,7 +15,7 @@
       that:
          - 'output is failed'
          - 'output.msg == "Error running docker swarm module: must run on swarm manager node"'
-         - 'output.can_talk_to_docker'
+         - 'output.can_talk_to_docker == true'
          - 'output.docker_swarm_active == false'
          - 'output.docker_swarm_manager == false'
 
@@ -27,7 +27,7 @@
   - name: assert changed when create a new swarm cluster
     assert:
       that:
-         - 'output.changed'
+         - 'output is changed'
          - 'output.actions[0] | regex_search("New Swarm cluster created: ")'
          - 'output.swarm_facts.JoinTokens.Manager'
          - 'output.swarm_facts.JoinTokens.Worker'
@@ -42,9 +42,9 @@
          - 'output.docker_swarm_facts.JoinTokens.Manager'
          - 'output.docker_swarm_facts.JoinTokens.Worker'
          - 'output.docker_swarm_facts.ID'
-         - 'output.can_talk_to_docker'
-         - 'output.docker_swarm_active'
-         - 'output.docker_swarm_manager'
+         - 'output.can_talk_to_docker == true'
+         - 'output.docker_swarm_active == true'
+         - 'output.docker_swarm_manager == true'
 
   - name: Try to get docker_swarm_facts and list of nodes when docker is running in swarm mode and as manager
     docker_swarm_facts:
@@ -57,13 +57,12 @@
          - 'output.docker_swarm_facts.JoinTokens.Manager'
          - 'output.docker_swarm_facts.JoinTokens.Worker'
          - 'output.docker_swarm_facts.ID'
-         - 'output.docker_nodes_list'
-         - 'output.docker_nodes_list[0].ID'
-         - 'output.can_talk_to_docker'
-         - 'output.docker_swarm_active'
-         - 'output.docker_swarm_manager'
+         - 'output.docker_nodes_list[0].ID is string'
+         - 'output.can_talk_to_docker == true'
+         - 'output.docker_swarm_active == true'
+         - 'output.docker_swarm_manager == true'
 
-  - name: Het local docker node name
+  - name: Get local docker node name
     set_fact:
       localnodename:  "{{ output.docker_nodes_list[0].Hostname }}"
 
@@ -80,12 +79,11 @@
          - 'output.docker_swarm_facts.JoinTokens.Manager'
          - 'output.docker_swarm_facts.JoinTokens.Worker'
          - 'output.docker_swarm_facts.ID'
-         - 'output.docker_nodes_list'
-         - 'output.docker_nodes_list[0].ID'
+         - 'output.docker_nodes_list[0].ID is string'
          - 'output.docker_nodes_list[0].CreatedAt'
-         - 'output.can_talk_to_docker'
-         - 'output.docker_swarm_active'
-         - 'output.docker_swarm_manager'
+         - 'output.can_talk_to_docker == true'
+         - 'output.docker_swarm_active == true'
+         - 'output.docker_swarm_manager == true'
 
   - name: Try to get docker_swarm_facts and list of nodes with filters providing existing node name
     docker_swarm_facts:
@@ -101,9 +99,9 @@
          - 'output.docker_swarm_facts.JoinTokens.Worker'
          - 'output.docker_swarm_facts.ID'
          - 'output.docker_nodes_list | length == 1'
-         - 'output.can_talk_to_docker'
-         - 'output.docker_swarm_active'
-         - 'output.docker_swarm_manager'
+         - 'output.can_talk_to_docker == true'
+         - 'output.docker_swarm_active == true'
+         - 'output.docker_swarm_manager == true'
 
   - name: Create random name
     set_fact:
@@ -123,9 +121,9 @@
          - 'output.docker_swarm_facts.JoinTokens.Worker'
          - 'output.docker_swarm_facts.ID'
          - 'output.docker_nodes_list | length == 0'
-         - 'output.can_talk_to_docker'
-         - 'output.docker_swarm_active'
-         - 'output.docker_swarm_manager'
+         - 'output.can_talk_to_docker == true'
+         - 'output.docker_swarm_active == true'
+         - 'output.docker_swarm_manager == true'
 
   always:
   - name: Cleanup
