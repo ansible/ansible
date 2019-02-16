@@ -145,6 +145,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
+        self.force_update = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
