@@ -217,7 +217,7 @@ options:
             send_to_users:
                 type: list
                 description:
-                    - Users to send messages to.
+                    - Users (usernames or aliases) to send messages to.
             message:
                 description:
                     - Operation message text.
