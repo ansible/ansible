@@ -22,6 +22,7 @@ notes:
   - This should be ran with connection C(local) and hosts C(localhost)
 author:
   - Mikhail Yohman (@FragmentedPacket)
+  - Anthony Ruhier (@Anthony25)
 requirements:
   - pynetbox
 version_added: '2.8'
@@ -293,7 +294,7 @@ def main():
                 **ensure_ip_address_absent(nb_endpoint, norm_data)
             )
         else:
-            return module.fail_json(msg="Unvalid state %s" % state)
+            return module.fail_json(msg="Invalid state %s" % state)
     except pynetbox.RequestError as e:
         return module.fail_json(msg=json.loads(e.error))
     except ValueError as e:
@@ -429,9 +430,18 @@ def get_new_available_ip_address(nb_app, data):
         prefix_query["vrf_id"] = data["vrf"]
 
     prefix = nb_app.prefixes.get(**prefix_query)
-    ip_addr = prefix.available_ips.create(data)
-    changed = True
-    msg = "IP Addresses %s created" % (ip_addr["address"])
+    if not prefix:
+        changed = False
+        msg = "%s does not exist - please create first" % (data["prefix"])
+        return {"msg": msg, "changed": changed}
+    elif prefix.available_ips.list():
+        ip_addr = prefix.available_ips.create(data)
+        changed = True
+        msg = "IP Addresses %s created" % (ip_addr["address"])
+    else:
+        changed = False
+        msg = "No available IPs available within %s" % (data['prefix'])
+        return {"msg": msg, "changed": changed}
 
     return {"ip_address": ip_addr, "msg": msg, "changed": changed}
 
