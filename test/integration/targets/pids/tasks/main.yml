@@ -1,0 +1,59 @@
+# Test code for the pids module
+# Copyright: (c) 2019, Saranya Sridharan
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- name: "Installing the psutil module"
+  pip:
+    name: psutil
+
+- name: "Checking the empty result" 
+  pids: 
+    name: "blahblah"
+  register: emptypids
+
+- name: "Verify that the list of Process IDs (PIDs) returned is empty"
+  assert:
+    that:
+    - emptypids is not changed
+    - emptypids.pids == [] 
+
+- name: "Picking a random process name"
+  command: "echo 'some-random-long-name-{{ 99999999 | random }}'"
+  register: random_name
+
+- name: "finding the 'sleep' binary"
+  command: which sleep
+  register: find_sleep
+
+- name: "copying 'sleep' binary"
+  copy:
+    src: "{{ find_sleep.stdout }}"
+    dest: "{{ output_dir }}/{{ random_name.stdout }}"
+    mode: "0777"
+
+- name: "Running the copy of 'sleep' binary"
+  command: "sh {{ role_path }}/files/obtainpid.sh '{{ output_dir }}/{{ random_name.stdout }}' '{{ output_dir }}/obtainpid.txt'"
+
+  async: 100
+  poll: 0
+
+- name: "Checking the process IDs (PIDs) of sleep binary"
+  pids:
+    name: "{{ random_name.stdout }}"
+  register: pids
+
+- name: "Checking that exact non-substring matches are required"
+  pids:
+    name: "{{ random_name.stdout[0:5] }}"
+  register: exactpidmatch
+
+- name: "Reading pid from the file"
+  slurp:
+    src:  "{{ output_dir }}/obtainpid.txt"
+  register: newpid
+
+- name: "Verify that the Process IDs (PIDs) returned is not empty and also equal to the PIDs obtained in console"
+  assert:
+    that:
+    - "pids.pids | join(' ')  == newpid.content | b64decode | trim"
+    - "pids.pids | length > 0"
+    - "exactpidmatch.pids == []"
