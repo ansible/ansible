@@ -19,6 +19,8 @@ description:
 - Installs or uninstalls a package in MSP format.
 - These packages can be sources from the local file system, network file share
   or a url.
+version_added: "2.8"
+author: Rodric Vos (@finzzownt)
 options:
   expected_return_code:
     description:
@@ -96,8 +98,6 @@ notes:
   C(/L*V /log, /qn, /norestart).
 - Packages will be temporarily downloaded or copied locally when path is a
   network location and credential delegation is not set, or path is a URL.
-author:
-- Rodric Vos (@finzzownt)
 '''
 
 EXAMPLES = r'''
