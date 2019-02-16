@@ -119,7 +119,74 @@ class TestMyModule(unittest.TestCase):
         my_obj = my_module(module)
         my_obj.server = MockONTAPConnection('vserver', 'SVMadmin')
         with pytest.raises(KeyError) as exc:
-            my_obj.get_all()
+            my_obj.get_all(['net_interface_info'])
         if sys.version_info >= (2, 7):
             msg = 'net-interface-info'
             assert exc.value.args[0] == msg
+
+    def test_subset_return_all(self):
+        ''' Check all returns all of the entries '''
+        set_module_args({
+            'hostname': 'hostname',
+            'username': 'username',
+            'password': 'password',
+        })
+        module = basic.AnsibleModule(
+            argument_spec=netapp_utils.na_ontap_host_argument_spec(),
+            supports_check_mode=True
+        )
+        my_obj = my_module(module)
+        subset = my_obj.get_subset(['all'])
+        print('subset_returned: %s' % str(subset))
+        print('subset_self: %s' % str(set(my_obj.fact_subsets.keys())))
+        assert set(my_obj.fact_subsets.keys()) == subset
+
+    def test_subset_return_one(self):
+        ''' Check single entry returns one '''
+        set_module_args({
+            'hostname': 'hostname',
+            'username': 'username',
+            'password': 'password',
+        })
+        module = basic.AnsibleModule(
+            argument_spec=netapp_utils.na_ontap_host_argument_spec(),
+            supports_check_mode=True
+        )
+        my_obj = my_module(module)
+        subset = my_obj.get_subset(['net_interface_info'])
+        print('subset_returned: %s' % str(subset))
+        assert len(subset) == 1
+
+    def test_subset_return_multiple(self):
+        ''' Check that more than one entry returns the same number '''
+        set_module_args({
+            'hostname': 'hostname',
+            'username': 'username',
+            'password': 'password',
+        })
+        module = basic.AnsibleModule(
+            argument_spec=netapp_utils.na_ontap_host_argument_spec(),
+            supports_check_mode=True
+        )
+        my_obj = my_module(module)
+        subset_entries = ['net_interface_info', 'net_port_info']
+        subset = my_obj.get_subset(subset_entries)
+        print('subset_returned: %s' % str(subset))
+        assert len(subset) == len(subset_entries)
+
+    def test_subset_return_bad(self):
+        ''' Check that a bad subset entry will error out '''
+        set_module_args({
+            'hostname': 'hostname',
+            'username': 'username',
+            'password': 'password',
+        })
+        module = basic.AnsibleModule(
+            argument_spec=netapp_utils.na_ontap_host_argument_spec(),
+            supports_check_mode=True
+        )
+        my_obj = my_module(module)
+        with pytest.raises(AnsibleFailJson) as exc:
+            subset = my_obj.get_subset(['net_interface_info', 'my_invalid_subset'])
+        print('Info: %s' % exc.value.args[0]['msg'])
+        assert exc.value.args[0]['msg'] == 'Bad subset'
