@@ -121,7 +121,7 @@ options:
         from Docker Hub. To build the image, provide a path value set to a directory containing a context and
         Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
         repository, provide a repository path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.3. Specifying C(build) will behave the
+      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
          same as C(present)."
     required: false
     default: present
@@ -644,6 +644,11 @@ def main():
         min_docker_api_version='1.20',
         option_minimal_versions=option_minimal_versions,
     )
+
+    if client.module.params['state'] == 'build':
+        client.module.warn('The "build" state has been deprecated for a long time '
+                           'and will be removed in Ansible 2.11. Please use '
+                           '"present", which has the same meaning as "build".')
 
     results = dict(
         changed=False,
