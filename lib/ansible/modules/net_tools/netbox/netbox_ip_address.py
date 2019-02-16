@@ -230,13 +230,15 @@ msg:
   type: str
 '''
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.compat import ipaddress
-from ansible.module_utils._text import to_text
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, IP_ADDRESS_ROLE, IP_ADDRESS_STATUS
 import json
 import traceback
 
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, IP_ADDRESS_ROLE, IP_ADDRESS_STATUS
+from ansible.module_utils.compat import ipaddress
+from ansible.module_utils._text import to_text
+
+PYNETBOX_IMP_ERR = None
 try:
     import pynetbox
     HAS_PYNETBOX = True
