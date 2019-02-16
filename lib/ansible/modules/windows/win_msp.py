@@ -143,7 +143,7 @@ exit_code:
 log:
     description: msiexec.exe log
     returned: changed
-    type: string
+    type: list
 reboot_required:
     description: Indicates if a reboot is required after change
     returned: changed
