@@ -220,7 +220,7 @@
 - name: Assert the state has not changed
   assert:
     that:
-      - output.changed == false
+      - output.changed
       - output.name == 'testdatabase'
 
 - name: Create second instance of PostgreSQL Database
