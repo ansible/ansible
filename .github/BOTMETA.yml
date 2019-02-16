@@ -123,6 +123,9 @@ files:
   $modules/cloud/docker/docker_network.py:
     <<: *docker
     maintainers: $team_docker olsaki
+  $modules/cloud/docker/docker_swarm_service.py:
+    <<: *docker
+    maintainers: $team_docker hannseman
   $modules/cloud/google/:
     supershipit: $team_google
     maintainers: $team_google
