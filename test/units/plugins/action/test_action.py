@@ -133,6 +133,7 @@ class TestActionBase(unittest.TestCase):
         mock_module_loader.find_plugin.side_effect = mock_find_plugin
         mock_shared_obj_loader = MagicMock()
         mock_shared_obj_loader.module_loader = mock_module_loader
+        mock_templar = MagicMock()
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -143,7 +144,7 @@ class TestActionBase(unittest.TestCase):
             connection=mock_connection,
             play_context=play_context,
             loader=fake_loader,
-            templar=None,
+            templar=mock_templar,
             shared_loader_obj=mock_shared_obj_loader,
         )
 
