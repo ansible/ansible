@@ -1,6 +1,6 @@
-#!/bin/bash -eux
+#!/bin/bash
 
-set -o pipefail
+set -o pipefail -eux
 
 declare -a args
 IFS='/:' read -ra args <<< "$1"
