@@ -13,7 +13,7 @@
   - name: assert failure when called when swarm is not in use or not run on mamager node
     assert:
       that:
-         - 'output.failed'
+         - 'output is failed'
          - 'output.msg == "Error running docker swarm module: must run on swarm manager node"'
          - 'output.can_talk_to_docker'
          - 'output.docker_swarm_active == false'
@@ -34,7 +34,6 @@
 
   - name: Try to get docker_swarm_facts when docker is running in swarm mode and as manager
     docker_swarm_facts:
-    ignore_errors: yes
     register: output
 
   - name: assert creding docker swarm facts
@@ -50,7 +49,6 @@
   - name: Try to get docker_swarm_facts and list of nodes when docker is running in swarm mode and as manager
     docker_swarm_facts:
       nodes: yes
-    ignore_errors: yes
     register: output
 
   - name: assert reding swarm facts with list of nodes option
@@ -74,7 +72,6 @@
     docker_swarm_facts:
       nodes: yes
       verbose_output: yes
-    ignore_errors: yes
     register: output
 
   - name: assert reading swarm facts with list of nodes and versbose output options
@@ -95,7 +92,6 @@
       nodes: yes
       nodes_filters:
         name: "{{ localnodename }}"
-    ignore_errors: yes
     register: output
 
   - name: assert reading reading swarm facts and using node filter (random node name)
@@ -118,7 +114,6 @@
       nodes: yes
       nodes_filters:
         name: "{{ randomnodename }}"
-    ignore_errors: yes
     register: output
 
   - name: assert reading reading swarm facts and using node filter (random node name)
