@@ -370,7 +370,7 @@ options:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
   update_failure_action:
-    type: int
+    type: str
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
