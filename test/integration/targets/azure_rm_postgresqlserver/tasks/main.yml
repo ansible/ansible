@@ -141,7 +141,7 @@
       - output.servers[0]['user_visible_state'] != None
       - output.servers[0]['fully_qualified_domain_name'] != None
       - output.servers[0]['tags']['aaa'] == 'bbb'
-#      - output.servers[0]['tags']['ccc'] == 'ddd'
+      - output.servers[0]['tags']['ccc'] == 'ddd'
 
 - name: Gather facts PostgreSQL Server
   azure_rm_postgresqlserver_facts:
