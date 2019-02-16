@@ -68,23 +68,31 @@ Function Get-DomainMembershipMatch {
     }
 }
 
-Function Create-Credential {
-    Param(
-        [string] $cred_user,
-        [string] $cred_pass
-    )
-
-    $cred = New-Object System.Management.Automation.PSCredential($cred_user, $($cred_pass | ConvertTo-SecureString -AsPlainText -Force))
-
-    return $cred
+<#
+    .SYNOPSIS
+    Save the username and the encrypted password as PSCredential object
+    .Parameter username
+    Username of the user which will join or unjoin the computer object
+    .Parameter passwordEncrypted
+    Encrypted password of the user which will be used for join or unjoin the computer object
+#>
+function Save-Credential {
+    [CmdletBinding()] param([Parameter(Mandatory = $true)][string] $username, [Parameter(Mandatory = $true)][securestring] $passwordEncrypted)   
+    Write-DebugLog "Preparing credentials..."
+    $credentials = New-Object System.Management.Automation.PSCredential($username, $passwordEncrypted)
+    return $credentials
+    Write-DebugLog "Prepared credentials"
 }
 
+<#
+    .SYNOPSIS
+    Add-Computer will validate the "shape" of the hostname- we just care if it matches...
+
+#>
 Function Get-HostnameMatch {
     Param(
         [string] $hostname
     )
-
-    # Add-Computer will validate the "shape" of the hostname- we just care if it matches...
 
     $hostname_match = $env:COMPUTERNAME -eq $hostname
     Write-DebugLog ("current hostname {0} matches {1}: {2}" -f $env:COMPUTERNAME, $hostname, $hostname_match)
@@ -100,17 +108,13 @@ Function Join-Domain {
     Param(
         [string] $dns_domain_name,
         [string] $new_hostname,
-        [string] $domain_admin_user,
-        [string] $domain_admin_password,
+        [pscredential] $domainCredential,
         [string] $domain_ou_path
     )
 
-    Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
-    $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
-
     $add_args = @{
         ComputerName="."
-        Credential=$domain_cred
+        Credential=$domainCredential
         DomainName=$dns_domain_name
         Force=$null
     }
@@ -161,16 +165,14 @@ Function Set-Workgroup {
 Function Join-Workgroup {
     Param(
         [string] $workgroup_name,
-        [string] $domain_admin_user,
-        [string] $domain_admin_password
+        [pscredential] $domainCredential
     )
 
     If(Is-DomainJoined) { # if we're on a domain, unjoin it (which forces us to join a workgroup)
-        $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
-            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+            $rc_result = Remove-Computer -Workgroup $workgroup_name -UnjoinDomainCredential $domainCredential -Force
         } catch {
             Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
         }
@@ -192,11 +194,14 @@ $params = Parse-Args -arguments $args -supports_check_mode $true
 
 $state = Get-AnsibleParam $params "state" -validateset @("domain","workgroup") -failifempty $result
 
+$domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
+$domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
+$domainAdminPasswordEncrypted = $domain_admin_password | ConvertTo-SecureString -AsPlainText -Force
+$domainAdminCredentials = Save-Credential -username $domain_admin_user -passwordEncrypted $domainAdminPasswordEncrypted
+
 $dns_domain_name = Get-AnsibleParam $params "dns_domain_name"
 $hostname = Get-AnsibleParam $params "hostname"
 $workgroup_name = Get-AnsibleParam $params "workgroup_name"
-$domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
-$domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
 
 $log_path = Get-AnsibleParam $params "log_path"
@@ -263,8 +268,7 @@ Try {
                     $rename_args = @{NewName=$hostname}
 
                     If (Is-DomainJoined) {
-                        $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
-                        $rename_args.DomainCredential = $domain_cred
+                        $rename_args.DomainCredential = $domainAdminCredentials
                     }
 
                     $rename_result = Rename-Computer @rename_args
@@ -290,7 +294,7 @@ Try {
             If(-not $_ansible_check_mode) {
                 If(-not $workgroup_match) {
                     Write-DebugLog ("setting workgroup to {0}" -f $workgroup_name)
-                    $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domain_admin_user $domain_admin_user -domain_admin_password $domain_admin_password
+                    $join_wg_result = Join-Workgroup -workgroup_name $workgroup_name -domainCredential $domainAdminCredentials
 
                     # this change requires a reboot
                     $result.reboot_required = $true
