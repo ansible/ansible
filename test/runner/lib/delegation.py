@@ -212,7 +212,7 @@ def delegate_docker(args, exclude, require, integration_targets):
     if isinstance(args, ShellConfig) or (isinstance(args, IntegrationConfig) and args.debug_strategy):
         cmd_options.append('-it')
 
-    with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
+    with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.txt') as local_source_fd:
         try:
             if not args.explain:
                 if args.docker_keep_git:
@@ -220,7 +220,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 else:
                     tar_filter = lib.pytar.DefaultTarFilter()
 
-                lib.pytar.create_tarfile(local_source_fd.name, '.', tar_filter)
+                lib.pytar.create_file_list(local_source_fd.name, '.', tar_filter)
 
             if use_httptester:
                 httptester_id = run_httptester(args)
@@ -266,12 +266,9 @@ def delegate_docker(args, exclude, require, integration_targets):
             else:
                 test_id = test_id.strip()
 
-            # write temporary files to /root since /tmp isn't ready immediately on container start
-            docker_put(args, test_id, 'test/runner/setup/docker.sh', '/root/docker.sh')
-            docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
-            docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
-            docker_exec(args, test_id, ['mkdir', '/root/ansible'])
-            docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
+            run_command(args, ['test/runner/scripts/docker_put.sh', test_id, local_source_fd.name, '/root/ansible'])
+
+            docker_exec(args, test_id, ['/bin/bash', '/root/ansible/test/runner/setup/docker.sh'])
 
             # docker images are only expected to have a single python version available
             if isinstance(args, UnitsConfig) and not args.python:
@@ -308,10 +305,7 @@ def delegate_docker(args, exclude, require, integration_targets):
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
             finally:
-                with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
-                    docker_exec(args, test_id, ['tar', 'czf', '/root/results.tgz', '-C', '/root/ansible/test', 'results'])
-                    docker_get(args, test_id, '/root/results.tgz', local_result_fd.name)
-                    run_command(args, ['tar', 'oxzf', local_result_fd.name, '-C', 'test'])
+                run_command(args, ['test/runner/scripts/docker_get.sh', test_id, '/root/ansible/test', 'results', 'test'])
         finally:
             if httptester_id:
                 docker_rm(args, httptester_id)
