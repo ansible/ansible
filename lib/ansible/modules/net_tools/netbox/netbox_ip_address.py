@@ -230,16 +230,18 @@ msg:
   type: str
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, IP_ADDRESS_ROLE, IP_ADDRESS_STATUS
 import json
+import traceback
 
 try:
     import pynetbox
     HAS_PYNETBOX = True
 except ImportError:
+    PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
 
 
@@ -260,7 +262,7 @@ def main():
 
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
-        module.fail_json(msg='pynetbox is required for this module')
+        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
 
     # Assign variables to be used with module
     app = 'ipam'
