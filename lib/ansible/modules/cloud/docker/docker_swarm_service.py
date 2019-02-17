@@ -403,7 +403,6 @@ options:
       - Corresponds to the C(--restart-window) option of C(docker service create).
   update_delay:
     type: int
-    default: 10
     description:
       - Rolling update delay in nanoseconds.
       - Corresponds to the C(--update-delay) option of C(docker service create).
@@ -1710,7 +1709,7 @@ def main():
         restart_policy_delay=dict(type='int'),
         restart_policy_attempts=dict(type='int'),
         restart_policy_window=dict(type='int'),
-        update_delay=dict(default=10, type='int'),
+        update_delay=dict(type='int'),
         update_parallelism=dict(type='int'),
         update_failure_action=dict(choices=['continue', 'pause']),
         update_monitor=dict(type='int'),
