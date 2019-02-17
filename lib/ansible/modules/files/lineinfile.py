@@ -299,19 +299,26 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         elif bre_ins is not None and bre_ins.search(b_cur_line):
             if insertafter:
                 if firstmatch and index[1] == -1:
-                    # first time insertafter regex matched; update index[1]
+                    # first time insertafter regex matches; update index[1]
                     index[1] = lineno + 1
                 elif firstmatch and index[1] != -1:
                     # insertafter regex matched already; don't update index[1]
                     continue
                 elif not firstmatch:
+                    # = firstmatch is false; update index[1] 
                     # + 1 for the next line
                     index[1] = lineno + 1
             if insertbefore:
-                # index[1] for the previous line
-                index[1] = lineno
-                if firstmatch:
-                    break
+                if firstmatch and index[1] == -1:
+                    # first time insertbefore regex matches; update index[1]
+                    index[1] = lineno
+                elif firstmatch and index[1] != -1:
+                    # insertbefore regex matched already; don't update index[1]
+                    continue
+                else: 
+                    # = firstmatch is false; update index[1] 
+                    # index[1] for the previous line
+                    index[1] = lineno
 
     msg = ''
     changed = False
