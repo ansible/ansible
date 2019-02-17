@@ -21,7 +21,7 @@ $dns_computer_name = Get-AnsibleParam -obj $params -Name "computer_name" -failif
 
 
 $extra_args = @{}
-if ($domain_server -ne $null) {
+if ($dns_computer_name -ne $null) {
     $extra_args.ComputerName = $dns_computer_name
 }
 
