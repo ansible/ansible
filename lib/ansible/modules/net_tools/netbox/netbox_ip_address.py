@@ -245,7 +245,7 @@ def main():
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
         data=dict(type="dict", required=True),
-        state=dict(required=False, default='present', choices=['present', 'absent']),
+        state=dict(required=False, default='present', choices=['present', 'absent', 'new']),
         validate_certs=dict(type="bool", default=True)
     )
 
@@ -489,4 +489,3 @@ def ensure_ip_address_absent(nb_endpoint, data):
 
 if __name__ == "__main__":
     main()
-
