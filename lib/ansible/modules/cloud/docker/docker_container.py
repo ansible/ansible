@@ -1087,7 +1087,7 @@ class TaskParameters(DockerBaseClass):
         try:
             self.healthcheck, self.disable_healthcheck = parse_healthcheck(self.healthcheck)
         except ValueError as e:
-            self.fail(e)
+            self.fail(str(e))
 
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
