@@ -749,7 +749,7 @@ def parse_healthcheck(healthcheck):
                     if isinstance(result[key], (tuple, list)):
                         result[key] = [str(e) for e in result[key]]
                     else:
-                        result[key] = ["CMD-SHELL", str(result[key])]
+                        result[key] = ['CMD-SHELL', str(result[key])]
                 elif key == 'retries':
                     try:
                         result[key] = int(result[key])
