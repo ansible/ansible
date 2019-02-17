@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: ce
+short_description: Use ce cliconf to run command on HUAWEI CloudEngine platform
+description:
+  - This ce plugin provides low level abstraction apis for
+    sending and receiving CLI commands from HUAWEI CloudEngine network devices.
+version_added: 2.7
+"""
+
 import re
 import json
 
@@ -35,7 +45,7 @@ class Cliconf(CliconfBase):
         device_info = {}
 
         device_info['network_os'] = 'ce'
-        reply = self.get(b'display version')
+        reply = self.get('display version')
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'^Huawei.+\n.+\Version\s+(\S+)', data)
@@ -86,8 +96,5 @@ class Cliconf(CliconfBase):
         return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
-        result = {}
-        result['rpc'] = self.get_base_rpc()
-        result['network_api'] = 'cliconf'
-        result['device_info'] = self.get_device_info()
+        result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)

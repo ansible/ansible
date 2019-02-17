@@ -86,6 +86,7 @@ ANSIBLE_PIPELINING:
     - This can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
+    - This options is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
   env:
     - name: ANSIBLE_PIPELINING
     - name: ANSIBLE_SSH_PIPELINING
@@ -318,6 +319,20 @@ COLOR_WARN:
   env: [{name: ANSIBLE_COLOR_WARN}]
   ini:
   - {key: warn, section: colors}
+CONDITINAL_BARE_VARS:
+  name: Allow bare variable evaluation in conditionals
+  default: True
+  type: boolean
+  description:
+    - With this setting on (True), runing conditional evaluation 'var' is treated differently 'var.subkey' as the first is evaluted
+      directly while the second goes though the Jinja2 parser. But 'false' strings in 'var' get evaluated as booleans.
+    - With this settting off they both evalutate the same but in cases in which 'var' was 'false' (a string) it won't get evaluated as a boolean anymore.
+    - Currently this setting defaults to 'True' but will soon change to 'False' and the setting itself will be removed in the future.
+    - Expect the default to change in version 2.10 and that this setting eventually will be deprecated after 2.12
+  env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
+  ini:
+  - {key: conditional_bare_variables, section: defaults}
+  version_added: "2.8"
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
@@ -352,6 +367,14 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+DOC_FRAGMENT_PLUGIN_PATH:
+  name: documentation fragment plugins path
+  default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
+  description: Colon separated paths in which Ansible will search for Documentation Fragments Plugins.
+  env: [{name: ANSIBLE_DOC_FRAGMENT_PLUGINS}]
+  ini:
+  - {key: doc_fragment_plugins, section: defaults}
+  type: pathspec
 DEFAULT_ACTION_PLUGIN_PATH:
   name: Action plugins path
   default: ~/.ansible/plugins/action:/usr/share/ansible/plugins/action
@@ -459,6 +482,14 @@ DEFAULT_BECOME_FLAGS:
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
   - {key: become_flags, section: privilege_escalation}
+DEFAULT_BECOME_PLUGIN_PATH:
+  name: Become plugins path
+  default: ~/.ansible/plugins/become:/usr/share/ansible/become
+  description: Colon separated paths in which Ansible will search for Become Plugins.
+  env: [{name: ANSIBLE_BECOME_PLUGINS}]
+  ini:
+  - {key: become_plugins, section: defaults}
+  type: pathspec
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
@@ -610,6 +641,7 @@ DEFAULT_GATHER_SUBSET:
     - key: gather_subset
       section: defaults
   version_added: "2.1"
+  type: list
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   default: 10
@@ -715,7 +747,9 @@ DEFAULT_JINJA2_NATIVE:
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
-  description: Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
+  description:
+    - Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
+    - If this option is enabled it will disable ``ANSIBLE_PIPELINING``.
   env: [{name: ANSIBLE_KEEP_REMOTE_FILES}]
   ini:
   - {key: keep_remote_files, section: defaults}
@@ -1059,50 +1093,6 @@ DEFAULT_SU:
   - {key: su, section: defaults}
   type: boolean
   yaml: {key: defaults.su}
-DEFAULT_SUDO:
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework
-    version: "2.9"
-    alternatives: become
-  description: 'Toggle the use of "sudo" for tasks.'
-  env: [{name: ANSIBLE_SUDO}]
-  ini:
-  - {key: sudo, section: defaults}
-  type: boolean
-DEFAULT_SUDO_EXE:
-  name: sudo executable
-  default: sudo
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.9"
-    alternatives: become
-  description: 'specify an "sudo" executable, otherwise it relies on PATH.'
-  env: [{name: ANSIBLE_SUDO_EXE}]
-  ini:
-  - {key: sudo_exe, section: defaults}
-DEFAULT_SUDO_FLAGS:
-  name: sudo flags
-  default: '-H -S -n'
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.9"
-    alternatives: become
-  description: 'Flags to pass to "sudo"'
-  env: [{name: ANSIBLE_SUDO_FLAGS}]
-  ini:
-  - {key: sudo_flags, section: defaults}
-DEFAULT_SUDO_USER:
-  name: sudo user
-  default:
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.9"
-    alternatives: become
-  description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
-  env: [{name: ANSIBLE_SUDO_USER}]
-  ini:
-  - {key: sudo_user, section: defaults}
 DEFAULT_SU_EXE:
   name: su executable
   default: su
@@ -1383,6 +1373,15 @@ HOST_KEY_CHECKING:
   ini:
   - {key: host_key_checking, section: defaults}
   type: boolean
+HOST_PATTERN_MISMATCH:
+  name: Control host pattern mismatch behaviour
+  default: 'warning'
+  description: This setting changes the behaviour of mismatched host patterns, it allows you to force a fatal error, a warning or just ignore it
+  env: [{name: ANSIBLE_HOST_PATTERN_MISMATCH}]
+  ini:
+  - {key: host_pattern_mismatch, section: inventory}
+  choices: ['warning', 'error', 'ignore']
+  version_added: "2.8"
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
   default: True
@@ -1554,7 +1553,7 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
   type: integer
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
-  default: 10
+  default: 30
   description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
@@ -1591,6 +1590,20 @@ PLUGIN_FILTERS_CFG:
   - key: plugin_filters_cfg
     section: defaults
   type: path
+PYTHON_MODULE_RLIMIT_NOFILE:
+  name: Adjust maximum file descriptor soft limit during Python module execution
+  description:
+  - Attempts to set RLIMIT_NOFILE soft limit to the specified value when executing Python modules (can speed up subprocess usage on
+    Python 2.x. See https://bugs.python.org/issue11284). The value will be limited by the existing hard limit. Default
+    value of 0 does not attempt to adjust existing system-defined limits.
+  default: 0
+  env:
+  - {name: ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE}
+  ini:
+  - {key: python_module_rlimit_nofile, section: defaults}
+  vars:
+  - {name: ansible_python_module_rlimit_nofile}
+  version_added: '2.8'
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True

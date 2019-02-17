@@ -261,6 +261,10 @@ class Default(FactsBase):
                 self.facts['image'] = self.parse_image(data)
                 self.facts['hostname'] = self.parse_hostname(data)
 
+        data = self.run('show license host-id')
+        if data:
+            self.facts['license_hostid'] = self.parse_license_hostid(data)
+
     def parse_version(self, data):
         match = re.search(r'\s+system:\s+version\s*(\S+)', data, re.M)
         if match:
@@ -291,6 +295,11 @@ class Default(FactsBase):
 
     def parse_hostname(self, data):
         match = re.search(r'\s+Device name:\s*(\S+)', data, re.M)
+        if match:
+            return match.group(1)
+
+    def parse_license_hostid(self, data):
+        match = re.search(r'License hostid: VDH=(.+)$', data, re.M)
         if match:
             return match.group(1)
 

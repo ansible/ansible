@@ -92,15 +92,16 @@ $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "b
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $members = Get-AnsibleParam -obj $params -name "members" -type "list" -failifempty $true
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
+$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","pure"
 
 $result = @{
     changed = $false
     name = $name
 }
-if ($state -eq "present") {
+if ($state -in @("present", "pure")) {
     $result.added = @()
-} elseif ($state -eq "absent") {
+}
+if ($state -in @("absent", "pure")) {
     $result.removed = @()
 }
 
@@ -112,9 +113,13 @@ if (!$group) {
 }
 
 $current_members = Get-GroupMember -Group $group
+$pure_members = @()
 
 foreach ($member in $members) {
     $group_member = Test-GroupMember -GroupMember $member
+    if ($state -eq "pure") {
+        $pure_members += $group_member
+    }
 
     $user_in_group = $false
     foreach ($current_member in $current_members) {
@@ -127,7 +132,7 @@ foreach ($member in $members) {
     $member_sid = "WinNT://{0}" -f $group_member.sid
 
     try {
-        if ($state -eq "present" -and !$user_in_group) {
+        if ($state -in @("present", "pure") -and !$user_in_group) {
             if (!$check_mode) {
                 $group.Add($member_sid)
                 $result.added += $group_member.account_name
@@ -142,6 +147,35 @@ foreach ($member in $members) {
         }
     } catch {
         Fail-Json -obj $result -message $_.Exception.Message
+    }
+}
+
+if ($state -eq "pure") {
+    # Perform removals for existing group members not defined in $members
+    $current_members = Get-GroupMember -Group $group
+
+    foreach ($current_member in $current_members) {
+        $user_to_remove = $true
+        foreach ($pure_member in $pure_members) {
+            if ($pure_member.sid -eq $current_member.sid) {
+                $user_to_remove = $false
+                break
+            }
+        }
+
+        $member_sid = "WinNT://{0}" -f $current_member.sid
+
+        try {
+            if ($user_to_remove) {
+                if (!$check_mode) {
+                    $group.Remove($member_sid)
+                    $result.removed += $current_member.account_name
+                }
+                $result.changed = $true
+            }
+        } catch {
+            Fail-Json -obj $result -message $_.Exception.Message
+        }
     }
 }
 

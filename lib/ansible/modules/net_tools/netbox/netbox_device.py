@@ -161,45 +161,29 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-meta:
-  description: Message indicating failure or returns results with the object created within Netbox
+device:
+  description: Serialized object as created or already existent within Netbox
+  returned: on creation
+  type: dict
+msg:
+  description: Message indicating failure or info about what has been achieved
   returned: always
-  type: list
+  type: str
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
 import json
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
+
+PYNETBOX_IMP_ERR = None
 try:
     import pynetbox
     HAS_PYNETBOX = True
 except ImportError:
+    PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
-
-
-def netbox_create_device(nb, nb_endpoint, data):
-    norm_data = normalize_data(data)
-    if norm_data.get("status"):
-            norm_data["status"] = DEVICE_STATUS.get(norm_data["status"].lower(), 0)
-    if norm_data.get("face"):
-        norm_data["face"] = FACE_ID.get(norm_data["face"].lower(), 0)
-    data = find_ids(nb, norm_data)
-    try:
-        return nb_endpoint.create([norm_data])
-    except pynetbox.RequestError as e:
-        return json.loads(e.error)
-
-
-def netbox_delete_device(nb_endpoint, data):
-    norm_data = normalize_data(data)
-    endpoint = nb_endpoint.get(name=norm_data["name"])
-    result = []
-    try:
-        if endpoint.delete():
-            result.append({'success': '%s deleted from Netbox' % (norm_data["name"])})
-    except AttributeError:
-        result.append({'failed': '%s not found' % (norm_data["name"])})
-    return result
 
 
 def main():
@@ -219,10 +203,9 @@ def main():
 
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
-        module.fail_json(msg='pynetbox is required for this module')
+        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
 
     # Assign variables to be used with module
-    changed = False
     app = 'dcim'
     endpoint = 'devices'
     url = module.params["netbox_url"]
@@ -242,15 +225,62 @@ def main():
         module.fail_json(msg="Incorrect application specified: %s" % (app))
 
     nb_endpoint = getattr(nb_app, endpoint)
-    if 'present' in state:
-        response = netbox_create_device(nb, nb_endpoint, data)
-        if response[0].get('created'):
-            changed = True
+    norm_data = normalize_data(data)
+    try:
+        if 'present' in state:
+            return module.exit_json(
+                **ensure_device_present(nb, nb_endpoint, norm_data)
+            )
+        else:
+            return module.exit_json(
+                **ensure_device_absent(nb_endpoint, norm_data)
+            )
+    except pynetbox.RequestError as e:
+        return module.fail_json(msg=json.loads(e.error))
+
+
+def ensure_device_present(nb, nb_endpoint, data):
+    '''
+    :returns dict(device, msg, changed): dictionary resulting of the request,
+        where `device` is the serialized device fetched or newly created in
+        Netbox
+    '''
+    nb_device = nb_endpoint.get(name=data["name"])
+    if not nb_device:
+        device = _netbox_create_device(nb, nb_endpoint, data).serialize()
+        changed = True
+        msg = "Device %s created" % (data["name"])
     else:
-        response = netbox_delete_device(nb_endpoint, data)
-        if 'success' in response[0]:
-            changed = True
-    module.exit_json(changed=changed, meta=response)
+        msg = "Device %s already exists" % (data["name"])
+        device = nb_device.serialize()
+        changed = False
+
+    return {"device": device, "msg": msg, "changed": changed}
+
+
+def _netbox_create_device(nb, nb_endpoint, data):
+    if data.get("status"):
+        data["status"] = DEVICE_STATUS.get(data["status"].lower(), 0)
+    if data.get("face"):
+        data["face"] = FACE_ID.get(data["face"].lower(), 0)
+    data = find_ids(nb, data)
+    return nb_endpoint.create(data)
+
+
+def ensure_device_absent(nb_endpoint, data):
+    '''
+    :returns dict(msg, changed)
+    '''
+    device = nb_endpoint.get(name=data["name"])
+    if device:
+        device.delete()
+        msg = 'Device %s deleted' % (data["name"])
+        changed = True
+    else:
+        msg = 'Device %s already absent' % (data["name"])
+        changed = False
+
+    return {"msg": msg, "changed": changed}
 
 
 if __name__ == "__main__":

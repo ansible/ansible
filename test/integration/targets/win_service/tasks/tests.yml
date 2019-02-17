@@ -427,7 +427,7 @@
     - win_service_local_system_desktop is changed
     - win_service_local_system_desktop.username == 'LocalSystem'
     - win_service_local_system_desktop.desktop_interact == True
-    
+
 - name: set service username to Local System with desktop interaction again
   win_service:
     name: "{{test_win_service_name}}"
@@ -800,116 +800,116 @@
     - win_service_removed.state is not defined
     - win_service_removed.username is not defined
 
-# only run these tests if TapiSrv is already stopped, don't want to impact an existing server
-- block:
-  - name: start the pausable service
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: started
-    register: stat_pausable_service
+- name: create new pausable dummy test service
+  win_service:
+    name: "{{test_win_service_name}}"
+    path: "{{test_win_service_path}}"
+    display_name: "{{test_win_service_display_name}}"
+    description: "{{test_win_service_description}}"
+    state: started
+  register: stat_pausable_service
 
-  - name: assert get details on a pausable service
-    assert:
-      that:
-      - stat_pausable_service.can_pause_and_continue == True
+- name: assert get details on a pausable service
+  assert:
+    that:
+    - stat_pausable_service.can_pause_and_continue == True
 
-  - name: pause a service check
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: paused
-    register: win_service_paused_check
-    check_mode: yes
+- name: pause a service check
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: paused
+  register: win_service_paused_check
+  check_mode: yes
 
-  - name: assert pause a service check
-    assert:
-      that:
-      - win_service_paused_check is changed
-      - win_service_paused_check.state == 'running'
+- name: assert pause a service check
+  assert:
+    that:
+    - win_service_paused_check is changed
+    - win_service_paused_check.state == 'running'
 
-  - name: pause a service
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: paused
-    register: win_service_paused
+- name: pause a service
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: paused
+  register: win_service_paused
 
-  - name: assert pause a service
-    assert:
-      that:
-      - win_service_paused is changed
-      - win_service_paused.state == 'paused'
+- name: assert pause a service
+  assert:
+    that:
+    - win_service_paused is changed
+    - win_service_paused.state == 'paused'
 
-  - name: pause a service again
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: paused
-    register: win_service_paused_again
+- name: pause a service again
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: paused
+  register: win_service_paused_again
 
-  - name: assert pause a service again
-    assert:
-      that:
-      - win_service_paused_again is not changed
+- name: assert pause a service again
+  assert:
+    that:
+    - win_service_paused_again is not changed
 
-  - name: start a paused service check
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: started
-    register: start_paused_service_check
-    check_mode: yes
+- name: start a paused service check
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: started
+  register: start_paused_service_check
+  check_mode: yes
 
-  - name: assert start a paused service check
-    assert:
-      that:
-      - start_paused_service_check is changed
-      - start_paused_service_check.state == 'paused'
+- name: assert start a paused service check
+  assert:
+    that:
+    - start_paused_service_check is changed
+    - start_paused_service_check.state == 'paused'
 
-  - name: start a paused service
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: started
-    register: start_paused_service
+- name: start a paused service
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: started
+  register: start_paused_service
 
-  - name: assert start a paused service
-    assert:
-      that:
-      - start_paused_service is changed
-      - start_paused_service.state == 'running'
+- name: assert start a paused service
+  assert:
+    that:
+    - start_paused_service is changed
+    - start_paused_service.state == 'running'
 
-  - name: pause service for next test
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: paused
+- name: pause service for next test
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: paused
 
-  - name: stop a paused service check
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: stopped
-      force_dependent_services: True
-    register: stop_paused_service_check
-    check_mode: yes
+- name: stop a paused service check
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: stopped
+    force_dependent_services: True
+  register: stop_paused_service_check
+  check_mode: yes
 
-  - name: assert stop a paused service check
-    assert:
-      that:
-      - stop_paused_service_check is changed
-      - stop_paused_service_check.state == 'paused'
+- name: assert stop a paused service check
+  assert:
+    that:
+    - stop_paused_service_check is changed
+    - stop_paused_service_check.state == 'paused'
 
-  - name: stop a paused service
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: stopped
-      force_dependent_services: True
-    register: stop_paused_service
+- name: stop a paused service
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: stopped
+    force_dependent_services: True
+  register: stop_paused_service
 
-  - name: assert stop a paused service
-    assert:
-      that:
-      - stop_paused_service is changed
-      - stop_paused_service.state == 'stopped'
+- name: assert stop a paused service
+  assert:
+    that:
+    - stop_paused_service is changed
+    - stop_paused_service.state == 'stopped'
 
-  - name: fail to pause a stopped service check
-    win_service:
-      name: '{{test_win_service_pause_name}}'
-      state: paused
-    register: fail_pause_stopped_service
-    failed_when: "fail_pause_stopped_service.msg != 'failed to pause service ' + test_win_service_pause_name + ': The service does not support pausing'"
-  when: pause_service_details.state == 'stopped'
+- name: fail to pause a stopped service check
+  win_service:
+    name: '{{test_win_service_name}}'
+    state: paused
+  register: fail_pause_stopped_service
+  failed_when: "fail_pause_stopped_service.msg != 'failed to pause service ' + test_win_service_name + ': The service does not support pausing'"

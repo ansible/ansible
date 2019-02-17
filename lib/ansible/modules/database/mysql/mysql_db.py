@@ -1,20 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+# Copyright: (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mysql_db
 short_description: Add or remove MySQL databases from a remote host.
@@ -72,7 +70,7 @@ notes:
 extends_documentation_fragment: mysql
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a new database with name 'bobdata'
   mysql_db:
     name: bobdata
@@ -143,7 +141,7 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --ssl-cert=%s" % pipes.quote(ssl_cert)
     if ssl_key is not None:
         cmd += " --ssl-key=%s" % pipes.quote(ssl_key)
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd += " --ssl-ca=%s" % pipes.quote(ssl_ca)
     if socket is not None:
         cmd += " --socket=%s" % pipes.quote(socket)
@@ -190,14 +188,14 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd.append("--user=%s" % pipes.quote(user))
     if password:
         cmd.append("--password=%s" % pipes.quote(password))
-    if socket is not None:
-        cmd.append("--socket=%s" % pipes.quote(socket))
     if ssl_cert is not None:
         cmd.append("--ssl-cert=%s" % pipes.quote(ssl_cert))
     if ssl_key is not None:
         cmd.append("--ssl-key=%s" % pipes.quote(ssl_key))
-    if ssl_cert is not None:
+    if ssl_ca is not None:
         cmd.append("--ssl-ca=%s" % pipes.quote(ssl_ca))
+    if socket is not None:
+        cmd.append("--socket=%s" % pipes.quote(socket))
     else:
         cmd.append("--host=%s" % pipes.quote(host))
         cmd.append("--port=%i" % port)
@@ -250,26 +248,26 @@ def db_create(cursor, db, encoding, collation):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            name=dict(required=True, aliases=['db']),
-            encoding=dict(default=""),
-            collation=dict(default=""),
-            target=dict(default=None, type='path'),
-            state=dict(default="present", choices=["absent", "present", "dump", "import"]),
-            ssl_cert=dict(default=None, type='path'),
-            ssl_key=dict(default=None, type='path'),
-            ssl_ca=dict(default=None, type='path'),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type='path'),
-            single_transaction=dict(default=False, type='bool'),
-            quick=dict(default=True, type='bool'),
-            ignore_tables=dict(default=[], type='list')
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            name=dict(type='str', required=True, aliases=['db']),
+            encoding=dict(type='str', default=''),
+            collation=dict(type='str', default=''),
+            target=dict(type='path'),
+            state=dict(type='str', default='present', choices=['absent', 'dump', 'import', 'present']),
+            ssl_cert=dict(type='path'),
+            ssl_key=dict(type='path'),
+            ssl_ca=dict(type='path'),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+            single_transaction=dict(type='bool', default=False),
+            quick=dict(type='bool', default=True),
+            ignore_tables=dict(type='list', default=[]),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if mysql_driver is None:

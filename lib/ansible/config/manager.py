@@ -77,7 +77,7 @@ def ensure_type(value, value_type, origin=None):
     '''
 
     basedir = None
-    if origin and os.path.isabs(origin) and os.path.exists(origin):
+    if origin and os.path.isabs(origin) and os.path.exists(to_bytes(origin)):
         basedir = origin
 
     if value_type:
@@ -398,8 +398,8 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and defs[config].get('keywords'):
-                    value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                if value is None and keys and config in keys:
+                    value, origin = keys[config], 'keyword'
                     origin = 'keyword: %s' % origin
 
                 # env vars are next precedence

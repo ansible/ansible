@@ -169,15 +169,18 @@ RETURN = '''
 # Returns only a success/failure result. Changed is always false.
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
 
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+
+LIB_FOUND_ERR = None
 try:
     import aerospike
     from time import sleep
     import re
 except ImportError as ie:
     LIB_FOUND = False
-    LIB_FOUND_ERR = ie
+    LIB_FOUND_ERR = traceback.format_exc()
 else:
     LIB_FOUND = True
 
@@ -210,13 +213,8 @@ def run_module():
         supports_check_mode=True
     )
     if not LIB_FOUND:
-        module.fail_json(
-            msg="A required module was not found. This playbook" +
-            " requires the 'aerospike' 'time' and 're' modules. " +
-            "Please run 'pip install aerospike'. The other modules" +
-            " should be included in a basic python install." +
-            " OS Error: {0}".format(LIB_FOUND_ERR)
-        )
+        module.fail_json(msg=missing_required_lib('aerospike'),
+                         exception=LIB_FOUND_ERR)
 
     try:
         if module.check_mode:
@@ -386,7 +384,7 @@ class Migrations:
                 cluster_keys[cluster_key] = 1
             else:
                 cluster_keys[cluster_key] += 1
-        if len(cluster_keys.keys()) is 1 and \
+        if len(cluster_keys.keys()) == 1 and \
                 self._start_cluster_key in cluster_keys:
             return True
         return False

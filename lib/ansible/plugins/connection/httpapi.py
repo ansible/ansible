@@ -61,6 +61,7 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_httpapi_pass
+      - name: ansible_httpapi_password
   use_ssl:
     type: boolean
     description:
@@ -137,7 +138,7 @@ options:
         return from the remote device.  If this timer is exceeded before the
         command returns, the connection plugin will raise an exception and
         close.
-    default: 10
+    default: 30
     ini:
       - section: persistent_connection
         key: command_timeout
@@ -287,5 +288,7 @@ class Connection(NetworkConnectionBase):
 
         # Try to assign a new auth token if one is given
         self._auth = self.update_auth(response, response_buffer) or self._auth
+
+        response_buffer.seek(0)
 
         return response, response_buffer

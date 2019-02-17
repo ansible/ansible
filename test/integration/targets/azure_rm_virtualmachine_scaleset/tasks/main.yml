@@ -152,6 +152,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
+    custom_data: "#cloud-config"
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -184,6 +185,7 @@
     tier: Standard
     managed_disk_type: Standard_LRS
     os_disk_caching: ReadWrite
+    custom_data: "#cloud-config"
     image:
       offer: CoreOS
       publisher: CoreOS
@@ -258,26 +260,102 @@
   assert:
     that: not results.changed
 
+- name: Install VMSS Extension
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    publisher: Microsoft.Azure.Extensions
+    type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "sudo apt-get -y install apache2"}
+  register: results
+
+- name: Assert that something was changed
+  assert:
+    that: results.changed
+
+- name: Install Again VMSS Extension - again
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    publisher: Microsoft.Azure.Extensions
+    type: CustomScript
+    type_handler_version: 2.0
+    auto_upgrade_minor_version: true
+    settings: {"commandToExecute": "sudo apt-get -y install apache2"}
+  register: results
+
+- name: Assert that nothing was changed
+  assert:
+    that: not results.changed
+
+- name: Query extension
+  azure_rm_virtualmachinescalesetextension_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['vmss_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+- name: List extensions
+  azure_rm_virtualmachinescalesetextension_facts:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+  register: results
+- name: Assert that facts are returned
+  assert:
+    that:
+      - results.changed == False
+      - results.extensions[0]['id'] != None
+      - results.extensions[0]['resource_group'] != None
+      - results.extensions[0]['vmss_name'] != None
+      - results.extensions[0]['name'] != None
+      - results.extensions[0]['publisher'] != None
+      - results.extensions[0]['type'] != None
+      - results.extensions[0]['settings'] != None
+      - results.extensions[0]['auto_upgrade_minor_version'] != None
+      - results.extensions[0]['provisioning_state'] != None
+
+
+- name: Delete VMSS Extension
+  azure_rm_virtualmachinescalesetextension:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    name: testExtension
+    state: absent
+  register: results
+
+- name: Assert that change was reported
+  assert:
+    that: results.changed
+
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}
     state: absent
-    remove_on_absent: ['all']
-    vm_size: Standard_B1s
-    capacity: 1
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
 
 - name: Create VMSS with security group in same resource group, with accelerated networking(check mode).
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -301,7 +379,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -327,7 +405,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -351,7 +429,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_D3_v2
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -375,7 +453,7 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     vm_size: Standard_B1s
-    capacity: 1
+    capacity: 0
     virtual_network_name: testVnet
     subnet_name: testSubnet
     admin_username: testuser
@@ -402,14 +480,6 @@
     resource_group: "{{ resource_group }}"
     name: testVMSS{{ rpfx }}2
     state: absent
-    remove_on_absent: ['all']
-    vm_size: Standard_B1s
-    capacity: 1
-    image:
-      offer: CoreOS
-      publisher: CoreOS
-      sku: Stable
-      version: latest
 
 - name: Fail when instance type is not supported to enable accelerated networking
   azure_rm_virtualmachine_scaleset:

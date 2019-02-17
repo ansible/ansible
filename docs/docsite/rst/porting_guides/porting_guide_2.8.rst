@@ -27,6 +27,33 @@ The two facts used in playbooks most often, ``ansible_distribution`` and ``ansib
 difference.  However, other facts like ``ansible_distribution_release`` and
 ``ansible_distribution_version`` may change as erroneous information gets corrected.
 
+Imports as handlers
+-------------------
+
+Beginning in version 2.8, a task cannot notify ``import_tasks`` or a static ``include`` that is specified in ``handlers``.
+
+The goal of a static import is to act as a pre-processor, where the import is replaced by the tasks defined within the imported file. When
+using an import, a task can notify any of the named tasks within the imported file, but not the name of the import itself.
+
+To achieve the results of notifying a single name but running mulitple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
+
+Jinja Undefined values
+----------------------
+
+Beginning in version 2.8, attempting to access an attribute of an Undefined value in Jinja will return another Undefined value, rather than throwing an error immediately. This means that you can now simply use
+a default with a value in a nested data structure when you don't know if the intermediate values are defined.
+
+In Ansible 2.8::
+
+    {{ foo.bar.baz | default('DEFAULT') }}
+
+In Ansible 2.7 and older::
+
+    {{ ((foo | default({})).bar | default({})).baz | default('DEFAULT') }}
+    
+    or
+    
+    {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
 
 Command Line
 ============
@@ -85,6 +112,10 @@ add ``$ErrorActionPreference = "Continue"`` to the top of the module. This chang
 of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
 that may occur in execution.
 
+PowerShell module options and option choices are currently case insensitive to what is defined in the module
+specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
+A future release of Ansible will make these checks case sensitive.
+
 
 Modules removed
 ---------------
@@ -105,6 +136,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
+* ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
 
 
 Noteworthy module changes
@@ -147,8 +179,26 @@ Noteworthy module changes
   remove that workaround. To get the previous behavior when applying ``state: absent`` to a builtin kernel module,
   use ``failed_when: false`` or ``ignore_errors: true`` in your playbook.
 
+* The ``digital_ocean`` module has been deprecated in favor of modules that do not require external dependencies.
+  This allows for more flexibility and better module support.
+
+* The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
+
+* The ``docker_swarm_service`` module no longer sets a default for the ``user`` option. Before, the default was ``root``.
+
+* ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
+  Please see module ``vmware_vm_facts`` documentation for example.
+
+
 Plugins
 =======
+
+* Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
+  and ``ansible_<conn-type>_password`` variables.  Variables such as
+  ``ansible_<conn-type>_pass`` and ``ansible_<conn-type>_username`` are treated
+  with lower priority than the standardized names and may be deprecated in the
+  future.  In general, the ``ansible_user`` and ``ansible_password`` vars should
+  be used unless there is a reason to use the connection-specific variables.
 
 * The ``powershell`` shell plugin now uses ``async_dir`` to define the async path for the results file and the default
   has changed to ``%USERPROFILE%\.ansible_async``. To control this path now, either set the ``ansible_async_dir``
@@ -200,4 +250,9 @@ import and instantiate ``ansible.utils.display.Display`` on its own.
 Networking
 ==========
 
-No notable changes.
+* The ``eos_config``, ``ios_config``, and ``nxos_config`` modules have removed the deprecated
+  ``save`` and ``force`` parameters, use the ``save_when`` parameter to replicate their
+  functionality.
+
+* The ``nxos_vrf_af`` module has removed the ``safi`` paramter. This parameter was deprecated
+  in Ansible 2.4 and has had no impact on the module since then.

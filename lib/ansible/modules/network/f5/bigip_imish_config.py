@@ -153,6 +153,28 @@ options:
         configuration against.
       - When specifying this argument, the task should also modify the
         C(diff_against) value and set it to I(intended).
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 notes:
   - Abbreviated commands are NOT idempotent, see
     L(Network FAQ,../network/user_guide/faq.html#why-do-the-config-modules-always-return-changed-true-with-abbreviated-commands).
@@ -223,6 +245,19 @@ EXAMPLES = r'''
       user: admin
       password: secret
       server: lb.mydomain.com
+  delegate_to: localhost
+
+- name: configurable backup path
+  bigip_imish_config:
+    lines: bfd slow-timer 2000
+    backup: yes
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
   delegate_to: localhost
 '''
 
@@ -707,6 +742,10 @@ class ModuleManager(object):
 class ArgumentSpec(object):
     def __init__(self):
         self.supports_check_mode = True
+        backup_spec = dict(
+            filename=dict(),
+            dir_path=dict(type='path')
+        )
         argument_spec = dict(
             route_domain=dict(default=0),
             src=dict(type='path'),
@@ -723,6 +762,7 @@ class ArgumentSpec(object):
             intended_config=dict(),
 
             backup=dict(type='bool', default=False),
+            backup_options=dict(type='dict', options=backup_spec),
 
             save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 

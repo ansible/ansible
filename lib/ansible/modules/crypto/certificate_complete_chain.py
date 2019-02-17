@@ -121,10 +121,12 @@ complete_chain:
 '''
 
 import os
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_bytes
 
+CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     import cryptography.hazmat.backends
@@ -140,6 +142,7 @@ try:
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.5'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
 except ImportError as e:
+    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     HAS_CRYPTOGRAPHY = False
 
 
@@ -289,7 +292,7 @@ def main():
     )
 
     if not HAS_CRYPTOGRAPHY:
-        module.fail_json(msg='cryptography >= 1.5 is required for this module.')
+        module.fail_json(msg=missing_required_lib('cryptography >= 1.5'), exception=CRYPTOGRAPHY_IMP_ERR)
 
     # Load chain
     chain = parse_PEM_list(module, module.params['input_chain'], source='input chain')

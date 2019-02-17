@@ -337,6 +337,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not isinstance(config_data['projects'], list):
             raise AnsibleParserError("Projects must be a list in GCP inventory YAML files")
 
+        # add in documented defaults
+        if 'filters' not in config_data:
+            config_data['filters'] = None
+
         projects = config_data['projects']
         zones = config_data.get('zones')
         config_data['scopes'] = ['https://www.googleapis.com/auth/compute']

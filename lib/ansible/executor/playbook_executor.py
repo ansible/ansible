@@ -25,8 +25,10 @@ from ansible import constants as C
 from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
+from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.template import Templar
+from ansible.plugins.loader import connection_loader, shell_loader
 from ansible.utils.helpers import pct_to_int
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.path import makedirs_safe
@@ -55,8 +57,13 @@ class PlaybookExecutor:
                 context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager,
-                                         loader=loader, passwords=self.passwords)
+            self._tqm = TaskQueueManager(
+                inventory=inventory,
+                variable_manager=variable_manager,
+                loader=loader,
+                passwords=self.passwords,
+                forks=context.CLIARGS.get('forks'),
+            )
 
         # Note: We run this here to cache whether the default ansible ssh
         # executable supports control persist.  Sometime in the future we may
@@ -76,6 +83,11 @@ class PlaybookExecutor:
         entrylist = []
         entry = {}
         try:
+            # preload become/connection/shell to set config defs cached
+            list(connection_loader.all(class_only=True))
+            list(shell_loader.all(class_only=True))
+            list(become_loader.all(class_only=True))
+
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
@@ -106,6 +118,7 @@ class PlaybookExecutor:
                     templar = Templar(loader=self._loader, variables=all_vars)
                     setattr(play, 'vars_prompt', templar.template(play.vars_prompt))
 
+                    # FIXME: this should be a play 'sub object' like loop_control
                     if play.vars_prompt:
                         for var in play.vars_prompt:
                             vname = var['name']
@@ -116,11 +129,13 @@ class PlaybookExecutor:
                             encrypt = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt = var.get("salt", None)
+                            unsafe = var.get("unsafe", None)
 
                             if vname not in self._variable_manager.extra_vars:
                                 if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt,
+                                                            default, unsafe)
+                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default, unsafe)
                                 else:  # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
 

@@ -24,6 +24,7 @@ options:
     name:
         description:
             - Name of the service to manage.
+        type: str
         required: true
     state:
         description:
@@ -33,13 +34,14 @@ options:
               C(reloaded) will send a sigusr1 (svc -1).
               C(once) will run a normally downed svc once (svc -o), not really
               an idempotent operation.
+        type: str
         choices: [ killed, once, reloaded, restarted, started, stopped ]
     downed:
         description:
             - Should a 'down' file exist or not, if it exists it disables auto startup.
               Defaults to no. Downed does not imply stopped.
         type: bool
-        default: 'no'
+        default: no
     enabled:
         description:
             - Whether the service is enabled or not, if disabled it also implies stopped.
@@ -48,10 +50,13 @@ options:
     service_dir:
         description:
             - Directory svscan watches for services
+        type: str
         default: /service
     service_src:
         description:
             - Directory where services are defined, the source of symlinks to service_dir.
+        type: str
+        default: /etc/service
 '''
 
 EXAMPLES = '''
@@ -247,7 +252,6 @@ def main():
             state=dict(type='str', choices=['killed', 'once', 'reloaded', 'restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
             downed=dict(type='bool'),
-            dist=dict(type='str', default='daemontools'),
             service_dir=dict(type='str', default='/service'),
             service_src=dict(type='str', default='/etc/service'),
         ),

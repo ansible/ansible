@@ -26,7 +26,7 @@ ifdef PLUGINS
 	PLUGIN_ARGS = -l $(PLUGINS)
 endif
 
-DOC_PLUGINS ?= cache callback connection inventory lookup shell strategy vars
+DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup shell strategy vars
 
 assertrst:
 ifndef rst

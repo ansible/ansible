@@ -99,25 +99,14 @@ options:
         line is not correct.
     default: line
     choices: ['line', 'block', 'config']
-  force:
-    description:
-      - The force argument instructs the module to not consider the
-        current devices running-config.  When set to true, this will
-        cause the module to push the contents of I(src) into the device
-        without first checking if already configured.
-      - Note this argument should be considered deprecated.  To achieve
-        the equivalent, set the C(match=none) which is idempotent.  This argument
-        will be removed in Ansible 2.6.
-    type: bool
-    default: 'no'
   backup:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory or role root directory, if
-        playbook is part of an ansible role. If the directory does not exist,
-        it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory or role root directory, if playbook is part of an
+        ansible role. If the directory does not exist, it is created.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -139,19 +128,6 @@ options:
         the command used to collect the running-config is append with
         the all keyword.  When the value is set to false, the command
         is issued without the all keyword
-    type: bool
-    default: 'no'
-    version_added: "2.2"
-  save:
-    description:
-      - The C(save) argument instructs the module to save the
-        running-config to startup-config.  This operation is performed
-        after any changes are made to the current running config.  If
-        no changes are made, the configuration is still saved to the
-        startup config.  This option will always cause the module to
-        return changed.
-      - This option is deprecated as of Ansible 2.4 and will be removed
-        in Ansible 2.8, use C(save_when) instead.
     type: bool
     default: 'no'
     version_added: "2.2"
@@ -206,6 +182,28 @@ options:
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
     version_added: "2.4"
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -245,6 +243,14 @@ EXAMPLES = """
       - shutdown
     # parents: int eth1
     parents: interface Ethernet1
+
+- name: configurable backup path
+  eos_config:
+    src: eos_template.j2
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -263,6 +269,26 @@ backup_path:
   returned: when backup is yes
   type: str
   sample: /playbooks/ansible/backup/eos_config.2016-07-16@22:28:34
+filename:
+  description: The name of the backup file
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: eos_config.2016-07-16@22:28:34
+shortname:
+  description: The full path to the backup file excluding the timestamp
+  returned: when backup is yes and filename is not specified in backup options
+  type: str
+  sample: /playbooks/ansible/backup/eos_config
+date:
+  description: The date extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "2016-07-16"
+time:
+  description: The time extracted from the backup file name
+  returned: when backup is yes
+  type: str
+  sample: "22:28:34"
 """
 from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
@@ -310,6 +336,10 @@ def save_config(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -324,6 +354,7 @@ def main():
 
         defaults=dict(type='bool', default=False),
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
 
         save_when=dict(choices=['always', 'never', 'modified', 'changed'], default='never'),
 
@@ -332,19 +363,12 @@ def main():
 
         running_config=dict(aliases=['config']),
         intended_config=dict(),
-
-        # save is deprecated as of ans2.4, use save_when instead
-        save=dict(default=False, type='bool', removed_in_version='2.8'),
-
-        # force argument deprecated in ans2.2
-        force=dict(default=False, type='bool', removed_in_version='2.6')
     )
 
     argument_spec.update(eos_argument_spec)
 
     mutually_exclusive = [('lines', 'src'),
-                          ('parents', 'src'),
-                          ('save', 'save_when')]
+                          ('parents', 'src')]
 
     required_if = [('match', 'strict', ['lines']),
                    ('match', 'exact', ['lines']),
@@ -420,7 +444,7 @@ def main():
     running_config = module.params['running_config']
     startup_config = None
 
-    if module.params['save_when'] == 'always' or module.params['save']:
+    if module.params['save_when'] == 'always':
         save_config(module, result)
     elif module.params['save_when'] == 'modified':
         output = run_commands(module, [{'command': 'show running-config', 'output': 'text'},

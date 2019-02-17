@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2018, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -46,6 +47,12 @@ options:
     type: str
     choices: [ absent, present, query ]
     default: present
+notes:
+- Due to restrictions of the MSO REST API this module cannot create empty schemas (i.e. schemas without templates).
+  Use the M(mso_schema_template) to automatically create schemas with templates.
+seealso:
+- module: mso_schema_site
+- module: mso_schema_template
 extends_documentation_fragment: mso
 '''
 
@@ -126,7 +133,7 @@ def main():
         supports_check_mode=True,
         required_if=[
             ['state', 'absent', ['schema']],
-            ['state', 'present', ['schema']],
+            ['state', 'present', ['schema', 'templates']],
         ],
     )
 

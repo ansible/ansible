@@ -52,6 +52,7 @@ td{vertical-align:top}
 .relative{position:relative}
 big,small{font-size:100%}
 @media print{html,body,section{background:none !important}
+.wy-nav-content{position:relative!important}
 *{box-shadow:none !important;text-shadow:none !important;filter:none !important;-ms-filter:none !important}
 a,a:visited{text-decoration:underline}
 .ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}
@@ -59,7 +60,8 @@ pre,blockquote{page-break-inside:avoid}
 thead{display:table-header-group}
 tr,img{page-break-inside:avoid}
 img{max-width:100% !important}
-@page{margin:0.5cm}
+@page{margin:20px!important}
+.DocSite-nav{display:none!important}
 p,h2,.rst-content .toctree-wrapper p.caption,h3{orphans:3;widows:3}
 h2,.rst-content .toctree-wrapper p.caption,h3{page-break-after:avoid}
 }
@@ -85,7 +87,7 @@ h2,.rst-content .toctree-wrapper p.caption,h3{page-break-after:avoid}
 }
 
 
-    
+
 .ansibleNav ul li{
     padding: 7px 0px;
     border-bottom: 1px solid #444;
@@ -109,24 +111,24 @@ h2,.rst-content .toctree-wrapper p.caption,h3{page-break-after:avoid}
     background: transparent;
 }
 
- 
+
 @media screen and (min-width: 768px) {
-    
+
     .DocSite-globalNav{
         display: block
     }
 
-    
+
     #sideBanner{
         display: block;
     }
 
-    
+
     .DocSite-sideNav{
         display: none;
     }
 
-    
+
     .ansibleNav{
         height: 45px;
         width: 100%;
@@ -142,14 +144,14 @@ h2,.rst-content .toctree-wrapper p.caption,h3{page-break-after:avoid}
         margin-top: 13px;
     }
 
-    
-        
+
+
     .ansibleNav ul li{
         padding: 0px;
         border-bottom: none;
     }
 
-    
+
     .ansibleNav ul li a {
         color: #fff;
         text-decoration: none;
@@ -266,7 +268,7 @@ DocSiteProduct-header {
     background-color: #5bbdbf;
     text-align: center;
     padding: 4px;
-    display: block; 
+    display: block;
     margin-bottom: 0.809em;
 }
 
@@ -312,7 +314,7 @@ DocSiteProduct-header {
     border: 2px solid #5bbdbf;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    color: #fff;    
+    color: #fff;
     padding-left: 2px;
     margin-left: 2px;
 
@@ -367,7 +369,7 @@ DocSiteProduct-header {
     color: #fff;
     font-size: 20px;
     position: fixed;
-    margin-left: 40px;        
+    margin-left: 40px;
     margin-top: -4px;
 
 }
@@ -508,7 +510,7 @@ table {
 }
 
 
-    
+
 .ansibleNav ul li{
     padding: 7px 0px;
     border-bottom: 1px solid #444;
@@ -532,25 +534,25 @@ table {
     background: transparent;
 }
 
- 
+
 @media screen and (min-width: 768px) {
-    
+
     .DocSite-globalNav{
         display: block;
         position: fixed;
     }
 
-    
+
     #sideBanner{
         display: block;
     }
 
-    
+
     .DocSite-sideNav{
         display: none;
     }
 
-    
+
     .ansibleNav{
         height: 45px;
         width: 100%;
@@ -566,14 +568,14 @@ table {
         margin-top: 13px;
     }
 
-    
-        
+
+
     .ansibleNav ul li{
         padding: 0px;
         border-bottom: none;
     }
 
-    
+
     .ansibleNav ul li a {
         color: #fff;
         text-decoration: none;
@@ -1802,19 +1804,19 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
 @media screen and (max-width: 480px){.rst-content .sidebar{width:100%}
 }
 @media screen and (min-width: 768px) {
-    
+
     .DocSite-globalNav{
         display: block
     }
-    
+
     #sideBanner{
         display: block;
     }
-    
+
     .DocSite-sideNav{
         display: none;
     }
-    
+
     .ansibleNav{
         height: 45px;
         width: 100%;
@@ -1828,13 +1830,13 @@ footer span.commit code,footer span.commit .rst-content tt,.rst-content footer s
         flex-wrap: nowrap;
         margin-top: 13px;
     }
-    
-        
+
+
     .ansibleNav ul li{
         padding: 0px;
         border-bottom: none;
     }
-    
+
     .ansibleNav ul li a {
         color: #fff;
         text-decoration: none;
@@ -1854,4 +1856,3 @@ span[id*='MathJax-Span']{color:#404040}
 @font-face{font-family:"Lato";font-style:italic;font-weight:700;src:local("Lato Bold Italic"),local("Lato-BoldItalic"),url(../fonts/Lato-BoldItalic.ttf) format("truetype")}
 @font-face{font-family:"Roboto Slab";font-style:normal;font-weight:400;src:local("Roboto Slab Regular"),local("RobotoSlab-Regular"),url(../fonts/RobotoSlab-Regular.ttf) format("truetype")}
 @font-face{font-family:"Roboto Slab";font-style:normal;font-weight:700;src:local("Roboto Slab Bold"),local("RobotoSlab-Bold"),url(../fonts/RobotoSlab-Bold.ttf) format("truetype")}
-

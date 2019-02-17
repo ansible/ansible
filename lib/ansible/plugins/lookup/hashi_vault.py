@@ -18,45 +18,51 @@ DOCUMENTATION = """
     - Due to a current limitation in the HVAC library there won't necessarily be an error if a bad endpoint is specified.
   options:
     secret:
-      description: query you are making
+      description: query you are making.
       required: True
     token:
-      description: vault token
+      description: vault token.
       env:
         - name: VAULT_TOKEN
     url:
-      description: url to vault service
+      description: URL to vault service.
       env:
         - name: VAULT_ADDR
       default: 'http://127.0.0.1:8200'
     username:
-      description: authentication user name
+      description: Authentication user name.
     password:
-      description: authentication password
+      description: Authentication password.
     role_id:
-      description: Role id for a vault AppRole auth
+      description: Role id for a vault AppRole auth.
       env:
         - name: VAULT_ROLE_ID
     secret_id:
-      description: Secret id for a vault AppRole auth
+      description: Secret id for a vault AppRole auth.
       env:
         - name: VAULT_SECRET_ID
     auth_method:
-      description: authentication method used
+      description:
+      - Authentication method to be used.
+      - C(userpass) is added in version 2.8.
       env:
         - name: VAULT_AUTH_METHOD
+      choices:
+        - userpass
+        - ldap
+        - approle
     mount_point:
-      description: vault mount point, only required if you have a custom mount point
+      description: vault mount point, only required if you have a custom mount point.
       default: ldap
     cacert:
-      description: path to certificate to use for authentication
+      description: path to certificate to use for authentication.
     validate_certs:
       description: controls verification and validation of SSL certificates, mostly you only want to turn off with self signed ones.
       type: boolean
       default: True
     namespace:
       version_added: "2.8"
-      description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+
+      description: namespace where secrets reside. requires HVAC 0.7.0+ and Vault 0.11+.
       default: None
 """
 
@@ -71,6 +77,10 @@ EXAMPLES = """
 - name: Vault that requires authentication via LDAP
   debug:
       msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=ldap mount_point=ldap username=myuser password=mypas url=http://myvault:8200')}}"
+
+- name: Vault that requires authentication via username and password
+  debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/hello:value auth_method=userpass username=myuser password=mypas url=http://myvault:8200')}}"
 
 - name: Using an ssl vault
   debug:
@@ -120,6 +130,7 @@ class HashiVault:
 
         self.url = kwargs.get('url', ANSIBLE_HASHI_VAULT_ADDR)
         self.namespace = kwargs.get('namespace', None)
+        self.avail_auth_method = ['approle', 'userpass', 'ldap']
 
         # split secret arg, which has format 'secret/hello:value' into secret='secret/hello' and secret_field='value'
         s = kwargs.get('secret')
@@ -152,7 +163,8 @@ class HashiVault:
                 # prefixing with auth_ to limit which methods can be accessed
                 getattr(self, 'auth_' + self.auth_method)(**kwargs)
             except AttributeError:
-                raise AnsibleError("Authentication method '%s' not supported" % self.auth_method)
+                raise AnsibleError("Authentication method '%s' not supported."
+                                   " Available options are %r" % (self.auth_method, self.avail_auth_method))
         else:
             self.token = kwargs.get('token', os.environ.get('VAULT_TOKEN', None))
             if self.token is None and os.environ.get('HOME'):
@@ -189,16 +201,28 @@ class HashiVault:
 
         return data['data'][self.secret_field]
 
-    def auth_ldap(self, **kwargs):
+    def check_params(self, **kwargs):
         username = kwargs.get('username')
         if username is None:
-            raise AnsibleError("Authentication method ldap requires a username")
+            raise AnsibleError("Authentication method %s requires a username" % self.auth_method)
 
         password = kwargs.get('password')
         if password is None:
-            raise AnsibleError("Authentication method ldap requires a password")
+            raise AnsibleError("Authentication method %s requires a password" % self.auth_method)
 
         mount_point = kwargs.get('mount_point')
+
+        return username, password, mount_point
+
+    def auth_userpass(self, **kwargs):
+        username, password, mount_point = self.check_params(**kwargs)
+        if mount_point is None:
+            mount_point = 'userpass'
+
+        self.client.auth_userpass(username, password, mount_point)
+
+    def auth_ldap(self, **kwargs):
+        username, password, mount_point = self.check_params(**kwargs)
         if mount_point is None:
             mount_point = 'ldap'
 
@@ -228,11 +252,11 @@ class HashiVault:
 
 
 class LookupModule(LookupBase):
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         if not HAS_HVAC:
             raise AnsibleError("Please pip install hvac to use the hashi_vault lookup module.")
 
-        vault_args = terms[0].split(' ')
+        vault_args = terms[0].split()
         vault_dict = {}
         ret = []
 

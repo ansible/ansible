@@ -1,4 +1,4 @@
-default name=quay.io/ansible/default-test-container:1.4.1 python=3
+default name=quay.io/ansible/default-test-container:1.5.2 python=3
 centos6 name=quay.io/ansible/centos6-test-container:1.4.0 seccomp=unconfined
 centos7 name=quay.io/ansible/centos7-test-container:1.4.0 seccomp=unconfined
 fedora28 name=quay.io/ansible/fedora28-test-container:1.5.0
@@ -7,3 +7,4 @@ opensuse42.3 name=quay.io/ansible/opensuse42.3-test-container:1.4.0 seccomp=unco
 ubuntu1404 name=quay.io/ansible/ubuntu1404-test-container:1.4.0 seccomp=unconfined
 ubuntu1604 name=quay.io/ansible/ubuntu1604-test-container:1.4.0 seccomp=unconfined
 ubuntu1604py3 name=quay.io/ansible/ubuntu1604py3-test-container:1.4.0 seccomp=unconfined python=3
+ubuntu1804 name=quay.io/ansible/ubuntu1804-test-container:1.6.0 seccomp=unconfined python=3

@@ -123,7 +123,7 @@ options:
     description:
       - Length of time in seconds after a new EC2 instance comes into service that Auto Scaling starts checking its health.
     required: false
-    default: 500 seconds
+    default: 300 seconds
     version_added: "1.7"
   health_check_type:
     description:

@@ -132,6 +132,14 @@ options:
     default: null
     required: false
 
+  labels:
+    version_added: 2.8
+    description:
+      - Dictionary of labels.
+    type: dict
+    default: null
+    required: false
+
   scope:
     version_added: 2.8
     description:
@@ -153,25 +161,17 @@ options:
     required: false
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - "Ben Keith (@keitwb)"
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Dave Bendit (@DBendit)"
+  - "Ben Keith (@keitwb)"
+  - "Chris Houseknecht (@chouseknecht)"
+  - "Dave Bendit (@DBendit)"
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.10.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "The docker server >= 1.10.0"
+  - "docker-py >= 1.10.0"
+  - "The docker server >= 1.10.0"
 '''
 
 EXAMPLES = '''
@@ -216,6 +216,13 @@ EXAMPLES = '''
           host1: 172.3.27.3
           host2: 172.3.27.4
 
+- name: Create a network with labels
+  docker_network:
+    name: network_four
+    labels:
+      key1: value1
+      key2: value2
+
 - name: Create a network with IPv6 IPAM config
   docker_network:
     name: network_ipv6_one
@@ -250,7 +257,7 @@ import re
 
 from distutils.version import LooseVersion
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DockerBaseClass,
     docker_version,
@@ -260,11 +267,10 @@ from ansible.module_utils.docker_common import (
 
 try:
     from docker import utils
-    from docker.errors import NotFound
     if LooseVersion(docker_version) >= LooseVersion('2.0.0'):
         from docker.types import IPAMPool, IPAMConfig
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 
@@ -283,6 +289,7 @@ class TaskParameters(DockerBaseClass):
         self.appends = None
         self.force = None
         self.internal = None
+        self.labels = None
         self.debug = None
         self.enable_ipv6 = None
         self.scope = None
@@ -437,6 +444,17 @@ class DockerNetworkManager(object):
             differences.add('attachable',
                             parameter=self.parameters.attachable,
                             active=net.get('Attachable'))
+        if self.parameters.labels:
+            if not net.get('Labels'):
+                differences.add('labels',
+                                parameter=self.parameters.labels,
+                                active=net.get('Labels'))
+            else:
+                for key, value in self.parameters.labels.items():
+                    if not (key in net['Labels']) or value != net['Labels'][key]:
+                        differences.add('labels.%s' % key,
+                                        parameter=value,
+                                        active=net['Labels'].get(key))
 
         return not differences.empty, differences
 
@@ -475,6 +493,8 @@ class DockerNetworkManager(object):
                 params['scope'] = self.parameters.scope
             if self.parameters.attachable is not None:
                 params['attachable'] = self.parameters.attachable
+            if self.parameters.labels:
+                params['labels'] = self.parameters.labels
 
             if not self.check_mode:
                 resp = self.client.create_network(self.parameters.network_name, **params)
@@ -586,6 +606,7 @@ def main():
         )),
         enable_ipv6=dict(type='bool'),
         internal=dict(type='bool'),
+        labels=dict(type='dict', default={}),
         debug=dict(type='bool', default=False),
         scope=dict(type='str', choices=['local', 'global', 'swarm']),
         attachable=dict(type='bool'),
@@ -598,6 +619,7 @@ def main():
     option_minimal_versions = dict(
         scope=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         attachable=dict(docker_py_version='2.0.0', docker_api_version='1.26'),
+        labels=dict(docker_api_version='1.23'),
     )
 
     client = AnsibleDockerClient(

@@ -136,6 +136,10 @@ if not HAS_SSLCONTEXT and HAS_SSL:
         del libssl
 
 
+# The following makes it easier for us to script updates of the bundled backports.ssl_match_hostname
+# The bundled backports.ssl_match_hostname should really be moved into its own file for processing
+_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.5.0.1"}
+
 LOADED_VERIFY_LOCATIONS = set()
 
 HAS_MATCH_HOSTNAME = True
@@ -146,6 +150,13 @@ except ImportError:
         from backports.ssl_match_hostname import match_hostname, CertificateError
     except ImportError:
         HAS_MATCH_HOSTNAME = False
+
+
+try:
+    import urllib_gssapi
+    HAS_GSSAPI = True
+except ImportError:
+    HAS_GSSAPI = False
 
 if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
@@ -890,7 +901,7 @@ class Request:
              force=None, last_mod_time=None, timeout=None, validate_certs=None,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=None, follow_redirects=None,
-             client_cert=None, client_key=None, cookies=None):
+             client_cert=None, client_key=None, cookies=None, use_gssapi=False):
         """
         Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -924,6 +935,7 @@ class Request:
             authentication. If client_cert contains both the certificate and key, this option is not required
         :kwarg cookies: (optional) CookieJar object to send with the
             request
+        :kwarg use_gssapi: (optional) Use GSSAPI handler of requests.
         :returns: HTTPResponse
         """
 
@@ -952,6 +964,8 @@ class Request:
         ssl_handler = maybe_add_ssl_handler(url, validate_certs)
         if ssl_handler:
             handlers.append(ssl_handler)
+        if HAS_GSSAPI and use_gssapi:
+            handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
 
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
@@ -1149,7 +1163,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None, cookies=None):
+             client_cert=None, client_key=None, cookies=None,
+             use_gssapi=False):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
@@ -1160,7 +1175,8 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
-                          client_cert=client_cert, client_key=client_key, cookies=cookies)
+                          client_cert=client_cert, client_key=client_key, cookies=cookies,
+                          use_gssapi=use_gssapi)
 
 
 #
@@ -1195,7 +1211,8 @@ def url_argument_spec():
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
-              use_proxy=True, force=False, last_mod_time=None, timeout=10):
+              use_proxy=True, force=False, last_mod_time=None, timeout=10,
+              use_gssapi=False):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1208,6 +1225,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg boolean force: If True: Do not get a cached copy (Default: False)
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
+    :kwarg boolean use_gssapi:   Default: False
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
@@ -1257,7 +1275,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key, cookies=cookies)
+                     client_key=client_key, cookies=cookies, use_gssapi=use_gssapi)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 

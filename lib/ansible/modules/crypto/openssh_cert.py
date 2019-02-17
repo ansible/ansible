@@ -21,7 +21,7 @@ author: "David Kainz (@lolcube)"
 version_added: "2.8"
 short_description: Generate OpenSSH host or user certificates.
 description:
-    - Generate and regenerate OpensSSH host or user certificates.
+    - Generate and regenerate OpenSSH host or user certificates.
 requirements:
     - "ssh-keygen"
 options:
@@ -203,6 +203,7 @@ from datetime import timedelta
 from shutil import copy2
 from shutil import rmtree
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.crypto import convert_relative_to_datetime
 from ansible.module_utils._text import to_native
 
 
@@ -332,24 +333,12 @@ class Certificate(object):
     def convert_to_datetime(self, module, timestring):
 
         if self.is_relative(timestring):
-            dispatched_time = re.findall("^([+\\-])((\\d+)[w])?((\\d+)[d])?((\\d+)[h])?((\\d+)[m])?((\\d+)[s])?$", timestring, re.I)
-            if not dispatched_time:
-                module.fail_json(msg="'%s' is not a valid time format." % timestring)
-            dispatched_time = dispatched_time[0]
-            if dispatched_time[0] == "+":
-                return datetime.utcnow() + timedelta(
-                    weeks=int('0' + dispatched_time[2]),
-                    days=int('0' + dispatched_time[4]),
-                    hours=int('0' + dispatched_time[6]),
-                    minutes=int('0' + dispatched_time[8]),
-                    seconds=int('0' + dispatched_time[10]))
+            result = convert_relative_to_datetime(timestring)
+            if result is None:
+                module.fail_json(
+                    msg="'%s' is not a valid time format." % timestring)
             else:
-                return datetime.utcnow() - timedelta(
-                    weeks=int('0' + dispatched_time[2]),
-                    days=int('0' + dispatched_time[4]),
-                    hours=int('0' + dispatched_time[6]),
-                    minutes=int('0' + dispatched_time[8]),
-                    seconds=int('0' + dispatched_time[10]))
+                return result
         else:
             formats = ["%Y-%m-%d",
                        "%Y-%m-%d %H:%M:%S",
@@ -521,22 +510,22 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            force=dict(default=False, type=bool),
-            type=dict(choices=['host', 'user'], type='str'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            force=dict(type='bool', default=False),
+            type=dict(type='str', choices=['host', 'user']),
             signing_key=dict(type='path'),
             public_key=dict(type='path'),
-            path=dict(required=True, type='path'),
+            path=dict(type='path', required=True),
             identifier=dict(type='str'),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
-            principals=dict(type=list),
-            options=dict(type=list),
+            principals=dict(type='list'),
+            options=dict(type='list'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])]
+        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])],
     )
 
     def isBaseDir(path):

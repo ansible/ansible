@@ -38,6 +38,7 @@ options:
       - Description of a crontab entry or, if env is set, the name of environment variable.
         Required if state=absent. Note that if name is not set and state=present, then a
         new crontab entry will always be created, regardless of existing ones.
+        This parameter will always be required in future releases.
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -98,7 +99,7 @@ options:
   special_time:
     description:
       - Special time specification nickname.
-    choices: [ reboot, yearly, annually, monthly, weekly, daily, hourly ]
+    choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
   disabled:
     description:
@@ -566,6 +567,12 @@ def main():
             ['reboot', 'special_time'],
             ['insertafter', 'insertbefore'],
         ],
+        required_by=dict(
+            cron_file=('user'),
+        ),
+        required_if=(
+            ('state', 'present', ('job')),
+        ),
     )
 
     name = module.params['name']
@@ -603,6 +610,17 @@ def main():
 
     module.debug('cron instantiated - name: "%s"' % name)
 
+    if not name:
+        module.deprecate(
+            msg="The 'name' parameter will be required in future releases.",
+            version='2.10'
+        )
+    if reboot:
+        module.deprecate(
+            msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
+            version='2.10'
+        )
+
     if module._diff:
         diff = dict()
         diff['before'] = crontab.existing
@@ -623,13 +641,6 @@ def main():
     # cannot support special_time on solaris
     if (special_time or reboot) and get_platform() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
-
-    if cron_file and do_install:
-        if not user:
-            module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
-
-    if job is None and do_install:
-        module.fail_json(msg="You must specify 'job' to install a new cron job or variable")
 
     if (insertafter or insertbefore) and not env and do_install:
         module.fail_json(msg="Insertafter and insertbefore parameters are valid only with env=yes")

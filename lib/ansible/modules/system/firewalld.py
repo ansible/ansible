@@ -65,9 +65,9 @@ options:
     default: system-default(public)
   permanent:
     description:
-      - >
-        Should this configuration be in the running firewalld configuration or persist across reboots. As of Ansible version 2.3, permanent operations can
-        operate on firewalld configs when it's not running (requires firewalld >= 3.0.9). (NOTE: If this is false, immediate is assumed true.)
+      - Should this configuration be in the running firewalld configuration or persist across reboots.
+      - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 3.0.9).
+      - Note that if this is C(no), immediate is assumed C(yes).
     type: bool
   immediate:
     description:
@@ -452,7 +452,7 @@ class InterfaceTransaction(FirewallTransaction):
                 # Even it shouldn't happen, it's actually possible that
                 # the same interface is in several zone XML files
                 self.module.fail_json(
-                    msg='ERROR: interface {} is in {} zone XML file, can only be in one'.format(
+                    msg='ERROR: interface {0} is in {1} zone XML file, can only be in one'.format(
                         interface,
                         len(iface_zone_objs)
                     )
@@ -647,7 +647,11 @@ def main():
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_by=dict(
+            interface=('zone'),
+            source=('permanent'),
+        ),
     )
 
     permanent = module.params['permanent']

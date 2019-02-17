@@ -27,9 +27,9 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.release import __version__
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
-from ansible.utils.vars import load_extra_vars, load_options_vars
 from ansible.vars.manager import VariableManager
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
+from ansible.plugins.loader import add_all_plugin_dirs
 
 
 display = Display()
@@ -234,7 +234,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             try:
                 file_vault_secret.load()
             except AnsibleError as exc:
-                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, exc))
+                display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, to_text(exc)))
                 raise
 
             if vault_id_name:
@@ -278,36 +278,6 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         return (sshpass, becomepass)
 
-    @staticmethod
-    def normalize_become_options(options):
-        ''' this keeps backwards compatibility with sudo/su command line options '''
-        if not options.become_ask_pass:
-            options.become_ask_pass = options.ask_sudo_pass or options.ask_su_pass or C.DEFAULT_BECOME_ASK_PASS
-        if not options.become_user:
-            options.become_user = options.sudo_user or options.su_user or C.DEFAULT_BECOME_USER
-
-        def _dep(which):
-            display.deprecated('The %s command line option has been deprecated in favor of the "become" command line arguments' % which, '2.9')
-
-        if options.become:
-            pass
-        elif options.sudo:
-            options.become = True
-            options.become_method = 'sudo'
-            _dep('sudo')
-        elif options.su:
-            options.become = True
-            options.become_method = 'su'
-            _dep('su')
-
-        # other deprecations:
-        if options.ask_sudo_pass or options.sudo_user:
-            _dep('sudo')
-        if options.ask_su_pass or options.su_user:
-            _dep('su')
-
-        return options
-
     def validate_conflicts(self, op, vault_opts=False, runas_opts=False, fork_opts=False, vault_rekey_opts=False):
         ''' check for conflicting options '''
 
@@ -319,17 +289,6 @@ class CLI(with_metaclass(ABCMeta, object)):
         if vault_rekey_opts:
             if op.new_vault_id and op.new_vault_password_file:
                 self.parser.error("--new-vault-password-file and --new-vault-id are mutually exclusive")
-
-        if runas_opts:
-            # Check for privilege escalation conflicts
-            if ((op.su or op.su_user) and (op.sudo or op.sudo_user) or
-                    (op.su or op.su_user) and (op.become or op.become_user) or
-                    (op.sudo or op.sudo_user) and (op.become or op.become_user)):
-
-                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass')"
-                                  " and su arguments ('--su', '--su-user', and '--ask-su-pass')"
-                                  " and become arguments ('--become', '--become-user', and"
-                                  " '--ask-become-pass') are exclusive of each other")
 
         if fork_opts:
             if op.forks < 1:
@@ -503,6 +462,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         basedir = options.get('basedir', False)
         if basedir:
             loader.set_basedir(basedir)
+            add_all_plugin_dirs(basedir)
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST
@@ -520,19 +480,7 @@ class CLI(with_metaclass(ABCMeta, object)):
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
-        variable_manager = VariableManager(loader=loader, inventory=inventory)
-
-        # If the basedir is specified as the empty string then it results in cwd being used.  This
-        # is not a safe location to load vars from
-        if options.get('basedir', False) is not False:
-            if basedir:
-                variable_manager.safe_basedir = True
-        else:
-            variable_manager.safe_basedir = True
-
-        # load vars from cli options
-        variable_manager.extra_vars = load_extra_vars(loader=loader)
-        variable_manager.options_vars = load_options_vars(CLI.version_info(gitinfo=False))
+        variable_manager = VariableManager(loader=loader, inventory=inventory, version_info=CLI.version_info(gitinfo=False))
 
         return loader, inventory, variable_manager
 
@@ -549,7 +497,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         inventory.subset(subset)
 
         hosts = inventory.list_hosts(pattern)
-        if len(hosts) == 0 and no_hosts is False:
+        if not hosts and no_hosts is False:
             raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts

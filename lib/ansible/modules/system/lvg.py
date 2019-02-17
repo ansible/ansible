@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author:
 - Alexander Bulimov (@abulimov)
@@ -25,40 +25,50 @@ options:
   vg:
     description:
     - The name of the volume group.
+    type: str
     required: true
   pvs:
     description:
-    - List of comma-separated devices to use as physical devices in this volume group. Required when creating or resizing volume group.
+    - List of comma-separated devices to use as physical devices in this volume group.
+    - Required when creating or resizing volume group.
     - The module will take care of running pvcreate if needed.
+    type: list
   pesize:
     description:
-    - The size of the physical extent. pesize must be a power of 2, or
-      multiple of 128KiB. Since version 2.6, pesize can be optionally suffixed
-      by a UNIT (k/K/m/M/g/G), default unit is megabyte.
+    - The size of the physical extent. pesize must be a power of 2, or multiple of 128KiB.
+    - Since Ansible 2.6, pesize can be optionally suffixed by a UNIT (k/K/m/M/g/G), default unit is megabyte.
+    type: str
     default: 4
   pv_options:
     description:
     - Additional options to pass to C(pvcreate) when creating the volume group.
+    type: str
     version_added: "2.4"
   vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
+    type: str
     version_added: "1.6"
   state:
     description:
     - Control if the volume group exists.
+    type: str
     choices: [ absent, present ]
     default: present
   force:
     description:
     - If C(yes), allows to remove volume group with logical volumes.
     type: bool
-    default: 'no'
+    default: no
+seealso:
+- module: filesystem
+- module: lvol
+- module: parted
 notes:
   - This module does not modify PE size for already present volume group.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create a volume group on top of /dev/sda1 with physical extent size = 32MB
   lvg:
     vg: vg.services

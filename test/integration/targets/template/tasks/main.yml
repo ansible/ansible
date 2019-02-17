@@ -642,5 +642,30 @@
   register: encoding_1252_diff_result
   loop: '{{ template_encoding_1252_encodings }}'
 
+- name: Check that nested undefined values return Undefined
+  vars:
+    dict_var:
+      bar: {}
+    list_var:
+      - foo: {}
+  assert:
+    that:
+      - dict_var is defined
+      - dict_var.bar is defined
+      - dict_var.bar.baz is not defined
+      - dict_var.bar.baz | default('DEFAULT') == 'DEFAULT'
+      - dict_var.bar.baz.abc is not defined
+      - dict_var.bar.baz.abc | default('DEFAULT') == 'DEFAULT'
+      - dict_var.baz is not defined
+      - dict_var.baz.abc is not defined
+      - dict_var.baz.abc | default('DEFAULT') == 'DEFAULT'
+      - list_var.0 is defined
+      - list_var.1 is not defined
+      - list_var.0.foo is defined
+      - list_var.0.foo.bar is not defined
+      - list_var.0.foo.bar | default('DEFAULT') == 'DEFAULT'
+      - list_var.1.foo is not defined
+      - list_var.1.foo | default('DEFAULT') == 'DEFAULT'
+
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml
