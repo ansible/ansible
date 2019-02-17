@@ -240,7 +240,6 @@ from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 
 
-
 PYNETBOX_IMP_ERR = None
 try:
     import pynetbox
@@ -501,4 +500,3 @@ def ensure_ip_address_absent(nb_endpoint, data):
 
 if __name__ == "__main__":
     main()
-
