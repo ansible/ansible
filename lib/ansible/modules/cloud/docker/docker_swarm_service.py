@@ -609,16 +609,17 @@ EXAMPLES = '''
 
 import shlex
 import time
-import re
 import operator
 
-from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,
     DockerBaseClass,
+    convert_duration_to_nanosecond,
+    parse_healthcheck
+
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.six import string_types
@@ -679,94 +680,6 @@ def get_docker_environment(env, env_files):
         else:
             return None
     return sorted(env_list)
-
-
-def convert_duration_to_nanosecond(time_str):
-    """
-    Return time duration in nanosecond.
-    """
-    if not isinstance(time_str, str):
-        raise ValueError('Missing unit in duration - %s' % time_str)
-
-    regex = re.compile(
-        r'^(((?P<hours>\d+)h)?'
-        r'((?P<minutes>\d+)m(?!s))?'
-        r'((?P<seconds>\d+)s)?'
-        r'((?P<milliseconds>\d+)ms)?'
-        r'((?P<microseconds>\d+)us)?)$'
-    )
-    parts = regex.match(time_str)
-
-    if not parts:
-        raise ValueError('Invalid time duration - %s' % time_str)
-
-    parts = parts.groupdict()
-    time_params = {}
-    for (name, value) in parts.items():
-        if value:
-            time_params[name] = int(value)
-
-    delta = timedelta(**time_params)
-    time_in_nanoseconds = (
-        delta.microseconds + (delta.seconds + delta.days * 24 * 3600) * 10 ** 6
-    ) * 10 ** 3
-
-    return time_in_nanoseconds
-
-
-def parse_healthcheck(healthcheck):
-    """
-    Return dictionary of healthcheck parameters and boolean if
-    healthcheck defined in image was requested to be disabled.
-    """
-    if (not healthcheck) or (not healthcheck.get('test')):
-        return None, None
-
-    result = dict()
-
-    # All supported healthcheck parameters
-    options = dict(
-        test='test',
-        interval='interval',
-        timeout='timeout',
-        start_period='start_period',
-        retries='retries'
-    )
-
-    duration_options = ['interval', 'timeout', 'start_period']
-
-    for (key, value) in options.items():
-        if value in healthcheck:
-            if healthcheck.get(value) is None:
-                # due to recursive argument_spec, all keys are always present
-                # (but have default value None if not specified)
-                continue
-            if value in duration_options:
-                time = convert_duration_to_nanosecond(healthcheck.get(value))
-                if time:
-                    result[key] = time
-            elif healthcheck.get(value):
-                result[key] = healthcheck.get(value)
-                if key == 'test':
-                    if isinstance(result[key], (tuple, list)):
-                        result[key] = [str(e) for e in result[key]]
-                    else:
-                        result[key] = ['CMD-SHELL', str(result[key])]
-                elif key == 'retries':
-                    try:
-                        result[key] = int(result[key])
-                    except ValueError:
-                        raise ValueError(
-                            'Cannot parse number of retries for healthcheck. '
-                            'Expected an integer, got "{0}".'.format(result[key])
-                        )
-
-    if result['test'] == ['NONE']:
-        # If the user explicitly disables the healthcheck, return None
-        # as the healthcheck object, and set disable_healthcheck to True
-        return None, True
-
-    return result, False
 
 
 class DockerService(DockerBaseClass):

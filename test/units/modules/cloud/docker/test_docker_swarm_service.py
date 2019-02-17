@@ -1,4 +1,3 @@
-import sys
 import pytest
 
 
@@ -99,31 +98,3 @@ def test_get_docker_environment(mocker, docker_swarm_service):
         None, env_files=[]
     )
     assert result == []
-
-
-def test_convert_duration_to_nanosecond(docker_swarm_service):
-    nanoseconds = docker_swarm_service.convert_duration_to_nanosecond('5s')
-    assert nanoseconds == 5000000000
-    nanoseconds = docker_swarm_service.convert_duration_to_nanosecond('1m5s')
-    assert nanoseconds == 65000000000
-    with pytest.raises(ValueError):
-        docker_swarm_service.convert_duration_to_nanosecond([1, 2, 3])
-    with pytest.raises(ValueError):
-        docker_swarm_service.convert_duration_to_nanosecond('10x')
-
-
-def test_parse_healthcheck(docker_swarm_service):
-    result, disabled = docker_swarm_service.parse_healthcheck({
-        'test': 'sleep 1',
-        'interval': '1s',
-    })
-    assert disabled is False
-    assert result == {
-        'test': ['CMD-SHELL', 'sleep 1'],
-        'interval': 1000000000
-    }
-    result, disabled = docker_swarm_service.parse_healthcheck({
-        'test': ['NONE'],
-    })
-    assert result is None
-    assert disabled
