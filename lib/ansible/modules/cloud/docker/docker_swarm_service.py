@@ -1153,7 +1153,7 @@ class DockerService(DockerBaseClass):
             container_spec_args['workdir'] = self.working_dir
         if secrets is not None:
             container_spec_args['secrets'] = secrets
-        if self.mounts is not None:
+        if mounts is not None:
             container_spec_args['mounts'] = mounts
         if dns_config is not None:
             container_spec_args['dns_config'] = dns_config
