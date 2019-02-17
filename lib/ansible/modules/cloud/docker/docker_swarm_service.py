@@ -67,6 +67,37 @@ options:
       - Corresponds to the C(--placement-pref) option of C(docker service create).
       - Requires API version >= 1.27.
     version_added: "2.8"
+  healthcheck:
+    type: dict
+    description:
+      - Configure a check that is run to determine whether or not containers for this service are "healthy".
+        See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
+        for details on how healthchecks work.
+      - "I(interval), I(timeout) and I(start_period) are specified as durations. They accept duration as a string in a format
+        that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+      - Requires API version >= 1.25.
+    suboptions:
+      test:
+        description:
+          - Command to run to check health.
+          - Must be either a string or a list. If it is a list, the first item must be one of C(NONE), C(CMD) or C(CMD-SHELL).
+      interval:
+        type: str
+        description:
+          - Time between running the check.
+      timeout:
+        type: str
+        description:
+          - Maximum time to allow one check to run.
+      retries:
+        type: int
+        description:
+          - Consecutive failures needed to report unhealthy. It accept integer value.
+      start_period:
+        type: str
+        description:
+          - Start period for the container to initialize before starting health-retries countdown.
+    version_added: "2.8"
   hostname:
     type: str
     description:
@@ -561,12 +592,27 @@ EXAMPLES = '''
   docker_swarm_service:
     name: myservice
     state: absent
+
+- name: Start service with healthcheck
+  docker_swarm_service:
+    name: myservice
+    image: nginx:1.13
+    healthcheck:
+      # Check if nginx server is healthy by curl'ing the server.
+      # If this fails or timeouts, the healthcheck fails.
+      test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 '''
 
-import time
 import shlex
+import time
+import re
 import operator
 
+from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.docker.common import (
@@ -635,6 +681,92 @@ def get_docker_environment(env, env_files):
     return sorted(env_list)
 
 
+def convert_duration_to_nanosecond(time_str):
+    """
+    Return time duration in nanosecond.
+    """
+    if not isinstance(time_str, str):
+        raise ValueError('Missing unit in duration - %s' % time_str)
+
+    regex = re.compile(
+        r'^(((?P<hours>\d+)h)?'
+        r'((?P<minutes>\d+)m(?!s))?'
+        r'((?P<seconds>\d+)s)?'
+        r'((?P<milliseconds>\d+)ms)?'
+        r'((?P<microseconds>\d+)us)?)$'
+    )
+    parts = regex.match(time_str)
+
+    if not parts:
+        raise ValueError('Invalid time duration - %s' % time_str)
+
+    parts = parts.groupdict()
+    time_params = {}
+    for (name, value) in parts.items():
+        if value:
+            time_params[name] = int(value)
+
+    delta = timedelta(**time_params)
+    time_in_nanoseconds = int(delta.total_seconds() * 1000000000)
+
+    return time_in_nanoseconds
+
+
+def parse_healthcheck(healthcheck):
+    """
+    Return dictionary of healthcheck parameters and boolean if
+    healthcheck defined in image was requested to be disabled.
+    """
+    if (not healthcheck) or (not healthcheck.get('test')):
+        return None, None
+
+    result = dict()
+
+    # All supported healthcheck parameters
+    options = dict(
+        test='test',
+        interval='interval',
+        timeout='timeout',
+        start_period='start_period',
+        retries='retries'
+    )
+
+    duration_options = ['interval', 'timeout', 'start_period']
+
+    for (key, value) in options.items():
+        if value in healthcheck:
+            if healthcheck.get(value) is None:
+                # due to recursive argument_spec, all keys are always present
+                # (but have default value None if not specified)
+                continue
+            if value in duration_options:
+                time = convert_duration_to_nanosecond(healthcheck.get(value))
+                if time:
+                    result[key] = time
+            elif healthcheck.get(value):
+                result[key] = healthcheck.get(value)
+                if key == 'test':
+                    if isinstance(result[key], (tuple, list)):
+                        result[key] = [str(e) for e in result[key]]
+                    else:
+                        result[key] = ["CMD-SHELL", str(result[key])]
+                elif key == 'retries':
+                    try:
+                        result[key] = int(result[key])
+                    except ValueError:
+                        raise ValueError(
+                            'Cannot parse number of retries for healthcheck. '
+                            'Expected an integer, got "{0}".'.format(result[key])
+                        )
+
+    if result['test'] == ['NONE']:
+        # If the user explicitly disables the healthcheck, return None
+        # as the healthcheck object, and set disable_healthcheck to True
+        return None, True
+
+    return result, False
+
+
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
@@ -643,6 +775,8 @@ class DockerService(DockerBaseClass):
         self.args = None
         self.endpoint_mode = None
         self.dns = None
+        self.healthcheck = None
+        self.healthcheck_disabled = None
         self.hostname = None
         self.tty = None
         self.dns_search = None
@@ -692,6 +826,8 @@ class DockerService(DockerBaseClass):
             'dns': self.dns,
             'dns_search': self.dns_search,
             'dns_options': self.dns_options,
+            'healthcheck': self.healthcheck,
+            'healthcheck_disabled': self.healthcheck_disabled,
             'hostname': self.hostname,
             'env': self.env,
             'force_update': self.force_update,
@@ -732,6 +868,7 @@ class DockerService(DockerBaseClass):
         s.dns = ap['dns']
         s.dns_search = ap['dns_search']
         s.dns_options = ap['dns_options']
+        s.healthcheck, s.healthcheck_disabled = parse_healthcheck(ap['healthcheck'])
         s.hostname = ap['hostname']
         s.tty = ap['tty']
         s.log_driver = ap['log_driver']
@@ -927,6 +1064,8 @@ class DockerService(DockerBaseClass):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
         if self.dns_options is not None and self.dns_options != (os.dns_options or []):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
+        if self.has_healthcheck_changed(os):
+            differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
         if self.hostname is not None and self.hostname != os.hostname:
             differences.add('hostname', parameter=self.hostname, active=os.hostname)
         if self.tty is not None and self.tty != os.tty:
@@ -934,6 +1073,13 @@ class DockerService(DockerBaseClass):
         if self.force_update:
             force_update = True
         return not differences.empty or force_update, differences, needs_rebuild, force_update
+
+    def has_healthcheck_changed(self, old_publish):
+        if self.healthcheck_disabled is False and self.healthcheck is None:
+            return False
+        if self.healthcheck_disabled and old_publish.healthcheck is None:
+            return False
+        return self.healthcheck != old_publish.healthcheck
 
     def has_publish_changed(self, old_publish):
         if self.publish is None:
@@ -1040,6 +1186,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['user'] = self.user
         if self.container_labels is not None:
             container_spec_args['labels'] = self.container_labels
+        if self.healthcheck is not None:
+            container_spec_args['healthcheck'] = types.Healthcheck(**self.healthcheck)
         if self.hostname is not None:
             container_spec_args['hostname'] = self.hostname
         if self.tty is not None:
@@ -1232,6 +1380,15 @@ class DockerServiceManager(object):
         ds.env = task_template_data['ContainerSpec'].get('Env')
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args')
+
+        healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
+        if healthcheck_data:
+            options = ['test', 'interval', 'timeout', 'start_period', 'retries']
+            healthcheck = dict(
+                (key.lower(), value) for key, value in healthcheck_data.items()
+                if value is not None and key.lower() in options
+            )
+            ds.healthcheck = healthcheck
 
         update_config_data = raw_data['Spec'].get('UpdateConfig')
         if update_config_data:
@@ -1513,6 +1670,10 @@ def _detect_publish_mode_usage(client):
     return False
 
 
+def _detect_healthcheck_start_period(client):
+    return client.module.params['healthcheck']['start_period'] is not None
+
+
 def main():
     argument_spec = dict(
         name=dict(required=True),
@@ -1564,6 +1725,13 @@ def main():
         dns=dict(type='list'),
         dns_search=dict(type='list'),
         dns_options=dict(type='list'),
+        healthcheck=dict(type='dict', options=dict(
+            test=dict(type='raw'),
+            interval=dict(type='str'),
+            timeout=dict(type='str'),
+            start_period=dict(type='str'),
+            retries=dict(type='int'),
+        )),
         hostname=dict(type='str'),
         labels=dict(type='dict'),
         container_labels=dict(type='dict'),
@@ -1594,6 +1762,7 @@ def main():
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         endpoint_mode=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
@@ -1609,6 +1778,12 @@ def main():
             docker_api_version='1.25',
             detect_usage=_detect_publish_mode_usage,
             usage_msg='set publish.mode'
+        ),
+        healthcheck_start_period=dict(
+            docker_py_version='2.4.0',
+            docker_api_version='1.25',
+            detect_usage=_detect_healthcheck_start_period,
+            usage_msg='set healthcheck.start_period'
         )
     )
 
