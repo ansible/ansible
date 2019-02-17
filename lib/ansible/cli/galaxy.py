@@ -207,7 +207,7 @@ class GalaxyCLI(CLI):
             for path_file in path_files:
                 gr = GalaxyRole(self.galaxy, path_file, path=path)
                 if gr.metadata:
-                    roles_list.append( ( gr.name , gr.install_info.get("version", None) ) )
+                    roles_list.append( gr )
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
         return roles_list
@@ -391,7 +391,7 @@ class GalaxyCLI(CLI):
                 role = RoleRequirement.role_yaml_parse(rname.strip())
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
-        installed_roles = [ name for (name,version) in self._list_installed_roles() ]
+        installed_roles = [ gr.name for gr in self._list_installed_roles() ]
         for role in roles_left:
             # only process roles in roles files when names matches if given
             if role_file and self.args and role.name not in self.args:
@@ -507,30 +507,14 @@ class GalaxyCLI(CLI):
                 display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
-            roles_path = self.options.roles_path
-            path_found = False
-            for path in roles_path:
-                role_path = os.path.expanduser(path)
-                if not os.path.exists(role_path):
-                    display.warning("- the configured path %s does not exist." % role_path)
-                    continue
-                elif not os.path.isdir(role_path):
-                    display.warning("- the configured path %s, exists, but it is not a directory." % role_path)
-                    continue
-                path_files = os.listdir(role_path)
-                path_found = True
-                for path_file in path_files:
-                    gr = GalaxyRole(self.galaxy, path_file, path=path)
-                    if gr.metadata:
-                        install_info = gr.install_info
-                        version = None
-                        if install_info:
-                            version = install_info.get("version", None)
-                        if not version:
-                            version = "(unknown version)"
-                        display.display("- %s, %s" % (path_file, version))
-            if not path_found:
-                raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
+            for gr in self._list_installed_roles():
+                install_info = gr.install_info
+                version = None
+                if install_info:
+                    version = install_info.get("version", None)
+                if not version:
+                    version = "(unknown version)"
+                display.display("- %s, %s" % (gr.name, version))
         return 0
 
     def execute_search(self):
