@@ -362,13 +362,13 @@ class ConditionsHandler(Handler):
         if self._module.params['device'] is not None:
             name = self._crypthandler.get_container_name_by_device(
                 self._module.params['device'])
-            # sucessfully getting name based on device means that luks is open
+            # successfully getting name based on device means that luks is open
             luks_is_open = name is not None
 
         if self._module.params['name'] is not None:
             device = self._crypthandler.get_container_device_by_name(
                 self._module.params['name'])
-            # sucessfully getting device based on name means that luks is open
+            # successfully getting device based on name means that luks is open
             luks_is_open = device is not None
 
         return luks_is_open
