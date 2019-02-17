@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - Do not add the same line with each playbook run if insertafter/insertbefore with firstmatch: yes matches before regexp does
