@@ -159,15 +159,8 @@ lib/ansible/modules/cloud/lxc/lxc_container.py E326
 lib/ansible/modules/cloud/lxd/lxd_container.py E322
 lib/ansible/modules/cloud/lxd/lxd_container.py E324
 lib/ansible/modules/cloud/lxd/lxd_profile.py E324
-lib/ansible/modules/cloud/misc/ovirt.py E322
-lib/ansible/modules/cloud/misc/ovirt.py E326
 lib/ansible/modules/cloud/misc/proxmox_kvm.py E322
 lib/ansible/modules/cloud/misc/proxmox_kvm.py E324
-lib/ansible/modules/cloud/misc/proxmox_template.py E323
-lib/ansible/modules/cloud/misc/terraform.py E324
-lib/ansible/modules/cloud/misc/virt.py E322
-lib/ansible/modules/cloud/misc/virt.py E326
-lib/ansible/modules/cloud/misc/virt_pool.py E326
 lib/ansible/modules/cloud/oneandone/oneandone_load_balancer.py E324
 lib/ansible/modules/cloud/oneandone/oneandone_private_network.py E326
 lib/ansible/modules/cloud/oneandone/oneandone_public_ip.py E324
@@ -385,7 +378,6 @@ lib/ansible/modules/files/synchronize.py E323
 lib/ansible/modules/files/synchronize.py E324
 lib/ansible/modules/files/unarchive.py E323
 lib/ansible/modules/identity/keycloak/keycloak_client.py E324
-lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py E324
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_binding.py E324
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_exchange.py E324
 lib/ansible/modules/messaging/rabbitmq/rabbitmq_exchange.py E326
@@ -774,10 +766,6 @@ lib/ansible/modules/remote_management/ucs/ucs_vnic_template.py E326
 lib/ansible/modules/remote_management/ucs/ucs_vsans.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E322
 lib/ansible/modules/remote_management/ucs/ucs_wwn_pool.py E323
-lib/ansible/modules/source_control/github_deploy_key.py E336
-lib/ansible/modules/source_control/github_issue.py E324
-lib/ansible/modules/source_control/github_issue.py E326
-lib/ansible/modules/source_control/subversion.py E322
 lib/ansible/modules/storage/infinidat/infini_export.py E323
 lib/ansible/modules/storage/infinidat/infini_export.py E324
 lib/ansible/modules/storage/infinidat/infini_export_client.py E323

@@ -1,19 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ryan Scott Brown <ryansb@redhat.com>
+# Copyright: (c) 2017, Ryan Scott Brown <ryansb@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: terraform
 short_description: Manages a Terraform deployment (and plans)
@@ -23,25 +21,26 @@ description:
 version_added: "2.5"
 options:
   state:
-    choices: ['planned', 'present', 'absent']
     description:
       - Goal state of given stage/project
-    required: false
+    type: str
+    choices: [ absent, planned, present ]
     default: present
   binary_path:
     description:
-      - The path of a terraform binary to use, relative to the 'service_path'
+      - The path of a terraform binary to use, relative to the I(service_path)
         unless you supply an absolute path.
-    required: false
+    type: path
   project_path:
     description:
       - The path to the root of the Terraform directory with the
         vars.tf/main.tf/etc to use.
+    type: path
     required: true
   workspace:
     description:
       - The terraform workspace to work with.
-    required: false
+    type: str
     default: default
     version_added: 2.7
   purge_workspace:
@@ -49,75 +48,75 @@ options:
       - Only works with state = absent
       - If true, the workspace will be deleted after the "terraform destroy" action.
       - The 'default' workspace will not be deleted.
-    required: false
-    default: false
     type: bool
+    default: no
     version_added: 2.7
   plan_file:
     description:
       - The path to an existing Terraform plan file to apply. If this is not
         specified, Ansible will build a new TF plan and execute it.
         Note that this option is required if 'state' has the 'planned' value.
-    required: false
+    type: path
   state_file:
     description:
       - The path to an existing Terraform state file to use when building plan.
         If this is not specified, the default `terraform.tfstate` will be used.
       - This option is ignored when plan is specified.
-    required: false
+    type: path
   variables_file:
     description:
       - The path to a variables file for Terraform to fill into the TF
         configurations.
-    required: false
+    type: path
   variables:
     description:
       - A group of key-values to override template variables or those in
         variables files.
-    required: false
+    type: dict
   targets:
     description:
       - A list of specific resources to target in this plan/application. The
         resources selected here will also auto-include any dependencies.
-    required: false
+    type: list
   lock:
     description:
       - Enable statefile locking, if you use a service that accepts locks (such
         as S3+DynamoDB) to store your statefile.
-    required: false
     type: bool
+    default: True
   lock_timeout:
     description:
       - How long to maintain the lock on the statefile, if you use a service
         that accepts locks (such as S3+DynamoDB).
-    required: false
+    type: int
   force_init:
     description:
       - To avoid duplicating infra, if a state file can't be found this will
         force a `terraform init`. Generally, this should be turned off unless
         you intend to provision an entirely new Terraform deployment.
-    default: false
-    required: false
     type: bool
+    default: no
   backend_config:
     description:
       - A group of key-values to provide at init stage to the -backend-config parameter.
-    required: false
+    type: dict
     version_added: 2.7
 notes:
-   - To just run a `terraform plan`, use check mode.
-requirements: [ "terraform" ]
-author: "Ryan Scott Brown (@ryansb)"
+   - To just run a C(terraform plan), use check mode.
+requirements:
+- terraform
+author:
+- Ryan Scott Brown (@ryansb)
 '''
 
-EXAMPLES = """
-# Basic deploy of a service
-- terraform:
+EXAMPLES = r'''
+- name: Basic deploy of a service
+  terraform:
     project_path: '{{ project_dir }}'
     state: present
 
-# Define the backend configuration at init
-- terraform:
+- name: Define the backend configuration at init
+  terraform:
     project_path: 'project/'
     state: "{{ state }}"
     force_init: true
@@ -125,9 +124,9 @@ EXAMPLES = """
       region: "eu-west-1"
       bucket: "some-bucket"
       key: "random.tfstate"
-"""
+'''
 
-RETURN = """
+RETURN = r'''
 outputs:
   type: complex
   description: A dictionary of all the TF outputs by their assigned name. Use `.outputs.MyOutputName.value` to access the value.
@@ -155,15 +154,14 @@ command:
   description: Full `terraform` command built by this module, in case you want to re-run the command outside the module or debug a problem.
   returned: always
   sample: terraform apply ...
-"""
+'''
 
-import os
 import json
+import os
 import tempfile
-import traceback
-from ansible.module_utils.six.moves import shlex_quote
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.six.moves import shlex_quote
 
 DESTROY_ARGS = ('destroy', '-no-color', '-force')
 APPLY_ARGS = ('apply', '-no-color', '-input=false', '-auto-approve=true')
@@ -271,11 +269,11 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            project_path=dict(required=True, type='path'),
+            project_path=dict(type='path', required=True),
             binary_path=dict(type='path'),
-            workspace=dict(required=False, type='str', default='default'),
+            workspace=dict(type='str', default='default'),
             purge_workspace=dict(type='bool', default=False),
-            state=dict(default='present', choices=['present', 'absent', 'planned']),
+            state=dict(type='str', default='present', choices=['absent', 'planned', 'present']),
             variables=dict(type='dict'),
             variables_file=dict(type='path'),
             plan_file=dict(type='path'),
@@ -286,7 +284,9 @@ def main():
             force_init=dict(type='bool', default=False),
             backend_config=dict(type='dict', default=None),
         ),
-        required_if=[('state', 'planned', ['plan_file'])],
+        required_if=[
+            ('state', 'planned', ['plan_file']),
+        ],
         supports_check_mode=True,
     )
 

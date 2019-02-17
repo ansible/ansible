@@ -1,19 +1,19 @@
 #!/usr/bin/python
-# (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: github_issue
-short_description: View GitHub issue.
+short_description: View GitHub issue
 description:
     - View GitHub issue for a given repository.
 version_added: "2.4"
@@ -21,37 +21,39 @@ options:
   repo:
     description:
       - Name of repository from which issue needs to be retrieved.
+    type: str
     required: true
   organization:
     description:
       - Name of the GitHub organization in which the repository is hosted.
+    type: str
     required: true
   issue:
     description:
       - Issue number for which information is required.
+    type: str
     required: true
   action:
     description:
         - Get various details about issue depending upon action specified.
-    default: 'get_status'
-    choices:
-        - ['get_status']
-
+    type: str
+    choices: [ get_status ]
+    default: get_status
 author:
     - Abhijeet Kasurde (@Akasurde)
 requirements:
-    - "github3.py >= 1.0.0a4"
+    - github3.py >= 1.0.0a4
 '''
 
-RETURN = '''
-get_status:
+RETURN = r'''
+issue_status:
     description: State of the GitHub issue
     type: str
     returned: success
     sample: open, closed
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Check if GitHub issue is closed or not
   github_issue:
     organization: ansible
@@ -82,10 +84,10 @@ from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            organization=dict(required=True),
-            repo=dict(required=True),
-            issue=dict(required=True),
-            action=dict(required=False, choices=['get_status']),
+            organization=dict(type='str', required=True),
+            repo=dict(type='str', required=True),
+            issue=dict(type='str', required=True),
+            action=dict(type='str', default='get_status', choices=['get_status']),
         ),
         supports_check_mode=True,
     )
@@ -99,7 +101,9 @@ def main():
     issue = module.params['issue']
     action = module.params['action']
 
-    result = dict()
+    result = dict(
+        changed=False,
+    )
 
     gh_obj = github3.issue(organization, repo, issue)
     if gh_obj is None:
@@ -107,11 +111,8 @@ def main():
                              "Please check organization, repo and issue "
                              "details and try again.")
 
-    if action == 'get_status' or action is None:
-        if module.check_mode:
-            result.update(changed=True)
-        else:
-            result.update(changed=True, issue_status=gh_obj.state)
+    if action == 'get_status':
+        result['issue_status'] = gh_obj.state
 
     module.exit_json(**result)
 

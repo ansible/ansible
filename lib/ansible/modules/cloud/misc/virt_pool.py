@@ -1,100 +1,95 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Maciej Delmanowski <drybjed@gmail.com>
+# Copyright: (c) 2015, Maciej Delmanowski <drybjed@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: virt_pool
-author: "Maciej Delmanowski (@drybjed)"
-version_added: "2.0"
 short_description: Manage libvirt storage pools
 description:
     - Manage I(libvirt) storage pools.
+version_added: "2.0"
+author:
+- Maciej Delmanowski (@drybjed)
 options:
     name:
-        required: false
-        aliases: [ "pool" ]
         description:
-            - name of the storage pool being managed. Note that pool must be previously
-              defined with xml.
+            - The name of the storage pool being managed.
+            - Note that pool must be previously defined with xml.
+        type: str
+        aliases: [ pool ]
     state:
-        required: false
-        choices: [ "active", "inactive", "present", "absent", "undefined", "deleted" ]
         description:
-            - specify which state you want a storage pool to be in.
-              If 'active', pool will be started.
-              If 'present', ensure that pool is present but do not change its
-              state; if it's missing, you need to specify xml argument.
-              If 'inactive', pool will be stopped.
-              If 'undefined' or 'absent', pool will be removed from I(libvirt) configuration.
-              If 'deleted', pool contents will be deleted and then pool undefined.
+            - Specify which state you want a storage pool to be in.
+            - If C(active), pool will be started.
+            - If C(present), ensure that pool is present but do not change its
+              state; if it is missing, you need to specify xml argument.
+            - If C(inactive), pool will be stopped.
+            - If C(undefined) or C(absent), pool will be removed from I(libvirt) configuration.
+            - If C(deleted), pool contents will be deleted and then pool undefined.
+        type: str
+        choices: [ absent, active, deleted, inactive, present, undefined ]
     command:
-        required: false
-        choices: [ "define", "build", "create", "start", "stop", "destroy",
-                   "delete", "undefine", "get_xml", "list_pools", "facts",
-                   "info", "status" ]
         description:
-            - in addition to state management, various non-idempotent commands are available.
-              See examples.
+            - In addition to state management, various non-idempotent commands are available.
+        type: str
+        choices: [ build, create, define, delete, destroy, facts, get_xml, info, list_pools, refresh, start, status, stop, undefine ]
     autostart:
-        required: false
-        type: bool
         description:
             - Specify if a given storage pool should be started automatically on system boot.
+        type: bool
     uri:
-        required: false
-        default: "qemu:///system"
         description:
-            - I(libvirt) connection uri.
+            - I(libvirt) connection URI.
+        type: str
+        default: qemu:///system
     xml:
-        required: false
         description:
-            - XML document used with the define command.
+            - XML document used with the C(define) command.
+        type: str
     mode:
-        required: false
-        choices: [ 'new', 'repair', 'resize', 'no_overwrite', 'overwrite', 'normal', 'zeroed' ]
         description:
-            - Pass additional parameters to 'build' or 'delete' commands.
+            - Pass additional parameters to C(build) or C(delete) commands.
+        type: str
+        choices: [ new, normal, no_overwrite, overwrite, repair, resize, zeroed ]
 requirements:
-    - "python >= 2.6"
-    - "python-libvirt"
-    - "python-lxml"
+    - python >= 2.6
+    - python-libvirt
+    - python-lxml
 '''
 
-EXAMPLES = '''
-# Define a new storage pool
-- virt_pool:
+EXAMPLES = r'''
+- name: Define a new storage pool
+  virt_pool:
     command: define
     name: vms
     xml: '{{ lookup("template", "pool/dir.xml.j2") }}'
 
-# Build a storage pool if it does not exist
-- virt_pool:
+- name: Build a storage pool if it does not exist
+  virt_pool:
     command: build
     name: vms
 
-# Start a storage pool
-- virt_pool:
+- name: Start a storage pool
+  virt_pool:
     command: create
     name: vms
 
-# List available pools
-- virt_pool:
+- name: List available pools
+  virt_pool:
     command: list_pools
 
-# Get XML data of a specified pool
-- virt_pool:
+- name: Get XML data of a specified pool
+  virt_pool:
     command: get_xml
     name: vms
 
@@ -103,45 +98,45 @@ EXAMPLES = '''
     command: destroy
     name: vms
 
-# Delete a storage pool (destroys contents)
-- virt_pool:
+- name: Delete a storage pool (destroys contents)
+  virt_pool:
     command: delete
     name: vms
 
-# Undefine a storage pool
-- virt_pool:
+- name: Undefine a storage pool
+  virt_pool:
     command: undefine
     name: vms
 
-# Gather facts about storage pools
 # Facts will be available as 'ansible_libvirt_pools'
-- virt_pool:
+- name: Gather facts about storage pools
+  virt_pool:
     command: facts
 
-# Gather information about pools managed by 'libvirt' remotely using uri
-- virt_pool:
+- name: Gather information about pools managed by 'libvirt' remotely using uri
+  virt_pool:
     command: info
     uri: '{{ item }}'
   with_items: '{{ libvirt_uris }}'
   register: storage_pools
 
-# Ensure that a pool is active (needs to be defined and built first)
-- virt_pool:
+- name: Ensure that a pool is active (needs to be defined and built first)
+  virt_pool:
     state: active
     name: vms
 
-# Ensure that a pool is inactive
-- virt_pool:
+- name: Ensure that a pool is inactive
+  virt_pool:
     state: inactive
     name: vms
 
-# Ensure that a given pool will be started at boot
-- virt_pool:
+- name: Ensure that a given pool will be started at boot
+  virt_pool:
     autostart: yes
     name: vms
 
-# Disable autostart for a given pool
-- virt_pool:
+- name: Disable autostart for a given pool
+  virt_pool:
     autostart: no
     name: vms
 '''
@@ -675,26 +670,22 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=['pool']),
-            state=dict(choices=['active', 'inactive', 'present', 'absent', 'undefined', 'deleted']),
-            command=dict(choices=ALL_COMMANDS),
-            uri=dict(default='qemu:///system'),
-            xml=dict(),
+            name=dict(type='str', aliases=['pool']),
+            state=dict(type='str', choices=['active', 'inactive', 'present', 'absent', 'undefined', 'deleted']),
+            command=dict(type='str', choices=ALL_COMMANDS),
+            uri=dict(type='str', default='qemu:///system'),
+            xml=dict(type='str'),
             autostart=dict(type='bool'),
-            mode=dict(choices=ALL_MODES),
+            mode=dict(type='str', choices=ALL_MODES),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if not HAS_VIRT:
-        module.fail_json(
-            msg='The `libvirt` module is not importable. Check the requirements.'
-        )
+        module.fail_json(msg="The 'libvirt' module is not importable. Check the requirements.")
 
     if not HAS_XML:
-        module.fail_json(
-            msg='The `lxml` module is not importable. Check the requirements.'
-        )
+        module.fail_json(msg="The 'lxml' module is not importable. Check the requirements.")
 
     rc = VIRT_SUCCESS
     try:
@@ -704,8 +695,8 @@ def main():
 
     if rc != 0:  # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
-    else:
-        module.exit_json(**result)
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: virt
 short_description: Manages virtual machines supported by libvirt
@@ -23,34 +23,41 @@ version_added: "0.2"
 options:
   name:
     description:
-      - name of the guest VM being managed. Note that VM must be previously
-        defined with xml.
+      - Name of the guest VM being managed.
+      - Note that VM must be previously defined with xml.
       - This option is required unless I(command) is C(list_vms).
+    type: str
+    aliases: [ guest ]
   state:
     description:
       - Note that there may be some lag for state requests like C(shutdown)
-        since these refer only to VM states. After starting a guest, it may not
-        be immediately accessible.
-        state and command are mutually exclusive except when command=list_vms. In
-        this case all VMs in specified state will be listed.
-    choices: [ destroyed, paused, running, shutdown ]
+        since these refer only to VM states.
+      - After starting a guest, it may not be immediately accessible.
+      - I(state) and I(command) are mutually exclusive except when C(command=list_vms).
+        In this case all VMs in specified state will be listed.
+    type: str
+    choices: [ destroyed, pause, running, shutdown ]
   command:
     description:
       - In addition to state management, various non-idempotent commands are available.
+    type: str
     choices: [ create, define, destroy, freemem, get_xml, info, list_vms, nodeinfo, pause, shutdown, start, status, stop, undefine, unpause, virttype ]
   autostart:
     description:
-      - start VM at host startup.
+      - Whether to start the VM at host startup.
     type: bool
     version_added: "2.3"
   uri:
     description:
-      - libvirt connection uri.
+      - The libvirt connection URI.
+    type: str
     default: qemu:///system
   xml:
     description:
       - XML document used with the define command.
-      - Must be raw XML content using C(lookup). XML cannot be reference to a file.
+      - Must be raw XML content using C(lookup).
+      - XML cannot be reference to a file.
+    type: str
 requirements:
     - python >= 2.6
     - libvirt-python
@@ -60,9 +67,9 @@ author:
     - Seth Vidal (@skvidal)
 '''
 
-EXAMPLES = '''
-# a playbook task line:
-- virt:
+EXAMPLES = r'''
+- name: Ensure VM alpha is running
+  virt:
     name: alpha
     state: running
 
@@ -71,73 +78,67 @@ EXAMPLES = '''
 # ansible host -m virt -a "name=alpha command=get_xml"
 # ansible host -m virt -a "name=alpha command=create uri=lxc:///"
 
-# defining and launching an LXC guest
-- name: define vm
+# Defining and launching an LXC guest
+- name: Define LXC VM
   virt:
     command: define
     xml: "{{ lookup('template', 'container-template.xml.j2') }}"
-    uri: 'lxc:///'
-- name: start vm
+    uri: lxc:///
+
+- name: Start LXC VM
   virt:
     name: foo
     state: running
-    uri: 'lxc:///'
+    uri: lxc:///
 
-# setting autostart on a qemu VM (default uri)
-- name: set autostart for a VM
+- name: Set autostart on a VM
   virt:
     name: foo
     autostart: yes
 
 # Defining a VM and making is autostart with host. VM will be off after this task
-- name: define vm from xml and set autostart
+- name: Define vm from xml and set autostart
   virt:
     command: define
     xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
     autostart: yes
 
-# Listing VMs
-- name: list all VMs
+- name: List all VMs
   virt:
     command: list_vms
   register: all_vms
 
-- name: list only running VMs
+- name: List only running VMs
   virt:
     command: list_vms
     state: running
   register: running_vms
 '''
 
-RETURN = '''
-# for list_vms command
+RETURN = r'''
 list_vms:
     description: The list of vms defined on the remote system
     type: list
     returned: success
     sample: [
-        "build.example.org",
-        "dev.example.org"
+        build.example.org,
+        dev.example.org
     ]
-# for status command
 status:
     description: The status of the VM, among running, crashed, paused and shutdown
     type: str
-    sample: "success"
+    sample: success
     returned: success
 '''
 
-import traceback
+import re
 
 try:
     import libvirt
-    from libvirt import libvirtError
 except ImportError:
     HAS_VIRT = False
 else:
     HAS_VIRT = True
-
-import re
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
@@ -546,7 +547,7 @@ def core(module):
                             res = {'changed': True, 'change_reason': 'config changed'}
                     else:
                         res = {'changed': True, 'created': domain.name()}
-                except libvirtError as e:
+                except libvirt.libvirtError as e:
                     if e.get_error_code() != 9:  # 9 means 'domain already exists' error
                         module.fail_json(msg='libvirtError: %s' % e.message)
                 if autostart is not None and v.autostart(domain_name, autostart):
@@ -586,18 +587,18 @@ def main():
     )
 
     if not HAS_VIRT:
-        module.fail_json(msg='The `libvirt` module is not importable. Check the requirements.')
+        module.fail_json(msg="The 'libvirt' module is not importable. Check the requirements.")
 
     rc = VIRT_SUCCESS
     try:
         rc, result = core(module)
     except Exception as e:
-        module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+        module.fail_json(msg=to_native(e))
 
     if rc != 0:  # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
-    else:
-        module.exit_json(**result)
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

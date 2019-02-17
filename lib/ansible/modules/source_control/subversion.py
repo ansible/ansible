@@ -11,12 +11,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: subversion
 short_description: Deploys a subversion repository
 description:
-   - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
+   - Deploy given repository URL / revision to dest.
+   - If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
 author:
 - Dane Summers (@dsummersl) <njharman@gmail.com>
@@ -27,68 +28,75 @@ options:
   repo:
     description:
       - The subversion URL to the repository.
+    type: str
     required: true
     aliases: [ name, repository ]
   dest:
     description:
       - Absolute path where the repository should be deployed.
+    type: path
     required: true
   revision:
     description:
       - Specific revision to checkout.
+    type: str
     default: HEAD
-    aliases: [ version ]
+    aliases: [ rev, version ]
   force:
     description:
-      - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
-        Prior to 1.9 the default was C(yes).
+      - If C(yes), modified files will be discarded.
+      - If C(no), module will fail if it encounters modified files.
+      - Prior to 1.9 the default was C(yes).
     type: bool
-    default: "no"
+    default: no
   in_place:
     description:
       - If the directory exists, then the working copy will be checked-out over-the-top using
         svn checkout --force; if force is specified then existing files with different content are reverted
     type: bool
-    default: "no"
+    default: no
     version_added: "2.6"
   username:
     description:
       - C(--username) parameter passed to svn.
+    type: str
   password:
     description:
       - C(--password) parameter passed to svn.
+    type: str
   executable:
     description:
-      - Path to svn executable to use. If not supplied,
-        the normal mechanism for resolving binary paths will be used.
+      - Path to svn executable to use.
+      - If not supplied, the normal mechanism for resolving binary paths will be used.
+    type: path
     version_added: "1.4"
   checkout:
     description:
      - If C(no), do not check out the repository if it does not exist locally.
     type: bool
-    default: "yes"
+    default: yes
     version_added: "2.3"
   update:
     description:
      - If C(no), do not retrieve new revisions from the origin repository.
     type: bool
-    default: "yes"
+    default: yes
     version_added: "2.3"
   export:
     description:
       - If C(yes), do export instead of checkout/update.
     type: bool
-    default: "no"
+    default: no
     version_added: "1.6"
   switch:
     description:
       - If C(no), do not call svn switch before update.
-    default: "yes"
+    default: yes
     version_added: "2.0"
     type: bool
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Checkout subversion repository to specified folder
   subversion:
     repo: svn+ssh://an.example.org/path/to/repo

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017, Eike Frost <ei@kefro.st>
+# Copyright: (c) 2017, Eike Frost <ei@kefro.st>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -40,69 +40,83 @@ options:
         description:
             - State of the client template
             - On C(present), the client template will be created (or updated if it exists already).
-            - On C(absent), the client template will be removed if it exists
-        choices: ['present', 'absent']
-        default: 'present'
+            - On C(absent), the client template will be removed if it exists.
+        type: str
+        choices: [ absent, present ]
+        default: present
 
     id:
         description:
-            - Id of client template to be worked on. This is usually a UUID.
+            - Id of client template to be worked on.
+            - This is usually a UUID.
+        type: str
 
     realm:
         description:
             - Realm this client template is found in.
+        type: str
+        default: master
 
     name:
         description:
-            - Name of the client template
+            - Name of the client template.
+        type: str
 
     description:
         description:
-            - Description of the client template in Keycloak
+            - Description of the client template in Keycloak.
+        type: str
 
     protocol:
         description:
             - Type of client template (either C(openid-connect) or C(saml).
-        choices: ['openid-connect', 'saml']
+        type: str
+        choices: [ openid-connect, saml ]
 
     full_scope_allowed:
         description:
             - Is the "Full Scope Allowed" feature set for this client template or not.
-              This is 'fullScopeAllowed' in the Keycloak REST API.
+            - This is 'fullScopeAllowed' in the Keycloak REST API.
         type: bool
 
     protocol_mappers:
         description:
-            - a list of dicts defining protocol mappers for this client template.
-              This is 'protocolMappers' in the Keycloak REST API.
+            - A list of dicts defining protocol mappers for this client template.
+            - This is 'protocolMappers' in the Keycloak REST API.
+        type: list
         suboptions:
             consentRequired:
                 description:
                     - Specifies whether a user needs to provide consent to a client for this mapper to be active.
+                type: str
 
             consentText:
                 description:
                     - The human-readable name of the consent the user is presented to accept.
+                type: str
 
             id:
                 description:
                     - Usually a UUID specifying the internal ID of this protocol mapper instance.
+                type: str
 
             name:
                 description:
                     - The name of this protocol mapper.
+                type: str
 
             protocol:
                 description:
                     - is either 'openid-connect' or 'saml', this specifies for which protocol this protocol mapper
                       is active.
-                choices: ['openid-connect', 'saml']
+                type: str
+                choices: [ openid-connect, saml ]
 
             protocolMapper:
                 description:
-                    - The Keycloak-internal name of the type of this protocol-mapper. While an exhaustive list is
-                      impossible to provide since this may be extended through SPIs by the user of Keycloak,
-                      by default Keycloak as of 3.4 ships with at least
+                    - The Keycloak-internal name of the type of this protocol-mapper.
+                    - While an exhaustive list is impossible to provide since this may be extended
+                      through SPIs by the user of Keycloak, by default Keycloak as of 3.4 ships with at least
                     - C(docker-v2-allow-all-mapper)
                     - C(oidc-address-mapper)
                     - C(oidc-full-name-mapper)
@@ -128,6 +142,7 @@ options:
                     - An exhaustive list of available mappers on your installation can be obtained on
                       the admin console by going to Server Info -> Providers and looking under
                       'protocol-mapper'.
+                type: str
 
             config:
                 description:
@@ -136,12 +151,14 @@ options:
                       other than by the source of the mappers and its parent class(es). An example is given
                       below. It is easiest to obtain valid config values by dumping an already-existing
                       protocol mapper configuration through check-mode in the "existing" field.
+                type: dict
 
     attributes:
         description:
-            - A dict of further attributes for this client template. This can contain various
-              configuration settings, though in the default installation of Keycloak as of 3.4, none
-              are documented or known, so this is usually empty.
+            - A dict of further attributes for this client template.
+            - This can contain various configuration settings, though in the default installation
+              of Keycloak as of 3.4, none are documented or known, so this is usually empty.
+        type: dict
 
 notes:
 - The Keycloak REST API defines further fields (namely I(bearerOnly), I(consentRequired), I(standardFlowEnabled),
@@ -157,7 +174,7 @@ author:
     - Eike Frost (@eikef)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create or update Keycloak client template (minimal)
   local_action:
     module: keycloak_clienttemplate
@@ -208,7 +225,7 @@ EXAMPLES = '''
     id: bce6f5e9-d7d3-4955-817e-c5b7f8d65b3f
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
   description: Message as to what action was taken
   returned: always

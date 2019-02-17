@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
+# -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -12,93 +12,105 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: proxmox_template
-short_description: management of OS templates in Proxmox VE cluster
+short_description: Manage OS templates in Proxmox VE cluster
 description:
-  - allows you to upload/delete templates in Proxmox VE cluster
+  - Allows you to upload/delete templates in Proxmox VE cluster.
 version_added: "2.0"
 options:
   api_host:
     description:
-      - the host of the Proxmox VE cluster
+      - The host of the Proxmox VE cluster.
+    type: str
     required: true
   api_user:
     description:
-      - the user to authenticate with
+      - The user to authenticate with.
+    type: str
     required: true
   api_password:
     description:
-      - the password to authenticate with
-      - you can use PROXMOX_PASSWORD environment variable
+      - The password to authenticate with.
+      - You can use PROXMOX_PASSWORD environment variable.
+    type: str
   validate_certs:
     description:
-      - enable / disable https certificate verification
-    default: 'no'
+      - Whether HTTPS certificate verification is enabled.
     type: bool
+    default: no
   node:
     description:
-      - Proxmox VE node, when you will operate with template
+      - Proxmox VE node, when you will operate with template.
+    type: str
     required: true
   src:
     description:
-      - path to uploaded file
-      - required only for C(state=present)
-    aliases: ['path']
+      - Path to uploaded file.
+      - Required only for C(state=present).
+    type: path
+    aliases: [ path ]
   template:
     description:
-      - the template name
-      - required only for states C(absent), C(info)
+      - The template name.
+      - Required only for states C(absent), C(info).
+    type: str
   content_type:
     description:
-      - content type
-      - required only for C(state=present)
-    default: 'vztmpl'
-    choices: ['vztmpl', 'iso']
+      - Content type.
+      - Required only for C(state=present).
+    choices: [ iso, vztmpl ]
+    default: vztmpl
   storage:
     description:
-      - target storage
-    default: 'local'
+      - Target storage.
+    type: str
+    default: local
   timeout:
     description:
-      - timeout for operations
+      - Timeout for operations.
+    type: int
     default: 30
   force:
     description:
-      - can be used only with C(state=present), exists template will be overwritten
+      - Can be used only with C(state=present), exists template will be overwritten.
     type: bool
-    default: 'no'
+    default: no
   state:
     description:
-     - Indicate desired state of the template
-    choices: ['present', 'absent']
+     - Indicate desired state of the template.
+    type: str
+    choices: [ absent, present ]
     default: present
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
-requirements: [ "proxmoxer", "requests" ]
-author: Sergei Antipov (@UnderGreen)
+requirements:
+- proxmoxer
+- requests
+author:
+- Sergei Antipov (@UnderGreen)
 '''
 
-EXAMPLES = '''
-# Upload new openvz template with minimal options
-- proxmox_template:
+EXAMPLES = r'''
+- name: Upload new openvz template with minimal options
+  proxmox_template:
     node: uk-mc02
     api_user: root@pam
     api_password: 1q2w3e
     api_host: node1
     src: ~/ubuntu-14.04-x86_64.tar.gz
 
-# Upload new openvz template with minimal options use environment PROXMOX_PASSWORD variable(you should export it before)
-- proxmox_template:
+# Use environment PROXMOX_PASSWORD variable, you should export it before
+- name: Upload new openvz template with minimal options
+  proxmox_template:
     node: uk-mc02
     api_user: root@pam
     api_host: node1
     src: ~/ubuntu-14.04-x86_64.tar.gz
 
-# Upload new openvz template with all options and force overwrite
-- proxmox_template:
+- name: Upload new openvz template with all options and force overwrite
+  proxmox_template:
     node: uk-mc02
     api_user: root@pam
     api_password: 1q2w3e
@@ -108,8 +120,8 @@ EXAMPLES = '''
     src: ~/ubuntu-14.04-x86_64.tar.gz
     force: yes
 
-# Delete template with minimal options
-- proxmox_template:
+- name: Delete template with minimal options
+  proxmox_template:
     node: uk-mc02
     api_user: root@pam
     api_password: 1q2w3e
@@ -167,19 +179,19 @@ def delete_template(module, proxmox, node, storage, content_type, template, time
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            api_host=dict(required=True),
-            api_user=dict(required=True),
-            api_password=dict(no_log=True),
-            validate_certs=dict(type='bool', default='no'),
-            node=dict(),
-            src=dict(type='path'),
-            template=dict(),
-            content_type=dict(default='vztmpl', choices=['vztmpl', 'iso']),
-            storage=dict(default='local'),
+            api_host=dict(type='str', required=True),
+            api_user=dict(type='str', required=True),
+            api_password=dict(type='str', no_log=True),
+            validate_certs=dict(type='bool', default=False),
+            node=dict(type='str'),
+            src=dict(type='path', aliases=['path']),
+            template=dict(type='str'),
+            content_type=dict(type='str', default='vztmpl', choices=['iso', 'vztmpl']),
+            storage=dict(type='str', default='local'),
             timeout=dict(type='int', default=30),
-            force=dict(type='bool', default='no'),
-            state=dict(default='present', choices=['present', 'absent']),
-        )
+            force=dict(type='bool', default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+        ),
     )
 
     if not HAS_PROXMOXER:
