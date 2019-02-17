@@ -106,12 +106,12 @@ options:
     description:
      - 'When I(wait: True) after I(wait_build) seconds passed, query DO API
       every I(wait_step) seconds if I(wait_timeout) is not exceeded'
-    type: int
+    type: float
     default: 2
   wait_timeout:
     description:
      - How long before wait gives up, in seconds, when creating/rebuilding a droplet.
-     - I(wait_build) always takes precedence, so if I(wait_build=150) and I(wait_timeout=120) timeout may happen only after 150 s.
+     - If I(wait_build)>I(wait_timeout), timeout may happen only after I(wait_build).
     type: int
     default: 120
   backups:
@@ -174,8 +174,8 @@ EXAMPLES = '''
     oauth_token: "{{ lookup('file', '~/.do/api-key1') }}"
     rebuild: yes
     image: debian-9-x64  # may be omitted.
-    wait_step: 3
-    wait_build: 20  # wait 20 seconds, then GET DO API droplet status every 3 s, unless default wait_timeout (120 s) is reached.
+    wait_step: 3.5
+    wait_build: 16  # wait 16 seconds, then GET DO API droplet status with 3.5 seconds pauses, unless default wait_timeout (120 s) is reached.
   register: my_droplet
 '''
 
@@ -201,6 +201,15 @@ data:
       type: str
       returned: success and present and private_networking
       sample: "10.135.133.25"
+    ops:
+      description: When building/rebuilding droplet with 'ansible-playbook -v' debug messages can be seen here.
+      type: list
+      returned: success and present and -v
+      sample: |-
+        ["1550503109.96 module start",
+         "1550503130.08 status off locked True net {'type': 'public', 'netmask': '255.255.240.0', 'ip_address': '139.59.144.10', 'gateway': '139.59.144.1'}",
+         "1550503134.6 status active locked False net {'type': 'public', 'netmask': '255.255.240.0', 'ip_address': '139.59.144.10', 'gateway': '139.59.144.1'}"
+        ]
     droplet:
       description: exact DigitalOcean API Response
       returned: success and present
@@ -318,6 +327,9 @@ from ansible.module_utils.digital_ocean import DigitalOceanHelper
 
 class DODroplet(object):
     def __init__(self, module):
+        self.ops = []
+        if module._verbosity >= 1:
+            self.ops.append('{0} module start'.format(time.time()))
         self.module = module
         self._id = self.module.params['id']
         self._name = self.module.params['name']
@@ -368,22 +380,20 @@ class DODroplet(object):
     def expose_addresses(self, data):
         """
          Expose IP addresses as their own property the same way M(digital_ocean) did.
+         Append run log (if exists)
         """
-        _data = data
-        for k, v in data.items():
-            setattr(self, k, v)
-        networks = _data['droplet']['networks']
+        networks = data['droplet']['networks']
         for network in networks.get('v4', []):
             if network['type'] == 'public':
-                _data['ip_address'] = network['ip_address']
-            else:
-                _data['private_ipv4_address'] = network['ip_address']
+                data['ip_address'] = network['ip_address']
+            elif network['type'] == 'private':
+                data['private_ipv4_address'] = network['ip_address']
         for network in networks.get('v6', []):
             if network['type'] == 'public':
-                _data['ipv6_address'] = network['ip_address']
-            else:
-                _data['private_ipv6_address'] = network['ip_address']
-        return _data
+                data['ipv6_address'] = network['ip_address']
+        if self.ops:
+            data['ops'] = self.ops
+        return data
 
     def find_droplet(self):
         json_data = self.get_by_id(self._id)
@@ -460,9 +470,9 @@ class DODroplet(object):
         elif self.rebuild and not json_data:
             self.module.fail_json(changed=False, msg='droplet {0} not found. Rebuild failed.'.format(self._droplet))
         elif self.rebuild and json_data:
-            self._rebuild(json_data)  # _rebuild() should not return here.
+            self._rebuild(json_data)
         else:
-            self._build()  # _build() should exit on its own too.
+            self._build()
 
     def _build(self):
         _size = self.module.params['size']
@@ -480,18 +490,20 @@ class DODroplet(object):
                                                      ' image={2} size={3}'.format(self._name, _region, _image, _size))
         if self.module.check_mode:
             self.module.exit_json(changed=True)
-        # self.module.warn("{0} create command sent".format(time.time())) ## debug (1 line)
+        if self.ops:
+            self.ops.append("{0} posting create droplet command.".format(time.time()))
         response = self.rest.post('droplets', data=self.module.params)
-        # if response.json and 'droplet' in response.json: ## debug start
-        #     dbg1 = response.json['droplet']
-        # elif response.json:
-        #     dbg1 = response.json
-        # else:
-        #     dbg1 = "! no JSON !"
-        # self.module.warn("{0} resp1 droplet: {1}".format(time.time(), dbg1))  ## debug end
+        if self.ops:
+            if response.json and 'droplet' in response.json:
+                dbg1 = response.json['droplet']
+            elif response.json:
+                dbg1 = response.json
+            else:
+                dbg1 = "! no JSON !"
+            self.ops.append("{0} create droplet response: {1}".format(time.time(), dbg1))
         if response.status_code >= 400:
             self.module.fail_json(changed=False, msg=response.json['message'])
-        jr = self.ready(response.json['droplet']['id'], action="create", new=True) if self.wait \
+        jr = self.ready(response.json['droplet']['id'], action="create", build=True) if self.wait \
             else response.json
         self.module.exit_json(changed=True, data=self.expose_addresses(jr))
 
@@ -511,7 +523,7 @@ class DODroplet(object):
             self.module.fail_json(changed=False, msg=response.json['message'])
         self.module.exit_json(  # wait for rebuild to finish, enrich received JSON, then return it.
             changed=True, data=self.expose_addresses(
-                self.ready(droplet_id, action="rebuild", new=True)))
+                self.ready(droplet_id, action="rebuild", build=True)))
 
     def delete(self):
         json_data = self.find_droplet()
@@ -525,27 +537,36 @@ class DODroplet(object):
         else:
             self.module.exit_json(changed=False, msg='Droplet {0} not found'.format(self._droplet))
 
-    def ready(self, droplet_id, action, new=False):
-        if new:
+    def ready(self, droplet_id, action, build=False):
+        if build and self.wait_build > self.wait_timeout:
+            timeout = self.wait_build
+        else:
+            timeout = self.wait_timeout
+        end_time = time.time() + timeout + 0.2  # compensate for time.sleep() inaccuracy
+        if build:
             time.sleep(self.wait_build)
-        end_time = time.time() + self.wait_timeout
+        locked = True
         while time.time() < end_time:
             response = self.rest.get('droplets/{0}'.format(droplet_id))
-            rj = response.json
-            # if 'droplet' in rj and 'locked' in rj['droplet']:   ## debug start
-            #   if 'v4' in rj['droplet']['networks'] and len(response.json['droplet']['networks']['v4']):
-            #       net1 = response.json['droplet']['networks']['v4'][0]
-            #   else:
-            #       net1 = rj['droplet']['networks']
-            #   lock = response.json['droplet']['locked']
-            #   stat = response.json['droplet']['status']
-            #   resp1 = "{0} status {1} locked {2} net {3}".format(time.time(), stat, lock, net1)
-            # self.module.warn(resp1)   ## debug end
-            if not rj['droplet']['locked'] and len(rj['droplet']['networks']['v4']):
-                return rj
+            if self.ops:
+                rj = response.json
+                if 'droplet' in rj and 'locked' in rj['droplet']:
+                    if 'v4' in rj['droplet']['networks'] and len(response.json['droplet']['networks']['v4']):
+                        net = response.json['droplet']['networks']['v4'][0]
+                    else:
+                        net = rj['droplet']['networks']
+                    lck = response.json['droplet']['locked']
+                    sta = response.json['droplet']['status']
+                self.ops.append("{0} status {1} locked {2} net {3}".format(time.time(), sta, lck, net))
+            locked = response.json['droplet']['locked']
+            has_net = len(response.json['droplet']['networks']['v4'])
+            if not locked and has_net:
+                return response.json
             time.sleep(min(self.wait_step, end_time - time.time()))
-        timeout = "wait_timeout" if self.wait_timeout > self.wait_build else self.wait_build
-        self.module.fail_json(msg='Droplet {0} action "{1}" `{2}` exceeded.'.format(self._droplet, action, timeout))
+        if action == 'create' and not locked:  # but not has_net
+            self.module.warn('Droplet created but no IPv4 net found in {0} seconds.'.format(timeout))
+            return response.json
+        self.module.fail_json(msg='Droplet {0} action "{1}" not finished in {2} seconds.'.format(self._droplet, action, timeout))
 
 
 def main():
@@ -568,7 +589,7 @@ def main():
         tags=dict(type='list'),
         wait=dict(type='bool', default=True),
         wait_timeout=dict(default=120, type='int'),
-        wait_step=dict(default=2, type='int'),
+        wait_step=dict(default=2.0, type='float'),
         wait_build=dict(default=30, type='int'),
         unique_name=dict(),
     )
