@@ -305,7 +305,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                     # insertafter regex matched already; don't update index[1]
                     continue
                 elif not firstmatch:
-                    # = firstmatch is false; update index[1] 
+                    # = firstmatch is false; update index[1]
                     # + 1 for the next line
                     index[1] = lineno + 1
             if insertbefore:
@@ -315,8 +315,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 elif firstmatch and index[1] != -1:
                     # insertbefore regex matched already; don't update index[1]
                     continue
-                else: 
-                    # = firstmatch is false; update index[1] 
+                else:
+                    # = firstmatch is false; update index[1]
                     # index[1] for the previous line
                     index[1] = lineno
 
