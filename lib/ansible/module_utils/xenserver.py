@@ -269,10 +269,10 @@ def is_valid_ip6_prefix(ip6_prefix):
 
 
 def get_object_ref(module, name, uuid=None, obj_type="VM", fail=True, msg_prefix=""):
-    """Finds and returns a reference to arbitary XAPI object.
+    """Finds and returns a reference to arbitrary XAPI object.
 
     An object is searched by using either name (name_label) or UUID
-    with UUID taken precendence over name.
+    with UUID taken precedence over name.
 
     Args:
         module: Reference to Ansible module object.
@@ -302,7 +302,7 @@ def get_object_ref(module, name, uuid=None, obj_type="VM", fail=True, msg_prefix
 
     obj_ref = None
 
-    # UUID has precendence over name.
+    # UUID has precedence over name.
     if uuid:
         try:
             # Find object by UUID. If no object is found using given UUID,
