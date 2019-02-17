@@ -409,7 +409,6 @@ options:
       - Corresponds to the C(--update-delay) option of C(docker service create).
   update_parallelism:
     type: int
-    default: 1
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
@@ -1712,7 +1711,7 @@ def main():
         restart_policy_attempts=dict(type='int'),
         restart_policy_window=dict(type='int'),
         update_delay=dict(default=10, type='int'),
-        update_parallelism=dict(default=1, type='int'),
+        update_parallelism=dict(type='int'),
         update_failure_action=dict(choices=['continue', 'pause']),
         update_monitor=dict(type='int'),
         update_max_failure_ratio=dict(type='float'),
