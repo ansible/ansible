@@ -49,7 +49,37 @@ class LocalFactCollector(BaseFactCollector):
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
             # where it will sit under local facts
             fact_base = os.path.basename(fn).replace('.fact', '')
-            if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
+            if os.getuid() == os.stat(fn)[stat.ST_UID]:
+                if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
+                    # run it
+                    # try to read it as json first
+                    # if that fails read it with ConfigParser
+                    # if that fails, skip it
+                    try:
+                        rc, out, err = module.run_command(fn)
+                    except UnicodeError:
+                        fact = 'error loading fact - output of running %s was not utf-8' % fn
+                        local[fact_base] = fact
+                        local_facts['local'] = local
+                        return local_facts
+                elif stat.S_IRUSR & os.stat(fn)[stat.ST_MODE]:
+                    out = get_file_content(fn, default='')
+            elif os.stat(fn)[stat.ST_GID] in os.getgroups():
+                if stat.S_IXGRP & os.stat(fn)[stat.ST_MODE]:
+                    # run it
+                    # try to read it as json first
+                    # if that fails read it with ConfigParser
+                    # if that fails, skip it
+                    try:
+                        rc, out, err = module.run_command(fn)
+                    except UnicodeError:
+                        fact = 'error loading fact - output of running %s was not utf-8' % fn
+                        local[fact_base] = fact
+                        local_facts['local'] = local
+                        return local_facts
+                elif stat.S_IRGRP & os.stat(fn)[stat.ST_MODE]:
+                    out = get_file_content(fn, default='')
+            elif stat.S_IXOTH & os.stat(fn)[stat.ST_MODE]:
                 # run it
                 # try to read it as json first
                 # if that fails read it with ConfigParser
@@ -61,8 +91,11 @@ class LocalFactCollector(BaseFactCollector):
                     local[fact_base] = fact
                     local_facts['local'] = local
                     return local_facts
-            else:
+            elif stat.S_IROTH & os.stat(fn)[stat.ST_MODE]:
                 out = get_file_content(fn, default='')
+
+            else:
+                out = 'facts non readable by running user'
 
             # load raw json
             fact = 'loading %s' % fact_base
