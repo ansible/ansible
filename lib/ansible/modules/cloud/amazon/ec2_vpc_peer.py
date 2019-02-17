@@ -403,7 +403,13 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'accept', 'reject'])
         )
     )
-    module = AnsibleModule(argument_spec=argument_spec)
+    required_if = [
+        ('state', 'present', ['vpc_id', 'peer_vpc_id']),
+        ('state', 'accept', ['peering_id']),
+        ('state', 'reject', ['peering_id'])
+    ]
+
+    module = AnsibleModule(argument_spec=argument_spec, required_if=required_if)
 
     if not HAS_BOTO3:
         module.fail_json(msg='json, botocore and boto3 are required.')
@@ -419,20 +425,14 @@ def main():
         module.fail_json(msg="Can't authorize connection - " + str(e))
 
     if state == 'present':
-        if not vpc_id and not peer_vpc_id:
-            module.fail_json(msg='vpc_id and peer_vpc_id parameters are required for creating peering connection')
-
         (changed, results) = create_peer_connection(client, module)
         module.exit_json(changed=changed, peering_id=results)
     elif state == 'absent':
-        if not peering_id or (not vpc_id and not peer_vpc_id):
-            module.fail_json(msg='peering_id or vpc_id and peer_vpc_id parameters are required for removing peering connection')
+        if not peering_id and (not vpc_id or not peer_vpc_id):
+            module.fail_json(msg='state is absent but all of the following are missing: peering_id or [vpc_id, peer_vpc_id]')
 
         remove_peer_connection(client, module)
     else:
-        if not peering_id:
-            module.fail_json(msg='peering_id parameter is required to accept or reject peering connection')
-
         (changed, results) = accept_reject(state, client, module)
         module.exit_json(changed=changed, peering_id=results)
 
