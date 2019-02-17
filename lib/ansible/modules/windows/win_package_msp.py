@@ -17,8 +17,9 @@ module: win_package_msp
 short_description: Installs/uninstalls a Microsoft Installer Patch file (.msp).
 description:
 - Installs or uninstalls a package in MSP format.
-- These packages can be sources from the local file system, network file share
-  or a url.
+- These packages can be sources from the local file system or network file share.
+  When the package resides on a web server, use M(win_get_url) to download the
+  package from http(s) to the local file system first.
 version_added: "2.8"
 author: Rodric Vos (@finzzownt)
 options:
@@ -33,8 +34,7 @@ options:
   path:
     description:
     - Location of the MSP to be installed, e.g. I(state=present).
-    - This package can either be on the local file system, network share or a
-      url.
+    - This package can either be on the local file system or on a network share.
     - If the path is on a network share and the current WinRM transport
       doesn't support credential delegation, then I(user_name) and I(user_password)
       must be set to access the file.
@@ -85,28 +85,14 @@ options:
     description:
     - The password for C(user_name), must be set when C(user_name) is.
     aliases: [ user_password ]
-  validate_certs:
-    description:
-    - SSL certification check can be disabled, when the MSP file should be
-      obtained from a https location.
-    - If C(no), SSL certificates will not be validated. This should only be
-      used on personally controlled sites using self-signed certificates.
-    type: bool
-    default: 'yes'
 notes:
 - By default all MSP installs and uninstalls will be run with the options
   C(/L*V /log, /qn, /norestart).
 - Packages will be temporarily downloaded or copied locally when path is a
-  network location and credential delegation is not set, or path is a URL.
+  network location and credential delegation is not set.
 '''
 
 EXAMPLES = r'''
-- name: Install SCOM 2016 UR4 over https
-  win_package_msp:
-    path: https://nexusrepo.domain.local/repository/MyRepo/Microsoft/OperationsManager/KB4024941-AMD64-ENU-Console.msp
-    patch_id: 4E6A3C97C54C78E478CDDF6B3268A6FC
-    state: present
-
 - name: Install SCOM 2016 UR4 over fs
   win_package_msp:
     path: D:\\Staging\\KB4024941-AMD64-ENU-Console.msp

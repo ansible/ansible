@@ -17,8 +17,7 @@ $expected_return_code = Get-AnsibleParam -obj $params -name "expected_return_cod
 $path = Get-AnsibleParam -obj $params -name "path" -type "str"
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "absent","present"
 $username = Get-AnsibleParam -obj $params -name "username" -type "str" -aliases "user_name"
-$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($username -ne $null) -aliases "user_password"
-$validate_certs = Get-AnsibleParam -obj $params -name "validate_certs" -type "bool" -default $true
+$password = Get-AnsibleParam -obj $params -name "password" -type "str" -failifempty ($null -ne $username) -aliases "user_password"
 $product_id = Get-AnsibleParam -obj $params -name "product_id" -type "str" -failifempty ($state -eq "absent") -aliases "productid"
 $patch_id = Get-AnsibleParam -obj $params -name "patch_id" -type "str" -failifempty ($state -eq "absent") -aliases "patchid"
 $patch_guid = Get-AnsibleParam -obj $params -name "patch_guid" -type "str" -failifempty ($state -eq "absent") -aliases "patchguid"
@@ -28,22 +27,8 @@ $result = @{
     reboot_required = $false
 }
 
-if (-not $validate_certs) {
-    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
-}
-
-# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
-$security_protcols = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::SystemDefault
-if ([Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
-    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls11
-}
-if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
-    $security_protcols = $security_protcols -bor [Net.SecurityProtocolType]::Tls12
-}
-[Net.ServicePointManager]::SecurityProtocol = $security_protcols
-
 $credential = $null
-if ($username -ne $null) {
+if ($null -ne $username) {
     $sec_user_password = ConvertTo-SecureString -String $password -AsPlainText -Force
     $credential = New-Object -TypeName PSCredential -ArgumentList $username, $sec_user_password
 }
@@ -68,8 +53,7 @@ Add-Type -TypeDefinition @"
 public enum LocationType {
     Empty,
     Local,
-    Unc,
-    Http
+    Unc
 }
 "@
 
@@ -81,15 +65,6 @@ public enum ActionState {
     PresentAndNotInstalled
 }
 "@
-
-function Get-FileFromUrl($url, $path) {
-    $web_client = New-Object -TypeName System.Net.WebClient
-    try {
-        $web_client.DownloadFile($url, $path)
-    } catch {
-        Fail-Json -obj $result -message "failed to download $url to $($path): $($_.Exception.Message)"
-    }
-}
 
 function Get-ProgramMetadata {
     param(
@@ -143,14 +118,7 @@ function Get-ProgramMetadata {
             } else {
                 $metadata.action_state = [ActionState]::PresentAndNotInstalled
                 # set the location type and validate the path
-                if ($path.StartsWith("http")) {
-                    $metadata.location_type = [LocationType]::Http
-                    try {
-                        Invoke-WebRequest -Uri $path -DisableKeepAlive -UseBasicParsing -Method HEAD | Out-Null
-                    } catch {
-                        $metadata.path_error = "the file at the URL $path cannot be reached: $($_.Exception.Message)"
-                    }
-                } elseif ($path.StartsWith("/") -or $path.StartsWith("\\")) {
+                if ($path.StartsWith("/") -or $path.StartsWith("\\")) {
                     $metadata.location_type = [LocationType]::Unc
                     if ($credential) {
                         # Test-Path doesn't support supplying -Credentials, need to create PSDrive before testing
@@ -231,7 +199,7 @@ switch($program_metadata.action_state)
                 Fail-Json -obj $result -message "failed to run uninstall process ($uninstall_command): $($_.Exception.Message)"
             }
 
-            if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
+            if (($null -ne $log_path) -and (Test-Path -Path $log_path)) {
                 $log_content = Get-Content -Path $log_path | Out-String
             } else {
                 $log_content = $null
@@ -242,7 +210,7 @@ switch($program_metadata.action_state)
             if ($valid_return_codes -notcontains $process_result.rc) {
                 $result.stdout = Convert-Encoding -string $process_result.stdout
                 $result.stderr = Convert-Encoding -string $process_result.stderr
-                if ($log_content -ne $null) {
+                if ($null -ne $log_content) {
                     $result.log = $log_content
                 }
                 Fail-Json -obj $result -message "unexpected rc from uninstall $uninstall_exe $($uninstall_arguments): see rc, stdout and stderr for more details"
@@ -274,17 +242,10 @@ switch($program_metadata.action_state)
         try {
             # If path is on a network and we specify credentials or path is a
             # URL and not an MSI we need to get a temp local copy
-            if ($program_metadata.location_type -eq [LocationType]::Unc -and $credential -ne $null) {
+            if ($program_metadata.location_type -eq [LocationType]::Unc -and $null -ne $credential) {
                 $file_name = Split-Path -Path $path -Leaf
                 $local_path = [System.IO.Path]::GetRandomFileName()
                 Copy-Item -Path "win_package:\$file_name" -Destination $local_path -WhatIf:$check_mode                                                
-                $cleanup_artifacts += $local_path
-            } elseif ($program_metadata.location_type -eq [LocationType]::Http) {
-                $local_path = [System.IO.Path]::GetRandomFileName()
-
-                if (-not $check_mode) {
-                    Get-FileFromUrl -url $path -path $local_path
-                }
                 $cleanup_artifacts += $local_path
             } else {
                 $local_path = $path
@@ -306,7 +267,7 @@ switch($program_metadata.action_state)
                     Fail-Json -obj $result -message "failed to run install process ($install_command): $($_.Exception.Message)"
                 }
 
-                if (($log_path -ne $null) -and (Test-Path -Path $log_path)) {
+                if (($null -ne $log_path) -and (Test-Path -Path $log_path)) {
                     $log_content = Get-Content -Path $log_path | Out-String
                 } else {
                     $log_content = $null
@@ -317,7 +278,7 @@ switch($program_metadata.action_state)
                 if ($valid_return_codes -notcontains $process_result.rc) {
                     $result.stdout = Convert-Encoding -string $process_result.stdout
                     $result.stderr = Convert-Encoding -string $process_result.stderr
-                    if ($log_content -ne $null) {
+                    if ($null -ne $log_content) {
                         $result.log = $log_content
                     }
                     Fail-Json -obj $result -message "unexpected rc from install $install_exe $($install_arguments): see rc, stdout and stderr for more details"
