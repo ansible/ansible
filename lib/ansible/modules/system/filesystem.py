@@ -46,7 +46,7 @@ options:
     default: 'no'
   resizefs:
     description:
-    - If C(yes), if the block device and filesytem size differ, grow the filesystem into the space.
+    - If C(yes), if the block device and filesystem size differ, grow the filesystem into the space.
     - Supported for C(ext2), C(ext3), C(ext4), C(ext4dev), C(f2fs), C(lvm), C(xfs), C(vfat), C(swap) filesystems.
     - XFS Will only grow if mounted.
     - vFAT will likely fail if fatresize < 1.04.
