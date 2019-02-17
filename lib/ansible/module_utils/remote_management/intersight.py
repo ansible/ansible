@@ -186,11 +186,14 @@ class IntersightModule():
         try:
             response, info = self.intersight_call(**options)
             if not re.match(r'2..', str(info['status'])):
-                raise RuntimeError(info['status'], info['msg'])
+                raise RuntimeError(info['status'], info['msg'], info['body'])
         except Exception as e:
             self.module.fail_json(msg="API error: %s " % str(e))
 
-        return json.loads(response.read())
+        json_response = {}
+        if response.length > 0:
+            json_response = json.loads(response.read())
+        return json_response
 
     def intersight_call(self, http_method="", resource_path="", query_params=None, body=None, moid=None, name=None):
         """
@@ -278,6 +281,7 @@ class IntersightModule():
         # Generate the HTTP requests header
         request_header = {
             'Accept': 'application/json',
+            'Content-Type': 'application/json',
             'Host': '{0}'.format(target_host),
             'Date': '{0}'.format(cdate),
             'Digest': 'SHA-256={0}'.format(b64_body_digest.decode('ascii')),
