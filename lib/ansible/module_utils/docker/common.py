@@ -570,10 +570,21 @@ class AnsibleDockerClient(Client):
             # In API <= 1.20 seeing 'docker.io/<name>' as the name of images pulled from docker hub
             registry, repo_name = auth.resolve_repository_name(name)
             if registry == 'docker.io':
-                # the name does not contain a registry, so let's see if docker.io works
-                lookup = "docker.io/%s" % name
-                self.log("Check for docker.io image: %s" % lookup)
-                images = self._image_lookup(lookup, tag)
+                # If docker.io is explicitly there in name, the image
+                # isn't found in some cases (#41509)
+                self.log("Check for docker.io image: %s" % repo_name)
+                images = self._image_lookup(repo_name, tag)
+                if len(images) == 0 and repo_name.startswith('library/'):
+                    # Sometimes library/xxx images are not found
+                    lookup = repo_name[len('library/'):]
+                    self.log("Check for docker.io image: %s" % lookup)
+                    images = self._image_lookup(lookup, tag)
+                if len(images) == 0:
+                    # Last case: if docker.io wasn't there, it can be that
+                    # the image wasn't found either (#15586)
+                    lookup = "%s/%s" % (registry, repo_name)
+                    self.log("Check for docker.io image: %s" % lookup)
+                    images = self._image_lookup(lookup, tag)
 
         if len(images) > 1:
             self.fail("Registry returned more than one result for %s:%s" % (name, tag))
