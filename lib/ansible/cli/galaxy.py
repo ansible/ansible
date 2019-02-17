@@ -439,7 +439,9 @@ class GalaxyCLI(CLI):
                             # we know we can skip this, as it's not going to
                             # be found on galaxy.ansible.com
                             continue
-                        if dep_role.install_info is None and not ( dep_role.name in installed_roles and not force ) :
+                        if dep_role.install_info is None and dep_role.name in installed_roles and not force :
+                            display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                        elif dep_role.install_info is None:
                             if dep_role not in roles_left:
                                 display.display('- adding dependency: %s' % str(dep_role))
                                 roles_left.append(dep_role)
