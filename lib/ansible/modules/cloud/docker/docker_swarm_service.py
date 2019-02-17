@@ -35,7 +35,7 @@ options:
     default: true
     description:
       - If the current image digest should be resolved from registry and updated if changed.
-    version_added: 2.8
+    version_added: "2.8"
   state:
     required: true
     type: str
@@ -54,7 +54,7 @@ options:
       - Command to execute when the container starts.
       - A command may be either a string or a list or a list of strings.
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
-    version_added: 2.8
+    version_added: "2.8"
   constraints:
     type: list
     description:
@@ -66,7 +66,7 @@ options:
       - List of the placement preferences as key value pairs.
       - Corresponds to the C(--placement-pref) option of C(docker service create).
       - Requires API version >= 1.27.
-    version_added: 2.8
+    version_added: "2.8"
   hostname:
     type: str
     description:
