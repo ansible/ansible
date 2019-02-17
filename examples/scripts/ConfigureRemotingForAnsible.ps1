@@ -39,6 +39,7 @@
 # Updated by Dag Wieërs <dag@wieers.com>
 # Updated by Jordan Borean <jborean93@gmail.com>
 # Updated by Erwan Quélin <erwan.quelin@gmail.com>
+# Updated by David Norman <david@dkn.email>
 #
 # Version 1.0 - 2014-07-06
 # Version 1.1 - 2014-11-11
@@ -48,6 +49,8 @@
 # Version 1.5 - 2017-02-09
 # Version 1.6 - 2017-04-18
 # Version 1.7 - 2017-11-23
+# Version 1.8 - 2018-02-23
+# Version 1.9 - 2018-09-21
 
 # Support -Verbose option
 [CmdletBinding()]
@@ -90,11 +93,15 @@ Function New-LegacySelfSignedCert
         [int]$ValidDays = 1095
     )
 
+    $hostnonFQDN = $env:computerName 
+    $hostFQDN = [System.Net.Dns]::GetHostByName(($env:computerName)).Hostname
+    $SignatureAlgorithm = "SHA256"
+
     $name = New-Object -COM "X509Enrollment.CX500DistinguishedName.1"
     $name.Encode("CN=$SubjectName", 0)
 
     $key = New-Object -COM "X509Enrollment.CX509PrivateKey.1"
-    $key.ProviderName = "Microsoft RSA SChannel Cryptographic Provider"
+    $key.ProviderName = "Microsoft Enhanced RSA and AES Cryptographic Provider"
     $key.KeySpec = 1
     $key.Length = 4096
     $key.SecurityDescriptor = "D:PAI(A;;0xd01f01ff;;;SY)(A;;0xd01f01ff;;;BA)(A;;0x80120089;;;NS)"
@@ -114,7 +121,33 @@ Function New-LegacySelfSignedCert
     $cert.Issuer = $cert.Subject
     $cert.NotBefore = (Get-Date).AddDays(-1)
     $cert.NotAfter = $cert.NotBefore.AddDays($ValidDays)
+
+    $SigOID = New-Object -ComObject X509Enrollment.CObjectId
+    $SigOID.InitializeFromValue(([Security.Cryptography.Oid]$SignatureAlgorithm).Value)
+
+    [string[]] $AlternativeName  += $hostnonFQDN
+    $AlternativeName += $hostFQDN
+    $IAlternativeNames = New-Object -ComObject X509Enrollment.CAlternativeNames
+
+    foreach ($AN in $AlternativeName)
+    {
+        $AltName = New-Object -ComObject X509Enrollment.CAlternativeName
+        $AltName.InitializeFromString(0x3,$AN)
+        $IAlternativeNames.Add($AltName)
+    }
+
+    $SubjectAlternativeName = New-Object -ComObject X509Enrollment.CX509ExtensionAlternativeNames
+    $SubjectAlternativeName.InitializeEncode($IAlternativeNames)
+
+    [String[]]$KeyUsage = ("DigitalSignature", "KeyEncipherment")
+    $KeyUsageObj = New-Object -ComObject X509Enrollment.CX509ExtensionKeyUsage
+    $KeyUsageObj.InitializeEncode([int][Security.Cryptography.X509Certificates.X509KeyUsageFlags]($KeyUsage))
+    $KeyUsageObj.Critical = $true
+
+    $cert.X509Extensions.Add($KeyUsageObj)
     $cert.X509Extensions.Add($ekuext)
+    $cert.SignatureInformation.HashAlgorithm = $SigOID
+    $CERT.X509Extensions.Add($SubjectAlternativeName)
     $cert.Encode()
 
     $enrollment = New-Object -COM "X509Enrollment.CX509Enrollment.1"
@@ -259,6 +292,20 @@ If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\lo
 Else
 {
     Write-Verbose "PS Remoting is already enabled."
+}
+
+# Ensure LocalAccountTokenFilterPolicy is set to 1
+# https://github.com/ansible/ansible/issues/42978
+$token_path = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+$token_prop_name = "LocalAccountTokenFilterPolicy"
+$token_key = Get-Item -Path $token_path
+$token_value = $token_key.GetValue($token_prop_name, $null)
+if ($token_value -ne 1) {
+    Write-Verbose "Setting LocalAccountTOkenFilterPolicy to 1"
+    if ($null -ne $token_value) {
+        Remove-ItemProperty -Path $token_path -Name $token_prop_name
+    }
+    New-ItemProperty -Path $token_path -Name $token_prop_name -Value 1 -PropertyType DWORD > $null
 }
 
 # Make sure there is a SSL listener.

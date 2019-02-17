@@ -153,14 +153,17 @@ api_response:
 
 import base64
 import json
+import traceback
 
+YAML_IMP_ERR = None
 try:
     import yaml
     HAS_LIB_YAML = True
 except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
     HAS_LIB_YAML = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.urls import fetch_url
 
 
@@ -349,11 +352,11 @@ def main():
         mutually_exclusive=(('file_reference', 'inline_data'),
                             ('url_username', 'insecure'),
                             ('url_password', 'insecure')),
-        required_one_of=(('file_reference', 'inline_data')),
+        required_one_of=(('file_reference', 'inline_data'),),
     )
 
     if not HAS_LIB_YAML:
-        module.fail_json(msg="missing python library: yaml")
+        module.fail_json(msg=missing_required_lib('PyYAML'), exception=YAML_IMP_ERR)
 
     decode_cert_data(module)
 
@@ -376,7 +379,7 @@ def main():
             f.close()
             if not data:
                 module.fail_json(msg="No valid data could be found.")
-        except:
+        except Exception:
             module.fail_json(msg="The file '%s' was not found or contained invalid YAML/JSON data" % file_reference)
 
     # set the transport type and build the target endpoint url

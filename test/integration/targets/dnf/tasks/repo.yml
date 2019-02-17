@@ -87,6 +87,7 @@
       dnf:
         name: "{{ repodir }}/foo-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
+        allow_downgrade: True
       register: dnf_result
 
     - name: Check foo with rpm
@@ -207,8 +208,59 @@
             - "not dnf_result.changed"
             - "dnf_result is failed"
     # ============================================================================
+
+    # Should install foo-with-weak-dep and foo-weak-dep
+    - name: Install package with defaults
+      dnf:
+        name: foo-with-weak-dep
+        state: present
+
+    - name: Check if foo-with-weak-dep is installed
+      shell: rpm -q foo-with-weak-dep
+      register: rpm_main_result
+
+    - name: Check if foo-weak-dep is installed
+      shell: rpm -q foo-weak-dep
+      register: rpm_weak_result
+
+    - name: Verify install with weak deps
+      assert:
+        that:
+        - rpm_main_result.rc == 0
+        - rpm_weak_result.rc == 0
+
+    - name: Uninstall foo weak dep packages
+      dnf:
+        name:
+        - foo-with-weak-dep
+        - foo-weak-dep
+        state: absent
+
+    - name: Install package with weak deps but skip weak deps
+      dnf:
+        name: foo-with-weak-dep
+        install_weak_deps: False
+        state: present
+
+    - name: Check if foo-with-weak-dep is installed
+      shell: rpm -q foo-with-weak-dep
+      register: rpm_main_result
+
+    - name: Check if foo-weak-dep is installed
+      shell: rpm -q foo-weak-dep
+      register: rpm_weak_result
+      ignore_errors: yes
+
+    - name: Verify install without weak deps
+      assert:
+        that:
+        - rpm_main_result.rc == 0
+        - rpm_weak_result.rc == 1  # the weak dependency shouldn't be installed
   always:
     - name: Clean up
       dnf:
-        name: foo
+        name:
+        - foo
+        - foo-with-weak-dep
+        - foo-weak-dep
         state: absent

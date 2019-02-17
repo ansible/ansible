@@ -1,1 +1,2 @@
-posix/ci/group3
+shippable/posix/group3
+needs/target/binary_modules

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: netapp_e_snapshot_group
-short_description: Manage snapshot groups
+short_description: NetApp E-Series manage snapshot groups
 description:
     - Create, update, delete snapshot groups for NetApp E-series storage arrays
 version_added: '2.2'
@@ -38,6 +38,7 @@ options:
         default: true
         description:
         - Should https certificates be validated?
+        type: bool
     state:
         description:
             - Whether to ensure the group is present or absent.
@@ -124,7 +125,7 @@ RETURN = """
 msg:
     description: Success message
     returned: success
-    type: string
+    type: str
     sample: json facts for newly created snapshot group.
 """
 HEADERS = {
@@ -158,7 +159,7 @@ def request(url, data=None, headers=None, method='GET', use_proxy=True,
             data = json.loads(raw_data)
         else:
             raw_data = None
-    except:
+    except Exception:
         if ignore_errors:
             pass
         else:

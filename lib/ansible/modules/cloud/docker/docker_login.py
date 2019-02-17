@@ -46,11 +46,10 @@ options:
   email:
     required: False
     description:
-      - "The email address for the registry account. NOTE: private registries may not require this,
-        but Docker Hub requires it."
+      - "The email address for the registry account."
   reauthorize:
     description:
-      - Refresh exiting authentication found in the configuration file.
+      - Refresh existing authentication found in the configuration file.
     type: bool
     default: 'no'
     aliases:
@@ -73,16 +72,15 @@ options:
     default: 'present'
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.7.0"
-    - "Docker API >= 1.20"
-    - 'Only to be able to logout (state=absent): the docker command line utility'
+  - "docker-py >= 1.8.0"
+  - "Docker API >= 1.20"
+  - "Only to be able to logout, that is for I(state) = C(absent): the C(docker) command line utility"
 author:
-    - "Olaf Kilian <olaf.kilian@symanex.com>"
-    - "Chris Houseknecht (@chouseknecht)"
-    - "James Tanner (@jctanner)"
+  - Olaf Kilian (@olsaki) <olaf.kilian@symanex.com>
+  - Chris Houseknecht (@chouseknecht)
 '''
 
 EXAMPLES = '''
@@ -91,7 +89,6 @@ EXAMPLES = '''
   docker_login:
     username: docker
     password: rekcod
-    email: docker@docker.io
 
 - name: Log into private registry and force re-authorization
   docker_login:
@@ -104,13 +101,11 @@ EXAMPLES = '''
   docker_login:
     username: docker
     password: rekcod
-    email: docker@docker.io
     config_path: /tmp/.mydockercfg
 
 - name: Log out of DockerHub
   docker_login:
     state: absent
-    email: docker@docker.com
 '''
 
 RETURN = '''
@@ -131,7 +126,7 @@ import os
 import re
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.docker_common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
+from ansible.module_utils.docker.common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
 
 
 class LoginManager(DockerBaseClass):
@@ -308,7 +303,8 @@ def main():
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        required_if=required_if
+        required_if=required_if,
+        min_docker_api_version='1.20',
     )
 
     results = dict(
@@ -316,9 +312,6 @@ def main():
         actions=[],
         login_result={}
     )
-
-    if client.module.params['state'] == 'present' and client.module.params['registry_url'] == DEFAULT_DOCKER_REGISTRY and not client.module.params['email']:
-        client.module.fail_json(msg="'email' is required when logging into DockerHub")
 
     LoginManager(client, results)
     if 'actions' in results:

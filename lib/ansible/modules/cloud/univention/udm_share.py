@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# Copyright (c) 2016, Adfinis SyGroup AG
+# Copyright: (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,7 +18,8 @@ DOCUMENTATION = '''
 ---
 module: udm_share
 version_added: "2.2"
-author: "Tobias Rueetschi (@2-B)"
+author:
+- Tobias Rüetschi (@keachi)
 short_description: Manage samba shares on a univention corporate server
 description:
     - "This module allows to manage samba shares on a univention corporate
@@ -478,13 +479,13 @@ def main():
     changed = False
 
     obj = list(ldap_search(
-        '(&(objectClass=univentionShare)(cn={}))'.format(name),
+        '(&(objectClass=univentionShare)(cn={0}))'.format(name),
         attr=['cn']
     ))
 
     exists = bool(len(obj))
-    container = 'cn=shares,ou={},{}'.format(module.params['ou'], base_dn())
-    dn = 'cn={},{}'.format(name, container)
+    container = 'cn=shares,ou={0},{1}'.format(module.params['ou'], base_dn())
+    dn = 'cn={0},{1}'.format(name, container)
 
     if state == 'present':
         try:
@@ -493,7 +494,7 @@ def main():
             else:
                 obj = umc_module_for_edit('shares/share', dn)
 
-            module.params['printablename'] = '{} ({})'.format(name, module.params['host'])
+            module.params['printablename'] = '{0} ({1})'.format(name, module.params['host'])
             for k in obj.keys():
                 if module.params[k] is True:
                     module.params[k] = '1'
@@ -513,9 +514,9 @@ def main():
                     obj.create()
                 elif changed:
                     obj.modify()
-        except BaseException as err:
+        except Exception as err:
             module.fail_json(
-                msg='Creating/editing share {} in {} failed: {}'.format(
+                msg='Creating/editing share {0} in {1} failed: {2}'.format(
                     name,
                     container,
                     err,
@@ -528,9 +529,9 @@ def main():
             if not module.check_mode:
                 obj.remove()
             changed = True
-        except BaseException as err:
+        except Exception as err:
             module.fail_json(
-                msg='Removing share {} in {} failed: {}'.format(
+                msg='Removing share {0} in {1} failed: {2}'.format(
                     name,
                     container,
                     err,

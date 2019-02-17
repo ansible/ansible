@@ -12,6 +12,6 @@
     - "install_systemd_result.dest == '/etc/systemd/system/ansible_test.service'"
     - "install_systemd_result.state == 'file'"
     - "install_systemd_result.mode == '0644'"
-    - "install_systemd_result.checksum == '6b5f2b9318524a387c77c550cef4dd411a471acf'"
+    - "install_systemd_result.checksum == '9e6320795a5c79c01230a6de1c343ea32097af52'"
     - "install_broken_systemd_result.dest == '/etc/systemd/system/ansible_test_broken.service'"
     - "install_broken_systemd_result.state == 'link'"

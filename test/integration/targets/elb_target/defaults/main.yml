@@ -1,4 +1,0 @@
----
-ec2_ami_image:
-  us-east-1: ami-8c1be5f6
-  us-east-2: ami-c5062ba0

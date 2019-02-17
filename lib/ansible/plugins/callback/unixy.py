@@ -23,6 +23,7 @@ DOCUMENTATION = '''
 from os.path import basename
 
 from ansible import constants as C
+from ansible import context
 from ansible.module_utils._text import to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
@@ -71,6 +72,7 @@ class CallbackModule(CallbackBase):
 
         if self._run_is_verbose(result):
             task_result = "%s %s: %s" % (task_host, msg, self._dump_results(result._result, indent=4))
+            return task_result
 
         if self.delegated_vars:
             task_delegate_host = self.delegated_vars['ansible_host']
@@ -108,6 +110,14 @@ class CallbackModule(CallbackBase):
 
         self._display.display(msg)
 
+    def v2_runner_on_skipped(self, result, ignore_errors=False):
+        self._preprocess_result(result)
+        display_color = C.COLOR_SKIP
+        msg = "skipped"
+
+        task_result = self._process_result_output(result, msg)
+        self._display.display("  " + task_result, display_color)
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self._preprocess_result(result)
         display_color = C.COLOR_ERROR
@@ -127,8 +137,14 @@ class CallbackModule(CallbackBase):
         task_result = self._process_result_output(result, msg)
         self._display.display("  " + task_result, display_color)
 
+    def v2_runner_item_on_skipped(self, result):
+        self.v2_runner_on_skipped(result)
+
     def v2_runner_item_on_failed(self, result):
         self.v2_runner_on_failed(result)
+
+    def v2_runner_item_on_ok(self, result):
+        self.v2_runner_on_ok(result)
 
     def v2_runner_on_unreachable(self, result):
         msg = "unreachable"
@@ -185,14 +201,16 @@ class CallbackModule(CallbackBase):
         # TODO display whether this run is happening in check mode
         self._display.display("Executing playbook %s" % basename(playbook._file_name))
 
+        # show CLI arguments
         if self._display.verbosity > 3:
-            if self._options is not None:
-                for option in dir(self._options):
-                    if option.startswith('_') or option in ['read_file', 'ensure_value', 'read_module']:
-                        continue
-                    val = getattr(self._options, option)
-                    if val:
-                        self._display.vvvv('%s: %s' % (option, val))
+            if context.CLIARGS.get('args'):
+                self._display.display('Positional arguments: %s' % ' '.join(context.CLIARGS['args']),
+                                      color=C.COLOR_VERBOSE, screen_only=True)
+
+            for argument in (a for a in context.CLIARGS if a != 'args'):
+                val = context.CLIARGS[argument]
+                if val:
+                    self._display.vvvv('%s: %s' % (argument, val))
 
     def v2_runner_retry(self, result):
         msg = "  Retrying... (%d of %d)" % (result._result['attempts'], result._result['retries'])

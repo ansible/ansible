@@ -26,5 +26,6 @@
       - "result.ansible_facts.ansible_net_interfaces | length > 1" # more than one interface returned
       # ... and not present
       - "result.ansible_facts.ansible_net_filesystems is not defined"
+      - "result.ansible_facts.ansible_net_filesystems_info is not defined"
 
 - debug: msg="END cli/not_hardware_facts.yaml on connection={{ ansible_connection }}"

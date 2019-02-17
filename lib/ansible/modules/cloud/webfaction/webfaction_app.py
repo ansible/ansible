@@ -1,15 +1,16 @@
 #!/usr/bin/python
-#
-# (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2015, Quentin Stafford-Fraser, with contributions gratefully acknowledged from:
 #     * Andy Baker
 #     * Federico Tarantini
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-#
+
 # Create a Webfaction application using Ansible and the Webfaction API
 #
 # Valid application types can be found by looking here:
-# http://docs.webfaction.com/xmlrpc-api/apps.html#application-types
+# https://docs.webfaction.com/xmlrpc-api/apps.html#application-types
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -25,7 +26,7 @@ DOCUMENTATION = '''
 module: webfaction_app
 short_description: Add or remove applications on a Webfaction host
 description:
-    - Add or remove applications on a Webfaction host. Further documentation at U(http://github.com/quentinsf/ansible-webfaction).
+    - Add or remove applications on a Webfaction host. Further documentation at U(https://github.com/quentinsf/ansible-webfaction).
 author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
@@ -33,7 +34,7 @@ notes:
       You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API.
       The location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as
       your host, you may want to add C(serial: 1) to the plays.
-    - See `the webfaction API <http://docs.webfaction.com/xmlrpc-api/>`_ for more info.
+    - See `the webfaction API <https://docs.webfaction.com/xmlrpc-api/>`_ for more info.
 
 options:
     name:
@@ -49,7 +50,7 @@ options:
 
     type:
         description:
-            - The type of application to create. See the Webfaction docs at U(http://docs.webfaction.com/xmlrpc-api/apps.html) for a list.
+            - The type of application to create. See the Webfaction docs at U(https://docs.webfaction.com/xmlrpc-api/apps.html) for a list.
         required: true
 
     autostart:
@@ -183,7 +184,7 @@ def main():
             )
 
     else:
-        module.fail_json(msg="Unknown state specified: {}".format(app_state))
+        module.fail_json(msg="Unknown state specified: {0}".format(app_state))
 
     module.exit_json(
         changed=True,

@@ -1,22 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# Copyright (c) 2015, René Moser <mail@renemoser.net>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,7 +15,7 @@ module: cs_staticnat
 short_description: Manages static NATs on Apache CloudStack based clouds.
 description:
     - Create, update and remove static NATs.
-version_added: '2.0'
+version_added: "2.0"
 author: "René Moser (@resmo)"
 options:
   ip_address:
@@ -39,12 +25,10 @@ options:
   vm:
     description:
       - Name of virtual machine which we make the static NAT for.
-      - Required if C(state=present).
+      - Required if I(state=present).
   vm_guest_ip:
     description:
       - VM guest NIC secondary IP address for the static NAT.
-    type: bool
-    default: 'no'
   network:
     description:
       - Network the IP address is related to.
@@ -56,8 +40,8 @@ options:
   state:
     description:
       - State of the static NAT.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
   domain:
     description:
       - Domain the static NAT is related to.
@@ -75,19 +59,19 @@ options:
     description:
       - Poll async jobs until job has finished.
     type: bool
-    default: 'yes'
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create a static NAT: 1.2.3.4 -> web01
-- local_action:
+- name: Create a static NAT for IP 1.2.3.4 to web01
+  local_action:
     module: cs_staticnat
     ip_address: 1.2.3.4
     vm: web01
 
-# remove a static NAT
-- local_action:
+- name: Remove a static NAT
+  local_action:
     module: cs_staticnat
     ip_address: 1.2.3.4
     state: absent
@@ -98,47 +82,47 @@ RETURN = '''
 id:
   description: UUID of the ip_address.
   returned: success
-  type: string
+  type: str
   sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
-  type: string
+  type: str
   sample: 1.2.3.4
 vm_name:
   description: Name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_display_name:
   description: Display name of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: web-01
 vm_guest_ip:
   description: IP of the virtual machine.
   returned: success
-  type: string
+  type: str
   sample: 10.101.65.152
 zone:
   description: Name of zone the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 project:
   description: Name of project the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 account:
   description: Account the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 domain:
   description: Domain the static NAT is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 '''
 

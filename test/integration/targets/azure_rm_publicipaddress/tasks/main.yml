@@ -1,17 +1,18 @@
 - name: Create domain name
   set_fact:
       domain_name: "ansible-{{ resource_group | hash('md5') | truncate(24, True, '') }}"
+      rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
 
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       state:  absent
 
 - name: Create public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       allocation_method: Static
       domain_name: "{{ domain_name }}"
       tags:
@@ -21,7 +22,7 @@
 
 - assert:
       that:
-          - output.state.public_ip_allocation_method == 'Static'
+          - output.state.public_ip_allocation_method == 'static'
           - output.state.dns_settings.domain_name_label == domain_name
           - output.state.tags | length == 2
           - output.state.tags.testing == 'testing'
@@ -29,12 +30,9 @@
 - name: Should be idempotent
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
-      allocation_method: Static
+      name: "pip{{ rpfx }}"
+      allocation_method: static
       domain_name: "{{ domain_name }}"
-      tags:
-          testing: testing
-          delete: on-exit
   register: output
 
 - assert:
@@ -43,9 +41,11 @@
 - name: Update tags
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
+      allocation_method: static
+      domain_name: "{{ domain_name }}"
+      append_tags: yes
       tags:
-          testing: testing
           delete: never
           foo: bar
   register: output
@@ -68,8 +68,10 @@
 - name: Purge all tags
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
-      tags: {}
+      name: "pip{{ rpfx }}"
+      allocation_method: static
+      domain_name: "{{ domain_name }}"
+      append_tags: no
   register: output
 
 - assert:
@@ -79,10 +81,15 @@
 - name: Gather facts for a public ip
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
+  register: pip
 
 - assert:
-      that: azure_publicipaddresses | length == 1
+      that:
+      - "pip.publicipaddresses | length == 1"
+      - pip.publicipaddresses[0].name == "pip{{ rpfx }}"
+      - pip.publicipaddresses[0].allocation_method == 'static'
+      - pip.publicipaddresses[0].dns_settings.domain_name_label == domain_name
 
 - name: Gather facts for all public ips
   azure_rm_publicipaddress_facts:
@@ -94,13 +101,13 @@
 - name: Remove public ip
   azure_rm_publicipaddress:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
       state:  absent
 
 - name: Gather facts for a public ip
   azure_rm_publicipaddress_facts:
       resource_group: "{{ resource_group }}"
-      name: testing01
+      name: "pip{{ rpfx }}"
 
 - assert:
       that: azure_publicipaddresses | length == 0

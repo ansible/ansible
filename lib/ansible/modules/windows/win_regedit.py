@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>, Josh Ludwig <jludwig@chathamfinancial.com>
+# Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
+# Copyright: (c) 2015, Josh Ludwig <jludwig@chathamfinancial.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # this is a windows documentation stub.  actual code lives in the .ps1
@@ -27,6 +28,7 @@ options:
     - Name of the registry path.
     - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU,
       HKLM, HKU.'
+    type: str
     required: yes
     aliases: [ key ]
   name:
@@ -34,6 +36,7 @@ options:
     - Name of the registry entry in the above C(path) parameters.
     - If not provided, or empty then the '(Default)' property for the key will
       be used.
+    type: str
     aliases: [ entry ]
   data:
     description:
@@ -50,15 +53,18 @@ options:
       or a hex value.
     - Multistring values should be passed in as a list.
     - See the examples for more details on how to format this data.
+    type: str
   type:
     description:
     - The registry value data type.
+    type: str
     choices: [ binary, dword, expandstring, multistring, string, qword ]
     default: string
     aliases: [ datatype ]
   state:
     description:
     - The state of the registry entry.
+    type: str
     choices: [ absent, present ]
     default: present
   delete_key:
@@ -67,7 +73,7 @@ options:
     - If C(no) then it will only clear out the '(Default)' property for
       that key.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.4'
   hive:
     description:
@@ -79,12 +85,16 @@ options:
       other hive saved as a file.
     - Using this function requires the user to have the C(SeRestorePrivilege)
       and C(SeBackupPrivilege) privileges enabled.
+    type: path
     version_added: '2.5'
 notes:
 - Check-mode C(-C/--check) and diff output C(-D/--diff) are supported, so that you can test every change against the active configuration before
   applying changes.
 - Beware that some registry hives (C(HKEY_USERS) in particular) do not allow to create new registry paths in the root folder.
 - Since ansible 2.4, when checking if a string registry value has changed, a case-sensitive test is used. Previously the test was case-insensitive.
+seealso:
+- module: win_reg_stat
+- module: win_regmerge
 author:
 - Adam Keech (@smadam813)
 - Josh Ludwig (@joshludwig)
@@ -181,20 +191,20 @@ EXAMPLES = r'''
     path: HKLM:\ANSIBLE\Control Panel\Mouse
     name: MouseTrails
     data: 10
-    type: string
+    type: str
     state: present
     hive: C:\Users\Default\NTUSER.dat
 '''
 
 RETURN = r'''
 data_changed:
-    description: whether this invocation changed the data in the registry value
+    description: Whether this invocation changed the data in the registry value.
     returned: success
-    type: boolean
-    sample: False
+    type: bool
+    sample: false
 data_type_changed:
-    description: whether this invocation changed the datatype of the registry value
+    description: Whether this invocation changed the datatype of the registry value.
     returned: success
-    type: boolean
-    sample: True
+    type: bool
+    sample: true
 '''

@@ -6,7 +6,7 @@
 - block:
   - name: setup
     nxos_config:
-      lines: hostname switch
+      lines: "hostname switch"
       match: none
       provider: "{{ connection }}"
 
@@ -33,7 +33,7 @@
   always:
   - name: teardown
     nxos_config:
-      lines: hostname switch
+      lines: "hostname switch"
       match: none
       provider: "{{ connection }}"
 

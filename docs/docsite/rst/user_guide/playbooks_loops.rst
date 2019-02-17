@@ -72,8 +72,23 @@ If you have a list of hashes, you can reference subkeys using things like::
         - { name: 'testuser1', groups: 'wheel' }
         - { name: 'testuser2', groups: 'root' }
 
-Also be aware that when combining :ref:`when: playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
+Also be aware that when combining :doc:`playbooks_conditionals` with a loop, the ``when:`` statement is processed separately for each item.
 See :ref:`the_when_statement` for an example.
+
+To loop over a dict, use the ``dict2items`` :ref:`dict_filter`::
+
+    - name: create a tag dictionary of non-empty tags
+      set_fact:
+        tags_dict: "{{ (tags_dict|default({}))|combine({item.key: item.value}) }}"
+      loop: "{{ tags|dict2items }}"
+      vars:
+        tags:
+          Environment: dev
+          Application: payment
+          Another: "{{ doesnotexist|default() }}"
+      when: item.value != ""
+
+Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
 
 
 .. _complex_loops:
@@ -90,9 +105,26 @@ For example, using the 'nested' lookup, you can combine lists::
         priv: "{{ item[1] }}.*:ALL"
         append_privs: yes
         password: "foo"
-      loop: "{{ lookup('nested', [ 'alice', 'bob' ], [ 'clientdb', 'employeedb', 'providerdb' ]) }}"
+      loop: "{{ ['alice', 'bob'] |product(['clientdb', 'employeedb', 'providerdb'])|list }}"
 
 .. note:: ``with_`` loops are actually a combination of things ``with_`` + ``lookup()``, even ``items`` is a lookup. ``loop`` can be used in the same way as shown above.
+
+
+Using lookup vs query with loop
+```````````````````````````````
+
+In Ansible 2.5 a new jinja2 function was introduced named :ref:`query`, that offers several benefits over ``lookup`` when using the new ``loop`` keyword.
+
+This is better described in the lookup documentation. However, ``query`` provides a simpler interface and a more predictable output from lookup plugins, ensuring better compatibility with ``loop``.
+
+In certain situations the ``lookup`` function may not return a list which ``loop`` requires.
+
+The following invocations are equivalent, using ``wantlist=True`` with ``lookup`` to ensure a return type of a list::
+
+    loop: "{{ query('inventory_hostnames', 'all') }}"
+
+    loop: "{{ lookup('inventory_hostnames', 'all', wantlist=True) }}"
+
 
 .. _do_until_loops:
 
@@ -109,7 +141,7 @@ Sometimes you would want to retry a task until a certain condition is met.  Here
       retries: 5
       delay: 10
 
-The above example run the shell module recursively till the module's result has "all systems go" in its stdout or the task has
+The above example runs the shell module iteratively until the module's result has "all systems go" in its stdout or the task has
 been retried for 5 times with a delay of 10 seconds. The default value for "retries" is 3 and "delay" is 5.
 
 The task returns the results returned by the last task run. The results of individual retries can be viewed by -vv option.
@@ -191,7 +223,7 @@ During iteration, the result of the current item will be placed in the variable:
 Looping over the inventory
 ``````````````````````````
 
-If you wish to loop over the inventory, or just a subset of it, there is multiple ways.
+If you wish to loop over the inventory, or just a subset of it, there are multiple ways.
 One can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables, like this::
 
     # show all the hosts in the inventory
@@ -209,12 +241,12 @@ There is also a specific lookup plugin ``inventory_hostnames`` that can be used 
     # show all the hosts in the inventory
     - debug:
         msg: "{{ item }}"
-      loop: "{{lookup('inventory_hostnames', 'all'}}"
+      loop: "{{ query('inventory_hostnames', 'all') }}"
 
     # show all the hosts matching the pattern, ie all but the group www
     - debug:
         msg: "{{ item }}"
-      loop: "{{lookup('inventory_hostnames', 'all!www'}}"
+      loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
 More information on the patterns can be found on :doc:`intro_patterns`
 
@@ -230,7 +262,6 @@ Ansible by default sets the loop variable ``item`` for each loop, which causes t
 As of Ansible 2.1, the ``loop_control`` option can be used to specify the name of the variable to be used for the loop::
 
     # main.yml
-    - include: inner.yml
     - include_tasks: inner.yml
       loop:
         - 1
@@ -285,7 +316,7 @@ Another option to loop control is ``pause``, which allows you to control the tim
       loop_control:
         pause: 3
 
-.. versionadded:: 2.7
+.. versionadded:: 2.5
 
 If you need to keep track of where you are in a loop, you can use the ``index_var`` option to loop control to specify a variable name to contain the current loop index.::
 
@@ -298,6 +329,35 @@ If you need to keep track of where you are in a loop, you can use the ``index_va
         - pear
       loop_control:
         index_var: my_idx
+
+.. versionadded:: 2.8
+
+As of Ansible 2.8 you can get extended loop information using the ``extended`` option to loop control. This option will expose the following information.
+
+==========================  ===========
+Variable                    Description
+--------------------------  -----------
+``ansible_loop.allitems``   The list of all items in the loop
+``ansible_loop.index``      The current iteration of the loop. (1 indexed)
+``ansible_loop.index0``     The current iteration of the loop. (0 indexed)
+``ansible_loop.revindex``   The number of iterations from the end of the loop (1 indexed)
+``ansible_loop.revindex0``  The number of iterations from the end of the loop (0 indexed)
+``ansible_loop.first``      ``True`` if first iteration
+``ansible_loop.last``       ``True`` if last iteration
+``ansible_loop.length``     The number of items in the loop
+``ansible_loop.previtem``   The item from the previous iteration of the loop. Undefined during the first iteration.
+``ansible_loop.nextitem``   The item from the following iteration of the loop. Undefined during the last iteration.
+==========================  ===========
+
+::
+
+      loop_control:
+        extended: yes
+
+Migrating from with_X to loop
+`````````````````````````````
+
+.. include:: shared_snippets/with2loop.txt
 
 
 .. seealso::
@@ -312,7 +372,7 @@ If you need to keep track of where you are in a loop, you can use the ``index_va
        Conditional statements in playbooks
    :doc:`playbooks_variables`
        All about variables
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

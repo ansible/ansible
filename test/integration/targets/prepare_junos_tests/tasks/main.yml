@@ -1,14 +1,13 @@
 ---
 - debug: msg="START prepare_junos_tests/main.yaml"
 
-- name: reset persistent connection
-  meta: reset_connection
-
 - name: Ensure netconf is enabled
   junos_netconf:
     state: present
   connection: network_cli
+  tags: netconf
 
 - name: wait for netconf server to come up
   pause:
     seconds: 10
+  tags: netconf

@@ -85,9 +85,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the
+        playbook root directory. If the directory does not exist, it is created.
     type: bool
     default: 'no'
   config:
@@ -119,6 +119,28 @@ options:
         running.  If check mode is specified, this argument is ignored.
     type: bool
     default: 'no'
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -162,6 +184,60 @@ vars:
     passwords: yes
     provider: "{{ cli }}"
 
+- name: attach ASA acl on interface vlan13/nameif cloud13
+  asa_config:
+    lines:
+      - access-group cloud-acl_access_in in interface cloud13
+    provider: "{{ cli }}"
+
+- name: configure ASA (>=9.2) default BGP
+  asa_config:
+    lines:
+      - bgp log-neighbor-changes
+      - bgp bestpath compare-routerid
+    provider: "{{ cli }}"
+    parents:
+      - router bgp 65002
+  register: bgp
+  when: bgp_default_config is defined
+
+- name: configure ASA (>=9.2) BGP neighbor in default/single context mode
+  asa_config:
+    lines:
+      - "bgp router-id {{ bgp_router_id }}"
+      - "neighbor {{ bgp_neighbor_ip }} remote-as {{ bgp_neighbor_as }}"
+      - "neighbor {{ bgp_neighbor_ip }} description {{ bgp_neighbor_name }}"
+    provider: "{{ cli }}"
+    parents:
+      - router bgp 65002
+      - address-family ipv4 unicast
+  register: bgp
+  when: bgp_neighbor_as is defined
+
+- name: configure ASA interface with standby
+  asa_config:
+    lines:
+      - description my cloud interface
+      - nameif cloud13
+      - security-level 50
+      - ip address 192.168.13.1 255.255.255.0 standby 192.168.13.2
+    provider: "{{ cli }}"
+    parents: ["interface Vlan13"]
+  register: interface
+
+- name: Show changes to interface from task above
+  debug:
+    var: interface
+
+- name: configurable backup path
+  asa_config:
+    lines:
+      - access-group cloud-acl_access_in in interface cloud13
+    provider: "{{ cli }}"
+    backup: yes
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -173,7 +249,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/asa_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.basic import AnsibleModule
@@ -237,6 +313,10 @@ def run(module, result):
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -248,6 +328,7 @@ def main():
 
         match=dict(default='line', choices=['line', 'strict', 'exact', 'none']),
         replace=dict(default='line', choices=['line', 'block']),
+        backup_options=dict(type='dict', options=backup_spec),
 
         config=dict(),
         defaults=dict(type='bool', default=False),

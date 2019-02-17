@@ -139,7 +139,7 @@ config:
 file:
   description: Path to the client configuration file
   returned: success
-  type: string
+  type: str
   sample: "/etc/sensu/conf.d/client.json"
 '''
 
@@ -245,6 +245,7 @@ def main():
     except (OSError, IOError) as e:
         module.fail_json(msg='Unable to write file {0}: {1}'.format(path,
                                                                     str(e)))
+
 
 if __name__ == '__main__':
     main()

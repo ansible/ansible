@@ -62,22 +62,22 @@ RETURN = '''
 msg:
     description: Messages that describe changes that were made
     returned: always
-    type: string
+    type: str
     sample: Config SELinux state changed from 'disabled' to 'permissive'
 configfile:
     description: Path to SELinux configuration file
     returned: always
-    type: string
+    type: str
     sample: /etc/selinux/config
 policy:
     description: Name of the SELinux policy
     returned: always
-    type: string
+    type: str
     sample: targeted
 state:
     description: SELinux mode
     returned: always
-    type: string
+    type: str
     sample: enforcing
 reboot_required:
     description: Whether or not an reboot is required for the changes to take effect
@@ -89,14 +89,17 @@ reboot_required:
 import os
 import re
 import tempfile
+import traceback
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
     HAS_SELINUX = True
 except ImportError:
+    SELINUX_IMP_ERR = traceback.format_exc()
     HAS_SELINUX = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.facts.utils import get_file_lines
 
 
@@ -176,7 +179,7 @@ def main():
     )
 
     if not HAS_SELINUX:
-        module.fail_json(msg='libselinux-python required for this module')
+        module.fail_json(msg=missing_required_lib('libselinux-python'), exception=SELINUX_IMP_ERR)
 
     # global vars
     changed = False
@@ -228,19 +231,20 @@ def main():
         changed = True
 
     if state != runtime_state:
-        if module.check_mode:
-            module.exit_json(changed=True)
         if runtime_enabled:
             if state == 'disabled':
                 if runtime_state != 'permissive':
                     # Temporarily set state to permissive
-                    set_state(module, 'permissive')
+                    if not module.check_mode:
+                        set_state(module, 'permissive')
                     module.warn('SELinux state temporarily changed from \'%s\' to \'permissive\'. State change will take effect next reboot.' % (runtime_state))
+                    changed = True
                 else:
                     module.warn('SELinux state change will take effect next reboot')
                 reboot_required = True
             else:
-                set_state(module, state)
+                if not module.check_mode:
+                    set_state(module, state)
                 msgs.append('SELinux state changed from \'%s\' to \'%s\'' % (runtime_state, state))
 
                 # Only report changes if the file is changed.
@@ -251,10 +255,9 @@ def main():
             reboot_required = True
 
     if state != config_state:
-        if module.check_mode:
-            module.exit_json(changed=True)
+        if not module.check_mode:
+            set_config_state(module, state, configfile)
         msgs.append('Config SELinux state changed from \'%s\' to \'%s\'' % (config_state, state))
-        set_config_state(module, state, configfile)
         changed = True
 
     module.exit_json(changed=changed, msg=', '.join(msgs), configfile=configfile, policy=policy, state=state, reboot_required=reboot_required)

@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
                     module = self._templar.template("{{hostvars['%s']['ansible_facts']['service_mgr']}}" % self._task.delegate_to)
                 else:
                     module = self._templar.template('{{ansible_facts.service_mgr}}')
-            except:
+            except Exception:
                 pass  # could not get it from template!
 
         try:
@@ -64,11 +64,6 @@ class ActionModule(ActionBase):
                 new_module_args = self._task.args.copy()
                 if 'use' in new_module_args:
                     del new_module_args['use']
-
-                # for backwards compatibility
-                if 'state' in new_module_args and new_module_args['state'] == 'running':
-                    self._display.deprecated(msg="state=running is deprecated. Please use state=started", version="2.7")
-                    new_module_args['state'] = 'started'
 
                 if module in self.UNUSED_PARAMS:
                     for unused in self.UNUSED_PARAMS[module]:

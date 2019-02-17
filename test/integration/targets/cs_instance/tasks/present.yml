@@ -1,6 +1,8 @@
 ---
 - name: setup instance to be absent
-  cs_instance: name={{ cs_resource_prefix }}-vm-{{ instance_number }} state=absent
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    state: expunged
   register: instance
 - name: verify instance to be absent
   assert:
@@ -82,6 +84,10 @@
     - instance.state == "Running"
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
+
+- name: gather host facts of running instance
+  cs_instance_facts:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
 
 - name: test running instance not updated in check mode
   cs_instance:
@@ -201,22 +207,6 @@
     that:
     - instance is successful
     - instance is not changed
-    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
-    - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
-    - instance.state == "Stopped"
-
-- name: test starting instance in check mdoe
-  cs_instance:
-    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    state: started
-  register: instance
-  check_mode: true
-- name: verify starting instance in check mode
-  assert:
-    that:
-    - instance is successful
-    - instance is changed
     - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"

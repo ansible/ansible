@@ -3,7 +3,7 @@
 - set_fact: snmp_version="v3"
 - set_fact: snmp_auth="noauth"
 
-- debug: msg="START connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }}sanity test"
+- debug: msg="START connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }} sanity test"
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
@@ -11,25 +11,29 @@
 - set_fact: intname="{{ nxos_int1 }}"
   when: not (platform is match("N5K"))
 
+- set_fact: run="true"
+- set_fact: run="false"
+  when: platform is match('N35')
+
 - name: Setup - Remove snmp_host if configured
   nxos_snmp_host: &remove
-    snmp_host: 3.3.3.3
+    snmp_host: 192.0.2.3
     community: TESTING
-    v3: "{{ snmp_auth|default(omit) }}"
     version: "{{ snmp_version }}" 
     snmp_type: "{{ snmp_type }}" 
+    v3: "{{ snmp_auth }}" 
     vrf: management
     vrf_filter: management
     src_intf: "{{ intname|default(omit) }}"
-    state: absent 
     provider: "{{ connection }}"
+    state: absent 
   ignore_errors: yes
 
 - block:
 
   - name: Configure snmp host 
     nxos_snmp_host: &config
-      snmp_host: 3.3.3.3
+      snmp_host: 192.0.2.3
       community: TESTING
       v3: "{{ snmp_auth|default(omit) }}"
       version: "{{ snmp_version }}" 
@@ -37,8 +41,8 @@
       vrf: management
       vrf_filter: management
       src_intf: "{{ intname|default(omit) }}"
-      state: present 
       provider: "{{ connection }}"
+      state: present 
     register: result
 
   - assert: &true
@@ -53,9 +57,60 @@
       that:
         - "result.changed == false"
 
-  when: not (platform is match('N35'))
+  - block:
+    - name: Add another vrf to filter
+      nxos_snmp_host: &config1
+        snmp_host: 192.0.2.3
+        vrf_filter: default
+        provider: "{{ connection }}"
+        state: present 
+      register: result
 
-  always:
+    - assert: *true
+
+    - name: Idempotence Check
+      nxos_snmp_host: *config1
+      register: result
+
+    - assert: *false
+    when: not (platform is match('N35|N5K'))
+
+  - name: remove some configuration
+    nxos_snmp_host: &rem1
+      snmp_host: 192.0.2.3
+      src_intf: "{{ intname|default(omit) }}"
+      vrf: management
+      vrf_filter: management
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: Idempotence Check
+    nxos_snmp_host: *rem1
+    register: result
+
+  - assert: *false
+
+  - block:
+    - name: remove some more configuration
+      nxos_snmp_host: &rem2
+        snmp_host: 192.0.2.3
+        vrf_filter: default
+        provider: "{{ connection }}"
+        state: absent
+      register: result
+
+    - assert: *true
+
+    - name: Idempotence Check
+      nxos_snmp_host: *rem2
+      register: result
+
+    - assert: *false
+    when: not (platform is match('N35|N5K'))
+
   - name: Cleanup
     nxos_snmp_host: *remove
     register: result
@@ -68,4 +123,11 @@
 
   - assert: *false
 
-  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }}sanity test"
+  when: run
+
+  always:
+  - name: Cleanup
+    nxos_snmp_host: *remove
+    register: result
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_snmp_host {{ snmp_type }} {{ snmp_version }} sanity test"

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages VXLAN virtual access point on HUAWEI CloudEngine Devices.
 description:
     - Manages VXLAN Virtual access point on HUAWEI CloudEngine Devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     bridge_domain_id:
         description:
@@ -125,7 +125,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

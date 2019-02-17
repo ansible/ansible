@@ -37,13 +37,9 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 class Connection(ConnectionBase):
@@ -51,7 +47,7 @@ class Connection(ConnectionBase):
 
     transport = 'zone'
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+    has_tty = False
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -157,13 +153,17 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(self._prefix_login_path(out_path))
         try:
             with open(in_path, 'rb') as in_file:
+                if not os.fstat(in_file.fileno()).st_size:
+                    count = ' count=0'
+                else:
+                    count = ''
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s%s' % (out_path, BUFSIZE, count), stdin=in_file)
                 except OSError:
                     raise AnsibleError("jail connection requires dd command in the jail")
                 try:
                     stdout, stderr = p.communicate()
-                except:
+                except Exception:
                     traceback.print_exc()
                     raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
@@ -188,7 +188,7 @@ class Connection(ConnectionBase):
                 while chunk:
                     out_file.write(chunk)
                     chunk = p.stdout.read(BUFSIZE)
-            except:
+            except Exception:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()

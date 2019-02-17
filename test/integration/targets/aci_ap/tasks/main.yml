@@ -21,6 +21,12 @@
     tenant: anstest
   register: tenant_present
 
+- name: ensure ap does not exist initially
+  aci_ap:
+    <<: *aci_tenant_present
+    ap: anstest
+    state: absent
+
 - name: create ap - check mode works
   aci_ap: &aci_ap_present
     <<: *aci_tenant_present
@@ -59,17 +65,17 @@
 - name: present asserts
   assert:
     that:
-      - ap_present_check_mode.changed == true
-      - ap_present.changed == true
+      - ap_present_check_mode is changed
+      - ap_present is changed
       - ap_present.previous == []
       - ap_present.sent == ap_present_check_mode.sent
       - 'ap_present.sent == {"fvAp": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
-      - ap_present_idempotent.changed == false
+      - ap_present_idempotent is not changed
       - ap_present_idempotent.previous != []
       - ap_present_idempotent.sent == {}
-      - ap_present_update.changed == true
+      - ap_present_update is changed
       - 'ap_present_update.sent.fvAp.attributes == {"descr": "Ansible Test Update"}'
-      - ap_present_missing_param.failed == true
+      - ap_present_missing_param is failed
       - 'ap_present_missing_param.msg == "state is present but all of the following are missing: ap"'
 
 - name: get ap - query specific ap
@@ -97,24 +103,27 @@
     ap: "{{ fakevar | default(omit) }}"
   register: query_all
 
+- debug:
+    msg: '{{ query_ap_ap.filter_string|urldecode }}'
+
 - name: query assertions
   assert:
     that:
-      - query_ap.changed == false
+      - query_ap is not changed
       - query_ap.current | length == 1
-      - 'query_ap.current.0.fvAp.attributes.name == "anstest"'
+      - query_ap.current.0.fvAp.attributes.name == "anstest"
       - '"tn-anstest/ap-anstest.json" in query_ap.url'
-      - query_ap_tenant.changed == false
+      - query_ap_tenant is not changed
       - query_ap_tenant.current | length == 1
       - query_ap_tenant.current.0.fvTenant.children | length == 2
       - '"rsp-subtree-class=fvAp" in query_ap_tenant.filter_string'
       - '"tn-anstest.json" in query_ap_tenant.url'
-      - query_ap_ap.changed == false
+      - query_ap_ap is not changed
       - query_ap_ap.current != []
       - query_ap_ap.current.0.fvAp is defined
-      - '"query-target-filter=eq(fvAp.name, \"anstest\")" in query_ap_ap.filter_string'
+      - '"query-target-filter=eq(fvAp.name, \"anstest\")" in query_ap_ap.filter_string|urldecode'
       - '"class/fvAp.json" in query_ap_ap.url'
-      - query_all.changed == false
+      - query_all is not changed
       - query_all.current | length > 1
       - '"class/fvAp.json" in query_all.url'
 
@@ -150,18 +159,18 @@
 - name: absent assertions
   assert:
     that:
-      - ap_delete_check_mode.changed == true
+      - ap_delete_check_mode is changed
       - ap_delete_check_mode.previous != []
       - '"tn-anstest/ap-anstest.json" in ap_delete_check_mode.url'
-      - ap_delete.changed == true
+      - ap_delete is changed
       - ap_delete.previous == ap_delete_check_mode.previous
-      - ap_delete_idempotent.changed == false
+      - ap_delete_idempotent is not changed
       - ap_delete_idempotent.previous == []
-      - ap_delete_missing_param.failed == true
+      - ap_delete_missing_param is failed
       - 'ap_delete_missing_param.msg == "state is absent but all of the following are missing: tenant"'
 
 - name: delete tenant - cleanup before ending tests
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

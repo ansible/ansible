@@ -36,7 +36,7 @@ options:
       - Optional text to use for the prompt message.
   echo:
     description:
-      - Contols whether or not keyboard input is shown when typing.
+      - Controls whether or not keyboard input is shown when typing.
       - Has no effect if 'seconds' or 'minutes' is set.
     type: bool
     default: 'yes'
@@ -70,27 +70,27 @@ RETURN = '''
 user_input:
   description: User input from interactive console
   returned: if no waiting time set
-  type: string
+  type: str
   sample: Example user input
 start:
   description: Time when started pausing
   returned: always
-  type: string
+  type: str
   sample: "2017-02-23 14:35:07.298862"
 stop:
   description: Time when ended pausing
   returned: always
-  type: string
+  type: str
   sample: "2017-02-23 14:35:09.552594"
 delta:
   description: Time paused in seconds
   returned: always
-  type: string
+  type: str
   sample: 2
 stdout:
   description: Output of pause module
   returned: always
-  type: string
+  type: str
   sample: Paused for 0.04 minutes
 echo:
   description: Value of echo setting

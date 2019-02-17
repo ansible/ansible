@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - Fix VMware module utils for self usage.
+  - Added unit test for VMware module_utils.

@@ -70,6 +70,7 @@ import smtplib
 
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins.callback import CallbackBase
 
 
@@ -155,14 +156,14 @@ class CallbackModule(CallbackBase):
             subject = self.itemsubject
         elif result._result.get('failed_when_result') is True:
             subject = "Failed due to 'failed_when' condition"
-        elif result._result.get('exception'):
-            subject = self.subject_msg(result._result['exception'], failtype, -1)
         elif result._result.get('msg'):
             subject = self.subject_msg(result._result['msg'], failtype, 0)
         elif result._result.get('stderr'):
             subject = self.subject_msg(result._result['stderr'], failtype, -1)
         elif result._result.get('stdout'):
             subject = self.subject_msg(result._result['stdout'], failtype, -1)
+        elif result._result.get('exception'):  # Unrelated exceptions are added to output :-/
+            subject = self.subject_msg(result._result['exception'], failtype, -1)
         else:
             subject = '%s: %s' % (failtype, result._task.name or result._task.action)
 
@@ -193,12 +194,12 @@ class CallbackModule(CallbackBase):
             body += self.body_blob(result._result['msg'], 'message')
 
         # Add stdout / stderr / exception / warnings / deprecations
-        if result._result.get('exception'):
-            body += self.body_blob(result._result['exception'], 'exception')
         if result._result.get('stdout'):
             body += self.body_blob(result._result['stdout'], 'standard output')
         if result._result.get('stderr'):
             body += self.body_blob(result._result['stderr'], 'error output')
+        if result._result.get('exception'):  # Unrelated exceptions are added to output :-/
+            body += self.body_blob(result._result['exception'], 'exception')
         if result._result.get('warnings'):
             for i in range(len(result._result.get('warnings'))):
                 body += self.body_blob(result._result['warnings'][i], 'exception %d' % (i + 1))
@@ -207,7 +208,7 @@ class CallbackModule(CallbackBase):
                 body += self.body_blob(result._result['deprecations'][i], 'exception %d' % (i + 1))
 
         body += 'and a complete dump of the error:\n\n'
-        body += self.indent('%s: %s' % (failtype, json.dumps(result._result, indent=4)))
+        body += self.indent('%s: %s' % (failtype, json.dumps(result._result, cls=AnsibleJSONEncoder, indent=4)))
 
         self.mail(subject=subject, body=body)
 
@@ -230,5 +231,4 @@ class CallbackModule(CallbackBase):
     def v2_runner_item_on_failed(self, result):
         # Pass item information to task failure
         self.itemsubject = result._result['msg']
-        self.itembody += self.body_blob(json.dumps(result._result, indent=4), "failed item dump '%(item)s'" % result._result)
-#        self.itembody += self.body_blob(json.dumps(dir(result), indent=4), "failed full dump '%(item)s'" % result._result)
+        self.itembody += self.body_blob(json.dumps(result._result, cls=AnsibleJSONEncoder, indent=4), "failed item dump '%(item)s'" % result._result)

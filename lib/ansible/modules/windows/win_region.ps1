@@ -1,24 +1,12 @@
 #!powershell
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
-# POWERSHELL_COMMON
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+#Requires -Module Ansible.ModuleUtils.Legacy
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params "_ansible_check_mode" -type 'bool' -default $false
+$_remote_tmp = Get-AnsibleParam $params "_ansible_remote_tmp" -type "path" -default $env:TMP
 
 $location = Get-AnsibleParam -obj $params -name 'location' -type 'str'
 $format = Get-AnsibleParam -obj $params -name 'format' -type 'str'
@@ -98,7 +86,11 @@ Function Copy-RegistryKey($source, $target) {
 Function Set-CultureLegacy($culture) {
     # For when Set-Culture is not available (Pre Windows 8 and Server 2012)
     $reg_key = 'HKCU:\Control Panel\International'
+
+    $original_tmp = $env:TMP
+    $env:TMP = $_remote_tmp
     Add-Type -TypeDefinition $lctype_util
+    $env:TMP = $original_tmp
 
     $lookup = New-Object Ansible.LocaleHelper($culture)
     # hex values are from http://www.pinvoke.net/default.aspx/kernel32/GetLocaleInfoEx.html

@@ -22,9 +22,9 @@ import re
 import shlex
 
 from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, AnsibleActionFail, AnsibleActionSkip
+from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.action import ActionBase
-from ansible.plugins.shell.powershell import exec_wrapper
 
 
 class ActionModule(ActionBase):
@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
             if chdir:
                 # Powershell is the only Windows-path aware shell
                 if self._connection._shell.SHELL_FAMILY == 'powershell' and \
-                        not self.windows_absolute_path_detection.matches(chdir):
+                        not self.windows_absolute_path_detection.match(chdir):
                     raise AnsibleActionFail('chdir %s must be an absolute path for a Windows remote node' % chdir)
                 # Every other shell is unix-path-aware.
                 if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):
@@ -78,6 +78,9 @@ class ActionModule(ActionBase):
             raw_params = to_native(self._task.args.get('_raw_params', ''), errors='surrogate_or_strict')
             parts = [to_text(s, errors='surrogate_or_strict') for s in shlex.split(raw_params.strip())]
             source = parts[0]
+
+            # Support executable paths and files with spaces in the name.
+            executable = to_native(self._task.args.get('executable', ''), errors='surrogate_or_strict')
 
             try:
                 source = self._loader.get_real_file(self._find_needle('files', source), decrypt=self._task.args.get('decrypt', True))
@@ -109,7 +112,11 @@ class ActionModule(ActionBase):
                 # add preparation steps to one ssh roundtrip executing the script
                 env_dict = dict()
                 env_string = self._compute_environment_string(env_dict)
-                script_cmd = ' '.join([env_string, target_command])
+
+                if executable:
+                    script_cmd = ' '.join([env_string, executable, target_command])
+                else:
+                    script_cmd = ' '.join([env_string, target_command])
 
             if self._play_context.check_mode:
                 raise _AnsibleActionDone()
@@ -117,14 +124,20 @@ class ActionModule(ActionBase):
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
             exec_data = None
-            # WinRM requires a special wrapper to work with environment variables
-            if self._connection.transport == "winrm":
-                pay = self._connection._create_raw_wrapper_payload(script_cmd,
-                                                                   env_dict)
-                exec_data = exec_wrapper.replace(b"$json_raw = ''",
-                                                 b"$json_raw = @'\r\n%s\r\n'@"
-                                                 % to_bytes(pay))
-                script_cmd = "-"
+            # PowerShell runs the script in a special wrapper to enable things
+            # like become and environment args
+            if self._connection._shell.SHELL_FAMILY == "powershell":
+                # FUTURE: use a more public method to get the exec payload
+                pc = self._play_context
+                exec_data = ps_manifest._create_powershell_wrapper(
+                    to_bytes(script_cmd), {}, env_dict, self._task.async_val,
+                    pc.become, pc.become_method, pc.become_user,
+                    pc.become_pass, pc.become_flags, substyle="script"
+                )
+                # build the necessary exec wrapper command
+                # FUTURE: this still doesn't let script work on Windows with non-pipelined connections or
+                # full manual exec of KEEP_REMOTE_FILES
+                script_cmd = self._connection._shell.build_module_command(env_string='', shebang='#!powershell', cmd='')
 
             result.update(self._low_level_execute_command(cmd=script_cmd, in_data=exec_data, sudoable=True, chdir=chdir))
 

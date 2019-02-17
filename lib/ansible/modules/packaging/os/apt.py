@@ -30,9 +30,9 @@ options:
   state:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
-        are installed.
+        are installed. C(fixed) attempt to correct a system with broken dependencies in place.
     default: present
-    choices: [ absent, build-dep, latest, present ]
+    choices: [ absent, build-dep, latest, present, fixed ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
@@ -41,7 +41,7 @@ options:
   cache_valid_time:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
-        As of Ansible 2.4, this implicitly sets I(update_cache) if set.
+        As of Ansible 2.4, this sets I(update_cache=yes).
     default: 0
   purge:
     description:
@@ -93,6 +93,7 @@ options:
      description:
        - Path to a .deb package on the remote machine.
        - If :// in the path, ansible will attempt to download deb before installing. (Version added 2.1)
+       - Requires the C(xz-utils) package to extract the control file of the deb package to install.
      required: false
      version_added: "1.6"
   autoremove:
@@ -108,6 +109,15 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  policy_rc_d:
+    description:
+      - Force the exit code of /usr/sbin/policy-rc.d.
+      - For example, if I(policy_rc_d=101) the installed package will not trigger a service start.
+      - If /usr/sbin/policy-rc.d already exist, it is backed up and restored after the package installation.
+      - If C(null), the /usr/sbin/policy-rc.d isn't created/changed.
+    type: int
+    default: null
+    version_added: "2.8"
   only_upgrade:
     description:
       - Only upgrade a package if it is already installed.
@@ -141,23 +151,33 @@ EXAMPLES = '''
     name: foo
     update_cache: yes
 
-- name: Install apache service but avoid starting it immediately
-  apt: name=apache2 state=present
+- name: Install apache httpd but avoid starting it immediately (state=present is optional)
+  apt:
+    name: apache2
+    state: present
   environment:
-    RUNLEVLEL: 1
+    RUNLEVEL: 1
 
 - name: Remove "foo" package
-  apt: name=foo state=absent
+  apt:
+    name: foo
+    state: absent
 
 - name: Install the package "foo"
   apt:
     name: foo
-    state: present
+
+- name: Install a list of packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - foo
+    - foo-tools
 
 - name: Install the version '1.00' of package "foo"
   apt:
     name: foo=1.00
-    state: present
 
 - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
   apt:
@@ -223,7 +243,7 @@ RETURN = '''
 cache_updated:
     description: if the cache was updated or not
     returned: success, in some cases
-    type: boolean
+    type: bool
     sample: True
 cache_update_time:
     description: time of the last cache update (0 if unknown)
@@ -233,12 +253,12 @@ cache_update_time:
 stdout:
     description: output from apt
     returned: success, when needed
-    type: string
+    type: str
     sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
 stderr:
     description: error output from apt
     returned: success, when needed
-    type: string
+    type: str
     sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
 '''  # NOQA
 
@@ -250,13 +270,15 @@ import datetime
 import fnmatch
 import itertools
 import os
+import shutil
 import re
 import sys
+import tempfile
 import time
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 
 # APT related constants
 APT_ENV_VARS = dict(
@@ -275,6 +297,14 @@ APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
 APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
+APT_MARK_INVALID_OP = 'Invalid operation'
+APT_MARK_INVALID_OP_DEB6 = 'Usage: apt-mark [options] {markauto|unmarkauto} packages'
+
+CLEAN_OP_CHANGED_STR = dict(
+    autoremove='The following packages will be REMOVED',
+    # "Del python3-q 2.4-1 [24 kB]"
+    autoclean='Del ',
+)
 
 HAS_PYTHON_APT = True
 try:
@@ -288,6 +318,83 @@ if sys.version_info[0] < 3:
     PYTHON_APT = 'python-apt'
 else:
     PYTHON_APT = 'python3-apt'
+
+
+class PolicyRcD(object):
+    """
+    This class is a context manager for the /usr/sbin/policy-rc.d file.
+    It allow the user to prevent dpkg to start the corresponding service when installing
+    a package.
+    https://people.debian.org/~hmh/invokerc.d-policyrc.d-specification.txt
+    """
+
+    def __init__(self, module):
+        # we need the module for later use (eg. fail_json)
+        self.m = module
+
+        # if policy_rc_d is null then we don't need to modify policy-rc.d
+        if self.m.params['policy_rc_d'] is None:
+            return
+
+        # if the /usr/sbin/policy-rc.d already exist
+        # we will back it up during package installation
+        # then restore it
+        if os.path.exists('/usr/sbin/policy-rc.d'):
+            self.backup_dir = tempfile.mkdtemp(prefix="ansible")
+        else:
+            self.backup_dir = None
+
+    def __enter__(self):
+        """
+        This method will be call when we enter the context, before we call `apt-get …`
+        """
+
+        # if policy_rc_d is null then we don't need to modify policy-rc.d
+        if self.m.params['policy_rc_d'] is None:
+            return
+
+        # if the /usr/sbin/policy-rc.d already exist we back it up
+        if self.backup_dir:
+            try:
+                shutil.move('/usr/sbin/policy-rc.d', self.backup_dir)
+            except Exception:
+                self.m.fail_json(msg="Fail to move /usr/sbin/policy-rc.d to %s" % self.backup_dir)
+
+        # we write /usr/sbin/policy-rc.d so it always exit with code policy_rc_d
+        try:
+            with open('/usr/sbin/policy-rc.d', 'w') as policy_rc_d:
+                policy_rc_d.write('#!/bin/sh\nexit %d\n' % self.m.params['policy_rc_d'])
+
+            os.chmod('/usr/sbin/policy-rc.d', 0o0755)
+        except Exception:
+            self.m.fail_json(msg="Failed to create or chmod /usr/sbin/policy-rc.d")
+
+    def __exit__(self, type, value, traceback):
+        """
+        This method will be call when we enter the context, before we call `apt-get …`
+        """
+
+        # if policy_rc_d is null then we don't need to modify policy-rc.d
+        if self.m.params['policy_rc_d'] is None:
+            return
+
+        if self.backup_dir:
+            # if /usr/sbin/policy-rc.d already exists before the call to __enter__
+            # we restore it (from the backup done in __enter__)
+            try:
+                shutil.move(os.path.join(self.backup_dir, 'policy-rc.d'),
+                            '/usr/sbin/policy-rc.d')
+                os.rmdir(self.tmpdir_name)
+            except Exception:
+                self.m.fail_json(msg="Fail to move back %s to /usr/sbin/policy-rc.d"
+                                     % os.path.join(self.backup_dir, 'policy-rc.d'))
+        else:
+            # if they wheren't any /usr/sbin/policy-rc.d file before the call to __enter__
+            # we just remove the file
+            try:
+                os.remove('/usr/sbin/policy-rc.d')
+            except Exception:
+                self.m.fail_json(msg="Fail to remove /usr/sbin/policy-rc.d (after package manipulation)")
 
 
 def package_split(pkgspec):
@@ -333,20 +440,21 @@ def package_status(m, pkgname, version, cache, state):
                 if provided_packages:
                     is_installed = False
                     upgradable = False
+                    version_ok = False
                     # when virtual package providing only one package, look up status of target package
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
-                        installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
+                        installed, version_ok, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
                         if installed:
                             is_installed = True
-                    return is_installed, upgradable, False
+                    return is_installed, version_ok, upgradable, False
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
                 # mark as upgradable and let apt-get install deal with it
-                return False, True, False
+                return False, False, True, False
         else:
-            return False, False, False
+            return False, False, False, False
     try:
         has_files = len(pkg.installed_files) > 0
     except UnicodeDecodeError:
@@ -364,6 +472,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
+    version_is_installed = package_is_installed
     if version:
         versions = package_versions(pkgname, pkg, cache._cache)
         avail_upgrades = fnmatch.filter(versions, version)
@@ -374,8 +483,8 @@ def package_status(m, pkgname, version, cache, state):
             except AttributeError:
                 installed_version = pkg.installedVersion
 
-            # Only claim the package is installed if the version is matched as well
-            package_is_installed = fnmatch.fnmatch(installed_version, version)
+            # check if the version is matched as well
+            version_is_installed = fnmatch.fnmatch(installed_version, version)
 
             # Only claim the package is upgradable if a candidate matches the version
             package_is_upgradable = False
@@ -392,7 +501,7 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_upgradable = pkg.isUpgradable
 
-    return package_is_installed, package_is_upgradable, has_files
+    return package_is_installed, version_is_installed, package_is_upgradable, has_files
 
 
 def expand_dpkg_options(dpkg_options_compressed):
@@ -469,14 +578,37 @@ def parse_diff(output):
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
 
 
+def mark_installed_manually(m, packages):
+    if not packages:
+        return
+
+    apt_mark_cmd_path = m.get_bin_path("apt-mark")
+
+    # https://github.com/ansible/ansible/issues/40531
+    if apt_mark_cmd_path is None:
+        m.warn("Could not find apt-mark binary, not marking package(s) as manually installed.")
+        return
+
+    cmd = "%s manual %s" % (apt_mark_cmd_path, ' '.join(packages))
+    rc, out, err = m.run_command(cmd)
+
+    if APT_MARK_INVALID_OP in err or APT_MARK_INVALID_OP_DEB6 in err:
+        cmd = "%s unmarkauto %s" % (apt_mark_cmd_path, ' '.join(packages))
+        rc, out, err = m.run_command(cmd)
+
+    if rc != 0:
+        m.fail_json(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
+
+
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, autoremove=False, only_upgrade=False,
+            build_dep=False, fixed=False, autoremove=False, only_upgrade=False,
             allow_unauthenticated=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
+    package_names = []
     for package in pkgspec:
         if build_dep:
             # Let apt decide what to install
@@ -484,10 +616,11 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             continue
 
         name, version = package_split(package)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='install')
-        if (not installed and not only_upgrade) or (upgrade and upgradable):
+        package_names.append(name)
+        installed, installed_version, upgradable, has_files = package_status(m, name, version, cache, state='install')
+        if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and upgradable):
             pkg_list.append("'%s'" % package)
-        if installed and upgradable and version:
+        if installed_version and upgradable and version:
             # This happens when the package is installed, a newer version is
             # available, and the version is a wildcard that matches both
             #
@@ -518,10 +651,15 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             only_upgrade = ''
 
-        if build_dep:
-            cmd = "%s -y %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, check_arg, packages)
+        if fixed:
+            fixed = '--fix-broken'
         else:
-            cmd = "%s -y %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, autoremove, check_arg, packages)
+            fixed = ''
+
+        if build_dep:
+            cmd = "%s -y %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
+        else:
+            cmd = "%s -y %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -535,19 +673,31 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
-        rc, out, err = m.run_command(cmd)
+        with PolicyRcD(m):
+            rc, out, err = m.run_command(cmd)
+
         if m._diff:
             diff = parse_diff(out)
         else:
             diff = {}
         status = True
-        data = dict(changed=True, stdout=out, stderr=err, diff=diff)
+
+        changed = True
+        if build_dep:
+            changed = APT_GET_ZERO not in out
+
+        data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
         if rc:
             status = False
             data = dict(msg="'%s' failed: %s" % (cmd, err), stdout=out, stderr=err, rc=rc)
-        return (status, data)
     else:
-        return (True, dict(changed=False))
+        status = True
+        data = dict(changed=False)
+
+    if not build_dep:
+        mark_installed_manually(m, package_names)
+
+    return (status, data)
 
 
 def get_field_of_deb(m, deb_file, field="Version"):
@@ -614,7 +764,10 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
             options += " --force-all"
 
         cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
-        rc, out, err = m.run_command(cmd)
+
+        with PolicyRcD(m):
+            rc, out, err = m.run_command(cmd)
+
         if "stdout" in retvals:
             stdout = retvals["stdout"] + out
         else:
@@ -644,8 +797,8 @@ def remove(m, pkgspec, cache, purge=False, force=False,
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
         name, version = package_split(package)
-        installed, upgradable, has_files = package_status(m, name, version, cache, state='remove')
-        if installed or (has_files and purge):
+        installed, installed_version, upgradable, has_files = package_status(m, name, version, cache, state='remove')
+        if installed_version or (has_files and purge):
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
 
@@ -674,7 +827,9 @@ def remove(m, pkgspec, cache, purge=False, force=False,
 
         cmd = "%s -q -y %s %s %s %s %s remove %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, autoremove, check_arg, packages)
 
-        rc, out, err = m.run_command(cmd)
+        with PolicyRcD(m):
+            rc, out, err = m.run_command(cmd)
+
         if m._diff:
             diff = parse_diff(out)
         else:
@@ -686,6 +841,10 @@ def remove(m, pkgspec, cache, purge=False, force=False,
 
 def cleanup(m, purge=False, force=False, operation=None,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS)):
+
+    if operation not in frozenset(['autoremove', 'autoclean']):
+        raise AssertionError('Expected "autoremove" or "autoclean" cleanup operation, got %s' % operation)
+
     if force:
         force_yes = '--force-yes'
     else:
@@ -703,19 +862,26 @@ def cleanup(m, purge=False, force=False, operation=None,
 
     cmd = "%s -y %s %s %s %s %s" % (APT_GET_CMD, dpkg_options, purge, force_yes, operation, check_arg)
 
-    rc, out, err = m.run_command(cmd)
+    with PolicyRcD(m):
+        rc, out, err = m.run_command(cmd)
+
     if m._diff:
         diff = parse_diff(out)
     else:
         diff = {}
     if rc:
         m.fail_json(msg="'apt-get %s' failed: %s" % (operation, err), stdout=out, stderr=err, rc=rc)
-    m.exit_json(changed=bool(len(diff)), stdout=out, stderr=err, diff=diff)
+
+    changed = CLEAN_OP_CHANGED_STR[operation] in out
+
+    m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=None):
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
+            allow_unauthenticated=False,
+            ):
 
     if autoremove:
         autoremove = '--auto-remove'
@@ -732,7 +898,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if mode == "dist" or (mode == "full" and use_apt_get):
         # apt-get dist-upgrade
         apt_cmd = APT_GET_CMD
-        upgrade_command = "dist-upgrade"
+        upgrade_command = "dist-upgrade %s" % (autoremove)
     elif mode == "full" and not use_apt_get:
         # aptitude full-upgrade
         apt_cmd = APTITUDE_CMD
@@ -755,6 +921,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
+    allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
+
     if apt_cmd is None:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
@@ -763,13 +931,15 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s' % (apt_cmd_path, dpkg_options,
-                                 force_yes, check_arg, upgrade_command)
+    cmd = '%s -y %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, allow_unauthenticated,
+                                    check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
 
-    rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
+    with PolicyRcD(m):
+        rc, out, err = m.run_command(cmd, prompt_regex=prompt_regex)
+
     if m._diff:
         diff = parse_diff(out)
     else:
@@ -779,37 +949,6 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     if (apt_cmd == APT_GET_CMD and APT_GET_ZERO in out) or (apt_cmd == APTITUDE_CMD and APTITUDE_ZERO in out):
         m.exit_json(changed=False, msg=out, stdout=out, stderr=err)
     m.exit_json(changed=True, msg=out, stdout=out, stderr=err, diff=diff)
-
-
-def download(module, deb):
-    tempdir = os.path.dirname(__file__)
-    package = os.path.join(tempdir, str(deb.rsplit('/', 1)[1]))
-    # When downloading a deb, how much of the deb to download before
-    # saving to a tempfile (64k)
-    BUFSIZE = 65536
-
-    try:
-        rsp, info = fetch_url(module, deb, method='GET')
-        if info['status'] != 200:
-            module.fail_json(msg="Failed to download %s, %s" % (deb,
-                                                                info['msg']))
-        # Ensure file is open in binary mode for Python 3
-        f = open(package, 'wb')
-        # Read 1kb at a time to save on ram
-        while True:
-            data = rsp.read(BUFSIZE)
-            data = to_bytes(data, errors='surrogate_or_strict')
-
-            if len(data) < 1:
-                break  # End of file, break while loop
-
-            f.write(data)
-        f.close()
-        deb = package
-    except Exception as e:
-        module.fail_json(msg="Failure downloading %s, %s" % (deb, to_native(e)))
-
-    return deb
 
 
 def get_cache_mtime():
@@ -857,14 +996,14 @@ def get_cache(module):
             # try again
             cache = apt.Cache()
         else:
-            module.fail_json(msg=str(e))
+            module.fail_json(msg=to_native(e))
     return cache
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present', 'fixed']),
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
@@ -877,6 +1016,7 @@ def main():
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
+            policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
@@ -893,6 +1033,7 @@ def main():
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
+            module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
             module.run_command(['apt-get', 'update'], check_rc=True)
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
@@ -915,8 +1056,8 @@ def main():
 
     use_apt_get = p['force_apt_get']
 
-    if not use_apt_get and not APTITUDE_CMD and p.get('upgrade', None) in ['full', 'safe', 'yes']:
-        module.warn("Could not find aptitude. Using apt-get instead.")
+    if not use_apt_get and not APTITUDE_CMD:
+        module.warn("Could not find aptitude. Using apt-get instead")
         use_apt_get = True
 
     updated_cache = False
@@ -966,8 +1107,10 @@ def main():
                 else:
                     module.fail_json(msg='Failed to update apt cache: %s' % err)
                 cache.open(progress=None)
-                updated_cache = True
-                mtimestamp, updated_cache_time = get_updated_cache_time()
+                mtimestamp, post_cache_update_time = get_updated_cache_time()
+                if updated_cache_time != post_cache_update_time:
+                    updated_cache = True
+                updated_cache_time = post_cache_update_time
 
             # If there is nothing else to do exit. This will set state as
             #  changed based on if the cache was updated.
@@ -981,13 +1124,13 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, allow_unauthenticated)
 
         if p['deb']:
             if p['state'] != 'present':
                 module.fail_json(msg="deb only supports state=present")
             if '://' in p['deb']:
-                p['deb'] = download(module, p['deb'])
+                p['deb'] = fetch_file(module, p['deb'])
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
@@ -1001,7 +1144,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, allow_unauthenticated)
 
         if packages:
             for package in packages:
@@ -1016,13 +1159,16 @@ def main():
             if autoremove:
                 cleanup(module, p['purge'], force=force_yes, operation='autoremove', dpkg_options=dpkg_options)
 
-        if p['state'] in ('latest', 'present', 'build-dep'):
+        if p['state'] in ('latest', 'present', 'build-dep', 'fixed'):
             state_upgrade = False
             state_builddep = False
+            state_fixed = False
             if p['state'] == 'latest':
                 state_upgrade = True
             if p['state'] == 'build-dep':
                 state_builddep = True
+            if p['state'] == 'fixed':
+                state_fixed = True
 
             success, retvals = install(
                 module,
@@ -1034,6 +1180,7 @@ def main():
                 force=force_yes,
                 dpkg_options=dpkg_options,
                 build_dep=state_builddep,
+                fixed=state_fixed,
                 autoremove=autoremove,
                 only_upgrade=p['only_upgrade'],
                 allow_unauthenticated=allow_unauthenticated

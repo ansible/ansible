@@ -21,8 +21,8 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack projects
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
    name:
      description:
@@ -83,15 +83,15 @@ openstack_projects:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the project.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the project
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the project is enabled
             returned: success
@@ -116,7 +116,7 @@ def main():
 
     module = AnsibleModule(argument_spec)
 
-    shade, opcloud = openstack_cloud_from_module(module)
+    sdk, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         domain = module.params['domain']
@@ -127,7 +127,7 @@ def main():
                 # We assume admin is passing domain id
                 dom = opcloud.get_domain(domain)['id']
                 domain = dom
-            except:
+            except Exception:
                 # If we fail, maybe admin is passing a domain name.
                 # Note that domains have unique names, just like id.
                 dom = opcloud.search_domains(filters={'name': domain})
@@ -145,7 +145,7 @@ def main():
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_projects=projects))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

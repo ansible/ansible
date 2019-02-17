@@ -210,7 +210,7 @@ elapsed:
 response:
   description: HTTP response message, including content length
   returned: always
-  type: string
+  type: str
   sample: OK (729 bytes)
 status:
   description: The HTTP response status code
@@ -232,24 +232,24 @@ error:
 error_code:
   description: Cisco IMC error code
   returned: failed
-  type: string
+  type: str
   sample: ERR-xml-parse-error
 error_text:
   description: Cisco IMC error message
   returned: failed
-  type: string
+  type: str
   sample: |
     XML PARSING ERROR: Element 'computeRackUnit', attribute 'admin_Power': The attribute 'admin_Power' is not allowed.
 input:
   description: RAW XML input sent to the Cisco IMC, causing the error
   returned: failed
-  type: string
+  type: str
   sample: |
     <configConfMo><inConfig><computeRackUnit dn="sys/rack-unit-1" admin_Power="down"/></inConfig></configConfMo>
 output:
   description: RAW XML output eceived from the Cisco IMC, with error details
   returned: failed
-  type: string
+  type: str
   sample: >
     <error cookie=""
       response="yes"
@@ -262,20 +262,25 @@ import atexit
 import datetime
 import itertools
 import os
+import traceback
 
+LXML_ETREE_IMP_ERR = None
 try:
     import lxml.etree
     HAS_LXML_ETREE = True
 except ImportError:
+    LXML_ETREE_IMP_ERR = traceback.format_exc()
     HAS_LXML_ETREE = False
 
+XMLJSON_COBRA_IMP_ERR = None
 try:
     from xmljson import cobra
     HAS_XMLJSON_COBRA = True
 except ImportError:
+    XMLJSON_COBRA_IMP_ERR = traceback.format_exc()
     HAS_XMLJSON_COBRA = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.urls import fetch_url
 
 
@@ -334,10 +339,10 @@ def main():
     )
 
     if not HAS_LXML_ETREE:
-        module.fail_json(msg='module requires the lxml Python library installed on the managed host')
+        module.fail_json(msg=missing_required_lib('lxml'), exception=LXML_ETREE_IMP_ERR)
 
     if not HAS_XMLJSON_COBRA:
-        module.fail_json(msg='module requires the xmljson (>= 0.1.8) Python library installed on the managed host')
+        module.fail_json(msg=missing_required_lib('xmljson >= 0.1.8'), exception=XMLJSON_COBRA_IMP_ERR)
 
     hostname = module.params['hostname']
     username = module.params['username']
@@ -376,7 +381,7 @@ def main():
     # Store cookie for future requests
     try:
         cookie = result['aaaLogin']['attributes']['outCookie']
-    except:
+    except Exception:
         module.fail_json(msg='Could not find cookie in output', **result)
 
     # If we would not log out properly, we run out of sessions quickly
@@ -421,6 +426,7 @@ def main():
     # Report success
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

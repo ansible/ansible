@@ -1,0 +1,76 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+
+    - block:
+
+        - set_fact:
+            instance_id: "{{ resource_prefix }}constructed"
+
+        # Create new host, refresh inventory
+
+        #- name: set connection information for all tasks
+        #  set_fact:
+        #    aws_connection_info: &aws_connection_info
+        #      aws_access_key: '{{ aws_access_key }}'
+        #      aws_secret_key: '{{ aws_secret_key }}'
+        #      security_token: '{{ security_token }}'
+        #      region: '{{ aws_region }}'
+        #  no_log: yes
+
+        # TODO: Uncomment once rds_instance has been added
+        #- name: create minimal mariadb instance in default VPC and default subnet group
+        #  rds_instance:
+        #    state: present
+        #    engine: mariadb
+        #    instance_class: db.t2.micro
+        #    storage: 20
+        #    instance_id: 'rds-mariadb-{{ resource_prefix }}'
+        #    master_username: 'ansible-test-user'
+        #    master_password: 'password-{{ resource_prefix }}'
+        #    <<: *aws_connection_info
+        #  register: setup_instance
+
+        - name: Use AWS CLI to create an RDS DB instance
+          command: "aws rds create-db-instance --db-instance-identifier '{{ instance_id }}' --engine 'mariadb' --db-instance-class 'db.t2.micro' --allocated-storage 20 --master-user-password '{{ resource_prefix }}' --master-username 'ansibletestuser' --tags Key='workload_type',Value='other'"
+          environment:
+            AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+            AWS_SESSION_TOKEN: "{{ security_token }}"
+            AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+        - meta: refresh_inventory
+        - debug: var=groups
+
+        - name: assert the keyed groups from constructed config were added to inventory
+          assert:
+            that:
+              # There are 6 groups: all, ungrouped, aws_rds, tag keyed group, engine keyed group, parameter group keyed group
+              - "groups | length == 6"
+              - groups.tag_workload_type_other
+              - groups.rds_mariadb
+              - groups.rds_parameter_group_default_mariadb10_0
+
+      always:
+
+        - name: Use AWS CLI to delete the DB instance
+          command: "aws rds delete-db-instance --db-instance-identifier '{{ instance_id }}' --skip-final-snapshot"
+          ignore_errors: True
+          environment:
+            AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+            AWS_SESSION_TOKEN: "{{ security_token }}"
+            AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+        # TODO: Uncomment once rds_instance has been added
+        #- name: remove mariadb instance
+        #  rds_instance:
+        #    state: absent
+        #    engine: mariadb
+        #    skip_final_snapshot: yes
+        #    instance_id: ansible-rds-mariadb-example
+        #    <<: *aws_connection_info
+        #  ignore_errors: yes
+        #  when: setup_instance is defined

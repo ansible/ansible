@@ -47,7 +47,8 @@ options:
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
-            Defaults to false.
+        default: False
+        type: bool
 '''
 
 EXAMPLES = '''
@@ -82,12 +83,12 @@ rule:
     metric_name:
       description: Metric name for the rule
       returned: always
-      type: string
+      type: str
       sample: ansibletest1234rule
     name:
       description: Friendly name for the rule
       returned: always
-      type: string
+      type: str
       sample: ansible-test-1234_rule
     predicates:
       description: List of conditions used in the rule
@@ -97,7 +98,7 @@ rule:
         data_id:
           description: ID of the condition
           returned: always
-          type: string
+          type: str
           sample: 8251acdb-526c-42a8-92bc-d3d13e584166
         negated:
           description: Whether the sense of the condition is negated
@@ -107,12 +108,12 @@ rule:
         type:
           description: type of the condition
           returned: always
-          type: string
+          type: str
           sample: ByteMatch
     rule_id:
       description: ID of the WAF rule
       returned: always
-      type: string
+      type: str
       sample: 15de0cbc-9204-4e1f-90e6-69b2f415c261
 '''
 
@@ -207,7 +208,7 @@ def find_and_update_rule(client, module, rule_id):
     }
     if changed:
         try:
-            run_func_with_change_token_backoff(client, module, update, client.update_rule)
+            run_func_with_change_token_backoff(client, module, update, client.update_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not update rule conditions')
 
@@ -282,7 +283,7 @@ def ensure_rule_absent(client, module):
     if rule_id:
         remove_rule_conditions(client, module, rule_id)
         try:
-            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule)
+            return True, run_func_with_change_token_backoff(client, module, {'RuleId': rule_id}, client.delete_rule, wait=True)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
             module.fail_json_aws(e, msg='Could not delete rule')
     return False, {}

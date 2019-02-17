@@ -26,7 +26,7 @@ version_added: "2.4"
 short_description: Manages global parameters of NetStream on HUAWEI CloudEngine switches.
 description:
     - Manages global parameters of NetStream on HUAWEI CloudEngine switches.
-author: YangYang (@CloudEngine-Ansible)
+author: YangYang (@QijunPan)
 options:
     type:
         description:
@@ -208,7 +208,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

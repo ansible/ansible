@@ -16,8 +16,9 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    state: absent
+    output_level: '{{ aci_output_level | default("info") }}'
     tenant: anstest
+    state: absent
 
 - name: ensure tenant exists for tests to kick off
   aci_tenant: &aci_tenant_present
@@ -28,8 +29,8 @@
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
     output_level: debug
-    state: present
     tenant: anstest
+    state: present
   register: tenant_present
 
 - name: ensure filter exists for tests to kick off
@@ -110,27 +111,27 @@
 - name: present assertions
   assert:
     that:
-      - entry_present_check_mode.changed == true
+      - entry_present_check_mode is changed
       - entry_present_check_mode.previous == []
       - 'entry_present_check_mode.sent == {"vzEntry": {"attributes": {"dFromPort": "http","dToPort": "88","descr": "Ansible Test","etherT": "ip","name": "anstest","prot": "tcp"}}}'
-      - entry_present.changed == true
+      - entry_present is changed
       - entry_present.previous == []
       - entry_present.sent == entry_present_check_mode.sent
-      - entry_present_idempotent.changed == false
+      - entry_present_idempotent is not changed
       - entry_present_idempotent.previous != []
       - entry_present_idempotent.sent == {}
-      - entry_present_update.changed == true
+      - entry_present_update is changed
       - entry_present_update.previous != []
       - entry_present_update.sent != entry_present_update.proposed
-      - entry_present_2.changed == true
+      - entry_present_2 is changed
       - 'entry_present_2.sent.vzEntry.attributes == {"arpOpc": "reply",  "etherT": "arp", "name": "anstest2"}'
-      - entry_present_3.changed == true
+      - entry_present_3 is changed
       - 'entry_present_3.sent.vzEntry.attributes == {"etherT": "ip", "icmpv4T": "echo", "name": "anstest3", "prot": "icmp"}'
-      - entry_present_4.changed == true
+      - entry_present_4 is changed
       - 'entry_present_4.sent.vzEntry.attributes == {"dFromPort": "1000", "dToPort": "1000", "etherT": "ip", "name": "anstest4", "prot": "udp"}'
-      - present_missing_param.failed == true
+      - present_missing_param is failed
       - 'present_missing_param.msg == "state is present but all of the following are missing: entry"'
-      - present_incompatible_params.failed == true
+      - present_incompatible_params is failed
       - present_incompatible_params.msg.startswith("Parameter")
 
 - name: query tenant filter entry
@@ -187,43 +188,43 @@
 - name: query assertions
   assert:
     that:
-      - query_tenant_filter_entry.changed == false
+      - query_tenant_filter_entry is not changed
       - query_tenant_filter_entry.current | length == 1
-      - 'query_tenant_filter_entry.current.0.vzEntry.attributes.name == "anstest"'
+      - query_tenant_filter_entry.current.0.vzEntry.attributes.name == "anstest"
       - '"tn-anstest/flt-anstest/e-anstest.json" in query_tenant_filter_entry.url'
-      - query_filter_entry.changed == false
-      - 'query_filter_entry.current.0.vzFilter.attributes.name == "anstest"'
+      - query_filter_entry is not changed
+      - query_filter_entry.current.0.vzFilter.attributes.name == "anstest"
       - query_filter_entry.current.0.vzFilter.children | length == 1
-      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter_entry.filter_string'
-      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_filter_entry.filter_string'
+      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter_entry.filter_string|urldecode'
+      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_filter_entry.filter_string|urldecode'
       - '"class/vzFilter.json" in query_filter_entry.url'
-      - query_tenant_entry.changed == false
+      - query_tenant_entry is not changed
       - query_tenant_entry.current | length == 1
-      - 'query_tenant_entry.current.0.fvTenant.attributes.name == "anstest"'
-      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_tenant_entry.filter_string'
+      - query_tenant_entry.current.0.fvTenant.attributes.name == "anstest"
+      - '"rsp-subtree-filter=eq(vzEntry.name, \"anstest\")" in query_tenant_entry.filter_string|urldecode'
       - '"rsp-subtree-class=vzEntry" in query_tenant_entry.filter_string'
       - '"tn-anstest.json" in query_tenant_entry.url'
-      - query_tenant_filter.changed == false
+      - query_tenant_filter is not changed
       - query_tenant_filter.current | length == 1
-      - 'query_tenant_filter.current.0.vzFilter.attributes.name == "anstest"'
+      - query_tenant_filter.current.0.vzFilter.attributes.name == "anstest"
       - query_tenant_filter.current.0.vzFilter.children | length == 4
       - '"rsp-subtree-class=vzEntry" in query_tenant_filter.filter_string'
       - '"tn-anstest/flt-anstest.json" in query_tenant_filter.url'
-      - query_entry.changed == false
-      - 'query_entry.current.0.vzEntry.attributes.name == "anstest"'
-      - '"query-target-filter=eq(vzEntry.name, \"anstest\")" in query_entry.filter_string'
+      - query_entry is not changed
+      - query_entry.current.0.vzEntry.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzEntry.name, \"anstest\")" in query_entry.filter_string|urldecode'
       - '"class/vzEntry.json" in query_entry.url'
-      - query_filter.changed == false
-      - 'query_filter.current.0.vzFilter.attributes.name == "anstest"'
-      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter.filter_string'
+      - query_filter is not changed
+      - query_filter.current.0.vzFilter.attributes.name == "anstest"
+      - '"query-target-filter=eq(vzFilter.name, \"anstest\")" in query_filter.filter_string|urldecode'
       - '"rsp-subtree-class=vzEntry" in query_filter.filter_string'
       - '"class/vzFilter.json" in query_filter.url'
-      - query_tenant.changed == false
+      - query_tenant is not changed
       - query_tenant.current | length == 1
-      - 'query_tenant.current.0.fvTenant.attributes.name == "anstest"'
-      - '"rsp-subtree-class=vzFilter,vzEntry" in query_tenant.filter_string'
+      - query_tenant.current.0.fvTenant.attributes.name == "anstest"
+      - '"rsp-subtree-class=vzEntry,vzFilter" in query_tenant.filter_string|urldecode'
       - '"tn-anstest.json" in query_tenant.url'
-      - query_all.changed == false
+      - query_all is not changed
       - query_all.current | length > 1
       - query_all.current.0.vzEntry is defined
       - '"class/vzEntry.json" in query_all.url'
@@ -261,24 +262,24 @@
 - name: absent assertions
   assert:
     that:
-      - entry_absent_check_mode.changed == true
+      - entry_absent_check_mode is changed
       - entry_absent_check_mode.previous != []
-      - entry_absent.changed == true
+      - entry_absent is changed
       - entry_absent.previous == entry_absent_check_mode.previous
       - entry_absent.proposed == {}
-      - entry_absent_idempotent.changed == false
+      - entry_absent_idempotent is not changed
       - entry_absent_idempotent.previous == []
-      - absent_missing_param.failed == true
+      - absent_missing_param is failed
       - 'absent_missing_param.msg == "state is absent but all of the following are missing: entry, filter"'
 
 - name: cleanup filter
   aci_filter:
     <<: *aci_filter_present
     state: absent
-  when: filter_present.changed == true
+  when: filter_present is changed
 
 - name: cleanup tenant
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

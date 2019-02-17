@@ -22,7 +22,9 @@ version_added: 1.8
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' service groups.
 description:
     - Manage SLB (Server Load Balancing) service-group objects on A10 Networks devices via aXAPIv2.
-author: "Eric Chou (@ericchou) 2016, Mischa Peters (@mischapeters) 2014"
+author:
+  - Eric Chou (@ericchou)
+  - Mischa Peters (@mischapeters)
 notes:
     - Requires A10 Networks aXAPI 2.1.
     - When a server doesn't exist and is added to the service-group the server will be created.
@@ -107,7 +109,7 @@ RETURN = '''
 content:
   description: the full info regarding the slb_service_group
   returned: success
-  type: string
+  type: str
   sample: "mynewservicegroup"
 '''
 import json
@@ -135,7 +137,7 @@ def validate_servers(module, servers):
         if 'port' in item:
             try:
                 item['port'] = int(item['port'])
-            except:
+            except Exception:
                 module.fail_json(msg="server port definitions must be integers")
         else:
             module.fail_json(msg="server definitions must define the port field")
@@ -330,6 +332,7 @@ def main():
     # log out of the session nicely and exit
     axapi_call(module, session_url + '&method=session.close')
     module.exit_json(changed=changed, content=result)
+
 
 if __name__ == '__main__':
     main()

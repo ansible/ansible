@@ -48,7 +48,7 @@ options:
         description:
           - State of the container
         required: True
-        choices: ["latest", "absent", "rollback"]
+        choices: ["latest", "present", "absent", "rollback"]
         default: "latest"
     mode:
         description:
@@ -86,7 +86,7 @@ RETURN = '''
 msg:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: [u'Using default tag: latest ...']
 '''
 

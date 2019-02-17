@@ -34,7 +34,7 @@ options:
      - cidr of the network being created
 author:
     - "Christopher H. Laco (@claco)"
-    - "Jesse Keating (@j2sol)"
+    - "Jesse Keating (@omgjlk)"
 extends_documentation_fragment: rackspace.openstack
 '''
 

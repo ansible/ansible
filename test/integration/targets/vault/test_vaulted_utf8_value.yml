@@ -1,0 +1,15 @@
+- name: "test that the vaulted_utf8_value decrypts correctly"
+  gather_facts: false
+  hosts: testhost
+  vars:
+    expected: "aöffü"
+  tasks:
+    - name: decrypt vaulted_utf8_value and show it in debug
+      debug:
+         var: vaulted_utf8_value
+
+    - name: assert decrypted vaulted_utf8_value matches expected
+      assert:
+        that:
+          - "vaulted_utf8_value == expected"
+          - "vaulted_utf8_value == 'aöffü'"

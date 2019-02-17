@@ -1,0 +1,2 @@
+bugfixes:
+- win_route - Corrected issue where the wrong network interface was used for new static routes. - https://github.com/ansible/ansible/issues/28051

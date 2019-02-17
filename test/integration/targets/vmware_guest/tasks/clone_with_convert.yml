@@ -1,0 +1,98 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Christophe FERREIRA <christophe.ferreira@cnaf.fr>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: get a list of VMS from vcsim   
+  uri:
+    url: http://{{ vcsim }}:5000/govc_find?filter=VM
+  register: vmlist
+
+- debug: var=vcsim_instance
+- debug: var=vmlist
+
+- name: clone vm from template and convert to thin 
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'thin_' + item|basename }}"
+    template: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}" 
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+    convert: thin
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_thin
+
+- debug: var=clone_thin
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "clone_thin.results|map(attribute='changed')|unique|list == [true]"
+
+- name: clone vm from template and convert to thick 
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'thick_' + item|basename }}"
+    template: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}" 
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+    convert: thick
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_thick
+
+- debug: var=clone_thick
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "clone_thick.results|map(attribute='changed')|unique|list == [true]"
+
+- name: clone vm from template and convert to eagerzeroedthick
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "{{ 'eagerzeroedthick_' + item|basename }}"
+    template: "{{ item|basename }}"
+    datacenter: "{{ (item|basename).split('_')[0] }}" 
+    state: poweredoff
+    folder: "{{ item|dirname }}"
+    convert: eagerzeroedthick
+  with_items: "{{ vmlist['json'] }}"
+  register: clone_eagerzeroedthick
+
+- debug: var=clone_eagerzeroedthick
+
+- name: assert that changes were made
+  assert:
+    that:
+        - "clone_eagerzeroedthick.results|map(attribute='changed')|unique|list == [true]"

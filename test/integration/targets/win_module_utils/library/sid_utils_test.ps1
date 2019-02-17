@@ -3,6 +3,9 @@
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.SID
 
+$params = Parse-Args $args
+$sid_account = Get-AnsibleParam -obj $params -name "sid_account" -type "str" -failifempty $true
+
 Function Assert-Equals($actual, $expected) {
     if ($actual -ne $expected) {
         Fail-Json @{} "actual != expected`nActual: $actual`nExpected: $expected"
@@ -75,5 +78,16 @@ foreach ($test in $tests) {
         Assert-Equals -actual $actual_sid -expected $test.sid
     }
 }
+
+# the account to SID test is run outside of the normal run as we can't test it
+# in the normal test suite
+# Calling Convert-ToSID with a string like a SID should return that SID back
+$actual = Convert-ToSID -account_name $sid_account
+Assert-Equals -actual $actual -expected $sid_account
+
+# Calling COnvert-ToSID with a string prefixed with .\ should return the SID
+# for a user that is called that SID and not the SID passed in
+$actual = Convert-ToSID -account_name ".\$sid_account"
+Assert-Equals -actual ($actual -ne $sid_account) -expected $true
 
 Exit-Json @{ data = "success" }

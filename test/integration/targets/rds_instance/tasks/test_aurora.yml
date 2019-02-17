@@ -1,0 +1,144 @@
+---
+  - block:
+      - name: set up aws connection info
+        set_fact:
+          aws_connection_info: &aws_connection_info
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            security_token: "{{ security_token }}"
+            region: "{{ aws_region }}"
+        no_log: yes
+
+      - name: Ensure the resource doesn't exist
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+        ignore_errors: yes
+
+      - name: Create minimal aurora cluster in default VPC and default subnet group
+        rds_cluster:
+          state: present
+          engine: aurora
+          cluster_id: "{{ cluster_id }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          <<: *aws_connection_info
+
+      - name: Create an Aurora instance
+        rds_instance:
+          id: "{{ instance_id }}"
+          cluster_id: "{{ cluster_id }}"
+          engine: aurora
+          state: present
+          db_instance_class: "{{ aurora_db_instance_class }}"
+          tags:
+            CreatedBy: rds_instance integration tests
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.db_instance_identifier == '{{ instance_id }}'"
+            - "result.tags | length == 1"
+
+      - name: Modify tags
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          tags:
+            Test: rds_instance
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - result.tags | length == 1
+            - "result.tags.Test == 'rds_instance'"
+
+      - name: Test idempotence
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - not result.changed
+
+      - name: Attempt to modify password (a cluster-managed attribute)
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          password:  "{{ password }}"
+          force_update_password: True
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+        ignore_errors: yes
+
+      - assert:
+          that:
+            - result.failed
+            - "'Modify master user password for the DB Cluster using the ModifyDbCluster API' in result.msg"
+            - "'Please see rds_cluster' in result.msg"
+
+      - name: Modify aurora instance port (a cluster-managed attribute)
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          port: 1150
+          <<: *aws_connection_info
+        register: result
+        ignore_errors: yes
+
+      - assert:
+          that:
+            - not result.changed
+            - "'Modify database endpoint port number for the DB Cluster using the ModifyDbCluster API' in result.msg"
+            - "'Please see rds_cluster' in result.msg"
+
+      - name: Modify Aurora instance identifier
+        rds_instance:
+          id: "{{ instance_id }}"
+          state: present
+          purge_tags: False
+          new_id: "{{ modified_instance_id }}"
+          apply_immediately: True
+          <<: *aws_connection_info
+        register: result
+
+      - assert:
+          that:
+            - result.changed
+            - "result.db_instance_identifier == '{{ modified_instance_id }}'"
+
+    always:
+
+      - name: Delete the instance
+        rds_instance:
+          id: "{{ item }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        loop:
+          - "{{ instance_id }}"
+          - "{{ modified_instance_id }}"
+        ignore_errors: yes
+
+      - name: Delete the cluster
+        rds_cluster:
+          cluster_id: "{{ cluster_id }}"
+          state: absent
+          skip_final_snapshot: True
+          <<: *aws_connection_info
+        ignore_errors: yes

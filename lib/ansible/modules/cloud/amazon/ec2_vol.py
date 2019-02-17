@@ -34,7 +34,7 @@ options:
     version_added: "1.6"
   volume_size:
     description:
-      - size of volume (in GB) to create.
+      - size of volume (in GiB) to create.
   volume_type:
     description:
       - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD).
@@ -50,6 +50,7 @@ options:
     description:
       - Enable encryption at rest for this volume.
     default: 'no'
+    type: bool
     version_added: "1.8"
   kms_key_id:
     description:
@@ -124,7 +125,7 @@ EXAMPLES = '''
 - ec2_vol:
     instance: "{{ item.id }}"
     volume_size: 5
-  with_items: "{{ ec2.instances }}"
+  loop: "{{ ec2.instances }}"
   register: ec2_vol
 
 # Example: Launch an instance and then add a volume if not already attached
@@ -145,7 +146,7 @@ EXAMPLES = '''
     instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
-  with_items: "{{ ec2.instances }}"
+  loop: "{{ ec2.instances }}"
   register: ec2_vol
 
 # Remove a volume
@@ -182,22 +183,22 @@ RETURN = '''
 device:
     description: device name of attached volume
     returned: when success
-    type: string
+    type: str
     sample: "/def/sdf"
 volume_id:
     description: the id of volume
     returned: when success
-    type: string
+    type: str
     sample: "vol-35b333d9"
 volume_type:
     description: the volume type
     returned: when success
-    type: string
+    type: str
     sample: "standard"
 volume:
     description: a dictionary containing detailed attributes of the volume
     returned: when success
-    type: string
+    type: str
     sample: {
         "attachment_set": {
             "attach_time": "2015-10-23T00:22:29.000Z",
@@ -368,7 +369,7 @@ def attach_volume(module, ec2, volume, instance):
     changed = False
 
     # If device_name isn't set, make a choice based on best practices here:
-    # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
 
     # In future this needs to be more dynamic but combining block device mapping best practices
     # (bounds for devices, as above) with instance.block_device_mapping data would be tricky. For me ;)

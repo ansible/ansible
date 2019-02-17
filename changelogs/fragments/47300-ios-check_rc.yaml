@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix issue getting output from failed ios commands when ``check_rc=False``

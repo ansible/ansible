@@ -41,7 +41,7 @@ options:
   state:
     description:
       - Should this managed policy be present or absent. Set to absent to detach all entities from this policy and remove it if found.
-    required: True
+    default: present
     choices: [ "present", "absent" ]
 author: "Dan Kozlowski (@dkhenry)"
 extends_documentation_fragment:
@@ -95,7 +95,7 @@ RETURN = '''
 policy:
   description: Returns the policy json structure, when state == absent this will return the value of the removed policy.
   returned: success
-  type: string
+  type: str
   sample: '{
         "arn": "arn:aws:iam::aws:policy/AdministratorAccess "
         "attachment_count": 0,
@@ -278,7 +278,7 @@ def main():
         make_default=dict(type='bool', default=True),
         only_version=dict(type='bool', default=False),
         fail_on_delete=dict(type='bool', default=True),
-        state=dict(required=True, choices=['present', 'absent']),
+        state=dict(default='present', choices=['present', 'absent']),
     ))
 
     module = AnsibleModule(

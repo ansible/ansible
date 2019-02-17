@@ -26,7 +26,7 @@ ifdef PLUGINS
 	PLUGIN_ARGS = -l $(PLUGINS)
 endif
 
-DOC_PLUGINS ?= cache callback connection inventory lookup strategy vars
+DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup shell strategy vars
 
 assertrst:
 ifndef rst
@@ -35,7 +35,7 @@ endif
 
 all: docs
 
-docs: clean htmldocs
+docs: htmldocs
 
 generate_rst: staticmin config cli keywords modules plugins testing
 
@@ -66,17 +66,15 @@ clean:
 	find . -type f \( -name "*~" -or -name "#*" \) -delete
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up generated rst"
-	-rm rst/cli/ansible-*.rst
-	-rm rst/cli/ansible.rst
-	-rm rst/modules/*_by_category.rst
-	-rm rst/modules/list_of_*.rst
-	-rm rst/modules/*_maintained.rst
-	-rm rst/modules/*_module.rst
-	-rm rst/modules/*_plugin.rst
-	-rm rst/playbooks_directives.rst
-	-rm rst/plugins/*/*.rst
-	-rm rst/reference_appendices/config.rst
-	-rm rst/reference_appendices/playbooks_keywords.rst
+	rm -f rst/modules/*_by_category.rst
+	rm -f rst/modules/list_of_*.rst
+	rm -f rst/modules/*_maintained.rst
+	rm -f rst/modules/*_module.rst
+	rm -f rst/modules/*_plugin.rst
+	rm -f rst/playbooks_directives.rst
+	rm -f rst/plugins/*/*.rst
+	rm -f rst/reference_appendices/config.rst
+	rm -f rst/reference_appendices/playbooks_keywords.rst
 
 .PHONY: docs clean
 
@@ -108,8 +106,8 @@ staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
 
 epub:
-	(CPUS=$(CPUS) make -f Makefile.sphinx epub)
+	(CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx epub)
 
 htmlsingle: assertrst
 	sphinx-build -j $(CPUS) -b html -d $(BUILDDIR)/doctrees ./rst $(BUILDDIR)/html rst/$(rst)
-	@echo "Output is in $(BUILDDIR)/$(rst:.rst=.html)"
+	@echo "Output is in $(BUILDDIR)/html/$(rst:.rst=.html)"

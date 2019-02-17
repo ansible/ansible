@@ -81,31 +81,31 @@ network:
     contains:
         id:
             description: Network ID.
-            type: string
+            type: str
             sample: "8c787000-a000-4050-a215-280893411a7d"
         name:
             description: Network name.
-            type: string
+            type: str
             sample: "My network"
         description:
             description: Network description.
-            type: string
+            type: str
             sample: "My network description"
         location:
             description: Datacenter location.
-            type: string
+            type: str
             sample: NA3
         status:
             description: Network status. (MCP 2.0 only)
-            type: string
+            type: str
             sample: NORMAL
         private_net:
             description: Private network subnet. (MCP 1.0 only)
-            type: string
+            type: str
             sample: "10.2.3.0"
         multicast:
             description: Multicast enabled? (MCP 1.0 only)
-            type: boolean
+            type: bool
             sample: false
 '''
 import traceback
@@ -289,6 +289,7 @@ def main():
         module.state_present()
     elif module.state == 'absent':
         module.state_absent()
+
 
 if __name__ == '__main__':
     main()

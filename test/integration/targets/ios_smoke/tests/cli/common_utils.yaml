@@ -30,7 +30,7 @@
 - name: Configure interface ipv4 address
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/24
+    ipv4: 192.168.20.1/24
     state: present
     provider: "{{ cli }}"
   register: result
@@ -39,12 +39,12 @@
     that:
       - 'result.changed == true'
       - '"interface {{ test_interface }}" in result.commands'
-      - '"ip address 192.168.0.1 255.255.255.0" in result.commands'
+      - '"ip address 192.168.20.1 255.255.255.0" in result.commands'
 
 - name: test invalid subnet
   ios_l3_interface:
     name: "{{ test_interface }}"
-    ipv4: 192.168.0.1/45
+    ipv4: 192.168.20.1/45
     state: present
     provider: "{{ cli }}"
   register: result
@@ -103,8 +103,6 @@
   ios_interface:
     name: "{{ test_interface }}"
     state: up
-    tx_rate: ge(0)
-    rx_rate: ge(0)
     provider: "{{ cli }}"
   register: result
 
@@ -116,8 +114,6 @@
   ios_interface:
     name: "{{ test_interface }}"
     state: down
-    tx_rate: gt(0)
-    rx_rate: lt(0)
     provider: "{{ cli }}"
   ignore_errors: yes
   register: result
@@ -126,8 +122,6 @@
     that:
       - "result.failed == true"
       - "'state eq(down)' in result.failed_conditions"
-      - "'tx_rate gt(0)' in result.failed_conditions"
-      - "'rx_rate lt(0)' in result.failed_conditions"
 
 - name: Config + intent
   ios_interface:
@@ -154,7 +148,5 @@
     that:
       - "result.failed == true"
       - "'state eq(up)' in result.failed_conditions"
-
-
 
 - debug: msg="END ios_smoke cli/common_utils.yaml on connection={{ ansible_connection }}"

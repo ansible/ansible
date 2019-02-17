@@ -20,12 +20,12 @@
 
 import sys
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 from ansible.module_utils.network.aci.aci import ACIModule
 from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_native
 
-from nose.plugins.skip import SkipTest
+import pytest
 
 
 class AltModule():
@@ -43,6 +43,7 @@ class AltACIModule(ACIModule):
         self.module = AltModule
         self.params = self.module.params
 
+
 aci = AltACIModule()
 
 
@@ -51,7 +52,7 @@ try:
     if sys.version_info >= (2, 7):
         from xmljson import cobra
 except ImportError:
-    raise SkipTest("ACI Ansible modules require the lxml and xmljson Python libraries")
+    pytestmark = pytest.mark.skip("ACI Ansible modules require the lxml and xmljson Python libraries")
 
 
 class AciRest(unittest.TestCase):
@@ -260,8 +261,8 @@ class AciRest(unittest.TestCase):
             error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
         elif PY2:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (line 1)"
-        elif sys.version_info >= (3, 7):
-            error_text = to_native(u"Unable to parse output as XML, see 'raw' output. None (line 0)", errors='surrogate_or_strict')
+        elif sys.version_info >= (3, 8):
+            error_text = "Unable to parse output as XML, see 'raw' output. None (line 0)"
         else:
             error_text = "Unable to parse output as XML, see 'raw' output. Document is empty, line 1, column 1 (<string>, line 1)"
 

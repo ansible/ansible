@@ -31,17 +31,21 @@ options:
           points to implicitly trigger handler runs (after pre/post tasks, the final role execution, and the main tasks section of your plays).
         - >
           C(refresh_inventory) (added in 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
-          re-executed. This is mainly useful when additional hosts are created and users wish to use them instead of using the `add_host` module."
+          re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
+          or, if available for your specific inventory datasource (for es.: aws), you can use the an inventory plugin instead of an inventory script).
+          This is mainly useful when additional hosts are created and users wish to use them instead of using the `add_host` module."
         - "C(noop) (added in 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use."
         - "C(clear_facts) (added in 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared, including the fact cache."
         - "C(clear_host_errors) (added in 2.1) clears the failed state (if any) from hosts specified in the play's list of hosts."
-        - "C(end_play) (added in 2.2) causes the play to end without failing the host."
+        - "C(end_play) (added in 2.2) causes the play to end without failing the host(s). Note that this affects all hosts."
         - "C(reset_connection) (added in 2.3) interrupts a persistent connection (i.e. ssh + control persist)"
-    choices: ['noop', 'flush_handlers', 'refresh_inventory', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection']
+        - "C(end_host) (added in 2.8) is a per-host variation of C(end_play). Causes the play to end for the current host without failing it."
+    choices: ['flush_handlers', 'refresh_inventory', 'noop', 'clear_facts', 'clear_host_errors', 'end_play', 'reset_connection', 'end_host']
     required: true
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
     - This module is also supported for Windows targets.
+    - "C(clear_facts) will remove the persistent facts from ``set_fact: cacheable=True``, but not the current host variable it creates for the current run."
 author:
     - "Ansible Core Team"
 '''
@@ -58,7 +62,7 @@ EXAMPLES = '''
   cloud_guest:            # this is fake module
     name: newhost
     state: present
-- name: Refresh inventory to ensure new instaces exist in inventory
+- name: Refresh inventory to ensure new instances exist in inventory
   meta: refresh_inventory
 
 - name: Clear gathered facts from all currently targeted hosts
@@ -75,4 +79,10 @@ EXAMPLES = '''
 - user: name={{ansible_user}} groups=input
 - name: reset ssh connection to allow user changes to affect 'current login user'
   meta: reset_connection
+
+- name: End the play for hosts that run CentOS 6
+  meta: end_host
+  when:
+    - ansible_distribution == 'CentOS'
+    - ansible_distribution_major_version == '6'
 '''

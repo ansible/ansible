@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
-    'status': ['preview'],
+    'status': ['stableinterface'],
     'supported_by': 'core'
 }
 
@@ -22,10 +22,15 @@ short_description: Load and execute a role
 description:
   - Loads and executes a role as a task dynamically. This frees roles from the `roles:` directive and allows them to be
     treated more as tasks.
-  - Unlike M(import_role), most keywords, including loops and conditionals, apply to this statement.
+  - Unlike M(import_role), most keywords, including loop, with_items, and conditionals, apply to this statement.
+  - The do until loop is not supported on M(include_role).
   - This module is also supported for Windows targets.
 version_added: "2.2"
 options:
+  apply:
+    description:
+      - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+    version_added: '2.7'
   name:
     description:
       - The name of the role to be executed.
@@ -47,11 +52,20 @@ options:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
     default: 'yes'
-  private:
+  public:
     description:
-      - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
-        play.
+      - This option dictates whether the role's C(vars) and C(defaults) are exposed to the playbook. If set to C(yes)
+        the variables will be available to tasks following the C(include_role) task. This functionality differs from
+        standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed at
+        playbook parsing time, and available to earlier roles and tasks as well.
     type: bool
+    default: 'no'
+    version_added: '2.7'
+  handlers_from:
+    description:
+      - File to load from a role's C(handlers/) directory.
+    default: main
+    version_added: '2.8'
 notes:
   - Handlers are made available to the whole play.
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
@@ -77,8 +91,8 @@ EXAMPLES = """
 
 - name: Use role in loop
   include_role:
-    name: myrole
-  with_items:
+    name: '{{ roleinputvar }}'
+  loop:
     - '{{ roleinput1 }}'
     - '{{ roleinput2 }}'
   loop_control:
@@ -88,6 +102,15 @@ EXAMPLES = """
   include_role:
     name: myrole
   when: not idontwanttorun
+
+- name: Apply tags to tasks within included file
+  include_role:
+    name: install
+    apply:
+      tags:
+        - install
+  tags:
+    - always
 """
 
 RETURN = """

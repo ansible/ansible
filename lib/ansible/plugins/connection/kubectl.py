@@ -103,6 +103,7 @@ DOCUMENTATION = """
         default: ''
         vars:
           - name: ansible_kubectl_username
+          - name: ansible_kubectl_user
         env:
           - name: K8S_AUTH_USERNAME
       kubectl_password:
@@ -143,7 +144,7 @@ DOCUMENTATION = """
           - Path to a CA certificate used to authenticate with the API.
         default: ''
         vars:
-          - name: ansible_kubectl_cert_file
+          - name: ansible_kubectl_ssl_ca_cert
         env:
           - name: K8S_AUTH_SSL_CA_CERT
       kubectl_verify_ssl:
@@ -153,7 +154,7 @@ DOCUMENTATION = """
         vars:
           - name: ansible_kubectl_verify_ssl
         env:
-          - name: K8s_AUTH_VERIFY_SSL
+          - name: K8S_AUTH_VERIFY_SSL
 """
 
 import distutils.spawn
@@ -167,13 +168,9 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.utils.display import Display
 
-
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 CONNECTION_TRANSPORT = 'kubectl'
@@ -201,7 +198,6 @@ class Connection(ConnectionBase):
     connection_options = CONNECTION_OPTIONS
     documentation = DOCUMENTATION
     has_pipelining = True
-    become_methods = frozenset(C.BECOME_METHODS)
     transport_cmd = None
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
@@ -300,9 +296,13 @@ class Connection(ConnectionBase):
         out_path = shlex_quote(out_path)
         # kubectl doesn't have native support for copying files into
         # running containers, so we use kubectl exec to implement this
-        args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s" % (out_path, BUFSIZE)])
-        args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
         with open(to_bytes(in_path, errors='surrogate_or_strict'), 'rb') as in_file:
+            if not os.fstat(in_file.fileno()).st_size:
+                count = ' count=0'
+            else:
+                count = ''
+            args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s%s" % (out_path, BUFSIZE, count)])
+            args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
             try:
                 p = subprocess.Popen(args, stdin=in_file,
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)

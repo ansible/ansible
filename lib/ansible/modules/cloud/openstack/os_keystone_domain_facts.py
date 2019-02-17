@@ -21,8 +21,8 @@ author: "Ricardo Carrillo Cruz (@rcarrillocruz)"
 description:
     - Retrieve facts about a one or more OpenStack domains
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "sdk"
 options:
    name:
      description:
@@ -70,15 +70,15 @@ openstack_domains:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the domain.
             returned: success
-            type: string
+            type: str
         description:
             description: Description of the domain.
             returned: success
-            type: string
+            type: str
         enabled:
             description: Flag to indicate if the domain is enabled.
             returned: success
@@ -102,7 +102,7 @@ def main():
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    shade, opcloud = openstack_cloud_from_module(module)
+    sdk, opcloud = openstack_cloud_from_module(module)
     try:
         name = module.params['name']
         filters = module.params['filters']
@@ -111,7 +111,7 @@ def main():
             # Let's suppose user is passing domain ID
             try:
                 domains = opcloud.get_domain(name)
-            except:
+            except Exception:
                 domains = opcloud.search_domains(filters={'name': name})
 
         else:
@@ -120,7 +120,7 @@ def main():
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_domains=domains))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

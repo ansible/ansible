@@ -45,6 +45,7 @@ options:
       - Clean up all domain resources like child domains and accounts.
       - Considered on C(state=absent).
     default: false
+    type: bool
   state:
     description:
       - State of the domain.
@@ -55,6 +56,7 @@ options:
     description:
       - Poll async jobs until job has finished.
     default: true
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
@@ -83,27 +85,27 @@ RETURN = '''
 id:
   description: UUID of the domain.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of the domain.
   returned: success
-  type: string
+  type: str
   sample: customers
 path:
   description: Domain path.
   returned: success
-  type: string
+  type: str
   sample: /ROOT/customers
 parent_domain:
   description: Parent domain of the domain.
   returned: success
-  type: string
+  type: str
   sample: ROOT
 network_domain:
   description: Network domain of the domain.
   returned: success
-  type: string
+  type: str
   sample: example.local
 '''
 
@@ -141,12 +143,13 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
             path = "root/" + path
 
         args = {
-            'listall': True
+            'listall': True,
+            'fetch_list': True,
         }
 
         domains = self.query_api('listDomains', **args)
         if domains:
-            for d in domains['domain']:
+            for d in domains:
                 if path == d['path'].lower():
                     return d
         return None

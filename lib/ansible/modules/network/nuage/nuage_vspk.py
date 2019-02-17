@@ -320,7 +320,7 @@ RETURN = '''
 id:
     description: The id of the entity that was found, created, updated or assigned.
     returned: On state=present and command=find in case one entity was found.
-    type: string
+    type: str
     sample: bae07d8d-d29c-4e2b-b6ba-621b4807a333
 entities:
     description: A list of entities handled. Each element is the to_dict() of the entity.

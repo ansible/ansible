@@ -19,12 +19,7 @@ module: cloudscale_server
 short_description: Manages servers on the cloudscale.ch IaaS service
 description:
   - Create, start, stop and delete servers on the cloudscale.ch IaaS service.
-  - All operations are performed using the cloudscale.ch public API v1.
-  - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
-  - A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
-    U(https://control.cloudscale.ch).
 notes:
-  - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new server at least the C(name), C(ssh_key), C(image) and C(flavor) options are required.
   - If more than one server with the name given by the C(name) option exists, execution is aborted.
   - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
@@ -68,33 +63,34 @@ options:
     description:
       - Attach a public network interface to the server.
     default: True
+    type: bool
   use_private_network:
     description:
       - Attach a private network interface to the server.
     default: False
+    type: bool
   use_ipv6:
     description:
       - Enable IPv6 on the public network interface.
     default: True
+    type: bool
   anti_affinity_with:
     description:
       - UUID of another server to create an anti-affinity group with.
   user_data:
     description:
       - Cloud-init configuration (cloud-config) data to use for the server.
-  api_token:
-    description:
-      - cloudscale.ch API token.
-      - This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
   api_timeout:
     description:
       - Timeout in seconds for calls to the cloudscale.ch API.
     default: 30
     version_added: "2.5"
+extends_documentation_fragment: cloudscale
 '''
 
 EXAMPLES = '''
 # Start a server (if it does not exist) and register the server details
+
 - name: Start cloudscale.ch server
   cloudscale_server:
     name: my-shiny-cloudscale-server
@@ -148,32 +144,32 @@ RETURN = '''
 href:
   description: API URL to get details about this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: https://api.cloudscale.ch/v1/servers/cfde831a-4e87-4a75-960f-89b0148aa2cc
 uuid:
   description: The unique identifier for this server
   returned: success
-  type: string
+  type: str
   sample: cfde831a-4e87-4a75-960f-89b0148aa2cc
 name:
   description: The display name of the server
   returned: success
-  type: string
+  type: str
   sample: its-a-me-mario.cloudscale.ch
 state:
   description: The current status of the server
   returned: success
-  type: string
+  type: str
   sample: running
 flavor:
   description: The flavor that has been used for this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: flex-8
 image:
   description: The image used for booting this server
   returned: success when not state == absent
-  type: string
+  type: str
   sample: debian-8
 volumes:
   description: List of volumes attached to the server
@@ -198,13 +194,14 @@ ssh_host_keys:
 anti_affinity_with:
   description: List of servers in the same anti-affinity group
   returned: success when not state == absent
-  type: string
+  type: str
   sample: []
 '''
 
 import os
 from datetime import datetime, timedelta
 from time import sleep
+from copy import deepcopy
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
@@ -296,8 +293,11 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             self._module.fail_json(msg='Missing required parameter(s) to create a new server: %s.' %
                                    ' '.join(missing_parameters))
 
+        # Deepcopy: Duplicate the data object for iteration, because
+        # iterating an object and changing it at the same time is insecure
+
         # Sanitize data dictionary
-        for k, v in data.items():
+        for k, v in deepcopy(data).items():
 
             # Remove items not relevant to the create server call
             if k in ('api_token', 'api_timeout', 'uuid', 'state'):
@@ -355,10 +355,10 @@ def main():
 
     target_state = module.params['state']
     server = AnsibleCloudscaleServer(module)
-    # The server could be in a changeing or error state.
+    # The server could be in a changing or error state.
     # Wait for one of the allowed states before doing anything.
     # If an allowed state can't be reached, this module fails.
-    if not server.info['state'] in ALLOWED_STATES:
+    if server.info['state'] not in ALLOWED_STATES:
         server.wait_for_state(ALLOWED_STATES)
     current_state = server.info['state']
 

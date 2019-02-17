@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,9 +19,9 @@ short_description: Manage BIG-IP module provisioning
 description:
   - Manage BIG-IP module provisioning. This module will only provision at the
     standard levels of Dedicated, Nominal, and Minimum.
-version_added: "2.4"
+version_added: 2.4
 options:
-  name:
+  module:
     description:
       - The module to provision in BIG-IP.
     required: true
@@ -31,6 +31,7 @@ options:
       - apm
       - asm
       - avr
+      - cgnat
       - fps
       - gtm
       - ilx
@@ -41,7 +42,7 @@ options:
       - swg
       - vcmp
     aliases:
-      - module
+      - name
   level:
     description:
       - Sets the provisioning level for the requested modules. Changing the
@@ -49,6 +50,8 @@ options:
         For example, changing one module to C(dedicated) requires setting all
         others to C(none). Setting the level of a module to C(none) means that
         the module is not activated.
+      - This parameter is not relevant to C(cgnat) and will not be applied to the
+        C(cgnat) module.
     default: nominal
     choices:
       - dedicated
@@ -73,22 +76,22 @@ author:
 EXAMPLES = r'''
 - name: Provision PEM at "nominal" level
   bigip_provision:
-    server: lb.mydomain.com
     module: pem
     level: nominal
-    password: secret
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 
 - name: Provision a dedicated SWG. This will unprovision every other module
   bigip_provision:
-    server: lb.mydomain.com
     module: swg
-    password: secret
     level: dedicated
-    user: admin
-    validate_certs: no
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
   delegate_to: localhost
 '''
 
@@ -96,7 +99,7 @@ RETURN = r'''
 level:
   description: The new provisioning level of the module.
   returned: changed
-  type: string
+  type: str
   sample: minimum
 '''
 
@@ -104,41 +107,24 @@ import time
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
+    from library.module_utils.network.f5.icontrol import TransactionContextManager
 except ImportError:
-    # Upstream Ansible
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-
-try:
-    from f5.bigip.contexts import TransactionContextManager
-    from f5.sdk_exception import LazyAttributesRequired
-except ImportError:
-    HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
+    from ansible.module_utils.network.f5.icontrol import TransactionContextManager
 
 
 class Parameters(AnsibleF5Parameters):
@@ -146,8 +132,26 @@ class Parameters(AnsibleF5Parameters):
 
     returnables = ['level']
 
-    updatables = ['level']
+    updatables = ['level', 'cgnat']
 
+    @property
+    def level(self):
+        if self._values['level'] is None:
+            return None
+        if self.state == 'absent':
+            return 'none'
+        return str(self._values['level'])
+
+
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
     def to_return(self):
         result = {}
         try:
@@ -158,11 +162,44 @@ class Parameters(AnsibleF5Parameters):
         except Exception:
             return result
 
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            result = self.__default(param)
+            return result
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
     @property
-    def level(self):
-        if self._values['level'] is None:
-            return None
-        return str(self._values['level'])
+    def cgnat(self):
+        if self.want.module == 'cgnat':
+            if self.want.state == 'absent' and self.have.enabled is True:
+                return True
+            if self.want.state == 'present' and self.have.disabled is True:
+                return True
 
 
 class ModuleManager(object):
@@ -170,51 +207,98 @@ class ModuleManager(object):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
         self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                if isinstance(change, dict):
+                    changed.update(change)
+                else:
+                    changed[k] = change
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
     def exec_module(self):
-        if not HAS_F5SDK:
-            raise F5ModuleError("The python f5-sdk module is required")
-
         changed = False
         result = dict()
         state = self.want.state
 
-        try:
-            if state == "present":
-                changed = self.update()
-            elif state == "absent":
-                changed = self.absent()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        if state == "present":
+            changed = self.present()
+        elif state == "absent":
+            changed = self.absent()
 
         changes = self.changes.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
         return result
 
-    def exists(self):
-        provision = self.client.api.tm.sys.provision
-        resource = getattr(provision, self.want.module)
-        resource = resource.load()
-        result = resource.attrs
-        if str(result['level']) == 'none':
+    def present(self):
+        if self.exists():
             return False
-        return True
+        return self.update()
+
+    def exists(self):
+        if self.want.module == 'cgnat':
+            uri = "https://{0}:{1}/mgmt/tm/sys/feature-module/cgnat/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+            )
+            resp = self.client.api.get(uri)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+            if 'disabled' in response and response['disabled'] is True:
+                return False
+            elif 'enabled' in response and response['enabled'] is True:
+                return True
+        try:
+            for x in range(0, 5):
+                uri = "https://{0}:{1}/mgmt/tm/sys/provision/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    self.want.module
+                )
+                resp = self.client.api.get(uri)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+
+                if str(response['level']) != 'none' and self.want.level == 'none':
+                    return True
+                if str(response['level']) == 'none' and self.want.level == 'none':
+                    return False
+                if str(response['level']) == self.want.level:
+                    return True
+                return False
+        except Exception as ex:
+            if 'not registered' in str(ex):
+                return False
+            time.sleep(1)
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -223,7 +307,10 @@ class ModuleManager(object):
         if self.module.check_mode:
             return True
 
-        self.update_on_device()
+        result = self.update_on_device()
+        if self.want.module == 'cgnat':
+            return result
+
         self._wait_for_module_provisioning()
 
         if self.want.module == 'vcmp':
@@ -232,7 +319,86 @@ class ModuleManager(object):
 
         if self.want.module == 'asm':
             self._wait_for_asm_ready()
+        if self.want.module == 'afm':
+            self._wait_for_afm_ready()
         return True
+
+    def should_reboot(self):
+        for x in range(0, 24):
+            try:
+                uri = "https://{0}:{1}/mgmt/tm/sys/db/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    'provision.action'
+                )
+                resp = self.client.api.get(uri)
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+
+                if response['value'] == 'reboot':
+                    return True
+                elif response['value'] == 'none':
+                    time.sleep(5)
+            except Exception:
+                time.sleep(5)
+        return False
+
+    def reboot_device(self):
+        nops = 0
+        last_reboot = self._get_last_reboot()
+
+        try:
+            params = dict(
+                command="run",
+                utilCmdArgs='-c "/sbin/reboot"'
+            )
+            uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            resp = self.client.api.post(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+            if 'commandResult' in response:
+                return str(response['commandResult'])
+        except Exception:
+            pass
+
+        # Sleep a little to let rebooting take effect
+        time.sleep(20)
+
+        while nops < 3:
+            try:
+                self.client.reconnect()
+                next_reboot = self._get_last_reboot()
+                if next_reboot is None:
+                    nops = 0
+                if next_reboot == last_reboot:
+                    nops = 0
+                else:
+                    nops += 1
+            except Exception as ex:
+                # This can be caused by restjavad restarting.
+                pass
+            time.sleep(10)
+        return None
 
     def should_update(self):
         result = self._update_changed_options()
@@ -241,39 +407,137 @@ class ModuleManager(object):
         return False
 
     def update_on_device(self):
-        if self.want.level == 'dedicated':
+        if self.want.module == 'cgnat':
+            if self.changes.cgnat:
+                return self.provision_cgnat_on_device()
+            return False
+        elif self.want.level == 'dedicated':
             self.provision_dedicated_on_device()
         else:
             self.provision_non_dedicated_on_device()
 
+    def provision_cgnat_on_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/feature-module/cgnat/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        params = dict(enabled=True)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
+
     def provision_dedicated_on_device(self):
         params = self.want.api_params()
-        tx = self.client.api.tm.transactions.transaction
-        collection = self.client.api.tm.sys.provision.get_collection()
-        resources = [x['name'] for x in collection if x['name'] != self.want.module]
-        with TransactionContextManager(tx) as api:
-            provision = api.tm.sys.provision
+        uri = "https://{0}:{1}/mgmt/tm/sys/provision/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        resources = [x['name'] for x in response['items'] if x['name'] != self.want.module]
+
+        with TransactionContextManager(self.client) as transact:
             for resource in resources:
-                resource = getattr(provision, resource)
-                resource = resource.load()
-                resource.update(level='none')
-            resource = getattr(provision, self.want.module)
-            resource = resource.load()
-            resource.update(**params)
+                target = uri + resource
+                resp = transact.api.patch(target, json=dict(level='none'))
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+
+            target = uri + self.want.module
+            resp = transact.api.patch(target, json=params)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
 
     def provision_non_dedicated_on_device(self):
         params = self.want.api_params()
-        provision = self.client.api.tm.sys.provision
-        resource = getattr(provision, self.want.module)
-        resource = resource.load()
-        resource.update(**params)
+        uri = "https://{0}:{1}/mgmt/tm/sys/provision/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.module
+        )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
 
     def read_current_from_device(self):
-        provision = self.client.api.tm.sys.provision
-        resource = getattr(provision, str(self.want.module))
-        resource = resource.load()
-        result = resource.attrs
-        return Parameters(params=result)
+        if self.want.module == 'cgnat':
+            uri = "https://{0}:{1}/mgmt/tm/sys/feature-module/cgnat/".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+            )
+            resp = self.client.api.get(uri)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+        else:
+            uri = "https://{0}:{1}/mgmt/tm/sys/provision/{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                self.want.module
+            )
+            resp = self.client.api.get(uri)
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+        return ApiParameters(params=response)
 
     def absent(self):
         if self.exists():
@@ -283,9 +547,11 @@ class ModuleManager(object):
     def remove(self):
         if self.module.check_mode:
             return True
+        if self.want.module == 'cgnat':
+            return self.deprovision_cgnat_on_device()
+
         self.remove_from_device()
         self._wait_for_module_provisioning()
-
         # For vCMP, because it has to reboot, we also wait for mcpd to become available
         # before "moving on", or else the REST API would not be available and subsequent
         # Tasks would fail.
@@ -293,15 +559,72 @@ class ModuleManager(object):
             self._wait_for_reboot()
             self._wait_for_module_provisioning()
 
+        if self.should_reboot():
+            self.save_on_device()
+            self.reboot_device()
+            self._wait_for_module_provisioning()
+
         if self.exists():
             raise F5ModuleError("Failed to de-provision the module")
         return True
 
+    def save_on_device(self):
+        command = 'tmsh save sys config'
+        params = dict(
+            command="run",
+            utilCmdArgs='-c "{0}"'.format(command)
+        )
+        uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+            self.client.provider['server'],
+            self.client.provider['server_port']
+        )
+        resp = self.client.api.post(uri, json=params)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] in [400, 403]:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
     def remove_from_device(self):
-        provision = self.client.api.tm.sys.provision
-        resource = getattr(provision, self.want.module)
-        resource = resource.load()
-        resource.update(level='none')
+        uri = "https://{0}:{1}/mgmt/tm/sys/provision/{2}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            self.want.module
+        )
+        resp = self.client.api.patch(uri, json=dict(level='none'))
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+    def deprovision_cgnat_on_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/feature-module/cgnat/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        params = dict(disabled=True)
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return True
 
     def _wait_for_module_provisioning(self):
         # To prevent things from running forever, the hack is to check
@@ -337,11 +660,29 @@ class ModuleManager(object):
         #   /usr/libexec/qemu-kvm -rt-usecs 880 ... -mem-path /dev/mprov/vcmp -f5-tracing ...
         #
         try:
-            output = self.client.api.tm.util.bash.exec_cmd(
-                'run',
-                utilCmdArgs='-c "ps aux | grep \'[m]prov\' | grep -v /usr/libexec/qemu-kvm"'
+            command = "ps aux | grep \'[m]prov\' | grep -v /usr/libexec/qemu-kvm"
+            params = dict(
+                command="run",
+                utilCmdArgs='-c "{0}"'.format(command)
             )
-            if hasattr(output, 'commandResult'):
+            uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            resp = self.client.api.post(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+            if 'commandResult' in response:
                 return True
         except Exception:
             pass
@@ -359,8 +700,24 @@ class ModuleManager(object):
         restarted_asm = False
         while nops < 3:
             try:
-                policies = self.client.api.tm.asm.policies_s.get_collection()
-                if len(policies) >= 0:
+                uri = "https://{0}:{1}/mgmt/tm/asm/policies/".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                )
+                resp = self.client.api.get(uri)
+
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] in [400, 403]:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+
+                if len(response['items']) >= 0:
                     nops += 1
                 else:
                     nops = 0
@@ -370,12 +727,64 @@ class ModuleManager(object):
                     restarted_asm = True
             time.sleep(5)
 
+    def _wait_for_afm_ready(self):
+        """Waits specifically for AFM
+
+        AFM can take longer to actually start up than all the previous checks take.
+        This check here is specifically waiting for the Security API to stop raising
+        errors.
+        :return:
+        """
+        nops = 0
+        while nops < 3:
+            try:
+                uri = "https://{0}:{1}/mgmt/tm/security/".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                )
+                resp = self.client.api.get(uri)
+
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] in [400, 403]:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+
+                if len(response['items']) >= 0:
+                    nops += 1
+                else:
+                    nops = 0
+            except Exception as ex:
+                pass
+            time.sleep(5)
+
     def _restart_asm(self):
         try:
-            self.client.api.tm.util.bash.exec_cmd(
-                'run',
+            params = dict(
+                command="run",
                 utilCmdArgs='-c "bigstart restart asm"'
             )
+            uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            resp = self.client.api.post(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
             time.sleep(60)
             return True
         except Exception:
@@ -384,12 +793,29 @@ class ModuleManager(object):
 
     def _get_last_reboot(self):
         try:
-            output = self.client.api.tm.util.bash.exec_cmd(
-                'run',
+            params = dict(
+                command="run",
                 utilCmdArgs='-c "/usr/bin/last reboot | head -1"'
             )
-            if hasattr(output, 'commandResult'):
-                return str(output.commandResult)
+            uri = "https://{0}:{1}/mgmt/tm/util/bash".format(
+                self.client.provider['server'],
+                self.client.provider['server_port']
+            )
+            resp = self.client.api.post(uri, json=params)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] in [400, 403]:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
+
+            if 'commandResult' in response:
+                return str(response['commandResult'])
         except Exception:
             pass
         return None
@@ -427,7 +853,7 @@ class ArgumentSpec(object):
                 choices=[
                     'afm', 'am', 'sam', 'asm', 'avr', 'fps',
                     'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
-                    'apm', 'vcmp'
+                    'apm', 'vcmp', 'cgnat'
                 ],
                 aliases=['name']
             ),
@@ -456,18 +882,15 @@ def main():
         supports_check_mode=spec.supports_check_mode,
         mutually_exclusive=spec.mutually_exclusive
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
-        cleanup_tokens(client)
-        module.exit_json(**results)
+        exit_json(module, results, client)
     except F5ModuleError as ex:
-        cleanup_tokens(client)
-        module.fail_json(msg=str(ex))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

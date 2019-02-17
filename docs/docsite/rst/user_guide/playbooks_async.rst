@@ -1,3 +1,5 @@
+.. _playbooks_async:
+
 Asynchronous Actions and Polling
 ================================
 
@@ -28,6 +30,11 @@ poll value is 10 seconds if you do not specify a value for `poll`::
    'async' keyword, the task runs synchronously, which is Ansible's
    default.
 
+.. note::
+  As of Ansible 2.3, async does not support check mode and will fail the
+  task when run in check mode. See :doc:`playbooks_checkmode` on how to
+  skip a task in check mode.
+
 Alternatively, if you do not need to wait on the task to complete, you may
 run the task asynchronously by specifying a poll value of 0::
 
@@ -52,7 +59,7 @@ run the task asynchronously by specifying a poll value of 0::
    Using a higher value for ``--forks`` will result in kicking off asynchronous
    tasks even faster.  This also increases the efficiency of polling.
 
-If you would like to perform a task asynchroniusly and check on it later you can perform a task similar to the
+If you would like to perform a task asynchronously and check on it later you can perform a task similar to the
 following::
 
       ---
@@ -60,7 +67,7 @@ following::
       - name: 'YUM - async task'
         yum:
           name: docker-io
-          state: installed
+          state: present
         async: 1000
         poll: 0
         register: yum_sleeper
@@ -93,8 +100,7 @@ of tasks running concurrently, you can do it this way::
           - 5
         durations: "{{ item }}"
       include_tasks: execute_batch.yml
-      loop:
-        - "{{ sleep_durations | batch(2) | list }}"
+      loop: "{{ sleep_durations | batch(2) | list }}"
 
     #####################
     # execute_batch.yml
@@ -122,8 +128,7 @@ of tasks running concurrently, you can do it this way::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-

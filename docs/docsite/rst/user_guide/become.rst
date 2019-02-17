@@ -11,7 +11,7 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 Become
 ======
 
-Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas` and others.
+Ansible allows you to 'become' another user, different from the user that logged into the machine (remote user). This is done using existing privilege escalation tools such as `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
 
 
 .. note:: Prior to version 1.9, Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user and execute tasks and create resources with the second user's permissions. As of Ansible version 1.9,  `become` supersedes the old sudo/su, while still being backwards compatible. This new implementation also makes it easier to add other privilege escalation tools, including `pbrun` (Powerbroker), `pfexec`, `dzdo` (Centrify), and others.
@@ -31,7 +31,7 @@ become_user
     set to user with desired privileges — the user you `become`, NOT the user you login as. Does NOT imply ``become: yes``, to allow it to be set at host level.
 
 become_method
-    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`
+    (at play or task level) overrides the default method set in ansible.cfg, set to `sudo`/`su`/`pbrun`/`pfexec`/`doas`/`dzdo`/`ksu`/`runas`/`machinectl`
 
 become_flags
     (at play or task level) permit the use of specific flags for the tasks or role. One common use is to change the user to nobody when the shell is set to no login. Added in Ansible 2.2.
@@ -73,7 +73,7 @@ ansible_become_method
 ansible_become_user
     set the user you become through privilege escalation; does not imply ``ansible_become: yes``
 
-ansible_become_pass
+ansible_become_password
     set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
@@ -91,7 +91,7 @@ Command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu | runas ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas | dzdo | ksu | runas | machinectl ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root), does not imply --become/-b
@@ -149,8 +149,9 @@ Ways to resolve this include:
 
 * Use `pipelining`.  When pipelining is enabled, Ansible doesn't save the
   module to a temporary file on the client.  Instead it pipes the module to
-  the remote python interpreter's stdin.  Pipelining does not work for
-  non-python modules.
+  the remote python interpreter's stdin. Pipelining does not work for
+  python modules involving file transfer (for example: :ref:`copy <copy_module>`,
+  :ref:`fetch <fetch_module>`, :ref:`template <template_module>`), or for non-python modules.
 
 * (Available in Ansible 2.1) Install POSIX.1e filesystem acl support on the
   managed host.  If the temporary directory on the remote host is mounted with
@@ -207,28 +208,51 @@ or '/bin/chmod' as the allowed commands this will fail with ansible as those
 paths won't match with the temporary file that ansible creates to run the
 module.
 
-.. _become-network:
+Environment variables populated by pam_systemd
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For most Linux distributions using ``systemd`` as their init, the default
+methods used by ``become`` do not open a new "session", in the sense of
+systemd.  Because the ``pam_systemd`` module will not fully initialize a new
+session, you might have surprises compared to a normal session opened through
+ssh: some environment variables set by ``pam_systemd``, most notably
+``XDG_RUNTIME_DIR``, are not populated for the new user and instead inherited
+or just emptied.
+
+This might cause trouble when trying to invoke systemd commands that depend on
+``XDG_RUNTIME_DIR`` to access the bus:
+
+.. code-block:: console
+
+   $ echo $XDG_RUNTIME_DIR
+
+   $ systemctl --user status
+   Failed to connect to bus: Permission denied
+
+To force ``become`` to open a new systemd session that goes through
+``pam_systemd``, you can use ``become_method: machinectl``.
+
+For more information, see `this systemd issue
+<https://github.com/systemd/systemd/issues/825#issuecomment-127917622>`_.
+
+.. _become_network:
 
 Become and Networks
 ===================
 
+As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all :ref:`Ansible-maintained platforms<network_supported>` that support ``enable`` mode: `eos``, ``ios``, and ``nxos``. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
 
-network_cli and become
-----------------------
+You must set the connection type to either ``connection: network_cli`` or ``connection: httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
-Ansible 2.5 added support for ``become`` to be used to enter `enable` mode (Privileged EXEC mode) on network devices that support it. This replaces the previous ``authorize`` and ``auth_pass`` options in ``provider``.
+You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
 
-This functionality requires the host connection type to be using ``connection: network_cli``. In Ansible 2.5 this is limited to ``eos`` and ``ios``.
-
-This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task.
-
-If a task fails with the following then it's an indicator that `enable` mode is required:
+If you see this error message, the task that generated it requires ``enable`` mode to succeed:
 
 .. code-block:: console
 
    Invalid input (privileged mode required)
 
-The following example shows how to set enable mode for a specific task:
+To set ``enable`` mode for a specific task, add ``become`` at the task level:
 
 .. code-block:: yaml
 
@@ -239,7 +263,7 @@ The following example shows how to set enable mode for a specific task:
      become: yes
      become_method: enable
 
-The following example shows how to set enable mode for `all` tests in this play:
+To set enable mode for all tasks in a single play, add ``become`` at the play level:
 
 .. code-block:: yaml
 
@@ -255,7 +279,7 @@ The following example shows how to set enable mode for `all` tests in this play:
 Setting enable mode for all tasks
 ---------------------------------
 
-Often you wish for all tasks to run using privilege mode, that is best achieved by using ``group_vars``:
+Often you wish for all tasks in all plays to run using privilege mode, that is best achieved by using ``group_vars``:
 
 **group_vars/eos.yml**
 
@@ -271,22 +295,19 @@ Often you wish for all tasks to run using privilege mode, that is best achieved 
 Passwords for enable mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If a password is required to enter enable mode this can be specified by doing one of the following:
+If you need a password to enter ``enable`` mode, you can specify it in one of two ways:
 
 * providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
-* setting the ``ansible_become_pass`` connection variable
+* setting the ``ansible_become_password`` connection variable
 
 .. warning::
 
-   As a reminder passwords should never be stored in plain text. See how encrypt secrets in vault :doc:`playbooks_vault` for more information.
-
-
-.. _become-network-auth-and-auth-password:
+   As a reminder passwords should never be stored in plain text. For information on encrypting your passwords and other secrets with Ansible Vault, see :doc:`playbooks_vault`.
 
 authorize and auth_pass
 -----------------------
 
-For network platforms that do not currently support ``connection: network_cli`` then the module options ``authorize`` and ``auth_pass`` can be used.
+Ansible still supports ``enable`` mode with ``connection: local`` for legacy playbooks. To enter ``enable`` mode with ``connection: local``, use the module options ``authorize`` and ``auth_pass``:
 
 .. code-block:: yaml
 
@@ -301,9 +322,9 @@ For network platforms that do not currently support ``connection: network_cli`` 
            authorize: yes
            auth_pass: " {{ secret_auth_pass }}"
 
-Note that over time more platforms will move to support ``become``. Check the :ref:`network_modules` for details.
+We recommend updating your playbooks to use ``become`` for network-device ``enable`` mode consistently. The use of ``authorize`` and of ``provider`` dictionaries will be deprecated in future. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
 
-.. _become-windows:
+.. _become_windows:
 
 Become and Windows
 ==================
@@ -320,10 +341,6 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
 and run commands that are not normally accessible in a WinRM session.
 
-.. note:: Prior to Ansible 2.4, become would only work when ``ansible_winrm_transport`` was
-    set to either ``basic`` or ``credssp``, but since Ansible 2.4 become now works on
-    all transport types.
-
 Administrative Rights
 ---------------------
 
@@ -332,21 +349,108 @@ the ``runas`` become method, Ansible will attempt to run the module with the
 full privileges that are available to the remote user. If it fails to elevate
 the user token, it will continue to use the limited token during execution.
 
-Before Ansible 2.5, a token was only able to be elevated when UAC was disabled
-or the remote user had the ``SeTcbPrivilege`` assigned. This restriction has
-been lifted in Ansible 2.5 and a user that is a member of the
-``BUILTIN\Administrators`` group should have an elevated token during the
-module execution.
+A user must have the ``SeDebugPrivilege`` to run a become process with elevated
+privileges. This privilege is assigned to Administrators by default. If the
+debug privilege is not available, the become process will run with a limited
+set of privileges and groups.
 
 To determine the type of token that Ansible was able to get, run the following
-task and check the output::
+task::
 
-    - win_shell: cmd.exe /c whoami && whoami /groups && whoami /priv
+    - win_whoami:
       become: yes
 
-Under the ``GROUP INFORMATION`` section, the ``Mandatory Label`` entry
-determines whether the user has Administrative rights. Here are the labels that
-can be returned and what they mean:
+The output will look something similar to the below:
+
+.. code-block:: ansible-output
+
+    ok: [windows] => {
+        "account": {
+            "account_name": "vagrant-domain",
+            "domain_name": "DOMAIN",
+            "sid": "S-1-5-21-3088887838-4058132883-1884671576-1105",
+            "type": "User"
+        },
+        "authentication_package": "Kerberos",
+        "changed": false,
+        "dns_domain_name": "DOMAIN.LOCAL",
+        "groups": [
+            {
+                "account_name": "Administrators",
+                "attributes": [
+                    "Mandatory",
+                    "Enabled by default",
+                    "Enabled",
+                    "Owner"
+                ],
+                "domain_name": "BUILTIN",
+                "sid": "S-1-5-32-544",
+                "type": "Alias"
+            },
+            {
+                "account_name": "INTERACTIVE",
+                "attributes": [
+                    "Mandatory",
+                    "Enabled by default",
+                    "Enabled"
+                ],
+                "domain_name": "NT AUTHORITY",
+                "sid": "S-1-5-4",
+                "type": "WellKnownGroup"
+            },
+        ],
+        "impersonation_level": "SecurityAnonymous",
+        "label": {
+            "account_name": "High Mandatory Level",
+            "domain_name": "Mandatory Label",
+            "sid": "S-1-16-12288",
+            "type": "Label"
+        },
+        "login_domain": "DOMAIN",
+        "login_time": "2018-11-18T20:35:01.9696884+00:00",
+        "logon_id": 114196830,
+        "logon_server": "DC01",
+        "logon_type": "Interactive",
+        "privileges": {
+            "SeBackupPrivilege": "disabled",
+            "SeChangeNotifyPrivilege": "enabled-by-default",
+            "SeCreateGlobalPrivilege": "enabled-by-default",
+            "SeCreatePagefilePrivilege": "disabled",
+            "SeCreateSymbolicLinkPrivilege": "disabled",
+            "SeDebugPrivilege": "enabled",
+            "SeDelegateSessionUserImpersonatePrivilege": "disabled",
+            "SeImpersonatePrivilege": "enabled-by-default",
+            "SeIncreaseBasePriorityPrivilege": "disabled",
+            "SeIncreaseQuotaPrivilege": "disabled",
+            "SeIncreaseWorkingSetPrivilege": "disabled",
+            "SeLoadDriverPrivilege": "disabled",
+            "SeManageVolumePrivilege": "disabled",
+            "SeProfileSingleProcessPrivilege": "disabled",
+            "SeRemoteShutdownPrivilege": "disabled",
+            "SeRestorePrivilege": "disabled",
+            "SeSecurityPrivilege": "disabled",
+            "SeShutdownPrivilege": "disabled",
+            "SeSystemEnvironmentPrivilege": "disabled",
+            "SeSystemProfilePrivilege": "disabled",
+            "SeSystemtimePrivilege": "disabled",
+            "SeTakeOwnershipPrivilege": "disabled",
+            "SeTimeZonePrivilege": "disabled",
+            "SeUndockPrivilege": "disabled"
+        },
+        "rights": [
+            "SeNetworkLogonRight",
+            "SeBatchLogonRight",
+            "SeInteractiveLogonRight",
+            "SeRemoteInteractiveLogonRight"
+        ],
+        "token_type": "TokenPrimary",
+        "upn": "vagrant-domain@DOMAIN.LOCAL",
+        "user_flags": []
+    }
+
+Under the ``label`` key, the ``account_name`` entry determines whether the user
+has Administrative rights. Here are the labels that can be returned and what
+they represent:
 
 * ``Medium``: Ansible failed to get an elevated token and ran under a limited
   token. Only a subset of the privileges assigned to user are available during
@@ -359,9 +463,9 @@ can be returned and what they mean:
   level of privileges available.
 
 The output will also show the list of privileges that have been granted to the
-user. When ``State==Disabled``, the privileges have not been enabled but can be
-if required. In most scenarios these privileges are automatically enabled when
-required.
+user. When the privilege value is ``disabled``, the privilege is assigned to
+the logon token but has not been enabled. In most scenarios these privileges
+are automatically enabled when required.
 
 If running on a version of Ansible that is older than 2.5 or the normal
 ``runas`` escalation process fails, an elevated token can be retrieved by:
@@ -374,7 +478,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
   full control over the operating system. No user is given this privilege by
   default, and care should be taken if you grant this privilege to a user or group.
   For more information on this privilege, please see
-  `Act as part of the operating system <https://technet.microsoft.com/en-us/library/dn221957(v=ws.11).aspx>`_.
+  `Act as part of the operating system <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn221957(v=ws.11)>`_.
   You can use the below task to set this privilege on a Windows host::
 
     - name: grant the ansible user the SeTcbPrivilege right
@@ -421,6 +525,42 @@ Because local service accounts do not have passwords, the
 ``ansible_become_password`` parameter is not required and is ignored if
 specified.
 
+Become without setting a Password
+---------------------------------
+
+As of Ansible 2.8, ``become`` can be used to become a local or domain account
+without requiring a password for that account. For this method to work, the
+following requirements must be met:
+
+* The connection user has the ``SeDebugPrivilege`` privilege assigned
+* The connection user is part of the ``BUILTIN\Administrators`` group
+* The ``become_user`` has either the ``SeBatchLogonRight`` or ``SeNetworkLogonRight`` user right
+
+Using become without a password is achieved in one of two different methods:
+
+* Duplicating an existing logon session's token if the account is already logged on
+* Using S4U to generate a logon token that is valid on the remote host only
+
+In the first scenario, the become process is spawned from another logon of that
+user account. This could be an existing RDP logon, console logon, but this is
+not guaranteed to occur all the time. This is similar to the
+``Run only when user is logged on`` option for a Scheduled Task.
+
+In the case where another logon of the become account does not exist, S4U is
+used to create a new logon and run the module through that. This is similar to
+the ``Run whether user is logged on or not`` with the ``Do not store password``
+option for a Scheduled Task. In this scenario, the become process will not be
+able to access any network resources like a normal WinRM process.
+
+To make a distinction between using become with no password and becoming an
+account that has no password make sure to keep ``ansible_become_password`` as
+undefined or set ``ansible_become_password:``.
+
+.. Note:: Because there are no guarantees an existing token will exist for a
+  user when Ansible runs, there's a high change the become process will only
+  have access to local resources. Use become with a password if the task needs
+  to access network resources
+
 Accounts without a Password
 ---------------------------
 
@@ -428,11 +568,10 @@ Accounts without a Password
 
 Ansible can be used to become an account that does not have a password (like the
 ``Guest`` account). To become an account without a password, set up the
-variables like normal but either do not define ``ansible_become_pass`` or set
-``ansible_become_pass: ''``.
+variables like normal but set ``ansible_become_password: ''``.
 
 Before become can work on an account like this, the local policy
-`Accounts: Limit local account use of blank passwords to console logon only <https://technet.microsoft.com/en-us/library/jj852174.aspx>`_
+`Accounts: Limit local account use of blank passwords to console logon only <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj852174(v=ws.11)>`_
 must be disabled. This can either be done through a Group Policy Object (GPO)
 or with this Ansible task:
 
@@ -447,12 +586,16 @@ or with this Ansible task:
        state: present
 
 .. Note:: This is only for accounts that do not have a password. You still need
-    to set the account's password under ``ansible_become_pass`` if the
+    to set the account's password under ``ansible_become_password`` if the
     become_user has a password.
 
 Become Flags
 ------------
-Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method. This parameter can be set using the ``become_flags`` task directive or set in Ansible's configuration using ``ansible_become_flags``. The two valid values that are initially supported for this parameter are ``logon_type`` and ``logon_flags``.
+Ansible 2.5 adds the ``become_flags`` parameter to the ``runas`` become method.
+This parameter can be set using the ``become_flags`` task directive or set in
+Ansible's configuration using ``ansible_become_flags``. The two valid values
+that are initially supported for this parameter are ``logon_type`` and
+``logon_flags``.
 
 
 .. Note:: These flags should only be set when becoming a normal user account, not a local service account like LocalSystem.
@@ -486,10 +629,10 @@ can be set to one of the following:
   logon session as running a normal WinRM process with credential delegation.
 
 For more information, see
-`dwLogonType <https://msdn.microsoft.com/en-au/library/windows/desktop/aa378184.aspx>`_.
+`dwLogonType <https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-logonusera>`_.
 
 The ``logon_flags`` key specifies how Windows will log the user on when creating
-the new process. The value can be set to one of the following:
+the new process. The value can be set to none or multiple of the following:
 
 * ``with_profile``: The default logon flag set. The process will load the
   user's profile in the ``HKEY_USERS`` registry key to ``HKEY_CURRENT_USER``.
@@ -499,7 +642,11 @@ the new process. The value can be set to one of the following:
   resource. This is useful in inter-domain scenarios where there is no trust
   relationship, and should be used with the ``new_credentials`` ``logon_type``.
 
-For more information, see `dwLogonFlags <https://msdn.microsoft.com/en-us/library/windows/desktop/ms682434.aspx>`_.
+By default ``logon_flags=with_profile`` is set, if the profile should not be
+loaded set ``logon_flags=`` or if the profile should be loaded with
+``netcredentials_only``, set ``logon_flags=with_profile,netcredentials_only``.
+
+For more information, see `dwLogonFlags <https://docs.microsoft.com/en-gb/windows/desktop/api/winbase/nf-winbase-createprocesswithtokenw>`_.
 
 Here are some examples of how to use ``become_flags`` with Windows tasks:
 
@@ -514,13 +661,18 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
       ansible_become: yes
       ansible_become_method: runas
       ansible_become_user: DOMAIN\user
-      ansible_become_pass: Password01
+      ansible_become_password: Password01
       ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
 
   - name: run a command under a batch logon
-    win_command: whoami
+    win_whoami:
     become: yes
     become_flags: logon_type=batch
+
+  - name: run a command and not load the user profile
+    win_whomai:
+    become: yes
+    become_flags: logon_flags=
 
 
 Limitations
@@ -529,12 +681,13 @@ Limitations
 Be aware of the following limitations with ``become`` on Windows:
 
 * Running a task with ``async`` and ``become`` on Windows Server 2008, 2008 R2
-  and Windows 7 does not work.
+  and Windows 7 only works when using Ansible 2.7 or newer.
 
 * By default, the become user logs on with an interactive session, so it must
   have the right to do so on the Windows host. If it does not inherit the
   ``SeAllowLogOnLocally`` privilege or inherits the ``SeDenyLogOnLocally``
-  privilege, the become process will fail.
+  privilege, the become process will fail. Either add the privilege or set the
+  ``logon_type`` flag to change the logon type used.
 
 * Prior to Ansible version 2.3, become only worked when
   ``ansible_winrm_transport`` was either ``basic`` or ``credssp``. This

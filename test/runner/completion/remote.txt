@@ -1,4 +1,5 @@
-freebsd/10.4
 freebsd/11.1
+freebsd/12.0
 osx/10.11
-rhel/7.4
+rhel/7.6
+rhel/8.0

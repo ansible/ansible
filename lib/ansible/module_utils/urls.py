@@ -51,6 +51,9 @@ except ImportError:
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
+
+from ansible.module_utils.six import PY3
+
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -63,16 +66,18 @@ except ImportError:
     import urllib2 as urllib_request
     from urllib2 import AbstractHTTPHandler
 
+urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
+
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 
 try:
     import ssl
     HAS_SSL = True
-except:
+except Exception:
     HAS_SSL = False
 
 try:
@@ -131,6 +136,10 @@ if not HAS_SSLCONTEXT and HAS_SSL:
         del libssl
 
 
+# The following makes it easier for us to script updates of the bundled backports.ssl_match_hostname
+# The bundled backports.ssl_match_hostname should really be moved into its own file for processing
+_BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.5.0.1"}
+
 LOADED_VERIFY_LOCATIONS = set()
 
 HAS_MATCH_HOSTNAME = True
@@ -141,6 +150,13 @@ except ImportError:
         from backports.ssl_match_hostname import match_hostname, CertificateError
     except ImportError:
         HAS_MATCH_HOSTNAME = False
+
+
+try:
+    import urllib_gssapi
+    HAS_GSSAPI = True
+except ImportError:
+    HAS_GSSAPI = False
 
 if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
@@ -243,8 +259,8 @@ if not HAS_MATCH_HOSTNAME:
     HAS_MATCH_HOSTNAME = True
 
 
-# This is a dummy cacert provided for Mac OS since you need at least 1
-# ca cert, regardless of validity, for Python on Mac OS to use the
+# This is a dummy cacert provided for macOS since you need at least 1
+# ca cert, regardless of validity, for Python on macOS to use the
 # keychain functionality in OpenSSL for validating SSL certificates.
 # See: http://mercurial.selenic.com/wiki/CACertificates#Mac_OS_X_10.6_and_higher
 b_DUMMY_CA_CERT = b"""-----BEGIN CERTIFICATE-----
@@ -290,9 +306,12 @@ class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
 
+
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
 # against openssl and thus do not have any HTTPS support.
-CustomHTTPSConnection = CustomHTTPSHandler = None
+CustomHTTPSConnection = None
+CustomHTTPSHandler = None
+HTTPSClientAuthHandler = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
     class CustomHTTPSConnection(httplib.HTTPSConnection):
         def __init__(self, *args, **kwargs):
@@ -336,32 +355,31 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
         https_request = AbstractHTTPHandler.do_request_
 
+    class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
+        '''Handles client authentication via cert/key
 
-class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
-    '''Handles client authentication via cert/key
+        This is a fairly lightweight extension on HTTPSHandler, and can be used
+        in place of HTTPSHandler
+        '''
 
-    This is a fairly lightweight extension on HTTPSHandler, and can be used
-    in place of HTTPSHandler
-    '''
+        def __init__(self, client_cert=None, client_key=None, **kwargs):
+            urllib_request.HTTPSHandler.__init__(self, **kwargs)
+            self.client_cert = client_cert
+            self.client_key = client_key
 
-    def __init__(self, client_cert=None, client_key=None, **kwargs):
-        urllib_request.HTTPSHandler.__init__(self, **kwargs)
-        self.client_cert = client_cert
-        self.client_key = client_key
+        def https_open(self, req):
+            return self.do_open(self._build_https_connection, req)
 
-    def https_open(self, req):
-        return self.do_open(self._build_https_connection, req)
-
-    def _build_https_connection(self, host, **kwargs):
-        kwargs.update({
-            'cert_file': self.client_cert,
-            'key_file': self.client_key,
-        })
-        try:
-            kwargs['context'] = self._context
-        except AttributeError:
-            pass
-        return httplib.HTTPSConnection(host, **kwargs)
+        def _build_https_connection(self, host, **kwargs):
+            kwargs.update({
+                'cert_file': self.client_cert,
+                'key_file': self.client_key,
+            })
+            try:
+                kwargs['context'] = self._context
+            except AttributeError:
+                pass
+            return httplib.HTTPSConnection(host, **kwargs)
 
 
 class ParseResultDottedDict(dict):
@@ -430,7 +448,7 @@ def generic_urlparse(parts):
             generic_parts['password'] = password
             generic_parts['hostname'] = hostname
             generic_parts['port'] = port
-        except:
+        except Exception:
             generic_parts['username'] = None
             generic_parts['password'] = None
             generic_parts['hostname'] = parts[1]
@@ -444,11 +462,11 @@ class RequestWithMethod(urllib_request.Request):
     Originally contained in library/net_infrastructure/dnsmadeeasy
     '''
 
-    def __init__(self, url, method, data=None, headers=None):
+    def __init__(self, url, method, data=None, headers=None, origin_req_host=None, unverifiable=True):
         if headers is None:
             headers = {}
         self._method = method.upper()
-        urllib_request.Request.__init__(self, url, data, headers)
+        urllib_request.Request.__init__(self, url, data, headers, origin_req_host, unverifiable)
 
     def get_method(self):
         if self._method:
@@ -476,36 +494,68 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True):
             if handler:
                 urllib_request._opener.add_handler(handler)
 
+            # Preserve urllib2 compatibility
             if follow_redirects == 'urllib2':
                 return urllib_request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, hdrs, newurl)
+
+            # Handle disabled redirects
             elif follow_redirects in ['no', 'none', False]:
                 raise urllib_error.HTTPError(newurl, code, msg, hdrs, fp)
 
-            do_redirect = False
+            method = req.get_method()
+
+            # Handle non-redirect HTTP status or invalid follow_redirects
             if follow_redirects in ['all', 'yes', True]:
-                do_redirect = (code >= 300 and code < 400)
-
+                if code < 300 or code >= 400:
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
             elif follow_redirects == 'safe':
-                m = req.get_method()
-                do_redirect = (code >= 300 and code < 400 and m in ('GET', 'HEAD'))
-
-            if do_redirect:
-                # be conciliant with URIs containing a space
-                newurl = newurl.replace(' ', '%20')
-                newheaders = dict((k, v) for k, v in req.headers.items()
-                                  if k.lower() not in ("content-length", "content-type"))
-                try:
-                    # Python 2-3.3
-                    origin_req_host = req.get_origin_req_host()
-                except AttributeError:
-                    # Python 3.4+
-                    origin_req_host = req.origin_req_host
-                return urllib_request.Request(newurl,
-                                              headers=newheaders,
-                                              origin_req_host=origin_req_host,
-                                              unverifiable=True)
+                if code < 300 or code >= 400 or method not in ('GET', 'HEAD'):
+                    raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
             else:
                 raise urllib_error.HTTPError(req.get_full_url(), code, msg, hdrs, fp)
+
+            try:
+                # Python 2-3.3
+                data = req.get_data()
+                origin_req_host = req.get_origin_req_host()
+            except AttributeError:
+                # Python 3.4+
+                data = req.data
+                origin_req_host = req.origin_req_host
+
+            # Be conciliant with URIs containing a space
+            newurl = newurl.replace(' ', '%20')
+
+            # Suport redirect with payload and original headers
+            if code in (307, 308):
+                # Preserve payload and headers
+                headers = req.headers
+            else:
+                # Do not preserve payload and filter headers
+                data = None
+                headers = dict((k, v) for k, v in req.headers.items()
+                               if k.lower() not in ("content-length", "content-type", "transfer-encoding"))
+
+                # http://tools.ietf.org/html/rfc7231#section-6.4.4
+                if code == 303 and method != 'HEAD':
+                    method = 'GET'
+
+                # Do what the browsers do, despite standards...
+                # First, turn 302s into GETs.
+                if code == 302 and method != 'HEAD':
+                    method = 'GET'
+
+                # Second, if a POST is responded to with a 301, turn it into a GET.
+                if code == 301 and method == 'POST':
+                    method = 'GET'
+
+            return RequestWithMethod(newurl,
+                                     method=method,
+                                     headers=headers,
+                                     data=data,
+                                     origin_req_host=origin_req_host,
+                                     unverifiable=True,
+                                     )
 
     return RedirectHandler
 
@@ -588,7 +638,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         to_add_fd, to_add_path = tempfile.mkstemp()
         to_add = False
 
-        # Write the dummy ca cert if we are running on Mac OS X
+        # Write the dummy ca cert if we are running on macOS
         if system == u'Darwin':
             os.write(tmp_fd, b_DUMMY_CA_CERT)
             # Default Homebrew path for OpenSSL certs
@@ -635,7 +685,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             (http_version, resp_code, msg) = re.match(br'(HTTP/\d\.\d) (\d\d\d) (.*)', response).groups()
             if int(resp_code) not in valid_codes:
                 raise Exception
-        except:
+        except Exception:
             raise ProxyError('Connection to proxy failed')
 
     def detect_no_proxy(self, url):
@@ -697,7 +747,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
-                s = socket.create_connection((proxy_parts.get('hostname'), port))
+                proxy_hostname = proxy_parts.get('hostname', None)
+                if proxy_hostname is None or proxy_parts.get('scheme') == '':
+                    raise ProxyError("Failed to parse https_proxy environment variable."
+                                     " Please make sure you export https proxy as 'https_proxy=<SCHEME>://<IP_ADDRESS>:<PORT>'")
+
+                s = socket.create_connection((proxy_hostname, port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(to_bytes(self.CONNECT_COMMAND % (self.hostname, self.port), errors='surrogate_or_strict'))
                     if proxy_parts.get('username'):
@@ -741,7 +796,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # cleanup the temp file created, don't worry
             # if it fails for some reason
             os.remove(tmp_ca_cert_path)
-        except:
+        except Exception:
             pass
 
         try:
@@ -749,7 +804,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             # if it fails for some reason
             if to_add_ca_cert_path:
                 os.remove(to_add_ca_cert_path)
-        except:
+        except Exception:
             pass
 
         return req
@@ -779,146 +834,350 @@ def maybe_add_ssl_handler(url, validate_certs):
         return SSLValidationHandler(hostname, port)
 
 
+def rfc2822_date_string(timetuple, zone='-0000'):
+    """Accepts a timetuple and optional zone which defaults to ``-0000``
+    and returns a date string as specified by RFC 2822, e.g.:
+
+    Fri, 09 Nov 2001 01:08:47 -0000
+
+    Copied from email.utils.formatdate and modified for separate use
+    """
+    return '%s, %02d %s %04d %02d:%02d:%02d %s' % (
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][timetuple[6]],
+        timetuple[2],
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][timetuple[1] - 1],
+        timetuple[0], timetuple[3], timetuple[4], timetuple[5],
+        zone)
+
+
+class Request:
+    def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
+                 url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
+                 follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None):
+        """This class works somewhat similarly to the ``Session`` class of from requests
+        by defining a cookiejar that an be used across requests as well as cascaded defaults that
+        can apply to repeated requests
+
+        For documentation of params, see ``Request.open``
+
+        >>> from ansible.module_utils.urls import Request
+        >>> r = Request()
+        >>> r.open('GET', 'http://httpbin.org/cookies/set?k1=v1').read()
+        '{\n  "cookies": {\n    "k1": "v1"\n  }\n}\n'
+        >>> r = Request(url_username='user', url_password='passwd')
+        >>> r.open('GET', 'http://httpbin.org/basic-auth/user/passwd').read()
+        '{\n  "authenticated": true, \n  "user": "user"\n}\n'
+        >>> r = Request(headers=dict(foo='bar'))
+        >>> r.open('GET', 'http://httpbin.org/get', headers=dict(baz='qux')).read()
+
+        """
+
+        self.headers = headers or {}
+        if not isinstance(self.headers, dict):
+            raise ValueError("headers must be a dict")
+        self.use_proxy = use_proxy
+        self.force = force
+        self.timeout = timeout
+        self.validate_certs = validate_certs
+        self.url_username = url_username
+        self.url_password = url_password
+        self.http_agent = http_agent
+        self.force_basic_auth = force_basic_auth
+        self.follow_redirects = follow_redirects
+        self.client_cert = client_cert
+        self.client_key = client_key
+        if isinstance(cookies, cookiejar.CookieJar):
+            self.cookies = cookies
+        else:
+            self.cookies = cookiejar.CookieJar()
+
+    def _fallback(self, value, fallback):
+        if value is None:
+            return fallback
+        return value
+
+    def open(self, method, url, data=None, headers=None, use_proxy=None,
+             force=None, last_mod_time=None, timeout=None, validate_certs=None,
+             url_username=None, url_password=None, http_agent=None,
+             force_basic_auth=None, follow_redirects=None,
+             client_cert=None, client_key=None, cookies=None, use_gssapi=False):
+        """
+        Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
+
+        Does not require the module environment
+
+        Returns :class:`HTTPResponse` object.
+
+        :arg method: method for the request
+        :arg url: URL to request
+
+        :kwarg data: (optional) bytes, or file-like object to send
+            in the body of the request
+        :kwarg headers: (optional) Dictionary of HTTP Headers to send with the
+            request
+        :kwarg use_proxy: (optional) Boolean of whether or not to use proxy
+        :kwarg force: (optional) Boolean of whether or not to set `cache-control: no-cache` header
+        :kwarg last_mod_time: (optional) Datetime object to use when setting If-Modified-Since header
+        :kwarg timeout: (optional) How long to wait for the server to send
+            data before giving up, as a float
+        :kwarg validate_certs: (optional) Booleani that controls whether we verify
+            the server's TLS certificate
+        :kwarg url_username: (optional) String of the user to use when authenticating
+        :kwarg url_password: (optional) String of the password to use when authenticating
+        :kwarg http_agent: (optional) String of the User-Agent to use in the request
+        :kwarg force_basic_auth: (optional) Boolean determining if auth header should be sent in the initial request
+        :kwarg follow_redirects: (optional) String of urllib2, all/yes, safe, none to determine how redirects are
+            followed, see RedirectHandlerFactory for more information
+        :kwarg client_cert: (optional) PEM formatted certificate chain file to be used for SSL client authentication.
+            This file can also include the key as well, and if the key is included, client_key is not required
+        :kwarg client_key: (optional) PEM formatted file that contains your private key to be used for SSL client
+            authentication. If client_cert contains both the certificate and key, this option is not required
+        :kwarg cookies: (optional) CookieJar object to send with the
+            request
+        :kwarg use_gssapi: (optional) Use GSSAPI handler of requests.
+        :returns: HTTPResponse
+        """
+
+        method = method.upper()
+
+        if headers is None:
+            headers = {}
+        elif not isinstance(headers, dict):
+            raise ValueError("headers must be a dict")
+        headers = dict(self.headers, **headers)
+
+        use_proxy = self._fallback(use_proxy, self.use_proxy)
+        force = self._fallback(force, self.force)
+        timeout = self._fallback(timeout, self.timeout)
+        validate_certs = self._fallback(validate_certs, self.validate_certs)
+        url_username = self._fallback(url_username, self.url_username)
+        url_password = self._fallback(url_password, self.url_password)
+        http_agent = self._fallback(http_agent, self.http_agent)
+        force_basic_auth = self._fallback(force_basic_auth, self.force_basic_auth)
+        follow_redirects = self._fallback(follow_redirects, self.follow_redirects)
+        client_cert = self._fallback(client_cert, self.client_cert)
+        client_key = self._fallback(client_key, self.client_key)
+        cookies = self._fallback(cookies, self.cookies)
+
+        handlers = []
+        ssl_handler = maybe_add_ssl_handler(url, validate_certs)
+        if ssl_handler:
+            handlers.append(ssl_handler)
+        if HAS_GSSAPI and use_gssapi:
+            handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
+
+        parsed = generic_urlparse(urlparse(url))
+        if parsed.scheme != 'ftp':
+            username = url_username
+
+            if username:
+                password = url_password
+                netloc = parsed.netloc
+            elif '@' in parsed.netloc:
+                credentials, netloc = parsed.netloc.split('@', 1)
+                if ':' in credentials:
+                    username, password = credentials.split(':', 1)
+                else:
+                    username = credentials
+                    password = ''
+
+                parsed_list = parsed.as_list()
+                parsed_list[1] = netloc
+
+                # reconstruct url without credentials
+                url = urlunparse(parsed_list)
+
+            if username and not force_basic_auth:
+                passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
+
+                # this creates a password manager
+                passman.add_password(None, netloc, username, password)
+
+                # because we have put None at the start it will always
+                # use this username/password combination for  urls
+                # for which `theurl` is a super-url
+                authhandler = urllib_request.HTTPBasicAuthHandler(passman)
+                digest_authhandler = urllib_request.HTTPDigestAuthHandler(passman)
+
+                # create the AuthHandler
+                handlers.append(authhandler)
+                handlers.append(digest_authhandler)
+
+            elif username and force_basic_auth:
+                headers["Authorization"] = basic_auth_header(username, password)
+
+            else:
+                try:
+                    rc = netrc.netrc(os.environ.get('NETRC'))
+                    login = rc.authenticators(parsed.hostname)
+                except IOError:
+                    login = None
+
+                if login:
+                    username, _, password = login
+                    if username and password:
+                        headers["Authorization"] = basic_auth_header(username, password)
+
+        if not use_proxy:
+            proxyhandler = urllib_request.ProxyHandler({})
+            handlers.append(proxyhandler)
+
+        if HAS_SSLCONTEXT and not validate_certs:
+            # In 2.7.9, the default context validates certificates
+            context = SSLContext(ssl.PROTOCOL_SSLv23)
+            if ssl.OP_NO_SSLv2:
+                context.options |= ssl.OP_NO_SSLv2
+            context.options |= ssl.OP_NO_SSLv3
+            context.verify_mode = ssl.CERT_NONE
+            context.check_hostname = False
+            handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                                   client_key=client_key,
+                                                   context=context))
+        elif client_cert:
+            handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
+                                                   client_key=client_key))
+
+        # pre-2.6 versions of python cannot use the custom https
+        # handler, since the socket class is lacking create_connection.
+        # Some python builds lack HTTPS support.
+        if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
+            handlers.append(CustomHTTPSHandler)
+
+        handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
+
+        # add some nicer cookie handling
+        if cookies is not None:
+            handlers.append(urllib_request.HTTPCookieProcessor(cookies))
+
+        opener = urllib_request.build_opener(*handlers)
+        urllib_request.install_opener(opener)
+
+        data = to_bytes(data, nonstring='passthru')
+        if method not in ('OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'PATCH'):
+            raise ConnectionError('invalid HTTP request method; %s' % method)
+        request = RequestWithMethod(url, method, data)
+
+        # add the custom agent header, to help prevent issues
+        # with sites that block the default urllib agent string
+        if http_agent:
+            request.add_header('User-agent', http_agent)
+
+        # Cache control
+        # Either we directly force a cache refresh
+        if force:
+            request.add_header('cache-control', 'no-cache')
+        # or we do it if the original is more recent than our copy
+        elif last_mod_time:
+            tstamp = rfc2822_date_string(last_mod_time.timetuple())
+            request.add_header('If-Modified-Since', tstamp)
+
+        # user defined headers now, which may override things we've set above
+        for header in headers:
+            request.add_header(header, headers[header])
+
+        urlopen_args = [request, None]
+        if sys.version_info >= (2, 6, 0):
+            # urlopen in python prior to 2.6.0 did not
+            # have a timeout parameter
+            urlopen_args.append(timeout)
+
+        r = urllib_request.urlopen(*urlopen_args)
+        return r
+
+    def get(self, url, **kwargs):
+        r"""Sends a GET request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('GET', url, **kwargs)
+
+    def options(self, url, **kwargs):
+        r"""Sends a OPTIONS request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('OPTIONS', url, **kwargs)
+
+    def head(self, url, **kwargs):
+        r"""Sends a HEAD request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('HEAD', url, **kwargs)
+
+    def post(self, url, data=None, **kwargs):
+        r"""Sends a POST request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request.
+        :kwarg data: (optional) bytes, or file-like object to send in the body of the request.
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('POST', url, data=data, **kwargs)
+
+    def put(self, url, data=None, **kwargs):
+        r"""Sends a PUT request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request.
+        :kwarg data: (optional) bytes, or file-like object to send in the body of the request.
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('PUT', url, data=data, **kwargs)
+
+    def patch(self, url, data=None, **kwargs):
+        r"""Sends a PATCH request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request.
+        :kwarg data: (optional) bytes, or file-like object to send in the body of the request.
+        :kwarg \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('PATCH', url, data=data, **kwargs)
+
+    def delete(self, url, **kwargs):
+        r"""Sends a DELETE request. Returns :class:`HTTPResponse` object.
+
+        :arg url: URL to request
+        :kwargs \*\*kwargs: Optional arguments that ``open`` takes.
+        :returns: HTTPResponse
+        """
+
+        return self.open('DELETE', url, **kwargs)
+
+
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force=False, last_mod_time=None, timeout=10, validate_certs=True,
              url_username=None, url_password=None, http_agent=None,
              force_basic_auth=False, follow_redirects='urllib2',
-             client_cert=None, client_key=None, cookies=None):
+             client_cert=None, client_key=None, cookies=None,
+             use_gssapi=False):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
     Does not require the module environment
     '''
-    handlers = []
-    ssl_handler = maybe_add_ssl_handler(url, validate_certs)
-    if ssl_handler:
-        handlers.append(ssl_handler)
+    method = method or ('POST' if data else 'GET')
+    return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
+                          force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
+                          url_username=url_username, url_password=url_password, http_agent=http_agent,
+                          force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
+                          client_cert=client_cert, client_key=client_key, cookies=cookies,
+                          use_gssapi=use_gssapi)
 
-    parsed = generic_urlparse(urlparse(url))
-    if parsed.scheme != 'ftp':
-        username = url_username
-
-        if headers is None:
-            headers = {}
-
-        if username:
-            password = url_password
-            netloc = parsed.netloc
-        elif '@' in parsed.netloc:
-            credentials, netloc = parsed.netloc.split('@', 1)
-            if ':' in credentials:
-                username, password = credentials.split(':', 1)
-            else:
-                username = credentials
-                password = ''
-
-            parsed_list = parsed.as_list()
-            parsed_list[1] = netloc
-
-            # reconstruct url without credentials
-            url = urlunparse(parsed_list)
-
-        if username and not force_basic_auth:
-            passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
-
-            # this creates a password manager
-            passman.add_password(None, netloc, username, password)
-
-            # because we have put None at the start it will always
-            # use this username/password combination for  urls
-            # for which `theurl` is a super-url
-            authhandler = urllib_request.HTTPBasicAuthHandler(passman)
-            digest_authhandler = urllib_request.HTTPDigestAuthHandler(passman)
-
-            # create the AuthHandler
-            handlers.append(authhandler)
-            handlers.append(digest_authhandler)
-
-        elif username and force_basic_auth:
-            headers["Authorization"] = basic_auth_header(username, password)
-
-        else:
-            try:
-                rc = netrc.netrc(os.environ.get('NETRC'))
-                login = rc.authenticators(parsed.hostname)
-            except IOError:
-                login = None
-
-            if login:
-                username, _, password = login
-                if username and password:
-                    headers["Authorization"] = basic_auth_header(username, password)
-
-    if not use_proxy:
-        proxyhandler = urllib_request.ProxyHandler({})
-        handlers.append(proxyhandler)
-
-    if HAS_SSLCONTEXT and not validate_certs:
-        # In 2.7.9, the default context validates certificates
-        context = SSLContext(ssl.PROTOCOL_SSLv23)
-        context.options |= ssl.OP_NO_SSLv2
-        context.options |= ssl.OP_NO_SSLv3
-        context.verify_mode = ssl.CERT_NONE
-        context.check_hostname = False
-        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                               client_key=client_key,
-                                               context=context))
-    elif client_cert:
-        handlers.append(HTTPSClientAuthHandler(client_cert=client_cert,
-                                               client_key=client_key))
-
-    # pre-2.6 versions of python cannot use the custom https
-    # handler, since the socket class is lacking create_connection.
-    # Some python builds lack HTTPS support.
-    if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
-        handlers.append(CustomHTTPSHandler)
-
-    handlers.append(RedirectHandlerFactory(follow_redirects, validate_certs))
-
-    # add some nicer cookie handling
-    if cookies is not None:
-        handlers.append(urllib_request.HTTPCookieProcessor(cookies))
-
-    opener = urllib_request.build_opener(*handlers)
-    urllib_request.install_opener(opener)
-
-    data = to_bytes(data, nonstring='passthru')
-    if method:
-        if method.upper() not in ('OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'PATCH'):
-            raise ConnectionError('invalid HTTP request method; %s' % method.upper())
-        request = RequestWithMethod(url, method.upper(), data)
-    else:
-        request = urllib_request.Request(url, data)
-
-    # add the custom agent header, to help prevent issues
-    # with sites that block the default urllib agent string
-    if http_agent:
-        request.add_header('User-agent', http_agent)
-
-    # Cache control
-    # Either we directly force a cache refresh
-    if force:
-        request.add_header('cache-control', 'no-cache')
-    # or we do it if the original is more recent than our copy
-    elif last_mod_time:
-        tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
-        request.add_header('If-Modified-Since', tstamp)
-
-    # user defined headers now, which may override things we've set above
-    if headers:
-        if not isinstance(headers, dict):
-            raise ValueError("headers provided to fetch_url() must be a dict")
-        for header in headers:
-            request.add_header(header, headers[header])
-
-    urlopen_args = [request, None]
-    if sys.version_info >= (2, 6, 0):
-        # urlopen in python prior to 2.6.0 did not
-        # have a timeout parameter
-        urlopen_args.append(timeout)
-
-    r = urllib_request.urlopen(*urlopen_args)
-    return r
 
 #
 # Module-related functions
@@ -938,21 +1197,22 @@ def url_argument_spec():
     that will be requesting content via urllib/urllib2
     '''
     return dict(
-        url=dict(),
-        force=dict(default='no', aliases=['thirsty'], type='bool'),
-        http_agent=dict(default='ansible-httpget'),
-        use_proxy=dict(default='yes', type='bool'),
-        validate_certs=dict(default='yes', type='bool'),
-        url_username=dict(required=False),
-        url_password=dict(required=False, no_log=True),
-        force_basic_auth=dict(required=False, type='bool', default='no'),
-        client_cert=dict(required=False, type='path', default=None),
-        client_key=dict(required=False, type='path', default=None),
+        url=dict(type='str'),
+        force=dict(type='bool', default=False, aliases=['thirsty']),
+        http_agent=dict(type='str', default='ansible-httpget'),
+        use_proxy=dict(type='bool', default=True),
+        validate_certs=dict(type='bool', default=True),
+        url_username=dict(type='str'),
+        url_password=dict(type='str', no_log=True),
+        force_basic_auth=dict(type='bool', default=False),
+        client_cert=dict(type='path'),
+        client_key=dict(type='path'),
     )
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
-              use_proxy=True, force=False, last_mod_time=None, timeout=10):
+              use_proxy=True, force=False, last_mod_time=None, timeout=10,
+              use_gssapi=False):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -965,6 +1225,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg boolean force: If True: Do not get a cached copy (Default: False)
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
+    :kwarg boolean use_gssapi:   Default: False
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status > 400)
@@ -975,8 +1236,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         data={...}
         resp, info = fetch_url(module,
                                "http://example.com",
-                               data=module.jsonify(data)
-                               header={Content-type': 'application/json'},
+                               data=module.jsonify(data),
+                               headers={'Content-type': 'application/json'},
                                method="POST")
         status_code = info["status"]
         body = resp.read()
@@ -1014,12 +1275,34 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      validate_certs=validate_certs, url_username=username,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
-                     client_key=client_key, cookies=cookies)
-        info.update(r.info())
+                     client_key=client_key, cookies=cookies, use_gssapi=use_gssapi)
+        # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+        info.update(dict((k.lower(), v) for k, v in r.info().items()))
+
+        # Don't be lossy, append header values for duplicate headers
+        # In Py2 there is nothing that needs done, py2 does this for us
+        if PY3:
+            temp_headers = {}
+            for name, value in r.headers.items():
+                # The same as above, lower case keys to match py2 behavior, and create more consistent results
+                name = name.lower()
+                if name in temp_headers:
+                    temp_headers[name] = ', '.join((temp_headers[name], value))
+                else:
+                    temp_headers[name] = value
+            info.update(temp_headers)
+
         # parse the cookies into a nice dictionary
+        cookie_list = []
         cookie_dict = dict()
+        # Python sorts cookies in order of most specific (ie. longest) path first. See ``CookieJar._cookie_attrs``
+        # Cookies with the same path are reversed from response order.
+        # This code makes no assumptions about that, and accepts the order given by python
         for cookie in cookies:
             cookie_dict[cookie.name] = cookie.value
+            cookie_list.append((cookie.name, cookie.value))
+        info['cookies_string'] = '; '.join('%s=%s' % c for c in cookie_list)
+
         info['cookies'] = cookie_dict
         # finally update the result with a message about the fetch
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), url=r.geturl(), status=r.code))
@@ -1039,8 +1322,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
         # Try to add exception info to the output but don't fail if we can't
         try:
-            info.update(dict(**e.info()))
-        except:
+            # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
+            info.update(dict((k.lower(), v) for k, v in e.info().items()))
+        except Exception:
             pass
 
         info.update({'msg': to_native(e), 'body': body, 'status': e.code})
@@ -1050,6 +1334,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
     except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % to_native(e), status=-1))
+    except httplib.BadStatusLine as e:
+        info.update(dict(msg="Connection failure: connection was closed before a valid response was received: %s" % to_native(e.line), status=-1))
     except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % to_native(e), status=-1),
                     exception=traceback.format_exc())
@@ -1057,3 +1343,40 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         tempfile.tempdir = old_tempdir
 
     return r, info
+
+
+def fetch_file(module, url, data=None, headers=None, method=None,
+               use_proxy=True, force=False, last_mod_time=None, timeout=10):
+    '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
+    This is basically a wrapper around fetch_url().
+
+    :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
+    :arg url:             The url to use.
+
+    :kwarg data:          The data to be sent (in case of POST/PUT).
+    :kwarg headers:       A dict with the request headers.
+    :kwarg method:        "POST", "PUT", etc.
+    :kwarg boolean use_proxy:     Default: True
+    :kwarg boolean force: If True: Do not get a cached copy (Default: False)
+    :kwarg last_mod_time: Default: None
+    :kwarg int timeout:   Default: 10
+
+    :returns: A string, the path to the downloaded file.
+    '''
+    # download file
+    bufsize = 65536
+    file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
+    fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
+    module.add_cleanup_file(fetch_temp_file.name)
+    try:
+        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
+        if not rsp:
+            module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
+        data = rsp.read(bufsize)
+        while data:
+            fetch_temp_file.write(data)
+            data = rsp.read(bufsize)
+        fetch_temp_file.close()
+    except Exception as e:
+        module.fail_json(msg="Failure downloading %s, %s" % (url, to_native(e)))
+    return fetch_temp_file.name

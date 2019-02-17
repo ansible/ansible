@@ -43,12 +43,13 @@ def initialize_cloud_plugins():
 
 def get_cloud_platforms(args, targets=None):
     """
-    :type args: IntegrationConfig
+    :type args: TestConfig
     :type targets: tuple[IntegrationTarget] | None
     :rtype: list[str]
     """
-    if args.list_targets:
-        return []
+    if isinstance(args, IntegrationConfig):
+        if args.list_targets:
+            return []
 
     if targets is None:
         cloud_platforms = set(args.metadata.cloud_config or [])

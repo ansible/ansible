@@ -35,9 +35,9 @@ description: >
 author: "Bob Hagen (@rnh556)"
 version_added: "2.5"
 requirements:
-    - pan-python can be obtained from PyPi U(https://pypi.python.org/pypi/pan-python)
-    - pandevice can be obtained from PyPi U(https://pypi.python.org/pypi/pandevice)
-    - xmltodict can be obtains from PyPi U(https://pypi.python.org/pypi/xmltodict)
+    - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
+    - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
+    - xmltodict can be obtains from PyPI U(https://pypi.org/project/xmltodict/)
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -237,7 +237,7 @@ def get_services(device, dev_group, svc_list, obj_list):
 
 def port_in_svc(orientation, port, protocol, obj):
     # Process address objects
-    if orientation is 'source':
+    if orientation == 'source':
         for x in obj.source_port.split(','):
             if '-' in x:
                 port_range = x.split('-')
@@ -248,7 +248,7 @@ def port_in_svc(orientation, port, protocol, obj):
             else:
                 if port == x and obj.protocol == protocol:
                     return True
-    elif orientation is 'destination':
+    elif orientation == 'destination':
         for x in obj.destination_port.split(','):
             if '-' in x:
                 port_range = x.split('-')

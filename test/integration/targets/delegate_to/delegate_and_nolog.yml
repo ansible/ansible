@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: no log filtering caused delegation to fail https://github.com/ansible/ansible/issues/43026
+      become: False
+      no_log: true
+      debug:
+      delegate_to: localhost

@@ -27,7 +27,7 @@ version_added: "2.4"
 short_description: Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
 description:
     - Manages global attributes of VXLAN and bridge domain on HUAWEI CloudEngine devices.
-author: QijunPan (@CloudEngine-Ansible)
+author: QijunPan (@QijunPan)
 options:
     bridge_domain_id:
         description:
@@ -118,7 +118,7 @@ updates:
 changed:
     description: check to see if a change was made on the device
     returned: always
-    type: boolean
+    type: bool
     sample: true
 '''
 

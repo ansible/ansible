@@ -1,6 +1,6 @@
 #!/usr/bin/python
-# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
-# Author: Davide Guerri <davide.guerri@hp.com>
+
+# Copyright: (c) 2015, Hewlett-Packard Development Company, L.P.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: os_floating_ip
 version_added: "2.0"
-author: "Davide Guerri <davide.guerri@hp.com>"
+author: Davide Guerri (@dguerri) <davide.guerri@hp.com>
 short_description: Add/Remove floating IP from an instance
 extends_documentation_fragment: openstack
 description:
@@ -78,7 +78,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -152,11 +152,6 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if module.params['nat_destination']:
-        min_version = '1.8.0'
-    else:
-        min_version = None
-
     server_name_or_id = module.params['server']
     state = module.params['state']
     network = module.params['network']
@@ -168,9 +163,9 @@ def main():
     timeout = module.params['timeout']
     purge = module.params['purge']
 
-    shade, cloud = openstack_cloud_from_module(module, min_version=min_version)
-
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
+
         server = cloud.get_server(server_name_or_id)
         if server is None:
             module.fail_json(
@@ -190,7 +185,7 @@ def main():
                 if nat_destination:
                     nat_floating_addrs = [addr for addr in server.addresses.get(
                         cloud.get_network(nat_destination)['name'], [])
-                        if addr.addr == public_ip and
+                        if addr['addr'] == public_ip and
                         addr['OS-EXT-IPS:type'] == 'floating']
 
                     if len(nat_floating_addrs) == 0:
@@ -251,7 +246,7 @@ def main():
                 module.exit_json(changed=True)
             module.exit_json(changed=changed, floating_ip=f_ip)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

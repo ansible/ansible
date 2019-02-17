@@ -42,6 +42,12 @@ options:
       - Reload SELinux policy after commit.
     type: bool
     default: 'yes'
+  ignore_selinux_state:
+    description:
+    - Run independent of selinux runtime state
+    type: bool
+    default: false
+    version_added: '2.8'
 notes:
    - The changes are persistent across reboots.
    - Not tested on any debian based system.
@@ -49,7 +55,7 @@ requirements:
 - libselinux-python
 - policycoreutils-python
 author:
-- Dan Keder
+- Dan Keder (@dankeder)
 '''
 
 EXAMPLES = '''
@@ -86,20 +92,28 @@ EXAMPLES = '''
 
 import traceback
 
+SELINUX_IMP_ERR = None
 try:
     import selinux
     HAVE_SELINUX = True
 except ImportError:
+    SELINUX_IMP_ERR = traceback.format_exc()
     HAVE_SELINUX = False
 
+SEOBJECT_IMP_ERR = None
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
+    SEOBJECT_IMP_ERR = traceback.format_exc()
     HAVE_SEOBJECT = False
 
-from ansible.module_utils.basic import AnsibleModule, HAVE_SELINUX
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
+
+
+def get_runtime_status(ignore_selinux_state=False):
+    return True if ignore_selinux_state is True else selinux.is_selinux_enabled()
 
 
 def semanage_port_get_ports(seport, setype, proto):
@@ -240,6 +254,7 @@ def semanage_port_del(module, ports, proto, setype, do_reload, sestore=''):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
+            ignore_selinux_state=dict(type='bool', default=False),
             ports=dict(type='list', required=True),
             proto=dict(type='str', required=True, choices=['tcp', 'udp']),
             setype=dict(type='str', required=True),
@@ -250,12 +265,14 @@ def main():
     )
 
     if not HAVE_SELINUX:
-        module.fail_json(msg="This module requires libselinux-python")
+        module.fail_json(msg=missing_required_lib("libselinux-python"), exception=SELINUX_IMP_ERR)
 
     if not HAVE_SEOBJECT:
-        module.fail_json(msg="This module requires policycoreutils-python")
+        module.fail_json(msg=missing_required_lib("policycoreutils-python"), exception=SEOBJECT_IMP_ERR)
 
-    if not selinux.is_selinux_enabled():
+    ignore_selinux_state = module.params['ignore_selinux_state']
+
+    if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
     ports = module.params['ports']

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "This reverts some changes from commit 723daf3. If a line is found in the file, exactly or via regexp matching, it must not be added again. `insertafter`/`insertbefore` options are used only when a line is to be inserted, to specify where it must be added."

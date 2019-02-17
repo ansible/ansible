@@ -5,13 +5,11 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    provider: "{{ cli }}"
 
 - name: configure top level command
   ios_config:
     lines: ['hostname foo']
     match: strict
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -23,7 +21,6 @@
   ios_config:
     lines: ['hostname foo']
     match: strict
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -34,6 +31,5 @@
   ios_config:
     lines: ['hostname {{ shorter_hostname }}']
     match: none
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/toplevel_nonidempotent.yaml on connection={{ ansible_connection }}"

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,38 +19,44 @@ description:
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.4'
-notes:
-- More information about the internal APIC class B(l2:IfPol) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l2:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   l2_policy:
     description:
     - The name of the Layer 2 interface policy.
+    type: str
     required: yes
     aliases: [ name ]
   description:
     description:
     - The description of the Layer 2 interface policy.
+    type: str
     aliases: [ descr ]
   qinq:
     description:
     - Determines if QinQ is disabled or if the port should be considered a core or edge port.
+    - The APIC defaults to C(disabled) when unset during creation.
+    type: str
     choices: [ core, disabled, edge ]
-    default: disabled
   vepa:
     description:
     - Determines if Virtual Ethernet Port Aggregator is disabled or enabled.
-    choices: [ disabled, enabled ]
-    default: disabled
+    - The APIC defaults to C(no) when unset during creation.
+    type: bool
   vlan_scope:
     description:
     - The scope of the VLAN.
+    - The APIC defaults to C(global) when unset during creation.
+    type: str
     choices: [ global, portlocal ]
-    default: global
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
@@ -64,6 +70,7 @@ EXAMPLES = r'''
     l2_policy: '{{ l2_policy }}'
     vlan_scope: '{{ vlan_policy }}'
     description: '{{ description }}'
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -98,7 +105,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -147,17 +154,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -167,7 +174,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -187,8 +194,6 @@ def main():
         qinq=dict(type='str', choices=['core', 'disabled', 'edge']),
         vepa=dict(type='raw'),  # Turn into a boolean in v2.9
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -215,8 +220,8 @@ def main():
         root_class=dict(
             aci_class='l2IfPol',
             aci_rn='infra/l2IfP-{0}'.format(l2_policy),
-            filter_target='eq(l2IfPol.name, "{0}")'.format(l2_policy),
             module_object=l2_policy,
+            target_filter={'name': l2_policy},
         ),
     )
 

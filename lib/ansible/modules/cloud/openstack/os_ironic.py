@@ -93,6 +93,20 @@ options:
           description:
             - size of first storage device in this machine (typically /dev/sda), in GB
           default: 1
+        capabilities:
+          description:
+            - special capabilities for the node, such as boot_option, node_role etc
+              (see U(https://docs.openstack.org/ironic/latest/install/advanced.html)
+              for more information)
+          default: ""
+          version_added: "2.8"
+        root_device:
+          description:
+            - Root disk device hints for deployment.
+              (see U(https://docs.openstack.org/ironic/latest/install/include/root-device-hints.html)
+              for allowed hints)
+          default: ""
+          version_added: "2.8"
     skip_update_of_driver_password:
       description:
         - Allows the code that would assert changes to nodes to skip the
@@ -106,7 +120,7 @@ options:
       description:
         - Ignored. Present for backwards compatibility
 
-requirements: ["shade", "jsonpatch"]
+requirements: ["openstacksdk", "jsonpatch"]
 '''
 
 EXAMPLES = '''
@@ -120,6 +134,9 @@ EXAMPLES = '''
       cpu_arch: "x86_64"
       ram: 8192
       disk_size: 64
+      capabilities: "boot_option:local"
+      root_device:
+        wwn: "0x4000cca77fc4dba1"
     nics:
       - mac: "aa:bb:cc:aa:bb:cc"
       - mac: "dd:ee:ff:dd:ee:ff"
@@ -149,15 +166,17 @@ def _parse_properties(module):
         cpus=p.get('cpus') if p.get('cpus') else 1,
         memory_mb=p.get('ram') if p.get('ram') else 1,
         local_gb=p.get('disk_size') if p.get('disk_size') else 1,
+        capabilities=p.get('capabilities') if p.get('capabilities') else '',
+        root_device=p.get('root_device') if p.get('root_device') else '',
     )
     return props
 
 
-def _parse_driver_info(shade, module):
+def _parse_driver_info(sdk, module):
     p = module.params['driver_info']
     info = p.get('power')
     if not info:
-        raise shade.OpenStackCloudException(
+        raise sdk.exceptions.OpenStackCloudException(
             "driver_info['power'] is required")
     if p.get('console'):
         info.update(p.get('console'))
@@ -177,7 +196,7 @@ def _choose_id_value(module):
 
 
 def _choose_if_password_only(module, patch):
-    if len(patch) is 1:
+    if len(patch) == 1:
         if 'password' in patch[0]['path'] and module.params['skip_update_of_masked_password']:
             # Return false to abort update as the password appears
             # to be the only element in the patch.
@@ -225,7 +244,7 @@ def main():
 
     node_id = _choose_id_value(module)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         server = cloud.get_machine(node_id)
         if module.params['state'] == 'present':
@@ -234,7 +253,7 @@ def main():
                                      "to set a node to present.")
 
             properties = _parse_properties(module)
-            driver_info = _parse_driver_info(shade, module)
+            driver_info = _parse_driver_info(sdk, module)
             kwargs = dict(
                 driver=module.params['driver'],
                 properties=properties,
@@ -328,7 +347,7 @@ def main():
             else:
                 module.exit_json(changed=False, result="Server not found")
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

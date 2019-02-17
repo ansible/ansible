@@ -1,0 +1,23 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+# - include: ../../../../../setup_ec2/tasks/common.yml module_name: ec2_instance
+
+- module_defaults:
+    group/aws:
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  block:
+    - include_tasks: cpu_options.yml
+    - include_tasks: iam_instance_role.yml
+
+  always:
+  - debug:
+      msg: teardown goes here

@@ -3,8 +3,8 @@
 from __future__ import absolute_import, print_function
 
 import atexit
+import contextlib
 import errno
-import filecmp
 import fcntl
 import inspect
 import json
@@ -14,6 +14,7 @@ import pkgutil
 import random
 import re
 import shutil
+import socket
 import stat
 import string
 import subprocess
@@ -30,9 +31,15 @@ except ImportError:
     from abc import ABCMeta
     ABC = ABCMeta('ABC', (), {})
 
-DOCKER_COMPLETION = {}
+try:
+    # noinspection PyCompatibility
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    # noinspection PyCompatibility
+    from configparser import ConfigParser
 
-coverage_path = ''  # pylint: disable=locally-disabled, invalid-name
+DOCKER_COMPLETION = {}
+COVERAGE_PATHS = {}  # type: dict[str, str]
 
 
 def get_docker_completion():
@@ -40,12 +47,27 @@ def get_docker_completion():
     :rtype: dict[str, str]
     """
     if not DOCKER_COMPLETION:
-        with open('test/runner/completion/docker.txt', 'r') as completion_fd:
-            images = completion_fd.read().splitlines()
+        images = read_lines_without_comments('test/runner/completion/docker.txt', remove_blank_lines=True)
 
-        DOCKER_COMPLETION.update(dict((i.split('@')[0], i) for i in images))
+        DOCKER_COMPLETION.update(dict(kvp for kvp in [parse_docker_completion(i) for i in images] if kvp))
 
     return DOCKER_COMPLETION
+
+
+def parse_docker_completion(value):
+    """
+    :type value: str
+    :rtype: tuple[str, dict[str, str]]
+    """
+    values = value.split()
+
+    if not values:
+        return None
+
+    name = values[0]
+    data = dict((kvp[0], kvp[1] if len(kvp) > 1 else '') for kvp in [item.split('=', 1) for item in values[1:]])
+
+    return name, data
 
 
 def is_shippable():
@@ -61,6 +83,23 @@ def remove_file(path):
     """
     if os.path.isfile(path):
         os.remove(path)
+
+
+def read_lines_without_comments(path, remove_blank_lines=False):
+    """
+    :type path: str
+    :type remove_blank_lines: bool
+    :rtype: list[str]
+    """
+    with open(path, 'r') as path_fd:
+        lines = path_fd.read().splitlines()
+
+    lines = [re.sub(r' *#.*$', '', line) for line in lines]
+
+    if remove_blank_lines:
+        lines = [line for line in lines if line]
+
+    return lines
 
 
 def find_executable(executable, cwd=None, path=None, required=True):
@@ -83,10 +122,10 @@ def find_executable(executable, cwd=None, path=None, required=True):
             match = executable
     else:
         if path is None:
-            path = os.environ.get('PATH', os.defpath)
+            path = os.environ.get('PATH', os.path.defpath)
 
         if path:
-            path_dirs = path.split(os.pathsep)
+            path_dirs = path.split(os.path.pathsep)
             seen_dirs = set()
 
             for path_dir in path_dirs:
@@ -156,16 +195,20 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
         env = common_environment()
 
     cmd = list(cmd)
-    inject_path = get_coverage_path(args)
-    config_path = os.path.join(inject_path, 'injector.json')
     version = python_version or args.python_version
     interpreter = find_python(version, path)
+    inject_path = get_coverage_path(args, interpreter)
+    config_path = os.path.join(inject_path, 'injector.json')
     coverage_file = os.path.abspath(os.path.join(inject_path, '..', 'output', '%s=%s=%s=%s=coverage' % (
         args.command, target_name, args.coverage_label or 'local-%s' % version, 'python-%s' % version)))
 
-    env['PATH'] = inject_path + os.pathsep + env['PATH']
+    env['PATH'] = inject_path + os.path.pathsep + env['PATH']
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
+
+    if args.coverage:
+        env['_ANSIBLE_COVERAGE_CONFIG'] = os.path.join(inject_path, '.coveragerc')
+        env['_ANSIBLE_COVERAGE_OUTPUT'] = coverage_file
 
     config = dict(
         python_interpreter=interpreter,
@@ -179,12 +222,13 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
 
 
-def get_coverage_path(args):
+def get_coverage_path(args, interpreter):
     """
     :type args: TestConfig
+    :type interpreter: str
     :rtype: str
     """
-    global coverage_path  # pylint: disable=locally-disabled, global-statement, invalid-name
+    coverage_path = COVERAGE_PATHS.get(interpreter)
 
     if coverage_path:
         return os.path.join(coverage_path, 'coverage')
@@ -211,13 +255,27 @@ def get_coverage_path(args):
         os.mkdir(os.path.join(coverage_path, directory))
         os.chmod(os.path.join(coverage_path, directory), stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
-    atexit.register(cleanup_coverage_dir)
+    os.symlink(interpreter, os.path.join(coverage_path, 'coverage', 'python'))
+
+    if not COVERAGE_PATHS:
+        atexit.register(cleanup_coverage_dirs)
+
+    COVERAGE_PATHS[interpreter] = coverage_path
 
     return os.path.join(coverage_path, 'coverage')
 
 
-def cleanup_coverage_dir():
-    """Copy over coverage data from temporary directory and purge temporary directory."""
+def cleanup_coverage_dirs():
+    """Clean up all coverage directories."""
+    for path in COVERAGE_PATHS.values():
+        display.info('Cleaning up coverage directory: %s' % path, verbosity=2)
+        cleanup_coverage_dir(path)
+
+
+def cleanup_coverage_dir(coverage_path):
+    """Copy over coverage data from temporary directory and purge temporary directory.
+    :type coverage_path: str
+    """
     output_dir = os.path.join(coverage_path, 'output')
 
     for filename in os.listdir(output_dir):
@@ -327,7 +385,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     if communicate:
         encoding = 'utf-8'
-        data_bytes = data.encode(encoding) if data else None
+        data_bytes = data.encode(encoding, 'surrogateescape') if data else None
         stdout_bytes, stderr_bytes = process.communicate(data_bytes)
         stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
         stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
@@ -350,7 +408,7 @@ def common_environment():
     """Common environment used for executing all programs."""
     env = dict(
         LC_ALL='en_US.UTF-8',
-        PATH=os.environ.get('PATH', os.defpath),
+        PATH=os.environ.get('PATH', os.path.defpath),
     )
 
     required = (
@@ -441,6 +499,56 @@ def is_binary_file(path):
     :type path: str
     :rtype: bool
     """
+    assume_text = set([
+        '.cfg',
+        '.conf',
+        '.crt',
+        '.cs',
+        '.css',
+        '.html',
+        '.ini',
+        '.j2',
+        '.js',
+        '.json',
+        '.md',
+        '.pem',
+        '.ps1',
+        '.psm1',
+        '.py',
+        '.rst',
+        '.sh',
+        '.txt',
+        '.xml',
+        '.yaml',
+        '.yml',
+    ])
+
+    assume_binary = set([
+        '.bin',
+        '.eot',
+        '.gz',
+        '.ico',
+        '.iso',
+        '.jpg',
+        '.otf',
+        '.p12',
+        '.png',
+        '.pyc',
+        '.rpm',
+        '.ttf',
+        '.woff',
+        '.woff2',
+        '.zip',
+    ])
+
+    ext = os.path.splitext(path)[1]
+
+    if ext in assume_text:
+        return False
+
+    if ext in assume_binary:
+        return True
+
     with open(path, 'rb') as path_fd:
         return b'\0' in path_fd.read(1024)
 
@@ -629,10 +737,13 @@ class MissingEnvironmentVariable(ApplicationError):
 
 class CommonConfig(object):
     """Configuration common to all commands."""
-    def __init__(self, args):
+    def __init__(self, args, command):
         """
         :type args: any
+        :type command: str
         """
+        self.command = command
+
         self.color = args.color  # type: bool
         self.explain = args.explain  # type: bool
         self.verbosity = args.verbosity  # type: int
@@ -643,32 +754,75 @@ class CommonConfig(object):
         if is_shippable():
             self.redact = True
 
+        self.cache = {}
+
 
 def docker_qualify_image(name):
     """
     :type name: str
     :rtype: str
     """
-    if not name or any((c in name) for c in ('/', ':')):
-        return name
+    config = get_docker_completion().get(name, {})
 
-    name = get_docker_completion().get(name, name)
-
-    return 'ansible/ansible:%s' % name
+    return config.get('name', name)
 
 
-def parse_to_dict(pattern, value):
+@contextlib.contextmanager
+def named_temporary_file(args, prefix, suffix, directory, content):
+    """
+    :param args: CommonConfig
+    :param prefix: str
+    :param suffix: str
+    :param directory: str
+    :param content: str | bytes | unicode
+    :rtype: str
+    """
+    if not isinstance(content, bytes):
+        content = content.encode('utf-8')
+
+    if args.explain:
+        yield os.path.join(directory, '%stemp%s' % (prefix, suffix))
+    else:
+        with tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=directory) as tempfile_fd:
+            tempfile_fd.write(content)
+            tempfile_fd.flush()
+
+            yield tempfile_fd.name
+
+
+def parse_to_list_of_dict(pattern, value):
     """
     :type pattern: str
     :type value: str
-    :return: dict[str, str]
+    :return: list[dict[str, str]]
     """
-    match = re.search(pattern, value)
+    matched = []
+    unmatched = []
 
-    if match is None:
-        raise Exception('Pattern "%s" did not match value: %s' % (pattern, value))
+    for line in value.splitlines():
+        match = re.search(pattern, line)
 
-    return match.groupdict()
+        if match:
+            matched.append(match.groupdict())
+        else:
+            unmatched.append(line)
+
+    if unmatched:
+        raise Exception('Pattern "%s" did not match values:\n%s' % (pattern, '\n'.join(unmatched)))
+
+    return matched
+
+
+def get_available_port():
+    """
+    :rtype: int
+    """
+    # this relies on the kernel not reusing previously assigned ports immediately
+    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    with contextlib.closing(socket_fd):
+        socket_fd.bind(('', 0))
+        return socket_fd.getsockname()[1]
 
 
 def get_subclasses(class_type):

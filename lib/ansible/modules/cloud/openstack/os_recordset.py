@@ -54,8 +54,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -94,23 +94,23 @@ recordset:
     contains:
         id:
             description: Unique recordset ID
-            type: string
+            type: str
             sample: "c1c530a3-3619-46f3-b0f6-236927b2618c"
         name:
             description: Recordset name
-            type: string
+            type: str
             sample: "www.example.net."
         zone_id:
             description: Zone id
-            type: string
+            type: str
             sample: 9508e177-41d8-434e-962c-6fe6ca880af7
         type:
             description: Recordset type
-            type: string
+            type: str
             sample: "A"
         description:
             description: Recordset description
-            type: string
+            type: str
             sample: "Test description"
         ttl:
             description: Zone TTL value
@@ -130,11 +130,11 @@ def _system_state_change(state, records, description, ttl, zone, recordset):
     if state == 'present':
         if recordset is None:
             return True
-        if records is not None and recordset.records != records:
+        if records is not None and recordset['records'] != records:
             return True
-        if description is not None and recordset.description != description:
+        if description is not None and recordset['description'] != description:
             return True
-        if ttl is not None and recordset.ttl != ttl:
+        if ttl is not None and recordset['ttl'] != ttl:
             return True
     if state == 'absent' and recordset:
         return True
@@ -164,12 +164,12 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.9.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         recordset_type = module.params.get('recordset_type')
         recordset_filter = {'type': recordset_type}
 
-        recordsets = cloud.search_recordsets(zone, name_or_id=name + '.' + zone, filters=recordset_filter)
+        recordsets = cloud.search_recordsets(zone, name_or_id=name, filters=recordset_filter)
 
         if len(recordsets) == 1:
             recordset = recordsets[0]
@@ -228,7 +228,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

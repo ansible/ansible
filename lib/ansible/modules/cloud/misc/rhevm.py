@@ -15,10 +15,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rhevm
-author: Timothy Vandenbrande
+author: Timothy Vandenbrande (@TimothyVandenbrande)
 short_description: RHEV/oVirt automation
 description:
-    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vms) supports oVirt/RHV version 4.
+    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vm) supports oVirt/RHV version 4.
     - Allows you to create/remove/update or powermanage virtual machines on a RHEV/oVirt platform.
 version_added: "2.2"
 requirements:
@@ -316,7 +316,6 @@ RHEV_UNAVAILABLE = 2
 RHEV_TYPE_OPTS = ['server', 'desktop', 'host']
 STATE_OPTS = ['ping', 'present', 'absent', 'up', 'down', 'restart', 'cd', 'info']
 
-global msg, changed, failed
 msg = []
 changed = False
 failed = False
@@ -340,7 +339,7 @@ class RHEVConn(object):
             api = API(url=url, username=user, password=password, insecure=str(insecure_api))
             api.test()
             self.conn = api
-        except:
+        except Exception:
             raise Exception("Failed to connect to RHEV-M.")
 
     def __del__(self):
@@ -589,6 +588,11 @@ class RHEVConn(object):
                 setMsg(str(e))
                 setFailed()
                 return False
+        elif int(DISK.size) > (1024 * 1024 * 1024 * int(disksize)):
+            setMsg("Shrinking disks is not supported")
+            setMsg(str(e))
+            setFailed()
+            return False
         else:
             setMsg("The size of the disk is correct")
         if str(DISK.interface) != str(diskinterface):
@@ -1374,7 +1378,7 @@ def core(module):
 
             # Set VM Host
             vmhost = module.params.get('vmhost')
-            if vmhost is not False and vmhost is not "False":
+            if vmhost is not False and vmhost != "False":
                 if r.setVMHost(vminfo['name'], vmhost) is False:
                     return RHEV_FAILED, msg
 

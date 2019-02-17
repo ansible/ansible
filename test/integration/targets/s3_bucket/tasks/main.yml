@@ -86,6 +86,10 @@
           - output.policy.Statement[0].Sid == 'AddPerm'
 
     # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
     - name: Try to update the same complex s3_bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
@@ -127,6 +131,10 @@
           - output.policy.Statement[0].Sid == 'AddPerm'
 
     # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
     - name: Update attributes for s3_bucket
       s3_bucket:
         name: "{{ resource_prefix }}-testbucket-ansible-complex"
@@ -146,7 +154,7 @@
           - output.name == '{{ resource_prefix }}-testbucket-ansible-complex'
           - not output.requester_pays
           - output.versioning.MfaDelete == 'Disabled'
-          - output.versioning.Versioning == 'Suspended'
+          - output.versioning.Versioning in ['Suspended', 'Disabled']
           - output.tags.example == 'tag1-udpated'
           - output.tags.another == 'tag2'
           - output.policy.Statement[0].Action == 's3:GetObject'
@@ -155,6 +163,65 @@
           - output.policy.Statement[0].Resource == 'arn:aws:s3:::{{ resource_prefix }}-testbucket-ansible-complex/*'
           - output.policy.Statement[0].Sid == 'AddPerm'
 
+    # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
+    - name: Remove a tag for s3_bucket
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        state: present
+        policy: "{{ lookup('template','policy.json') }}"
+        requester_pays: no
+        versioning: no
+        tags:
+          example: tag1-udpated
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.tags.example == 'tag1-udpated'
+          - "'another' not in output.tags"
+
+    # ============================================================
+    - name: Pause to help with s3 bucket eventual consistency
+      pause:
+        seconds: 10
+
+    - name: Do not specify any tag to ensure previous tags are not removed
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        state: present
+        policy: "{{ lookup('template','policy.json') }}"
+        requester_pays: no
+        versioning: no
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+          - output.tags.example == 'tag1-udpated'
+
+    # ============================================================
+    - name: Remove all tags
+      s3_bucket:
+        name: "{{ resource_prefix }}-testbucket-ansible-complex"
+        state: present
+        policy: "{{ lookup('template','policy.json') }}"
+        requester_pays: no
+        versioning: no
+        tags: {}
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - output.changed
+          - output.tags == {}
 
     # ============================================================
     - name: Delete s3_bucket
@@ -181,6 +248,8 @@
           - output.changed
           - output.name == '{{ resource_prefix }}.testbucket.ansible'
 
+
+    # ============================================================
     - name: Delete s3_bucket
       s3_bucket:
         name: "{{ resource_prefix }}.testbucket.ansible"
@@ -192,6 +261,18 @@
         that:
           - output.changed
 
+    # ============================================================
+    - name: Try to delete a missing bucket (should not fail)
+      s3_bucket:
+        name: "{{ resource_prefix }}.testbucket.ansible.missing"
+        state: absent
+        <<: *aws_connection_info
+      register: output
+
+    - assert:
+        that:
+          - not output.changed
+
   # ============================================================
   always:
     - name: Ensure all buckets are deleted
@@ -199,6 +280,7 @@
         name: "{{item}}"
         state: absent
         <<: *aws_connection_info
+      ignore_errors: yes
       with_items:
         - "{{ resource_prefix }}-testbucket-ansible"
         - "{{ resource_prefix }}-testbucket-ansible-complex"

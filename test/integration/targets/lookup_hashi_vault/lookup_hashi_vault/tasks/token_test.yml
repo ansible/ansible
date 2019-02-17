@@ -1,0 +1,45 @@
+- vars:
+    user_token: '{{ user_token_cmd.stdout }}'
+  block:
+    - name: 'Fetch secrets using "hashi_vault" lookup'
+      set_fact:
+        secret1: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret1 auth_method=token token=' ~ user_token) }}"
+        secret2: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret2 token=' ~ user_token) }}"
+        secret3: "{{ lookup('hashi_vault', conn_params ~ ' secret=' ~ vault_base_path ~ '/secret2  token=' ~ user_token) }}"
+
+    - name: 'Check secret values'
+      fail:
+        msg: 'unexpected secret values'
+      when: secret1['data']['value'] != 'foo1' or secret2['data']['value'] != 'foo2' or secret3['data']['value'] != 'foo2'
+
+    - name: 'Failure expected when erroneous credentials are used'
+      vars:
+        secret_wrong_cred: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret2 auth_method=token token=wrong_token') }}"
+      debug:
+        msg: 'Failure is expected ({{ secret_wrong_cred }})'
+      register: test_wrong_cred
+      ignore_errors: true
+
+    - name: 'Failure expected when unauthorized secret is read'
+      vars:
+        secret_unauthorized: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret3 token=' ~ user_token) }}"
+      debug:
+        msg: 'Failure is expected ({{ secret_unauthorized }})'
+      register: test_unauthorized
+      ignore_errors: true
+
+    - name: 'Failure expected when inexistent secret is read'
+      vars:
+        secret_inexistent: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret4 token=' ~ user_token) }}"
+      debug:
+        msg: 'Failure is expected ({{ secret_inexistent }})'
+      register: test_inexistent
+      ignore_errors: true
+
+    - name: 'Check expected failures'
+      assert:
+        msg: "an expected failure didn't occur"
+        that:
+          - test_wrong_cred is failed
+          - test_unauthorized is failed
+          - test_inexistent is failed

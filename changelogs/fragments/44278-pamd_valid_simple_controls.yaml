@@ -1,0 +1,2 @@
+bugfixes:
+- pamd - Allow for validation of definitive control in pamd module.

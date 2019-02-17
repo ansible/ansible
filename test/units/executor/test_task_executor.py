@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
-from ansible.compat.tests.mock import patch, MagicMock
+from units.compat import unittest
+from units.compat.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.playbook.play_context import PlayContext
@@ -55,7 +55,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
     def test_task_executor_run(self):
@@ -82,7 +82,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -126,7 +126,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         items = te._get_loop_items()
@@ -162,7 +162,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         def _execute(variables):
@@ -208,7 +208,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         # No replacement
@@ -400,7 +400,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -455,7 +455,7 @@ class TestTaskExecutor(unittest.TestCase):
             new_stdin=new_stdin,
             loader=fake_loader,
             shared_loader_obj=shared_loader,
-            rslt_q=mock_queue,
+            final_q=mock_queue,
         )
 
         te._connection = MagicMock()
@@ -502,6 +502,14 @@ class TestTaskExecutor(unittest.TestCase):
                 'a_list': ['POPCORN'],
             },
             'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [
+                {
+                    'remove': 'POPCORN',
+                }
+            ],
         }
 
         expected = {
@@ -516,6 +524,10 @@ class TestTaskExecutor(unittest.TestCase):
                 'a_list': ['POPCORN'],
             },
             'a_list': ['POPCORN'],
+            'list_of_lists': [
+                ['some', 'thing'],
+            ],
+            'list_of_dicts': [{}],
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)

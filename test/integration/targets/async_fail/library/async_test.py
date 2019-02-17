@@ -46,4 +46,5 @@ def main():
         if 'trailing_junk' in fail_mode:
             print("trailing junk after module output")
 
+
 main()

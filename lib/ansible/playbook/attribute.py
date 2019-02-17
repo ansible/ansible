@@ -19,7 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from copy import deepcopy
+from copy import copy, deepcopy
+
+
+_CONTAINERS = frozenset(('list', 'dict', 'set'))
 
 
 class Attribute:
@@ -38,6 +41,7 @@ class Attribute:
         alias=None,
         extend=False,
         prepend=False,
+        static=False,
     ):
 
         """
@@ -63,7 +67,7 @@ class Attribute:
             passed to the __init__ method of that class during post validation and
             the field will be an instance of that class.
         :kwarg always_post_validate: Controls whether a field should be post
-            validated or not (default: True).
+            validated or not (default: False).
         :kwarg inherit: A boolean value, which controls whether the object
             containing this field should attempt to inherit the value from its
             parent object if the local value is None.
@@ -83,11 +87,10 @@ class Attribute:
         self.alias = alias
         self.extend = extend
         self.prepend = prepend
+        self.static = static
 
-        if default is not None and self.isa in ('list', 'dict', 'set'):
-            self.default = deepcopy(default)
-        else:
-            self.default = default
+        if default is not None and self.isa in _CONTAINERS and not callable(default):
+            raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
 
     def __eq__(self, other):
         return other.priority == self.priority

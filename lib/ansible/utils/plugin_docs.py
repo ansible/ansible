@@ -1,38 +1,18 @@
-# (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright: (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
-from collections import MutableMapping, MutableSet, MutableSequence
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
+from ansible.utils.display import Display
 
-try:
-    from __main__ import display
-except ImportError:
-    from ansible.utils.display import Display
-    display = Display()
+display = Display()
 
 
 # modules that are ok that they do not have documentation strings
@@ -89,6 +69,13 @@ def add_fragments(doc, filename, fragment_loader):
                     doc['notes'] = []
                 doc['notes'].extend(notes)
 
+        if 'seealso' in fragment:
+            seealso = fragment.pop('seealso')
+            if seealso:
+                if 'seealso' not in doc:
+                    doc['seealso'] = []
+                doc['seealso'].extend(seealso)
+
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 
@@ -110,7 +97,7 @@ def add_fragments(doc, filename, fragment_loader):
 
 def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
     """
-    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the module_docs_fragments directory.
+    DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)

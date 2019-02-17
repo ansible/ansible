@@ -1,0 +1,117 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_user parameter test"
+- debug: msg="Using provider={{ connection.transport }}"
+  when: ansible_connection == "local"
+
+- set_fact: idem="true"
+- set_fact: idem="false"
+  when: ((platform is search('N7K')) and (imagetag and (imagetag is version_compare('D1', 'eq'))))
+
+- block:
+  - name: Create user
+    nxos_user: &configure
+      name: netend
+      configured_password: Hello!23$
+      update_password: on_create
+      roles: network-operator
+      provider: "{{ connection }}"
+      state: present
+    register: result
+
+  - assert: &true
+      that:
+        - 'result.changed == true'
+
+  - block:
+    - name: conf idempotency
+      nxos_user: *configure
+      register: result
+
+    - assert: &false
+        that:
+          - 'result.changed == false'
+    when: idem
+
+  - name: Remove user
+    nxos_user: &remove
+      name: netend
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - name: remove idempotency
+    nxos_user: *remove
+    register: result
+
+  - assert: *false
+
+  - debug: msg="skipping sshkey test as the key needs to be created on the server first"
+
+#  - name: create a new user
+#    nxos_user: &conf1
+#      name: ansible
+#      sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+#      provider: "{{ connection }}"
+#      state: present
+#    register: result
+#
+#  - assert: *true
+
+#  - block:
+#    - name: user idempotency
+#      nxos_user: *conf1
+#      register: result
+#
+#    - assert: *false
+#
+#    when: idem
+
+  - name: Collection of users
+    nxos_user: &coll
+      users:
+        - name: test1
+        - name: test2
+      configured_password: Hello!23$
+      update_password: on_create
+      provider: "{{ connection }}"
+      state: present
+      roles: 
+        - network-admin
+        - network-operator
+    register: result
+
+  - assert: *true
+
+  - block:
+    - name: users idempotency
+      nxos_user: *coll
+      register: result
+
+    - assert: *false
+
+    when: idem
+
+  - name: tearDown
+    nxos_user: &tear
+      name: ansible
+      purge: yes
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: teardown idempotency
+    nxos_user: *tear
+    register: result
+
+  - assert: *false
+
+  always:
+  - name: tearDown
+    nxos_user: *tear
+    register: result
+    ignore_errors: yes
+
+- debug: msg="END connection={{ ansible_connection }} nxos_user parameter test"

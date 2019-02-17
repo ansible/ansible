@@ -1,0 +1,2 @@
+bugfixes:
+  - "docker_swarm_service - fix use of Docker API so that services are not detected as present if there is an existing service whose name is a substring of the desired service"

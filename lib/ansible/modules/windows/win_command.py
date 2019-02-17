@@ -25,19 +25,24 @@ options:
     description:
       - The C(win_command) module takes a free form command to run.
       - There is no parameter actually named 'free form'. See the examples!
+    type: str
     required: yes
   creates:
     description:
       - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+    type: path
   removes:
     description:
       - A path or path filter pattern; when the referenced path B(does not) exist on the target host, the task will be skipped.
+    type: path
   chdir:
     description:
       - Set the specified path as the current working directory before executing a command.
+    type: path
   stdin:
     description:
     - Set the stdin of the command directly to the specified value.
+    type: str
     version_added: '2.5'
 notes:
     - If you want to run a command through a shell (say you are using C(<),
@@ -46,7 +51,12 @@ notes:
       environment.
     - C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not
       exist, use this.
-    - For non-Windows targets, use the M(command) module instead.
+seealso:
+- module: command
+- module: psexec
+- module: raw
+- module: win_psexec
+- module: win_shell
 author:
     - Matt Davis (@nitzmahone)
 '''
@@ -72,37 +82,37 @@ RETURN = r'''
 msg:
     description: changed
     returned: always
-    type: boolean
-    sample: True
+    type: bool
+    sample: true
 start:
     description: The command execution start time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.429568'
 end:
     description: The command execution end time
     returned: always
-    type: string
+    type: str
     sample: '2016-02-25 09:18:26.755339'
 delta:
     description: The command execution delta time
     returned: always
-    type: string
+    type: str
     sample: '0:00:00.325771'
 stdout:
     description: The command standard output
     returned: always
-    type: string
+    type: str
     sample: 'Clustering node rabbit@slave1 with rabbit@master ...'
 stderr:
     description: The command standard error
     returned: always
-    type: string
+    type: str
     sample: 'ls: cannot access foo: No such file or directory'
 cmd:
     description: The command executed by the task
     returned: always
-    type: string
+    type: str
     sample: 'rabbitmqctl join_cluster rabbit@master'
 rc:
     description: The command return code (0 means success)

@@ -27,12 +27,12 @@ description:
 options:
    name:
      description:
-        - Name that has to be given to the image
+        - The name of the image when uploading - or the name/ID of the image if deleting
      required: true
    id:
      version_added: "2.4"
      description:
-        - The Id of the image
+        - The ID of the image when uploading an image
    checksum:
      version_added: "2.5"
      description:
@@ -80,7 +80,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -128,7 +128,7 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
 
         changed = False
@@ -177,7 +177,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

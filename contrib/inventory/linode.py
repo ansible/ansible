@@ -81,17 +81,14 @@ import sys
 import argparse
 from time import time
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 
 try:
     from chube import load_chube_config
     from chube import api as chube_api
     from chube.datacenter import Datacenter
     from chube.linode_obj import Linode
-except:
+except Exception:
     try:
         # remove local paths and other stuff that may
         # cause an import conflict, as chube is sensitive

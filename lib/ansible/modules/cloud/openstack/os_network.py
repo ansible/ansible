@@ -69,7 +69,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["shade"]
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -89,11 +89,11 @@ network:
     contains:
         id:
             description: Network ID.
-            type: string
+            type: str
             sample: "4bb4f9a5-3bd2-4562-bf6a-d17a6341bb56"
         name:
             description: Network name.
-            type: string
+            type: str
             sample: "ext_network"
         shared:
             description: Indicates whether this network is shared across all tenants.
@@ -101,11 +101,11 @@ network:
             sample: false
         status:
             description: Network status.
-            type: string
+            type: str
             sample: "ACTIVE"
         mtu:
             description: The MTU of a network resource.
-            type: integer
+            type: int
             sample: 0
         admin_state_up:
             description: The administrative state of the network.
@@ -121,7 +121,7 @@ network:
             sample: true
         tenant_id:
             description: The tenant ID.
-            type: string
+            type: str
             sample: "06820f94b9f54b119636be2728d216fc"
         subnets:
             description: The associated subnets.
@@ -129,15 +129,15 @@ network:
             sample: []
         "provider:physical_network":
             description: The physical network where this network object is implemented.
-            type: string
+            type: str
             sample: my_vlan_net
         "provider:network_type":
             description: The type of physical network that maps to this network resource.
-            type: string
+            type: str
             sample: vlan
         "provider:segmentation_id":
             description: An isolated segment on the physical network.
-            type: string
+            type: str
             sample: 101
 '''
 
@@ -171,7 +171,7 @@ def main():
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.6.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if project is not None:
             proj = cloud.get_project(project)
@@ -212,7 +212,7 @@ def main():
                 cloud.delete_network(name)
                 module.exit_json(changed=True)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

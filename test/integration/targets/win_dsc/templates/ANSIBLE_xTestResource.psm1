@@ -119,6 +119,7 @@ CimInstanceArrayParam:
     }
     New-Item -Path $Path -ItemType File > $null
     Set-Content -Path $Path -Value $file_contents > $null
+    Write-Warning -Message "set warning"
 }
 
 Function Test-TargetResource
@@ -167,6 +168,7 @@ Function Test-TargetResource
         [Microsoft.Management.Infrastructure.CimInstance[]]
         $CimInstanceArrayParam
     )
+    Write-Warning -Message "test warning"
     return $false
 }
 

@@ -1,0 +1,27 @@
+---
+- debug: msg="START cli/all_facts.yaml"
+
+- name: test getting all facts
+  cnos_facts:
+    gather_subset:
+      - all
+  register: result
+
+- assert:
+    that:
+      # _facts modules should never report a change
+      - "result.changed == false"
+
+      # Correct subsets are present
+      - "'config' in result.ansible_facts.ansible_net_gather_subset"
+      - "'hardware' in result.ansible_facts.ansible_net_gather_subset"
+      - "'default' in result.ansible_facts.ansible_net_gather_subset"
+      - "'interfaces' in result.ansible_facts.ansible_net_gather_subset"
+
+      # Items from those subsets are present
+      #- "result.ansible_facts.ansible_net_filesystems is defined"
+      # Check that these facts not only are present, but are valid (positive integers)
+      - "result.ansible_facts.ansible_net_memfree_mb > 1"
+      - "result.ansible_facts.ansible_net_memtotal_mb > 1"
+
+- debug: msg="END cli/all_facts.yaml"

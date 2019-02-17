@@ -27,7 +27,8 @@ description:
 options:
    name:
      description:
-        - Name that has to be given to the instance
+        - Name that has to be given to the instance. It is also possible to
+          specify the ID of the instance instead of its name if I(state) is I(absent).
      required: true
    image:
      description:
@@ -166,8 +167,8 @@ options:
      description:
        - Availability zone in which to create the server.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -381,6 +382,29 @@ EXAMPLES = '''
           ifdown eth0 && ifup eth0
           {% endraw %}
 
+# Create a new instance with server group for (anti-)affinity
+# server group ID is returned from os_server_group module.
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+    - name: launch an instance
+      os_server:
+        state: present
+        name: vm1
+        image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+        flavor: 4
+        scheduler_hints:
+          group: f5c8c61a-9230-400a-8ed2-3b023c190a7f
+
+# Deletes an instance via its ID
+- name: remove an instance
+  hosts: localhost
+  tasks:
+    - name: remove an instance
+      os_server:
+        name: abcdef01-2345-6789-0abc-def0123456789
+        state: absent
+
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -538,10 +562,12 @@ def _update_server(module, cloud, server):
     return (changed, server)
 
 
-def _delete_floating_ip_list(cloud, server, extra_ips):
+def _detach_ip_list(cloud, server, extra_ips):
     for ip in extra_ips:
-        cloud.nova_client.servers.remove_floating_ip(
-            server=server.id, address=ip)
+        ip_id = cloud.get_floating_ip(
+            id=None, filters={'floating_ip_address': ip})
+        cloud.detach_ip_from_server(
+            server_id=server.id, floating_ip_id=ip_id)
 
 
 def _check_ips(module, cloud, server):
@@ -582,7 +608,7 @@ def _check_ips(module, cloud, server):
                 if ip not in floating_ips:
                     extra_ips.append(ip)
             if extra_ips:
-                _delete_floating_ip_list(cloud, server, extra_ips)
+                _detach_ip_list(cloud, server, extra_ips)
                 changed = True
     elif auto_ip:
         if server['interface_ip']:
@@ -613,11 +639,7 @@ def _check_security_groups(module, cloud, server):
         return changed, server
 
     module_security_groups = set(module.params['security_groups'])
-    # Workaround a bug in shade <= 1.20.0
-    if server.security_groups is not None:
-        server_security_groups = set(sg.name for sg in server.security_groups)
-    else:
-        server_security_groups = set()
+    server_security_groups = set(sg['name'] for sg in server.security_groups)
 
     add_sgs = module_security_groups - server_security_groups
     remove_sgs = server_security_groups - module_security_groups
@@ -715,7 +737,7 @@ def main():
                     "if state == 'present'"
             )
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         if state == 'present':
             _get_server_state(module, cloud)
@@ -723,7 +745,7 @@ def main():
         elif state == 'absent':
             _get_server_state(module, cloud)
             _delete_server(module, cloud)
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 

@@ -7,12 +7,10 @@
   nxos_feature:
     feature: lldp
     state: disabled
-    provider: "{{ connection }}"
 
 - name: Enable LLDP service
   nxos_lldp:
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -23,7 +21,6 @@
 - name: Enable LLDP service again (idempotent)
   nxos_lldp:
     state: present
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -33,7 +30,6 @@
 - name: Disable LLDP service
   nxos_lldp:
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:
@@ -44,7 +40,6 @@
 - name: Disable LLDP service (idempotent)
   nxos_lldp:
     state: absent
-    provider: "{{ connection }}"
   register: result
 
 - assert:

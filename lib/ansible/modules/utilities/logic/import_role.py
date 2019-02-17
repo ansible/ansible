@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
-    'status': ['preview'],
+    'status': ['stableinterface'],
     'supported_by': 'core'
 }
 
@@ -24,7 +24,7 @@ description:
     between other tasks of the play.
   - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
     you want the opposite behavior, use M(include_role) instead. To better understand the difference you can read
-    U(https://docs.ansible.com/ansible/latest/playbooks_reuse_includes.html).
+    the L(Including and Importing Guide,../user_guide/playbooks_reuse_includes.html).
 version_added: "2.4"
 options:
   name:
@@ -48,13 +48,17 @@ options:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
     default: 'yes'
-  private:
+  handlers_from:
     description:
-      - If C(yes) the variables from C(defaults/) and C(vars/) in a role will not be made available to the rest of the
-        play.
-    type: bool
+      - File to load from a role's C(handlers/) directory.
+    default: main
+    version_added: '2.8'
 notes:
   - Handlers are made available to the whole play.
+  - "Since Ansible 2.7: variables defined in C(vars) and C(defaults) for the role are exposed at playbook parsing time.
+    Due to this, these variables will be accessible to roles and tasks executed before the location of the
+    C(import_role) task."
+  - Unlike C(include_role) variable exposure is not configurable, and will always be exposed.
 '''
 
 EXAMPLES = """
@@ -73,15 +77,6 @@ EXAMPLES = """
         name: myrole
       vars:
         rolevar1: value from task
-
-    - name: Apply loop to each task in role
-      import_role:
-        name: myrole
-      with_items:
-        - '{{ roleinput1 }}'
-        - '{{ roleinput2 }}'
-      loop_control:
-        loop_var: roleinputvar
 
     - name: Apply condition to each task in role
       import_role:

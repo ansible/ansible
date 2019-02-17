@@ -21,7 +21,7 @@ module: digital_ocean_load_balancer_facts
 short_description: Gather facts about DigitalOcean load balancers
 description:
     - This module can be used to gather facts about DigitalOcean provided load balancers.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 options:
   load_balancer_id:
@@ -49,7 +49,7 @@ EXAMPLES = '''
   register: resp_out
 - set_fact:
     load_balancer_name: "{{ item.name }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?id=='4de7ac8b-495b-4884-9a69-1050c6793cd6']"
 - debug: var=load_balancer_name

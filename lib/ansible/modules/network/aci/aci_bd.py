@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -19,8 +19,11 @@ description:
 notes:
 - The C(tenant) used must exist before using this module in your playbook.
   The M(aci_tenant) module can be used for this.
-- More information about the internal APIC class B(fv:BD) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:BD).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.4'
@@ -28,113 +31,117 @@ options:
   arp_flooding:
     description:
     - Determines if the Bridge Domain should flood ARP traffic.
-    - The APIC defaults new Bridge Domains to C(no).
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   bd:
     description:
     - The name of the Bridge Domain.
+    type: str
     aliases: [ bd_name, name ]
   bd_type:
     description:
     - The type of traffic on the Bridge Domain.
-    - The APIC defaults new Bridge Domains to C(ethernet).
+    - The APIC defaults to C(ethernet) when unset during creation.
+    type: str
     choices: [ ethernet, fc ]
-    default: ethernet
   description:
     description:
     - Description for the Bridge Domain.
+    type: str
   enable_multicast:
     description:
-    - Determines if PIM is enabled
-    - The APIC defaults new Bridge Domains to C(no).
+    - Determines if PIM is enabled.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   enable_routing:
     description:
     - Determines if IP forwarding should be allowed.
-    - The APIC defaults new Bridge Domains to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   endpoint_clear:
     description:
     - Clears all End Points in all Leaves when C(yes).
-    - The APIC defaults new Bridge Domains to C(no).
     - The value is not reset to disabled once End Points have been cleared; that requires a second task.
+    - The APIC defaults to C(no) when unset during creation.
     type: bool
-    default: 'no'
   endpoint_move_detect:
     description:
     - Determines if GARP should be enabled to detect when End Points move.
-    - The APIC defaults new Bridge Domains to C(garp).
+    - The APIC defaults to C(garp) when unset during creation.
+    type: str
     choices: [ default, garp ]
-    default: garp
   endpoint_retention_action:
-   description:
-   - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
-   - The APIC defaults new Bridge Domain to End Point Retention Policies to C(resolve).
-   choices: [ inherit, resolve ]
-   default: resolve
+    description:
+    - Determines if the Bridge Domain should inherit or resolve the End Point Retention Policy.
+    - The APIC defaults to C(resolve) when unset during creation.
+    type: str
+    choices: [ inherit, resolve ]
   endpoint_retention_policy:
     description:
     - The name of the End Point Retention Policy the Bridge Domain should use when
       overriding the default End Point Retention Policy.
+    type: str
   igmp_snoop_policy:
     description:
     - The name of the IGMP Snooping Policy the Bridge Domain should use when
       overriding the default IGMP Snooping Policy.
+    type: str
   ip_learning:
     description:
     - Determines if the Bridge Domain should learn End Point IPs.
-    - The APIC defaults new Bridge Domains to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
   ipv6_nd_policy:
     description:
     - The name of the IPv6 Neighbor Discovery Policy the Bridge Domain should use when
       overridding the default IPV6 ND Policy.
+    type: str
   l2_unknown_unicast:
     description:
     - Determines what forwarding method to use for unknown l2 destinations.
-    - The APIC defaults new Bridge domains to C(proxy).
+    - The APIC defaults to C(proxy) when unset during creation.
+    type: str
     choices: [ proxy, flood ]
-    default: proxy
   l3_unknown_multicast:
     description:
     - Determines the forwarding method to use for unknown multicast destinations.
-    - The APCI defaults new Bridge Domains to C(flood).
+    - The APIC defaults to C(flood) when unset during creation.
+    type: str
     choices: [ flood, opt-flood ]
-    default: flood
   limit_ip_learn:
     description:
     - Determines if the BD should limit IP learning to only subnets owned by the Bridge Domain.
-    - The APIC defaults new Bridge Domains to C(yes).
+    - The APIC defaults to C(yes) when unset during creation.
     type: bool
-    default: 'yes'
   mac_address:
     description:
     - The MAC Address to assign to the C(bd) instead of using the default.
-    default: 00:22:BD:F8:19:FF
+    - The APIC defaults to C(00:22:BD:F8:19:FF) when unset during creation.
+    type: str
     aliases: [ mac ]
     version_added: '2.5'
   multi_dest:
     description:
     - Determines the forwarding method for L2 multicast, broadcast, and link layer traffic.
-    - The APIC defaults new Bridge Domains to C(bd-flood).
+    - The APIC defaults to C(bd-flood) when unset during creation.
+    type: str
     choices: [ bd-flood, drop, encap-flood ]
-    default: bd-flood
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
   tenant:
     description:
     - The name of the Tenant.
+    type: str
     aliases: [ tenant_name ]
   vrf:
     description:
     - The name of the VRF.
+    type: str
     aliases: [ vrf_name ]
 extends_documentation_fragment: aci
 '''
@@ -146,11 +153,12 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: no
-    state: present
     tenant: prod
     bd: web_servers
     mac_address: 00:22:BD:F8:19:FE
     vrf: prod_vrf
+    state: present
+  delegate_to: localhost
 
 - name: Add an FC Bridge Domain
   aci_bd:
@@ -158,12 +166,13 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: no
-    state: present
     tenant: prod
     bd: storage
     bd_type: fc
     vrf: fc_vrf
     enable_routing: no
+    state: present
+  delegate_to: localhost
 
 - name: Modify a Bridge Domain
   aci_bd:
@@ -171,11 +180,12 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: present
     tenant: prod
     bd: web_servers
     arp_flooding: yes
     l2_unknown_unicast: flood
+    state: present
+  delegate_to: localhost
 
 - name: Query All Bridge Domains
   aci_bd:
@@ -184,6 +194,8 @@ EXAMPLES = r'''
     password: "{{ password }}"
     validate_certs: yes
     state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Query a Bridge Domain
   aci_bd:
@@ -191,9 +203,11 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: query
     tenant: prod
     bd: web_servers
+    state: query
+  delegate_to: localhost
+  register: query_result
 
 - name: Delete a Bridge Domain
   aci_bd:
@@ -201,9 +215,10 @@ EXAMPLES = r'''
     username: "{{ username }}"
     password: "{{ password }}"
     validate_certs: yes
-    state: absent
     tenant: prod
     bd: web_servers
+    state: absent
+  delegate_to: localhost
 '''
 
 RETURN = r'''
@@ -238,7 +253,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -287,17 +302,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -307,7 +322,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -331,19 +346,17 @@ def main():
         igmp_snoop_policy=dict(type='str'),
         ip_learning=dict(type='bool'),
         ipv6_nd_policy=dict(type='str'),
-        l2_unknown_unicast=dict(choices=['proxy', 'flood']),
-        l3_unknown_multicast=dict(choices=['flood', 'opt-flood']),
+        l2_unknown_unicast=dict(type='str', choices=['proxy', 'flood']),
+        l3_unknown_multicast=dict(type='str', choices=['flood', 'opt-flood']),
         limit_ip_learn=dict(type='bool'),
         mac_address=dict(type='str', aliases=['mac']),
-        multi_dest=dict(choices=['bd-flood', 'drop', 'encap-flood']),
-        state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
+        multi_dest=dict(type='str', choices=['bd-flood', 'drop', 'encap-flood']),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         vrf=dict(type='str', aliases=['vrf_name']),
         gateway_ip=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         scope=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
         subnet_mask=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        protocol=dict(type='str', removed_in_version='2.6'),  # Deprecated in v2.6
     )
 
     module = AnsibleModule(
@@ -394,14 +407,14 @@ def main():
         root_class=dict(
             aci_class='fvTenant',
             aci_rn='tn-{0}'.format(tenant),
-            filter_target='eq(fvTenant.name, "{0}")'.format(tenant),
             module_object=tenant,
+            target_filter={'name': tenant},
         ),
         subclass_1=dict(
             aci_class='fvBD',
             aci_rn='BD-{0}'.format(bd),
-            filter_target='eq(fvBD.name, "{0}")'.format(bd),
             module_object=bd,
+            target_filter={'name': bd},
         ),
         child_classes=['fvRsCtx', 'fvRsIgmpsn', 'fvRsBDToNdP', 'fvRsBdToEpRet'],
     )

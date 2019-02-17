@@ -6,7 +6,6 @@
 - name: configure with invalid src
   eos_config:
     src: basic/foobar.j2
-    provider: "{{ eapi }}"
   register: result
   ignore_errors: yes
 

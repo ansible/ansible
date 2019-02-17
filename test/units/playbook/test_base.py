@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import unittest
+from units.compat import unittest
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
@@ -114,8 +114,6 @@ class TestBase(unittest.TestCase):
         data = {'no_log': False,
                 'remote_user': None,
                 'vars': self.assorted_vars,
-                # 'check_mode': False,
-                'always_run': False,
                 'environment': [],
                 'run_once': False,
                 'connection': None,
@@ -349,14 +347,13 @@ class BaseSubClass(base.Base):
     _test_attr_list = FieldAttribute(isa='list', listof=string_types, always_post_validate=True)
     _test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
     _test_attr_list_required = FieldAttribute(isa='list', listof=string_types, required=True,
-                                              default=[], always_post_validate=True)
-    _test_attr_barelist = FieldAttribute(isa='barelist', always_post_validate=True)
+                                              default=list, always_post_validate=True)
     _test_attr_string = FieldAttribute(isa='string', default='the_test_attr_string_default_value')
     _test_attr_string_required = FieldAttribute(isa='string', required=True,
                                                 default='the_test_attr_string_default_value')
     _test_attr_percent = FieldAttribute(isa='percent', always_post_validate=True)
-    _test_attr_set = FieldAttribute(isa='set', default=set(), always_post_validate=True)
-    _test_attr_dict = FieldAttribute(isa='dict', default={'a_key': 'a_value'}, always_post_validate=True)
+    _test_attr_set = FieldAttribute(isa='set', default=set, always_post_validate=True)
+    _test_attr_dict = FieldAttribute(isa='dict', default=lambda: {'a_key': 'a_value'}, always_post_validate=True)
     _test_attr_class = FieldAttribute(isa='class', class_type=ExampleSubClass)
     _test_attr_class_post_validate = FieldAttribute(isa='class', class_type=ExampleSubClass,
                                                     always_post_validate=True)
@@ -611,11 +608,6 @@ class TestBaseSubClass(TestBase):
         templar = Templar(loader=fake_loader)
         self.assertRaisesRegexp(AnsibleParserError, 'cannot have empty values',
                                 bsc.post_validate, templar)
-
-    def test_attr_barelist(self):
-        ds = {'test_attr_barelist': 'comma,separated,values'}
-        bsc = self._base_validate(ds)
-        self.assertEquals(['comma', 'separated', 'values'], bsc._attributes['test_attr_barelist'])
 
     def test_attr_unknown(self):
         a_list = ['some string']

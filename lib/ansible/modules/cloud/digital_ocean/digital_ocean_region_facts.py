@@ -21,7 +21,7 @@ module: digital_ocean_region_facts
 short_description: Gather facts about DigitalOcean regions
 description:
     - This module can be used to gather facts about regions.
-author: "Abhijeet Kasurde (@akasurde)"
+author: "Abhijeet Kasurde (@Akasurde)"
 version_added: "2.6"
 extends_documentation_fragment: digital_ocean.documentation
 requirements:
@@ -41,7 +41,7 @@ EXAMPLES = '''
 - debug: var=resp_out
 - set_fact:
     region_slug: "{{ item.name }}"
-  with_items: "{{ resp_out.data|json_query(name) }}"
+  loop: "{{ resp_out.data|json_query(name) }}"
   vars:
     name: "[?slug==`nyc1`]"
 - debug: var=region_slug

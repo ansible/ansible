@@ -25,7 +25,9 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-# need one
+- name: get 'custom_field' from lastpass entry 'entry-name'
+  debug:
+    msg: "{{ lookup('lastpass', 'entry-name', field='custom_field') }}"
 """
 
 RETURN = """
@@ -36,6 +38,7 @@ RETURN = """
 from subprocess import Popen, PIPE
 
 from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.lookup import LookupBase
 
 
@@ -59,11 +62,11 @@ class LPass(object):
 
     def _run(self, args, stdin=None, expected_rc=0):
         p = Popen([self.cli_path] + args, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        out, err = p.communicate(stdin)
+        out, err = p.communicate(to_bytes(stdin))
         rc = p.wait()
         if rc != expected_rc:
             raise LPassException(err)
-        return out, err
+        return to_text(out, errors='surrogate_or_strict'), to_text(err, errors='surrogate_or_strict')
 
     def _build_args(self, command, args=None):
         if args is None:

@@ -138,39 +138,27 @@ warnings:
 """
 import time
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
 from ansible.module_utils.network.common.parsing import Conditional
-from ansible.module_utils.network.common.utils import ComplexList
-from ansible.module_utils.six import string_types
+from ansible.module_utils.network.common.utils import transform_commands, to_lines
 from ansible.module_utils.network.vyos.vyos import run_commands
 from ansible.module_utils.network.vyos.vyos import vyos_argument_spec
 
 
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, string_types):
-            item = str(item).split('\n')
-        yield item
-
-
 def parse_commands(module, warnings):
-    command = ComplexList(dict(
-        command=dict(key=True),
-        prompt=dict(),
-        answer=dict(),
-    ), module)
-    commands = command(module.params['commands'])
-    items = []
+    commands = transform_commands(module)
 
-    for item in commands:
-        if module.check_mode and not item['command'].startswith('show'):
-            warnings.append('only show commands are supported when using '
-                            'check mode, not executing `%s`' % item['command'])
-        else:
-            items.append(module.jsonify(item))
+    if module.check_mode:
+        for item in list(commands):
+            if not item['command'].startswith('show'):
+                warnings.append(
+                    'Only show commands are supported when using check mode, not '
+                    'executing %s' % item['command']
+                )
+                commands.remove(item)
 
-    return items
+    return commands
 
 
 def main():
@@ -189,14 +177,14 @@ def main():
     module = AnsibleModule(argument_spec=spec, supports_check_mode=True)
 
     warnings = list()
-
+    result = {'changed': False, 'warnings': warnings}
     commands = parse_commands(module, warnings)
-
     wait_for = module.params['wait_for'] or list()
+
     try:
         conditionals = [Conditional(c) for c in wait_for]
     except AttributeError as exc:
-        module.fail_json(msg=to_native(exc))
+        module.fail_json(msg=to_text(exc))
 
     retries = module.params['retries']
     interval = module.params['interval']
@@ -205,29 +193,27 @@ def main():
     for _ in range(retries):
         responses = run_commands(module, commands)
 
-        for item in conditionals:
+        for item in list(conditionals):
             if item(responses):
                 if match == 'any':
                     conditionals = list()
                     break
                 conditionals.remove(item)
 
-            if not conditionals:
-                break
+        if not conditionals:
+            break
 
-            time.sleep(interval)
+        time.sleep(interval)
 
     if conditionals:
         failed_conditions = [item.raw for item in conditionals]
         msg = 'One or more conditional statements have not been satisfied'
-        module.fail_json(msg=msg, falied_conditions=failed_conditions)
+        module.fail_json(msg=msg, failed_conditions=failed_conditions)
 
-    result = {
-        'changed': False,
+    result.update({
         'stdout': responses,
-        'warnings': warnings,
         'stdout_lines': list(to_lines(responses)),
-    }
+    })
 
     module.exit_json(**result)
 

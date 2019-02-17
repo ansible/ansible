@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'certified'}
+                    'supported_by': 'community'}
 
 
 DOCUMENTATION = '''
@@ -42,7 +42,6 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     account_type:
         description:
             - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
@@ -52,6 +51,7 @@ options:
             - Premium_LRS
             - Standard_GRS
             - Standard_LRS
+            - StandardSSD_LRS
             - Standard_RAGRS
             - Standard_ZRS
         aliases:
@@ -68,16 +68,20 @@ options:
         default: 'Storage'
         choices:
             - Storage
+            - StorageV2
             - BlobStorage
         version_added: "2.2"
     access_tier:
         description:
             - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
-        default: 'Storage'
         choices:
             - Hot
             - Cool
         version_added: "2.4"
+    force:
+        description:
+            - Attempt deletion if resource already exists and cannot be updated
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -102,8 +106,8 @@ EXAMPLES = '''
         name: clh0002
         type: Standard_RAGRS
         tags:
-          - testing: testing
-          - delete: on-exit
+          testing: testing
+          delete: on-exit
 '''
 
 
@@ -147,7 +151,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, HAS_AZURE
 
 
 class AzureRMStorageAccount(AzureRMModuleBase):
@@ -155,7 +159,8 @@ class AzureRMStorageAccount(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            account_type=dict(type='str', choices=[], aliases=['type']),
+            account_type=dict(type='str', choices=['Premium_LRS', 'Standard_GRS', 'Standard_LRS', 'StandardSSD_LRS', 'Standard_RAGRS', 'Standard_ZRS'],
+                              aliases=['type']),
             custom_domain=dict(type='dict'),
             location=dict(type='str'),
             name=dict(type='str', required=True),
@@ -163,12 +168,14 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             state=dict(default='present', choices=['present', 'absent']),
             force=dict(type='bool', default=False),
             tags=dict(type='dict'),
-            kind=dict(type='str', default='Storage', choices=['Storage', 'BlobStorage']),
+            kind=dict(type='str', default='Storage', choices=['Storage', 'StorageV2', 'BlobStorage']),
             access_tier=dict(type='str', choices=['Hot', 'Cool'])
         )
 
-        for key in self.storage_models.SkuName:
-            self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
+        if HAS_AZURE:
+            for key in self.storage_models.SkuName:
+                if getattr(key, 'value') not in self.module_arg_spec['account_type']['choices']:
+                    self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,
@@ -447,6 +454,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
 def main():
     AzureRMStorageAccount()
+
 
 if __name__ == '__main__':
     main()

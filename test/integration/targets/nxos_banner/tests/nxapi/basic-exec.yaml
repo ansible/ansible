@@ -5,8 +5,8 @@
     - name: setup - remove exec
       nxos_banner: &remove
         banner: exec
+        provider: "{{ connection }}"
         state: absent
-        provider: "{{ nxapi }}"
 
     - name: Set exec
       nxos_banner: &exec
@@ -15,8 +15,8 @@
           this is my exec banner
           that has a multiline
           string
+        provider: "{{ connection }}"
         state: present
-        provider: "{{ nxapi }}"
       register: result
 
     - assert:

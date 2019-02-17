@@ -6,13 +6,13 @@
 - name: Make sure LLDP is not running before tests
   nxos_feature:
     feature: lldp
-    state: disabled
     provider: "{{ connection }}"
+    state: disabled
 
 - name: Enable LLDP service
   nxos_lldp:
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -22,8 +22,8 @@
 
 - name: Enable LLDP service again (idempotent)
   nxos_lldp:
-    state: present
     provider: "{{ connection }}"
+    state: present
   register: result
 
 - assert:
@@ -32,8 +32,8 @@
 
 - name: Disable LLDP service
   nxos_lldp:
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:
@@ -43,8 +43,8 @@
 
 - name: Disable LLDP service (idempotent)
   nxos_lldp:
-    state: absent
     provider: "{{ connection }}"
+    state: absent
   register: result
 
 - assert:

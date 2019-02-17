@@ -204,6 +204,7 @@ def to_template_params(health_check):
         params['string_match_part'] = HealthCheck.XMLStringMatchPart % {'string_match': health_check.string_match}
     return params
 
+
 XMLResourcePathPart = """<ResourcePath>%(resource_path)s</ResourcePath>"""
 
 POSTXMLBody = """

@@ -19,7 +19,7 @@ options:
     description:
       - The default behaviour for targets that are unused is to leave them registered. If instead you would like to remove them
         set I(deregister_unused) to yes.
-    choices: [ 'yes', 'no' ]
+    type: bool
   target_az:
     description:
       - An Availability Zone or all. This determines whether the target receives traffic from the load balancer nodes in the specified
@@ -44,7 +44,7 @@ options:
   target_status:
     description:
       - Blocks and waits for the target status to equal given value. For more detail on target status see
-        U(http://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#target-health-states)
+        U(https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#target-health-states)
     required: false
     choices: [ 'initial', 'healthy', 'unhealthy', 'unused', 'draining', 'unavailable' ]
   target_status_timeout:
@@ -70,7 +70,7 @@ EXAMPLES = '''
 # Register an IP address target to a target group
 - elb_target:
     target_group_name: myiptargetgroup
-    target_id: 10.0.0.10
+    target_id: i-1234567
     state: present
 
 # Register an instance target to a target group
@@ -296,7 +296,7 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
-                           mutually_exclusive=['target_group_arn', 'target_group_name']
+                           mutually_exclusive=[['target_group_arn', 'target_group_name']]
                            )
 
     if not HAS_BOTO3:
@@ -311,6 +311,7 @@ def main():
         register_target(connection, module)
     else:
         deregister_target(connection, module)
+
 
 if __name__ == '__main__':
     main()

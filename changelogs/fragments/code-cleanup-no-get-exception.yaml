@@ -1,0 +1,2 @@
+minor_changes:
+    - Cleaned up module code to remove all calls to the deprecated get_exception() function

@@ -1,0 +1,56 @@
+---
+  # junos interface -> remove_default_spec() conditional()
+  - debug: msg="START junos_interface netconf/common_utils.yaml on connection={{ ansible_connection }}"
+
+  - name: get facts
+    junos_facts:
+      provider: "{{ netconf }}"
+    register: result
+
+
+  - name: Define interface name for vSRX
+    set_fact:
+      intf_name: pp0
+    when: result['ansible_facts']['ansible_net_model']  is search("vSRX*")
+
+  - name: Define interface name for vsrx
+    set_fact:
+      intf_name: pp0
+    when: result['ansible_facts']['ansible_net_model']  is search("vsrx")
+
+  - name: Define interface name for vQFX
+    set_fact:
+      intf_name: gr-0/0/0
+    when: result['ansible_facts']['ansible_net_model']  is search("vqfx*")
+
+  - name: Check intent arguments
+    junos_interface:
+      name: "{{ intf_name }}"
+      state: up
+      tx_rate: ge(0)
+      rx_rate: le(0)
+      provider: "{{ netconf }}"
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == false"
+
+  - name: Check intent arguments (failed condition)
+    junos_interface:
+      name: "{{ intf_name }}"
+      state: down
+      tx_rate: gt(0)
+      rx_rate: lt(0)
+      provider: "{{ netconf }}"
+    ignore_errors: yes
+    register: result
+
+  - assert:
+      that:
+        - "result.failed == true"
+        - "'state eq(down)' in result.failed_conditions"
+        - "'tx_rate gt(0)' in result.failed_conditions"
+        - "'rx_rate lt(0)' in result.failed_conditions"
+
+  - debug: msg="END junos_interface netconf/common_utils.yaml on connection={{ ansible_connection }}"

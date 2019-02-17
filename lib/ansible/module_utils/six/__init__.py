@@ -33,6 +33,10 @@ import operator
 import sys
 import types
 
+# The following makes it easier for us to script updates of the bundled code.  It is not part of
+# upstream six
+_BUNDLED_METADATA = {"pypi_name": "six", "version": "1.11.0"}
+
 __author__ = "Benjamin Peterson <benjamin@python.org>"
 __version__ = "1.11.0"
 
@@ -227,6 +231,7 @@ class _SixMetaPathImporter(object):
         self.__get_module(fullname)  # eventually raises ImportError
         return None
     get_source = get_code  # same as get_code
+
 
 _importer = _SixMetaPathImporter(__name__)
 
@@ -489,6 +494,7 @@ class Module_six_moves_urllib(types.ModuleType):
 
     def __dir__(self):
         return ['parse', 'error', 'request', 'response', 'robotparser']
+
 
 _importer._add_module(Module_six_moves_urllib(__name__ + ".moves.urllib"),
                       "moves.urllib")

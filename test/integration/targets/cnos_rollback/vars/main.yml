@@ -1,0 +1,12 @@
+---
+test_rollback_data1:
+  - {configType: running-config, protocol: "sftp", serverip: "10.241.106.118", rcpath: "/root/cnos_config/10.241.107.39_running-config.txt", serverusername: "root", serverpassword: "root123"}
+
+test_rollback_data2:
+  - {configType: startup-config, protocol: "sftp", serverip: "10.241.106.118", rcpath: "/root/cnos_config/10.241.107.39_startup-config.txt", serverusername: "root", serverpassword: "root123"}
+
+test_rollback_data3:
+  - {configType: running-config, protocol: "tftp", serverip: "10.241.106.118"}
+  
+test_rollback_data4:
+  - {configType: startup-config, protocol: "tftp", serverip: "10.241.106.118"}

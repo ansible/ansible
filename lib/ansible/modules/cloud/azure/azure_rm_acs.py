@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2017 Julien Stroheker, <juliens@microsoft.com>
-#
+# -*- coding: utf-8 -*
+
+# Copyright: (c) 2017, Julien Stroheker <juliens@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -39,10 +39,13 @@ options:
     location:
         description:
             - Valid azure location. Defaults to location of the resource group.
-        default: resource_group location
     orchestration_platform:
         description:
             - Specifies the Container Orchestration Platform to use. Currently can be either DCOS, Kubernetes or Swarm.
+        choices:
+            - 'DCOS'
+            - 'Kubernetes'
+            - 'Swarm'
         required: true
     master_profile:
         description:
@@ -107,15 +110,14 @@ options:
             client_id:
                 description:
                     - The ID for the Service Principal.
-                required: false
             client_secret:
                 description:
                     - The secret password associated with the service principal.
-                required: false
     diagnostics_profile:
         description:
             - Should VM Diagnostics be enabled for the Container Service VM's.
         required: true
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -465,13 +467,11 @@ class AzureRMContainerService(AzureRMModuleBase):
             ),
             state=dict(
                 type='str',
-                required=False,
                 default='present',
                 choices=['present', 'absent']
             ),
             location=dict(
-                type='str',
-                required=False
+                type='str'
             ),
             orchestration_platform=dict(
                 type='str',
@@ -491,8 +491,7 @@ class AzureRMContainerService(AzureRMModuleBase):
                 required=True
             ),
             service_principal=dict(
-                type='list',
-                required=False
+                type='list'
             ),
             diagnostics_profile=dict(
                 type='bool',
@@ -546,7 +545,7 @@ class AzureRMContainerService(AzureRMModuleBase):
 
             mastercount = self.master_profile[0].get('count')
             if mastercount != 1 and mastercount != 3 and mastercount != 5:
-                self.fail('Master Count number wrong : {} / should be 1 3 or 5'.format(mastercount))
+                self.fail('Master Count number wrong : {0} / should be 1 3 or 5'.format(mastercount))
 
             # For now Agent Pool cannot be more than 1, just remove this part in the future if it change
             agentpoolcount = len(self.agent_pool_profiles)

@@ -1,15 +1,24 @@
 .. _appendix_module_utilities:
 
+**************************
 Appendix: Module Utilities
-``````````````````````````
+**************************
 
-Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The `basic.py` module utility provides the main entry point for accessing the Ansible library, and all Ansible modules must, at minimum, import from basic.py::
+Ansible provides a number of module utilities that provide helper functions that you can use when developing your own modules. The ``basic.py`` module utility provides the main entry point for accessing the Ansible library, and all Python Ansible modules must, at minimum, import ``AnsibleModule``::
 
-  from ansible.module_utils.basic import *
+  from ansible.module_utils.basic import AnsibleModule
 
+If you need to share Python code between some of your own local modules, you can use Ansible's ``module_utils`` directories for this. When you run ``ansible-playbook``, Ansible will merge any files in the local ``module_utils`` directory into the ``ansible.module_utils`` namespace. For example, if you have your own custom modules that import a ``my_shared_code`` library, you can place that into a ``./module_utils/my_shared_code.py`` file in the root location where your playbook lives, and then import it in your modules like so::
 
-The following is a list of module_utils files and a general description. The module utility source code lives in the `./lib/module_utils` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
+  from ansible.module_utils.my_shared_code import MySharedCodeClient
 
+Your custom ``module_utils`` directories can live in the root directory of your playbook, or in the individual role directories, or in the directories specified by the ``ANSIBLE_MODULE_UTILS`` configuration setting.
+
+Ansible ships with the following list of ``module_utils`` files. The module utility source code lives in the ``./lib/ansible/module_utils`` directory under your main Ansible path - for more details on any specific module utility, please see the source code.
+
+.. include:: shared_snippets/licensing.txt
+
+- alicloud_ecs.py - Definitions and utilities for modules working with Alibaba Cloud ECS.
 - api.py - Adds shared support for generic API modules.
 - azure_rm_common.py - Definitions and utilities for Microsoft Azure Resource Manager template deployments.
 - basic.py - General definitions and helper utilities for Ansible modules.
@@ -23,6 +32,7 @@ The following is a list of module_utils files and a general description. The mod
 - keycloak.py - Definitions and helper functions for modules working with the Keycloak API
 - known_hosts.py - utilities for working with known_hosts file
 - manageiq.py - Functions and utilities for modules that work with ManageIQ platform and its resources.
+- memset.py - Helper functions and utilities for interacting with Memset's API.
 - mysql.py - Allows modules to connect to a MySQL instance
 - netapp.py - Functions and utilities for modules that work with the NetApp storage platforms.
 - network/a10/a10.py - Utilities used by the a10_server module to manage A10 Networks devices.
@@ -50,6 +60,7 @@ The following is a list of module_utils files and a general description. The mod
 - network/iosxr/iosxr.py - Definitions and helper functions for modules that manage Cisco IOS-XR networking devices.
 - network/ironware/ironware.py - Module support utilities for managing Brocade IronWare devices.
 - network/junos/junos.py -  Definitions and helper functions for modules that manage Junos networking devices.
+- network/meraki/meraki.py - Utilities specifically for the Meraki network modules.
 - network/netscaler/netscaler.py - Utilities specifically for the netscaler network modules.
 - network/nso/nso.py - Utilities for modules that work with Cisco NSO.
 - network/nxos/nxos.py - Contains definitions and helper functions specific to Cisco NXOS networking devices.
@@ -69,5 +80,7 @@ The following is a list of module_utils files and a general description. The mod
 - six/__init__.py - Bundled copy of the `Six Python library <https://pythonhosted.org/six/>`_ to aid in writing code compatible with both Python 2 and Python 3.
 - splitter.py - String splitting and manipulation utilities for working with Jinja2 templates
 - urls.py - Utilities for working with http and https requests
+- utm_utils.py - Contains base class for creating new Sophos UTM Modules and helper functions for handling the rest interface of Sophos UTM
 - vca.py - Contains utilities for modules that work with VMware vCloud Air
 - vmware.py - Contains utilities for modules that work with VMware vSphere VMs
+- xenserver.py - Contains utilities for modules that work with XenServer.

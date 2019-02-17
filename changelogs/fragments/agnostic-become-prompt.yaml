@@ -1,0 +1,2 @@
+minor_changes:
+- become - Change the default value for `AGNOSTIC_BECOME_PROMPT` to `True` so become prompts display `BECOME password:` regardless of the become method used. To display the become method in the prompt (for example, `SUDO password:`), set this config option to `False`.

@@ -45,7 +45,7 @@ TEST_MAP = {
 }
 
 
-FILTER_RE = re.compile(r'((.+?)\s*(?P<left>[\w \.\'"]+)(\s*)\|(\s*)(?P<filter>\w+))')
+FILTER_RE = re.compile(r'(?P<left>[\w .\'"]+)(\s*)\|(\s*)(?P<filter>\w+)')
 
 
 def main():

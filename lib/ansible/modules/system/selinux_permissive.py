@@ -19,36 +19,37 @@ DOCUMENTATION = '''
 module: selinux_permissive
 short_description: Change permissive domain in SELinux policy
 description:
-  - Add and remove domain from the list of permissive domain.
+  - Add and remove a domain from the list of permissive domains.
 version_added: "2.0"
 options:
   domain:
     description:
-        - "the domain that will be added or removed from the list of permissive domains"
+        - The domain that will be added or removed from the list of permissive domains.
     required: true
   permissive:
     description:
-        - "indicate if the domain should or should not be set as permissive"
+        - Indicate if the domain should or should not be set as permissive.
     required: true
     type: bool
   no_reload:
     description:
-        - "automatically reload the policy after a change"
-        - "default is set to 'false' as that's what most people would want after changing one domain"
-        - "Note that this doesn't work on older version of the library (example EL 6), the module will silently ignore it in this case"
+        - Disable reloading of the SELinux policy after making change to a domain's permissive setting.
+        - The default is C(no), which causes policy to be reloaded when a domain changes state.
+        - Reloading the policy does not work on older versions of the C(policycoreutils-python) library, for example in EL 6."
     type: bool
     default: 'no'
   store:
     description:
-      - "name of the SELinux policy store to use"
+      - "Name of the SELinux policy store to use."
 notes:
-    - Requires a version of SELinux recent enough ( ie EL 6 or newer )
+    - Requires a recent version of SELinux and C(policycoreutils-python) (EL 6 or newer).
 requirements: [ policycoreutils-python ]
-author: Michael Scherer <misc@zarb.org>
+author: Michael Scherer (@mscherer) <misc@zarb.org>
 '''
 
 EXAMPLES = '''
-- selinux_permissive:
+- name: Change the httpd_t domain to permissive
+  selinux_permissive:
     name: httpd_t
     permissive: true
 '''
@@ -56,13 +57,14 @@ EXAMPLES = '''
 import traceback
 
 HAVE_SEOBJECT = False
+SEOBJECT_IMP_ERR = None
 try:
     import seobject
     HAVE_SEOBJECT = True
 except ImportError:
-    pass
+    SEOBJECT_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -85,7 +87,8 @@ def main():
     no_reload = module.params['no_reload']
 
     if not HAVE_SEOBJECT:
-        module.fail_json(changed=False, msg="policycoreutils-python required for this module")
+        module.fail_json(changed=False, msg=missing_required_lib("policycoreutils-python"),
+                         exception=SEOBJECT_IMP_ERR)
 
     try:
         permissive_domains = seobject.permissiveRecords(store)

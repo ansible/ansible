@@ -1,0 +1,33 @@
+- name: collect repo configuration before test
+  shell: "grep . /etc/zypp/repos.d/*"
+  register: before
+
+- name: ensure zypper ref works
+  command: zypper -n ref
+
+- block:
+    - include: 'zypper_repository.yml'
+  always:
+    - name: remove repositories added during test
+      zypper_repository:
+        name: "{{item}}"
+        state: absent
+      with_items:
+        - chrome1
+        - chrome2
+        - test
+        - testrefresh
+        - testprio
+        - Apache_Modules
+
+    - name: collect repo configuration after test
+      shell: "grep . /etc/zypp/repos.d/*"
+      register: after
+
+    - name: verify repo configuration has been restored
+      assert:
+        that:
+          - before.stdout == after.stdout
+
+    - name: ensure zypper ref still works
+      command: zypper -n ref

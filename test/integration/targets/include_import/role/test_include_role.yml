@@ -47,11 +47,17 @@
     - name: Test role include with a loop
       include_role:
         name: "{{ item }}"
-      register: loop_test
       with_items:
         - role1
         - role3
         - role2
+
+    - name: Assert that roles run with_items
+      assert:
+        that:
+          - _role1_result.msg == 'In role1'
+          - _role2_result.msg == 'In role2'
+          - _role3_result.msg == 'In role3'
 
     - name: Test including a task file from a role
       include_role:
@@ -63,10 +69,7 @@
         name: role3
         tasks_from: vartest.yml
         vars_from: role3vars.yml
-        private: no
 
-    # FIXME Setting private: no in previous task does not make the variables
-    # available to the play
     - name: Assert that variables defined in previous task are available to play
       assert:
         that:
@@ -105,6 +108,18 @@
       vars:
         where_am_i_defined: "{{ test_var }}"
 
+    - name: Use a variable in tasks_from field
+      include_role:
+        name: role1
+        tasks_from: "{{ tasks_file_name }}.yml"
+      vars:
+        tasks_file_name: canary3
+
+    - name: Assert that tasks file was included
+      assert:
+        that:
+          - role1_canary3 == 'r1c3'
+
     ## FIXME This fails with the following error:
     ## The module {u'include_role': {u'name': u'role1'}} was not found in configured module paths.
     # - name: Include an entire task
@@ -126,3 +141,26 @@
         - name: Include role inside always
           include_role:
             name: role3
+
+- hosts: testhost,testhost2
+  tasks:
+    - name: wipe role results
+      set_fact:
+        _role2_result: ~
+        _role3_result: ~
+
+    - name: Test using a host variable for role name
+      include_role:
+        name: "{{ host_var_role_name }}"
+
+    - name: assert that host varible for role name calls 2 diff roles
+      assert:
+        that:
+          - _role2_result is not none
+      when: inventory_hostname == 'testhost2'
+
+    - name: assert that host varible for role name calls 2 diff roles
+      assert:
+        that:
+          - _role3_result is not none
+      when: inventory_hostname == 'testhost'

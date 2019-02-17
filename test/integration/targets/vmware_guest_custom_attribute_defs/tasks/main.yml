@@ -1,0 +1,157 @@
+# Test code for the vmware_guest_custom_attribute_defs module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+
+- debug: var=vcsim
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for vcsim server to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- name: list custom attributes
+  vmware_guest_custom_attribute_defs:
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    validate_certs: False
+    state: list
+  register: list_attrib_def
+
+- debug: var=list_attrib_def
+
+- assert:
+    that:
+      - "not list_attrib_def.changed"
+
+- name: add custom attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: present
+    attribute_key: sample_5
+  register: add_attrib_def
+
+- debug: var=add_attrib_def
+
+- assert:
+    that:
+      - "add_attrib_def.changed"
+      - "'sample_5' in add_attrib_def.instance"
+
+- name: list custom attributes
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: list
+  register: list_attrib_def
+
+- debug: var=list_attrib_def
+
+- assert:
+    that:
+      - "not list_attrib_def.changed"
+
+- name: add attribute definition again
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: present
+    attribute_key: sample_5
+  register: add_attrib_def
+
+- debug: var=add_attrib_def
+
+- assert:
+    that:
+      - "not add_attrib_def.changed"
+
+- name: list attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: list
+  register: list_attrib_def
+
+- debug: var=list_attrib_def
+
+- assert:
+    that:
+      - "not list_attrib_def.changed"
+
+- name: remove attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: absent
+    attribute_key: sample_5
+  register: remove_attrib_def
+
+- debug: var=remove_attrib_def
+
+- assert:
+    that:
+      - "remove_attrib_def.changed"
+      - "'sample_5' not in remove_attrib_def.instance"
+
+- name: remove attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: absent
+    attribute_key: sample_5
+  register: remove_attrib_def
+
+- debug: var=remove_attrib_def
+
+- assert:
+    that:
+      - "not remove_attrib_def.changed"
+      - "'sample_5' not in remove_attrib_def.instance"
+
+- name: list attribute definition
+  vmware_guest_custom_attribute_defs:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    state: list
+  register: list_attrib_def
+
+- debug: var=list_attrib_def
+
+- assert:
+    that:
+      - "not list_attrib_def.changed"

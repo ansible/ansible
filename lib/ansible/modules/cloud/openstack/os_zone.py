@@ -52,8 +52,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -89,23 +89,23 @@ zone:
     contains:
         id:
             description: Unique zone ID
-            type: string
+            type: str
             sample: "c1c530a3-3619-46f3-b0f6-236927b2618c"
         name:
             description: Zone name
-            type: string
+            type: str
             sample: "example.net."
         type:
             description: Zone type
-            type: string
+            type: str
             sample: "PRIMARY"
         email:
             description: Zone owner email
-            type: string
+            type: str
             sample: "test@example.net"
         description:
             description: Zone description
-            type: string
+            type: str
             sample: "Test description"
         ttl:
             description: Zone TTL value
@@ -157,7 +157,7 @@ def main():
     name = module.params.get('name')
     state = module.params.get('state')
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.8.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         zone = cloud.get_zone(name)
 
@@ -206,7 +206,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

@@ -27,7 +27,7 @@ EXAMPLES = """
   with_nested:
     - [ 'alice', 'bob' ]
     - [ 'clientdb', 'employeedb', 'providerdb' ]
-As with the case of 'with_items' above, you can use previously defined variables.:
+# As with the case of 'with_items' above, you can use previously defined variables.:
 
 - name: here, 'users' contains the above list of employees
   mysql_user:

@@ -118,9 +118,9 @@ Lead by mattclay
 
   Some new issues have also appeared, which are currently being worked on.
 
-- *Enable Remaining Tests:* Implement fixes for OS X, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
+- *Enable Remaining Tests:* Implement fixes for macOS, FreeBSD and Python 3 to enable the remaining blacklisted tests for CI.
 
-  **Ongoing:** More tests have been enabled for OS X, FreeBSD and Python 3. However, work still remains to enable more tests.
+  **Ongoing:** More tests have been enabled for macOS, FreeBSD and Python 3. However, work still remains to enable more tests.
 
 - *Windows Server 2016:* Add Windows Server 2016 to CI when official AMIs become available.
 
@@ -163,4 +163,4 @@ ansible-ssh
 
   - https://github.com/2ndQuadrant/ansible-ssh
   - https://github.com/haad/ansible-ssh
-  - https://github.com/mlvnd/ansible-ssh
+  - https://github.com/mlvnd/ansible-tools

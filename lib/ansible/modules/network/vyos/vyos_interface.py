@@ -46,6 +46,7 @@ options:
   enabled:
     description:
       - Interface link status.
+    type: bool
   speed:
     description:
       - Interface link speed.
@@ -393,7 +394,7 @@ def main():
     required_one_of = [['name', 'aggregate']]
     mutually_exclusive = [['name', 'aggregate']]
 
-    required_together = (['speed', 'duplex'])
+    required_together = [['speed', 'duplex']]
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
@@ -427,6 +428,7 @@ def main():
         msg = 'One or more conditional statements have not been satisfied'
         module.fail_json(msg=msg, failed_conditions=failed_conditions)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()

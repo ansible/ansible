@@ -268,7 +268,7 @@ system.
        An introduction to playbooks
    :ref:`playbooks_delegation`
        Delegation, useful for working with load balancers, clouds, and locally executed steps.
-   `User Mailing List <http://groups.google.com/group/ansible-project>`_
+   `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

@@ -9,13 +9,11 @@
     parents:
       - interface Loopback999
     match: none
-    provider: "{{ cli }}"
 
 - name: configure device with defaults included
   ios_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
   register: result
 
 - debug: var=result
@@ -30,7 +28,6 @@
   ios_config:
     src: defaults/config.j2
     defaults: yes
-    provider: "{{ cli }}"
   register: result
 
 - debug: var=result
@@ -44,14 +41,12 @@
   ios_config:
     lines:
         - mac-address-table notification mac-move
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: show interfaces brief to ensure deivce goes to valid prompt
   ios_command:
     commands:
       - show interfaces
-    provider: "{{ cli }}"
   register: result
 
 - assert:

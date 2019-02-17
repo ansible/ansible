@@ -41,7 +41,7 @@ options:
         - the iscsi target name
     login:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the target node should be connected
     node_auth:
@@ -60,12 +60,12 @@ options:
     auto_node_startup:
         aliases: [automatic]
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the target node should be automatically connected at startup
     discover:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the list of target nodes on the portal should be
           (re)discovered and added to the persistent iscsi database.
@@ -74,7 +74,7 @@ options:
           a changed state.
     show_nodes:
         required: false
-        choices: [true, false]
+        type: bool
         description:
         - whether the list of nodes in the persistent iscsi database should be
           returned by the module

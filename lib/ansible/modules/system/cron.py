@@ -38,6 +38,7 @@ options:
       - Description of a crontab entry or, if env is set, the name of environment variable.
         Required if state=absent. Note that if name is not set and state=present, then a
         new crontab entry will always be created, regardless of existing ones.
+        This parameter will always be required in future releases.
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -98,7 +99,7 @@ options:
   special_time:
     description:
       - Special time specification nickname.
-    choices: [ reboot, yearly, annually, monthly, weekly, daily, hourly ]
+    choices: [ annually, daily, hourly, monthly, reboot, weekly, yearly ]
     version_added: "1.3"
   disabled:
     description:
@@ -128,65 +129,62 @@ requirements:
   - cron
 author:
     - Dane Summers (@dsummersl)
-    - Mike Grozak
-    - Patrick Callahan
+    - Mike Grozak (@rhaido)
+    - Patrick Callahan (@dirtyharrycallahan)
     - Evan Kaufman (@EvanK)
     - Luca Berruti (@lberruti)
 """
 
 EXAMPLES = '''
-# Ensure a job that runs at 2 and 5 exists.
-# Creates an entry like "0 5,2 * * ls -alh > /dev/null"
-- cron:
+- name: Ensure a job that runs at 2 and 5 exists. Creates an entry like "0 5,2 * * ls -alh > /dev/null"
+  cron:
     name: "check dirs"
     minute: "0"
     hour: "5,2"
     job: "ls -alh > /dev/null"
 
-# Ensure an old job is no longer present. Removes any job that is prefixed
-# by "#Ansible: an old job" from the crontab
-- cron:
+- name: 'Ensure an old job is no longer present. Removes any job that is prefixed by "#Ansible: an old job" from the crontab'
+  cron:
     name: "an old job"
     state: absent
 
-# Creates an entry like "@reboot /some/job.sh"
-- cron:
+- name: Creates an entry like "@reboot /some/job.sh"
+  cron:
     name: "a job for reboot"
     special_time: reboot
     job: "/some/job.sh"
 
-# Creates an entry like "PATH=/opt/bin" on top of crontab
-- cron:
+- name: Creates an entry like "PATH=/opt/bin" on top of crontab
+  cron:
     name: PATH
     env: yes
-    value: /opt/bin
+    job: /opt/bin
 
-# Creates an entry like "APP_HOME=/srv/app" and insert it after PATH
-# declaration
-- cron:
+- name: Creates an entry like "APP_HOME=/srv/app" and insert it after PATH declaration
+  cron:
     name: APP_HOME
     env: yes
-    value: /srv/app
+    job: /srv/app
     insertafter: PATH
 
-# Creates a cron file under /etc/cron.d
-- cron:
+- name: Creates a cron file under /etc/cron.d
+  cron:
     name: yum autoupdate
     weekday: 2
     minute: 0
     hour: 12
     user: root
-    job: "YUMINTERACTIVE: 0 /usr/sbin/yum-autoupdate"
+    job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
     cron_file: ansible_yum-autoupdate
 
-# Removes a cron file from under /etc/cron.d
-- cron:
+- name: Removes a cron file from under /etc/cron.d
+  cron:
     name: "yum autoupdate"
     cron_file: ansible_yum-autoupdate
     state: absent
 
-# Removes "APP_HOME" environment variable from crontab
-- cron:
+- name: Removes "APP_HOME" environment variable from crontab
+  cron:
     name: APP_HOME
     env: yes
     state: absent
@@ -249,7 +247,7 @@ class CronTab(object):
             except IOError:
                 # cron file does not exist
                 return
-            except:
+            except Exception:
                 raise CronTabError("Unexpected error:", sys.exc_info()[0])
         else:
             # using safely quoted shell for now, but this really should be two non-shell calls instead.  FIXME
@@ -374,7 +372,7 @@ class CronTab(object):
         except OSError:
             # cron file does not exist
             return False
-        except:
+        except Exception:
             raise CronTabError("Unexpected error:", sys.exc_info()[0])
 
     def find_job(self, name, job=None):
@@ -569,6 +567,12 @@ def main():
             ['reboot', 'special_time'],
             ['insertafter', 'insertbefore'],
         ],
+        required_by=dict(
+            cron_file=('user'),
+        ),
+        required_if=(
+            ('state', 'present', ('job')),
+        ),
     )
 
     name = module.params['name']
@@ -606,6 +610,17 @@ def main():
 
     module.debug('cron instantiated - name: "%s"' % name)
 
+    if not name:
+        module.deprecate(
+            msg="The 'name' parameter will be required in future releases.",
+            version='2.10'
+        )
+    if reboot:
+        module.deprecate(
+            msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
+            version='2.10'
+        )
+
     if module._diff:
         diff = dict()
         diff['before'] = crontab.existing
@@ -626,13 +641,6 @@ def main():
     # cannot support special_time on solaris
     if (special_time or reboot) and get_platform() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
-
-    if cron_file and do_install:
-        if not user:
-            module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
-
-    if job is None and do_install:
-        module.fail_json(msg="You must specify 'job' to install a new cron job or variable")
 
     if (insertafter or insertbefore) and not env and do_install:
         module.fail_json(msg="Insertafter and insertbefore parameters are valid only with env=yes")
@@ -701,7 +709,7 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and not crontab.existing == '':
+    if not changed and crontab.existing != '':
         if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
             changed = True
 

@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from ansible.compat.tests.mock import MagicMock, patch
+from units.compat.mock import MagicMock, patch
 from ansible.module_utils import basic
 from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import builtins
@@ -97,6 +97,7 @@ def options_argspec_list():
         bam1=dict(),
         bam2=dict(default='test'),
         bam3=dict(type='bool'),
+        bam4=dict(type='str'),
     )
 
     arg_spec = dict(
@@ -116,7 +117,10 @@ def options_argspec_list():
             ],
             required_together=[
                 ['bam1', 'baz']
-            ]
+            ],
+            required_by={
+                'bam4': ('bam1', 'bam3'),
+            },
         )
     )
 
@@ -130,9 +134,9 @@ def options_argspec_list():
 
 
 @pytest.fixture
-def options_argspec_dict():
+def options_argspec_dict(options_argspec_list):
     # should test ok, for options in dict format.
-    kwargs = options_argspec_list()
+    kwargs = options_argspec_list
     kwargs['argument_spec']['foobar']['type'] = 'dict'
 
     return kwargs
@@ -278,46 +282,54 @@ class TestComplexArgSpecs:
 class TestComplexOptions:
     """Test arg spec options"""
 
-    # (Paramaters, expected value of module.params['foobar'])
+    # (Parameters, expected value of module.params['foobar'])
     OPTIONS_PARAMS_LIST = (
         ({'foobar': [{"foo": "hello", "bam": "good"}, {"foo": "test", "bar": "good"}]},
-         [{'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None},
-          {'foo': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None},
+         [{'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None},
+          {'foo': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None},
           ]),
         # Alias for required param
         ({'foobar': [{"dup": "test", "bar": "good"}]},
-         [{'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None}]
+         [{'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None}]
          ),
         # Required_if utilizing default value of the requirement
         ({'foobar': [{"foo": "bam2", "bar": "required_one_of"}]},
-         [{'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}]
+         [{'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}]
          ),
         # Check that a bool option is converted
         ({"foobar": [{"foo": "required", "bam": "good", "bam3": "yes"}]},
-         [{'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bar': None, 'baz': None, 'foo': 'required'}]
+         [{'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bam4': None, 'bar': None, 'baz': None, 'foo': 'required'}]
+         ),
+        # Check required_by options
+        ({"foobar": [{"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}]},
+         [{'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required'}]
          ),
     )
 
-    # (Paramaters, expected value of module.params['foobar'])
+    # (Parameters, expected value of module.params['foobar'])
     OPTIONS_PARAMS_DICT = (
         ({'foobar': {"foo": "hello", "bam": "good"}},
-         {'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None}
+         {'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None}
          ),
         # Alias for required param
         ({'foobar': {"dup": "test", "bar": "good"}},
-         {'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None}
+         {'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None}
          ),
         # Required_if utilizing default value of the requirement
         ({'foobar': {"foo": "bam2", "bar": "required_one_of"}},
-         {'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}
+         {'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}
          ),
         # Check that a bool option is converted
         ({"foobar": {"foo": "required", "bam": "good", "bam3": "yes"}},
-         {'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bar': None, 'baz': None, 'foo': 'required'}
+         {'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bam4': None, 'bar': None, 'baz': None, 'foo': 'required'}
+         ),
+        # Check required_by options
+        ({"foobar": {"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}},
+         {'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required'}
          ),
     )
 
-    # (Paramaters, failure message)
+    # (Parameters, failure message)
     FAILING_PARAMS_LIST = (
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
@@ -335,9 +347,12 @@ class TestComplexOptions:
         # Missing required_together option
         ({'foobar': [{"foo": "test", "bar": "required_one_of", "bam1": "bad"}]},
          'parameters are required together: bam1, baz found in foobar'),
+        # Missing required_by options
+        ({'foobar': [{"foo": "test", "bar": "required_one_of", "bam4": "required_by"}]},
+         "missing parameter(s) required by 'bam4': bam1, bam3"),
     )
 
-    # (Paramaters, failure message)
+    # (Parameters, failure message)
     FAILING_PARAMS_DICT = (
         # Missing required option
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
@@ -356,6 +371,9 @@ class TestComplexOptions:
         # Missing required_together option
         ({'foobar': {"foo": "test", "bar": "required_one_of", "bam1": "bad"}},
          'parameters are required together: bam1, baz found in foobar'),
+        # Missing required_by options
+        ({'foobar': {"foo": "test", "bar": "required_one_of", "bam4": "required_by"}},
+         "missing parameter(s) required by 'bam4': bam1, bam3"),
     )
 
     @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_DICT, indirect=['stdin'])
@@ -411,6 +429,19 @@ class TestComplexOptions:
 
         assert isinstance(am.params['foobar']['baz'], str)
         assert am.params['foobar']['baz'] == 'test data'
+
+    @pytest.mark.parametrize('stdin,spec,expected', [
+        ({},
+         {'one': {'type': 'dict', 'apply_defaults': True, 'options': {'two': {'default': True, 'type': 'bool'}}}},
+         {'two': True}),
+        ({},
+         {'one': {'type': 'dict', 'options': {'two': {'default': True, 'type': 'bool'}}}},
+         None),
+    ], indirect=['stdin'])
+    def test_subspec_not_required_defaults(self, stdin, spec, expected):
+        # Check that top level not required, processed subspec defaults
+        am = basic.AnsibleModule(spec)
+        assert am.params['one'] == expected
 
 
 class TestLoadFileCommonArguments:

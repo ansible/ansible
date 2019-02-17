@@ -1,0 +1,71 @@
+- block:
+  - set_fact:
+      plugin_name: rabbitmq_top
+
+  - name: Enable plugin
+    rabbitmq_plugin:
+      name: "{{ plugin_name }}"
+      state: enabled
+      new_only: True
+    register: result
+
+  - name: Get rabbitmq-plugins output
+    shell: "rabbitmq-plugins list | grep {{ plugin_name }}"
+    register: cli_result
+
+  - name: Check that the plugin is enabled
+    assert:
+      that:
+        - result is changed
+        - result is success
+        - '"{{ plugin_name }}" in result.enabled'
+        - result.disabled == []
+        - '"[E" in cli_result.stdout'
+
+  - name: Enable plugin (idempotency)
+    rabbitmq_plugin:
+      name: "{{ plugin_name }}"
+      state: enabled
+      new_only: True
+    register: result
+
+  - name: Check idempotency
+    assert:
+      that:
+        - result is not changed
+
+  - name: Disable plugin
+    rabbitmq_plugin:
+      name: "{{ plugin_name }}"
+      state: disabled
+    register: result
+
+  - name: Get rabbitmq-plugins output
+    shell: "rabbitmq-plugins list | grep {{ plugin_name }}"
+    register: cli_result
+
+  - name: Check that the plugin is disabled
+    assert:
+      that:
+        - result is changed
+        - result is success
+        - result.enabled == []
+        - '"{{ plugin_name }}" in result.disabled'
+        - '"[E" not in cli_result.stdout'
+
+  - name: Disable plugin (idempotency)
+    rabbitmq_plugin:
+      name: "{{ plugin_name }}"
+      state: disabled
+    register: result
+
+  - name: Check idempotency
+    assert:
+      that:
+        - result is not changed
+
+  always:
+    - name: Disable plugin
+      rabbitmq_plugin:
+        name: "{{ plugin_name }}"
+        state: disabled

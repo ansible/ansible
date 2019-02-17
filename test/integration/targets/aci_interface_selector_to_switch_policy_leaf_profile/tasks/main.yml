@@ -16,6 +16,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     leaf_profile: swleafprftest
     state: absent
 
@@ -27,6 +28,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     leaf_interface_profile: leafintprftest
     state: absent
 
@@ -51,7 +53,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
-    output_level: info
+    output_level: '{{ aci_output_level | default("info") }}'
     leaf_interface_profile: leafintprftest
     state: present
   register: leaf_profile_present
@@ -77,11 +79,11 @@
 - name: present assertions
   assert:
     that:
-    - intftoleaf_check_mode_present.changed == true
-    - intftoleaf_present.changed == true
+    - intftoleaf_check_mode_present is changed
+    - intftoleaf_present is changed
     - intftoleaf_present.previous == []
     - 'intftoleaf_present.sent == {"infraRsAccPortP": {"attributes": {"tDn": "uni/infra/accportprof-leafintprftest"}}}'
-    - intftoleaf_idempotent.changed == false
+    - intftoleaf_idempotent is not changed
     - intftoleaf_idempotent.sent == {}
 
 - name: Query an interface selector profile associated with a switch policy leaf profile
@@ -94,7 +96,7 @@
 - name: query assertions
   assert:
     that:
-      - binding_query.changed == false
+      - binding_query is not changed
       - binding_query.current | length >= 1
       - '"api/mo/uni/infra/nprof-swleafprftest/rsaccPortP-[uni/infra/accportprof-leafintprftest].json" in binding_query.url'
 
@@ -126,13 +128,13 @@
 - name: absent assertions
   assert:
     that:
-      - intftoleaf_check_mode_absent.changed == true
+      - intftoleaf_check_mode_absent is changed
       - intftoleaf_check_mode_absent.previous != []
-      - intftoleaf_absent.changed == true
+      - intftoleaf_absent is changed
       - intftoleaf_absent.previous == intftoleaf_check_mode_absent.previous
-      - intftoleaf_absent_idempotent.changed == false
+      - intftoleaf_absent_idempotent is not changed
       - intftoleaf_absent_idempotent.previous == []
-      - intftoleaf_absent_missing_param.failed == true
+      - intftoleaf_absent_missing_param is failed
       - 'intftoleaf_absent_missing_param.msg == "state is absent but all of the following are missing: interface_selector"'
 
 - name: Remove an interface selector associated with a Switch Policy Leaf Profile - Clean up

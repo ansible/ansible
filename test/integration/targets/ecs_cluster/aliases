@@ -3,3 +3,4 @@ ecs_service_facts
 ecs_task
 ecs_taskdefinition
 ecs_taskdefinition_facts
+unsupported

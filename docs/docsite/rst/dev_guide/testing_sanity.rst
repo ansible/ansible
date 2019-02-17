@@ -1,3 +1,7 @@
+:orphan:
+
+.. _testing_sanity:
+
 ************
 Sanity Tests
 ************
@@ -73,5 +77,3 @@ yamllint
 ~~~~~~~~
 
 Check YAML files for syntax and formatting issues.
-
-

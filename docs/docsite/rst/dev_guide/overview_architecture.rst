@@ -1,5 +1,6 @@
+********************
 Ansible Architecture
-====================
+********************
 
 Ansible is a radically simple IT automation engine that automates cloud provisioning, configuration management, application deployment, intra-service orchestration, and many other IT needs.
 
@@ -10,18 +11,19 @@ It uses no agents and no additional custom security infrastructure, so it's easy
 In this section, we'll give you a really quick overview of how Ansible works so you can see how the pieces fit together.
 
 Modules
-`````````````````
+=======
+
 Ansible works by connecting to your nodes and pushing out small programs, called "Ansible Modules" to them. These programs are written to be resource models of the desired state of the system. Ansible then executes these modules (over SSH by default), and removes them when finished.
 
 Your library of modules can reside on any machine, and there are no servers, daemons, or databases required. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content.
 
 Plugins
-``````````````````
+=======
 
 Plugins are pieces of code that augment Ansible's core functionality. Ansible ships with a number of handy plugins, and you can easily write your own.
 
 Inventory
-````````````````````
+=========
 
 By default, Ansible represents what machines it manages using a very simple INI file that puts all of your managed machines in groups of your own choosing.
 
@@ -45,7 +47,7 @@ Once inventory hosts are listed, variables can be assigned to them in simple tex
 Or, as already mentioned, use a dynamic inventory to pull your inventory from data sources like EC2, Rackspace, or OpenStack.
 
 Playbooks
-````````````````````
+=========
 
 Playbooks can finely orchestrate multiple slices of your infrastructure topology, with very detailed control over how many machines to tackle at a time.  This is where Ansible starts to get most interesting.
 
@@ -66,7 +68,7 @@ Here's what a simple playbook looks like::
     - content
 
 
-Extending Ansible with Plug-ins and the API
-````````````````````````````````````````````
+Extending Ansible with plug-ins and the API
+===========================================
 
 Should you want to write your own, Ansible modules can be written in any language that can return JSON (Ruby, Python, bash, etc). Inventory can also plug in to any datasource by writing a program that speaks to that datasource and returns JSON. There's also various Python APIs for extending Ansible's connection types (SSH is not the only transport possible), callbacks (how Ansible logs, etc), and even for adding new server side behaviors.

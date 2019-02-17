@@ -46,6 +46,7 @@ options:
     description:
       - Wait for operation to complete before returning.
     default: true
+    type: bool
   wait_timeout:
     description:
       - How many seconds to wait for an operation to complete before timing out.
@@ -146,17 +147,17 @@ RETURN = '''
 stream_name:
   description: The name of the Kinesis Stream.
   returned: when state == present.
-  type: string
+  type: str
   sample: "test-stream"
 stream_arn:
   description: The amazon resource identifier
   returned: when state == present.
-  type: string
+  type: str
   sample: "arn:aws:kinesis:east-side:123456789:stream/test-stream"
 stream_status:
   description: The current state of the Kinesis Stream.
   returned: when state == present.
-  type: string
+  type: str
   sample: "ACTIVE"
 retention_period_hours:
   description: Number of hours messages will be kept for a Kinesis Stream.
@@ -515,7 +516,6 @@ def recreate_tags_from_list(list_of_tags):
     """
     tags = list()
     i = 0
-    list_of_tags = list_of_tags
     for i in range(len(list_of_tags)):
         key_name = list_of_tags[i][0]
         key_val = list_of_tags[i][1]

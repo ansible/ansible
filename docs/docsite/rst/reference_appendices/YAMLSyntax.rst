@@ -30,11 +30,10 @@ All members of a list are lines beginning at the same indentation level starting
 
     ---
     # A list of tasty fruits
-    fruits:
-        - Apple
-        - Orange
-        - Strawberry
-        - Mango
+    - Apple
+    - Orange
+    - Strawberry
+    - Mango
     ...
 
 A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
@@ -67,7 +66,7 @@ Dictionaries and lists can also be represented in an abbreviated form if you rea
 
     ---
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
-    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
+    ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 These are called "Flow collections".
 
@@ -137,8 +136,8 @@ Gotchas
 -------
 
 While you can put just about anything into an unquoted scalar, there are some exceptions.
-A colon followed by a space (or newline) ``: `` is an indicator for a mapping.
-A space followed by the pound sign `` #`` starts a comment.
+A colon followed by a space (or newline) ``": "`` is an indicator for a mapping.
+A space followed by the pound sign ``" #"`` starts a comment.
 
 Because of this, the following is going to result in a YAML syntax error::
 
@@ -171,7 +170,9 @@ you can use escapes::
 
 The list of allowed escapes can be found in the YAML Specification under "Escape Sequences" (YAML 1.1) or "Escape Characters" (YAML 1.2).
 
-The following is invalid YAML::
+The following is invalid YAML:
+
+.. code-block:: text
 
     foo: "an escaped \' single quote"
 
@@ -224,17 +225,17 @@ value::
        Learn what playbooks can do and how to write/run them.
    `YAMLLint <http://yamllint.com/>`_
        YAML Lint (online) helps you debug YAML syntax if you are having problems
-   `Github examples directory <https://github.com/ansible/ansible-examples>`_
+   `GitHub examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
    `Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_
        A good guide to YAML syntax
-   `Mailing List <http://groups.google.com/group/ansible-project>`_
+   `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel and #yaml for YAML specific questions
    `YAML 1.1 Specification <http://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing
-   `YAML 1.2 Specification <http://yaml.org/spec/1.2/>`_
+   `YAML 1.2 Specification <http://yaml.org/spec/1.2/spec.html>`_
        For completeness, YAML 1.2 is the successor of 1.1
 

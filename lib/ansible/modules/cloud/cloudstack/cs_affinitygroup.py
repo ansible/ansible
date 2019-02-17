@@ -84,37 +84,37 @@ RETURN = '''
 id:
   description: UUID of the affinity group.
   returned: success
-  type: string
+  type: str
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of affinity group.
   returned: success
-  type: string
+  type: str
   sample: app
 description:
   description: Description of affinity group.
   returned: success
-  type: string
+  type: str
   sample: application affinity group
 affinity_type:
   description: Type of affinity group.
   returned: success
-  type: string
+  type: str
   sample: host anti-affinity
 project:
   description: Name of project the affinity group is related to.
   returned: success
-  type: string
+  type: str
   sample: Production
 domain:
   description: Domain the affinity group is related to.
   returned: success
-  type: string
+  type: str
   sample: example domain
 account:
   description: Account the affinity group is related to.
   returned: success
-  type: string
+  type: str
   sample: example account
 '''
 

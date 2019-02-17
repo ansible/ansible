@@ -65,9 +65,9 @@ options:
     description:
       - This argument will cause the module to create a full backup of
         the current C(running-config) from the remote device before any
-        changes are made.  The backup file is written to the C(backup)
-        folder in the playbook root directory.  If the directory does not
-        exist, it is created.
+        changes are made. If the C(backup_options) value is not given,
+        the backup file is written to the C(backup) folder in the playbook
+        root directory.  If the directory does not exist, it is created.
     type: bool
     default: 'no'
   running_config:
@@ -82,11 +82,29 @@ options:
     aliases: ['config']
   save:
     description:
-      - The C(save) argument instructs the module to save the running-
-        config to the startup-config at the conclusion of the module
-        running.  If check mode is specified, this argument is ignored.
+      - The C(save) argument instructs the module to save the
+        running-config to startup-config.  This operation is performed
+        after any changes are made to the current running config.  If
+        no changes are made, the configuration is still saved to the
+        startup config.  This option will always cause the module to
+        return changed. This argument is mutually exclusive with I(save_when).
+      - This option is deprecated as of Ansible 2.7, use C(save_when)
     type: bool
     default: 'no'
+  save_when:
+    description:
+      - When changes are made to the device running-configuration, the
+        changes are not copied to non-volatile storage by default.  Using
+        this argument will change that.  If the argument is set to
+        I(always), then the running-config will always be copied to the
+        startup-config and the module will always return as changed.
+        If the argument is set to I(never), the running-config will never
+        be copied to the startup-config.  If the argument is set to I(changed),
+        then the running-config will only be copied to the startup-config if
+        the task has made a change.
+    default: never
+    choices: ['always', 'never', 'changed']
+    version_added: "2.7"
   diff_against:
     description:
       - When using the C(ansible-playbook --diff) command line argument
@@ -113,6 +131,28 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
+  backup_options:
+    description:
+      - This is a dict object containing configurable options related to backup file path.
+        The value of this option is read only when C(backup) is set to I(yes), if C(backup) is set
+        to I(no) this option will be silently ignored.
+    suboptions:
+      filename:
+        description:
+          - The filename to be used to store the backup configuration. If the the filename
+            is not given it will be generated based on the hostname, current time and date
+            in format defined by <hostname>_config.<current-date>@<current-time>
+      dir_path:
+        description:
+          - This option provides the path ending with directory name in which the backup
+            configuration file will be stored. If the directory does not exist it will be first
+            created and the filename is either the value of C(filename) or default filename
+            as described in C(filename) options description. If the path value is not given
+            in that case a I(backup) directory will be created in the current working directory
+            and backup configuration will be copied in C(filename) within I(backup) directory.
+        type: path
+    type: dict
+    version_added: "2.8"
 """
 
 EXAMPLES = """
@@ -132,6 +172,14 @@ EXAMPLES = """
       - acl rule protocol testACL 1 any
       - acl rule direction testACL 3 in
     before: acl delete testACL
+
+- name: configurable backup path
+  aireos_config:
+    backup: yes
+    lines: sysname testDevice
+    backup_options:
+      filename: backup.cfg
+      dir_path: /home/user
 """
 
 RETURN = """
@@ -148,7 +196,7 @@ updates:
 backup_path:
   description: The full path to the backup file
   returned: when backup is yes
-  type: string
+  type: str
   sample: /playbooks/ansible/backup/aireos_config.2016-07-16@22:28:34
 """
 from ansible.module_utils.network.aireos.aireos import run_commands, get_config, load_config
@@ -178,9 +226,23 @@ def get_candidate(module):
     return candidate
 
 
+def save_config(module, result):
+    result['changed'] = True
+    if not module.check_mode:
+        command = {"command": "save config", "prompt": "Are you sure you want to save", "answer": "y"}
+        run_commands(module, command)
+    else:
+        module.warn('Skipping command `save config` due to check_mode.  Configuration not copied to '
+                    'non-volatile storage')
+
+
 def main():
     """ main entry point for module execution
     """
+    backup_spec = dict(
+        filename=dict(),
+        dir_path=dict(type='path')
+    )
     argument_spec = dict(
         src=dict(type='path'),
 
@@ -195,8 +257,11 @@ def main():
         intended_config=dict(),
 
         backup=dict(type='bool', default=False),
+        backup_options=dict(type='dict', options=backup_spec),
 
-        save=dict(type='bool', default=False),
+        # save is deprecated as of 2.7, use save_when instead
+        save=dict(type='bool', default=False, removed_in_version='2.11'),
+        save_when=dict(choices=['always', 'never', 'changed'], default='never'),
 
         diff_against=dict(choices=['running', 'intended']),
         diff_ignore_lines=dict(type='list')
@@ -204,7 +269,8 @@ def main():
 
     argument_spec.update(aireos_argument_spec)
 
-    mutually_exclusive = [('lines', 'src')]
+    mutually_exclusive = [('lines', 'src'),
+                          ('save', 'save_when')]
 
     required_if = [('diff_against', 'intended', ['intended_config'])]
 
@@ -255,13 +321,10 @@ def main():
 
     diff_ignore_lines = module.params['diff_ignore_lines']
 
-    if module.params['save']:
-        result['changed'] = True
-        if not module.check_mode:
-            command = {"command": "save config", "prompt": "Are you sure you want to save", "answer": "y"}
-            run_commands(module, command)
-        else:
-            module.warn('Skipping command `save config` due to check_mode.  Configuration not copied to non-volatile storage')
+    if module.params['save_when'] == 'always' or module.params['save']:
+        save_config(module, result)
+    elif module.params['save_when'] == 'changed' and result['changed']:
+        save_config(module, result)
 
     if module._diff:
         output = run_commands(module, 'show run-config commands')

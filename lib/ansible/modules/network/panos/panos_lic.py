@@ -32,19 +32,6 @@ version_added: "2.3"
 requirements:
     - pan-python
 options:
-    ip_address:
-        description:
-            - IP address (or hostname) of PAN-OS device
-        required: true
-    password:
-        description:
-            - password for authentication
-        required: true
-    username:
-        description:
-            - username for authentication
-        required: false
-        default: "admin"
     auth_code:
         description:
             - authcode to be applied
@@ -54,6 +41,8 @@ options:
             - whether to apply authcode even if device is already licensed
         required: false
         default: "false"
+        type: bool
+extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
@@ -75,7 +64,7 @@ RETURN = '''
 serialnumber:
     description: serialnumber of the device in case that it has been already registered
     returned: success
-    type: string
+    type: str
     sample: 007200004214
 '''
 
@@ -173,6 +162,7 @@ def main():
         fetch_authcode(xapi, module)
 
     module.exit_json(changed=True, msg="okey dokey")
+
 
 if __name__ == '__main__':
     main()

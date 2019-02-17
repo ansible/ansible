@@ -48,8 +48,8 @@ options:
      description:
        - Ignored. Present for backwards compatibility
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -76,28 +76,28 @@ service:
     contains:
         id:
             description: Service ID.
-            type: string
+            type: str
             sample: "3292f020780b4d5baf27ff7e1d224c44"
         name:
             description: Service name.
-            type: string
+            type: str
             sample: "glance"
         service_type:
             description: Service type.
-            type: string
+            type: str
             sample: "image"
         description:
             description: Service description.
-            type: string
+            type: str
             sample: "OpenStack Image Service"
         enabled:
             description: Service status.
-            type: boolean
+            type: bool
             sample: True
 id:
     description: The service ID.
     returned: On success when I(state) is 'present'
-    type: string
+    type: str
     sample: "3292f020780b4d5baf27ff7e1d224c44"
 '''
 
@@ -147,7 +147,7 @@ def main():
     state = module.params['state']
     service_type = module.params['service_type']
 
-    shade, cloud = openstack_cloud_from_module(module, min_version='1.6.0')
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         services = cloud.search_services(name_or_id=name,
                                          filters=dict(type=service_type))
@@ -186,7 +186,7 @@ def main():
                 changed = True
             module.exit_json(changed=changed)
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

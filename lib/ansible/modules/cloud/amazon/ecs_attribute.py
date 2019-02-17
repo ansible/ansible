@@ -88,21 +88,21 @@ attributes:
     contains:
         cluster:
             description: cluster name
-            type: string
+            type: str
         ec2_instance_id:
             description: ec2 instance id of ecs container instance
-            type: string
+            type: str
         attributes:
             description: list of attributes
             type: list of complex
             contains:
                 name:
                     description: name of the attribute
-                    type: string
+                    type: str
                 value:
                     description: value of the attribute
                     returned: if present
-                    type: string
+                    type: str
 '''
 
 try:
@@ -257,7 +257,7 @@ def main():
         attributes=dict(required=True, type='list'),
     ))
 
-    required_together = (['cluster', 'ec2_instance_id', 'attributes'])
+    required_together = [['cluster', 'ec2_instance_id', 'attributes']]
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True,
                            required_together=required_together)

@@ -145,7 +145,7 @@ options:
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
 requirements: [ "proxmoxer", "python >= 2.7", "requests" ]
-author: "Sergei Antipov @UnderGreen"
+author: Sergei Antipov (@UnderGreen)
 '''
 
 EXAMPLES = '''
@@ -216,7 +216,7 @@ EXAMPLES = '''
     ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
     netif: '{"net0":"name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,bridge=vmbr0"}'
 
-# Create new container with minimal options defining a mount
+# Create new container with minimal options defining a mount with 8GB
 - proxmox:
     vmid: 100
     node: uk-mc02
@@ -248,6 +248,15 @@ EXAMPLES = '''
     api_host: node1
     state: started
 
+# Start container with mount. You should enter a 90-second timeout because servers with additional disks take longer to boot.
+- proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: started
+    timeout: 90
+
 # Stop container
 - proxmox:
     vmid: 100
@@ -271,7 +280,7 @@ EXAMPLES = '''
     api_user: root@pam
     api_password: 1q2w3e
     api_host: node1
-    state: stopped
+    state: restarted
 
 # Remove container
 - proxmox:

@@ -20,9 +20,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: datadog_event
-short_description: Posts events to DataDog  service
+short_description: Posts events to Datadog  service
 description:
-- "Allows to post events to DataDog (www.datadoghq.com) service."
+- "Allows to post events to Datadog (www.datadoghq.com) service."
 - "Uses http://docs.datadoghq.com/api/#events API."
 version_added: "1.3"
 author:
@@ -93,13 +93,15 @@ import platform
 import traceback
 
 # Import Datadog
+DATADOG_IMP_ERR = None
 try:
     from datadog import initialize, api
     HAS_DATADOG = True
-except:
+except Exception:
+    DATADOG_IMP_ERR = traceback.format_exc()
     HAS_DATADOG = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
@@ -127,7 +129,7 @@ def main():
 
     # Prepare Datadog
     if not HAS_DATADOG:
-        module.fail_json(msg='datadogpy required for this module')
+        module.fail_json(msg=missing_required_lib('datadogpy'), exception=DATADOG_IMP_ERR)
 
     options = {
         'api_key': module.params['api_key'],

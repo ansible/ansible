@@ -255,3 +255,113 @@
     that:
     - regedit_shortcut_remove_again.changed == false
     - regedit_shortcut_remove_again.dest == 'C:\\Users\\Public\\Desktop\\Registry Editor.lnk'
+
+- name: Create shortcut to shell path
+  win_shortcut:
+    dest: '%Public%\bin.lnk'
+    src: shell:RecycleBinFolder
+    state: present
+  register: shell_add
+
+- name: Check there was a change
+  assert:
+    that:
+    - shell_add is changed
+    - shell_add.dest == 'C:\\Users\\Public\\bin.lnk'
+    - shell_add.src == 'shell:RecycleBinFolder'
+
+- name: Create shortcut to shell path again
+  win_shortcut:
+    dest: '%Public%\bin.lnk'
+    src: shell:RecycleBinFolder
+    state: present
+  register: shell_add_again
+
+- name: Check there was no change (normal mode)
+  assert:
+    that:
+    - not shell_add_again is changed
+    - shell_add_again.src == 'shell:RecycleBinFolder'
+  when: not in_check_mode
+
+- name: Check there was a change (check-mode)
+  assert:
+    that:
+    - shell_add_again is changed
+  when: in_check_mode
+
+- name: Change shortcut to another shell path
+  win_shortcut:
+    dest: '%Public%\bin.lnk'
+    src: shell:Start Menu
+    state: present
+  register: shell_change
+
+- name: Check there was a change
+  assert:
+    that:
+    - shell_change is changed
+    - shell_change.src == 'shell:Start Menu'
+
+- name: Create shortcut to an executable without run as admin
+  win_shortcut:
+    dest: '%Public%\Desktop\cmd.lnk'
+    src: '%SystemRoot%\System32\cmd.exe'
+    state: present
+  register: shell_exe_limited
+
+- name: Get run as admin flag state
+  win_shell: |
+    $shortcut = "$env:Public\Desktop\cmd.lnk"
+    $flags = [System.BitConverter]::ToUInt32([System.IO.FIle]::ReadAllBytes($shortcut), 20)
+    ($flags -band 0x00002000) -eq 0x00002000
+  register: shell_exe_limited_actual
+
+- name: Check that run as admin flag wasn't set (normal mode)
+  assert:
+    that:
+    - shell_exe_limited is changed
+    - not shell_exe_limited_actual.stdout_lines[0]|bool
+  when: not in_check_mode
+
+- name: Check that exe shortcut results in a change (check-mode)
+  assert:
+    that:
+    - shell_exe_limited is changed
+  when: in_check_mode
+
+- name: Set shortcut to run as admin
+  win_shortcut:
+    dest: '%Public%\Desktop\cmd.lnk'
+    src: '%SystemRoot%\System32\cmd.exe'
+    run_as_admin: True
+    state: present
+  register: shell_exe_admin
+
+- name: Get run as admin flag state
+  win_shell: |
+    $shortcut = "$env:Public\Desktop\cmd.lnk"
+    $flags = [System.BitConverter]::ToUInt32([System.IO.FIle]::ReadAllBytes($shortcut), 20)
+    ($flags -band 0x00002000) -eq 0x00002000
+  register: shell_exe_admin_actual
+
+- name: Check that run as admin flag was set (normal mode)
+  assert:
+    that:
+    - shell_exe_admin is changed
+    - shell_exe_admin_actual.stdout_lines[0]|bool
+  when: not in_check_mode
+
+- name: Set shortcut to run as admin again
+  win_shortcut:
+    dest: '%Public%\Desktop\cmd.lnk'
+    src: '%SystemRoot%\System32\cmd.exe'
+    run_as_admin: True
+    state: present
+  register: shell_exe_admin_again
+
+- name: Check that set run as admin wasn't changed (normal mode)
+  assert:
+    that:
+    - not shell_exe_admin_again is changed
+  when: not in_check_mode

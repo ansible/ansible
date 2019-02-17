@@ -81,7 +81,7 @@ RETURN = '''
 auto_scaling_group_arn:
     description: The Amazon Resource Name of the ASG
     returned: success
-    type: string
+    type: str
     sample: "arn:aws:autoscaling:us-west-2:1234567890:autoScalingGroup:10787c52-0bcb-427d-82ba-c8e4b008ed2e:autoScalingGroupName/public-webapp-production-1"
 auto_scaling_group_name:
     description: Name of autoscaling group
@@ -96,7 +96,7 @@ availability_zones:
 created_time:
     description: The date and time this ASG was created, in ISO 8601 format.
     returned: success
-    type: string
+    type: str
     sample: "2015-11-25T00:05:36.309Z"
 default_cooldown:
     description: The default cooldown time in seconds.
@@ -162,7 +162,7 @@ min_size:
 new_instances_protected_from_scale_in:
     description: Whether or not new instances a protected from automatic scaling in.
     returned: success
-    type: boolean
+    type: bool
     sample: "false"
 placement_group:
     description: Placement group into which instances are launched, if any.

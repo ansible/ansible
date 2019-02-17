@@ -23,12 +23,17 @@ description:
 options:
   path:
     description: The full registry key path including the hive to search for.
+    type: str
     required: yes
     aliases: [ key ]
   name:
     description:
     - The registry property name to get information for, the return json will not include the sub_keys and properties entries for the I(key) specified.
+    type: str
     aliases: [ entry, value, property ]
+seealso:
+- module: win_regedit
+- module: win_regmerge
 author:
 - Jordan Borean (@jborean93)
 '''
@@ -50,13 +55,13 @@ RETURN = r'''
 changed:
   description: Whether anything was changed.
   returned: always
-  type: boolean
-  sample: True
+  type: bool
+  sample: true
 exists:
   description: States whether the registry key/property exists.
   returned: success and path/property exists
-  type: boolean
-  sample: True
+  type: bool
+  sample: true
 properties:
   description: A dictionary containing all the properties and their values in the registry key.
   returned: success, path exists and property not specified
@@ -86,16 +91,16 @@ raw_value:
   description: Returns the raw value of the registry property, REG_EXPAND_SZ has no string expansion, REG_BINARY or REG_NONE is in hex 0x format.
     REG_NONE, this value is a hex string in the 0x format.
   returned: success, path/property exists and property specified
-  type: string
+  type: str
   sample: '%ProgramDir%\\Common Files'
 type:
   description: The property type.
   returned: success, path/property exists and property specified
-  type: string
+  type: str
   sample: "REG_EXPAND_SZ"
 value:
   description: The value of the property.
   returned: success, path/property exists and property specified
-  type: string
+  type: str
   sample: 'C:\\Program Files\\Common Files'
 '''

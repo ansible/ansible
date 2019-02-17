@@ -7,43 +7,76 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import time
-
-try:
-    from f5.bigip import ManagementRoot
-    from icontrol.exceptions import iControlUnexpectedHTTPError
-    HAS_F5SDK = True
-except ImportError:
-    HAS_F5SDK = False
-
 try:
     from library.module_utils.network.f5.common import F5BaseClient
     from library.module_utils.network.f5.common import F5ModuleError
+    from library.module_utils.network.f5.icontrol import iControlRestSession
 except ImportError:
     from ansible.module_utils.network.f5.common import F5BaseClient
     from ansible.module_utils.network.f5.common import F5ModuleError
+    from ansible.module_utils.network.f5.icontrol import iControlRestSession
 
 
-class F5Client(F5BaseClient):
+class F5RestClient(F5BaseClient):
+    def __init__(self, *args, **kwargs):
+        super(F5RestClient, self).__init__(*args, **kwargs)
+        self.provider = self.merge_provider_params()
+        self.headers = {
+            'Content-Type': 'application/json'
+        }
+
     @property
     def api(self):
         if self._client:
             return self._client
-        for x in range(0, 10):
-            try:
-                result = ManagementRoot(
-                    self.params['server'],
-                    self.params['user'],
-                    self.params['password'],
-                    port=self.params['server_port'],
-                    verify=self.params['validate_certs'],
-                    token='tmos'
-                )
-                self._client = result
-                return self._client
-            except Exception:
-                time.sleep(3)
-        raise F5ModuleError(
-            'Unable to connect to {0} on port {1}. '
-            'Is "validate_certs" preventing this?'.format(self.params['server'], self.params['server_port'])
+        session, err = self.connect_via_token_auth()
+        if err or session is None:
+            session, err = self.connect_via_basic_auth()
+            if err or session is None:
+                raise F5ModuleError(err)
+        self._client = session
+        return session
+
+    def connect_via_token_auth(self):
+        url = "https://{0}:{1}/mgmt/shared/authn/login".format(
+            self.provider['server'], self.provider['server_port']
         )
+        payload = {
+            'username': self.provider['user'],
+            'password': self.provider['password'],
+            'loginProviderName': self.provider['auth_provider'] or 'tmos'
+        }
+        session = iControlRestSession(
+            validate_certs=self.provider['validate_certs']
+        )
+
+        response = session.post(
+            url,
+            json=payload,
+            headers=self.headers
+        )
+
+        if response.status not in [200]:
+            return None, response.content
+
+        session.request.headers['X-F5-Auth-Token'] = response.json()['token']['token']
+        return session, None
+
+    def connect_via_basic_auth(self):
+        url = "https://{0}:{1}/mgmt/tm/sys".format(
+            self.provider['server'], self.provider['server_port']
+        )
+        session = iControlRestSession(
+            url_username=self.provider['user'],
+            url_password=self.provider['password'],
+            validate_certs=self.provider['validate_certs'],
+        )
+
+        response = session.get(
+            url,
+            headers=self.headers
+        )
+
+        if response.status not in [200]:
+            return None, response.content
+        return session, None

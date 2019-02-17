@@ -47,7 +47,11 @@ options:
     description:
       - The desired state of program/group.
     required: true
-    choices: [ "present", "started", "stopped", "restarted", "absent" ]
+    choices: [ "present", "started", "stopped", "restarted", "absent", "signalled" ]
+  signal:
+    description:
+      - The signal to send to the program/group, when combined with the 'signalled' state. Required when l(state=signalled).
+    version_added: "2.8"
   supervisorctl_path:
     description:
       - path to supervisorctl executable
@@ -55,6 +59,7 @@ options:
 notes:
   - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.
   - When C(state) = I(restarted), the module will call C(supervisorctl update) then call C(supervisorctl restart).
+  - When C(state) = I(absent), the module will call C(supervisorctl reread) then C(supervisorctl remove) to remove the target program/group.
 requirements: [ "supervisorctl" ]
 author:
     - "Matt Wright (@mattupstate)"
@@ -85,6 +90,12 @@ EXAMPLES = '''
     username: test
     password: testpass
     server_url: http://localhost:9001
+
+# Send a signal to my_app via supervisorctl
+- supervisorctl:
+    name: my_app
+    state: signalled
+    signal: USR1
 '''
 
 import os
@@ -99,7 +110,8 @@ def main():
         username=dict(required=False),
         password=dict(required=False, no_log=True),
         supervisorctl_path=dict(required=False, type='path'),
-        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'absent'])
+        state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'absent', 'signalled']),
+        signal=dict(required=False)
     )
 
     module = AnsibleModule(argument_spec=arg_spec, supports_check_mode=True)
@@ -115,6 +127,7 @@ def main():
     username = module.params.get('username')
     password = module.params.get('password')
     supervisorctl_path = module.params.get('supervisorctl_path')
+    signal = module.params.get('signal')
 
     # we check error message for a pattern, so we need to make sure that's in C locale
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
@@ -136,6 +149,9 @@ def main():
         supervisorctl_args.extend(['-u', username])
     if password:
         supervisorctl_args.extend(['-p', password])
+
+    if state == 'signalled' and not signal:
+        module.fail_json(msg="State 'signalled' requires a 'signal' value")
 
     def run_supervisorctl(cmd, name=None, **kwargs):
         args = list(supervisorctl_args)  # copy the master args
@@ -234,6 +250,12 @@ def main():
         if len(processes) == 0:
             module.fail_json(name=name, msg="ERROR (no such process)")
         take_action_on_processes(processes, lambda s: s in ('RUNNING', 'STARTING'), 'stop', 'stopped')
+
+    if state == 'signalled':
+        if len(processes) == 0:
+            module.fail_json(name=name, msg="ERROR (no such process)")
+        take_action_on_processes(processes, lambda s: s in ('RUNNING'), "signal %s" % signal, 'signalled')
+
 
 if __name__ == '__main__':
     main()

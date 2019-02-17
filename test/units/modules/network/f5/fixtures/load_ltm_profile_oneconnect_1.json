@@ -1,0 +1,18 @@
+{
+  "kind": "tm:ltm:profile:one-connect:one-connectstate",
+  "name": "oneconnect",
+  "partition": "Common",
+  "fullPath": "/Common/oneconnect",
+  "generation": 1,
+  "selfLink": "https://localhost/mgmt/tm/ltm/profile/one-connect/~Common~oneconnect?ver=13.1.0.4",
+  "appService": "none",
+  "defaultsFrom": "none",
+  "description": "none",
+  "idleTimeoutOverride": "disabled",
+  "limitType": "none",
+  "maxAge": 86400,
+  "maxReuse": 1000,
+  "maxSize": 10000,
+  "sharePools": "disabled",
+  "sourceMask": "any"
+}

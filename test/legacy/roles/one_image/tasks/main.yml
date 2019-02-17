@@ -1,0 +1,287 @@
+---
+- name: Check that '{{ one_image_name }}' exists
+  one_image:
+    name: '{{ one_image_name }}'
+
+- name: Try to fetch non-existent image by name
+  one_image:
+    name: non-existent-vm-{{ ansible_date_time.iso8601_basic_short }}
+  register: image_missing
+  failed_when: not image_missing is failed
+
+- name: Try to fetch non-existent image by id
+  one_image:
+    id: -999
+  register: image_missing
+  failed_when: not image_missing is failed
+
+- name: Try to fetch image by id and name
+  one_image:
+    id: 35
+    name: '{{ one_image_name }}'
+  register: module_failed
+  failed_when: not module_failed is failed
+
+- name: Fetch image info
+  one_image:
+    name: '{{ one_image_name }}'
+  register: unused_image
+
+- name: Check is the image in USE
+  assert:
+    that:
+      - not unused_image is changed
+      - unused_image.name == one_image_name
+      - unused_image.running_vms == 0
+      - unused_image.state == "READY"
+      - not unused_image.used|bool
+    msg: 'Image is USED'
+
+- name: Enable image
+  one_image:
+    id: '{{ unused_image.id }}'
+    enabled: yes
+
+- name: Disable the image in check-mode
+  one_image:
+    name: '{{ one_image_name }}'
+    enabled: no
+  check_mode: yes
+  register: disable_image
+
+- name: Check if task in check-mode returns as 'changed'
+  assert:
+    that: disable_image is changed
+    msg: 'Disabling the enabled image in check-mode should return as changed.'
+
+- name: Disable the image again in check-mode to check idempotence
+  one_image:
+    name: '{{ one_image_name }}'
+    enabled: no
+  check_mode: yes
+  register: disable_image2
+
+- name: Check if task in check-mode returns as 'changed'
+  assert:
+    that: disable_image2 is changed
+    msg: 'Disabling the enabled image in check-mode should return as changed.'
+
+- name: Disable the image
+  one_image:
+    name: '{{ one_image_name }}'
+    enabled: no
+  register: disable_image
+
+- name: Check if image's state is 'DISABLED'
+  assert:
+    that: 
+      - disable_image is changed
+      - disable_image.state == "DISABLED"
+    msg: 'Disabling the enabled image was unsuccessful.'
+
+- block:
+    - name: Try to clone disabled image
+      one_image:
+        name: '{{ one_image_name }}'
+        state: cloned
+        new_name: '{{ one_image_name }}-clone'
+      register: clone_image
+      failed_when: not clone_image is failed
+  rescue:
+    - name: Delete new image
+      one_image:
+        name: '{{ one_image_name }}-clone'
+        state: absent
+
+- name: Enable the image
+  one_image:
+    name: '{{ one_image_name }}'
+    enabled: yes
+
+- block:
+    - name: Check that clone image doesn't exist
+      one_image:
+        name: '{{ one_image_name }}-clone'
+      register: clone_image_result
+      failed_when: not clone_image_result is failed
+
+    - name: Clone the image in check-mode
+      one_image:
+        name: '{{ one_image_name }}'
+        state: cloned
+        new_name: '{{ one_image_name }}-clone'
+      register: new_image
+      check_mode: yes
+
+    - name: Check if cloning in check-mode was returned as 'changed'
+      assert:
+        that: new_image is changed
+        msg: "Cloning image in check-mode should be returned as 'changed'"
+
+    - name: Check that new image doesn't exist
+      one_image:
+        name: '{{ one_image_name }}-clone'
+      register: new_image_result
+      failed_when: not new_image_result is failed
+
+    - name: Clone the image
+      one_image:
+        name: '{{ one_image_name }}'
+        state: cloned
+        new_name: '{{ one_image_name }}-clone'
+      register: new_image
+
+    - name: Verify cloning of the image
+      assert:
+        that: 
+          - new_image is changed
+          - new_image.name == '{{ one_image_name }}-clone'
+          - new_image.state == "READY"
+          - not new_image.used|bool
+
+    - name: Clone the image again to check idempotence
+      one_image:
+        name: '{{ one_image_name }}'
+        state: cloned
+        new_name: '{{ one_image_name }}-clone'
+      register: new_image
+
+    - name: Verify cloning of the image
+      assert:
+        that:
+          - not new_image is changed
+          - new_image.name == '{{ one_image_name }}-clone'
+          - new_image.state == "READY"
+          - not new_image.used|bool
+
+    - name: Try to rename an image without a passed new name
+      one_image:
+        id: '{{ new_image.id }}'
+        state: renamed
+      register: rename_fail
+      failed_when: not rename_fail is failed
+      
+    - name: Verify a fail message
+      assert:
+        that:
+          - rename_fail.msg == "'new_name' option has to be specified when the state is 'renamed'"
+
+    - name: Set the image's new name                                    
+      set_fact:                                                 
+        image_new_name: test-{{ ansible_date_time.iso8601_basic_short }}
+
+    - name: Try to rename an image without specified id
+      one_image:
+        name: '{{ new_image.name }}'
+        state: renamed
+        new_name: '{{ image_new_name }}'
+      register: rename_fail
+      failed_when: not rename_fail is failed
+      
+    - name: Verify a fail message
+      assert:
+        that:
+          - rename_fail.msg == "Option 'id' is required when the state is 'renamed'"
+
+    - name: Rename cloned instance in check-mode
+      one_image:
+        id: '{{ new_image.id }}'
+        state: renamed
+        new_name: '{{ image_new_name }}'
+      register: new_name_check
+      check_mode: yes
+
+    - name: Check if previous task is returned as 'changed'
+      assert:
+        that: new_name_check is changed
+        msg: "Renaming in check-mode should return as 'changed'."
+
+    - name: Check if that image wasn't renamed in check-mode
+      assert:
+        that: new_name_check.name == new_image.name
+        msg: "Renaming in check-mode shouldn't rename the image."
+
+    - name: Rename cloned instance
+      one_image:
+        id: '{{ new_image.id }}'
+        state: renamed
+        new_name: '{{ image_new_name }}'
+      register: new_name
+
+    - name: Check that name is correctly assigned
+      assert:
+        that: 
+          - new_name is changed
+          - new_name.name == image_new_name
+          - new_name.id == new_image.id
+        msg: "The new name wasn't assigned correctly"
+
+    - name: Rename cloned instance again to check idempotence
+      one_image:
+        id: '{{ new_name.id }}'
+        state: renamed
+        new_name: '{{ image_new_name }}'
+      register: new_name
+
+    - name: Check if renaming is idempotent
+      assert:
+        that: not new_name is changed
+        msg: "Renaming should be idempotent."
+
+    - name: Try to assigned name of the existent image
+      one_image:
+        id: '{{ new_name.id }}'
+        state: renamed
+        new_name: '{{ one_image_name }}'
+      register: existent_name
+      failed_when: not existent_name is failed
+
+    - name: Verify the fail message
+      assert:
+        that:
+          - existent_name.msg is match("Name '{{ one_image_name }}' is already taken by IMAGE with id=\d+")
+
+    - name: Delete new image in check-mode
+      one_image:
+        name: '{{ image_new_name }}'
+        state: absent
+      register: delete_new_image_check
+      check_mode: yes
+      
+    - name: Check if deletion in check-mode was returned as 'changed'
+      assert:
+        that: delete_new_image_check is changed
+        msg: "Deletion of the image in check-mode should return as 'changed'."
+
+    - name: Delete new image
+      one_image:
+        name: '{{ image_new_name }}'
+        state: absent
+      register: delete_new_image
+
+    - name: Check if deletion was returned as 'changed'
+      assert:
+        that: delete_new_image is changed
+        msg: "Deletion of the existent image should return as 'changed'."
+
+    - name: Delete the image again to check idempotece
+      one_image:
+        name: '{{ image_new_name }}'
+        state: absent
+      register: delete_new_image
+
+    - name: Check if deletion was returned as 'changed'
+      assert:
+        that: not delete_new_image is changed
+        msg: "Deletion of the non-existent image shouldn't return as 'changed'."
+
+  always:
+    - name: Delete image
+      one_image:
+        name: '{{ one_image_name }}-clone'
+        state: absent
+
+    - name: Delete image
+      one_image:
+        name: '{{ image_new_name }}'
+        state: absent

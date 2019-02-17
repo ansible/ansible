@@ -6,7 +6,9 @@ declare -a args
 IFS='/:' read -ra args <<< "$1"
 
 version="${args[1]}"
-target="windows/ci/group${args[2]}/"
+group="${args[2]}"
+
+target="shippable/windows/group${group}/"
 
 stage="${S:-prod}"
 provider="${P:-default}"
@@ -17,6 +19,8 @@ python_versions=(
     2.6
     3.5
     3.6
+    3.7
+    3.8
     2.7
 )
 
@@ -24,7 +28,8 @@ python_versions=(
 single_version=2012-R2
 
 # shellcheck disable=SC2086
-ansible-test windows-integration "${target}" --explain ${CHANGED:+"$CHANGED"} 2>&1 | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
+ansible-test windows-integration --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} 2>&1 \
+    | { grep ' windows-integration: .* (targeted)$' || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
     echo "Detected changes requiring integration tests specific to Windows:"
@@ -51,6 +56,7 @@ fi
 
 for version in "${python_versions[@]}"; do
     changed_all_target="all"
+    changed_all_mode="default"
 
     if [ "${version}" == "2.7" ]; then
         # smoketest tests for python 2.7
@@ -58,12 +64,13 @@ for version in "${python_versions[@]}"; do
             # with change detection enabled run tests for anything changed
             # use the smoketest tests for any change that triggers all tests
             ci="${target}"
-            if [ "${target}" == "windows/ci/group1/" ]; then
+            changed_all_target="shippable/windows/smoketest/"
+            if [ "${target}" == "shippable/windows/group1/" ]; then
                 # only run smoketest tests for group1
-                changed_all_target="windows/ci/smoketest/"
+                changed_all_mode="include"
             else
                 # smoketest tests already covered by group1
-                changed_all_target="none"
+                changed_all_mode="exclude"
             fi
         else
             # without change detection enabled run entire test group
@@ -71,9 +78,9 @@ for version in "${python_versions[@]}"; do
         fi
     else
         # only run minimal tests for group1
-        if [ "${target}" != "windows/ci/group1/" ]; then continue; fi
+        if [ "${target}" != "shippable/windows/group1/" ]; then continue; fi
         # minimal tests for other python versions
-        ci="windows/ci/minimal/"
+        ci="shippable/windows/minimal/"
     fi
 
     # terminate remote instances on the final python version tested
@@ -84,7 +91,8 @@ for version in "${python_versions[@]}"; do
     fi
 
     # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" --docker default --python "${version}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-        "${platforms[@]}" --changed-all-target "${changed_all_target}" \
+    ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+        "${platforms[@]}" --changed-all-target "${changed_all_target}" --changed-all-mode "${changed_all_mode}" \
+        --docker default --python "${version}" \
         --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
 done

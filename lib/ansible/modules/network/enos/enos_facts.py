@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 #
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
 # Module to Collect facts from Lenovo Switches running Lenovo ENOS commands
 # Lenovo Networking
 #
@@ -37,7 +38,7 @@ description:
     and can enable or disable collection of additional facts.
 extends_documentation_fragment: enos
 notes:
-  - Tested against ENOS 8.4.1.68
+  - Tested against ENOS 8.4.1
 options:
   gather_subset:
     description:
@@ -108,11 +109,11 @@ RETURN = '''
   ansible_net_hostname:
     description: The configured hostname of the device
     returned: always
-    type: string
+    type: str
   ansible_net_image:
     description: Indicates the active image for the device
     returned: always
-    type: string
+    type: str
 # hardware
   ansible_net_memfree_mb:
     description: The available free memory on the remote device in MB
@@ -420,6 +421,7 @@ class Interfaces(FactsBase):
                     key = match.group(1)
                     parsed.append(line)
         return parsed
+
 
 FACT_SUBSETS = dict(
     default=Default,

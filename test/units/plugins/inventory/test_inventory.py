@@ -23,8 +23,8 @@ import string
 import textwrap
 
 from ansible import constants as C
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
+from units.compat import mock
+from units.compat import unittest
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from units.mock.path import mock_unfrackpath_noop
@@ -198,6 +198,6 @@ class TestInventoryPlugins(unittest.TestCase):
         all_hosts = set(host.name for host in inventory.groups['all'].get_hosts())
         self.assertEqual(set(['host1', 'host2', 'host3', 'host4', 'host5']), all_hosts)
         ungrouped_hosts = set(host.name for host in inventory.groups['ungrouped'].get_hosts())
-        self.assertEqual(set(['host1', 'host2', 'host3']), ungrouped_hosts)
+        self.assertEqual(set(['host1', 'host2']), ungrouped_hosts)
         servers_hosts = set(host.name for host in inventory.groups['servers'].get_hosts())
         self.assertEqual(set(['host3', 'host4', 'host5']), servers_hosts)

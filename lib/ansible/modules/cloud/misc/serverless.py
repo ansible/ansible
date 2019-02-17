@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Ryan Scott Brown <ryansb@redhat.com>
+# Copyright: (c) 2016, Ryan Scott Brown <ryansb@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -56,10 +56,23 @@ options:
         run to send them out. This is mostly useful for generating artifacts to be stored/deployed elsewhere.
     required: false
     default: true
+    type: bool
+  force:
+    description:
+      - Whether or not to force full deployment, equivalent to serverless `--force` option.
+    required: false
+    default: false
+    version_added: "2.7"
+  verbose:
+    description:
+      - Shows all stack events during deployment, and display any Stack Output.
+    required: false
+    default: false
+    version_added: "2.7"
 notes:
    - Currently, the `serverless` command must be in the path of the node executing the task. In the future this may be a flag.
 requirements: [ "serverless", "yaml" ]
-author: "Ryan Scott Brown @ryansb"
+author: Ryan Scott Brown (@ryansb)
 '''
 
 EXAMPLES = """
@@ -99,16 +112,16 @@ EXAMPLES = """
 
 RETURN = """
 service_name:
-  type: string
+  type: str
   description: The service name specified in the serverless.yml that was just deployed.
   returned: always
   sample: my-fancy-service-dev
 state:
-  type: string
+  type: str
   description: Whether the stack for the serverless project is present/absent.
   returned: always
 command:
-  type: string
+  type: str
   description: Full `serverless` command run by this module, in case you want to re-run the command outside the module.
   returned: always
   sample: serverless deploy --stage production
@@ -134,9 +147,9 @@ def read_serverless_config(module):
             config = yaml.safe_load(sls_config.read())
             return config
     except IOError as e:
-        module.fail_json(msg="Could not open serverless.yml in {}. err: {}".format(path, str(e)), exception=traceback.format_exc())
+        module.fail_json(msg="Could not open serverless.yml in {0}. err: {1}".format(path, str(e)), exception=traceback.format_exc())
 
-    module.fail_json(msg="Failed to open serverless config at {}".format(
+    module.fail_json(msg="Failed to open serverless config at {0}".format(
         os.path.join(path, 'serverless.yml')))
 
 
@@ -146,9 +159,9 @@ def get_service_name(module, stage):
         module.fail_json(msg="Could not read `service` key from serverless.yml file")
 
     if stage:
-        return "{}-{}".format(config['service'], stage)
+        return "{0}-{1}".format(config['service'], stage)
 
-    return "{}-{}".format(config['service'], config.get('stage', 'dev'))
+    return "{0}-{1}".format(config['service'], config.get('stage', 'dev'))
 
 
 def main():
@@ -160,7 +173,9 @@ def main():
             region=dict(default='', required=False),
             stage=dict(default='', required=False),
             deploy=dict(default=True, type='bool', required=False),
-            serverless_bin_path=dict(required=False, type='path')
+            serverless_bin_path=dict(required=False, type='path'),
+            force=dict(default=False, required=False),
+            verbose=dict(default=False, required=False)
         ),
     )
 
@@ -173,6 +188,8 @@ def main():
     region = module.params.get('region')
     stage = module.params.get('stage')
     deploy = module.params.get('deploy', True)
+    force = module.params.get('force', False)
+    verbose = module.params.get('verbose', False)
     serverless_bin_path = module.params.get('serverless_bin_path')
 
     if serverless_bin_path is not None:
@@ -185,22 +202,28 @@ def main():
     elif state == 'absent':
         command += 'remove '
     else:
-        module.fail_json(msg="State must either be 'present' or 'absent'. Received: {}".format(state))
+        module.fail_json(msg="State must either be 'present' or 'absent'. Received: {0}".format(state))
 
-    if not deploy and state == 'present':
-        command += '--noDeploy '
+    if state == 'present':
+        if not deploy:
+            command += '--noDeploy '
+        elif force:
+            command += '--force '
+
     if region:
-        command += '--region {} '.format(region)
+        command += '--region {0} '.format(region)
     if stage:
-        command += '--stage {} '.format(stage)
+        command += '--stage {0} '.format(stage)
+    if verbose:
+        command += '--verbose '
 
     rc, out, err = module.run_command(command, cwd=service_path)
     if rc != 0:
-        if state == 'absent' and "-{}' does not exist".format(stage) in out:
+        if state == 'absent' and "-{0}' does not exist".format(stage) in out:
             module.exit_json(changed=False, state='absent', command=command,
                              out=out, service_name=get_service_name(module, stage))
 
-        module.fail_json(msg="Failure when executing Serverless command. Exited {}.\nstdout: {}\nstderr: {}".format(rc, out, err))
+        module.fail_json(msg="Failure when executing Serverless command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err))
 
     # gather some facts about the deployment
     module.exit_json(changed=True, state='present', out=out, command=command,

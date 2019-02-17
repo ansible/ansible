@@ -1,3 +1,5 @@
+.. _playbooks_templating:
+
 Templating (Jinja2)
 ===================
 
@@ -16,6 +18,24 @@ Please note that all templating happens on the Ansible controller before the tas
    playbooks_lookups
    playbooks_python_version
 
+.. _templating_now:
+
+Get the current time
+````````````````````
+
+.. versionadded:: 2.8
+
+The ``now()`` Jinja2 function, allows you to retrieve python datetime object or a string representation for the current time.
+
+The ``now()`` function supports 2 arguments:
+
+utc
+  Specify ``True`` to get the current time in UTC. Defaults to ``False``
+
+fmt
+  Accepts a `strftime <https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior>`_ string that will be used
+  to return a formatted date time string
+
 
 .. seealso::
 
@@ -29,9 +49,7 @@ Please note that all templating happens on the Ansible controller before the tas
        Playbook organization by roles
    :doc:`playbooks_best_practices`
        Best practices in playbooks
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

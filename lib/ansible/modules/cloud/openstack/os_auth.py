@@ -21,8 +21,8 @@ author: "Monty Taylor (@emonty)"
 description:
     - Retrieve an auth token from an OpenStack Cloud
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "openstacksdk"
 options:
   availability_zone:
     description:
@@ -41,6 +41,17 @@ EXAMPLES = '''
     var: service_catalog
 '''
 
+RETURN = '''
+auth_token:
+    description: Openstack API Auth Token
+    returned: success
+    type: str
+service_catalog:
+    description: A dictionary of available API endpoints
+    returned: success
+    type: dict
+'''
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -53,7 +64,7 @@ def main():
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         module.exit_json(
             changed=False,

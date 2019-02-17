@@ -8,7 +8,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -18,8 +18,11 @@ description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
 notes:
 - The C(pool) must exist in order to add or delete a range.
-- More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk) from
-  L(the APIC Management Information Model reference,https://developer.cisco.com/docs/apic-mim-ref/).
+seealso:
+- module: aci_encap_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
 author:
 - Jacob McGill (@jmcgill298)
 version_added: '2.5'
@@ -28,51 +31,60 @@ options:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, inherit, static]
     aliases: [ mode ]
   description:
     description:
     - Description for the pool range.
+    type: str
     aliases: [ descr ]
   pool:
     description:
     - The name of the pool that the range should be assigned to.
+    type: str
     aliases: [ pool_name ]
   pool_allocation_mode:
     description:
     - The method used for allocating encaps to resources.
     - Only vlan and vsan support allocation modes.
+    type: str
     choices: [ dynamic, static]
     aliases: [ pool_mode ]
   pool_type:
     description:
     - The encap type of C(pool).
+    type: str
     required: yes
     aliases: [ type ]
     choices: [ vlan, vxlan, vsan]
   range_end:
     description:
     - The end of encap range.
+    type: int
     aliases: [ end ]
   range_name:
     description:
     - The name to give to the encap range.
+    type: str
     aliases: [ name, range ]
   range_start:
     description:
     - The start of the encap range.
+    type: int
     aliases: [ start ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
     - Use C(query) for listing an object or multiple objects.
+    type: str
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a new vlan range
+- name: Add a new VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -82,8 +94,9 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: present
+  delegate_to: localhost
 
-- name: Remove a vlan range
+- name: Remove a VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -93,8 +106,9 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: absent
+  delegate_to: localhost
 
-- name: Query a vlan range
+- name: Query a VLAN range
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -104,8 +118,10 @@ EXAMPLES = r'''
     encap_start: 20
     encap_end: 50
     state: query
+  delegate_to: localhost
+  register: query_result
 
-- name: Query a vlan pool for ranges
+- name: Query a VLAN pool for ranges
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
@@ -113,14 +129,18 @@ EXAMPLES = r'''
     pool: production
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 
-- name: Query all vlan ranges
+- name: Query all VLAN ranges
   aci_vlan_pool_encap_block:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool_type: vlan
     state: query
+  delegate_to: localhost
+  register: query_result
 '''
 
 RETURN = r'''
@@ -155,7 +175,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -204,17 +224,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -224,7 +244,7 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
@@ -325,33 +345,15 @@ def main():
                 if not 1 <= encap_id <= 4093:
                     module.fail_json(msg='vsan pools must have "range_start" and "range_end" values between 1 and 4093')
 
-    # Build proper proper filter_target based on range_start, range_end, and range_name
     if range_end is not None and range_start is not None:
         # Validate range_start is less than range_end
         if range_start > range_end:
             module.fail_json(msg='The "range_start" must be less than or equal to the "range_end"')
 
-        if range_name is None:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"))'.format(aci_range_class, encap_start, encap_end)
-        else:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.to, "{2}"),eq({0}.name, "{3}"))'.format(aci_range_class, encap_start, encap_end, range_name)
     elif range_end is None and range_start is None:
         if range_name is None:
             # Reset range managed object to None for aci util to properly handle query
             aci_range_mo = None
-            range_filter_target = ''
-        else:
-            range_filter_target = 'eq({0}.name, "{1}")'.format(aci_range_class, range_name)
-    elif range_start is not None:
-        if range_name is None:
-            range_filter_target = 'eq({0}.from, "{1}")'.format(aci_range_class, encap_start)
-        else:
-            range_filter_target = 'and(eq({0}.from, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_start, range_name)
-    else:
-        if range_name is None:
-            range_filter_target = 'eq({0}.to, "{1}")'.format(aci_range_class, encap_end)
-        else:
-            range_filter_target = 'and(eq({0}.to, "{1}"),eq({0}.name, "{2}"))'.format(aci_range_class, encap_end, range_name)
 
     # Vxlan does not support setting the allocation mode
     if pool_type == 'vxlan' and allocation_mode is not None:
@@ -369,14 +371,14 @@ def main():
         root_class=dict(
             aci_class=aci_pool_class,
             aci_rn='{0}{1}'.format(aci_pool_mo, pool_name),
-            filter_target='eq({0}.name, "{1}")'.format(aci_pool_class, pool),
             module_object=pool,
+            target_filter={'name': pool},
         ),
         subclass_1=dict(
             aci_class=aci_range_class,
             aci_rn='{0}'.format(aci_range_mo),
-            filter_target=range_filter_target,
             module_object=aci_range_mo,
+            target_filter={'from': encap_start, 'to': encap_end, 'name': range_name},
         ),
     )
 

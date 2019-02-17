@@ -5,8 +5,7 @@ from __future__ import absolute_import, print_function
 import os
 import pipes
 import tempfile
-
-from time import sleep
+import time
 
 import lib.pytar
 
@@ -25,6 +24,10 @@ from lib.ansible_util import (
     ansible_environment,
 )
 
+from lib.config import (
+    ShellConfig,
+)
+
 
 class ManageWindowsCI(object):
     """Manage access to a Windows instance provided by Ansible Core CI."""
@@ -33,6 +36,22 @@ class ManageWindowsCI(object):
         :type core_ci: AnsibleCoreCI
         """
         self.core_ci = core_ci
+        self.ssh_args = ['-i', self.core_ci.ssh_key.key]
+
+        ssh_options = dict(
+            BatchMode='yes',
+            StrictHostKeyChecking='no',
+            UserKnownHostsFile='/dev/null',
+            ServerAliveInterval=15,
+            ServerAliveCountMax=4,
+        )
+
+        for ssh_option in sorted(ssh_options):
+            self.ssh_args += ['-o', '%s=%s' % (ssh_option, ssh_options[ssh_option])]
+
+    def setup(self):
+        """Used in delegate_remote to setup the host, no action is required for Windows."""
+        pass
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
@@ -50,16 +69,66 @@ class ManageWindowsCI(object):
         env = ansible_environment(self.core_ci.args)
         cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
-        for _ in range(1, 120):
+        for dummy in range(1, 120):
             try:
                 intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
-                sleep(10)
-                continue
+                time.sleep(10)
 
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
+
+    def download(self, remote, local):
+        """
+        :type remote: str
+        :type local: str
+        """
+        self.scp('%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote), local)
+
+    def upload(self, local, remote):
+        """
+        :type local: str
+        :type remote: str
+        """
+        self.scp(local, '%s@%s:%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname, remote))
+
+    def ssh(self, command, options=None, force_pty=True):
+        """
+        :type command: str | list[str]
+        :type options: list[str] | None
+        :type force_pty: bool
+        """
+        if not options:
+            options = []
+        if force_pty:
+            options.append('-tt')
+
+        if isinstance(command, list):
+            command = ' '.join(pipes.quote(c) for c in command)
+
+        run_command(self.core_ci.args,
+                    ['ssh', '-q'] + self.ssh_args +
+                    options +
+                    ['-p', '22',
+                     '%s@%s' % (self.core_ci.connection.username, self.core_ci.connection.hostname)] +
+                    [command])
+
+    def scp(self, src, dst):
+        """
+        :type src: str
+        :type dst: str
+        """
+        for dummy in range(1, 10):
+            try:
+                run_command(self.core_ci.args,
+                            ['scp'] + self.ssh_args +
+                            ['-P', '22', '-q', '-r', src, dst])
+                return
+            except SubprocessError:
+                time.sleep(10)
+
+        raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))
 
 
 class ManageNetworkCI(object):
@@ -92,13 +161,12 @@ class ManageNetworkCI(object):
             name,
         ]
 
-        for _ in range(1, 90):
+        for dummy in range(1, 90):
             try:
                 intercept_command(self.core_ci.args, cmd, 'ping', env=env)
                 return
             except SubprocessError:
-                sleep(10)
-                continue
+                time.sleep(10)
 
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
@@ -139,18 +207,22 @@ class ManagePosixCI(object):
     def setup(self):
         """Start instance and wait for it to become ready and respond to an ansible ping."""
         self.wait()
+
+        if isinstance(self.core_ci.args, ShellConfig):
+            if self.core_ci.args.raw:
+                return
+
         self.configure()
         self.upload_source()
 
     def wait(self):
         """Wait for instance to respond to SSH."""
-        for _ in range(1, 90):
+        for dummy in range(1, 90):
             try:
                 self.ssh('id')
                 return
             except SubprocessError:
-                sleep(10)
-                continue
+                time.sleep(10)
 
         raise ApplicationError('Timeout waiting for %s/%s instance %s.' %
                                (self.core_ci.platform, self.core_ci.version, self.core_ci.instance_id))
@@ -209,6 +281,13 @@ class ManagePosixCI(object):
         :type src: str
         :type dst: str
         """
-        run_command(self.core_ci.args,
-                    ['scp'] + self.ssh_args +
-                    ['-P', str(self.core_ci.connection.port), '-q', '-r', src, dst])
+        for dummy in range(1, 10):
+            try:
+                run_command(self.core_ci.args,
+                            ['scp'] + self.ssh_args +
+                            ['-P', str(self.core_ci.connection.port), '-q', '-r', src, dst])
+                return
+            except SubprocessError:
+                time.sleep(10)
+
+        raise ApplicationError('Failed transfer: %s -> %s' % (src, dst))

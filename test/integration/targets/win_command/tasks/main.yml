@@ -28,7 +28,7 @@
     - cmdout is not changed
     - cmdout.cmd == 'bogus_command1234'
     - cmdout.rc == 2
-    - "'Could not locate the following executable bogus_command1234' in cmdout.msg"
+    - "\"Could not find file 'bogus_command1234.exe'.\" in cmdout.msg"
 
 - name: execute something with error output
   win_command: cmd /c "echo some output & echo some error 1>&2"
@@ -222,3 +222,16 @@
     - cmdout.stdout_lines|count == 1
     - cmdout.stdout_lines[0] == "some input"
     - cmdout.stderr == ""
+
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''

@@ -93,24 +93,24 @@
 - name: asserts for subnet creation tasks
   assert:
     that:
-      - create_check_mode.changed == true
+      - create_check_mode is changed
       - 'create_check_mode.sent == {"fvSubnet": {"attributes": {"descr": "Ansible Test", "ip": "10.100.100.1/24", "name": "anstest"}}}'
-      - create_subnet.changed == true
+      - create_subnet is changed
       - 'create_subnet.sent == {"fvSubnet": {"attributes": {"descr": "Ansible Test", "ip": "10.100.100.1/24", "name": "anstest"}}}'
-      - 'create_subnet.previous == []'
-      - create_subnet2.changed == true
+      - create_subnet.previous == []
+      - create_subnet2 is changed
       - create_subnet2.sent == create_subnet2.proposed
-      - 'create_subnet2.sent.fvSubnet.attributes.scope == "private,shared"'
+      - create_subnet2.sent.fvSubnet.attributes.scope == "private,shared"
       - 'create_subnet2.sent.fvSubnet.children.0.fvRsBDSubnetToProfile.attributes == {"tnL3extOutName": "default", "tnRtctrlProfileName": "default"}'
-      - create_idempotency.changed == false
+      - create_idempotency is not changed
       - create_idempotency.previous != []
-      - modify_subnet.changed == true
+      - modify_subnet is changed
       - modify_subnet.previous != []
-      - modify_subnet.changed != modify_subnet.proposed
+      - modify_subnet.sent != modify_subnet.proposed
       - 'modify_subnet.sent == {"fvSubnet": {"attributes": {"ctrl": "querier", "scope": "public,shared"}}}'
-      - create_bad_scope.failed == true
+      - create_bad_scope is failed
       - create_bad_scope.msg.startswith("Parameter 'scope' cannot be both 'private' and 'public'")
-      - create_incomplete_data.failed == true
+      - create_incomplete_data is failed
       - 'create_incomplete_data.msg == "state is present but all of the following are missing: bd"'
 
 - name: get all subnets
@@ -169,27 +169,28 @@
 - name: asserts for query tasks
   assert:
     that:
-      - get_all.changed == false
+      - get_all is not changed
       - get_all.current | length > 1
-      - get_all_tenant.changed == false
+      - get_all_tenant is not changed
       - '"tn-anstest.json" in get_all_tenant.url'
-      - get_all_bd.changed == false
-      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in get_all_bd.filter_string'
+      - get_all_bd is not changed
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in get_all_bd.filter_string|urldecode'
       - '"class/fvBD.json" in get_all_bd.url'
-      - get_all_tenant_bd.changed == false
+      - get_all_tenant_bd is not changed
       - '"tn-anstest/BD-anstest.json" in get_all_tenant_bd.url'
       - get_all_tenant_bd.current.0.fvBD.children | length > 1
-      - get_subnet_tenant.changed == false
-      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_tenant.filter_string'
+      - get_subnet_tenant is not changed
+      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_tenant.filter_string|urldecode'
       - '"tn-anstest.json" in get_subnet_tenant.url'
-      - get_subnet_bd.changed == false
-      - '"query-target-filter=eq(fvBD.name, \"anstest\")" and "rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_bd.filter_string'
+      - get_subnet_bd is not changed
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")"|urldecode'
+      - '"rsp-subtree-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnet_bd.filter_string|urldecode'
       - '"class/fvBD.json" in get_subnet_bd.url'
-      - get_subnet.changed == false
+      - get_subnet is not changed
       - get_subnet.current | length == 1
       - '"tn-anstest/BD-anstest/subnet-[10.100.100.1/24].json" in get_subnet.url'
-      - get_subnets_gateway.changed == false
-      - '"query-target-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnets_gateway.filter_string'
+      - get_subnets_gateway is not changed
+      - '"query-target-filter=eq(fvSubnet.ip, \"10.100.100.1/24\")" in get_subnets_gateway.filter_string|urldecode'
       - '"class/fvSubnet.json" in get_subnets_gateway.url'
 
 - name: delete subnet - check mode works
@@ -215,22 +216,22 @@
 - name: asserts for deletion task
   assert:
     that:
-      - delete_check_mode.changed == true
+      - delete_check_mode is changed
       - delete_check_mode.proposed == {}
-      - delete_subnet.changed == true
+      - delete_subnet is changed
       - delete_subnet.previous != []
-      - 'delete_subnet.method == "DELETE"'
-      - delete_idempotency.changed == false
+      - delete_subnet.method == "DELETE"
+      - delete_idempotency is not changed
       - delete_idempotency.previous == []
 
 - name: delete bd - cleanup before ending tests
   aci_bd:
     <<: *aci_bd_present
     state: absent
-  when: bd_present.changed == true
+  when: bd_present is changed
 
 - name: delete tenant - cleanup before ending tests
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

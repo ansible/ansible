@@ -47,8 +47,7 @@ options:
     description:
       - If C(yes), text will be parsed as markdown.
     default: 'yes'
-    choices:
-      - 'yes'
+    type: bool
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the
@@ -87,14 +86,14 @@ RETURN = """
 msg:
     description: execution result
     returned: success
-    type: string
+    type: str
     sample: "OK"
 """
 
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
     HAS_URLPARSE = True
-except:
+except Exception:
     HAS_URLPARSE = False
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url

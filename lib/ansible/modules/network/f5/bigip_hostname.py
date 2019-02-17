@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2017 F5 Networks Inc.
+# Copyright: (c) 2017, F5 Networks Inc.
 # GNU General Public License v3.0 (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -9,8 +9,8 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+                    'status': ['stableinterface'],
+                    'supported_by': 'certified'}
 
 DOCUMENTATION = r'''
 ---
@@ -18,7 +18,7 @@ module: bigip_hostname
 short_description: Manage the hostname of a BIG-IP
 description:
   - Manage the hostname of a BIG-IP.
-version_added: "2.3"
+version_added: 2.3
 options:
   hostname:
     description:
@@ -28,15 +28,17 @@ extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
   - Matthew Lam (@mryanlam)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
 - name: Set the hostname of the BIG-IP
   bigip_hostname:
     hostname: bigip.localhost.localdomain
-    password: secret
-    server: lb.mydomain.com
-    user: admin
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
   delegate_to: localhost
 '''
 
@@ -44,41 +46,28 @@ RETURN = r'''
 hostname:
   description: The new hostname of the device
   returned: changed
-  type: string
+  type: str
   sample: big-ip01.internal
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 
-HAS_DEVEL_IMPORTS = False
-
 try:
-    # Sideband repository used for dev
-    from library.module_utils.network.f5.bigip import HAS_F5SDK
-    from library.module_utils.network.f5.bigip import F5Client
+    from library.module_utils.network.f5.bigip import F5RestClient
     from library.module_utils.network.f5.common import F5ModuleError
     from library.module_utils.network.f5.common import AnsibleF5Parameters
     from library.module_utils.network.f5.common import cleanup_tokens
-    from library.module_utils.network.f5.common import fqdn_name
     from library.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from library.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
-    HAS_DEVEL_IMPORTS = True
+    from library.module_utils.network.f5.common import exit_json
+    from library.module_utils.network.f5.common import fail_json
 except ImportError:
-    # Upstream Ansible
-    from ansible.module_utils.network.f5.bigip import HAS_F5SDK
-    from ansible.module_utils.network.f5.bigip import F5Client
+    from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
     from ansible.module_utils.network.f5.common import AnsibleF5Parameters
     from ansible.module_utils.network.f5.common import cleanup_tokens
-    from ansible.module_utils.network.f5.common import fqdn_name
     from ansible.module_utils.network.f5.common import f5_argument_spec
-    try:
-        from ansible.module_utils.network.f5.common import iControlUnexpectedHTTPError
-    except ImportError:
-        HAS_F5SDK = False
+    from ansible.module_utils.network.f5.common import exit_json
+    from ansible.module_utils.network.f5.common import fail_json
 
 
 class Parameters(AnsibleF5Parameters):
@@ -100,13 +89,55 @@ class Parameters(AnsibleF5Parameters):
         return str(self._values['hostname'])
 
 
+class ApiParameters(Parameters):
+    pass
+
+
+class ModuleParameters(Parameters):
+    pass
+
+
+class Changes(Parameters):
+    pass
+
+
+class UsableChanges(Changes):
+    pass
+
+
+class ReportableChanges(Changes):
+    pass
+
+
+class Difference(object):
+    def __init__(self, want, have=None):
+        self.want = want
+        self.have = have
+
+    def compare(self, param):
+        try:
+            result = getattr(self, param)
+            return result
+        except AttributeError:
+            return self.__default(param)
+
+    def __default(self, param):
+        attr1 = getattr(self.want, param)
+        try:
+            attr2 = getattr(self.have, param)
+            if attr1 != attr2:
+                return attr1
+        except AttributeError:
+            return attr1
+
+
 class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.have = None
-        self.want = Parameters(params=self.module.params)
-        self.changes = Parameters()
+        self.have = ApiParameters()
+        self.want = ModuleParameters(params=self.module.params)
+        self.changes = UsableChanges()
 
     def _set_changed_options(self):
         changed = {}
@@ -114,38 +145,83 @@ class ModuleManager(object):
             if getattr(self.want, key) is not None:
                 changed[key] = getattr(self.want, key)
         if changed:
-            self.changes = Parameters(params=changed)
+            self.changes = UsableChanges(params=changed)
 
     def _update_changed_options(self):
-        changed = {}
-        for key in Parameters.updatables:
-            if getattr(self.want, key) is not None:
-                attr1 = getattr(self.want, key)
-                attr2 = getattr(self.have, key)
-                if attr1 != attr2:
-                    changed[key] = attr1
-        self.changes = Parameters(params=changed)
+        diff = Difference(self.want, self.have)
+        updatables = Parameters.updatables
+        changed = dict()
+        for k in updatables:
+            change = diff.compare(k)
+            if change is None:
+                continue
+            else:
+                changed[k] = change
         if changed:
+            self.changes = UsableChanges(params=changed)
             return True
         return False
 
     def exec_module(self):
         result = dict()
 
-        try:
-            changed = self.update()
-        except iControlUnexpectedHTTPError as e:
-            raise F5ModuleError(str(e))
+        changed = self.update()
 
-        changes = self.changes.to_return()
+        reportable = ReportableChanges(params=self.changes.to_return())
+        changes = reportable.to_return()
         result.update(**changes)
         result.update(dict(changed=changed))
+        self._announce_deprecations(result)
         return result
 
+    def _announce_deprecations(self, result):
+        warnings = result.pop('__warnings', [])
+        for warning in warnings:
+            self.module.deprecate(
+                msg=warning['msg'],
+                version=warning['version']
+            )
+
+    def _read_global_settings_from_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/sys/global-settings/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        return response
+
     def read_current_from_device(self):
-        resource = self.client.api.tm.sys.global_settings.load()
-        result = resource.attrs
-        return Parameters(params=result)
+        result = self._read_global_settings_from_device()
+        uri = "https://{0}:{1}/mgmt/tm/cm/device/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        self_device = next((x['name'] for x in response['items'] if x['selfDevice'] == "true"), None)
+        result['self_device'] = self_device
+
+        return ApiParameters(params=result)
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -164,11 +240,44 @@ class ModuleManager(object):
 
     def update_on_device(self):
         params = self.want.api_params()
-        resource = self.client.api.tm.sys.global_settings.load()
-        resource.modify(**params)
-        self.client.api.tm.cm.devices.exec_cmd(
-            'mv', name=self.have.hostname, target=self.want.hostname
+        uri = "https://{0}:{1}/mgmt/tm/sys/global-settings/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
         )
+        resp = self.client.api.patch(uri, json=params)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if self.have.self_device:
+            uri = "https://{0}:{1}/mgmt/tm/cm/device".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+            )
+            args = dict(
+                command='mv',
+                name=self.have.self_device,
+                target=self.want.hostname
+            )
+            resp = self.client.api.post(uri, json=args)
+
+            try:
+                response = resp.json()
+            except ValueError as ex:
+                raise F5ModuleError(str(ex))
+
+            if 'code' in response and response['code'] == 400:
+                if 'message' in response:
+                    raise F5ModuleError(response['message'])
+                else:
+                    raise F5ModuleError(resp.content)
 
 
 class ArgumentSpec(object):
@@ -191,18 +300,17 @@ def main():
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode
     )
-    if not HAS_F5SDK:
-        module.fail_json(msg="The python f5-sdk module is required")
+
+    client = F5RestClient(**module.params)
 
     try:
-        client = F5Client(**module.params)
         mm = ModuleManager(module=module, client=client)
         results = mm.exec_module()
         cleanup_tokens(client)
-        module.exit_json(**results)
-    except F5ModuleError as e:
+        exit_json(module, results, client)
+    except F5ModuleError as ex:
         cleanup_tokens(client)
-        module.fail_json(msg=str(e))
+        fail_json(module, ex, client)
 
 
 if __name__ == '__main__':

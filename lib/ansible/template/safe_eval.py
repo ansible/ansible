@@ -90,9 +90,17 @@ def safe_eval(expr, locals=None, include_exceptions=False):
             )
         )
 
+    # And in Python 3.6 too, although not encountered until Python 3.8, see https://bugs.python.org/issue32892
+    if sys.version_info[:2] >= (3, 6):
+        SAFE_NODES.update(
+            set(
+                (ast.Constant,)
+            )
+        )
+
     filter_list = []
-    for filter in filter_loader.all():
-        filter_list.extend(filter.filters().keys())
+    for filter_ in filter_loader.all():
+        filter_list.extend(filter_.filters().keys())
 
     test_list = []
     for test in test_loader.all():

@@ -3,80 +3,75 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # TODO: vcsim does not support manage DRS rule
-#- name: make sure pyvmomi is installed
-#  pip:
-#    name: pyvmomi
-#    state: latest
-#  when: "{{ ansible_user_id == 'root' }}"
 
-#- name: store the vcenter container ip
-#  set_fact:
-#    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-#- debug: var=vcsim
+- name: store the vcenter container ip
+  set_fact:
+    vcsim: "{{ lookup('env', 'vcenter_host') }}"
+- debug: var=vcsim
 
-#- name: wait for flask server
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 5000
-#    state: started
+- name: wait for flask server
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
 
-#- name: kill vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/killall
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
 
-#- name: start vcsim
-#  uri:
-#    url: http://{{ vcsim }}:5000/spawn?datacenter=2&cluster=1&folder=0&ds=2&pool=2
-#  register: vcsim_instance
+- name: start vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=2&cluster=1&folder=0&ds=2&pool=2
+  register: vcsim_instance
 
-#- name: wait for vcsim server
-#  wait_for:
-#    host: "{{ vcsim }}"
-#    port: 443
-#    state: started
+- name: wait for vcsim server
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
 
-#- debug: var=vcsim_instance
+- debug: var=vcsim_instance
 
-#- name: Create a DRS Affinity rule for vms
-#  vmware_vm_vm_drs_rule:
-#    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    drs_rule_name: drs_rule_0001
-#    cluster_name: DC0_C0
-#    vms:
-#      - DC0_C0_RP0_VM0
-#      - DC0_C0_RP0_VM1
-#    enabled: True
-#    affinity_rule: True
-#    mandatory: True
-#  register: drs_rule_0001_results
+- name: Create a DRS Affinity rule for vms
+  vmware_vm_vm_drs_rule:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    drs_rule_name: drs_rule_0001
+    cluster_name: DC0_C0
+    vms:
+      - DC0_C0_RP0_VM0
+      - DC0_C0_RP0_VM1
+    enabled: True
+    affinity_rule: True
+    mandatory: True
+  register: drs_rule_0001_results
 
-#- debug: var=drs_rule_0001_results
+- debug: var=drs_rule_0001_results
 
-#- assert:
-#    that:
-#        - "{{ drs_rule_0001_results.changed }}"
+- assert:
+    that:
+        - "{{ drs_rule_0001_results.changed }}"
 
-#- name: Create a DRS Anti-Affinity rule for vms
-#  vmware_vm_vm_drs_rule:
-#    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    drs_rule_name: drs_rule_0001
-#    cluster_name: DC0_C0
-#    vms:
-#      - DC0_C0_RP0_VM0
-#      - DC0_C0_RP0_VM1
-#    enabled: False
-#    affinity_rule: False
-#    mandatory: False
-#  register: drs_rule_0002_results
+- name: Create a DRS Anti-Affinity rule for vms
+  vmware_vm_vm_drs_rule:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    drs_rule_name: drs_rule_0001
+    cluster_name: DC0_C0
+    vms:
+      - DC0_C0_RP0_VM0
+      - DC0_C0_RP0_VM1
+    enabled: False
+    affinity_rule: False
+    mandatory: False
+  register: drs_rule_0002_results
 
-#- debug: var=drs_rule_0002_results
+- debug: var=drs_rule_0002_results
 
-#- assert:
-#    that:
-#        - "{{ drs_rule_0002_results.changed }}"
+- assert:
+    that:
+        - "{{ drs_rule_0002_results.changed }}"

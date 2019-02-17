@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
+# Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -27,7 +27,7 @@ description:
        absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
-     - This module is also supported for Windows targets.
+     - For Windows targets, use the M(win_wait_for) module instead.
 version_added: "0.7"
 options:
   host:
@@ -50,6 +50,7 @@ options:
   port:
     description:
       - Port number to poll.
+      - C(path) and C(port) are mutually exclusive parameters.
   active_connection_states:
     description:
       - The list of TCP connection states which are counted as active connections.
@@ -67,6 +68,7 @@ options:
     version_added: "1.4"
     description:
       - Path to a file on the filesystem that must exist before continuing.
+      - C(path) and C(port) are mutually exclusive parameters.
   search_regex:
     version_added: "1.4"
     description:
@@ -87,14 +89,16 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
-  - Prior to 2.4, testing for the absense of a directory or UNIX socket did not work correctly.
+  - Prior to 2.4, testing for the absence of a directory or UNIX socket did not work correctly.
   - Prior to 2.4, testing for the presence of a file did not work correctly if the remote user did not have read access to that file.
   - Under some circumstances when using mandatory access control, a path may always be treated as being absent even if it exists, but
     can't be modified or created by the remote user either.
   - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
     so operations on the path using other modules may not work exactly as expected.
-  - This module is also supported for Windows targets.
-  - See also M(wait_for_connection)
+seealso:
+- module: wait_for_connection
+- module: win_wait_for
+- module: win_wait_for_process
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)
@@ -106,19 +110,19 @@ EXAMPLES = r'''
   wait_for: timeout=300
   delegate_to: localhost
 
-- name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+- name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
   wait_for:
     port: 8000
     delay: 10
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, don't start checking for 10 seconds
+- name: Waits for port 8000 of any IP to close active connections, don't start checking for 10 seconds
   wait_for:
     host: 0.0.0.0
     port: 8000
     delay: 10
     state: drained
 
-- name: Wait 300 seconds for port 8000 of any IP to close active connections, ignoring connections for specified hosts
+- name: Wait for port 8000 of any IP to close active connections, ignoring connections for specified hosts
   wait_for:
     host: 0.0.0.0
     port: 8000
@@ -133,6 +137,14 @@ EXAMPLES = r'''
   wait_for:
     path: /tmp/foo
     search_regex: completed
+
+- name: Wait until regex pattern matches in the file /tmp/foo and print the matched group
+  wait_for:
+    path: /tmp/foo
+    search_regex: completed (?P<task>\w+)
+  register: waitfor
+- debug:
+    msg: Completed {{ waitfor['groupdict']['task'] }}
 
 - name: Wait until the lock file is removed
   wait_for:
@@ -170,6 +182,28 @@ EXAMPLES = r'''
     ansible_connection: local
 '''
 
+RETURN = r'''
+elapsed:
+  description: The number of seconds that elapsed while waiting
+  returned: always
+  type: int
+  sample: 23
+match_groups:
+  description: Tuple containing all the subgroups of the match as returned by U(https://docs.python.org/2/library/re.html#re.MatchObject.groups)
+  returned: always
+  type: list
+  sample: ['match 1', 'match 2']
+match_groupdict:
+  description: Dictionary containing all the named subgroups of the match, keyed by the subgroup name,
+    as returned by U(https://docs.python.org/2/library/re.html#re.MatchObject.groupdict)
+  returned: always
+  type: dict
+  sample:
+    {
+      'group': 'match'
+    }
+'''
+
 import binascii
 import datetime
 import errno
@@ -180,18 +214,20 @@ import select
 import socket
 import sys
 import time
+import traceback
 
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass, missing_required_lib
 from ansible.module_utils._text import to_native
 
 
 HAS_PSUTIL = False
+PSUTIL_IMP_ERR = None
 try:
     import psutil
     HAS_PSUTIL = True
     # just because we can import it on Linux doesn't mean we will use it
 except ImportError:
-    pass
+    PSUTIL_IMP_ERR = traceback.format_exc()
 
 
 class TCPConnectionInfo(object):
@@ -227,7 +263,7 @@ class TCPConnectionInfo(object):
         self.port = int(self.module.params['port'])
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
-            module.fail_json(msg="psutil module required for wait_for")
+            module.fail_json(msg=missing_required_lib('psutil'), exception=PSUTIL_IMP_ERR)
 
     def _get_exclude_ips(self):
         exclude_hosts = self.module.params['exclude_hosts']
@@ -314,6 +350,8 @@ class LinuxTCPConnectionInfo(TCPConnectionInfo):
     def get_active_connections_count(self):
         active_connections = 0
         for family in self.source_file.keys():
+            if not os.path.isfile(self.source_file[family]):
+                continue
             f = open(self.source_file[family])
             for tcp_connection in f.readlines():
                 tcp_connection = tcp_connection.strip().split()
@@ -458,19 +496,22 @@ def main():
     else:
         compiled_search_re = None
 
+    match_groupdict = {}
+    match_groups = ()
+
     if port and path:
-        module.fail_json(msg="port and path parameter can not both be passed to wait_for")
+        module.fail_json(msg="port and path parameter can not both be passed to wait_for", elapsed=0)
     if path and state == 'stopped':
-        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module")
+        module.fail_json(msg="state=stopped should only be used for checking a port in the wait_for module", elapsed=0)
     if path and state == 'drained':
-        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module")
+        module.fail_json(msg="state=drained should only be used for checking a port in the wait_for module", elapsed=0)
     if module.params['exclude_hosts'] is not None and state != 'drained':
-        module.fail_json(msg="exclude_hosts should only be with state=drained")
+        module.fail_json(msg="exclude_hosts should only be with state=drained", elapsed=0)
     for _connection_state in module.params['active_connection_states']:
         try:
             get_connection_state_id(_connection_state)
-        except:
-            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state)
+        except Exception:
+            module.fail_json(msg="unknown active_connection_state (%s) defined" % _connection_state, elapsed=0)
 
     start = datetime.datetime.utcnow()
 
@@ -495,7 +536,7 @@ def main():
                     s = _create_connection(host, port, connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
-                except:
+                except Exception:
                     break
             # Conditions not yet met, wait and try again
             time.sleep(module.params['sleep'])
@@ -527,8 +568,13 @@ def main():
                     try:
                         f = open(path)
                         try:
-                            if re.search(compiled_search_re, f.read()):
-                                # String found, success!
+                            search = re.search(compiled_search_re, f.read())
+                            if search:
+                                if search.groupdict():
+                                    match_groupdict = search.groupdict()
+                                if search.groups():
+                                    match_groups = search.groups()
+
                                 break
                         finally:
                             f.close()
@@ -538,7 +584,7 @@ def main():
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
                     s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
-                except:
+                except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass
                 else:
@@ -620,7 +666,8 @@ def main():
             module.fail_json(msg=msg or "Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
 
     elapsed = datetime.datetime.utcnow() - start
-    module.exit_json(state=state, port=port, search_regex=search_regex, path=path, elapsed=elapsed.seconds)
+    module.exit_json(state=state, port=port, search_regex=search_regex, match_groups=match_groups, match_groupdict=match_groupdict, path=path,
+                     elapsed=elapsed.seconds)
 
 
 if __name__ == '__main__':

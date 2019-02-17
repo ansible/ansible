@@ -158,7 +158,9 @@ requirements:
 notes:
   - Either I(instance_names) or I(name) is required.
   - JSON credentials strongly preferred.
-author: "Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>"
+author:
+  - Eric Johnson (@erjohnso) <erjohnso@google.com>
+  - Tom Melendez (@supertom) <supertom@google.com>
 '''
 
 EXAMPLES = '''
@@ -328,11 +330,11 @@ def get_instance_info(inst):
 
     try:
         netname = inst.extra['networkInterfaces'][0]['network'].split('/')[-1]
-    except:
+    except Exception:
         netname = None
     try:
         subnetname = inst.extra['networkInterfaces'][0]['subnetwork'].split('/')[-1]
-    except:
+    except Exception:
         subnetname = None
     if 'disks' in inst.extra:
         disk_names = [disk_info['source'].split('/')[-1]

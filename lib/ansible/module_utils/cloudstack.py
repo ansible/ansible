@@ -9,13 +9,17 @@ __metaclass__ = type
 import os
 import sys
 import time
+import traceback
 
 from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.basic import missing_required_lib
 
+CS_IMP_ERR = None
 try:
     from cs import CloudStack, CloudStackException, read_config
     HAS_LIB_CS = True
 except ImportError:
+    CS_IMP_ERR = traceback.format_exc()
     HAS_LIB_CS = False
 
 CS_HYPERVISORS = [
@@ -53,7 +57,7 @@ class AnsibleCloudStack:
 
     def __init__(self, module):
         if not HAS_LIB_CS:
-            module.fail_json(msg="python library cs required: pip install cs")
+            module.fail_json(msg=missing_required_lib('cs'), exception=CS_IMP_ERR)
 
         self.result = {
             'changed': False,
@@ -136,7 +140,7 @@ class AnsibleCloudStack:
             'api_region': api_region,
             'api_url': api_config['endpoint'],
             'api_key': api_config['key'],
-            'api_timeout': api_config['timeout'],
+            'api_timeout': int(api_config['timeout']),
             'api_http_method': api_config['method'],
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):
@@ -413,10 +417,11 @@ class AnsibleCloudStack:
             'domainid': self.get_domain(key='id'),
             'projectid': self.get_project(key='id'),
             'zoneid': self.get_zone(key='id') if filter_zone else None,
+            'fetch_list': True,
         }
         vms = self.query_api('listVirtualMachines', **args)
         if vms:
-            for v in vms['virtualmachine']:
+            for v in vms:
                 if vm.lower() in [v['name'].lower(), v['displayname'].lower(), v['id']]:
                     self.vm = v
                     return self._get_by_key(key, self.vm)
@@ -545,7 +550,7 @@ class AnsibleCloudStack:
 
     def query_tags(self, resource, resource_type):
         args = {
-            'resourceids': resource['id'],
+            'resourceid': resource['id'],
             'resourcetype': resource_type,
         }
         tags = self.query_api('listTags', **args)

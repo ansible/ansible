@@ -28,23 +28,34 @@
 
 import os
 import re
+import traceback
 
+from ansible.module_utils.ansible_release import __version__
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.six import string_types, binary_type, text_type
+from ansible.module_utils.common.dict_transformations import (
+    camel_dict_to_snake_dict, snake_dict_to_camel_dict,
+    _camel_to_snake, _snake_to_camel,
+)
 
+BOTO_IMP_ERR = None
 try:
     import boto
     import boto.ec2  # boto does weird import stuff
     HAS_BOTO = True
 except ImportError:
+    BOTO_IMP_ERR = traceback.format_exc()
     HAS_BOTO = False
 
+BOTO3_IMP_ERR = None
 try:
     import boto3
     import botocore
     HAS_BOTO3 = True
-except:
+except Exception:
+    BOTO3_IMP_ERR = traceback.format_exc()
     HAS_BOTO3 = False
 
 try:
@@ -122,15 +133,24 @@ def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **par
                          'the conn_type parameter in the boto3_conn function '
                          'call')
 
-    if conn_type == 'resource':
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
-        return resource
-    elif conn_type == 'client':
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        return client
+    if params.get('config'):
+        config = params.pop('config')
+        config.user_agent_extra = 'Ansible/{0}'.format(__version__)
     else:
-        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
-        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        config = botocore.config.Config(
+            user_agent_extra='Ansible/{0}'.format(__version__),
+        )
+    session = boto3.session.Session(
+        profile_name=profile,
+    )
+
+    if conn_type == 'resource':
+        return session.resource(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
+    elif conn_type == 'client':
+        return session.client(resource, config=config, region_name=region, endpoint_url=endpoint, **params)
+    else:
+        client = session.client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = session.resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 
@@ -239,7 +259,7 @@ def get_aws_connection_info(module, boto3=False):
                     if not region:
                         region = boto.config.get('Boto', 'ec2_region')
                 else:
-                    module.fail_json(msg="boto is required for this module. Please install boto and try again")
+                    module.fail_json(msg=missing_required_lib('boto'), exception=BOTO_IMP_ERR)
             elif HAS_BOTO3:
                 # here we don't need to make an additional call, will default to 'us-east-1' if the below evaluates to None.
                 try:
@@ -247,7 +267,7 @@ def get_aws_connection_info(module, boto3=False):
                 except botocore.exceptions.ProfileNotFound as e:
                     pass
             else:
-                module.fail_json(msg="Boto3 is required for this module. Please install boto3 and try again")
+                module.fail_json(msg=missing_required_lib('boto3'), exception=BOTO3_IMP_ERR)
 
     if not security_token:
         if os.environ.get('AWS_SECURITY_TOKEN'):
@@ -271,6 +291,7 @@ def get_aws_connection_info(module, boto3=False):
         boto_params['verify'] = validate_certs
 
         if profile_name:
+            boto_params = dict(aws_access_key_id=None, aws_secret_access_key=None, aws_session_token=None)
             boto_params['profile_name'] = profile_name
 
     else:
@@ -344,103 +365,6 @@ def ec2_connect(module):
         module.fail_json(msg="Either region or ec2_url must be specified")
 
     return ec2
-
-
-def _camel_to_snake(name, reversible=False):
-
-    def prepend_underscore_and_lower(m):
-        return '_' + m.group(0).lower()
-
-    import re
-    if reversible:
-        upper_pattern = r'[A-Z]'
-    else:
-        # Cope with pluralized abbreviations such as TargetGroupARNs
-        # that would otherwise be rendered target_group_ar_ns
-        upper_pattern = r'[A-Z]{3,}s$'
-
-    s1 = re.sub(upper_pattern, prepend_underscore_and_lower, name)
-    # Handle when there was nothing before the plural_pattern
-    if s1.startswith("_") and not name.startswith("_"):
-        s1 = s1[1:]
-    if reversible:
-        return s1
-
-    # Remainder of solution seems to be https://stackoverflow.com/a/1176023
-    first_cap_pattern = r'(.)([A-Z][a-z]+)'
-    all_cap_pattern = r'([a-z0-9])([A-Z]+)'
-    s2 = re.sub(first_cap_pattern, r'\1_\2', s1)
-    return re.sub(all_cap_pattern, r'\1_\2', s2).lower()
-
-
-def camel_dict_to_snake_dict(camel_dict, reversible=False, ignore_list=()):
-    """
-    reversible allows two way conversion of a camelized dict
-    such that snake_dict_to_camel_dict(camel_dict_to_snake_dict(x)) == x
-
-    This is achieved through mapping e.g. HTTPEndpoint to h_t_t_p_endpoint
-    where the default would be simply http_endpoint, which gets turned into
-    HttpEndpoint if recamelized.
-
-    ignore_list is used to avoid converting a sub-tree of a dict. This is
-    particularly important for tags, where keys are case-sensitive. We convert
-    the 'Tags' key but nothing below.
-    """
-
-    def value_is_list(camel_list):
-
-        checked_list = []
-        for item in camel_list:
-            if isinstance(item, dict):
-                checked_list.append(camel_dict_to_snake_dict(item, reversible))
-            elif isinstance(item, list):
-                checked_list.append(value_is_list(item))
-            else:
-                checked_list.append(item)
-
-        return checked_list
-
-    snake_dict = {}
-    for k, v in camel_dict.items():
-        if isinstance(v, dict) and k not in ignore_list:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = camel_dict_to_snake_dict(v, reversible)
-        elif isinstance(v, list) and k not in ignore_list:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = value_is_list(v)
-        else:
-            snake_dict[_camel_to_snake(k, reversible=reversible)] = v
-
-    return snake_dict
-
-
-def _snake_to_camel(snake, capitalize_first=False):
-    if capitalize_first:
-        return ''.join(x.capitalize() or '_' for x in snake.split('_'))
-    else:
-        return snake.split('_')[0] + ''.join(x.capitalize() or '_' for x in snake.split('_')[1:])
-
-
-def snake_dict_to_camel_dict(snake_dict, capitalize_first=False):
-    """
-    Perhaps unexpectedly, snake_dict_to_camel_dict returns dromedaryCase
-    rather than true CamelCase. Passing capitalize_first=True returns
-    CamelCase. The default remains False as that was the original implementation
-    """
-
-    def camelize(complex_type, capitalize_first=False):
-        if complex_type is None:
-            return
-        new_type = type(complex_type)()
-        if isinstance(complex_type, dict):
-            for key in complex_type:
-                new_type[_snake_to_camel(key, capitalize_first)] = camelize(complex_type[key], capitalize_first)
-        elif isinstance(complex_type, list):
-            for i in range(len(complex_type)):
-                new_type.append(camelize(complex_type[i], capitalize_first))
-        else:
-            return complex_type
-        return new_type
-
-    return camelize(snake_dict, capitalize_first)
 
 
 def ansible_dict_to_boto3_filter_list(filters_dict):
@@ -635,6 +559,9 @@ def _hashable_policy(policy, policy_list):
                 tupleified = tuple(tupleified)
             policy_list.append(tupleified)
     elif isinstance(policy, string_types) or isinstance(policy, binary_type):
+        # convert root account ARNs to just account IDs
+        if policy.startswith('arn:aws:iam::') and policy.endswith(':root'):
+            policy = policy.split(':')[4]
         return [(to_text(policy))]
     elif isinstance(policy, dict):
         sorted_keys = list(policy.keys())
@@ -794,7 +721,7 @@ def compare_aws_tags(current_tags_dict, new_tags_dict, purge_tags=True):
             tag_keys_to_unset.append(key)
 
     for key in set(new_tags_dict.keys()) - set(tag_keys_to_unset):
-        if new_tags_dict[key] != current_tags_dict.get(key):
+        if to_text(new_tags_dict[key]) != current_tags_dict.get(key):
             tag_key_value_pairs_to_set[key] = new_tags_dict[key]
 
     return tag_key_value_pairs_to_set, tag_keys_to_unset

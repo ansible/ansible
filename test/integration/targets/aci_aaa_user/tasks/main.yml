@@ -18,6 +18,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     state: absent
 
@@ -31,6 +32,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     description: Ansible test user
     email: ansible@ansible.lan
@@ -62,8 +64,12 @@
 - name: Verify add user
   assert:
     that:
-    - cm_add_user.changed == nm_add_user.changed == true
-    - cm_add_user_again.changed == nm_add_user_again.changed == false
+    - cm_add_user is changed
+    - nm_add_user is changed
+    - nm_add_user.current.0.aaaUser.attributes.descr == 'Ansible test user'
+    - cm_add_user_again is not changed
+    - nm_add_user_again is not changed
+    - nm_add_user_again.current.0.aaaUser.attributes.descr == 'Ansible test user'
 
 
 # MODIFY USER
@@ -75,6 +81,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     description: Ansible test user for integration tests
     email: aci-ansible@ansible.lan
@@ -100,8 +107,50 @@
 - name: Verify modify user
   assert:
     that:
-    - cm_modify_user.changed == nm_modify_user.changed == true
-    - cm_modify_user_again.changed == nm_modify_user_again.changed == false
+    - cm_modify_user is changed
+    - nm_modify_user is changed
+    - nm_modify_user.current.0.aaaUser.attributes.descr == 'Ansible test user for integration tests'
+    - cm_modify_user_again is not changed
+    - nm_modify_user_again is not changed
+    - nm_modify_user_again.current.0.aaaUser.attributes.descr == 'Ansible test user for integration tests'
+
+
+# CLEAR PASSWORD HISTORY
+- name: Clear password history (check_mode)
+  aci_aaa_user: &clear_password_history
+    host: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: '{{ aci_validate_certs | default(false) }}'
+    use_ssl: '{{ aci_use_ssl | default(true) }}'
+    use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
+    aaa_user: ansible
+    clear_password_history: yes
+  check_mode: yes
+  register: cm_clear_password_history
+
+- name: Clear password history (normal mode)
+  aci_aaa_user: *clear_password_history
+  register: nm_clear_password_history
+
+- name: Clear password history (check mode)
+  aci_aaa_user: *clear_password_history
+  check_mode: yes
+  register: cm_clear_password_history_again
+
+- name: Clear password history (normal mode)
+  aci_aaa_user: *clear_password_history
+  register: nm_clear_password_history_again
+
+- name: Verify clear password history
+  assert:
+    that:
+    # NOTE: Clearing password history is a changing action, everytime
+    - cm_clear_password_history is changed
+    - nm_clear_password_history is changed
+    - cm_clear_password_history_again is changed
+    - nm_clear_password_history_again is changed
 
 
 # QUERY ALL USERS
@@ -113,6 +162,7 @@
     validate_certs: '{{ aci_validate_certs | default(false) }}'
     use_ssl: '{{ aci_use_ssl | default(true) }}'
     use_proxy: '{{ aci_use_proxy | default(true) }}'
+    output_level: '{{ aci_output_level | default("info") }}'
     aaa_user: ansible
     state: query
   check_mode: yes
@@ -125,7 +175,8 @@
 - name: Verify query_all_users
   assert:
     that:
-    - cm_query_all_users.changed == nm_query_all_users.changed == false
+    - cm_query_all_users is not changed
+    - nm_query_all_users is not changed
     # NOTE: Order of users is not stable between calls
     #- cm_query_all_users == nm_query_all_users
 
@@ -145,8 +196,15 @@
 - name: Verify query_user
   assert:
     that:
-    - cm_query_user.changed == nm_query_user.changed == false
+    - cm_query_user is not changed
+    - nm_query_user is not changed
     - cm_query_user == nm_query_user
+    - nm_query_user.current.0.aaaUser.attributes.accountStatus == 'active'
+    - nm_query_user.current.0.aaaUser.attributes.descr == 'Ansible test user for integration tests'
+    - nm_query_user.current.0.aaaUser.attributes.email == 'aci-ansible@ansible.lan'
+    - nm_query_user.current.0.aaaUser.attributes.expiration == '2123-12-12T00:00:00.000+00:00'
+    - nm_query_user.current.0.aaaUser.attributes.expires == 'yes'
+    - nm_query_user.current.0.aaaUser.attributes.phone == '2-345-555-678'
 
 
 # REMOVE USER
@@ -171,5 +229,7 @@
 - name: Verify remove_user
   assert:
     that:
-    - cm_remove_user.changed == nm_remove_user.changed == true
-    - cm_remove_user_again.changed == nm_remove_user_again.changed == false
+    - cm_remove_user is changed
+    - nm_remove_user is changed
+    - cm_remove_user_again is not changed
+    - nm_remove_user_again is not changed

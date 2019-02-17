@@ -3,41 +3,88 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- name: Create snmp user
-  nxos_snmp_user: &create
-    user: ntc
-    group: network-operator
-    authentication: md5
-    pwd: N$tOpe%1
-    privacy: HelloU$er1
-    encrypt: true
-    provider: "{{ connection }}"
-  register: result
-
-- assert: &true
-    that:
-      - "result.changed == true"
-
-- name: delete snmp user
+- name: Remove snmp user
   nxos_snmp_user: &remove
     user: ntc
-    group: network-operator
-    authentication: md5
-    pwd: Testing1%
-    privacy: HelloU$er1
-    encrypt: true
-    state: absent
     provider: "{{ connection }}"
-  register: result
+    state: absent
 
-- assert: *true
+- pause:
+    seconds: 5
 
-- name: "Remove Idempotence"
-  nxos_snmp_user: *remove
-  register: result
+- block:
+  - name: Create snmp user
+    nxos_snmp_user: &create
+      user: ntc
+      group: network-operator
+      authentication: md5
+      pwd: N$tOpe%1
+      privacy: HelloU$er1
+      encrypt: true
+      provider: "{{ connection }}"
+    register: result
 
-- assert: &false
-    that:
-      - "result.changed == false"
+  - assert: &true
+      that:
+        - "result.changed == true"
+
+  - name: Add another group to user
+    nxos_snmp_user: &chg
+      user: ntc
+      group: network-admin
+      provider: "{{ connection }}"
+    register: result
+
+  - assert: *true
+
+  - name: "Check Idempotence"
+    nxos_snmp_user: *chg
+    register: result
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+
+  - name: Remove group from user
+    nxos_snmp_user: &remg
+      user: ntc
+      group: network-admin
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 5
+
+  - name: "Check Idempotence"
+    nxos_snmp_user: *remg
+    register: result
+
+  - assert: *false
+
+  - name: delete snmp user
+    nxos_snmp_user: &remove1
+      user: ntc
+      group: network-operator
+      provider: "{{ connection }}"
+      state: absent
+    register: result
+
+  - assert: *true
+
+  - pause:
+      seconds: 5
+
+  - name: "Remove Idempotence"
+    nxos_snmp_user: *remove1
+    register: result
+
+  - assert: *false
+
+  always:
+    - name: delete snmp user
+      nxos_snmp_user: *remove
 
 - debug: msg="END connection={{ ansible_connection }} nxos_snmp_user sanity test"

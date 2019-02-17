@@ -13,7 +13,7 @@ Ansible contains a number of extra modules for interacting with CloudStack based
 
 Prerequisites
 `````````````
-Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.python.org/pypi/cs.
+Prerequisites for using the CloudStack modules are minimal. In addition to Ansible itself, all of the modules require the python library ``cs`` https://pypi.org/project/cs/
 
 You'll need this Python module installed on the execution host, usually your workstation.
 
@@ -74,9 +74,9 @@ and fulfill the missing data by either setting ENV variables or tasks params:
     ---
     - name: provision our VMs
       hosts: cloud-vm
-      connection: local
       tasks:
         - name: ensure VMs are created and running
+          delegate_to: localhost
           cs_instance:
             api_key: your api key
             api_secret: your api secret
@@ -94,12 +94,12 @@ If you use more than one CloudStack region, you can define as many sections as y
     key = api key
     secret = api secret
 
-    [exmaple_cloud_one]
+    [example_cloud_one]
     endpoint = https://cloud-one.example.com/client/api
     key = api key
     secret = api secret
 
-    [exmaple_cloud_two]
+    [example_cloud_two]
     endpoint = https://cloud-two.example.com/client/api
     key = api key
     secret = api secret
@@ -111,10 +111,11 @@ By passing the argument ``api_region`` with the CloudStack modules, the region w
 .. code-block:: yaml
 
     - name: ensure my ssh public key exists on Exoscale
-      local_action: cs_sshkeypair
+      cs_sshkeypair:
         name: my-ssh-key
         public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
         api_region: exoscale
+      delegate_to: localhost
 
 Or by looping over a regions list if you want to do the task in every region:
 
@@ -127,8 +128,8 @@ Or by looping over a regions list if you want to do the task in every region:
         api_region: "{{ item }}"
         loop:
           - exoscale
-          - exmaple_cloud_one
-          - exmaple_cloud_two
+          - example_cloud_one
+          - example_cloud_two
 
 Environment Variables
 `````````````````````
@@ -144,20 +145,19 @@ Below you see an example how it can be used in combination with Ansible's block 
       tasks:
         - block:
             - name: ensure my ssh public key
-              local_action:
-                module: cs_sshkeypair
+              cs_sshkeypair:
                 name: my-ssh-key
                 public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
             - name: ensure my ssh public key
-              local_action:
-                module: cs_instance:
+              cs_instance:
                   display_name: "{{ inventory_hostname_short }}"
                   template: Linux Debian 7 64-bit 20GB Disk
                   service_offering: "{{ cs_offering }}"
                   ssh_key: my-ssh-key
                   state: running
 
+          delegate_to: localhost
           environment:
             CLOUDSTACK_DOMAIN: root/customers
             CLOUDSTACK_PROJECT: web-app
@@ -241,28 +241,30 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
     ---
     - name: provision our VMs
       hosts: cloud-vm
-      connection: local
       tasks:
-        - name: ensure VMs are created and running
-          cs_instance:
-            name: "{{ inventory_hostname_short }}"
-            template: Linux Debian 7 64-bit 20GB Disk
-            service_offering: "{{ cs_offering }}"
-            state: running
+        - name: run all enclosed tasks from localhost
+          delegate_to: localhost
+          block:
+            - name: ensure VMs are created and running
+              cs_instance:
+                name: "{{ inventory_hostname_short }}"
+                template: Linux Debian 7 64-bit 20GB Disk
+                service_offering: "{{ cs_offering }}"
+                state: running
 
-        - name: ensure firewall ports opened
-          cs_firewall:
-            ip_address: "{{ public_ip }}"
-            port: "{{ item.port }}"
-            cidr: "{{ item.cidr | default('0.0.0.0/0') }}"
-          loop: "{{ cs_firewall }}"
-          when: public_ip is defined
+            - name: ensure firewall ports opened
+              cs_firewall:
+                ip_address: "{{ public_ip }}"
+                port: "{{ item.port }}"
+                cidr: "{{ item.cidr | default('0.0.0.0/0') }}"
+              loop: "{{ cs_firewall }}"
+              when: public_ip is defined
 
-        - name: ensure static NATs
-          cs_staticnat: vm="{{ inventory_hostname_short }}" ip_address="{{ public_ip }}"
-          when: public_ip is defined
+            - name: ensure static NATs
+              cs_staticnat: vm="{{ inventory_hostname_short }}" ip_address="{{ public_ip }}"
+              when: public_ip is defined
 
-In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connection=local`` to execute the API calls locally from our workstation.
+In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``delegate_to: localhost`` to execute the API calls locally from our workstation.
 
 In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
 
@@ -316,7 +318,6 @@ The playbook looks like the following:
     ---
     - name: cloud base setup
       hosts: localhost
-      connection: local
       tasks:
       - name: upload ssh public key
         cs_sshkeypair:
@@ -349,26 +350,27 @@ The playbook looks like the following:
 
     - name: install VMs in the cloud
       hosts: cloud-vm
-      connection: local
       tasks:
-      - name: create and run VMs on CloudStack
-        cs_instance:
-          name: "{{ inventory_hostname_short }}"
-          template: Linux Debian 7 64-bit 20GB Disk
-          service_offering: "{{ cs_offering }}"
-          security_groups: "{{ cs_securitygroups }}"
-          ssh_key: defaultkey
-          state: Running
-        register: vm
+      - delegate_to: localhost
+        block:
+        - name: create and run VMs on CloudStack
+          cs_instance:
+            name: "{{ inventory_hostname_short }}"
+            template: Linux Debian 7 64-bit 20GB Disk
+            service_offering: "{{ cs_offering }}"
+            security_groups: "{{ cs_securitygroups }}"
+            ssh_key: defaultkey
+            state: Running
+          register: vm
 
-      - name: show VM IP
-        debug: msg="VM {{ inventory_hostname }} {{ vm.default_ip }}"
+        - name: show VM IP
+          debug: msg="VM {{ inventory_hostname }} {{ vm.default_ip }}"
 
-      - name: assign IP to the inventory
-        set_fact: ansible_ssh_host={{ vm.default_ip }}
+        - name: assign IP to the inventory
+          set_fact: ansible_ssh_host={{ vm.default_ip }}
 
-      - name: waiting for SSH to come up
-        wait_for: port=22 host={{ vm.default_ip }} delay=5
+        - name: waiting for SSH to come up
+          wait_for: port=22 host={{ vm.default_ip }} delay=5
 
 In the first play we setup the security groups, in the second play the VMs will created be assigned to these groups. Further you see, that we assign the public IP returned from the modules to the host inventory. This is needed as we do not know the IPs we will get in advance. In a next step you would configure the DNS servers with these IPs for accessing the VMs with their DNS name.
 

@@ -32,7 +32,7 @@ options:
               do not persist across reboots.
         required: false
         default: false
-        choices: [ "true", "false" ]
+        type: bool
     state:
         description:
             - Create or delete Solaris/illumos etherstub.
@@ -57,17 +57,17 @@ RETURN = '''
 name:
     description: etherstub name
     returned: always
-    type: string
+    type: str
     sample: "switch0"
 state:
     description: state of the target
     returned: always
-    type: string
+    type: str
     sample: "present"
 temporary:
     description: etherstub's persistence
     returned: always
-    type: boolean
+    type: bool
     sample: "True"
 '''
 from ansible.module_utils.basic import AnsibleModule

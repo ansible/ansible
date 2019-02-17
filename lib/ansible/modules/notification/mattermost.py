@@ -58,9 +58,7 @@ options:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled sites using self-signed certificates.
     default: yes
-    choices:
-      - 'yes'
-      - 'no'
+    type: bool
 """
 
 EXAMPLES = """
@@ -84,11 +82,11 @@ RETURN = '''
 payload:
     description: Mattermost payload
     returned: success
-    type: string
+    type: str
 webhook_url:
     description: URL the webhook is sent to
     returned: success
-    type: string
+    type: str
 '''
 
 from ansible.module_utils.basic import AnsibleModule

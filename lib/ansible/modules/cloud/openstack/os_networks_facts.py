@@ -21,8 +21,8 @@ author: "Davide Agnello (@dagnello)"
 description:
     - Retrieve facts about one or more networks from OpenStack.
 requirements:
-    - "python >= 2.6"
-    - "shade"
+    - "python >= 2.7"
+    - "sdk"
 options:
    name:
      description:
@@ -94,15 +94,15 @@ openstack_networks:
         id:
             description: Unique UUID.
             returned: success
-            type: string
+            type: str
         name:
             description: Name given to the network.
             returned: success
-            type: string
+            type: str
         status:
             description: Network status.
             returned: success
-            type: string
+            type: str
         subnets:
             description: Subnet(s) included in this network.
             returned: success
@@ -110,11 +110,11 @@ openstack_networks:
         tenant_id:
             description: Tenant id associated with this network.
             returned: success
-            type: string
+            type: str
         shared:
             description: Network shared flag.
             returned: success
-            type: boolean
+            type: bool
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -129,14 +129,14 @@ def main():
     )
     module = AnsibleModule(argument_spec)
 
-    shade, cloud = openstack_cloud_from_module(module)
+    sdk, cloud = openstack_cloud_from_module(module)
     try:
         networks = cloud.search_networks(module.params['name'],
                                          module.params['filters'])
         module.exit_json(changed=False, ansible_facts=dict(
             openstack_networks=networks))
 
-    except shade.OpenStackCloudException as e:
+    except sdk.exceptions.OpenStackCloudException as e:
         module.fail_json(msg=str(e))
 
 

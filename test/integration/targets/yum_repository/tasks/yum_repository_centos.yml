@@ -171,7 +171,6 @@
       - "'RPM-GPG2-KEY-EPEL' in repofile"
       - "'aaa bbb' in repofile"
       - "'ccc ddd' in repofile"
-    value:
 
 - name: Cleanup list test repo
   yum_repository:

@@ -32,7 +32,7 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
-    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions']
+    VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
     VALID_ALL = ['name']
 
@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
         if not self.ignore_files:
             self.ignore_files = list()
 
-        if isinstance(self.ignore_files, str):
+        if isinstance(self.ignore_files, string_types):
             self.ignore_files = self.ignore_files.split()
 
         elif isinstance(self.ignore_files, dict):
@@ -68,6 +68,7 @@ class ActionModule(ActionBase):
 
         self.depth = self._task.args.get('depth', None)
         self.files_matching = self._task.args.get('files_matching', None)
+        self.ignore_unknown_extensions = self._task.args.get('ignore_unknown_extensions', False)
         self.ignore_files = self._task.args.get('ignore_files', None)
         self.valid_extensions = self._task.args.get('extensions', self.VALID_FILE_EXTENSIONS)
 
@@ -99,10 +100,10 @@ class ActionModule(ActionBase):
             elif arg in self.VALID_ALL:
                 pass
             else:
-                raise AnsibleError('{0} is not a valid option in debug'.format(arg))
+                raise AnsibleError('{0} is not a valid option in include_vars'.format(to_native(arg)))
 
         if dirs and files:
-            raise AnsibleError("Your are mixing file only and dir only arguments, these are incompatible")
+            raise AnsibleError("You are mixing file only and dir only arguments, these are incompatible")
 
         # set internal vars from args
         self._set_args()
@@ -113,10 +114,10 @@ class ActionModule(ActionBase):
             self._set_root_dir()
             if not path.exists(self.source_dir):
                 failed = True
-                err_msg = ('{0} directory does not exist'.format(self.source_dir))
+                err_msg = ('{0} directory does not exist'.format(to_native(self.source_dir)))
             elif not path.isdir(self.source_dir):
                 failed = True
-                err_msg = ('{0} is not a directory'.format(self.source_dir))
+                err_msg = ('{0} is not a directory'.format(to_native(self.source_dir)))
             else:
                 for root_dir, filenames in self._traverse_dir_depth():
                     failed, err_msg, updated_results = (self._load_files_in_dir(root_dir, filenames))
@@ -230,18 +231,18 @@ class ActionModule(ActionBase):
         err_msg = ''
         if validate_extensions and not self._is_valid_file_ext(filename):
             failed = True
-            err_msg = ('{0} does not have a valid extension: {1}' .format(filename, ', '.join(self.valid_extensions)))
+            err_msg = ('{0} does not have a valid extension: {1}'.format(to_native(filename), ', '.join(self.valid_extensions)))
         else:
             b_data, show_content = self._loader._get_file_contents(filename)
             data = to_text(b_data, errors='surrogate_or_strict')
 
             self.show_content = show_content
-            data = self._loader.load(data, show_content)
+            data = self._loader.load(data, file_name=filename, show_content=show_content)
             if not data:
                 data = dict()
             if not isinstance(data, dict):
                 failed = True
-                err_msg = ('{0} must be stored as a dictionary/hash' .format(filename))
+                err_msg = ('{0} must be stored as a dictionary/hash'.format(to_native(filename)))
             else:
                 self.included_files.append(filename)
                 results.update(data)
@@ -274,9 +275,15 @@ class ActionModule(ActionBase):
                     stop_iter = True
 
             if not stop_iter and not failed:
-                if path.exists(filepath) and not self._ignore_file(filename):
-                    failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
-                    if not failed:
-                        results.update(loaded_data)
+                if self.ignore_unknown_extensions:
+                    if path.exists(filepath) and not self._ignore_file(filename) and self._is_valid_file_ext(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(loaded_data)
+                else:
+                    if path.exists(filepath) and not self._ignore_file(filename):
+                        failed, err_msg, loaded_data = self._load_files(filepath, validate_extensions=True)
+                        if not failed:
+                            results.update(loaded_data)
 
         return failed, err_msg, results

@@ -1,4 +1,4 @@
-- hosts: testhost_binary_modules
+- hosts: testhost
   tasks:
     - debug: var=ansible_system
 

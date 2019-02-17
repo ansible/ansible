@@ -5,6 +5,10 @@
 - name: Generate a local SSH key
   local_action: "shell ssh-keygen -b 2048 -t rsa -f {{ tempdir.stdout }}/id_rsa -q -N 'passphrase'"
 
+- name: Read the generated key
+  set_fact:
+    ssh_key_data: "{{ lookup('file', tempdir.stdout + '/id_rsa') }}"
+
 - name: Create a User-specific credential
   tower_credential:
     name: SSH Credential
@@ -43,6 +47,46 @@
     become_method: sudo
     become_username: superuser
     become_password: supersecret
+    ssh_key_data: "{{ ssh_key_data }}"
+    ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid SSH credential from lookup source
+  tower_credential:
+    name: SSH Credential from lookup source
+    organization: Default
+    state: present
+    kind: ssh
+    description: An example SSH credential from lookup source
+    username: joe
+    password: secret
+    become_method: sudo
+    become_username: superuser
+    become_password: supersecret
+    ssh_key_data: "{{ lookup('file', tempdir.stdout + '/id_rsa') }}"
+    ssh_key_unlock: "passphrase"
+  register: result
+
+- assert:
+    that:
+      - "result is changed"
+
+- name: Create a valid SSH credential from file source
+  tower_credential:
+    name: SSH Credential from file source
+    organization: Default
+    state: present
+    kind: ssh
+    description: An example SSH credential from file source
+    username: joe
+    password: secret
+    become_method: sudo
+    become_username: superuser
+    become_password: supersecret
     ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
     ssh_key_unlock: "passphrase"
   register: result
@@ -50,6 +94,8 @@
 - assert:
     that:
       - "result is changed"
+      - "result is not failed"
+      - "'ssh_key_data should be a string, not a path to a file.' in result.deprecations[0].msg"
 
 - name: Create an invalid SSH credential (passphrase required)
   tower_credential:
@@ -58,46 +104,14 @@
     state: present
     kind: ssh
     username: joe
-    ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
+    ssh_key_data: "{{ ssh_key_data }}"
   ignore_errors: yes
   register: result
 
 - assert:
     that:
       - "result is failed"
-      - "'must be set when SSH key is encrypted' in result.module_stderr"
-
-- name: Create an invalid SSH credential (ssh_key_data file is missing)
-  tower_credential:
-    name: SSH Credential
-    organization: Default
-    state: present
-    kind: ssh
-    username: joe
-    ssh_key_data: "{{ tempdir.stdout }}/not_a_valid_file"
-  ignore_errors: yes
-  register: result
-
-- assert:
-    that:
-      - "result is failed"
-      - "'file not found' in result.msg"
-
-- name: Create an invalid SSH credential (ssh_key_data is a directory)
-  tower_credential:
-    name: SSH Credential
-    organization: Default
-    state: present
-    kind: ssh
-    username: joe
-    ssh_key_data: "{{ tempdir.stdout }}"
-  ignore_errors: yes
-  register: result
-
-- assert:
-    that:
-      - "result is failed"
-      - "'attempted to read contents of directory' in result.msg"
+      - "'must be set when SSH key is encrypted' in result.msg"
 
 - name: Create an invalid SSH credential (Organization not found)
   tower_credential:
@@ -112,7 +126,7 @@
 - assert:
     that:
       - "result is failed"
-      - "'The requested object could not be found' in result.module_stderr"
+      - "'The requested object could not be found' in result.msg"
 
 - name: Delete an SSH credential
   tower_credential:
@@ -202,7 +216,7 @@
     kind: scm
     username: joe
     password: secret
-    ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
+    ssh_key_data: "{{ ssh_key_data }}"
     ssh_key_unlock: "passphrase"
   register: result
 
@@ -338,7 +352,7 @@
     kind: gce
     username: joe
     project: ABC123
-    ssh_key_data: "{{ tempdir.stdout }}/id_rsa"
+    ssh_key_data: "{{ ssh_key_data }}"
   register: result
 
 - assert:
@@ -508,3 +522,17 @@
 - assert:
     that:
       - "result is changed"
+
+- name: Check module fails with correct msg
+  tower_credential:
+    name: test-credential
+    description: Credential Description
+    kind: ssh
+    organization: test-non-existing-org
+    state: present
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - "result.msg =='Failed to update credential, organization not found: The requested object could not be found.'"

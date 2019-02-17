@@ -27,6 +27,18 @@
     vrf: anstest
   register: vrf_present
 
+- name: ensure bd anstest does not exist
+  aci_bd:
+    <<: *aci_tenant_present
+    bd: anstest
+    state: absent
+
+- name: ensure bd anstest2 does not exist
+  aci_bd:
+    <<: *aci_tenant_present
+    bd: anstest2
+    state: absent
+
 - name: create bd - check mode works
   aci_bd: &aci_bd_present
     <<: *aci_tenant_present
@@ -74,20 +86,20 @@
 - name: present asserts
   assert:
     that:
-      - bd_present_check_mode.changed == true
+      - bd_present_check_mode is changed
       - 'bd_present_check_mode.sent == {"fvBD": {"attributes": {"descr": "Ansible Test", "name": "anstest"}}}'
-      - bd_present.changed == true
+      - bd_present is changed
       - bd_present.sent == bd_present_check_mode.sent
       - bd_present.previous == []
-      - bd_present_idempotent.changed == false
+      - bd_present_idempotent is not changed
       - bd_present_idempotent.previous != []
-      - bd_update.changed == true
+      - bd_update is changed
       - bd_update.previous != []
-      - bd_update.changed != bd_update.proposed
+      - bd_update.sent != bd_update.proposed
       - 'bd_update.sent == {"fvBD": {"attributes": {"descr": "Ansible Test Update"}, "children": [{"fvRsCtx": {"attributes": {"tnFvCtxName": "anstest"}}}]}}'
       - 'bd_present_2.sent.fvBD.attributes == {"arpFlood": "yes", "descr": "Ansible Test", "ipLearning": "no", "multiDstPktAct": "drop", "name": "anstest2",
       "unicastRoute": "no", "unkMacUcastAct": "flood", "unkMcastAct": "opt-flood"}'
-      - bd_present_missing_param.failed == true
+      - bd_present_missing_param is failed
       - 'bd_present_missing_param.msg == "state is present but all of the following are missing: tenant"'
 
 - name: get all bd
@@ -118,25 +130,25 @@
 - name: query asserts
   assert:
     that:
-      - query_all.changed == false
+      - query_all is not changed
       - query_all.current | length > 1
       - query_all.current.0.fvBD is defined
-      - '"rsp-subtree-class=fvRsCtx,fvRsIgmpsn,fvRsBDToNdP,fvRsBdToEpRet" in query_all.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_all.filter_string|urldecode'
       - '"class/fvBD.json" in query_all.url'
-      - query_tenant.changed == false
+      - query_tenant is not changed
       - query_tenant.current | length == 1
       - query_tenant.current.0.fvTenant.children | length == 2
-      - '"rsp-subtree-class=fvRsCtx,fvRsIgmpsn,fvRsBDToNdP,fvRsBdToEpRet,fvBD" in query_tenant.filter_string'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvBD,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_tenant.filter_string|urldecode'
       - '"tn-anstest.json" in query_tenant.url'
-      - query_bd_bd.changed == false
+      - query_bd_bd is not changed
       - query_bd_bd.current != []
-      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in query_bd_bd.filter_string'
-      - '"rsp-subtree=full&rsp-subtree-class=fvRsCtx,fvRsIgmpsn,fvRsBDToNdP,fvRsBdToEpRet" in query_bd_bd.filter_string'
+      - '"query-target-filter=eq(fvBD.name, \"anstest\")" in query_bd_bd.filter_string|urldecode'
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd_bd.filter_string|urldecode'
       - '"class/fvBD.json" in query_bd_bd.url'
-      - query_bd.changed == false
+      - query_bd is not changed
       - query_bd.current | length == 1
-      - 'query_bd.current.0.fvBD.attributes.name == "anstest"'
-      - '"rsp-subtree-class=fvRsCtx,fvRsIgmpsn,fvRsBDToNdP,fvRsBdToEpRet" in query_bd.filter_string'
+      - query_bd.current.0.fvBD.attributes.name == "anstest"
+      - '"rsp-subtree-class=fvRsBdToEpRet,fvRsCtx,fvRsIgmpsn,fvRsBDToNdP" in query_bd.filter_string|urldecode'
       - '"tn-anstest/BD-anstest.json" in query_bd.url'
 
 - name: delete bd - check mode works
@@ -171,23 +183,23 @@
 - name: asserts for deletion task
   assert:
     that:
-      - bd_absent_check_mode.changed == true
+      - bd_absent_check_mode is changed
       - bd_absent_check_mode.proposed == {}
-      - bd_absent.changed == true
+      - bd_absent is changed
       - bd_absent.previous != []
-      - bd_absent_idempotent.changed == false
+      - bd_absent_idempotent is not changed
       - bd_absent_idempotent.previous == []
-      - bd_absent_missing_param.failed == true
+      - bd_absent_missing_param is failed
       - 'bd_absent_missing_param.msg == "state is absent but all of the following are missing: bd"'
 
 - name: delete vrf - cleanup before ending tests
   aci_vrf:
     <<: *aci_vrf_present
     state: absent
-  when: vrf_present.changed == true
+  when: vrf_present is changed
 
 - name: delete tenant - cleanup before ending tests
   aci_tenant:
     <<: *aci_tenant_present
     state: absent
-  when: tenant_present.changed == true
+  when: tenant_present is changed

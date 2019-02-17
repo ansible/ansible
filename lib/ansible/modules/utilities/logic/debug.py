@@ -33,6 +33,8 @@ options:
   var:
     description:
       - A variable name to debug.  Mutually exclusive with the 'msg' option.
+      - Be aware that this option already runs in Jinja2 context and has an implicit ``{{ }}`` wrapping,
+        so you should not be using Jinja2 delimiters unless you are looking for double interpolation.
   verbosity:
     description:
       - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above
@@ -66,4 +68,10 @@ EXAMPLES = '''
   debug:
     var: hostvars[inventory_hostname]
     verbosity: 4
+
+# Example that prints two lines of messages, but only if there's an environment value set
+- debug:
+    msg:
+      - "Provisioning based on YOUR_KEY which is: '{{ lookup('env', 'YOUR_KEY') }}"
+      - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 '''

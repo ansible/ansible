@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -162,13 +162,13 @@ def map_config_to_obj(module):
         lines = out.splitlines()
         for line in lines:
             obj = {}
-            add_match = re.search(r'ip route (\S+)', line, re.M)
+            add_match = re.search(r'ip route ([\d\./]+)', line, re.M)
             if add_match:
                 address = add_match.group(1)
                 if is_address(address):
                     obj['address'] = address
 
-                hop_match = re.search(r'ip route {0} (\S+)'.format(address), line, re.M)
+                hop_match = re.search(r'ip route {0} ([\d\./]+)'.format(address), line, re.M)
                 if hop_match:
                     hop = hop_match.group(1)
                     if is_hop(hop):
@@ -224,7 +224,7 @@ def main():
 
     if address and prefix:
         if '/' not in address or not validate_ip_address(address.split('/')[0]):
-            module.fail_json(msg='{} is not a valid IP address'.format(address))
+            module.fail_json(msg='{0} is not a valid IP address'.format(address))
 
         if not validate_prefix(prefix):
             module.fail_json(msg='Length of prefix should be between 0 and 32 bits')
@@ -248,6 +248,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
