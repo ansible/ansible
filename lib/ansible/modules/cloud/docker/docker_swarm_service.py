@@ -794,7 +794,7 @@ class DockerService(DockerBaseClass):
             'update_monitor': self.update_monitor,
             'update_max_failure_ratio': self.update_max_failure_ratio,
             'update_order': self.update_order,
-            'working_dir': self.working_dir
+            'working_dir': self.working_dir,
         }
 
     @staticmethod
