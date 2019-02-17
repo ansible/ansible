@@ -487,8 +487,29 @@ def test_parse_healthcheck():
         'test': ['CMD-SHELL', 'sleep 1'],
         'interval': 1000000000
     }
+
     result, disabled = parse_healthcheck({
         'test': ['NONE'],
     })
     assert result is None
     assert disabled
+
+    result, disabled = parse_healthcheck({
+        'test': 'sleep 1',
+        'interval': '1s423ms'
+    })
+    assert result == {
+        'test': ['CMD-SHELL', 'sleep 1'],
+        'interval': 1423000000
+    }
+    assert disabled is False
+
+    result, disabled = parse_healthcheck({
+        'test': 'sleep 1',
+        'interval': '1h1m2s3ms4us'
+    })
+    assert result == {
+        'test': ['CMD-SHELL', 'sleep 1'],
+        'interval': 3662003004000
+    }
+    assert disabled is False
