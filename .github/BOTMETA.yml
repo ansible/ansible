@@ -160,7 +160,7 @@ files:
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/: &vmware
-    ignored: cigamit jcpowermac mtnbikenc
+    ignored: cigamit jcpowermac mtnbikenc tchernomax
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: vmware
     maintainers: $team_vmware
