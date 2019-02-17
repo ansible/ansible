@@ -57,6 +57,7 @@ options:
          private keys in PEM format can be used as well."
       - "Mutually exclusive with C(account_key_content)."
       - "Required if C(account_key_content) is not used."
+    type: path
   account_key_content:
     description:
       - "Content of the ACME account RSA or Elliptic Curve key."
@@ -71,11 +72,13 @@ options:
          temporary file. It can still happen that it is written to disk by
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
+    type: str
   private_key_src:
     description:
       - "Path to the certificate's private key."
       - "Note that exactly one of C(account_key_src), C(account_key_content),
          C(private_key_src) or C(private_key_content) must be specified."
+    type: path
   private_key_content:
     description:
       - "Content of the certificate's private key."
@@ -90,6 +93,7 @@ options:
          temporary file. It can still happen that it is written to disk by
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
+    type: str
   revoke_reason:
     description:
       - "One of the revocation reasonCodes defined in
@@ -99,6 +103,7 @@ options:
          C(5) (cessationOfOperation), C(6) (certificateHold),
          C(8) (removeFromCRL), C(9) (privilegeWithdrawn),
          C(10) (aACompromise)"
+    type: int
 '''
 
 EXAMPLES = '''

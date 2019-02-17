@@ -83,12 +83,14 @@ options:
          used the M(acme_account) module to specify more than one contact
          for your account, this module will update your account and restrict
          it to the (at most one) contact email address specified here."
+    type: str
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
          ACME v1 service at C(acme_directory)."
       - Default is latest gathered from C(acme_directory) URL.
       - This option will only be used when C(acme_version) is 1.
+    type: str
   terms_agreed:
     description:
       - "Boolean indicating whether you agree to the terms of service document."
@@ -112,6 +114,7 @@ options:
     description: The challenge to be performed.
     choices: [ 'http-01', 'dns-01', 'tls-alpn-01' ]
     default: 'http-01'
+    type: str
   csr:
     description:
       - "File containing the CSR for the new certificate."
@@ -125,6 +128,7 @@ options:
          error in this case."
     required: true
     aliases: ['src']
+    type: path
   data:
     description:
       - "The data to validate ongoing challenges. This must be specified for
@@ -140,11 +144,13 @@ options:
          as it causes error messages to be come unusable, and C(data) does
          not contain any information which can be used without having
          access to the account key or which are not public anyway."
+    type: dict
   dest:
     description:
       - "The destination file for the certificate."
       - "Required if C(fullchain_dest) is not specified."
     aliases: ['cert']
+    type: path
   fullchain_dest:
     description:
       - "The destination file for the full chain (i.e. certificate followed
@@ -152,11 +158,13 @@ options:
       - "Required if C(dest) is not specified."
     version_added: 2.5
     aliases: ['fullchain']
+    type: path
   chain_dest:
     description:
       - If specified, the intermediate certificate will be written to this file.
     aliases: ['chain']
     version_added: 2.5
+    type: path
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -166,6 +174,7 @@ options:
       - "To make sure that the certificate is renewed in any case, you can
          use the C(force) option."
     default: 10
+    type: int
   deactivate_authzs:
     description:
       - "Deactivate authentication objects (authz) after issuing a certificate,

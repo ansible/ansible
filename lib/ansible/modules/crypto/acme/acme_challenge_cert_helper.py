@@ -42,19 +42,23 @@ options:
     required: yes
     choices:
     - tls-alpn-01
+    type: str
   challenge_data:
     description:
       - "The C(challenge_data) entry provided by M(acme_certificate) for the challenge."
     required: yes
+    type: dict
   private_key_src:
     description:
       - "Path to a file containing the private key file to use for this challenge
          certificate."
       - "Mutually exclusive with C(private_key_content)."
+    type: path
   private_key_content:
     description:
       - "Content of the private key to use for this challenge certificate."
       - "Mutually exclusive with C(private_key_src)."
+    type: str
 '''
 
 EXAMPLES = '''

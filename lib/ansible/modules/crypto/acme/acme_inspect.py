@@ -68,6 +68,7 @@ options:
     - post
     - directory-only
     default: get
+    type: str
   content:
     description:
       - "An encoded JSON object which will be sent as the content if I(method)

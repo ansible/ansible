@@ -33,6 +33,7 @@ options:
         choices: [ present, absent ]
         description:
             - Whether the private and public keys should exist or not, taking action if the state is different from what is stated.
+        type: str
     size:
         required: false
         description:
@@ -41,6 +42,7 @@ options:
               For ECDSA keys, size determines the key length by selecting from one of three elliptic curve sizes: 256, 384 or 521 bits.
               Attempting to use bit lengths other than these three values for ECDSA keys will cause this module to fail.
               Ed25519 keys have a fixed length and the size will be ignored."
+        type: int
     type:
         required: false
         default: rsa
@@ -48,6 +50,7 @@ options:
         description:
             - "The algorithm used to generate the SSH private key. C(rsa1) is for protocol version 1.
               C(rsa1) is deprecated and may not be supported by every version of ssh-keygen."
+        type: str
     force:
         required: false
         default: false
@@ -58,10 +61,12 @@ options:
         required: true
         description:
             - Name of the files containing the public and private key. The file containing the public key will have the extension C(.pub).
+        type: path
     comment:
         required: false
         description:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
+        type: str
 
 extends_documentation_fragment: files
 '''

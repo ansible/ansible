@@ -28,6 +28,7 @@ options:
             - C(export) or C(parse) a PKCS#12.
         choices: [ export, parse ]
         default: export
+        type: str
     ca_certificates:
         description:
             - List of CA certificate to include.
@@ -80,6 +81,7 @@ options:
               All parameters except C(path) are ignored when state is C(absent).
         choices: [ absent, present ]
         default: present
+        type: str
     src:
         description:
             - PKCS#12 file path to parse.

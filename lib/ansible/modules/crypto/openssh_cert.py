@@ -31,11 +31,13 @@ options:
         choices: [ 'present', 'absent' ]
         description:
             - Whether the host or user certificate should exist or not, taking action if the state is different from what is stated.
+        type: str
     type:
         required: true
         choices: ['host', 'user']
         description:
             - Whether the module should generate a host or a user certificate.
+        type: str
     force:
         required: false
         default: false

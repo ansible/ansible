@@ -34,6 +34,7 @@ options:
       - "Mutually exclusive with C(account_key_content)."
       - "Required if C(account_key_content) is not used."
     aliases: [ account_key ]
+    type: path
   account_key_content:
     description:
       - "Content of the ACME account RSA or Elliptic Curve key."
@@ -49,12 +50,14 @@ options:
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
     version_added: "2.5"
+    type: str
   account_uri:
     description:
       - "If specified, assumes that the account URI is as given. If the
          account key does not match this account, or an account with this
          URI does not exist, the module fails."
     version_added: "2.7"
+    type: str
   acme_version:
     description:
       - "The ACME version of the endpoint."
@@ -63,6 +66,7 @@ options:
     default: 1
     choices: [1, 2]
     version_added: "2.5"
+    type: int
   acme_directory:
     description:
       - "The ACME directory to use. This is the entry point URL to access
@@ -79,6 +83,7 @@ options:
          (staging and production) and against the
          L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     default: https://acme-staging.api.letsencrypt.org/directory
+    type: str
   validate_certs:
     description:
       - Whether calls to the ACME directory will validate TLS certificates.

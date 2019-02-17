@@ -37,6 +37,7 @@ options:
         description:
             - A concatenated set of certificates in PEM format forming a chain.
             - The module will try to complete this chain.
+        type: str
     root_certificates:
         required: yes
         type: list

@@ -54,6 +54,7 @@ options:
     - present
     - absent
     - changed_key
+    type: str
   allow_creation:
     description:
       - "Whether account creation is allowed (when state is C(present))."
@@ -68,6 +69,7 @@ options:
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."
     default: []
+    type: list
   terms_agreed:
     description:
       - "Boolean indicating whether you agree to the terms of service document."
@@ -80,12 +82,14 @@ options:
       - "Same restrictions apply as to C(account_key_src)."
       - "Mutually exclusive with C(new_account_key_content)."
       - "Required if C(new_account_key_content) is not used and state is C(changed_key)."
+    type: path
   new_account_key_content:
     description:
       - "Content of the ACME account RSA or Elliptic Curve key to change to."
       - "Same restrictions apply as to C(account_key_content)."
       - "Mutually exclusive with C(new_account_key_src)."
       - "Required if C(new_account_key_src) is not used and state is C(changed_key)."
+    type: str
 '''
 
 EXAMPLES = '''
