@@ -707,7 +707,9 @@ def convert_duration_to_nanosecond(time_str):
             time_params[name] = int(value)
 
     delta = timedelta(**time_params)
-    time_in_nanoseconds = int(delta.total_seconds() * 1000000000)
+    time_in_nanoseconds = (
+        delta.microseconds + (delta.seconds + delta.days * 24 * 3600) * 10 ** 6
+    ) * 10 ** 3
 
     return time_in_nanoseconds
 

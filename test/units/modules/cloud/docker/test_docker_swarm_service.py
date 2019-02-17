@@ -101,7 +101,6 @@ def test_get_docker_environment(mocker, docker_swarm_service):
     assert result == []
 
 
-@pytest.mark.skipif(sys.version_info < (2, 7), reason='Requires at least Python 2.7')
 def test_convert_duration_to_nanosecond(docker_swarm_service):
     nanoseconds = docker_swarm_service.convert_duration_to_nanosecond('5s')
     assert nanoseconds == 5000000000
@@ -113,7 +112,6 @@ def test_convert_duration_to_nanosecond(docker_swarm_service):
         docker_swarm_service.convert_duration_to_nanosecond('10x')
 
 
-@pytest.mark.skipif(sys.version_info < (2, 7), reason='Requires at least Python 2.7')
 def test_parse_healthcheck(docker_swarm_service):
     result, disabled = docker_swarm_service.parse_healthcheck({
         'test': 'sleep 1',
