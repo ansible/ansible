@@ -190,6 +190,28 @@ class GalaxyCLI(CLI):
 
         return u'\n'.join(text)
 
+    def _list_installed_roles(self):
+        roles_list = []
+        roles_path = self.options.roles_path
+        path_found = False
+        for path in roles_path:
+            role_path = os.path.expanduser(path)
+            if not os.path.exists(role_path):
+                display.warning("- the configured path %s does not exist." % role_path)
+                continue
+            elif not os.path.isdir(role_path):
+                display.warning("- the configured path %s, exists, but it is not a directory." % role_path)
+                continue
+            path_files = os.listdir(role_path)
+            path_found = True
+            for path_file in path_files:
+                gr = GalaxyRole(self.galaxy, path_file, path=path)
+                if gr.metadata:
+                    roles_list.append( ( gr.name , gr.install_info.get("version", None) ) )
+        if not path_found:
+            raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
+        return roles_list
+
 ############################
 # execute actions
 ############################
