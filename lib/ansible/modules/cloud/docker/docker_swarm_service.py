@@ -406,11 +406,13 @@ options:
     description:
       - Rolling update delay in nanoseconds.
       - Corresponds to the C(--update-delay) option of C(docker service create).
+      - Before Ansible 2.8, the default value for this option was C(10).
   update_parallelism:
     type: int
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
+      - Before Ansible 2.8, the default value for this option was C(1).
   update_failure_action:
     type: str
     description:
