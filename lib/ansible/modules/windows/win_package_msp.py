@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = r'''
 ---
-module: win_msp
+module: win_package_msp
 short_description: Installs/uninstalls a Microsoft Installer Patch file (.msp).
 description:
 - Installs or uninstalls a package in MSP format.
@@ -102,19 +102,19 @@ notes:
 
 EXAMPLES = r'''
 - name: Install SCOM 2016 UR4 over https
-  win_msp:
+  win_package_msp:
     path: https://nexusrepo.domain.local/repository/MyRepo/Microsoft/OperationsManager/KB4024941-AMD64-ENU-Console.msp
     patch_id: 4E6A3C97C54C78E478CDDF6B3268A6FC
     state: present
 
 - name: Install SCOM 2016 UR4 over fs
-  win_msp:
+  win_package_msp:
     path: D:\\Staging\\KB4024941-AMD64-ENU-Console.msp
     patch_id: 4E6A3C97C54C78E478CDDF6B3268A6FC
     state: present
 
 - name: Install SCOM 2016 UR4 over unc
-  win_msp:
+  win_package_msp:
     path: \\\\packagesrv\data\\KB4024941-AMD64-ENU-Console.msp
     patch_id: 4E6A3C97C54C78E478CDDF6B3268A6FC
     username: DOMAIN\\userID
@@ -122,7 +122,7 @@ EXAMPLES = r'''
     state: present
 
 - name: Uninstall SCOM 2016 UR4
-  win_msp:
+  win_package_msp:
     patch_id: 4E6A3C97C54C78E478CDDF6B3268A6FC
     patch_guid: '{79C3A6E4-C45C-4E87-87DC-FDB623866ACF}'
     product_id: '{E072D8FC-CD31-4ABE-BD65-606965965426}'
