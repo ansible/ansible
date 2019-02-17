@@ -31,6 +31,7 @@ options:
       - The name of the network to inspect.
       - When identifying an existing network name may be a name or a long or short network ID.
     required: true
+    type: str
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation

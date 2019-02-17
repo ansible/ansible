@@ -27,6 +27,7 @@ options:
         required: true
         description:
         -   Stack name
+        type: str
     state:
         description:
         -   Service state.
@@ -34,12 +35,14 @@ options:
         choices:
         -   present
         -   absent
+        type: str
     compose:
         default: []
         description:
         -   List of compose definitions. Any element may be a string
             referring to the path of the compose file on the target host
             or the YAML contents of a compose file nested as dictionary.
+        type: list
     prune:
         default: false
         description:
@@ -59,6 +62,7 @@ options:
         -   If set will add the C(--resolve-image) option to the C(docker stack deploy) command.
             This will have docker query the registry to resolve image digest and
             supported platforms. If not set, docker use "always" by default.
+        type: str
     absent_retries:
         default: 0
         description:
@@ -67,10 +71,12 @@ options:
             resources have been effectively deleted.
             If the last try still reports the stack as not completely
             removed the module will fail.
+        type: int
     absent_retries_interval:
         default: 1
         description:
         -   Interval in seconds between C(absent_retries)
+        type: int
 
 requirements:
 -   jsondiff

@@ -34,13 +34,16 @@ options:
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
+    type: int
   capabilities:
     description:
       - List of capabilities to add to the container.
+    type: list
   cap_drop:
     description:
       - List of capabilities to drop from the container.
     version_added: "2.7"
+    type: list
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
@@ -52,6 +55,7 @@ options:
       - Command to execute when the container starts.
         A command may be either a string or a list.
         Prior to version 2.4, strings were split on commas.
+    type: raw
   comparisons:
     type: dict
     description:
@@ -76,18 +80,23 @@ options:
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
+    type: int
   cpu_quota:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) quota
+    type: int
   cpuset_cpus:
     description:
       - CPUs in which to allow execution C(1,3) or C(1-3).
+    type: str
   cpuset_mems:
     description:
       - Memory nodes (MEMs) in which to allow execution C(0-3) or C(0,1)
+    type: str
   cpu_shares:
     description:
       - CPU shares (relative weight).
+    type: int
   detach:
     description:
       - Enable detached mode to leave the container running in background.
@@ -98,6 +107,7 @@ options:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
         in the format: <path_on_host>:<path_in_container>:<cgroup_permissions>"
+    type: list
   device_read_bps:
     description:
       - "List of device path and read rate (bytes per second) from device."
@@ -173,16 +183,20 @@ options:
   dns_opts:
     description:
       - list of DNS options
+    type: list
   dns_servers:
     description:
       - List of custom DNS servers.
+    type: list
   dns_search_domains:
     description:
       - List of custom DNS search domains.
+    type: list
   domainname:
     description:
       - Container domainname.
     version_added: "2.5"
+    type: str
   env:
     description:
       - Dictionary of key,value pairs.
@@ -193,13 +207,16 @@ options:
     description:
       - Path to a file, present on the target, containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
+    type: path
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
+    type: list
   etc_hosts:
     description:
       - Dict of host-to-IP mappings, where each host name is a key in the dictionary.
         Each host name will be added to the container's /etc/hosts file.
+    type: dict
   exposed_ports:
     description:
       - List of additional container ports which informs Docker that the container
@@ -209,6 +226,7 @@ options:
     aliases:
       - exposed
       - expose
+    type: list
   force_kill:
     description:
       - Use the kill command when stopping a running container.
@@ -219,6 +237,7 @@ options:
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
+    type: list
   healthcheck:
     version_added: "2.8"
     type: dict
@@ -252,6 +271,7 @@ options:
   hostname:
     description:
       - Container hostname.
+    type: str
   ignore_image:
     description:
       - When C(state) is I(present) or I(started) the module compares the configuration of an existing
@@ -268,6 +288,7 @@ options:
         will be pulled from the registry. If no tag is included, C(latest) will be used.
       - Can also be an image ID. If this is the case, the image is assumed to be available locally.
         The C(pull) option is ignored for this case.
+    type: str
   init:
     description:
       - Run an init inside the container that forwards signals and reaps processes.
@@ -284,6 +305,7 @@ options:
     description:
       - Set the IPC mode for the container. Can be one of 'container:<name|id>' to reuse another
         container's IPC namespace or 'host' to use the host's IPC namespace within the container.
+    type: str
   keep_volumes:
     description:
       - Retain volumes associated with a removed container.
@@ -292,33 +314,40 @@ options:
   kill_signal:
     description:
       - Override default signal used to kill a running container.
+    type: str
   kernel_memory:
     description:
       - "Kernel memory limit (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte). Minimum is C(4M)."
       - Omitting the unit defaults to bytes.
+    type: str
   labels:
-     description:
-       - Dictionary of key value pairs.
+    description:
+      - Dictionary of key value pairs.
+    type: dict
   links:
     description:
       - List of name aliases for linked containers in the format C(container_name:alias).
       - Setting this will force container to be restarted.
+    type: list
   log_driver:
     description:
       - Specify the logging driver. Docker uses I(json-file) by default.
       - See L(here,https://docs.docker.com/config/containers/logging/configure/) for possible choices.
     required: false
+    type: str
   log_options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
         for details.
     aliases:
       - log_opt
+    type: dict
   mac_address:
     description:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
+    type: str
   memory:
     description:
       - "Memory limit (format: C(<number>[<unit>])). Number is a positive integer.
@@ -326,67 +355,74 @@ options:
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
     default: '0'
+    type: str
   memory_reservation:
     description:
       - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
+    type: str
   memory_swap:
     description:
       - "Total memory limit (memory + swap, format: C(<number>[<unit>])).
         Number is a positive integer. Unit can be C(B) (byte), C(K) (kibibyte, 1024B),
         C(M) (mebibyte), C(G) (gibibyte), C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
+    type: str
   memory_swappiness:
     description:
         - Tune a container's memory swappiness behavior. Accepts an integer between 0 and 100.
         - If not set, the value will be remain the same if container exists and will be inherited from the host machine if it is (re-)created.
+    type: int
   name:
     description:
       - Assign a name to a new container or match an existing container.
       - When identifying an existing container name may be a name or a long or short container ID.
     required: true
+    type: str
   network_mode:
     description:
       - Connect the container to a network. Choices are "bridge", "host", "none" or "container:<name|id>"
+    type: str
   userns_mode:
-     description:
-       - Set the user namespace mode for the container. Currently, the only valid value is C(host).
-     version_added: "2.5"
+    description:
+      - Set the user namespace mode for the container. Currently, the only valid value is C(host).
+    version_added: "2.5"
+    type: str
   networks:
-     description:
-       - List of networks the container belongs to.
-       - For examples of the data structure and usage see EXAMPLES below.
-       - To remove a container from one or more networks, use the C(purge_networks) option.
-       - Note that as opposed to C(docker run ...), M(docker_container) does not remove the default
-         network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
-         the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
-     version_added: "2.2"
-     type: list
-     suboptions:
-        name:
-           type: str
-           required: true
-           description:
-             - The network's name.
-        ipv4_address:
-           type: str
-           description:
-             - The container's IPv4 address in this network.
-        ipv6_address:
-           type: str
-           description:
-             - The container's IPv6 address in this network.
-        links:
-           type: list
-           description:
-             - A list of containers to link to.
-        aliases:
-           type: list
-           description:
-             - List of aliases for this container in this network. These names
-               can be used in the network to reach this container.
+    description:
+      - List of networks the container belongs to.
+      - For examples of the data structure and usage see EXAMPLES below.
+      - To remove a container from one or more networks, use the C(purge_networks) option.
+      - Note that as opposed to C(docker run ...), M(docker_container) does not remove the default
+        network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
+        the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
+    version_added: "2.2"
+    type: list
+    suboptions:
+      name:
+        type: str
+        required: true
+        description:
+          - The network's name.
+      ipv4_address:
+        type: str
+        description:
+          - The container's IPv4 address in this network.
+      ipv6_address:
+        type: str
+        description:
+          - The container's IPv6 address in this network.
+      links:
+        type: list
+        description:
+          - A list of containers to link to.
+      aliases:
+        type: list
+        description:
+          - List of aliases for this container in this network. These names
+            can be used in the network to reach this container.
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -395,6 +431,7 @@ options:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     version_added: "2.2"
+    type: int
   output_logs:
     description:
       - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
@@ -410,6 +447,7 @@ options:
     description:
       - Set the PID namespace mode for the container.
       - Note that docker-py < 2.0 only supports 'host'. Newer versions allow all values supported by the docker daemon.
+    type: str
   pids_limit:
     description:
       - Set PIDs limit for the container. It accepts an integer value.
@@ -442,6 +480,7 @@ options:
         value encountered in the list of C(networks) is the one that will be used.
     aliases:
       - ports
+    type: list
   pull:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image
@@ -480,22 +519,27 @@ options:
       - 'on-failure'
       - 'always'
       - 'unless-stopped'
+    type: str
   restart_retries:
     description:
-       - Use with restart policy to control maximum number of restart attempts.
+      - Use with restart policy to control maximum number of restart attempts.
+    type: int
   runtime:
     description:
       - Runtime to use for the container.
     version_added: "2.8"
+    type: str
   shm_size:
     description:
       - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes. If you omit the size entirely, the system uses C(64M).
+    type: str
   security_opts:
     description:
       - List of security options in the form of C("label:user:User")
+    type: list
   state:
     description:
       - 'I(absent) - A container matching the specified name will be stopped and removed. Use force_kill to kill the container
@@ -523,9 +567,11 @@ options:
       - present
       - stopped
       - started
+    type: str
   stop_signal:
     description:
       - Override default signal used to stop the container.
+    type: str
   stop_timeout:
     description:
       - Number of seconds to wait for the container to stop before sending SIGKILL.
@@ -536,6 +582,7 @@ options:
         the behavior depends on the version of docker. New versions of docker will
         always use the container's configured C(StopTimeout) value if it has been
         configured.
+    type: int
   trust_image_content:
     description:
       - If C(yes), skip image verification.
@@ -545,6 +592,7 @@ options:
     description:
       - Mount a tmpfs directory
     version_added: 2.4
+    type: list
   tty:
     description:
       - Allocate a pseudo-TTY.
@@ -553,17 +601,21 @@ options:
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
+    type: list
   sysctls:
     description:
       - Dictionary of key,value pairs.
     version_added: 2.4
+    type: dict
   user:
     description:
       - Sets the username or UID used and optionally the groupname or GID for the specified command.
       - "Can be [ user | user:group | uid | uid:gid | user:gid | uid:group ]"
+    type: str
   uts:
     description:
       - Set the UTS namespace mode for the container.
+    type: str
   volumes:
     description:
       - List of volumes to mount within the container.
@@ -575,16 +627,20 @@ options:
         private label for the volume.
       - "Note that Ansible 2.7 and earlier only supported one mode, which had to be one of C(ro), C(rw),
         C(z), and C(Z)."
+    type: list
   volume_driver:
     description:
       - The container volume driver.
+    type: str
   volumes_from:
     description:
       - List of container names or Ids to get volumes from.
+    type: list
   working_dir:
     description:
       - Path to the working directory.
     version_added: "2.4"
+    type: str
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation

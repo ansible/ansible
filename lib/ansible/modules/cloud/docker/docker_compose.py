@@ -36,14 +36,17 @@ options:
         - Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
         - Mutually exclusive with C(definition).
         - Required when no C(definition) is provided.
+      type: path
   project_name:
       description:
         - Provide a project name. If not provided, the project name is taken from the basename of C(project_src).
         - Required when C(definition) is provided.
+      type: str
   files:
       description:
         - List of file names relative to C(project_src). Overrides docker-compose.yml or docker-compose.yaml.
         - Files are loaded and merged in the order given.
+      type: list
   state:
       description:
         - Desired state of the project.
@@ -53,13 +56,16 @@ options:
         - absent
         - present
       default: present
+      type: str
   services:
       description:
         - When C(state) is I(present) run I(docker-compose up) on a subset of services.
+      type: list
   scale:
       description:
         - When C(state) is I(present) scale services. Provide a dictionary of key/value pairs where the key
           is the name of the service and the value is an integer count for the number of containers.
+      type: dict
   dependencies:
       description:
         - When C(state) is I(present) specify whether or not to include linked services.
@@ -85,6 +91,7 @@ options:
         - never
         - smart
       default: smart
+      type: str
   build:
       description:
         - Use with state I(present) to always build images prior to starting the application.
@@ -114,6 +121,7 @@ options:
       choices:
           - 'all'
           - 'local'
+      type: str
   remove_volumes:
       description:
         - Use with state I(absent) to remove data volumes.

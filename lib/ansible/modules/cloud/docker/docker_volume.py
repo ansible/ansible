@@ -72,6 +72,7 @@ options:
     - never
     - options-changed
     default: never
+    type: str
 
   state:
     description:
@@ -81,6 +82,7 @@ options:
     choices:
       - absent
       - present
+    type: str
 
 extends_documentation_fragment:
   - docker

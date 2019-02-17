@@ -30,6 +30,7 @@ options:
         where C(tag) is optional. If a tag is not provided, C(latest) will be used. Instead of image names, also
         image IDs can be used.
     required: true
+    type: list
 
 extends_documentation_fragment:
   - docker

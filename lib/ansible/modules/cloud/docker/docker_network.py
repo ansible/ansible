@@ -26,21 +26,25 @@ options:
     required: true
     aliases:
       - network_name
+    type: str
 
   connected:
     description:
       - List of container names or container IDs to connect to a network.
     aliases:
       - containers
+    type: list
 
   driver:
     description:
       - Specify the type of network. Docker provides bridge and overlay drivers, but 3rd party drivers can also be used.
     default: bridge
+    type: str
 
   driver_options:
     description:
       - Dictionary of network settings. Consult docker docs for valid options and values.
+    type: dict
 
   force:
     description:
@@ -67,12 +71,12 @@ options:
     description:
       - Enable IPv6 networking.
     type: bool
-    default: null
     required: false
 
   ipam_driver:
     description:
       - Specify an IPAM driver.
+    type: str
 
   ipam_options:
     description:
@@ -80,6 +84,7 @@ options:
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options.
+    type: dict
 
   ipam_config:
     version_added: 2.8
@@ -88,7 +93,6 @@ options:
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
         Note that I(iprange) is spelled differently here (we use the notation from the Docker Python SDK).
     type: list
-    default: null
     required: false
     suboptions:
       subnet:
@@ -123,6 +127,7 @@ options:
     choices:
       - absent
       - present
+    type: str
 
   internal:
     version_added: 2.8

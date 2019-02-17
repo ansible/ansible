@@ -30,6 +30,7 @@ options:
       - Use with state C(present) to archive an image to a .tar file.
     required: false
     version_added: "2.1"
+    type: path
   cache_from:
     description:
       - List of image names to consider as cache source.
@@ -41,11 +42,13 @@ options:
       - Use with state C(present) to load an image from a .tar file.
     required: false
     version_added: "2.2"
+    type: path
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
     required: false
     version_added: "2.0"
+    type: str
   force:
     description:
       - Use with state I(absent) to un-tag and remove all images matching the specified name. Use with state
@@ -60,12 +63,14 @@ options:
         seconds.
     required: false
     version_added: "2.1"
+    type: int
   name:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
       - Note that image IDs (hashes) are not supported.
     required: true
+    type: str
   path:
     description:
       - Use with state 'present' to build an image. Will be the path to a directory containing the context and
@@ -73,6 +78,7 @@ options:
     aliases:
       - build_path
     required: false
+    type: path
   pull:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
@@ -99,6 +105,7 @@ options:
       - The network to use for C(RUN) build instructions.
     required: false
     version_added: "2.8"
+    type: str
   nocache:
     description:
       - Do not use cache when building an image.
@@ -111,6 +118,7 @@ options:
         format I(repository:tag). If no tag is provided, will use the value of the C(tag) parameter or I(latest).
     required: false
     version_added: "2.1"
+    type: str
   state:
     description:
       - Make assertions about the state of an image.
@@ -129,6 +137,7 @@ options:
       - absent
       - present
       - build
+    type: str
   tag:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
@@ -136,6 +145,7 @@ options:
       - If C(name) parameter format is I(name:tag), then tag value from C(name) will take precedence.
     default: latest
     required: false
+    type: str
   buildargs:
     description:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
@@ -143,11 +153,13 @@ options:
       - Requires Docker API >= 1.21.
     required: false
     version_added: "2.2"
+    type: dict
   container_limits:
     description:
       - A dictionary of limits applied to each container created by the build process.
     required: false
     version_added: "2.1"
+    type: dict
     suboptions:
       memory:
         description:
@@ -175,6 +187,7 @@ options:
       - 'verify'
     required: false
     version_added: "2.0"
+    type: str
 
 extends_documentation_fragment:
   - docker

@@ -49,12 +49,14 @@ options:
     description:
       - List arguments to be passed to the container.
       - Corresponds to the C(ARG) parameter of C(docker service create).
+    type: list
   command:
     description:
       - Command to execute when the container starts.
       - A command may be either a string or a list or a list of strings.
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
     version_added: 2.8
+    type: raw
   constraints:
     type: list
     description:
@@ -1667,9 +1669,9 @@ def main():
             gid=dict(default=0, type='int'),
             mode=dict(default=0o444, type='int'),
         )),
-        networks=dict(type='list'),
+        networks=dict(type='list', elements='str'),
         command=dict(type='raw'),
-        args=dict(type='list'),
+        args=dict(type='list', elements='str'),
         env=dict(type='raw'),
         env_files=dict(type='list', elements='path'),
         force_update=dict(default=False, type='bool'),

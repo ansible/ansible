@@ -35,18 +35,22 @@ options:
     aliases:
       - registry
       - url
+    type: str
   username:
     description:
       - The username for the registry account
     required: True
+    type: str
   password:
     description:
       - The plaintext password for the registry account
     required: True
+    type: str
   email:
     required: False
     description:
       - "The email address for the registry account."
+    type: str
   reauthorize:
     description:
       - Refresh existing authentication found in the configuration file.
@@ -61,6 +65,7 @@ options:
     aliases:
       - self.config_path
       - dockercfg_path
+    type: path
   state:
     version_added: '2.3'
     description:
@@ -70,6 +75,7 @@ options:
       - docker does not support 'logout' with a custom config file.
     choices: ['present', 'absent']
     default: 'present'
+    type: str
 
 extends_documentation_fragment:
   - docker

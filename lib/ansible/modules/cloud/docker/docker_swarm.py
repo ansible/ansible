@@ -29,6 +29,7 @@ options:
                 the port number from the listen address is used.
             - If C(advertise_addr) is not specified, it will be automatically
                 detected when possible.
+        type: str
     listen_addr:
         description:
             - Listen address used for inter-manager communication.
@@ -38,6 +39,7 @@ options:
             - If the port number is omitted, the default swarm listening port
                 is used.
         default: 0.0.0.0:2377
+        type: str
     force:
         description:
             - Use with state C(present) to force creating a new Swarm, even if already part of one.
@@ -59,45 +61,56 @@ options:
           - absent
           - remove
           - inspect
+        type: str
     node_id:
         description:
             - Swarm id of the node to remove.
             - Used with I(state=remove).
+        type: str
     join_token:
         description:
             - Swarm token used to join a swarm cluster.
             - Used with I(state=join).
+        type: str
     remote_addrs:
         description:
             - Remote address of a manager to connect to.
             - Used with I(state=join).
+        type: list
     task_history_retention_limit:
         description:
             - Maximum number of tasks history stored.
             - Docker default value is C(5).
+        type: int
     snapshot_interval:
         description:
             - Number of logs entries between snapshot.
             - Docker default value is C(10000).
+        type: int
     keep_old_snapshots:
         description:
             - Number of snapshots to keep beyond the current snapshot.
             - Docker default value is C(0).
+        type: int
     log_entries_for_slow_followers:
         description:
             - Number of log entries to keep around to sync up slow followers after a snapshot is created.
+        type: int
     heartbeat_tick:
         description:
             - Amount of ticks (in seconds) between each heartbeat.
             - Docker default value is C(1s).
+        type: int
     election_tick:
         description:
             - Amount of ticks (in seconds) needed without a leader to trigger a new election.
             - Docker default value is C(10s).
+        type: int
     dispatcher_heartbeat_period:
         description:
             - The delay for an agent to send a heartbeat to the dispatcher.
             - Docker default value is C(5s).
+        type: int
     node_cert_expiry:
         description:
             - Automatic expiry for nodes certificates.
@@ -105,20 +118,25 @@ options:
     name:
         description:
             - The name of the swarm.
+        type: str
     labels:
         description:
             - User-defined key/value metadata.
+        type: dict
     signing_ca_cert:
         description:
             - The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
+        type: path
     signing_ca_key:
         description:
             - The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
+        type: path
     ca_force_rotate:
         description:
             - An integer whose purpose is to force swarm to generate a new signing CA certificate and key,
                 if none have been specified.
             - Docker default value is C(0).
+        type: int
     autolock_managers:
         description:
             - If set, generate a key and use it to lock data stored on the managers.
@@ -486,8 +504,8 @@ def main():
         node_cert_expiry=dict(type='int'),
         name=dict(type='str'),
         labels=dict(type='dict'),
-        signing_ca_cert=dict(type='str'),
-        signing_ca_key=dict(type='str'),
+        signing_ca_cert=dict(type='path'),
+        signing_ca_key=dict(type='path'),
         ca_force_rotate=dict(type='int'),
         autolock_managers=dict(type='bool'),
         node_id=dict(type='str'),
