@@ -18,9 +18,9 @@ short_description: Create or delete an AWS CloudFormation stack
 description:
      - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
-     - Cloudformation features change often, and this module tries to keep up. That means your botocore version should be fresh. The version listed is a minimum possible version, but some features may require more, and it's difficult to find what ancient version is good enough. So, instead, keep botocore up-to-date. AWS is always releasing features and fixing bugs.
-     - As of version 2.3, migrated to boto3 to enable new features. To match existing behavior, YAML parsing is done in the module, not given to AWS as YAML.
-       This will change (in fact, it may change before 2.3 is out).
+     - Cloudformation features change often, and this module tries to keep up. That means your botocore version should be fresh.
+       The version listed is a minimum possible version, but some features may require more, and it's difficult to find what ancient version is good enough.
+       So, instead, keep botocore up-to-date. AWS is always releasing features and fixing bugs.
 version_added: "1.1"
 options:
   stack_name:
