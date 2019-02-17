@@ -171,8 +171,6 @@ lib/ansible/modules/cloud/lxd/lxd_container.py E324
 lib/ansible/modules/cloud/lxd/lxd_profile.py E324
 lib/ansible/modules/cloud/misc/ovirt.py E322
 lib/ansible/modules/cloud/misc/ovirt.py E326
-lib/ansible/modules/cloud/misc/proxmox_kvm.py E322
-lib/ansible/modules/cloud/misc/proxmox_kvm.py E324
 lib/ansible/modules/cloud/misc/proxmox_template.py E323
 lib/ansible/modules/cloud/misc/rhevm.py E322
 lib/ansible/modules/cloud/misc/rhevm.py E324

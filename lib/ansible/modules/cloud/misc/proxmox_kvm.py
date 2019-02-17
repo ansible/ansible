@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = r'''
 ---
@@ -20,13 +18,14 @@ short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluste
 description:
   - Allows you to create/delete/stop Qemu(KVM) Virtual Machines in Proxmox VE cluster.
 version_added: "2.3"
-author: "Abdoul Bah (@helldorado) <bahabdoul at gmail.com>"
+author:
+- Abdoul Bah (@helldorado) <bahabdoul at gmail.com>
 options:
   acpi:
     description:
       - Specify if ACPI should be enabled/disabled.
     type: bool
-    default: 'yes'
+    default: yes
   agent:
     description:
       - Specify if the QEMU Guest Agent should be enabled/disabled.
@@ -35,72 +34,90 @@ options:
     description:
       - Pass arbitrary arguments to kvm.
       - This option is for experts only!
-    default: "-serial unix:/var/run/qemu-server/VMID.serial,server,nowait"
+      - This parameter defauls to C(-serial unix:/var/run/qemu-server/VMID.serial,server,nowait)
+    type: str
   api_host:
     description:
       - Specify the target host of the Proxmox VE cluster.
+    type: str
     required: true
   api_user:
     description:
       - Specify the user to authenticate with.
+    type: str
     required: true
   api_password:
     description:
       - Specify the password to authenticate with.
       - You can use C(PROXMOX_PASSWORD) environment variable.
+    type: str
   autostart:
     description:
       - Specify if the VM should be automatically restarted after crash (currently ignored in PVE API).
     type: bool
-    default: 'no'
+    default: no
   balloon:
     description:
       - Specify the amount of RAM for the VM in MB.
       - Using zero disables the balloon driver.
+    type: int
     default: 0
   bios:
     description:
       - Specify the BIOS implementation.
-    choices: ['seabios', 'ovmf']
+    type: str
+    choices: [ ovmf, seabios ]
   boot:
     description:
       - Specify the boot order -> boot on floppy C(a), hard disk C(c), CD-ROM C(d), or network C(n).
       - You can combine to set order.
+    type: str
     default: cnd
   bootdisk:
     description:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
+    type: str
   clone:
     description:
-      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
+      - Name of VM to be cloned.
+      - If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
+    type: str
   cores:
     description:
       - Specify number of cores per socket.
+    type: int
     default: 1
   cpu:
     description:
       - Specify emulated CPU type.
+    type: str
     default: kvm64
   cpulimit:
     description:
       - Specify if CPU usage will be limited. Value 0 indicates no CPU limit.
-      - If the computer has 2 CPUs, it has total of '2' CPU time
+      - If the computer has 2 CPUs, it has total of '2' CPU time.
+    type: int
   cpuunits:
     description:
       - Specify CPU weight for a VM.
-      - You can disable fair-scheduler configuration by setting this to 0
+      - You can disable fair-scheduler configuration by setting this to 0.
+    type: int
     default: 1000
   delete:
     description:
       - Specify a list of settings you want to delete.
+    type: list
   description:
     description:
-      - Specify the description for the VM. Only used on the configuration web interface.
+      - Specify the description for the VM.
+      - Only used on the configuration web interface.
       - This is saved as comment inside the configuration file.
+    type: str
   digest:
     description:
       - Specify if to prevent changes if current configuration file has different SHA1 digest.
       - This can be used to prevent concurrent modifications.
+    type: str
   force:
     description:
       - Allow to force stop VM.
@@ -109,20 +126,23 @@ options:
   format:
     description:
       - Target drive's backing file's data format.
-      - Used only with clone
+      - Used only with clone.
+    type: str
+    choices: [ cloop, cow, qcow, qcow2, qed, raw, vmdk ]
     default: qcow2
-    choices: [ "cloop", "cow", "qcow", "qcow2", "qed", "raw", "vmdk" ]
   freeze:
     description:
-      - Specify if PVE should freeze CPU at startup (use 'c' monitor command to start execution).
+      - Specify if PVE should freeze CPU at startup.
+      - Use 'c' monitor command to start execution.
     type: bool
   full:
     description:
-      - Create a full copy of all disk. This is always done when you clone a normal VM.
+      - Create a full copy of all disk.
+      - This is always done when you clone a normal VM.
       - For VM templates, we try to create a linked clone by default.
       - Used only with clone
     type: bool
-    default: 'yes'
+    default: yes
   hostpci:
     description:
       - Specify a hash/dictionary of map host pci devices into guest. C(hostpci='{"key":"value", "key":"value"}').
@@ -133,14 +153,17 @@ options:
       - C(rombar=boolean) I(default=1) Specify whether or not the device's ROM will be visible in the guest's memory map.
       - C(x-vga=boolean) I(default=0) Enable vfio-vga device support.
       - /!\ This option allows direct access to host hardware. So it is no longer possible to migrate such machines - use with special care.
+    type: dict
   hotplug:
     description:
       - Selectively enable hotplug features.
       - This is a comma separated list of hotplug features C('network', 'disk', 'cpu', 'memory' and 'usb').
       - Value 0 disables hotplug completely and value 1 is an alias for the default C('network,disk,usb').
+    type: list
   hugepages:
     description:
       - Enable/disable hugepages memory.
+    type: str
     choices: ['any', '2', '1024']
   ide:
     description:
@@ -150,14 +173,16 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+    type: dict
   keyboard:
     description:
       - Sets the keyboard layout for VNC server.
+    type: str
   kvm:
     description:
       - Enable/disable KVM hardware virtualization.
     type: bool
-    default: 'yes'
+    default: yes
   localtime:
     description:
       - Sets the real time clock to local time.
@@ -166,26 +191,33 @@ options:
   lock:
     description:
       - Lock/unlock the VM.
-    choices: ['migrate', 'backup', 'snapshot', 'rollback']
+    type: str
+    choices: [ backup, migrate, rollback, snapshot ]
   machine:
     description:
       - Specifies the Qemu machine type.
       - type => C((pc|pc(-i440fx)?-\d+\.\d+(\.pxe)?|q35|pc-q35-\d+\.\d+(\.pxe)?))
+    type: str
   memory:
     description:
       - Memory size in MB for instance.
+    type: int
     default: 512
   migrate_downtime:
     description:
       - Sets maximum tolerated downtime (in seconds) for migrations.
+    type: int
   migrate_speed:
     description:
       - Sets maximum speed (in MB/s) for migrations.
       - A value of 0 is no limit.
+    type: int
   name:
     description:
-      - Specifies the VM name. Only used on the configuration web interface.
+      - Specifies the VM name.
+      - Only used on the configuration web interface.
       - Required only for C(state=present).
+    type: str
   net:
     description:
       - A hash/dictionary of network interfaces for the VM. C(net='{"key":"value", "key":"value"}').
@@ -196,15 +228,19 @@ options:
       - The C(bridge) parameter can be used to automatically add the interface to a bridge device. The Proxmox VE standard bridge is called 'vmbr0'.
       - Option C(rate) is used to limit traffic bandwidth from and to this interface. It is specified as floating point number, unit is 'Megabytes per second'.
       - If you specify no bridge, we create a kvm 'user' (NATed) network device, which provides DHCP and DNS services.
+    type: dict
   newid:
     description:
-      - VMID for the clone. Used only with clone.
+      - VMID for the clone.
+      - Used only with clone.
       - If newid is not set, the next available VM ID will be fetched from ProxmoxAPI.
+    type: int
   node:
     description:
       - Proxmox VE node, where the new VM will be created.
       - Only required for C(state=present).
       - For other states, it will be autodiscovered.
+    type: str
   numa:
     description:
       - A hash/dictionaries of NUMA topology. C(numa='{"key":"value", "key":"value"}').
@@ -214,36 +250,48 @@ options:
       - C(hostnodes) Host NUMA nodes to use.
       - C(memory) Amount of memory this NUMA node provides.
       - C(policy) NUMA allocation policy.
+    type: dict
+  numa_enabled:
+    description:
+    - Whether NUMA is enabled or not.
+    type: bool
   onboot:
     description:
       - Specifies whether a VM will be started during system bootup.
     type: bool
-    default: 'yes'
+    default: yes
   ostype:
     description:
-      - Specifies guest operating system. This is used to enable special optimization/features for specific operating systems.
+      - Specifies guest operating system.
+      - This is used to enable special optimization/features for specific operating systems.
       - The l26 is Linux 2.6/3.X Kernel.
-    choices: ['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']
+    type: str
+    choices: [ l24, l26, other, solaris, w2k, w2k3, w2k8, win7, win8, wxp, wvista ]
     default: l26
   parallel:
     description:
       - A hash/dictionary of map host parallel devices. C(parallel='{"key":"value", "key":"value"}').
       - Keys allowed are - (parallel[n]) where 0 ≤ n ≤ 2.
       - Values allowed are - C("/dev/parport\d+|/dev/usb/lp\d+").
+    type: dict
   pool:
     description:
       - Add the new VM to the specified pool.
+    type: str
   protection:
     description:
-      - Enable/disable the protection flag of the VM. This will enable/disable the remove VM and remove disk operations.
+      - Enable/disable the protection flag of the VM.
+      - This will enable/disable the remove VM and remove disk operations.
     type: bool
   reboot:
     description:
-      - Allow reboot. If set to C(yes), the VM exit on reboot.
+      - Allow reboot.
+      - If set to C(yes), the VM exit on reboot.
     type: bool
   revert:
     description:
       - Revert a pending change.
+    type: list
   sata:
     description:
       - A hash/dictionary of volume used as sata hard disk or CD-ROM. C(sata='{"key":"value", "key":"value"}').
@@ -252,6 +300,7 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+    type: dict
   scsi:
     description:
       - A hash/dictionary of volume used as SCSI hard disk or CD-ROM. C(scsi='{"key":"value", "key":"value"}').
@@ -260,63 +309,79 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+    type: dict
   scsihw:
     description:
       - Specifies the SCSI controller model.
-    choices: ['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']
+    type: str
+    choices: [ lsi, lsi53c810, megasas, pvscsi, virtio-scsi-pci, virtio-scsi-single ]
   serial:
     description:
       - A hash/dictionary of serial device to create inside the VM. C('{"key":"value", "key":"value"}').
       - Keys allowed are - serial[n](str; required) where 0 ≤ n ≤ 3.
       - Values allowed are - C((/dev/.+|socket)).
       - /!\ If you pass through a host serial device, it is no longer possible to migrate such machines - use with special care.
+    type: dict
   shares:
     description:
       - Rets amount of memory shares for auto-ballooning. (0 - 50000).
       - The larger the number is, the more memory this VM gets.
       - The number is relative to weights of all other running VMs.
       - Using 0 disables auto-ballooning, this means no limit.
+    type: int
   skiplock:
     description:
       - Ignore locks
       - Only root is allowed to use this option.
+    type: bool
   smbios:
     description:
       - Specifies SMBIOS type 1 fields.
+    type: str
   snapname:
     description:
-      - The name of the snapshot. Used only with clone.
+      - The name of the snapshot.
+      - Used only with clone.
+    type: str
   sockets:
     description:
       - Sets the number of CPU sockets. (1 - N).
+    type: int
     default: 1
   startdate:
     description:
       - Sets the initial date of the real time clock.
       - Valid format for date are C('now') or C('2016-09-25T16:01:21') or C('2016-09-25').
+    type: str
   startup:
     description:
       - Startup and shutdown behavior. C([[order=]\d+] [,up=\d+] [,down=\d+]).
       - Order is a non-negative number defining the general startup order.
       - Shutdown in done with reverse ordering.
+    type: str
   state:
     description:
       - Indicates desired state of the instance.
-      - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
-    choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
+      - If C(current), the current state of the VM will be fecthed.
+      - You can access it with C(results.status)
+    type: str
+    choices: [ absent, current, present, restarted, started, stopped ]
     default: present
   storage:
     description:
       - Target storage for full clone.
+    type: str
   tablet:
     description:
       - Enables/disables the USB tablet device.
     type: bool
-    default: 'no'
+    default: no
   target:
     description:
-      - Target node. Only allowed if the original VM is on shared storage.
+      - Target node.
+      - Only allowed if the original VM is on shared storage.
       - Used only with clone
+    type: str
   tdf:
     description:
       - Enables/disables time drift fix.
@@ -325,10 +390,11 @@ options:
     description:
       - Enables/disables the template.
     type: bool
-    default: 'no'
+    default: no
   timeout:
     description:
       - Timeout for operations.
+    type: int
     default: 30
   update:
     description:
@@ -336,19 +402,23 @@ options:
       - Cause of the operations of the API and security reasons, I have disabled the update of the following parameters
       - C(net, virtio, ide, sata, scsi). Per example updating C(net) update the MAC address and C(virtio) create always new disk...
     type: bool
-    default: 'no'
+    default: no
   validate_certs:
     description:
-      - If C(no), SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+      - If C(no), SSL certificates will not be validated.
+      - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
-    default: 'no'
+    default: no
   vcpus:
     description:
       - Sets number of hotplugged vcpus.
+    type: int
   vga:
     description:
-      - Select VGA type. If you want to use high resolution modes (>= 1280x1024x16) then you should use option 'std' or 'vmware'.
-    choices: ['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']
+      - Select VGA type.
+      - If you want to use high resolution modes (>= 1280x1024x16) then you should use option 'std' or 'vmware'.
+    type: str
+    choices: [ cirrus, qxl, qxl2, qxl3, qxl4, serial0, serial1, serial2, serial3, std, vmware ]
     default: std
   virtio:
     description:
@@ -358,185 +428,191 @@ options:
       - C(storage) is the storage identifier where to create the disk.
       - C(size) is the size of the disk in GB.
       - C(format) is the drive's backing file's data format. C(qcow2|raw|subvol).
+    type: dict
   vmid:
     description:
-      - Specifies the VM ID. Instead use I(name) parameter.
+      - Specifies the VM ID.
+      - Instead use I(name) parameter.
       - If vmid is not set, the next available VM ID will be fetched from ProxmoxAPI.
+    type: int
   watchdog:
     description:
       - Creates a virtual hardware watchdog device.
-requirements: [ "proxmoxer", "requests" ]
+    type: str
+requirements:
+- proxmoxer
+- requests
 '''
 
-EXAMPLES = '''
-# Create new VM with minimal options
-- proxmox_kvm:
-    api_user    : root@pam
+EXAMPLES = r'''
+- name: Create new VM with minimal options
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
+    name: spynal
+    node: sabrewulf
 
-# Create new VM with minimal options and given vmid
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Create new VM with minimal options and given vmid
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    vmid        : 100
+    name: spynal
+    node: sabrewulf
+    vmid: 100
 
-# Create new VM with two network interface options.
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Create new VM with two network interface options.
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    net         : '{"net0":"virtio,bridge=vmbr1,rate=200", "net1":"e1000,bridge=vmbr2,"}'
+    name: spynal
+    node: sabrewulf
+    net: '{"net0":"virtio,bridge=vmbr1,rate=200", "net1":"e1000,bridge=vmbr2,"}'
 
-# Create new VM with one network interface, three virto hard disk, 4 cores, and 2 vcpus.
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Create new VM with one network interface, three virto hard disk, 4 cores, and 2 vcpus.
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    net         : '{"net0":"virtio,bridge=vmbr1,rate=200"}'
-    virtio      : '{"virtio0":"VMs_LVM:10", "virtio1":"VMs:2,format=qcow2", "virtio2":"VMs:5,format=raw"}'
-    cores       : 4
-    vcpus       : 2
+    name: spynal
+    node: sabrewulf
+    net: '{"net0":"virtio,bridge=vmbr1,rate=200"}'
+    virtio: '{"virtio0":"VMs_LVM:10", "virtio1":"VMs:2,format=qcow2", "virtio2":"VMs:5,format=raw"}'
+    cores: 4
+    vcpus: 2
 
-# Clone VM with only source VM name
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Clone VM with only source VM name
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    clone       : spynal   # The VM source
-    name        : zavala  # The target VM name
-    node        : sabrewulf
-    storage     : VMs
-    format      : qcow2
-    timeout     : 500  # Note: The task can take a while. Adapt
+    clone: spynal   # The VM source
+    name: zavala  # The target VM name
+    node: sabrewulf
+    storage: VMs
+    format: qcow2
+    timeout: 500  # Note: The task can take a while. Adapt
 
-# Clone VM with source vmid and target newid and raw format
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Clone VM with source vmid and target newid and raw format
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    clone       : arbitrary_name
-    vmid        : 108
-    newid       : 152
-    name        : zavala  # The target VM name
-    node        : sabrewulf
-    storage     : LVM_STO
-    format      : raw
-    timeout     : 300  # Note: The task can take a while. Adapt
+    clone: arbitrary_name
+    vmid: 108
+    newid: 152
+    name: zavala  # The target VM name
+    node: sabrewulf
+    storage: LVM_STO
+    format: raw
+    timeout: 300  # Note: The task can take a while. Adapt
 
-# Create new VM and lock it for snapashot.
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Create new VM and lock it for snapashot.
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    lock        : snapshot
+    name: spynal
+    node: sabrewulf
+    lock: snapshot
 
-# Create new VM and set protection to disable the remove VM and remove disk operations
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Create new VM and set protection to disable the remove VM and remove disk operations
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    protection  : yes
+    name: spynal
+    node: sabrewulf
+    protection: yes
 
-# Start VM
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Start VM
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    state       : started
+    name: spynal
+    node: sabrewulf
+    state: started
 
-# Stop VM
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Stop VM
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    state       : stopped
+    name: spynal
+    node: sabrewulf
+    state: stopped
 
-# Stop VM with force
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Stop VM with force
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    state       : stopped
-    force       : yes
+    name: spynal
+    node: sabrewulf
+    force: yes
+    state: stopped
 
-# Restart VM
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Restart VM
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    state       : restarted
+    name: spynal
+    node: sabrewulf
+    state: restarted
 
-# Remove VM
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Remove VM
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    state       : absent
+    name: spynal
+    node: sabrewulf
+    state: absent
 
-# Get VM current state
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Get VM current state
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    state       : current
+    name: spynal
+    node: sabrewulf
+    state: current
 
-# Update VM configuration
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Update VM configuration
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    cores       : 8
-    memory      : 16384
-    update      : yes
+    name: spynal
+    node: sabrewulf
+    cores: 8
+    memory: 16384
+    update: yes
 
-# Delete QEMU parameters
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Delete QEMU parameters
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    delete      : 'args,template,cpulimit'
+    name: spynal
+    node: sabrewulf
+    delete: args,template,cpulimit
 
-# Revert a pending change
-- proxmox_kvm:
-    api_user    : root@pam
+- name: Revert a pending change
+  proxmox_kvm:
+    api_host: helldorado
+    api_user: root@pam
     api_password: secret
-    api_host    : helldorado
-    name        : spynal
-    node        : sabrewulf
-    revert      : 'template,cpulimit'
+    name: spynal
+    node: sabrewulf
+    revert: template,cpulimit
 '''
 
-RETURN = '''
+RETURN = r'''
 devices:
     description: The list of devices created or used.
     returned: success
@@ -786,57 +862,57 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            acpi=dict(type='bool', default='yes'),
+            acpi=dict(type='bool', default=True),
             agent=dict(type='bool'),
-            args=dict(type='str', default=None),
-            api_host=dict(required=True),
-            api_user=dict(required=True),
-            api_password=dict(no_log=True),
-            autostart=dict(type='bool', default='no'),
+            args=dict(type='str'),
+            api_host=dict(type='str', required=True),
+            api_user=dict(type='str', required=True),
+            api_password=dict(type='str', no_log=True),
+            autostart=dict(type='bool', default=False),
             balloon=dict(type='int', default=0),
-            bios=dict(choices=['seabios', 'ovmf']),
+            bios=dict(type='str', choices=['seabios', 'ovmf']),
             boot=dict(type='str', default='cnd'),
             bootdisk=dict(type='str'),
-            clone=dict(type='str', default=None),
+            clone=dict(type='str'),
             cores=dict(type='int', default=1),
             cpu=dict(type='str', default='kvm64'),
             cpulimit=dict(type='int'),
             cpuunits=dict(type='int', default=1000),
-            delete=dict(type='str', default=None),
+            delete=dict(type='list'),
             description=dict(type='str'),
             digest=dict(type='str'),
-            force=dict(type='bool', default=None),
+            force=dict(type='bool'),
             format=dict(type='str', default='qcow2', choices=['cloop', 'cow', 'qcow', 'qcow2', 'qed', 'raw', 'vmdk']),
             freeze=dict(type='bool'),
-            full=dict(type='bool', default='yes'),
+            full=dict(type='bool', default=True),
             hostpci=dict(type='dict'),
-            hotplug=dict(type='str'),
-            hugepages=dict(choices=['any', '2', '1024']),
-            ide=dict(type='dict', default=None),
+            hotplug=dict(type='list'),
+            hugepages=dict(type='str', choices=['any', '2', '1024']),
+            ide=dict(type='dict'),
             keyboard=dict(type='str'),
-            kvm=dict(type='bool', default='yes'),
+            kvm=dict(type='bool', default=True),
             localtime=dict(type='bool'),
-            lock=dict(choices=['migrate', 'backup', 'snapshot', 'rollback']),
+            lock=dict(type='str', choices=['backup', 'migrate', 'rollback', 'snapshot']),
             machine=dict(type='str'),
             memory=dict(type='int', default=512),
             migrate_downtime=dict(type='int'),
             migrate_speed=dict(type='int'),
             name=dict(type='str'),
             net=dict(type='dict'),
-            newid=dict(type='int', default=None),
-            node=dict(),
+            newid=dict(type='int'),
+            node=dict(type='str'),
             numa=dict(type='dict'),
             numa_enabled=dict(type='bool'),
-            onboot=dict(type='bool', default='yes'),
-            ostype=dict(default='l26', choices=['other', 'wxp', 'w2k', 'w2k3', 'w2k8', 'wvista', 'win7', 'win8', 'l24', 'l26', 'solaris']),
+            onboot=dict(type='bool', default=True),
+            ostype=dict(default='l26', choices=['l24', 'l26', 'other', 'solaris', 'w2k', 'w2k3', 'w2k8', 'win7', 'win8', 'wvista', 'wxp']),
             parallel=dict(type='dict'),
             pool=dict(type='str'),
             protection=dict(type='bool'),
             reboot=dict(type='bool'),
-            revert=dict(type='str', default=None),
+            revert=dict(type='list'),
             sata=dict(type='dict'),
             scsi=dict(type='dict'),
-            scsihw=dict(choices=['lsi', 'lsi53c810', 'virtio-scsi-pci', 'virtio-scsi-single', 'megasas', 'pvscsi']),
+            scsihw=dict(choices=['lsi', 'lsi53c810', 'megasas', 'pvscsi', 'virtio-scsi-pci', 'virtio-scsi-single']),
             serial=dict(type='dict'),
             shares=dict(type='int'),
             skiplock=dict(type='bool'),
@@ -844,25 +920,36 @@ def main():
             snapname=dict(type='str'),
             sockets=dict(type='int', default=1),
             startdate=dict(type='str'),
-            startup=dict(),
-            state=dict(default='present', choices=['present', 'absent', 'stopped', 'started', 'restarted', 'current']),
+            startup=dict(type='str', ),
+            state=dict(type='str', default='present', choices=['absent', 'current', 'present', 'restarted', 'started', 'stopped']),
             storage=dict(type='str'),
-            tablet=dict(type='bool', default='no'),
+            tablet=dict(type='bool', default=False),
             target=dict(type='str'),
             tdf=dict(type='bool'),
-            template=dict(type='bool', default='no'),
+            template=dict(type='bool', default=False),
             timeout=dict(type='int', default=30),
-            update=dict(type='bool', default='no'),
-            validate_certs=dict(type='bool', default='no'),
-            vcpus=dict(type='int', default=None),
-            vga=dict(default='std', choices=['std', 'cirrus', 'vmware', 'qxl', 'serial0', 'serial1', 'serial2', 'serial3', 'qxl2', 'qxl3', 'qxl4']),
-            virtio=dict(type='dict', default=None),
-            vmid=dict(type='int', default=None),
-            watchdog=dict(),
+            update=dict(type='bool', default=False),
+            validate_certs=dict(type='bool', default=False),
+            vcpus=dict(type='int'),
+            vga=dict(type='str', default='std', choices=['cirrus', 'qxl', 'qxl2', 'qxl3', 'qxl4', 'serial0', 'serial1', 'serial2', 'serial3', 'std', 'vmware']),
+            virtio=dict(type='dict'),
+            vmid=dict(type='int'),
+            watchdog=dict(type='str'),
         ),
-        mutually_exclusive=[('delete', 'revert'), ('delete', 'update'), ('revert', 'update'), ('clone', 'update'), ('clone', 'delete'), ('clone', 'revert')],
-        required_one_of=[('name', 'vmid',)],
-        required_if=[('state', 'present', ['node'])]
+        mutually_exclusive=[
+            ('delete', 'revert'),
+            ('delete', 'update'),
+            ('revert', 'update'),
+            ('clone', 'update'),
+            ('clone', 'delete'),
+            ('clone', 'revert'),
+        ],
+        required_one_of=[
+            ('name', 'vmid'),
+        ],
+        required_if=[
+            ('state', 'present', ['node']),
+        ],
     )
 
     if not HAS_PROXMOXER:
@@ -874,16 +961,16 @@ def main():
     clone = module.params['clone']
     cpu = module.params['cpu']
     cores = module.params['cores']
-    delete = module.params['delete']
+    delete = ','.join(module.params['delete'])
     memory = module.params['memory']
     name = module.params['name']
     newid = module.params['newid']
     node = module.params['node']
-    revert = module.params['revert']
+    revert = ','.join(module.params['revert'])
     sockets = module.params['sockets']
     state = module.params['state']
     timeout = module.params['timeout']
-    update = bool(module.params['update'])
+    update = module.params['update']
     vmid = module.params['vmid']
     validate_certs = module.params['validate_certs']
 
@@ -978,7 +1065,7 @@ def main():
                       force=module.params['force'],
                       freeze=module.params['freeze'],
                       hostpci=module.params['hostpci'],
-                      hotplug=module.params['hotplug'],
+                      hotplug=','.join(module.params['hotplug']),
                       hugepages=module.params['hugepages'],
                       ide=module.params['ide'],
                       keyboard=module.params['keyboard'],
