@@ -191,7 +191,7 @@ class GalaxyCLI(CLI):
         return u'\n'.join(text)
 
     def _list_installed_roles(self):
-        roles_list = []
+        roles_list = {}
         roles_path = self.options.roles_path
         path_found = False
         for path in roles_path:
@@ -206,8 +206,8 @@ class GalaxyCLI(CLI):
             path_found = True
             for path_file in path_files:
                 gr = GalaxyRole(self.galaxy, path_file, path=path)
-                if gr.metadata:
-                    roles_list.append( gr )
+                if gr.metadata and not roles_list.has_key(gr.name) :
+                    roles_list[gr.name] = gr
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths was usable. Please specify a valid path with --roles-path")
         return roles_list
@@ -391,7 +391,7 @@ class GalaxyCLI(CLI):
                 role = RoleRequirement.role_yaml_parse(rname.strip())
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
-        installed_roles = [ gr.name for gr in self._list_installed_roles() ]
+        installed_roles = self._list_installed_roles()
         for role in roles_left:
             # only process roles in roles files when names matches if given
             if role_file and self.args and role.name not in self.args:
@@ -439,9 +439,9 @@ class GalaxyCLI(CLI):
                             # we know we can skip this, as it's not going to
                             # be found on galaxy.ansible.com
                             continue
-                        if dep_role.install_info is None and dep_role.name in installed_roles and not force :
-                            display.display('- dependency %s is already installed, skipping.' % dep_role.name)
-                        elif dep_role.install_info is None:
+                        if not dep_role.install_info and installed_roles.has_key(dep_role.name) :
+                            dep_role._install_info = installed_roles[dep_role.name].install_info
+                        if dep_role.install_info is None:
                             if dep_role not in roles_left:
                                 display.display('- adding dependency: %s' % str(dep_role))
                                 roles_left.append(dep_role)
@@ -505,7 +505,7 @@ class GalaxyCLI(CLI):
                 display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
-            for gr in self._list_installed_roles():
+            for gr in self._list_installed_roles().values():
                 install_info = gr.install_info
                 version = None
                 if install_info:
