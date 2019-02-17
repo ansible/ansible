@@ -863,14 +863,17 @@ docker_container:
 import os
 import re
 import shlex
-from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
-    DockerBaseClass, sanitize_result, is_image_name_id,
-    compare_generic, DifferenceTracker,
+    DifferenceTracker,
+    DockerBaseClass,
+    compare_generic,
+    is_image_name_id,
+    sanitize_result,
+    parse_healthcheck
 )
 from ansible.module_utils.six import string_types
 
@@ -1081,7 +1084,11 @@ class TaskParameters(DockerBaseClass):
         self.ulimits = self._parse_ulimits()
         self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
-        self.healthcheck, self.disable_healthcheck = self._parse_healthcheck()
+        try:
+            self.healthcheck, self.disable_healthcheck = parse_healthcheck(self.healthcheck)
+        except ValueError as e:
+            self.fail(e)
+
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
         self.pid_mode = self._replace_container_names(self.pid_mode)
@@ -1497,81 +1504,6 @@ class TaskParameters(DockerBaseClass):
             return LogConfig(**options)
         except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
-
-    def _parse_healthcheck(self):
-        '''
-        Return dictionary of healthcheck parameters
-        '''
-        if (not self.healthcheck) or (not self.healthcheck.get('test')):
-            return None, None
-
-        result = dict()
-
-        # all the supported healthecheck parameters
-        options = dict(
-            test='test',
-            interval='interval',
-            timeout='timeout',
-            start_period='start_period',
-            retries='retries'
-        )
-
-        duration_options = ['interval', 'timeout', 'start_period']
-
-        for (key, value) in options.items():
-            if value in self.healthcheck:
-                if self.healthcheck.get(value) is None:
-                    # due to recursive argument_spec, all keys are always present
-                    # (but have default value None if not specified)
-                    continue
-                if value in duration_options:
-                    time = self._convert_duration_to_nanosecond(self.healthcheck.get(value))
-                    if time:
-                        result[key] = time
-                elif self.healthcheck.get(value):
-                    result[key] = self.healthcheck.get(value)
-                    if key == 'test':
-                        if isinstance(result[key], (tuple, list)):
-                            result[key] = [str(e) for e in result[key]]
-                        else:
-                            result[key] = ["CMD-SHELL", str(result[key])]
-                    elif key == 'retries':
-                        try:
-                            result[key] = int(result[key])
-                        except Exception as dummy:
-                            self.fail('Cannot parse number of retries for healthcheck. '
-                                      'Expected an integer, got "{0}".'.format(result[key]))
-
-        if result['test'] == ['NONE']:
-            # If the user explicitly disables the healthcheck, return None
-            # as the healthcheck object, and set disable_healthcheck to True
-            return None, True
-
-        return result, False
-
-    def _convert_duration_to_nanosecond(self, time_str):
-        '''
-        Return time duration in nanosecond
-        '''
-        if not isinstance(time_str, str):
-            self.fail("Missing unit in duration - %s" % time_str)
-
-        regex = re.compile(r'^(((?P<hours>\d+)h)?((?P<minutes>\d+)m(?!s))?((?P<seconds>\d+)s)?((?P<milliseconds>\d+)ms)?((?P<microseconds>\d+)us)?)$')
-        parts = regex.match(time_str)
-
-        if not parts:
-            self.fail("Invalid time duration - %s" % time_str)
-
-        parts = parts.groupdict()
-        time_params = {}
-        for (name, value) in parts.items():
-            if value:
-                time_params[name] = int(value)
-
-        time = timedelta(**time_params)
-        time_in_nanoseconds = int(time.total_seconds() * 1000000000)
-
-        return time_in_nanoseconds
 
     def _parse_tmpfs(self):
         '''
