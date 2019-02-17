@@ -298,10 +298,15 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             m = match_found
         elif bre_ins is not None and bre_ins.search(b_cur_line):
             if insertafter:
-                # + 1 for the next line
-                index[1] = lineno + 1
-                if firstmatch:
-                    break
+                if firstmatch and index[1] == -1:
+                    # first time insertafter regex matched; update index[1]
+                    index[1] = lineno + 1
+                elif firstmatch and index[1] != -1:
+                    # insertafter regex matched already; don't update index[1]
+                    continue
+                elif not firstmatch:
+                    # + 1 for the next line
+                    index[1] = lineno + 1
             if insertbefore:
                 # index[1] for the previous line
                 index[1] = lineno
