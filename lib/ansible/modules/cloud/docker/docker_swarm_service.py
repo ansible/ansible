@@ -97,7 +97,7 @@ options:
         type: str
         description:
           - Start period for the container to initialize before starting health-retries countdown.
-    version_added: 2.8
+    version_added: "2.8"
   hostname:
     type: str
     description:
@@ -170,7 +170,7 @@ options:
       - The order of the list is significant in determining the value assigned to a
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
-    version_added: 2.8
+    version_added: "2.8"
   log_driver:
     type: str
     description:
