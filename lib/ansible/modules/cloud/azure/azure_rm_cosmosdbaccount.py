@@ -284,6 +284,9 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                     id=dict(
                         type='str',
                         required=True
+                    ),
+                    ignore_missing_vnet_service_endpoint=dict(
+                        type='bool'
                     )
                 )
             ),
@@ -340,6 +343,8 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                 template = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}"
                 subnet = template.format(self.subscription_id, resource_group_name, virtual_network_name, subnet_name)
             rule['id'] = subnet
+            # just temporary
+            rule['ignore_missing_vnet_service_endpoint'] = True
 
         response = None
 
