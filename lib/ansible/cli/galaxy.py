@@ -391,10 +391,15 @@ class GalaxyCLI(CLI):
                 role = RoleRequirement.role_yaml_parse(rname.strip())
                 roles_left.append(GalaxyRole(self.galaxy, **role))
 
+        installed_roles = [ name for (name,version) in self._list_installed_roles() ]
         for role in roles_left:
             # only process roles in roles files when names matches if given
             if role_file and self.args and role.name not in self.args:
                 display.vvv('Skipping role %s' % role.name)
+                continue
+
+            if role.name in installed_roles and not force :
+                display.display('- %s is already installed, skipping.' % str(role))
                 continue
 
             display.vvv('Processing role %s ' % role.name)
