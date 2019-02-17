@@ -429,7 +429,7 @@ def main():
         module.exit_json(changed=changed, peering_id=results)
     elif state == 'absent':
         if not peering_id and (not vpc_id or not peer_vpc_id):
-            module.fail_json(msg='state is absent but all of the following are missing: peering_id or [vpc_id, peer_vpc_id]')
+            module.fail_json(msg='state is absent but one of the following is missing: peering_id or [vpc_id, peer_vpc_id]')
 
         remove_peer_connection(client, module)
     else:
