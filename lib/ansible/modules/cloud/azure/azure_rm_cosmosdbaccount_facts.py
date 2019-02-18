@@ -25,7 +25,6 @@ options:
     resource_group:
         description:
             - Name of an Azure resource group.
-        required: True
     name:
         description:
             - Cosmos DB database account name.
@@ -361,8 +360,7 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
         # define user inputs into argument
         self.module_arg_spec = dict(
             resource_group=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             name=dict(
                 type='str'
@@ -400,8 +398,8 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
 
         if self.name is not None:
             self.results['accounts'] = self.get()
-        else:
-            self.results['accounts'] = self.list_by_resource_group()
+        elif self.resource_group is not None:
+            self.results['accounts'] = self.list_all()
         return self.results
 
     def get(self):
@@ -435,11 +433,27 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
 
         return results
 
+    def list_all(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.database_accounts.list()
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.log('Could not get facts for Database Account.')
+
+        if response is not None:
+            for item in response:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
+
+        return results
+
     def format_response(self, item):
         d = item.as_dict()
         d = {
-            'id': d.get('id', None),
-            'resource_group': self.resource_group,
+            'id': d.get('id'),
+            'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
             'name': d.get('name', None),
             'location': d.get('location', '').replace(' ', '').lower(),
             'kind': _camel_to_snake(d.get('kind', None)),
