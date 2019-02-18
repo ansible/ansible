@@ -90,7 +90,7 @@
 
 - assert:
     that:
-      - "zypper_result1.rc == 6"
+      - "zypper_result1.rc != 0"
       - "'not found' in zypper_result1.stderr"
       - "zypper_result2.rc == 0"
       - "'http://dl.google.com/linux/chrome/rpm/stable/x86_64' in zypper_result2.stdout"
