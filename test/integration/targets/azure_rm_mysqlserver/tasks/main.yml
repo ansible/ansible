@@ -226,12 +226,12 @@
     name: testdatabase
     collation: SQL_Latin1_General_CP1_CS_AS
     charset: WIN1252
+  ignore_errors: yes
   register: output
-- name: Assert the state has not changed
+- name: Assert that nothing has changed
   assert:
     that:
-      - output.changed == false
-      - output.name == 'testdatabase'
+      - output.changed == False
 
 - name: Update instance of database using force_update
   azure_rm_mysqldatabase:
