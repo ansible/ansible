@@ -1343,7 +1343,7 @@ macros:
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
-  team_gitlab: dagwieers dj-wasabi Lunik marwatk Shaps waheedi
+  team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
   team_hpux: bcoca dagwieers davx8342
   team_ipa: Nosmoht Akasurde fxfitz
@@ -1352,7 +1352,7 @@ macros:
   team_macos: dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
-  team_mysql: bmalynovytch dagwieers michaelcoburn oneiroi tolland Xyon
+  team_mysql: bmalynovytch michaelcoburn oneiroi tolland Xyon
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
@@ -1363,7 +1363,7 @@ macros:
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
-  team_postgresql: amenonsen Andersson007 andytom dagwieers Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
+  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
@@ -1371,7 +1371,7 @@ macros:
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
-  team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
+  team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb
   team_vmware: Akasurde dav1x warthog9 ckotte
   team_virt: joshainglis karmab machacekondra mwperina
   team_vultr: resmo Spredzy
