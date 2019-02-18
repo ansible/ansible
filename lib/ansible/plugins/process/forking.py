@@ -135,6 +135,7 @@ class ProcessModel(ProcessModelBase):
         self._worker_results_q.put(data, block=False)
 
     def cleanup(self):
+        self.terminate()
         self._worker_results_q.put(self._sentinel)
         self._results_thread.join()
         self._worker_results_q.close()

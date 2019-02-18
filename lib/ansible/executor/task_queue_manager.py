@@ -92,15 +92,6 @@ class TaskQueueManager:
         # a special flag to help us exit cleanly
         self._terminated = False
 
-        try:
-            pm_class = process_loader.get(C.DEFAULT_PROCESS_MODEL, class_only=True)
-        except:
-            display.warning(
-                'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
-            )
-            pm_class = process_loader.get('forking', class_only=True)
-        self._process_manager = pm_class(self)
-
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
         self._unreachable_hosts = dict()
@@ -108,6 +99,9 @@ class TaskQueueManager:
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
+
+        # the process manager class, which will be loaded during run()
+        self._process_manager = None
 
     def _initialize_processes(self, num):
         self._terminated = False
@@ -212,6 +206,17 @@ class TaskQueueManager:
             all_vars=all_vars,
             start_at_done=self._start_at_done,
         )
+
+        # load the process manager class and instantiate it
+        try:
+            pm_class = process_loader.get(C.DEFAULT_PROCESS_MODEL, class_only=True)
+        except:
+            display.warning(
+                'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
+            )
+            pm_class = process_loader.get('forking', class_only=True)
+
+        self._process_manager = pm_class(self)
 
         # adjust to # of workers to configured forks or size of batch, whatever is lower
         self._initialize_processes(min(self._forks, iterator.batch_size))
