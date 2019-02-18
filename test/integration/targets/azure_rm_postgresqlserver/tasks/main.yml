@@ -207,8 +207,8 @@
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: testdatabase
-    charset: WIN1252
-    collation: SQL_Latin1_General_CP1_CS_AS
+    charset: UTF8
+    collation: English_United States.1252
   register: output
 - name: Assert the state has not changed
   assert:
@@ -223,12 +223,7 @@
     name: testdatabase
     charset: WIN1252
     collation: SQL_Latin1_General_CP1_CS_AS
-  register: output
-- name: Assert the state has not changed
-  assert:
-    that:
-      - output.changed == False
-      - output.name == 'testdatabase'
+  ignore_errors: yes
 
 - name: Try to update PostgreSQL Database with force_update
   azure_rm_postgresqldatabase:
