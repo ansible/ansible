@@ -1,0 +1,2 @@
+bugfixes:
+    - warn when local fact is not correctly set
