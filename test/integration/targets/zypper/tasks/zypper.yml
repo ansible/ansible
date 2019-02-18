@@ -4,7 +4,7 @@
 
 - name: set URL of test package
   set_fact:
-    hello_package_url: http://download.opensuse.org/distribution/leap/{{ ansible_distribution_version }}/repo/oss/suse/x86_64/hello-{{hello_version.stdout}}.x86_64.rpm
+    hello_package_url: http://download.opensuse.org/repositories/openSUSE:/Leap:/{{ ansible_distribution_version }}/standard/x86_64/hello-{{ hello_version.stdout }}.x86_64.rpm
 
 - debug: var=hello_package_url
 
