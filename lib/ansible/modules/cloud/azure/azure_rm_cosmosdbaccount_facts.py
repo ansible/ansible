@@ -370,8 +370,7 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
             ),
             retrieve_keys=dict(
                 type='str',
-                choices=['all', 'readonly', 'none'],
-                default='none'
+                choices=['all', 'readonly']
             ),
             retrieve_connection_strings=dict(
                 type='bool'
