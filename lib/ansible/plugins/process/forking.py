@@ -80,7 +80,10 @@ class ProcessModel(ProcessModelBase):
         # create the worker results queue, which is where all workers
         # send their results. The results thread reads from this in the
         # background and copies the results to the final_q deque object
-        self._worker_results_q = multiprocessing.Queue()
+        try:
+            self._worker_results_q = multiprocessing.Queue()
+        except OSError as e:
+            raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
