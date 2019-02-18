@@ -135,7 +135,7 @@
       - "'secondary_master_key' not in output.accounts[0]"
       - output.accounts[0]['primary_readonly_master_key'] != None
       - output.accounts[0]['secondary_readonly_master_key'] != None
-      - output.accounts[0]['connection_strings'] | length == 4
+      - output.accounts[0]['connection_strings'] | length > 0
 
 - name: List acounts by resource group
   azure_rm_cosmosdbaccount_facts:
