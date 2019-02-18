@@ -117,7 +117,7 @@ EXAMPLES = r'''
     db: acme
     login_user: django
     login_password: mysecretpass
-    query: SELECT * FROM acme WHERE id = $1 AND story = $2
+    query: SELECT * FROM acme WHERE id = %s AND story = %s
     positional_args:
     - 1
     - test
@@ -125,7 +125,7 @@ EXAMPLES = r'''
 - name: Select query to test_db with named_args
   postgresql_query:
     db: test_db
-    query: SELECT * FROM test WHERE id = %(id_va)s AND story = %(story_val)s
+    query: SELECT * FROM test WHERE id = %(id_val)s AND story = %(story_val)s
     named_args:
       id_val: 1
       story_val: test
@@ -278,28 +278,34 @@ def main():
     except Exception as e:
         cursor.close()
         db_connection.close()
-        module.fail_json(msg="Cannot execute SQL '%s' [%s]: %s" % (query, arguments, to_native(e)))
+        module.fail_json(msg="Cannot execute SQL '%s' %s: %s" % (query, arguments, to_native(e)))
 
     statusmessage = cursor.statusmessage
     rowcount = cursor.rowcount
-    module.warn("rowcount %s" % rowcount)
 
-    if ('SELECT 0' in cursor.statusmessage or
-            'UPDATE' in cursor.statusmessage or
-            'DELETE' in cursor.statusmessage or
-            'INSERT' in cursor.statusmessage):
-        query_result = {}
-    else:
-        try:
-            query_result = [dict(row) for row in cursor.fetchall()]
-        except Exception as e:
-            module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
+    try:
+        query_result = [dict(row) for row in cursor.fetchall()]
+    except psycopg2.ProgrammingError as e:
+        if to_native(e) == 'no results to fetch':
+            query_result = {}
+
+    except Exception as e:
+        module.fail_json(msg="Cannot fetch rows from cursor: %s" % to_native(e))
 
     if 'SELECT' not in statusmessage:
-        if ('UPDATE' in statusmessage or 'INSERT' in statusmessage or 'DELETE' in statusmessage) \
-                and statusmessage.split()[2] == '0':
+        if 'UPDATE' in statusmessage or 'INSERT' in statusmessage or 'DELETE' in statusmessage:
+            s = statusmessage.split()
+            if len(s) == 3:
+                if statusmessage.split()[2] != '0':
+                    changed = True
 
-            changed = False
+            elif len(s) == 2:
+                if statusmessage.split()[1] != '0':
+                    changed = True
+
+            else:
+                changed = True
+
         else:
             changed = True
 
@@ -313,7 +319,7 @@ def main():
         query=cursor.query,
         statusmessage=statusmessage,
         query_result=query_result,
-        rowcount=rowcount,
+        rowcount=rowcount if rowcount >= 0 else 0,
     )
 
     cursor.close()
