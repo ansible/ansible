@@ -165,6 +165,7 @@
     name: "{{ storage_account }}"
     type: Standard_LRS
     state: absent
+    force_delete_nonempty: true
 
 - name: Delete Network Security Group that allows SSH
   azure_rm_securitygroup:
