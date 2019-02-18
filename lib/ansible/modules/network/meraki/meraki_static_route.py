@@ -26,45 +26,45 @@ options:
         description:
         - Authentication key provided by the dashboard.
         - Required if environmental variable MERAKI_KEY is not set.
-        type: string
+        type: str
     state:
         description:
         - Create or modify an organization.
         choices: [ absent, query, present ]
         default: present
-        type: string
+        type: str
     net_name:
         description:
         - Name of a network.
-        type: string
+        type: str
     net_id:
         description:
         - ID number of a network.
-        type: string
+        type: str
     org_name:
         description:
         - Name of organization associated to a network.
-        type: string
+        type: str
     org_id:
         description:
         - ID of organization associated to a network.
-        type: string
+        type: str
     name:
         description:
         - Descriptive name of the static route.
-        type: string
+        type: str
     subnet:
         description:
         - CIDR notation based subnet for static route.
-        type: string
+        type: str
     gateway_ip:
         description:
         - IP address of the gateway for the subnet.
-        type: string
+        type: str
     route_id:
         description:
         - Unique ID of static route.
-        type: string
+        type: str
     fixed_ip_assignments:
         description:
         - List of fixed MAC to IP bindings for DHCP.
@@ -73,15 +73,15 @@ options:
             mac:
                 description:
                 - MAC address of endpoint.
-                type: string
+                type: str
             ip:
                 description:
                 - IP address of endpoint.
-                type: string
+                type: str
             name:
                 description:
                 - Hostname of endpoint.
-                type: string
+                type: str
     reserved_ip_ranges:
         description:
         - List of IP ranges reserved for static IP assignments.
@@ -90,15 +90,15 @@ options:
             start:
                 description:
                 - First IP address of reserved range.
-                type: string
+                type: str
             end:
                 description:
                 - Last IP address of reserved range.
-                type: string
+                type: str
             comment:
                 description:
                 - Human readable description of reservation range.
-                type: string
+                type: str
     enabled:
         description:
         - Indicates whether static route is enabled within a network.
