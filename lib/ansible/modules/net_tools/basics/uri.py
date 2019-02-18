@@ -170,6 +170,10 @@ options:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
     default: yes
+  unix_socket:
+    description:
+    - Path to Unix domain socket to use for connection
+    version_added: '2.8'
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
@@ -460,7 +464,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             _, redir_info = fetch_url(module, url, data=body,
                                       headers=headers,
                                       method=method,
-                                      timeout=socket_timeout)
+                                      timeout=socket_timeout, unix_socket=module.params['unix_socket'])
             # if we are redirected, update the url with the location header,
             # and update dest with the new url filename
             if redir_info['status'] in (301, 302, 303, 307):
@@ -475,7 +479,8 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         module.params['follow_redirects'] = follow_redirects
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
-                           method=method, timeout=socket_timeout, **kwargs)
+                           method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
+                           **kwargs)
 
     try:
         content = resp.read()
@@ -515,6 +520,7 @@ def main():
         status_code=dict(type='list', default=[200]),
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
+        unix_socket=dict(type='path'),
     )
 
     module = AnsibleModule(
