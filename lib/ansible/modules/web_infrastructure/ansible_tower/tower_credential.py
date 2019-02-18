@@ -93,7 +93,7 @@ options:
         - Domain for openstack type.
     become_method:
       description:
-        - Become method to Use for privledge escalation.
+        - Become method to use for privilege escalation.
       choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
     become_username:
       description:
