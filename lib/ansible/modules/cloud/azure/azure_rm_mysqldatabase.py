@@ -200,6 +200,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if not self.check_mode:
                     self.delete_mysqldatabase()
             else:
+                self.module.warn("Database properties cannot be updated without setting 'force_update' option")
                 self.to_do = Actions.NoAction
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
