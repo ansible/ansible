@@ -75,6 +75,7 @@ class CPAN(CLIMgr):
     def get_package_details(self, package):
         pass
 
+
 def main():
 
     # start work
