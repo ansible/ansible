@@ -214,7 +214,7 @@ except ImportError:
     pass
 
 import copy
-from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase, HAS_AZURE
+from ansible.module_utils.azure_rm_common import AZURE_SUCCESS_STATE, AzureRMModuleBase
 from ansible.module_utils._text import to_native
 
 cors_rule_spec = dict(
@@ -265,11 +265,6 @@ class AzureRMStorageAccount(AzureRMModuleBase):
             https_only=dict(type='bool', default=False),
             blob_cors=dict(type='list', options=cors_rule_spec, elements='dict')
         )
-
-        if HAS_AZURE:
-            for key in self.storage_models.SkuName:
-                if getattr(key, 'value') not in self.module_arg_spec['account_type']['choices']:
-                    self.module_arg_spec['account_type']['choices'].append(getattr(key, 'value'))
 
         self.results = dict(
             changed=False,
