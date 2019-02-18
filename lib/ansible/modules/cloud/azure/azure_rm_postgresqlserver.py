@@ -227,7 +227,7 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "location":
                     self.parameters["location"] = kwargs[key]
                 elif key == "storage_mb":
-                    self.parameters.setdefault("properties", {}).setdefault("storage_profile", {})["storage_mb"] = kwargs[key]
+                    self.parameters.setdefault("properties", {})["storage_mb"] = kwargs[key]
                 elif key == "version":
                     self.parameters.setdefault("properties", {})["version"] = kwargs[key]
                 elif key == "enforce_ssl":
@@ -320,8 +320,6 @@ class AzureRMServers(AzureRMModuleBase):
                                                                  server_name=self.name,
                                                                  parameters=self.parameters)
             else:
-                # structure of parameters for update must be changed
-                self.parameters.update(self.parameters.pop("properties", {}))
                 response = self.postgresql_client.servers.update(resource_group_name=self.resource_group,
                                                                  server_name=self.name,
                                                                  parameters=self.parameters)

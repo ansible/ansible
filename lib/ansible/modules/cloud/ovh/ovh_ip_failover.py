@@ -80,7 +80,7 @@ options:
 '''
 
 EXAMPLES = '''
-# Route an IP address 1.1.1.1 to the service ns666.ovh.net
+# Route an IP adress 1.1.1.1 to the service ns666.ovh.net
 - ovh_ip_failover:
     name: 1.1.1.1
     service: ns666.ovh.net

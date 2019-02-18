@@ -23,9 +23,7 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to send a configuration XML file to a netconf
       device, and detects if there was a configuration change.
-extends_documentation_fragment:
-    - netconf
-    - network_agnostic
+extends_documentation_fragment: netconf
 options:
   content:
     description:

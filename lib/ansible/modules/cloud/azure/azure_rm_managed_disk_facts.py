@@ -1,9 +1,20 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2016, Bruno Medina Bolanos Cacho <bruno.medina@microsoft.com>
+#
+# Copyright (c) 2016 Bruno Medina Bolanos Cacho, <bruno.medina@microsoft.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -12,13 +23,13 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: azure_rm_managed_disk_facts
 
 version_added: "2.4"
 
-short_description: Get managed disk facts
+short_description: Get managed disk facts.
 
 description:
     - Get facts for a specific managed disk or all managed disks.
@@ -26,42 +37,38 @@ description:
 options:
     name:
         description:
-            - Limit results to a specific managed disk.
-        type: str
+            - Limit results to a specific managed disk
     resource_group:
         description:
-            - Limit results to a specific resource group.
-        type: str
+            - Limit results to a specific resource group
     tags:
         description:
-            - Limit results by providing a list of tags.
-            - Format tags as 'key' or 'key:value'.
-        type: list
+            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - Bruno Medina (@brusMX)
+    - "Bruno Medina (@brusMX)"
 '''
 
-EXAMPLES = r'''
-- name: Get facts for one managed disk
-  azure_rm_managed_disk_facts:
-    name: Testing
-    resource_group: TestRG
+EXAMPLES = '''
+    - name: Get facts for one managed disk
+      azure_rm_managed_disk_facts:
+        name: Testing
+        resource_group: TestRG
 
-- name: Get facts for all managed disks
-  azure_rm_managed_disk_facts:
+    - name: Get facts for all managed disks
+      azure_rm_managed_disk_facts:
 
-- name: Get facts by tags
-  azure_rm_managed_disk_facts:
-    tags:
-    - testing
+    - name: Get facts by tags
+      azure_rm_managed_disk_facts:
+        tags:
+          - testing
 '''
 
-RETURN = r'''
+RETURN = '''
 azure_managed_disk:
     description: List of managed disk dicts.
     returned: always
@@ -70,46 +77,39 @@ azure_managed_disk:
         id:
             description:
                 - Resource id.
-            type: str
         name:
             description:
                 - Name of the managed disk.
-            type: str
         location:
             description:
                 - Valid Azure location.
-            type: str
         storage_account_type:
             description:
                 - Type of storage for the managed disk
-            type: str
             sample: Standard_LRS
+            type: str
         create_option:
             description:
                 - Create option of the disk
-            type: str
             sample: copy
+            type: str
         source_uri:
             description:
                 - URI to a valid VHD file to be used or the resource ID of the managed disk to copy.
-            type: str
         os_type:
             description:
                 - "Type of Operating System: C(linux) or C(windows)."
-            type: str
         disk_size_gb:
             description:
                 - Size in GB of the managed disk to be created.
-            type: str
         managed_by:
             description:
                 - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
-            type: str
         tags:
             description:
                 - Tags to assign to the managed disk.
-            type: dict
             sample: { "tag": "value" }
+            type: dict
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -175,7 +175,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
 
         self.results['ansible_facts']['azure_managed_disk'] = (
             self.get_item() if self.name
-            else (self.list_items_by_resource_group() if self.resource_group else self.list_items())
+            else self.list_items()
         )
 
         return self.results
@@ -202,20 +202,7 @@ class AzureRMManagedDiskFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.disks.list()
         except CloudError as exc:
-            self.fail('Failed to list all items - {0}'.format(str(exc)))
-
-        results = []
-        for item in response:
-            if self.has_tags(item.tags, self.tags):
-                results.append(managed_disk_to_dict(item))
-        return results
-
-    def list_items_by_resource_group(self):
-        """Get managed disks in a resource group"""
-        try:
-            response = self.compute_client.disks.list_by_resource_group(resource_group_name=self.resource_group)
-        except CloudError as exc:
-            self.fail('Failed to list items by resource group - {0}'.format(str(exc)))
+            self.fail('Failed to list all items - {}'.format(str(exc)))
 
         results = []
         for item in response:

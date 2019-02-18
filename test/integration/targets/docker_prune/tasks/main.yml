@@ -35,14 +35,14 @@
   - assert:
       that:
       # containers
-      - container.docker_container.Id in result.containers
+      - container.ansible_facts.docker_container.Id in result.containers
       - "'containers_space_reclaimed' in result"
       # images
       - "'images_space_reclaimed' in result"
       # networks
-      - network.docker_network.Name in result.networks
+      - network.ansible_facts.docker_network.Name in result.networks
       # volumes
-      - volume.docker_volume.Name in result.volumes
+      - volume.ansible_facts.docker_volume.Name in result.volumes
       - "'volumes_space_reclaimed' in result"
       # builder_cache
       - "'builder_cache_space_reclaimed' in result"

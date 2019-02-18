@@ -86,18 +86,15 @@ RETURN = '''
 '''
 
 import os
-import traceback
 
-PYMSSQL_IMP_ERR = None
 try:
     import pymssql
 except ImportError:
-    PYMSSQL_IMP_ERR = traceback.format_exc()
     mssql_found = False
 else:
     mssql_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 
 
 def db_exists(conn, cursor, db):
@@ -158,7 +155,7 @@ def main():
     )
 
     if not mssql_found:
-        module.fail_json(msg=missing_required_lib('pymssql'), exception=PYMSSQL_IMP_ERR)
+        module.fail_json(msg="pymssql python module is required")
 
     db = module.params['name']
     state = module.params['state']

@@ -515,15 +515,15 @@ General for all connections:
 ansible_host
     The name of the host to connect to, if different from the alias you wish to give to it.
 ansible_port
-    The connection port number, if not the default (22 for ssh)
+    The ssh port number, if not 22
 ansible_user
-    The user name to use when connecting to the host
-ansible_password
-    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+    The default ssh user name to use.
 
 
 Specific to the SSH connection:
 
+ansible_ssh_pass
+    The ssh password to use (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_ssh_private_key_file
     Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 ansible_ssh_common_args
@@ -550,8 +550,8 @@ ansible_become_method
     Allows to set privilege escalation method
 ansible_become_user
     Equivalent to ``ansible_sudo_user`` or ``ansible_su_user``, allows to set the user you become through privilege escalation
-ansible_become_password
-    Equivalent to ``ansible_sudo_password`` or ``ansible_su_password``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
+ansible_become_pass
+    Equivalent to ``ansible_sudo_pass`` or ``ansible_su_pass``, allows you to set the privilege escalation password (never store this variable in plain text; always use a vault. See :ref:`best_practices_for_variables_and_vaults`)
 ansible_become_exe
     Equivalent to ``ansible_sudo_exe`` or ``ansible_su_exe``, allows you to set the executable for the escalation method selected
 ansible_become_flags

@@ -297,11 +297,11 @@ def main():
                     if key not in IFPROPS_MAPPING:
                         module.warn("Property '{0}' is not a valid system property.".format(key))
                     if not system or system['interfaces'][device][IFPROPS_MAPPING[key]] != value:
-                        result['changed'] = True
-                    interface_properties['{0}-{1}'.format(key, device)] = value
+                        interface_properties['{0}-{1}'.format(key, device)] = value
 
-            if result['changed'] is True:
+            if interface_properties:
                 conn.modify_system(system_id, "modify_interface", interface_properties, token)
+                result['changed'] = True
 
         # Only save when the entry was changed
         if not module.check_mode and result['changed']:

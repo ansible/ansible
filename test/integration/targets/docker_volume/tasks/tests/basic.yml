@@ -20,17 +20,11 @@
     name: "{{ vname }}"
   register: create_2
 
-- name: "Create a volume (recreate: options-changed)"
+- name: Create a volume (force)
   docker_volume:
     name: "{{ vname }}"
-    recreate: options-changed
+    force: yes
   register: create_3
-
-- name: "Create a volume (recreate: always)"
-  docker_volume:
-    name: "{{ vname }}"
-    recreate: always
-  register: create_4
 
 - name: Remove a volume
   docker_volume:
@@ -49,7 +43,6 @@
     - create_1 is changed
     - create_2 is not changed
     - create_3 is not changed
-    - create_4 is changed
     - absent_1 is changed
     - absent_2 is not changed
 
@@ -87,7 +80,7 @@
       o: size=200m,uid=1000
   register: driver_options_3
 
-- name: "Create a volume with options (changed, recreate: options-changed)"
+- name: Create a volume with options (changed, force)
   docker_volume:
     name: "{{ vname }}"
     driver: local
@@ -95,7 +88,7 @@
       type: tempfs
       device: tmpfs
       o: size=200m,uid=1000
-    recreate: options-changed
+    force: yes
   register: driver_options_4
 
 - name: Cleanup
@@ -137,12 +130,12 @@
       ansible.test.1: hello
   register: driver_labels_3
 
-- name: "Create a volume with labels (less, recreate: options-changed)"
+- name: Create a volume with labels (less, force)
   docker_volume:
     name: "{{ vname }}"
     labels:
       ansible.test.1: hello
-    recreate: options-changed
+    force: yes
   register: driver_labels_4
 
 - name: Create a volume with labels (more)
@@ -153,13 +146,13 @@
       ansible.test.3: ansible
   register: driver_labels_5
 
-- name: "Create a volume with labels (more, recreate: options-changed)"
+- name: Create a volume with labels (more, force)
   docker_volume:
     name: "{{ vname }}"
     labels:
       ansible.test.1: hello
       ansible.test.3: ansible
-    recreate: options-changed
+    force: yes
   register: driver_labels_6
 
 - name: Cleanup

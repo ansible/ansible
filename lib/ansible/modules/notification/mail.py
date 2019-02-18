@@ -291,7 +291,7 @@ def main():
     try:
         smtp.ehlo()
     except smtplib.SMTPException as e:
-        module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
+            module.fail_json(rc=1, msg='Helo failed for host %s:%s: %s' % (host, port, to_native(e)), exception=traceback.format_exc())
 
     if int(code) > 0:
         if not secure_state and secure in ('starttls', 'try'):

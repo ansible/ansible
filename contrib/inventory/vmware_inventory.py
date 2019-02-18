@@ -614,14 +614,7 @@ class VMWareInventory(object):
                         lastref = lastref[x]
                     else:
                         lastref[x] = val
-        if self.args.debug:
-            self.debugl("For %s" % vm.name)
-            for key in list(rdata.keys()):
-                if isinstance(rdata[key], dict):
-                    for ikey in list(rdata[key].keys()):
-                        self.debugl("Property '%s.%s' has value '%s'" % (key, ikey, rdata[key][ikey]))
-                else:
-                    self.debugl("Property '%s' has value '%s'" % (key, rdata[key]))
+
         return rdata
 
     def facts_from_vobj(self, vobj, level=0):

@@ -73,7 +73,7 @@ options:
   delay_restore:
     description:
       - manages delay restore command and config value in seconds
-    type: str
+    type: bool
   state:
     description:
       - Manages desired state of the resource

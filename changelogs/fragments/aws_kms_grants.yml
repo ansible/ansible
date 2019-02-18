@@ -1,2 +1,0 @@
-minor_changes:
-  - aws_kms is now able to create keys and manage grants and tags

@@ -783,7 +783,7 @@ class AzureRMWebApps(AzureRMModuleBase):
             if self.site_config.get(fx_version):
                 if not getattr(existing_config, fx_version) or \
                         getattr(existing_config, fx_version).upper() != self.site_config.get(fx_version).upper():
-                    return True
+                            return True
 
         return False
 

@@ -1,41 +1,37 @@
 # -*- coding: utf-8 -*-
-
-# Copyright: (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# Copyright (C) 2018 Yanis Guenane <yanis+ansible@guenane.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = '''
 options:
   api_token:
     description:
       - Scaleway OAuth token.
-    type: str
-    aliases: [ oauth_token ]
+    aliases: ['oauth_token']
   api_url:
     description:
-      - Scaleway API URL.
-    type: str
-    default: https://api.scaleway.com
-    aliases: [ base_url ]
+      - Scaleway API URL
+    default: 'https://api.scaleway.com'
+    aliases: ['base_url']
   api_timeout:
     description:
       - HTTP timeout to Scaleway API in seconds.
-    type: int
     default: 30
-    aliases: [ timeout ]
+    aliases: ['timeout']
   query_parameters:
     description:
-    - List of parameters passed to the query string.
+    - List of parameters passed to the query string
     type: dict
     default: {}
   validate_certs:
     description:
       - Validate SSL certs of the Scaleway API.
-    type: bool
     default: yes
+    type: bool
 notes:
   - Also see the API documentation on U(https://developer.scaleway.com/)
   - If C(api_token) is not set within the module, the following

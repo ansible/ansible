@@ -235,16 +235,16 @@ def core(module):
 
 def main():
     argument_spec = scaleway_argument_spec()
-    argument_spec.update(
-        state=dict(type='str', default='present', choices=['absent', 'present']),
-        region=dict(type='str', required=True, choices=SCALEWAY_LOCATION.keys()),
-        protocol=dict(type='str', required=True, choices=['TCP', 'UDP', 'ICMP']),
-        port=dict(type='int', required=True),
-        ip_range=dict(type='str', default='0.0.0.0/0'),
-        direction=dict(type='str', required=True, choices=['inbound', 'outbound']),
-        action=dict(type='str', required=True, choices=['accept', 'drop']),
-        security_group=dict(type='str', required=True),
-    )
+    argument_spec.update(dict(
+        state=dict(default='present', choices=['absent', 'present']),
+        region=dict(required=True, choices=SCALEWAY_LOCATION.keys()),
+        protocol=dict(required=True, choices=['TCP', 'UDP', 'ICMP']),
+        port=dict(required=True, type=int),
+        ip_range=dict(default='0.0.0.0/0', type=lambda x: to_text(ip_network(to_text(x)))),
+        direction=dict(required=True, choices=['inbound', 'outbound']),
+        action=dict(required=True, choices=['accept', 'drop']),
+        security_group=dict(required=True),
+    ))
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,

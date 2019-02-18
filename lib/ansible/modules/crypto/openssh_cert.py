@@ -26,65 +26,69 @@ requirements:
     - "ssh-keygen"
 options:
     state:
-        description:
-            - Whether the host or user certificate should exist or not, taking action if the state is different from what is stated.
-        type: str
+        required: false
         default: "present"
         choices: [ 'present', 'absent' ]
-    type:
         description:
-            - Whether the module should generate a host or a user certificate.
-        type: str
+            - Whether the host or user certificate should exist or not, taking action if the state is different from what is stated.
+    type:
         required: true
         choices: ['host', 'user']
+        description:
+            - Whether the module should generate a host or a user certificate.
     force:
+        required: false
+        default: false
+        type: bool
         description:
             - Should the certificate be regenerated even if it already exists and is valid.
-        type: bool
-        default: false
     path:
+        required: true
+        type: path
         description:
             - Path of the file containing the certificate.
-        type: path
-        required: true
     signing_key:
+        required: true
+        type: path
         description:
             - The path to the private openssh key that is used for signing the public key in order to generate the certificate.
-        type: path
-        required: true
     public_key:
+        required: true
+        type: path
         description:
             - The path to the public key that will be signed with the signing key in order to generate the certificate.
-        type: path
-        required: true
     valid_from:
+        required: true
+        type: str
         description:
             - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | always)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
-        type: str
-        required: true
     valid_to:
+        required: true
+        type: str
         description:
             - "The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp.
                Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | forever)
                where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
                Note that if using relative time this module is NOT idempotent."
-        type: str
-        required: true
     valid_at:
+        required: false
+        type: str
         description:
             - "Check if the certificate is valid at a certain point in time. If it is not the certificate will be regenerated.
                Time will always be interpreted as UTC. Mainly to be used with relative timespec for I(valid_from) and / or I(valid_to).
                Note that if using relative time this module is NOT idempotent."
-        type: str
     principals:
+        required: false
+        type: list
         description:
             - "Certificates may be limited to be valid for a set of principal (user/host) names.
               By default, generated certificates are valid for all users or hosts."
-        type: list
     options:
+        required: false
+        type: list
         description:
             - "Specify certificate options when signing a key. The option that are valid for user certificates are:"
             - "C(clear): Clear all enabled permissions.  This is useful for clearing the default set of permissions so permissions may be added individually."
@@ -103,11 +107,12 @@ options:
             - "C(source-address=address_list): Restrict the source addresses from which the certificate is considered valid.
                The C(address_list) is a comma-separated list of one or more address/netmask pairs in CIDR format."
             - "At present, no options are valid for host keys."
-        type: list
+
     identifier:
+        required: false
+        type: str
         description:
             - Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
-        type: str
 
 extends_documentation_fragment: files
 '''
@@ -505,22 +510,22 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            force=dict(type='bool', default=False),
-            type=dict(type='str', choices=['host', 'user']),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            force=dict(default=False, type=bool),
+            type=dict(choices=['host', 'user'], type='str'),
             signing_key=dict(type='path'),
             public_key=dict(type='path'),
-            path=dict(type='path', required=True),
+            path=dict(required=True, type='path'),
             identifier=dict(type='str'),
             valid_from=dict(type='str'),
             valid_to=dict(type='str'),
             valid_at=dict(type='str'),
-            principals=dict(type='list'),
-            options=dict(type='list'),
+            principals=dict(type=list),
+            options=dict(type=list),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])],
+        required_if=[('state', 'present', ['type', 'signing_key', 'public_key', 'valid_from', 'valid_to'])]
     )
 
     def isBaseDir(path):

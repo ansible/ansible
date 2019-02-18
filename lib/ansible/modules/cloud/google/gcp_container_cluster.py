@@ -49,7 +49,7 @@ options:
     default: present
   name:
     description:
-    - The name of this cluster. The name must be unique within this project and location,
+    - The name of this cluster. The name must be unique within this project and zone,
       and can be up to 40 characters. Must be Lowercase letters, numbers, and hyphens
       only. Must start with a letter. Must end with a number or a letter.
     required: false
@@ -254,11 +254,13 @@ options:
     required: false
   location:
     description:
-    - The location where the cluster is deployed.
+    - The list of Google Compute Engine locations in which the cluster's nodes should
+      be located.
+    required: false
+  zone:
+    description:
+    - The zone where the cluster is deployed.
     required: true
-    aliases:
-    - zone
-    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
@@ -273,7 +275,7 @@ EXAMPLES = '''
       node_config:
         machine_type: n1-standard-4
         disk_size_gb: 500
-      location: us-central1-a
+      zone: us-central1-a
       project: "test_project"
       auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
@@ -283,7 +285,7 @@ EXAMPLES = '''
 RETURN = '''
 name:
   description:
-  - The name of this cluster. The name must be unique within this project and location,
+  - The name of this cluster. The name must be unique within this project and zone,
     and can be up to 40 characters. Must be Lowercase letters, numbers, and hyphens
     only. Must start with a letter. Must end with a number or a letter.
   returned: success
@@ -506,6 +508,12 @@ subnetwork:
   - The name of the Google Compute Engine subnetwork to which the cluster is connected.
   returned: success
   type: str
+location:
+  description:
+  - The list of Google Compute Engine locations in which the cluster's nodes should
+    be located.
+  returned: success
+  type: list
 endpoint:
   description:
   - The IP address of this cluster's master endpoint.
@@ -559,9 +567,9 @@ expireTime:
   - The time the cluster will be automatically deleted in RFC3339 text format.
   returned: success
   type: str
-location:
+zone:
   description:
-  - The location where the cluster is deployed.
+  - The zone where the cluster is deployed.
   returned: success
   type: str
 '''
@@ -625,7 +633,8 @@ def main():
                 ),
             ),
             subnetwork=dict(type='str'),
-            location=dict(required=True, type='str', aliases=['zone']),
+            location=dict(type='list', elements='str'),
+            zone=dict(required=True, type='str'),
         )
     )
 
@@ -687,6 +696,7 @@ def resource_to_request(module):
         u'clusterIpv4Cidr': module.params.get('cluster_ipv4_cidr'),
         u'addonsConfig': ClusterAddonsconfig(module.params.get('addons_config', {}), module).to_request(),
         u'subnetwork': module.params.get('subnetwork'),
+        u'location': module.params.get('location'),
     }
     request = encode_request(request, module)
     return_vals = {}
@@ -703,11 +713,11 @@ def fetch_resource(module, link, allow_not_found=True):
 
 
 def self_link(module):
-    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters/{name}".format(**module.params)
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{name}".format(**module.params)
 
 
 def collection(module):
-    return "https://container.googleapis.com/v1/projects/{project}/locations/{location}/clusters".format(**module.params)
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters".format(**module.params)
 
 
 def return_if_object(module, response, allow_not_found=False):
@@ -764,6 +774,7 @@ def response_to_hash(module, response):
         u'clusterIpv4Cidr': response.get(u'clusterIpv4Cidr'),
         u'addonsConfig': ClusterAddonsconfig(response.get(u'addonsConfig', {}), module).from_response(),
         u'subnetwork': response.get(u'subnetwork'),
+        u'location': response.get(u'location'),
         u'endpoint': response.get(u'endpoint'),
         u'initialClusterVersion': response.get(u'initialClusterVersion'),
         u'currentMasterVersion': response.get(u'currentMasterVersion'),
@@ -800,7 +811,7 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, False)
+        op_result = fetch_resource(module, op_uri)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

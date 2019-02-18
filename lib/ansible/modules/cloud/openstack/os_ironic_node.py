@@ -259,7 +259,7 @@ def main():
         timeout = module.params['timeout']
 
         # User has reqeusted desired state to be in maintenance state.
-        if module.params['state'] == 'maintenance':
+        if module.params['state'] is 'maintenance':
             module.params['maintenance'] = True
 
         if node['provision_state'] in [

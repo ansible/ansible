@@ -30,21 +30,6 @@ about: Create a report to help us improve
 ##### OS / ENVIRONMENT
 <!--- Provide all relevant information below, e.g. target OS versions, network device firmware, etc. -->
 
-##### DEPENDENCY PROBLEMS
-<!--- If you're having problems with a Python library (e.g. you've installed a library but
-Ansible is still telling you it's missing) add a task to the failing playbook:
-
-```
-- python_requirements_facts:
-    dependencies:
-      - $PROBLEM_LIBRARY (e.g. openshift, boto3, etc.)
-```
-
--->
-```paste below
-
-```
-
 ##### STEPS TO REPRODUCE
 <!--- Describe exactly how to reproduce the problem, using a minimal test-case -->
 

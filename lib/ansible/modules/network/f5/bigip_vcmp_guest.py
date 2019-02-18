@@ -710,7 +710,7 @@ class ModuleManager(object):
     def virtual_disk_exists(self):
         response = self.get_virtual_disk_on_device()
         if response:
-            return True
+                return True
         return False
 
     def remove_virtual_disk_from_device(self):
@@ -743,7 +743,7 @@ class ModuleManager(object):
         try:
             response = resp.json()
         except ValueError as ex:
-            raise F5ModuleError(str(ex))
+                raise F5ModuleError(str(ex))
 
         if resp.status == 404 or 'code' in response and response['code'] == 404:
             return True
@@ -767,7 +767,7 @@ class ModuleManager(object):
         try:
             response = resp.json()
         except ValueError:
-            return False
+                return False
         if 'code' in response and response['code'] == 400:
             if 'message' in response:
                 raise F5ModuleError(response['message'])

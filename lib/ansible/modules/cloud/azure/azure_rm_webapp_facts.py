@@ -167,12 +167,12 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            return_publish_profile=dict(type='bool', default=False),
+            return_publish_profile=dict(type=bool, default=False)
         )
 
         self.results = dict(
             changed=False,
-            webapps=[],
+            webapps=[]
         )
 
         self.name = None

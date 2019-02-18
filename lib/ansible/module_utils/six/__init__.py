@@ -33,10 +33,6 @@ import operator
 import sys
 import types
 
-# The following makes it easier for us to script updates of the bundled code.  It is not part of
-# upstream six
-_BUNDLED_METADATA = {"pypi_name": "six", "version": "1.11.0"}
-
 __author__ = "Benjamin Peterson <benjamin@python.org>"
 __version__ = "1.11.0"
 

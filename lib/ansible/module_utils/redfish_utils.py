@@ -531,6 +531,25 @@ class RedfishUtils(object):
             result['entries'].append(firmware)
         return result
 
+    def get_manager_attributes(self):
+        result = {}
+        manager_attributes = {}
+        key = "Attributes"
+
+        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        for attribute in data[key].items():
+            manager_attributes[attribute[0]] = attribute[1]
+        result["entries"] = manager_attributes
+        return result
+
     def get_bios_attributes(self):
         result = {}
         bios_attributes = {}
@@ -558,73 +577,52 @@ class RedfishUtils(object):
         result["entries"] = bios_attributes
         return result
 
-    def get_boot_order(self):
+    def get_bios_boot_order(self):
         result = {}
-        # Get these entries from BootOption, if present
-        properties = ['DisplayName', 'BootOptionReference']
+        boot_device_list = []
+        boot_device_details = []
+        key = "Bios"
+        bootsources = "BootSources"
+        # Get these entries, but does not fail if not found
+        properties = ['Index', 'Id', 'Name', 'Enabled']
 
-        # Retrieve System resource
+        # Search for 'key' entry and extract URI from it
         response = self.get_request(self.root_uri + self.systems_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
-        # Confirm needed Boot properties are present
-        if 'Boot' not in data or 'BootOrder' not in data['Boot']:
-            return {'ret': False, 'msg': "Key BootOrder not found"}
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
 
-        boot = data['Boot']
-        boot_order = boot['BootOrder']
+        bios_uri = data[key]["@odata.id"]
 
-        # Retrieve BootOptions if present
-        if 'BootOptions' in boot and '@odata.id' in boot['BootOptions']:
-            boot_options_uri = boot['BootOptions']["@odata.id"]
-            # Get BootOptions resource
-            response = self.get_request(self.root_uri + boot_options_uri)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-
-            # Retrieve Members array
-            if 'Members' not in data:
-                return {'ret': False,
-                        'msg': "Members not found in BootOptionsCollection"}
-            members = data['Members']
+        # Get boot mode first as it will determine what attribute to read
+        response = self.get_request(self.root_uri + bios_uri)
+        if response['ret'] is False:
+            return response
+        data = response['data']
+        boot_mode = data[u'Attributes']["BootMode"]
+        if boot_mode == "Uefi":
+            boot_seq = "UefiBootSeq"
         else:
-            members = []
+            boot_seq = "BootSeq"
 
-        # Build dict of BootOptions keyed by BootOptionReference
-        boot_options_dict = {}
-        for member in members:
-            if '@odata.id' not in member:
-                return {'ret': False,
-                        'msg': "@odata.id not found in BootOptions"}
-            boot_option_uri = member['@odata.id']
-            response = self.get_request(self.root_uri + boot_option_uri)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-            if 'BootOptionReference' not in data:
-                return {'ret': False,
-                        'msg': "BootOptionReference not found in BootOption"}
-            boot_option_ref = data['BootOptionReference']
+        response = self.get_request(self.root_uri + self.systems_uri + "/" + bootsources)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
 
-            # fetch the props to display for this boot device
-            boot_props = {}
-            for prop in properties:
-                if prop in data:
-                    boot_props[prop] = data[prop]
-
-            boot_options_dict[boot_option_ref] = boot_props
-
-        # Build boot device list
-        boot_device_list = []
-        for ref in boot_order:
-            boot_device_list.append(
-                boot_options_dict.get(ref, {'BootOptionReference': ref}))
-
-        result["entries"] = boot_device_list
+        boot_device_list = data[u'Attributes'][boot_seq]
+        for b in boot_device_list:
+            boot_device = {}
+            for property in properties:
+                if property in b:
+                    boot_device[property] = b[property]
+            boot_device_details.append(boot_device)
+        result["entries"] = boot_device_details
         return result
 
     def set_bios_default_settings(self):
@@ -687,6 +685,44 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True}
+
+    def set_manager_attributes(self, attr):
+        result = {}
+        # Here I'm making the assumption that the key 'Attributes' is part of the URI.
+        # It may not, but in the hardware I tested with, getting to the final URI where
+        # the Manager Attributes are, appear to be part of a specific OEM extension.
+        key = "Attributes"
+
+        # Search for key entry and extract URI from it
+        response = self.get_request(self.root_uri + self.manager_uri + "/" + key)
+        if response['ret'] is False:
+            return response
+        result['ret'] = True
+        data = response['data']
+
+        if key not in data:
+            return {'ret': False, 'msg': "Key %s not found" % key}
+
+        # Check if attribute exists
+        if attr['mgr_attr_name'] not in data[key]:
+            return {'ret': False, 'msg': "Manager attribute %s not found" % attr['mgr_attr_name']}
+
+        # Example: manager_attr = {\"name\":\"value\"}
+        # Check if value is a number. If so, convert to int.
+        if attr['mgr_attr_value'].isdigit():
+            manager_attr = "{\"%s\": %i}" % (attr['mgr_attr_name'], int(attr['mgr_attr_value']))
+        else:
+            manager_attr = "{\"%s\": \"%s\"}" % (attr['mgr_attr_name'], attr['mgr_attr_value'])
+
+        # Find out if value is already set to what we want. If yes, return
+        if data[key][attr['mgr_attr_name']] == attr['mgr_attr_value']:
+            return {'ret': True, 'changed': False, 'msg': "Manager attribute already set"}
+
+        payload = {"Attributes": json.loads(manager_attr)}
+        response = self.patch_request(self.root_uri + self.manager_uri + "/" + key, payload, HEADERS)
+        if response['ret'] is False:
+            return response
+        return {'ret': True, 'changed': True, 'msg': "Modified Manager attribute %s" % attr['mgr_attr_name']}
 
     def set_bios_attributes(self, attr):
         result = {}

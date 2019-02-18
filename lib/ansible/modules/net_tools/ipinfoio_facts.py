@@ -1,7 +1,6 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
-
-# Copyright: (c) 2016, Aleksei Kostiuk <unitoff@gmail.com>
+#
+# (c) 2016, Aleksei Kostiuk <unitoff@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -102,7 +101,7 @@ class IpinfoioFacts(object):
         try:
             info['status'] == 200
         except AssertionError:
-            self.module.fail_json(msg='Could not get {0} page, '
+            self.module.fail_json(msg='Could not get {} page, '
                                   'check for connectivity!'.format(self.url))
         else:
             try:

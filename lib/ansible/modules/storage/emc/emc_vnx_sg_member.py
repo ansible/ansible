@@ -79,20 +79,16 @@ hluid:
     returned: success
 '''
 
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.storage.emc.emc_vnx import emc_vnx_argument_spec
 
-LIB_IMP_ERR = None
 try:
     from storops import VNXSystem
     from storops.exception import VNXCredentialError, VNXStorageGroupError, \
         VNXAluAlreadyAttachedError, VNXAttachAluError, VNXDetachAluNotFoundError
     HAS_LIB = True
 except Exception:
-    LIB_IMP_ERR = traceback.format_exc()
     HAS_LIB = False
 
 
@@ -116,8 +112,9 @@ def run_module():
     )
 
     if not HAS_LIB:
-        module.fail_json(msg=missing_required_lib('storops >= 0.5.10'),
-                         exception=LIB_IMP_ERR)
+        module.fail_json(msg='storops library (0.5.10 or greater) is missing.'
+                             'Install with pip install storops'
+                         )
 
     sp_user = module.params['sp_user']
     sp_address = module.params['sp_address']
@@ -159,11 +156,11 @@ def run_module():
                                          '{1} '.format(alu, to_native(e)),
                                      **result)
         else:
-            module.fail_json(msg='No such storage group named '
-                                 '{0}'.format(module.params['name']),
-                                 **result)
+                module.fail_json(msg='No such storage group named '
+                                     '{0}'.format(module.params['name']),
+                                     **result)
     except VNXCredentialError as e:
-        module.fail_json(msg='{0}'.format(to_native(e)), **result)
+            module.fail_json(msg='{0}'.format(to_native(e)), **result)
 
     module.exit_json(**result)
 

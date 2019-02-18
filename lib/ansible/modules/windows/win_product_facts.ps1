@@ -57,29 +57,9 @@ if (-not $product_key) {
     }
 }
 
-# Retrieve license information
-$license_info = Get-CimInstance SoftwareLicensingProduct | Where-Object PartialProductKey
-
-$winlicense_status = switch ($license_info.LicenseStatus) {
-    0 { "Unlicensed" }
-    1 { "Licensed" }
-    2 { "OOBGrace" }
-    3 { "OOTGrace" }
-    4 { "NonGenuineGrace" }
-    5 { "Notification" }
-    6 { "ExtendedGrace" }
-    default { $null }
-}
-
-$winlicense_edition = $license_info.Name
-$winlicense_channel = $license_info.ProductKeyChannel
-
 $module.Result.ansible_facts = @{
     ansible_os_product_id = (Get-CimInstance Win32_OperatingSystem).SerialNumber
     ansible_os_product_key = $product_key
-    ansible_os_license_edition = $winlicense_edition
-    ansible_os_license_channel = $winlicense_channel 
-    ansible_os_license_status = $winlicense_status 
 }
 
 $module.ExitJson()

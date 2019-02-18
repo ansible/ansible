@@ -70,7 +70,7 @@ EXAMPLES = """
     state: present
     active: no
 
-- name: Remove an arbitrary inactive rule set
+- name: Remove an arbitary inactive rule set
   aws_ses_rule_set:
     name: arbitrary-rule-set
     state: absent

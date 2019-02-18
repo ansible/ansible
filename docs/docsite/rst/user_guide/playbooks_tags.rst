@@ -196,7 +196,7 @@ Another special tag is ``never``, which will prevent a task from running unless 
 Example::
 
     tasks:
-      - debug: msg="{{ showmevar }}"
+      - debug: msg="{{ showmevar}}"
         tags: [ never, debug ]
 
 In this example, the task will only run when the ``debug`` or ``never`` tag is explicitly requested.

@@ -1,11 +1,4 @@
 {
-    "ignore_changes": true,
-    "prefixes": [
-        "lib/ansible/modules/",
-        "lib/ansible/plugins/action/"
-    ],
-    "extensions": [
-        ".py"
-    ],
+    "always": true,
     "output": "path-message"
 }

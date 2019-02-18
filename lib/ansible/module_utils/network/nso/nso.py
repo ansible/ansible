@@ -1,7 +1,23 @@
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Cisco and/or its affiliates.
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright (c) 2017 Cisco and/or its affiliates.
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import open_url
@@ -19,10 +35,10 @@ except NameError:
 
 
 nso_argument_spec = dict(
-    url=dict(type='str', required=True),
-    username=dict(type='str', required=True, fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
-    password=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
-    timeout=dict(type='int', default=300),
+    url=dict(required=True),
+    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), required=True),
+    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), required=True, no_log=True),
+    timeout=dict(default=300, type=int)
 )
 
 

@@ -59,7 +59,7 @@ Example NETCONF inventory ``[junos:vars]``
    ansible_connection=netconf
    ansible_network_os=junos
    ansible_user=myuser
-   ansible_password=!vault |
+   ansible_ssh_pass=!vault |
 
 
 Example NETCONF Task

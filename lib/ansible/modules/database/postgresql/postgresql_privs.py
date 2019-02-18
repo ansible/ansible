@@ -70,11 +70,6 @@ options:
         for the implicitly defined PUBLIC group.
       - 'Alias: I(role)'
     required: yes
-  session_role:
-    version_added: "2.8"
-    description: |
-      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   grant_option:
     description:
       - Whether C(role) may grant/revoke the specified privileges/group
@@ -269,16 +264,14 @@ EXAMPLES = """
 
 import traceback
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extensions
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
     psycopg2 = None
 
 # import module snippets
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import pg_quote_identifier
 from ansible.module_utils._text import to_native
 
@@ -372,7 +365,7 @@ class Connection(object):
         query = """SELECT relname
                    FROM pg_catalog.pg_class c
                    JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                   WHERE nspname = %s AND relkind in ('r', 'v', 'm')"""
+                   WHERE nspname = %s AND relkind in ('r', 'v')"""
         self.cursor.execute(query, (schema,))
         return [t[0] for t in self.cursor.fetchall()]
 
@@ -675,7 +668,6 @@ def main():
             objs=dict(required=False, aliases=['obj']),
             schema=dict(required=False),
             roles=dict(required=True, aliases=['role']),
-            session_role=dict(required=False),
             grant_option=dict(required=False, type='bool',
                               aliases=['admin_option']),
             host=dict(default='', aliases=['login_host']),
@@ -717,7 +709,7 @@ def main():
 
     # Connect to Database
     if not psycopg2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
+        module.fail_json(msg='Python module "psycopg2" must be installed.')
     try:
         conn = Connection(p)
     except psycopg2.Error as e:
@@ -729,12 +721,6 @@ def main():
     except ValueError as e:
         # We raise this when the psycopg library is too old
         module.fail_json(msg=to_native(e))
-
-    if p.session_role:
-        try:
-            conn.cursor.execute('SET ROLE %s' % pg_quote_identifier(p.session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch to role %s: %s" % (p.session_role, to_native(e)), exception=traceback.format_exc())
 
     try:
         # privs

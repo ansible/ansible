@@ -86,7 +86,6 @@ ANSIBLE_PIPELINING:
     - This can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
-    - This options is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
   env:
     - name: ANSIBLE_PIPELINING
     - name: ANSIBLE_SSH_PIPELINING
@@ -332,7 +331,6 @@ CONDITINAL_BARE_VARS:
   env: [{name: ANSIBLE_CONDITIONAL_BARE_VARS}]
   ini:
   - {key: conditional_bare_variables, section: defaults}
-  version_added: "2.8"
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
@@ -482,14 +480,6 @@ DEFAULT_BECOME_FLAGS:
   env: [{name: ANSIBLE_BECOME_FLAGS}]
   ini:
   - {key: become_flags, section: privilege_escalation}
-DEFAULT_BECOME_PLUGIN_PATH:
-  name: Become plugins path
-  default: ~/.ansible/plugins/become:/usr/share/ansible/become
-  description: Colon separated paths in which Ansible will search for Become Plugins.
-  env: [{name: ANSIBLE_BECOME_PLUGINS}]
-  ini:
-  - {key: become_plugins, section: defaults}
-  type: pathspec
 DEFAULT_BECOME_USER:
   # FIXME: should really be blank and make -u passing optional depending on it
   name: Set the user you 'become' via privilege escalation
@@ -641,7 +631,6 @@ DEFAULT_GATHER_SUBSET:
     - key: gather_subset
       section: defaults
   version_added: "2.1"
-  type: list
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   default: 10
@@ -747,9 +736,7 @@ DEFAULT_JINJA2_NATIVE:
 DEFAULT_KEEP_REMOTE_FILES:
   name: Keep remote files
   default: False
-  description:
-    - Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
-    - If this option is enabled it will disable ``ANSIBLE_PIPELINING``.
+  description: Enables/disables the cleaning up of the temporary files Ansible used to execute the tasks on the remote.
   env: [{name: ANSIBLE_KEEP_REMOTE_FILES}]
   ini:
   - {key: keep_remote_files, section: defaults}
@@ -1093,6 +1080,50 @@ DEFAULT_SU:
   - {key: su, section: defaults}
   type: boolean
   yaml: {key: defaults.su}
+DEFAULT_SUDO:
+  default: False
+  deprecated:
+    why: In favor of Ansible Become, which is a generic framework
+    version: "2.9"
+    alternatives: become
+  description: 'Toggle the use of "sudo" for tasks.'
+  env: [{name: ANSIBLE_SUDO}]
+  ini:
+  - {key: sudo, section: defaults}
+  type: boolean
+DEFAULT_SUDO_EXE:
+  name: sudo executable
+  default: sudo
+  deprecated:
+    why: In favor of Ansible Become, which is a generic framework. See become_exe.
+    version: "2.9"
+    alternatives: become
+  description: 'specify an "sudo" executable, otherwise it relies on PATH.'
+  env: [{name: ANSIBLE_SUDO_EXE}]
+  ini:
+  - {key: sudo_exe, section: defaults}
+DEFAULT_SUDO_FLAGS:
+  name: sudo flags
+  default: '-H -S -n'
+  deprecated:
+    why: In favor of Ansible Become, which is a generic framework. See become_flags.
+    version: "2.9"
+    alternatives: become
+  description: 'Flags to pass to "sudo"'
+  env: [{name: ANSIBLE_SUDO_FLAGS}]
+  ini:
+  - {key: sudo_flags, section: defaults}
+DEFAULT_SUDO_USER:
+  name: sudo user
+  default:
+  deprecated:
+    why: In favor of Ansible Become, which is a generic framework. See become_user.
+    version: "2.9"
+    alternatives: become
+  description: 'User you become when using "sudo", leaving it blank will use the default configured on the target (normally root)'
+  env: [{name: ANSIBLE_SUDO_USER}]
+  ini:
+  - {key: sudo_user, section: defaults}
 DEFAULT_SU_EXE:
   name: su executable
   default: su
@@ -1590,20 +1621,6 @@ PLUGIN_FILTERS_CFG:
   - key: plugin_filters_cfg
     section: defaults
   type: path
-PYTHON_MODULE_RLIMIT_NOFILE:
-  name: Adjust maximum file descriptor soft limit during Python module execution
-  description:
-  - Attempts to set RLIMIT_NOFILE soft limit to the specified value when executing Python modules (can speed up subprocess usage on
-    Python 2.x. See https://bugs.python.org/issue11284). The value will be limited by the existing hard limit. Default
-    value of 0 does not attempt to adjust existing system-defined limits.
-  default: 0
-  env:
-  - {name: ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE}
-  ini:
-  - {key: python_module_rlimit_nofile, section: defaults}
-  vars:
-  - {name: ansible_python_module_rlimit_nofile}
-  version_added: '2.8'
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True

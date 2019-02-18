@@ -45,14 +45,7 @@ all: # keys must be unique, i.e. only one 'hosts' per group
             children:
                 group_x:
                     hosts:
-                        test5   # Note that one machine will work without a colon
-                #group_x:
-                #    hosts:
-                #        test5  # But this won't
-                #        test7  #
-                group_y:
-                    hosts:
-                        test6:  # So always use a colon
+                        test5
             vars:
                 g2_var2: value3
             hosts:

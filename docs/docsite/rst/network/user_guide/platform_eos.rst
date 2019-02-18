@@ -52,14 +52,14 @@ Example CLI ``group_vars/eos.yml``
    ansible_connection: network_cli
    ansible_network_os: eos
    ansible_user: myuser
-   ansible_password: !vault...
+   ansible_ssh_pass: !vault...
    ansible_become: yes
    ansible_become_method: enable
-   ansible_become_password: !vault...
+   ansible_become_pass: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
-- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
+- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_ssh_pass`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
@@ -106,7 +106,7 @@ Example eAPI ``group_vars/eos.yml``
    ansible_connection: httpapi
    ansible_network_os: eos
    ansible_user: myuser
-   ansible_password: !vault...
+   ansible_ssh_pass: !vault... 
    ansible_become: yes
    ansible_become_method: enable
    proxy_env:
@@ -140,7 +140,7 @@ eAPI examples with ``connection: local``
    ansible_connection: local
    ansible_network_os: eos
    ansible_user: myuser
-   ansible_password: !vault...
+   ansible_ssh_pass: !vault... 
    eapi:
      host: "{{ inventory_hostname }}"
      transport: eapi

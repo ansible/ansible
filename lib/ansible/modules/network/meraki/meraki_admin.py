@@ -45,8 +45,7 @@ options:
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
     state:
         description:
-        - Create or modify, or delete an organization
-        - If C(state) is C(absent), name takes priority over email if both are specified.
+        - Create or modify an organization
         choices: [ absent, present, query ]
         required: true
     org_name:
@@ -209,7 +208,7 @@ def get_admin_id(meraki, data, name=None, email=None):
                     admin_id = a['id']
         elif meraki.params['email']:
             if meraki.params['email'] == a['email']:
-                return a['id']
+                    return a['id']
     if admin_id is None:
         meraki.fail_json(msg='No admin_id found')
     return admin_id

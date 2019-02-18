@@ -222,7 +222,7 @@
       - query_tenant is not changed
       - query_tenant.current | length == 1
       - query_tenant.current.0.fvTenant.attributes.name == "anstest"
-      - '"rsp-subtree-class=vzEntry,vzFilter" in query_tenant.filter_string|urldecode'
+      - '"rsp-subtree-class=vzEntry,vzFilter" in query_tenant.filter_string'
       - '"tn-anstest.json" in query_tenant.url'
       - query_all is not changed
       - query_all.current | length > 1

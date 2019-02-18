@@ -75,7 +75,7 @@ try:
     if LooseVersion(requests.__version__) < LooseVersion('1.1.0'):
         raise ImportError
 except ImportError:
-    raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
+        raise AnsibleError('This script requires python-requests 1.1 as a minimum version')
 
 from requests.auth import HTTPBasicAuth
 

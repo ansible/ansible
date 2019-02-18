@@ -100,7 +100,7 @@ class AnsibleVultrOSFacts(Vultr):
 
 
 def parse_oses_list(oses_list):
-    return [os for id, os in oses_list.items()]
+        return [os for id, os in oses_list.items()]
 
 
 def main():

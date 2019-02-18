@@ -68,17 +68,13 @@ EXAMPLES = '''
     state: running
 '''
 
-import traceback
-
-PINGDOM_IMP_ERR = None
 try:
     import pingdom
     HAS_PINGDOM = True
 except Exception:
-    PINGDOM_IMP_ERR = traceback.format_exc()
     HAS_PINGDOM = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 
 
 def pause(checkid, uid, passwd, key):
@@ -118,7 +114,7 @@ def main():
     )
 
     if not HAS_PINGDOM:
-        module.fail_json(msg=missing_required_lib("pingdom"), exception=PINGDOM_IMP_ERR)
+        module.fail_json(msg="Missing required pingdom module (check docs)")
 
     checkid = module.params['checkid']
     state = module.params['state']

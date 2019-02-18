@@ -99,7 +99,8 @@ options:
         description:
           - Name of the new cloned server. This is only used when state is
             clone.
-        type: str
+        type: bool
+        default: 'no'
         version_added: "2.0"
     clone_snapshot:
         choices:

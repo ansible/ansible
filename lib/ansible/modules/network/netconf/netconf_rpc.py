@@ -26,7 +26,6 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to execute NETCONF RPC requests as defined
       by IETF RFC standards as well as proprietary requests.
-extends_documentation_fragment: network_agnostic
 options:
   rpc:
     description:

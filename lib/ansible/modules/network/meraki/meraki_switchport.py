@@ -168,75 +168,19 @@ EXAMPLES = r'''
 
 RETURN = r'''
 data:
-    description: Information queried or updated switchports.
-    returned: success
-    type: complex
-    contains:
-        number:
-            description: Number of port.
-            returned: success
-            type: int
-            sample: 1
-        name:
-            description: Human friendly description of port.
-            returned: success
-            type: str
-            sample: "Jim Phone Port"
-        tags:
-            description: Space delimited list of tags assigned to port.
-            returned: success
-            type: str
-            sample: phone marketing
-        enabled:
-            description: Enabled state of port.
-            returned: success
-            type: bool
-            sample: true
-        poeEnabled:
-            description: Power Over Ethernet enabled state of port.
-            returned: success
-            type: bool
-            sample: true
-        type:
-            description: Type of switchport.
-            returned: success
-            type: str
-            sample: trunk
-        vlan:
-            description: VLAN assigned to port.
-            returned: success
-            type: int
-            sample: 10
-        voiceVlan:
-            description: VLAN assigned to port with voice VLAN enabled devices.
-            returned: success
-            type: int
-            sample: 20
-        isolationEnabled:
-            description: Port isolation status of port.
-            returned: success
-            type: bool
-            sample: true
-        rstpEnabled:
-            description: Enabled or disabled state of Rapid Spanning Tree Protocol (RSTP)
-            returned: success
-            type: bool
-            sample: true
-        stpGuard:
-            description: State of STP guard
-            returned: success
-            type: str
-            sample: "Root Guard"
-        accessPolicyNumber:
-            description: Number of assigned access policy. Only applicable to access ports.
-            returned: success
-            type: int
-            sample: 1234
-        linkNegotiation:
-            description: Link speed for the port.
-            returned: success
-            type: str
-            sample: "Auto negotiate"
+    description: Information about queried or updated object.
+    type: list
+    returned: info
+    sample:
+      "data": {
+          "hostname": "n110.meraki.com",
+          "peer_ips": null,
+          "port": 16100,
+          "v2c_enabled": false,
+          "v3_auth_mode": null,
+          "v3_enabled": false,
+          "v3_priv_mode": null
+      }
 '''
 
 import os

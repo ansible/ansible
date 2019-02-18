@@ -18,35 +18,30 @@ matrix:
     - env: T=units/3.5
     - env: T=units/3.6
     - env: T=units/3.7
-    - env: T=units/3.8
 
     - env: T=windows/2008/1
     - env: T=windows/2008-R2/1
     - env: T=windows/2012/1
     - env: T=windows/2012-R2/1
     - env: T=windows/2016/1
-    - env: T=windows/2019/1
 
     - env: T=windows/2008/2
     - env: T=windows/2008-R2/2
     - env: T=windows/2012/2
     - env: T=windows/2012-R2/2
     - env: T=windows/2016/2
-    - env: T=windows/2019/2
 
     - env: T=windows/2008/3
     - env: T=windows/2008-R2/3
     - env: T=windows/2012/3
     - env: T=windows/2012-R2/3
     - env: T=windows/2016/3
-    - env: T=windows/2019/3
 
     - env: T=windows/2008/4
     - env: T=windows/2008-R2/4
     - env: T=windows/2012/4
     - env: T=windows/2012-R2/4
     - env: T=windows/2016/4
-    - env: T=windows/2019/4
 
     - env: T=network
 
@@ -54,7 +49,6 @@ matrix:
     - env: T=rhel/7.6/1
     - env: T=rhel/8.0/1
     - env: T=freebsd/11.1/1
-    - env: T=freebsd/12.0/1
     - env: T=linux/centos6/1
     - env: T=linux/centos7/1
     - env: T=linux/fedora28/1
@@ -69,7 +63,6 @@ matrix:
     - env: T=rhel/7.6/2
     - env: T=rhel/8.0/2
     - env: T=freebsd/11.1/2
-    - env: T=freebsd/12.0/2
     - env: T=linux/centos6/2
     - env: T=linux/centos7/2
     - env: T=linux/fedora28/2
@@ -84,7 +77,6 @@ matrix:
     - env: T=rhel/7.6/3
     - env: T=rhel/8.0/3
     - env: T=freebsd/11.1/3
-    - env: T=freebsd/12.0/3
     - env: T=linux/centos6/3
     - env: T=linux/centos7/3
     - env: T=linux/fedora28/3

@@ -171,18 +171,13 @@ msg:
   type: str
 '''
 
-import json
-import traceback
-
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, DEVICE_STATUS, FACE_ID
-
-PYNETBOX_IMP_ERR = None
+import json
 try:
     import pynetbox
     HAS_PYNETBOX = True
 except ImportError:
-    PYNETBOX_IMP_ERR = traceback.format_exc()
     HAS_PYNETBOX = False
 
 
@@ -203,7 +198,7 @@ def main():
 
     # Fail module if pynetbox is not installed
     if not HAS_PYNETBOX:
-        module.fail_json(msg=missing_required_lib('pynetbox'), exception=PYNETBOX_IMP_ERR)
+        module.fail_json(msg='pynetbox is required for this module')
 
     # Assign variables to be used with module
     app = 'dcim'

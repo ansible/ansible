@@ -24,8 +24,6 @@ __metaclass__ = type
 from abc import ABCMeta
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
 from ansible.module_utils.six import with_metaclass, string_types
 from ansible.utils.display import Display
 
@@ -54,10 +52,7 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
-            try:
-                option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self._load_name, variables=hostvars)
-            except AnsibleError as e:
-                raise KeyError(to_native(e))
+            option_value = C.config.get_config_value(option, plugin_type=get_plugin_class(self), plugin_name=self._load_name, variables=hostvars)
             self.set_option(option, option_value)
         return self._options.get(option)
 

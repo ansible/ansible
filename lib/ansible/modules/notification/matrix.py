@@ -72,15 +72,11 @@ EXAMPLES = '''
 
 RETURN = '''
 '''
-import traceback
+from ansible.module_utils.basic import AnsibleModule
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-
-MATRIX_IMP_ERR = None
 try:
     from matrix_client.client import MatrixClient
 except ImportError:
-    MATRIX_IMP_ERR = traceback.format_exc()
     matrix_found = False
 else:
     matrix_found = True
@@ -111,7 +107,7 @@ def run_module():
     )
 
     if not matrix_found:
-        module.fail_json(msg=missing_required_lib('matrix-client'), exception=MATRIX_IMP_ERR)
+        module.fail_json(msg="Python 'matrix-client' module is required. Install via: $ pip install matrix-client")
 
     if module.check_mode:
         return result

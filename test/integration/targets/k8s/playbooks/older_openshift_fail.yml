@@ -31,8 +31,7 @@
       assert:
         that:
           - k8s_append_hash is failed
-          - "'Failed to import the required Python library (openshift >= 0.7.2)' in k8s_append_hash.msg"
-          - "'. This is required for append_hash.' in k8s_append_hash.msg"
+          - "k8s_append_hash.msg == 'openshift >= 0.7.2 is required for append_hash'"
 
     # merge_type
     - include_role:

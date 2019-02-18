@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2014, Mischa Peters <mpeters@a10networks.com>
-# Copyright: (c) 2016, Eric Chou <ericc@a10networks.com>
+# (c) 2014, Mischa Peters <mpeters@a10networks.com>
+# (c) 2016, Eric Chou <ericc@a10networks.com>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -161,7 +162,7 @@ def main():
     slb_server_status = module.params['server_status']
     slb_server_ports = module.params['server_ports']
 
-    axapi_base_url = 'https://{0}/axapi/v3/'.format(host)
+    axapi_base_url = 'https://{}/axapi/v3/'.format(host)
     axapi_auth_url = axapi_base_url + 'auth/'
     signature = axapi_authenticate_v3(module, axapi_auth_url, username, password)
 

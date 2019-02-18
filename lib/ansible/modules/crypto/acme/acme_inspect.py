@@ -63,12 +63,11 @@ options:
          and a regular GET request for ACME v1."
       - "The value C(directory-only) only retrieves the directory, without doing
          a request."
-    type: str
-    default: get
     choices:
     - get
     - post
     - directory-only
+    default: get
   content:
     description:
       - "An encoded JSON object which will be sent as the content if I(method)
@@ -260,15 +259,15 @@ def main():
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(type='str'),
-            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
-            acme_version=dict(type='int', default=1, choices=[1, 2]),
-            validate_certs=dict(type='bool', default=True),
-            url=dict(type='str'),
-            method=dict(type='str', choices=['get', 'post', 'directory-only'], default='get'),
-            content=dict(type='str'),
-            fail_on_acme_error=dict(type='bool', default=True),
-            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
+            account_uri=dict(required=False, type='str'),
+            acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
+            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
+            validate_certs=dict(required=False, default=True, type='bool'),
+            url=dict(required=False, type='str'),
+            method=dict(required=False, type='str', choices=['get', 'post', 'directory-only'], default='get'),
+            content=dict(required=False, type='str'),
+            fail_on_acme_error=dict(required=False, type='bool', default=True),
+            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
         ),
         mutually_exclusive=(
             ['account_key_src', 'account_key_content'],

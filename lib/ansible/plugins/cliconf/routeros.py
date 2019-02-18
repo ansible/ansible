@@ -19,16 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-cliconf: routeros
-short_description: Use routeros cliconf to run command on MikroTik RouterOS platform
-description:
-  - This routeros plugin provides low level abstraction apis for
-    sending and receiving CLI commands from MikroTik RouterOS network devices.
-version_added: "2.7"
-"""
-
 import re
 import json
 

@@ -22,9 +22,10 @@ DOCUMENTATION = """
       remote_user:
         description:
             - The user to execute as inside the container
+        default: The set user as per docker's configuration
         vars:
             - name: ansible_user
-            - name: ansible_docker_user
+            - name: ansible_docker4_user
       docker_extra_args:
         description:
             - Extra arguments to pass to the docker command line
@@ -61,6 +62,7 @@ class Connection(ConnectionBase):
 
     transport = 'docker'
     has_pipelining = True
+    become_methods = frozenset(C.BECOME_METHODS)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

@@ -837,7 +837,7 @@ class DnfModule(YumDnf):
                         if self.allow_downgrade:
                             self.base.package_install(pkg)
                     else:
-                        self.base.package_install(pkg)
+                            self.base.package_install(pkg)
                 except Exception as e:
                     self.module.fail_json(
                         msg="Error occured attempting remote rpm operation: {0}".format(to_native(e)),

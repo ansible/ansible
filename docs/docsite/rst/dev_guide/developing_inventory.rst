@@ -50,7 +50,7 @@ Here are some plugins and the type of source they use:
 Inventory plugins
 =================
 
-Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_node_requirements`.
+Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_machine_requirements`.
 
 Most of the documentation in :ref:`developing_plugins` also applies here, so as to not repeat ourselves, you should read that document first and we'll include inventory plugin specifics next.
 

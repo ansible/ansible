@@ -489,22 +489,22 @@ def core(module):
             module.fail_json(msg="state change requires a guest specified")
 
         if state == 'running':
-            if v.status(guest) == 'paused':
+            if v.status(guest) is 'paused':
                 res['changed'] = True
                 res['msg'] = v.unpause(guest)
-            elif v.status(guest) != 'running':
+            elif v.status(guest) is not 'running':
                 res['changed'] = True
                 res['msg'] = v.start(guest)
         elif state == 'shutdown':
-            if v.status(guest) != 'shutdown':
+            if v.status(guest) is not 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.shutdown(guest)
         elif state == 'destroyed':
-            if v.status(guest) != 'shutdown':
+            if v.status(guest) is not 'shutdown':
                 res['changed'] = True
                 res['msg'] = v.destroy(guest)
         elif state == 'paused':
-            if v.status(guest) == 'running':
+            if v.status(guest) is 'running':
                 res['changed'] = True
                 res['msg'] = v.pause(guest)
         else:

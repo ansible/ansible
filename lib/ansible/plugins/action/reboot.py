@@ -217,7 +217,7 @@ class ActionModule(ActionBase):
                 out=to_native(command_result['stdout']))
             raise RuntimeError(msg)
 
-        display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
+        display.vvv("{action}: system sucessfully rebooted".format(action=self._task.action))
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
         max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
@@ -307,7 +307,7 @@ class ActionModule(ActionBase):
             # Get the connect_timeout set on the connection to compare to the original
             try:
                 connect_timeout = self._connection.get_option('connection_timeout')
-            except KeyError:
+            except AnsibleError:
                 pass
             else:
                 if original_connection_timeout != connect_timeout:
@@ -380,7 +380,7 @@ class ActionModule(ActionBase):
         try:
             original_connection_timeout = self._connection.get_option('connection_timeout')
             display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
-        except KeyError:
+        except AnsibleError:
             display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
         # Initiate reboot
         reboot_result = self.perform_reboot(task_vars, distribution)

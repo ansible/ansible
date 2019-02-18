@@ -153,17 +153,14 @@ api_response:
 
 import base64
 import json
-import traceback
 
-YAML_IMP_ERR = None
 try:
     import yaml
     HAS_LIB_YAML = True
 except ImportError:
-    YAML_IMP_ERR = traceback.format_exc()
     HAS_LIB_YAML = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 
 
@@ -356,7 +353,7 @@ def main():
     )
 
     if not HAS_LIB_YAML:
-        module.fail_json(msg=missing_required_lib('PyYAML'), exception=YAML_IMP_ERR)
+        module.fail_json(msg="missing python library: yaml")
 
     decode_cert_data(module)
 

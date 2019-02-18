@@ -191,19 +191,6 @@ def tests_as_filters_warning(name, func):
     return wrapper
 
 
-class AnsibleUndefined(StrictUndefined):
-    '''
-    A custom Undefined class, which returns further Undefined objects on access,
-    rather than throwing an exception.
-    '''
-    def __getattr__(self, name):
-        # Return original Undefined object to preserve the first failure context
-        return self
-
-    def __repr__(self):
-        return 'AnsibleUndefined'
-
-
 class AnsibleContext(Context):
     '''
     A custom context, which intercepts resolve() calls and sets a flag
@@ -298,7 +285,7 @@ class Templar:
 
         self.environment = AnsibleEnvironment(
             trim_blocks=True,
-            undefined=AnsibleUndefined,
+            undefined=StrictUndefined,
             extensions=self._get_extensions(),
             finalize=self._finalize,
             loader=FileSystemLoader(self._basedir),
@@ -708,7 +695,7 @@ class Templar:
                 if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
-                if 'AnsibleUndefined' in to_native(te):
+                if 'StrictUndefined' in to_native(te):
                     errmsg = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
                     errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_native(te)
                     raise AnsibleUndefinedVariable(errmsg)

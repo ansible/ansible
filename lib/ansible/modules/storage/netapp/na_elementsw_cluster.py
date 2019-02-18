@@ -114,20 +114,20 @@ class ElementSWCluster(object):
 
     def __init__(self):
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
-        self.argument_spec.update(
-            management_virtual_ip=dict(type='str', required=True),
-            storage_virtual_ip=dict(type='str', required=True),
-            replica_count=dict(type='str', default='2'),
-            cluster_admin_username=dict(type='str'),
-            cluster_admin_password=dict(type='str', no_log=True),
-            accept_eula=dict(type='bool', required=True),
-            nodes=dict(type='list'),
-            attributes=dict(type='list'),
-        )
+        self.argument_spec.update(dict(
+            management_virtual_ip=dict(required=True, type='str'),
+            storage_virtual_ip=dict(required=True, type='str'),
+            replica_count=dict(required=False, type='str', default='2'),
+            cluster_admin_username=dict(required=False, type='str'),
+            cluster_admin_password=dict(required=False, type='str', no_log=True),
+            accept_eula=dict(required=True, type='bool'),
+            nodes=dict(required=False, type=list, default=None),
+            attributes=dict(required=False, type=list, default=None)
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True,
+            supports_check_mode=True
         )
 
         input_params = self.module.params

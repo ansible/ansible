@@ -198,7 +198,6 @@ spec. The following options can be set at the root level of the argument spec:
 - ``mutually_exclusive``: A list of lists, where the inner list contains module options that cannot be set together
 - ``no_log``: Stops the module from emitting any logs to the Windows Event log
 - ``options``: A dictionary where the key is the module option and the value is the spec for that option
-- ``required_by``: A dictionary where the option(s) specified by the value must be set if the option specified by the key is also set
 - ``required_if``: A list of lists where the inner list contains 3 or 4 elements;
     * The first element is the module option to check the value against
     * The second element is the value of the option specified by the first element, if matched then the required if check is run
@@ -237,7 +236,6 @@ When ``type=dict``, or ``type=list`` and ``elements=dict``, the following keys c
 - ``mutually_exclusive``: Same as the root level ``mutually_exclusive`` but validated against the values in the sub dict
 - ``options``: Same as the root level ``options`` but contains the valid options for the sub option
 - ``required_if``: Same as the root level ``required_if`` but validated against the values in the sub dict
-- ``required_by``: Same as the root level ``required_by`` but validated against the values in the sub dict
 - ``required_together``: Same as the root level ``required_together`` but validated against the values in the sub dict
 - ``required_one_of``: Same as the root level ``required_one_of`` but validated against the values in the sub dict
 
@@ -510,7 +508,6 @@ tests for win_stat:
 - Run the command ``source ./hacking/env-setup`` to prepare environment.
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
-- :ref:`Install the required Python modules <windows_winrm>` to support WinRM and a configured authentication method.
 - To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
 
 This will execute all the tests currently defined for that role. You can set

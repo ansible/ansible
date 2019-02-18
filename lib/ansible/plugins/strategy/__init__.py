@@ -880,7 +880,7 @@ class StrategyBase:
 
         host_results = []
         for host in notified_hosts:
-            if not iterator.is_failed(host) or iterator._play.force_handlers:
+            if not iterator.is_failed(host) or play_context.force_handlers:
                 task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
                 self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
@@ -1061,7 +1061,7 @@ class StrategyBase:
                 del self._active_connections[target_host]
             else:
                 connection = connection_loader.get(play_context.connection, play_context, os.devnull)
-                play_context.set_attributes_from_plugin(connection)
+                play_context.set_options_from_plugin(connection)
 
             if connection:
                 try:

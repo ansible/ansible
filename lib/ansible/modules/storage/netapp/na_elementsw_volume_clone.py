@@ -233,7 +233,7 @@ class ElementOSVolumeClone(object):
         result_message = ""
 
         if self.get_account_id() is None:
-            self.module.fail_json(msg="Account id not found: %s" % (self.account_id))
+                self.module.fail_json(msg="Account id not found: %s" % (self.account_id))
 
         # there is only one state. other operations
         # are part of the volume module
@@ -245,7 +245,7 @@ class ElementOSVolumeClone(object):
             if self.get_src_volume_id() is not None:
                 # check for a valid snapshot
                 if self.src_snapshot_id and not self.get_snapshot_id():
-                    self.module.fail_json(msg="Snapshot id not found: %s" % (self.src_snapshot_id))
+                        self.module.fail_json(msg="Snapshot id not found: %s" % (self.src_snapshot_id))
                 # change required
                 changed = True
             else:

@@ -80,7 +80,7 @@ options:
     geo_mapping:
         description:
             - The list of countries/regions mapped to this endpoint when traffic manager profile has routing_method of C(geographic).
-        type: list
+        type: str
     state:
         description:
             - Assert the state of the Traffic Manager endpoint. Use C(present) to create or update a Traffic Manager endpoint and C(absent) to delete it.

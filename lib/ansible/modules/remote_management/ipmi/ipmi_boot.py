@@ -110,16 +110,12 @@ EXAMPLES = '''
     state: absent
 '''
 
-import traceback
-
-PYGHMI_IMP_ERR = None
 try:
     from pyghmi.ipmi import command
 except ImportError:
-    PYGHMI_IMP_ERR = traceback.format_exc()
     command = None
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -138,7 +134,7 @@ def main():
     )
 
     if command is None:
-        module.fail_json(msg=missing_required_lib('pyghmi'), exception=PYGHMI_IMP_ERR)
+        module.fail_json(msg='the python pyghmi module is required')
 
     name = module.params['name']
     port = module.params['port']

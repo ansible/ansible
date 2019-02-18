@@ -1,10 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2016, Ted Elhourani <ted@bigswitch.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
 # Ansible module to manage Big Monitoring Fabric service chains
+# (c) 2016, Ted Elhourani <ted@bigswitch.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -122,7 +121,7 @@ def policy(module):
 
     response = rest.get('policy?config=true', data={})
     if response.status_code != 200:
-        module.fail_json(msg="failed to obtain existing policy config: {0}".format(response.json['description']))
+        module.fail_json(msg="failed to obtain existing policy config: {}".format(response.json['description']))
 
     config_present = False
 
@@ -152,14 +151,14 @@ def policy(module):
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error creating policy '{0}': {1}".format(name, response.json['description']))
+            module.fail_json(msg="error creating policy '{}': {}".format(name, response.json['description']))
 
     if state in ('absent'):
         response = rest.delete('policy[name="%s"]' % name, data={})
         if response.status_code == 204:
             module.exit_json(changed=True)
         else:
-            module.fail_json(msg="error deleting policy '{0}': {1}".format(name, response.json['description']))
+            module.fail_json(msg="error deleting policy '{}': {}".format(name, response.json['description']))
 
 
 def main():

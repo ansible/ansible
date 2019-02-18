@@ -6,16 +6,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import fcntl
+import gettext
 import os
 import shlex
 from abc import abstractmethod, abstractproperty
 from functools import wraps
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
+from ansible.plugins.loader import shell_loader, connection_loader
 from ansible.utils.display import Display
-from ansible.plugins.loader import connection_loader, get_shell_plugin
 from ansible.utils.path import unfrackpath
 
 display = Display()
@@ -43,7 +46,7 @@ class ConnectionBase(AnsiblePlugin):
     has_pipelining = False
     has_native_async = False  # eg, winrm
     always_pipeline_modules = False  # eg, winrm
-    has_tty = True  # for interacting with become plugins
+    become_methods = C.BECOME_METHODS
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
@@ -63,12 +66,11 @@ class ConnectionBase(AnsiblePlugin):
 
         # All these hasattrs allow subclasses to override these parameters
         if not hasattr(self, '_play_context'):
-            # Backwards compat: self._play_context isn't really needed, using set_options/get_option
             self._play_context = play_context
         if not hasattr(self, '_new_stdin'):
             self._new_stdin = new_stdin
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         if not hasattr(self, '_display'):
-            # Backwards compat: self._display isn't really needed, just import the global display and use that.
             self._display = display
         if not hasattr(self, '_connected'):
             self._connected = False
@@ -78,18 +80,30 @@ class ConnectionBase(AnsiblePlugin):
         self._connected = False
         self._socket_path = None
 
-        # helper plugins
-        self._shell = shell
+        if shell is not None:
+            self._shell = shell
 
-        # we always must have shell
+        # load the shell plugin for this action/connection
+        if play_context.shell:
+            shell_type = play_context.shell
+        elif hasattr(self, '_shell_type'):
+            shell_type = getattr(self, '_shell_type')
+        else:
+            shell_type = 'sh'
+            shell_filename = os.path.basename(self._play_context.executable)
+            try:
+                shell = shell_loader.get(shell_filename)
+            except Exception:
+                shell = None
+            if shell is None:
+                for shell in shell_loader.all():
+                    if shell_filename in shell.COMPATIBLE_SHELLS:
+                        break
+            shell_type = shell.SHELL_FAMILY
+
+        self._shell = shell_loader.get(shell_type)
         if not self._shell:
-            shell_type = play_context.shell if play_context.shell else getattr(self, '_shell_type', None)
-            self._shell = get_shell_plugin(shell_type=shell_type, executable=self._play_context.executable)
-
-        self.become = None
-
-    def set_become_plugin(self, plugin):
-        self.become = plugin
+            raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
 
     @property
     def connected(self):
@@ -100,6 +114,14 @@ class ConnectionBase(AnsiblePlugin):
     def socket_path(self):
         '''Read-only property holding the connection socket path for this remote host'''
         return self._socket_path
+
+    def _become_method_supported(self):
+        ''' Checks if the current class supports this privilege escalation method '''
+
+        if self._play_context.become_method in self.become_methods:
+            return True
+
+        raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
 
     @staticmethod
     def _split_ssh_args(argstring):
@@ -128,6 +150,10 @@ class ConnectionBase(AnsiblePlugin):
     @abstractmethod
     def _connect(self):
         """Connect to the host we've been initialized with"""
+
+        # Check if PE is supported
+        if self._play_context.become:
+            self._become_method_supported()
 
     @ensure_connect
     @abstractmethod
@@ -158,13 +184,13 @@ class ConnectionBase(AnsiblePlugin):
             processed on the remote machine, not on the local machine so no
             shell is needed on the local machine.  (Example, ``/bin/sh``)
         :ConnectionCommand: This is the command that connects us to the remote
-            machine to run the rest of the command.  ``ansible_user``,
+            machine to run the rest of the command.  ``ansible_ssh_user``,
             ``ansible_ssh_host`` and so forth are fed to this piece of the
             command to connect to the correct host (Examples ``ssh``,
             ``chroot``)
         :UsersLoginShell: This shell may or may not be created depending on
             the ConnectionCommand used by the connection plugin.  This is the
-            shell that the ``ansible_user`` has configured as their login
+            shell that the ``ansible_ssh_user`` has configured as their login
             shell.  In traditional UNIX parlance, this is the last field of
             a user's ``/etc/passwd`` entry   We do not specifically try to run
             the ``UsersLoginShell`` when we connect.  Instead it is implicit
@@ -214,6 +240,31 @@ class ConnectionBase(AnsiblePlugin):
         """Terminate the connection"""
         pass
 
+    def check_become_success(self, b_output):
+        b_success_key = to_bytes(self._play_context.success_key)
+        for b_line in b_output.splitlines(True):
+            if b_success_key == b_line.rstrip():
+                return True
+        return False
+
+    def check_password_prompt(self, b_output):
+        if self._play_context.prompt is None:
+            return False
+        elif isinstance(self._play_context.prompt, string_types):
+            b_prompt = to_bytes(self._play_context.prompt).strip()
+            b_lines = b_output.splitlines()
+            return any(l.strip().startswith(b_prompt) for l in b_lines)
+        else:
+            return self._play_context.prompt(b_output)
+
+    def check_incorrect_password(self, b_output):
+        b_incorrect_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method]))
+        return b_incorrect_password and b_incorrect_password in b_output
+
+    def check_missing_password(self, b_output):
+        b_missing_password = to_bytes(gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method]))
+        return b_missing_password and b_missing_password in b_output
+
     def connection_lock(self):
         f = self._play_context.connection_lockfd
         display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f), host=self._play_context.remote_addr)
@@ -227,39 +278,6 @@ class ConnectionBase(AnsiblePlugin):
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
-
-    # NOTE: these password functions are all become specific, the name is
-    # confusing as it does not handle 'protocol passwords'
-    # DEPRECATED:
-    # These are kept for backwards compatiblity
-    # Use the methods provided by the become plugins instead
-    def check_become_success(self, b_output):
-        display.deprecated(
-            "Connection.check_become_success is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_success(b_output)
-
-    def check_password_prompt(self, b_output):
-        display.deprecated(
-            "Connection.check_password_prompt is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_password_prompt(b_output)
-
-    def check_incorrect_password(self, b_output):
-        display.deprecated(
-            "Connection.check_incorrect_password is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_incorrect_password(b_output)
-
-    def check_missing_password(self, b_output):
-        display.deprecated(
-            "Connection.check_missing_password is deprecated, calling code should be using become plugins instead",
-            version="2.12"
-        )
-        return self.become.check_missing_password(b_output)
 
 
 class NetworkConnectionBase(ConnectionBase):

@@ -1,2 +1,0 @@
-minor_changes:
-- win_dsc - Display the warnings produced by the DSC engine for better troubleshooting - https://github.com/ansible/ansible/issues/51543

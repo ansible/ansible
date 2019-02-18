@@ -33,7 +33,7 @@ requirements:
 options:
     host:
        description:
-            - FortiOS or FortiGate ip address.
+            - FortiOS or FortiGate ip adress.
        required: true
     username:
         description:

@@ -83,7 +83,7 @@ class Connection(ConnectionBase):
         )
         display.debug("done running command with Popen()")
 
-        if self.become and self.become.expect_prompt() and sudoable:
+        if self._play_context.prompt and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             selector = selectors.DefaultSelector()
@@ -92,7 +92,7 @@ class Connection(ConnectionBase):
 
             become_output = b''
             try:
-                while not self.become.check_success(become_output) and not self.become.check_password_prompt(become_output):
+                while not self.check_become_success(become_output) and not self.check_password_prompt(become_output):
                     events = selector.select(self._play_context.timeout)
                     if not events:
                         stdout, stderr = p.communicate()
@@ -111,7 +111,7 @@ class Connection(ConnectionBase):
             finally:
                 selector.close()
 
-            if not self.become.check_success(become_output):
+            if not self.check_become_success(become_output):
                 p.stdin.write(to_bytes(self._play_context.become_pass, errors='surrogate_or_strict') + b'\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)

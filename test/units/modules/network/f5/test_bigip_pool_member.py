@@ -84,6 +84,11 @@ class TestParameters(unittest.TestCase):
             partition='Common',
             fqdn_auto_populate=False,
             reuse_nodes=False,
+
+            # Deprecated params
+            # TODO(Remove in 2.7)
+            session_state='disabled',
+            monitor_state='disabled',
         )
 
         p = ModuleParameters(params=args)
@@ -104,24 +109,20 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             pool='my-pool',
-            fqdn='foo.bar.com',
+            name='my-name',
             port=2345,
             state='present',
             partition='Common',
             reuse_nodes=True,
-            provider=dict(
-                password='password',
-                server='localhost',
-                user='admin'
-            )
+            password='password',
+            server='localhost',
+            user='admin'
         ))
 
         current_node = NodeApiParameters(params=load_fixture('load_net_node_with_fqdn.json'))
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            mutually_exclusive=self.spec.mutually_exclusive,
-            required_one_of=self.spec.required_one_of,
+            supports_check_mode=self.spec.supports_check_mode
         )
         mm = ModuleManager(module=module)
 
@@ -141,24 +142,20 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             pool='my-pool',
-            address='7.3.67.8',
+            name='7.3.67.8',
             port=2345,
             state='present',
             partition='Common',
             reuse_nodes=True,
-            provider=dict(
-                password='password',
-                server='localhost',
-                user='admin'
-            )
+            password='password',
+            server='localhost',
+            user='admin'
         ))
 
         current_node = NodeApiParameters(params=load_fixture('load_net_node_with_ipv4_address.json'))
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            mutually_exclusive=self.spec.mutually_exclusive,
-            required_one_of=self.spec.required_one_of,
+            supports_check_mode=self.spec.supports_check_mode
         )
         mm = ModuleManager(module=module)
 
@@ -178,25 +175,21 @@ class TestManager(unittest.TestCase):
         # Configure the arguments that would be sent to the Ansible module
         set_module_args(dict(
             pool='my-pool',
-            fqdn='foo.bar.com',
+            name='my-name',
             port=2345,
             state='present',
             partition='Common',
             reuse_nodes=True,
             fqdn_auto_populate=False,
-            provider=dict(
-                password='password',
-                server='localhost',
-                user='admin'
-            )
+            password='password',
+            server='localhost',
+            user='admin'
         ))
 
         current_node = NodeApiParameters(params=load_fixture('load_net_node_with_fqdn.json'))
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            mutually_exclusive=self.spec.mutually_exclusive,
-            required_one_of=self.spec.required_one_of,
+            supports_check_mode=self.spec.supports_check_mode
         )
         mm = ModuleManager(module=module)
 
@@ -211,48 +204,3 @@ class TestManager(unittest.TestCase):
         assert results['fqdn_auto_populate'] is True
         assert results['fqdn'] == 'foo.bar.com'
         assert results['state'] == 'present'
-
-    def test_create_aggregate_pool_members(self, *args):
-        set_module_args(dict(
-            pool='fake_pool',
-            aggregate=[
-                dict(
-                    name='my-name',
-                    host="1.1.1.1",
-                    port=1234,
-                    state='present',
-                    partition='Common',
-                    reuse_nodes=True,
-                    fqdn_auto_populate=False,
-                ),
-                dict(
-                    name='my-name2',
-                    fqdn='google.com',
-                    port=2423,
-                    state='present',
-                    partition='Common',
-                    fqdn_auto_populate=True,
-                    reuse_nodes=True,
-                )
-            ],
-            provider=dict(
-                password='password',
-                server='localhost',
-                user='admin'
-            )
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            mutually_exclusive=self.spec.mutually_exclusive,
-            required_one_of=self.spec.required_one_of,
-        )
-
-        mm = ModuleManager(module=module)
-        mm.create_on_device = Mock(return_value=True)
-        mm.exists = Mock(return_value=False)
-
-        results = mm.exec_module()
-
-        assert results['changed'] is True

@@ -63,7 +63,6 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
-      - name: ansible_ssh_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the

@@ -29,7 +29,7 @@ Connections Available
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     | | not supported by NX-API               |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      | |                                       |
-| | supported as of 2.5.3   | | and ``ansible_become_password:``            | |                                       |
+| | supported as of 2.5.3   | | and ``ansible_become_pass:``                | |                                       |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                | ``stdout[0].messages[0].``              |
 +---------------------------+-----------------------------------------------+-----------------------------------------+
@@ -47,14 +47,14 @@ Example CLI ``group_vars/nxos.yml``
    ansible_connection: network_cli
    ansible_network_os: nxos
    ansible_user: myuser
-   ansible_password: !vault...
+   ansible_ssh_pass: !vault...
    ansible_become: yes
    ansible_become_method: enable
-   ansible_become_password: !vault...
+   ansible_become_pass: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
-- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
+- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_ssh_pass`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
@@ -99,7 +99,7 @@ Example NX-API ``group_vars/nxos.yml``
    ansible_connection: httpapi
    ansible_network_os: nxos
    ansible_user: myuser
-   ansible_password: !vault...
+   ansible_ssh_pass: !vault... 
    proxy_env:
      http_proxy: http://proxy.example.com:8080
 

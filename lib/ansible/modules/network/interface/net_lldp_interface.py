@@ -21,7 +21,6 @@ short_description: Manage LLDP interfaces configuration on network devices
 description:
   - This module provides declarative management of LLDP interfaces
     configuration on network devices.
-extends_documentation_fragment: network_agnostic
 options:
   name:
     description:

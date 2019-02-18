@@ -710,7 +710,7 @@ class Difference(object):
         if self.have.options is None:
             return self.want.options
         if set(self.want.options) != set(self.have.options):
-            return self.want.options
+                return self.want.options
 
     @property
     def sni_require(self):

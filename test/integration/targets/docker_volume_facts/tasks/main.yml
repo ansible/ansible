@@ -8,6 +8,7 @@
     docker_volume:
       name: "{{ cname }}"
       state: absent
+      force: yes
 
   - name: Inspect a non-present volume
     docker_volume_facts:
@@ -43,6 +44,7 @@
     docker_volume:
       name: "{{ cname }}"
       state: absent
+      force: yes
 
   - assert:
       that:

@@ -66,23 +66,11 @@ options:
     description:
       - Database port to connect to.
     default: 5432
-  session_role:
-    version_added: "2.8"
-    description: |
-      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   state:
     description:
       - The database extension state
     default: present
     choices: [ "present", "absent" ]
-  cascade:
-    description:
-      - Automatically install/remove any extensions that this extension depends on
-        that are not already installed/removed (supported since PostgreSQL 9.6).
-    type: bool
-    default: no
-    version_added: '2.8'
 notes:
    - The default authentication assumes that you are either logging in as or sudo'ing to the C(postgres) account on the host.
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
@@ -101,29 +89,20 @@ EXAMPLES = '''
     name: postgis
     db: acme
     schema: extensions
-
-# Adds earthdistance to the database "template1"
-- postgresql_ext:
-    name: earthdistance
-    db: template1
-    cascade: true
 '''
 import traceback
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
     postgresqldb_found = False
 else:
     postgresqldb_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
-from ansible.module_utils.database import pg_quote_identifier
 
 
 class NotSupportedError(Exception):
@@ -140,24 +119,20 @@ def ext_exists(cursor, ext):
     return cursor.rowcount == 1
 
 
-def ext_delete(cursor, ext, cascade):
+def ext_delete(cursor, ext):
     if ext_exists(cursor, ext):
         query = "DROP EXTENSION \"%s\"" % ext
-        if cascade:
-            query += " CASCADE"
         cursor.execute(query)
         return True
     else:
         return False
 
 
-def ext_create(cursor, ext, schema, cascade):
+def ext_create(cursor, ext, schema):
     if not ext_exists(cursor, ext):
-        query = "CREATE EXTENSION \"%s\"" % ext
+        query = 'CREATE EXTENSION "%s"' % ext
         if schema:
-            query += " WITH SCHEMA \"%s\"" % schema
-        if cascade:
-            query += " CASCADE"
+            query += ' WITH SCHEMA "%s"' % schema
         cursor.execute(query)
         return True
     else:
@@ -180,25 +155,21 @@ def main():
             ext=dict(required=True, aliases=['name']),
             schema=dict(default=""),
             state=dict(default="present", choices=["absent", "present"]),
-            cascade=dict(type='bool', default=False),
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None),
-            session_role=dict(),
         ),
         supports_check_mode=True
     )
 
     if not postgresqldb_found:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
+        module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
     ext = module.params["ext"]
     schema = module.params["schema"]
     state = module.params["state"]
-    cascade = module.params["cascade"]
     sslrootcert = module.params["ssl_rootcert"]
-    session_role = module.params["session_role"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -245,12 +216,6 @@ def main():
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
 
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
-
     try:
         if module.check_mode:
             if state == "present":
@@ -259,10 +224,10 @@ def main():
                 changed = ext_exists(cursor, ext)
         else:
             if state == "absent":
-                changed = ext_delete(cursor, ext, cascade)
+                changed = ext_delete(cursor, ext)
 
             elif state == "present":
-                changed = ext_create(cursor, ext, schema, cascade)
+                changed = ext_create(cursor, ext, schema)
     except NotSupportedError as e:
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
     except Exception as e:

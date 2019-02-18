@@ -16,16 +16,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-cliconf: enos
-short_description: Use enos cliconf to run command on Lenovo ENOS platform
-description:
-  - This enos plugin provides low level abstraction apis for
-    sending and receiving CLI commands from Lenovo ENOS network devices.
-version_added: "2.5"
-"""
-
 import re
 import json
 

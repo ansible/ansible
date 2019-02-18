@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template.
-    type: str
+    type: list
     required: yes
   filter:
     description:

@@ -340,7 +340,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'description': module.params.get('description'),
-        u'gatewayIPv4': response.get(u'gatewayIPv4'),
+        u'gatewayIPv4': response.get(u'gateway_ipv4'),
         u'id': response.get(u'id'),
         u'IPv4Range': module.params.get('ipv4_range'),
         u'name': module.params.get('name'),
@@ -375,7 +375,7 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, 'compute#operation', False)
+        op_result = fetch_resource(module, op_uri, 'compute#operation')
         status = navigate_hash(op_result, ['status'])
     return op_result
 

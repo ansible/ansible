@@ -65,8 +65,9 @@ except ImportError:
     pass  # caught by imported HAS_BOTO3
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ec2 import ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, boto3_tag_list_to_ansible_dict
+from ansible.module_utils.ec2 import connect_to_aws, ec2_argument_spec, get_aws_connection_info, boto3_conn, HAS_BOTO3, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, camel_dict_to_snake_dict
+from ansible.module_utils._text import to_native
 
 
 def get_volume_info(volume, region):
@@ -113,6 +114,7 @@ def list_ec2_volumes(connection, module, region):
 
     try:
         all_volumes = describe_volumes_with_backoff(connection, ansible_dict_to_boto3_filter_list(sanitized_filters))
+
     except ClientError as e:
         module.fail_json(msg=e.response, exception=traceback.format_exc())
 
@@ -126,7 +128,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            filters=dict(default={}, type='dict')
+            filters=dict(default=None, type='dict')
         )
     )
 

@@ -211,10 +211,10 @@ def assemble_payload(meraki):
 
 
 def get_rules(meraki, net_id):
-    path = meraki.construct_path('get_all', net_id=net_id)
-    response = meraki.request(path, method='GET')
-    if meraki.status == 200:
-        return response
+        path = meraki.construct_path('get_all', net_id=net_id)
+        response = meraki.request(path, method='GET')
+        if meraki.status == 200:
+            return response
 
 
 def main():

@@ -6,5 +6,3 @@ db_user2: 'ansible_db_user2'
 db_user3: 'ansible_db_user3'
 
 tmp_dir: '/tmp'
-db_session_role1: 'session_role1'
-db_session_role2: 'session_role2'

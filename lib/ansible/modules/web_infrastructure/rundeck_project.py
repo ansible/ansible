@@ -73,11 +73,11 @@ rundeck_response:
     returned: failed
     type: str
 before:
-    description: dictionary containing project information before modification
+    description: dictionnary containing project informations before modification
     returned: success
     type: dict
 after:
-    description: dictionary containing project information after modification
+    description: dictionnary containing project informations after modification
     returned: success
     type: dict
 '''

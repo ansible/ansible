@@ -179,13 +179,13 @@ Create the encrypted ssh password for your VyOS network devices, pulling your an
 
 .. code-block:: console
 
-   ansible-vault encrypt_string --vault-id my_user@~/my-ansible-vault-pw-file 'VyOS_SSH_password' --name 'ansible_password'
+   ansible-vault encrypt_string --vault-id my_user@~/my-ansible-vault-pw-file 'VyOS_SSH_password' --name 'ansible_ssh_pass'
 
 If you prefer to type your ansible-vault password rather than store it in a file, you can request a prompt:
 
 .. code-block:: console
 
-   ansible-vault encrypt_string --vault-id my_user@prompt 'VyOS_SSH_password' --name 'ansible_password'
+   ansible-vault encrypt_string --vault-id my_user@prompt 'VyOS_SSH_password' --name 'ansible_ssh_pass'
 
 and type in the vault password for ``my_user``. 
 
@@ -193,7 +193,7 @@ The :option:`--vault-id <ansible-playbook --vault-id>` flag allows different vau
 
 .. code-block:: yaml
 
-   ansible_password: !vault |
+   ansible_ssh_pass: !vault |
           $ANSIBLE_VAULT;1.2;AES256;my_user
           66386134653765386232383236303063623663343437643766386435663632343266393064373933
           3661666132363339303639353538316662616638356631650a316338316663666439383138353032
@@ -213,7 +213,7 @@ This is an example using an extract from a  YAML inventory, as the INI format do
       ansible_connection: network_cli
       ansible_network_os: vyos
       ansible_user: my_vyos_user
-      ansible_password:  !vault |
+      ansible_ssh_pass:  !vault |
            $ANSIBLE_VAULT;1.2;AES256;my_user
            66386134653765386232383236303063623663343437643766386435663632343266393064373933
            3661666132363339303639353538316662616638356631650a316338316663666439383138353032
@@ -244,11 +244,11 @@ To see the original value, you can use the debug module. Please note if your YAM
 
    cat vyos.yml | grep -v ansible_connection >> vyos_no_connection.yml
 
-   ansible localhost -m debug -a var="ansible_password" -e "@vyos_no_connection.yml" --ask-vault-pass
+   ansible localhost -m debug -a var="ansible_ssh_pass" -e "@vyos_no_connection.yml" --ask-vault-pass
    Vault password:
 
    localhost | SUCCESS => {
-       "ansible_password": "VyOS_SSH_password"
+       "ansible_ssh_pass": "VyOS_SSH_password"
    }
 
 

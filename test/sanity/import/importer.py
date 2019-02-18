@@ -8,7 +8,6 @@ import os
 import re
 import sys
 import traceback
-import warnings
 
 try:
     import importlib.util
@@ -147,7 +146,6 @@ class Capture(object):
     def __init__(self):
         self.stdout = StringIO()
         self.stderr = StringIO()
-        self.warnings = []
 
 
 def capture_report(path, capture, messages):
@@ -157,37 +155,11 @@ def capture_report(path, capture, messages):
     :type messages: set[str]
     """
     if capture.stdout.getvalue():
-        first = capture.stdout.getvalue().strip().splitlines()[0].strip()
-        message = '%s:%d:%d: %s: %s' % (path, 0, 0, 'StandardOutputUsed', first)
+        message = '%s:%d:%d: %s: %s' % (path, 0, 0, 'Output', 'Import resulted in output to stdout.')
         report_message(message, messages)
 
     if capture.stderr.getvalue():
-        first = capture.stderr.getvalue().strip().splitlines()[0].strip()
-        message = '%s:%d:%d: %s: %s' % (path, 0, 0, 'StandardErrorUsed', first)
-        report_message(message, messages)
-
-    for warning in capture.warnings:
-        msg = re.sub(r'\s+', ' ', '%s' % warning.message).strip()
-
-        filepath = os.path.relpath(warning.filename)
-        lineno = warning.lineno
-
-        import_dir = 'test/runner/.tox/import/'
-        minimal_dir = 'test/runner/.tox/minimal-'
-
-        if filepath.startswith('../') or filepath.startswith(minimal_dir):
-            # The warning occurred outside our source tree.
-            # The best we can do is to report the file which was tested that triggered the warning.
-            # If the responsible import is in shared code this warning will be repeated for each file tested which imports the shared code.
-            msg += ' (in %s:%d)' % (warning.filename, warning.lineno)
-            filepath = path
-            lineno = 0
-        elif filepath.startswith(import_dir):
-            # Strip the import dir from warning paths in shared code.
-            # Needed when warnings occur in places like module_utils but are caught by the modules importing the module_utils.
-            filepath = os.path.relpath(filepath, import_dir)
-
-        message = '%s:%d:%d: %s: %s' % (filepath, lineno, 0, warning.category.__name__, msg)
+        message = '%s:%d:%d: %s: %s' % (path, 0, 0, 'Output', 'Import resulted in output to stderr.')
         report_message(message, messages)
 
 
@@ -212,14 +184,11 @@ def capture_output(capture):
     sys.stdout = capture.stdout
     sys.stderr = capture.stderr
 
-    with warnings.catch_warnings(record=True) as captured_warnings:
-        try:
-            yield
-        finally:
-            capture.warnings = captured_warnings
-
-            sys.stdout = old_stdout
-            sys.stderr = old_stderr
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
 if __name__ == '__main__':

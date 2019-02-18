@@ -120,7 +120,8 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     if multiline:
         flags |= re.M
     _re = re.compile(pattern, flags=flags)
-    return bool(getattr(_re, match_type, 'search')(value))
+    _bool = __builtins__.get('bool')
+    return _bool(getattr(_re, match_type, 'search')(value))
 
 
 def match(value, pattern='', ignorecase=False, multiline=False):

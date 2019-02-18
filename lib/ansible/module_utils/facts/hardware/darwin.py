@@ -64,7 +64,7 @@ class DarwinHardware(Hardware):
         mac_facts = {}
         rc, out, err = self.module.run_command("sysctl hw.model")
         if rc == 0:
-            mac_facts['model'] = mac_facts['product_name'] = out.splitlines()[-1].split()[1]
+            mac_facts['model'] = out.splitlines()[-1].split()[1]
         mac_facts['osversion'] = self.sysctl['kern.osversion']
         mac_facts['osrevision'] = self.sysctl['kern.osrevision']
 

@@ -16,9 +16,10 @@ options:
   force:
     description:
       - If C(yes) do not get a cached copy.
+    aliases:
+      - thirsty
     type: bool
     default: no
-    aliases: [ thirsty ]
   http_agent:
     description:
       - Header to identify as, generally appears in web server logs.

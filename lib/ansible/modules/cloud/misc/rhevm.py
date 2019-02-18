@@ -588,7 +588,7 @@ class RHEVConn(object):
                 setMsg(str(e))
                 setFailed()
                 return False
-        elif int(DISK.size) > (1024 * 1024 * 1024 * int(disksize)):
+        elif int(DISK.size) < (1024 * 1024 * 1024 * int(disksize)):
             setMsg("Shrinking disks is not supported")
             setMsg(str(e))
             setFailed()
@@ -1378,7 +1378,7 @@ def core(module):
 
             # Set VM Host
             vmhost = module.params.get('vmhost')
-            if vmhost is not False and vmhost != "False":
+            if vmhost is not False and vmhost is not "False":
                 if r.setVMHost(vminfo['name'], vmhost) is False:
                     return RHEV_FAILED, msg
 

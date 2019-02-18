@@ -81,7 +81,7 @@ EXAMPLES = '''
     sysctl_file: /tmp/test_sysctl.conf
     reload: no
 
-# Set ip forwarding on in /proc and verify token value with the sysctl command
+# Set ip forwarding on in /proc and do not reload the sysctl file
 - sysctl:
     name: net.ipv4.ip_forward
     value: 1

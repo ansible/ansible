@@ -25,14 +25,6 @@
       - generate_csr_check_idempotent is not changed
       - generate_csr_check_idempotent_check is not changed
 
-- name: Validate CSR without SAN (check mode, idempotency)
-  assert:
-    that:
-      - generate_csr_nosan_check is changed
-      - generate_csr_nosan is changed
-      - generate_csr_nosan_check_idempotent is not changed
-      - generate_csr_nosan_check_idempotent_check is not changed
-
 - name: Validate CSR_KU_XKU (assert idempotency, change)
   assert:
     that:

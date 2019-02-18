@@ -1,85 +1,80 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Thom Wiggers  <ansible@thomwiggers.nl>
+# (c) 2017, Thom Wiggers  <ansible@thomwiggers.nl>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+
+DOCUMENTATION = '''
 ---
 module: openssl_dhparam
+author: "Thom Wiggers (@thomwiggers)"
 version_added: "2.5"
 short_description: Generate OpenSSL Diffie-Hellman Parameters
 description:
-    - This module allows one to (re)generate OpenSSL DH-params.
-    - This module uses file common arguments to specify generated file permissions.
+    - "This module allows one to (re)generate OpenSSL DH-params.
+      This module uses file common arguments to specify generated file permissions."
 requirements:
     - OpenSSL
-author:
-- Thom Wiggers (@thomwiggers)
 options:
     state:
+        required: false
+        default: "present"
+        choices: [ present, absent ]
         description:
             - Whether the parameters should exist or not,
               taking action if the state is different from what is stated.
-        type: str
-        default: present
-        choices: [ absent, present ]
     size:
-        description:
-            - Size (in bits) of the generated DH-params.
-        type: int
+        required: false
         default: 4096
-    force:
         description:
-            - Should the parameters be regenerated even it it already exists.
+            - Size (in bits) of the generated DH-params
+    force:
+        required: false
+        default: False
         type: bool
-        default: no
+        description:
+            - Should the parameters be regenerated even it it already exists
     path:
+        required: true
         description:
             - Name of the file in which the generated parameters will be saved.
-        type: path
-        required: true
-extends_documentation_fragment:
-- files
-seealso:
-- module: openssl_certificate
-- module: openssl_csr
-- module: openssl_pkcs12
-- module: openssl_privatekey
-- module: openssl_publickey
+extends_documentation_fragment: files
 '''
 
-EXAMPLES = r'''
-- name: Generate Diffie-Hellman parameters with the default size (4096 bits)
-  openssl_dhparam:
+EXAMPLES = '''
+# Generate Diffie-Hellman parameters with the default size (4096 bits)
+- openssl_dhparam:
     path: /etc/ssl/dhparams.pem
 
-- name: Generate DH Parameters with a different size (2048 bits)
-  openssl_dhparam:
+# Generate DH Parameters with a different size (2048 bits)
+- openssl_dhparam:
     path: /etc/ssl/dhparams.pem
     size: 2048
 
-- name: Force regenerate an DH parameters if they already exist
-  openssl_dhparam:
+# Force regenerate an DH parameters if they already exist
+- openssl_dhparam:
     path: /etc/ssl/dhparams.pem
-    force: yes
+    force: True
+
 '''
 
-RETURN = r'''
+RETURN = '''
 size:
-    description: Size (in bits) of the Diffie-Hellman parameters.
+    description: Size (in bits) of the Diffie-Hellman parameters
     returned: changed or success
     type: int
     sample: 4096
 filename:
-    description: Path to the generated Diffie-Hellman parameters.
+    description: Path to the generated Diffie-Hellman parameters
     returned: changed or success
     type: str
     sample: /etc/ssl/dhparams.pem
@@ -102,7 +97,7 @@ class DHParameter(object):
     def __init__(self, module):
         self.state = module.params['state']
         self.path = module.params['path']
-        self.size = module.params['size']
+        self.size = int(module.params['size'])
         self.force = module.params['force']
         self.changed = False
         self.openssl_bin = module.get_bin_path('openssl', True)
@@ -155,8 +150,8 @@ class DHParameter(object):
         match = re.search(r"Parameters:\s+\((\d+) bit\).*", result)
         if not match:
             return False  # No "xxxx bit" in output
-
-        bits = int(match.group(1))
+        else:
+            bits = int(match.group(1))
 
         # if output contains "WARNING" we've got a problem
         if "WARNING" in result or "WARNING" in to_native(err):
@@ -187,10 +182,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            size=dict(type='int', default=4096),
-            force=dict(type='bool', default=False),
-            path=dict(type='path', required=True),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            size=dict(default=4096, type='int'),
+            force=dict(default=False, type='bool'),
+            path=dict(required=True, type='path'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
@@ -200,7 +195,7 @@ def main():
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,
-            msg="The directory '%s' does not exist or the file is not a directory" % base_dir
+            msg='The directory %s does not exist or the file is not a directory' % base_dir
         )
 
     dhparam = DHParameter(module)

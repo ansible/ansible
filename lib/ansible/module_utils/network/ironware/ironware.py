@@ -97,13 +97,13 @@ def run_commands(module, commands, check_rc=True):
 
 def get_config(module, source='running', flags=None):
     global _DEVICE_CONFIG
-    if source == 'running' and flags is None and _DEVICE_CONFIG is not None:
+    if source is 'running' and flags is None and _DEVICE_CONFIG is not None:
         return _DEVICE_CONFIG
     else:
         conn = get_connection(module)
         out = conn.get_config(source=source, flags=flags)
         cfg = to_text(out, errors='surrogate_then_replace').strip()
-        if source == 'running' and flags is None:
+        if source is 'running' and flags is None:
             _DEVICE_CONFIG = cfg
         return cfg
 

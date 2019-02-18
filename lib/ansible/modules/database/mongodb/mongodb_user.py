@@ -178,7 +178,6 @@ import os
 import ssl as ssl_lib
 import traceback
 from distutils.version import LooseVersion
-from operator import itemgetter
 
 try:
     from pymongo.errors import ConnectionFailure
@@ -195,7 +194,7 @@ except ImportError:
 else:
     pymongo_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
@@ -320,7 +319,7 @@ def check_if_roles_changed(uinfo, roles, db_name):
     roles_as_list_of_dict = make_sure_roles_are_a_list_of_dict(roles, db_name)
     uinfo_roles = uinfo.get('roles', [])
 
-    if sorted(roles_as_list_of_dict, key=itemgetter('db')) == sorted(uinfo_roles, key=itemgetter('db')):
+    if sorted(roles_as_list_of_dict) == sorted(uinfo_roles):
         return False
     return True
 
@@ -351,7 +350,7 @@ def main():
     )
 
     if not pymongo_found:
-        module.fail_json(msg=missing_required_lib('pymongo'))
+        module.fail_json(msg='the python pymongo module is required')
 
     login_user = module.params['login_user']
     login_password = module.params['login_password']

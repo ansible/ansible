@@ -14,7 +14,7 @@ from functools import partial
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible import context
+
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
@@ -520,10 +520,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Dumps all attributes to a dictionary
         '''
-        attrs = {}
+        attrs = dict()
         for (name, attribute) in iteritems(self._valid_attrs):
             attr = getattr(self, name)
-            if attribute.isa == 'class' and hasattr(attr, 'serialize'):
+            if attribute.isa == 'class' and attr is not None and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
             else:
                 attrs[name] = attr
@@ -592,9 +592,9 @@ class Base(FieldAttributeBase):
     _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
 
     # connection/transport
-    _connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    _connection = FieldAttribute(isa='string')
     _port = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
+    _remote_user = FieldAttribute(isa='string')
 
     # variables
     _vars = FieldAttribute(isa='dict', priority=100, inherit=False)
@@ -608,8 +608,8 @@ class Base(FieldAttributeBase):
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
     _ignore_unreachable = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
-    _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
+    _check_mode = FieldAttribute(isa='bool')
+    _diff = FieldAttribute(isa='bool')
     _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
 
     # explicitly invoke a debugger on tasks

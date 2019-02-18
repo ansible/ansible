@@ -136,7 +136,6 @@ try:
     import winrm
     from winrm import Response
     from winrm.protocol import Protocol
-    import requests.exceptions
     HAS_WINRM = True
 except ImportError as e:
     HAS_WINRM = False
@@ -177,6 +176,7 @@ class Connection(ConnectionBase):
 
     transport = 'winrm'
     module_implementation_preferences = ('.ps1', '.exe', '')
+    become_methods = ['runas']
     allow_executable = False
     has_pipelining = True
     allow_extras = True
@@ -206,6 +206,10 @@ class Connection(ConnectionBase):
         self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
         self._winrm_pass = self._play_context.password
+
+        self._become_method = self._play_context.become_method
+        self._become_user = self._play_context.become_user
+        self._become_pass = self._play_context.become_pass
 
         self._winrm_port = self.get_option('port')
 
@@ -478,8 +482,6 @@ class Connection(ConnectionBase):
                 raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (to_native(response.std_out), to_native(stderr)))
 
             return response
-        except requests.exceptions.ConnectionError as exc:
-            raise AnsibleConnectionFailure('winrm connection error: %s' % to_native(exc))
         finally:
             if command_id:
                 self.protocol.cleanup_command(self.shell_id, command_id)

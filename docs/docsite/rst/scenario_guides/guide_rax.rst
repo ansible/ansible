@@ -130,7 +130,7 @@ The rax module returns data about the nodes it creates, like IP addresses, hostn
       add_host:
           hostname: "{{ item.name }}"
           ansible_host: "{{ item.rax_accessipv4 }}"
-          ansible_password: "{{ item.rax_adminpass }}"
+          ansible_ssh_pass: "{{ item.rax_adminpass }}"
           groups: raxhosts
       loop: "{{ rax.success }}"
       when: rax.action == 'create'
@@ -511,7 +511,7 @@ Build a complete webserver environment with servers, custom networks and load ba
           add_host:
             hostname: "{{ item.name }}"
             ansible_host: "{{ item.rax_accessipv4 }}"
-            ansible_password: "{{ item.rax_adminpass }}"
+            ansible_ssh_pass: "{{ item.rax_adminpass }}"
             ansible_user: root
             groups: web
           loop: "{{ rax.success }}"
@@ -592,7 +592,7 @@ Using a Control Machine
           add_host:
             hostname: "{{ item.name }}"
             ansible_host: "{{ item.rax_accessipv4 }}"
-            ansible_password: "{{ item.rax_adminpass }}"
+            ansible_ssh_pass: "{{ item.rax_adminpass }}"
             ansible_user: root
             rax_id: "{{ item.rax_id }}"
             groups: web,new_web

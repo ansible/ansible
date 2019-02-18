@@ -39,26 +39,22 @@ options:
   challenge:
     description:
       - "The challenge type."
-    type: str
     required: yes
     choices:
     - tls-alpn-01
   challenge_data:
     description:
       - "The C(challenge_data) entry provided by M(acme_certificate) for the challenge."
-    type: dict
     required: yes
   private_key_src:
     description:
       - "Path to a file containing the private key file to use for this challenge
          certificate."
       - "Mutually exclusive with C(private_key_content)."
-    type: path
   private_key_content:
     description:
       - "Content of the private key to use for this challenge certificate."
       - "Mutually exclusive with C(private_key_src)."
-    type: str
 '''
 
 EXAMPLES = '''
@@ -129,15 +125,13 @@ from ansible.module_utils.acme import (
     read_file,
 )
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_text
 
 import base64
 import datetime
 import sys
-import traceback
 
-CRYPTOGRAPHY_IMP_ERR = None
 try:
     import cryptography
     import cryptography.hazmat.backends
@@ -153,7 +147,6 @@ try:
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.3'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
 except ImportError as e:
-    CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     HAS_CRYPTOGRAPHY = False
 
 
@@ -173,8 +166,8 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            challenge=dict(type='str', required=True, choices=['tls-alpn-01']),
-            challenge_data=dict(type='dict', required=True),
+            challenge=dict(required=True, choices=['tls-alpn-01'], type='str'),
+            challenge_data=dict(required=True, type='dict'),
             private_key_src=dict(type='path'),
             private_key_content=dict(type='str', no_log=True),
         ),
@@ -186,7 +179,7 @@ def main():
         ),
     )
     if not HAS_CRYPTOGRAPHY:
-        module.fail_json(msg=missing_required_lib('cryptography >= 1.3'), exception=CRYPTOGRAPHY_IMP_ERR)
+        module.fail(msg='cryptography >= 1.3 is required for this module.')
 
     try:
         # Get parameters

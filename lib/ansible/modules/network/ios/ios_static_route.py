@@ -35,6 +35,8 @@ description:
     IP routes on Cisco IOS network devices.
 notes:
   - Tested against IOS 15.6
+requirements:
+  - Python >= 3.3 or C(ipaddress) python package
 options:
   prefix:
     description:
@@ -45,31 +47,9 @@ options:
   next_hop:
     description:
       - Next hop IP of the static route.
-  vrf:
-    description:
-      - VRF of the static route.
-    version_added: "2.8"
-  interface:
-    description:
-      - Interface of the static route.
-    version_added: "2.8"
-  name:
-    description:
-      - Name of the static route
-    aliases: ['description']
-    version_added: "2.8"
   admin_distance:
     description:
       - Admin distance of the static route.
-    default: 1
-  tag:
-    description:
-      - Set tag of the static route.
-    version_added: "2.8"
-  track:
-    description:
-      - Tracked item to depend on for the static route.
-    version_added: "2.8"
   aggregate:
     description: List of static route definitions.
   state:
@@ -87,22 +67,6 @@ EXAMPLES = """
     mask: 255.255.255.0
     next_hop: 10.0.0.1
 
-- name: configure black hole in vrf blue depending on tracked item 10
-  ios_static_route:
-    prefix: 192.168.2.0
-    mask: 255.255.255.0
-    vrf: blue
-    interface: null0
-    track: 10
-
-- name: configure ultimate route with name and tag
-  ios_static_route:
-    prefix: 192.168.2.0
-    mask: 255.255.255.0
-    interface: GigabitEthernet1
-    name: hello world
-    tag: 100
-
 - name: remove configuration
   ios_static_route:
     prefix: 192.168.2.0
@@ -116,7 +80,7 @@ EXAMPLES = """
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
       - { prefix: 172.16.33.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
 
-- name: Remove static route aggregates
+- name: Add static route aggregates
   ios_static_route:
     aggregate:
       - { prefix: 172.16.32.0, mask: 255.255.255.0, next_hop: 10.0.0.8 }
@@ -133,54 +97,55 @@ commands:
     - ip route 192.168.2.0 255.255.255.0 10.0.0.1
 """
 from copy import deepcopy
-from re import findall
+import re
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.utils import remove_default_spec, validate_ip_address
-from ansible.module_utils.network.ios.ios import get_config, load_config
+from ansible.module_utils.connection import ConnectionError
+from ansible.module_utils.network.common.utils import remove_default_spec
+from ansible.module_utils.network.ios.ios import get_config, load_config, run_commands
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 
+try:
+    from ipaddress import ip_network
+    HAS_IPADDRESS = True
+except ImportError:
+    HAS_IPADDRESS = False
 
-def map_obj_to_commands(want, have):
+
+def map_obj_to_commands(want, have, module):
     commands = list()
 
     for w in want:
-        state = w['state']
-        del w['state']
         # Try to match an existing config with the desired config
         for h in have:
-            diff = list(set(w.items()) ^ set(h.items()))
-            if not diff:
-                break
-            # if route is present with name or name already starts with wanted name it will not change
-            elif len(diff) == 2 and diff[0][0] == diff[1][0] == 'name' and (not w['name'] or h['name'].startswith(w['name'])):
+            for key in ['prefix', 'mask', 'next_hop']:
+                # If any key doesn't match, skip to the next set
+                if w[key] != h[key]:
+                    break
+            # If all keys match, don't execute final else
+            else:
                 break
         # If no matches found, clear `h`
         else:
             h = None
 
-        command = 'ip route'
         prefix = w['prefix']
         mask = w['mask']
-        vrf = w.get('vrf')
-        if vrf:
-            command = ' '.join((command, 'vrf', vrf, prefix, mask))
-        else:
-            command = ' '.join((command, prefix, mask))
+        next_hop = w['next_hop']
+        admin_distance = w.get('admin_distance')
+        if not admin_distance and h:
+            w['admin_distance'] = admin_distance = h['admin_distance']
+        state = w['state']
+        del w['state']
 
-        for key in ['interface', 'next_hop', 'admin_distance', 'tag', 'name', 'track']:
-            if w.get(key):
-                if key == 'name' and len(w.get(key).split()) > 1:
-                    command = ' '.join((command, key, '"%s"' % w.get(key)))  # name with multiple words needs to be quoted
-                elif key in ('name', 'tag', 'track'):
-                    command = ' '.join((command, key, w.get(key)))
-                else:
-                    command = ' '.join((command, w.get(key)))
-
-        if state == 'absent' and h:
-            commands.append('no %s' % command)
-        elif state == 'present' and not h:
-            commands.append(command)
+        if state == 'absent' and w in have:
+            commands.append('no ip route %s %s %s' % (prefix, mask, next_hop))
+        elif state == 'present' and w not in have:
+            if admin_distance:
+                commands.append('ip route %s %s %s %s' % (prefix, mask, next_hop, admin_distance))
+            else:
+                commands.append('ip route %s %s %s' % (prefix, mask, next_hop))
 
     return commands
 
@@ -188,43 +153,56 @@ def map_obj_to_commands(want, have):
 def map_config_to_obj(module):
     obj = []
 
-    out = get_config(module, flags='| include ip route')
+    try:
+        out = run_commands(module, 'show ip static route')[0]
+        match = re.search(r'.*Static local RIB for default\s*(.*)$', out, re.DOTALL)
 
-    for line in out.splitlines():
-        splitted_line = findall(r'[^"\s]\S*|".+?"', line)  # Split by whitespace but do not split quotes, needed for name parameter
+        if match and match.group(1):
+            for r in match.group(1).splitlines():
+                splitted_line = r.split()
 
-        if splitted_line[2] == 'vrf':
-            route = {'vrf': splitted_line[3]}
-            del splitted_line[:4]  # Removes the words ip route vrf vrf_name
-        else:
-            route = {}
-            del splitted_line[:2]  # Removes the words ip route
+                code = splitted_line[0]
 
-        prefix = splitted_line[0]
-        mask = splitted_line[1]
-        route.update({'prefix': prefix, 'mask': mask, 'admin_distance': '1'})
+                if code != 'M':
+                    continue
 
-        next_word = None
-        for word in splitted_line[2:]:
-            if next_word:
-                route[next_word] = word.strip('"')  # Remove quotes which is needed for name
-                next_word = None
-            elif validate_ip_address(word):
-                route.update(next_hop=word)
-            elif word.isdigit():
-                route.update(admin_distance=word)
-            elif word in ('tag', 'name', 'track'):
-                next_word = word
+                cidr = ip_network(to_text(splitted_line[1]))
+                prefix = str(cidr.network_address)
+                mask = str(cidr.netmask)
+                next_hop = splitted_line[4]
+                admin_distance = splitted_line[2][1]
+
+                obj.append({
+                    'prefix': prefix, 'mask': mask, 'next_hop': next_hop,
+                    'admin_distance': admin_distance
+                })
+
+    except ConnectionError:
+        out = get_config(module, flags='| include ip route')
+
+        for line in out.splitlines():
+            splitted_line = line.split()
+            if len(splitted_line) not in (5, 6):
+                continue
+
+            prefix = splitted_line[2]
+            mask = splitted_line[3]
+            next_hop = splitted_line[4]
+            if len(splitted_line) == 6:
+                admin_distance = splitted_line[5]
             else:
-                route.update(interface=word)
+                admin_distance = '1'
 
-        obj.append(route)
+            obj.append({
+                'prefix': prefix, 'mask': mask, 'next_hop': next_hop,
+                'admin_distance': admin_distance
+            })
 
     return obj
 
 
 def map_params_to_obj(module, required_together=None):
-    keys = ['prefix', 'mask', 'state', 'next_hop', 'vrf', 'interface', 'name', 'admin_distance', 'track', 'tag']
+    keys = ['prefix', 'mask', 'next_hop', 'admin_distance', 'state']
     obj = []
 
     aggregate = module.params.get('aggregate')
@@ -235,16 +213,21 @@ def map_params_to_obj(module, required_together=None):
                 if route.get(key) is None:
                     route[key] = module.params.get(key)
 
-            route = dict((k, v) for k, v in route.items() if v is not None)
             module._check_required_together(required_together, route)
             obj.append(route)
     else:
         module._check_required_together(required_together, module.params)
-        route = dict()
-        for key in keys:
-            if module.params.get(key) is not None:
-                route[key] = module.params.get(key)
-        obj.append(route)
+        obj.append({
+            'prefix': module.params['prefix'].strip(),
+            'mask': module.params['mask'].strip(),
+            'next_hop': module.params['next_hop'].strip(),
+            'admin_distance': module.params.get('admin_distance'),
+            'state': module.params['state'],
+        })
+
+    for route in obj:
+        if route['admin_distance']:
+            route['admin_distance'] = str(route['admin_distance'])
 
     return obj
 
@@ -256,12 +239,7 @@ def main():
         prefix=dict(type='str'),
         mask=dict(type='str'),
         next_hop=dict(type='str'),
-        vrf=dict(type='str'),
-        interface=dict(type='str'),
-        name=dict(type='str', aliases=['description']),
-        admin_distance=dict(type='str', default='1'),
-        track=dict(type='str'),
-        tag=dict(tag='str'),
+        admin_distance=dict(type='int'),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -279,13 +257,16 @@ def main():
     argument_spec.update(ios_argument_spec)
 
     required_one_of = [['aggregate', 'prefix']]
-    required_together = [['prefix', 'mask']]
+    required_together = [['prefix', 'mask', 'next_hop']]
     mutually_exclusive = [['aggregate', 'prefix']]
 
     module = AnsibleModule(argument_spec=argument_spec,
                            required_one_of=required_one_of,
                            mutually_exclusive=mutually_exclusive,
                            supports_check_mode=True)
+
+    if not HAS_IPADDRESS:
+        module.fail_json(msg="ipaddress python package is required")
 
     warnings = list()
     check_args(module, warnings)
@@ -296,7 +277,7 @@ def main():
     want = map_params_to_obj(module, required_together=required_together)
     have = map_config_to_obj(module)
 
-    commands = map_obj_to_commands(want, have)
+    commands = map_obj_to_commands(want, have, module)
     result['commands'] = commands
 
     if commands:

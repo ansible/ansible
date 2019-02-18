@@ -263,7 +263,7 @@ class VmBootManager(PyVmomi):
             if self.params.get('secure_boot_enabled') and \
                self.params.get('boot_firmware') is None and \
                self.vm.config.firmware == 'bios':
-                self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
+                    self.module.fail_json(msg="EFI secure boot cannot be enabled when boot_firmware = bios.  VM's boot_firmware currently set to bios")
 
             kwargs.update({'efiSecureBootEnabled': self.params.get('secure_boot_enabled')})
             change_needed = True

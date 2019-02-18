@@ -31,7 +31,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
-from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.plugins.loader import get_all_plugin_loaders
 from ansible.utils.vars import combine_vars
 
 
@@ -194,8 +194,12 @@ class Role(Base, Become, Conditional, Taggable):
             else:
                 self._attributes[attr_name] = role_include._attributes[attr_name]
 
-        # ensure all plugins dirs for this role are added to plugin search path
-        add_all_plugin_dirs(self._role_path)
+        # dynamically load any plugins from the role directory
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(self._role_path, obj.subdir)
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(plugin_path)
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)

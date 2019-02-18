@@ -1,125 +1,117 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2016, Yanis Guenane <yanis+ansible@guenane.org>
+# (c) 2016, Yanis Guenane <yanis+ansible@guenane.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+
+DOCUMENTATION = '''
 ---
 module: openssl_publickey
+author: "Yanis Guenane (@Spredzy)"
 version_added: "2.3"
 short_description: Generate an OpenSSL public key from its private key.
 description:
-    - This module allows one to (re)generate OpenSSL public keys from their private keys.
-    -  It uses the pyOpenSSL python library to interact with openssl.
-    - Keys are generated in PEM format.
-    - This module works only if the version of PyOpenSSL is recent enough (> 16.0.0).
+    - "This module allows one to (re)generate OpenSSL public keys from their private keys.
+       It uses the pyOpenSSL python library to interact with openssl. Keys are generated
+       in PEM format. This module works only if the version of PyOpenSSL is recent enough (> 16.0.0)."
 requirements:
-    - python-pyOpenSSL
-author:
-- Yanis Guenane (@Spredzy)
+    - "python-pyOpenSSL"
 options:
     state:
+        required: false
+        default: "present"
+        choices: [ present, absent ]
         description:
             - Whether the public key should exist or not, taking action if the state is different from what is stated.
-        type: str
-        default: present
-        choices: [ absent, present ]
     force:
-        description:
-            - Should the key be regenerated even it it already exists.
+        required: false
+        default: False
         type: bool
-        default: no
+        description:
+            - Should the key be regenerated even it it already exists
     format:
+        required: false
+        default: PEM
+        choices: [ PEM, OpenSSH ]
         description:
             - The format of the public key.
-        type: str
-        default: PEM
-        choices: [ OpenSSH, PEM ]
         version_added: "2.4"
     path:
+        required: true
         description:
             - Name of the file in which the generated TLS/SSL public key will be written.
-        type: path
-        required: true
     privatekey_path:
+        required: true
         description:
             - Path to the TLS/SSL private key from which to generate the public key.
-        type: path
-        required: true
     privatekey_passphrase:
+        required: false
         description:
             - The passphrase for the privatekey.
-        type: str
         version_added: "2.4"
-extends_documentation_fragment:
-- files
-seealso:
-- module: openssl_certificate
-- module: openssl_csr
-- module: openssl_dhparam
-- module: openssl_pkcs12
-- module: openssl_privatekey
+extends_documentation_fragment: files
 '''
 
-EXAMPLES = r'''
-- name: Generate an OpenSSL public key in PEM format
-  openssl_publickey:
+EXAMPLES = '''
+# Generate an OpenSSL public key in PEM format.
+- openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
 
-- name: Generate an OpenSSL public key in OpenSSH v2 format
-  openssl_publickey:
+# Generate an OpenSSL public key in OpenSSH v2 format.
+- openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
     format: OpenSSH
 
-- name: Generate an OpenSSL public key with a passphrase protected private key
-  openssl_publickey:
+# Generate an OpenSSL public key with a passphrase protected
+# private key
+- openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
     privatekey_passphrase: ansible
 
-- name: Force regenerate an OpenSSL public key if it already exists
-  openssl_publickey:
+# Force regenerate an OpenSSL public key if it already exists
+- openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
-    force: yes
+    force: True
 
-- name: Remove an OpenSSL public key
-  openssl_publickey:
+# Remove an OpenSSL public key
+- openssl_publickey:
     path: /etc/ssl/public/ansible.com.pem
     privatekey_path: /etc/ssl/private/ansible.com.pem
     state: absent
 '''
 
-RETURN = r'''
+RETURN = '''
 privatekey:
-    description: Path to the TLS/SSL private key the public key was generated from.
+    description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
 format:
-    description: The format of the public key (PEM, OpenSSH, ...).
+    description: The format of the public key (PEM, OpenSSH, ...)
     returned: changed or success
     type: str
     sample: PEM
 filename:
-    description: Path to the generated TLS/SSL public key file.
+    description: Path to the generated TLS/SSL public key file
     returned: changed or success
     type: str
     sample: /etc/ssl/public/ansible.com.pem
 fingerprint:
-    description:
-    - The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.
-    - Requires PyOpenSSL >= 16.0 for meaningful output.
+    description: The fingerprint of the public key. Fingerprint will be generated for each hashlib.algorithms available.
+                 Requires PyOpenSSL >= 16.0 for meaningful output.
     returned: changed or success
     type: dict
     sample:
@@ -133,22 +125,19 @@ fingerprint:
 
 import hashlib
 import os
-import traceback
 
-PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import serialization as crypto_serialization
 except ImportError:
-    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
 
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 
 
 class PublicKeyError(crypto_utils.OpenSSLObjectError):
@@ -267,26 +256,26 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['present', 'absent']),
-            force=dict(type='bool', default=False),
-            path=dict(type='path', required=True),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            force=dict(default=False, type='bool'),
+            path=dict(required=True, type='path'),
             privatekey_path=dict(type='path'),
-            format=dict(type='str', default='PEM', choices=['OpenSSH', 'PEM']),
+            format=dict(type='str', choices=['PEM', 'OpenSSH'], default='PEM'),
             privatekey_passphrase=dict(type='str', no_log=True),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
-        required_if=[('state', 'present', ['privatekey_path'])],
+        required_if=[('state', 'present', ['privatekey_path'])]
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+        module.fail_json(msg='the python pyOpenSSL module is required')
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,
-            msg="The directory '%s' does not exist or the file is not a directory" % base_dir
+            msg='The directory %s does not exist or the file is not a directory' % base_dir
         )
 
     public_key = PublicKey(module)

@@ -19,16 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-cliconf: slxos
-short_description: Use slxos cliconf to run command on Extreme SLX-OS platform
-description:
-  - This slxos plugin provides low level abstraction apis for
-    sending and receiving CLI commands from Extreme SLX-OS network devices.
-version_added: "2.6"
-"""
-
 import re
 import json
 

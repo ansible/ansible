@@ -184,7 +184,6 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
-  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''
@@ -243,7 +242,7 @@ EXAMPLES = r'''
 - name: Add node by their FQDN
   bigip_node:
     fqdn: foo.bar.com
-    name: foobar.net
+    name: 10.20.30.40
     provider:
       server: lb.mydomain.com
       user: admin

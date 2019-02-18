@@ -29,15 +29,23 @@ options:
       - volume_name
 
 extends_documentation_fragment:
-  - docker
-  - docker.docker_py_1_documentation
+    - docker
 
 author:
-  - Felix Fontein (@felixfontein)
+    - Felix Fontein (@felixfontein)
 
 requirements:
-  - "docker-py >= 1.8.0"
-  - "Docker API >= 1.21"
+    - "python >= 2.6"
+    - "docker-py >= 1.8.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
+    - "Docker API >= 1.21"
 '''
 
 EXAMPLES = '''
@@ -83,10 +91,10 @@ docker_volume:
 try:
     from docker.errors import NotFound
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-from ansible.module_utils.docker.common import AnsibleDockerClient
+from ansible.module_utils.docker_common import AnsibleDockerClient
 
 
 def get_existing_volume(client, volume_name):
@@ -95,7 +103,7 @@ def get_existing_volume(client, volume_name):
     except NotFound as dummy:
         return None
     except Exception as exc:
-        client.fail("Error inspecting volume: %s" % exc)
+        client.module.fail_json(msg="Error inspecting volume: %s" % exc)
 
 
 def main():

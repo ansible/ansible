@@ -52,7 +52,7 @@ options:
       description:
         - If the certificates of the authentication is to be verified.
       type: bool
-      default: yes
+      default: 'yes'
     vdc_name:
       description:
         - The name of the vdc where the gateway is located.

@@ -47,7 +47,7 @@ class Connection(ConnectionBase):
 
     transport = 'zone'
     has_pipelining = True
-    has_tty = False
+    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)

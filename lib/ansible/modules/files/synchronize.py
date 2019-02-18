@@ -127,7 +127,7 @@ options:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
       - To specify the rsync command to run on the local host, you need to set this your task var C(ansible_rsync_path).
-    type: str
+    type: path
   rsync_timeout:
     description:
       - Specify a C(--timeout) for the rsync command in seconds.
@@ -150,7 +150,7 @@ options:
     description:
       - Specify additional rsync options by passing in an array.
       - Note that an empty string in C(rsync_opts) will end up transfer the current working directory.
-    type: list
+    type: str
     default:
     version_added: "1.6"
   partial:
@@ -173,7 +173,7 @@ options:
   link_dest:
     description:
       - Add a destination to hard link against during the rsync.
-    type: list
+    type: str
     default:
     version_added: "2.5"
 notes:

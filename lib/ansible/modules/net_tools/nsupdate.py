@@ -156,12 +156,9 @@ dns_rc_str:
     sample: 'REFUSED'
 '''
 
-import traceback
-
 from binascii import Error as binascii_error
 from socket import error as socket_error
 
-DNSPYTHON_IMP_ERR = None
 try:
     import dns.update
     import dns.query
@@ -171,10 +168,9 @@ try:
 
     HAVE_DNSPYTHON = True
 except ImportError:
-    DNSPYTHON_IMP_ERR = traceback.format_exc()
     HAVE_DNSPYTHON = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -400,7 +396,7 @@ def main():
     )
 
     if not HAVE_DNSPYTHON:
-        module.fail_json(msg=missing_required_lib('dnspython'), exception=DNSPYTHON_IMP_ERR)
+        module.fail_json(msg='python library dnspython required: pip install dnspython')
 
     if len(module.params["record"]) == 0:
         module.fail_json(msg='record cannot be empty.')
