@@ -98,3 +98,14 @@ def test_get_docker_environment(mocker, docker_swarm_service):
         None, env_files=[]
     )
     assert result == []
+
+
+def test_get_nanoseconds_from_raw_option(docker_swarm_service):
+    value = docker_swarm_service.get_nanoseconds_from_raw_option(None)
+    assert value is None
+
+    value = docker_swarm_service.get_nanoseconds_from_raw_option("1m30s500ms")
+    assert value is 90535000000
+
+    value = docker_swarm_service.get_nanoseconds_from_raw_option(10000000000)
+    assert value is 10000000000
