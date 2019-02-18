@@ -185,7 +185,10 @@ Noteworthy module changes
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 
-* The ``docker_swarm_service`` module no longer sets a default for the ``user`` option. Before, the default was ``root``.
+* The ``docker_swarm_service`` module no longer sets a defaults for the following options:
+    * ``user``. Before, the default was ``root``.
+    * ``update_delay``. Before, the default was ``10``.
+    * ``update_parallelism``. Before, the default was ``1``.
 
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
