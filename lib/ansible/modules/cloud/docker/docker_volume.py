@@ -113,8 +113,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-facts:
-    description: Volume inspection results for the affected volume.
+docker_volume:
+    description:
+    - Volume inspection results for the affected volume.
+    - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+      are also accessible directly.
     returned: success
     type: dict
     sample: {}
@@ -284,7 +287,9 @@ class DockerVolumeManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'docker_volume': self.get_existing_volume()}
+        volume_facts = self.get_existing_volume()
+        self.results['ansible_facts'] = {u'docker_volume': volume_facts}
+        self.results['docker_volume'] = volume_facts
 
     def absent(self):
         self.diff_tracker.add('exists', parameter=False, active=self.existing_volume is not None)
