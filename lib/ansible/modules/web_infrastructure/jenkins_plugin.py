@@ -478,7 +478,7 @@ class JenkinsPlugin(object):
                             self._write_file(plugin_file, data)
 
                         changed = True
-            else:
+            elif self.params['version'] == 'latest':
                 # Check for update from the updates JSON file
                 plugin_data = self._download_updates()
 
