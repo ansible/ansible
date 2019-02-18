@@ -1,8 +1,8 @@
 ####
 # setup ports
 
-- name: portsnap interactive fetch forced in nnon login shell session and extract or update
-  shell: portsnap --interactive auto
+- name: portsnap interactive fetch forced in non login shell session and extract or update silently
+  shell: portsnap --interactive auto >/dev/null 2>&1
 
 ###
 # check ports setup
