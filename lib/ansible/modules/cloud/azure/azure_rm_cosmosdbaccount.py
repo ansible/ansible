@@ -284,6 +284,9 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                     id=dict(
                         type='str',
                         required=True
+                    ),
+                    ignore_missing_vnet_service_endpoint=dict(
+                        type='bool'
                     )
                 )
             ),
