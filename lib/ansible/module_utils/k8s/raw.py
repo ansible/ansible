@@ -42,6 +42,12 @@ except ImportError:
     pass
 
 try:
+    from openshift.dynamic import ResourceList
+except ImportError:
+    # Exceptions handled by version check
+    pass
+
+try:
     import kubernetes_validate
     HAS_KUBERNETES_VALIDATE = True
 except ImportError:
@@ -136,11 +142,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.client = self.get_api_client()
         for definition in self.resource_definitions:
             kind = definition.get('kind', self.kind)
-            search_kind = kind
-            if kind.lower().endswith('list'):
-                search_kind = kind[:-4]
             api_version = definition.get('apiVersion', self.api_version)
-            resource = self.find_resource(search_kind, api_version, fail=True)
+            if kind.endswith('List') and LooseVersion(self.openshift_version) < LooseVersion("0.8.1"):
+                self.fail(msg="Support for List kinds was added in version 0.8.1 of the OpenShift Python client, v{0} detected.".format(self.openshift_version))
+            resource = self.find_resource(kind, api_version, fail=True)
             definition = self.set_defaults(resource, definition)
             self.warnings = []
             if self.params['validate'] is not None:
@@ -191,17 +196,13 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         force = self.params.get('force', False)
         name = definition['metadata'].get('name')
         namespace = definition['metadata'].get('namespace')
+        if isinstance(resource, ResourceList):
+            definition.pop('metadata')
         existing = None
         wait = self.params.get('wait')
         wait_timeout = self.params.get('wait_timeout')
 
         self.remove_aliases()
-
-        if definition['kind'].endswith('List'):
-            result['result'] = resource.get(namespace=namespace).to_dict()
-            result['changed'] = False
-            result['method'] = 'get'
-            return result
 
         try:
             # ignore append_hash for resources other than ConfigMap and Secret
