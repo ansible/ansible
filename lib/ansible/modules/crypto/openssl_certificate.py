@@ -1051,7 +1051,7 @@ class AcmeCertificate(Certificate):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', choices=['present', 'absent'], default='present'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             path=dict(type='path', required=True),
             provider=dict(type='str', choices=['acme', 'assertonly', 'ownca', 'selfsigned']),
             force=dict(type='bool', default=False,),
@@ -1082,10 +1082,8 @@ def main():
             # provider: selfsigned
             selfsigned_version=dict(type='int', default=3),
             selfsigned_digest=dict(type='str', default='sha256'),
-            selfsigned_not_before=dict(
-                type='str', default='+0s', aliases=['selfsigned_notBefore']),
-            selfsigned_not_after=dict(
-                type='str', default='+3650d', aliases=['selfsigned_notAfter']),
+            selfsigned_not_before=dict(type='str', default='+0s', aliases=['selfsigned_notBefore']),
+            selfsigned_not_after=dict(type='str', default='+3650d', aliases=['selfsigned_notAfter']),
 
             # provider: ownca
             ownca_path=dict(type='path'),

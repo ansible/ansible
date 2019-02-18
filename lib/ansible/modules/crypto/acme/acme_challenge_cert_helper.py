@@ -173,8 +173,8 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            challenge=dict(required=True, choices=['tls-alpn-01'], type='str'),
-            challenge_data=dict(required=True, type='dict'),
+            challenge=dict(type='str', required=True, choices=['tls-alpn-01']),
+            challenge_data=dict(type='dict', required=True),
             private_key_src=dict(type='path'),
             private_key_content=dict(type='str', no_log=True),
         ),

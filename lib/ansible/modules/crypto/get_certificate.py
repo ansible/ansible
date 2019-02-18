@@ -132,10 +132,10 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ca_certs=dict(required=False, type='path', default=None),
-            host=dict(required=True, type='str'),
-            port=dict(required=True, type='int'),
-            timeout=dict(required=False, type='int', default=10),
+            ca_certs=dict(type='path'),
+            host=dict(type='str', required=True),
+            port=dict(type='int', required=True),
+            timeout=dict(type='int', default=10),
         ),
     )
 

@@ -285,9 +285,9 @@ def format_cert(cert):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            input_chain=dict(required=True, type='str'),
-            root_certificates=dict(required=True, type='list', elements='path'),
-            intermediate_certificates=dict(required=False, type='list', elements='path', default=[]),
+            input_chain=dict(type='str', required=True),
+            root_certificates=dict(type='list', required=True, elements='path'),
+            intermediate_certificates=dict(type='list', default=[], elements='path'),
         ),
         supports_check_mode=True,
     )

@@ -265,11 +265,11 @@ def main():
     # Define Ansible Module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             size=dict(type='int'),
-            type=dict(default='rsa', choices=['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519'], type='str'),
-            force=dict(default=False, type='bool'),
-            path=dict(required=True, type='path'),
+            type=dict(type='str', default='rsa', choices=['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']),
+            force=dict(type='bool', default=False),
+            path=dict(type='path', required=True),
             comment=dict(type='str'),
         ),
         supports_check_mode=True,
