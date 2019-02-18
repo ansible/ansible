@@ -12,6 +12,8 @@ service_expected_output:
   endpoint_mode: vip
   env: null
   force_update: null
+  healthcheck: null
+  healthcheck_disabled: null
   hostname: null
   image: busybox
   labels: null
