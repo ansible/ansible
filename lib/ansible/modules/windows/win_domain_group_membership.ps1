@@ -16,6 +16,7 @@ $ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 # Module control parameters
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","pure"
@@ -46,6 +47,9 @@ if ($state -in @("present", "pure")) {
 }
 if ($state -in @("absent", "pure")) {
     $result.removed = @()
+}
+if ($diff_mode) {
+    $result.diff = @{}
 }
 
 try {
@@ -135,6 +139,17 @@ if ($final_members) {
     $result.members = [Array]$final_members.name
 } else {
     $result.members = @()
+}
+
+if ($diff_mode -and $result.changed) {
+    $diff_text = "[$name]`n"
+    foreach ($added in $result.added) {
+        $diff_text += "+Member = $added`n"
+    }
+    foreach ($removed in $result.removed) {
+        $diff_text += "+Member = $removed`n"
+    }
+    $result.diff.prepared = $diff_text
 }
 
 Exit-Json -obj $result
