@@ -115,7 +115,7 @@ options:
         suboptions:
             subnet:
                 description:
-                    - It can be a string containing resource if of a subnet.
+                    - It can be a string containing resource id of a subnet.
                     - It can be a dictionary containing 'resource_group', 'virtual_network_name' and 'subnet_name'
             ignore_missing_vnet_service_endpoint:
                 description:
