@@ -38,10 +38,10 @@ service_expected_output:
   restart_policy_delay: null
   restart_policy_window: null
   tty: null
-  update_delay: 10
+  update_delay: null
   update_failure_action: null
   update_max_failure_ratio: null
   update_monitor: null
   update_order: null
-  update_parallelism: 1
+  update_parallelism: null
   working_dir: null
