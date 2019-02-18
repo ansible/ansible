@@ -63,13 +63,13 @@ options:
     description:
      - Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(sfo1), or C(sgp1).
      - Required when I(state=present) and the droplet does not yet exist.
-     - "New DO users be aware: due to limited capacity, C(nyc2), c(ams2), and C(sfo1) are
+     - "New DigitalOcean users be aware: due to limited capacity, C(nyc2), c(ams2), and C(sfo1) are
       currently available only to resource owners in respective datacenters."
     type: str
     aliases: ['region_id']
   ssh_keys:
     description:
-     - 'List of DO registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
+     - 'List of DigitalOcean registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
        C(12345) or C("1e:f8:e3:b2:0d:dc:15:02:aa:54:15:23:bc:5c:ec:34").'
      - You may register keys with M(digital_ocean_sshkey) and list them with M(digital_ocean_sshkey_facts).
      - "Hint: compute fingerprint C(cut -f2 -d' ' ~/.ssh/do_key1.pub| base64 -d | md5sum -b | sed 's/../&:/g; s/: .*$//'),
@@ -104,8 +104,8 @@ options:
     default: 30
   wait_step:
     description:
-     - 'When I(wait: True) after I(wait_build) seconds passed, query DO API
-      every I(wait_step) seconds if I(wait_timeout) is not exceeded'
+     - 'When I(wait: True) after I(wait_build) seconds passed, query DigitalOcean API
+      with I(wait_step) seconds pauses if I(wait_timeout) is not exceeded'
     type: float
     default: 2
   wait_timeout:
@@ -175,7 +175,7 @@ EXAMPLES = '''
     rebuild: yes
     image: debian-9-x64  # may be omitted.
     wait_step: 3.5
-    wait_build: 16  # wait 16 seconds, then GET DO API droplet status with 3.5 seconds pauses, unless default wait_timeout (120 s) is reached.
+    wait_build: 16  # wait 16 seconds, then GET DigitalOcean API droplet status with 3.5 seconds pauses, unless default wait_timeout (120 s) is reached.
   register: my_droplet
 '''
 
