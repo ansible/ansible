@@ -893,8 +893,6 @@ def main():
     pg_facts = PgClusterFacts(module, cursor)
 
     if filter_:
-        #val_list = [s.strip(" \'][") for s in filter_.split(',')]
-        #kw['ansible_facts'] = pg_facts.collect(val_list)
         kw['ansible_facts'] = pg_facts.collect(filter_)
 
     else:
