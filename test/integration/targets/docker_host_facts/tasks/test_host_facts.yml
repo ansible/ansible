@@ -204,7 +204,7 @@
          - 'output.docker_networks_list is not defined'
          - 'output.docker_volumes_list is not defined'
          - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage.LayerSize is number'
+         - 'output.docker_disk_usage.LayersSize is number'
          - 'output.docker_disk_usage.BuilderSize is not defined'
 
 
