@@ -1,4 +1,15 @@
 ---
+- name: Create random container name prefix
+  set_fact:
+    cname_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+
+- debug:
+    msg: "Using container name prefix {{ cname_prefix }}"
+
+- name: Registering container name
+  set_fact:
+    cname: "{{ cname_prefix ~ '-hi' }}"
+
 - block:
   - name: Get info on Docker host
     docker_host_facts:
@@ -13,17 +24,6 @@
          - 'output.docker_volumes_list is not defined'
          - 'output.docker_images_list is not defined'
          - 'output.docker_disk_usage is not defined'
-
-  - name: Create random container name prefix
-    set_fact:
-      cname_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
-
-  - debug:
-      msg: "Using container name prefix {{ cname_prefix }}"
-
-  - name: Registering container name
-    set_fact:
-      cname: "{{ cname_prefix ~ '-hi' }}"
 
   - name: Create container
     docker_container:
@@ -218,6 +218,7 @@
          - 'output.docker_disk_usage.LayersSize is number'
          - 'output.docker_disk_usage.BuilderSize is number'
 
+  always:
   - name: Delete container
     docker_container:
       image: alpine:3.8
@@ -226,9 +227,6 @@
       state: absent
     register: container_output
 
-  - assert:
-      that:
-      - container_output is changed
 
   - name: Delete volume
     docker_volume:
@@ -236,6 +234,3 @@
       state: absent
     register: volume_output
 
-  - assert:
-      that:
-        - volume_output is changed
