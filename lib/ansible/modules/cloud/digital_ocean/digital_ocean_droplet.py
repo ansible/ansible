@@ -63,7 +63,7 @@ options:
     description:
      - Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(sfo1), or C(sgp1).
      - Required when I(state=present) and the droplet does not yet exist.
-     - "New DigitalOcean users be aware: due to limited capacity, C(nyc2), c(ams2), and C(sfo1) are
+     - "New DigitalOcean users be aware: due to limited capacity, C(nyc2), C(ams2), and C(sfo1) are
       currently available only to resource owners in respective datacenters."
     type: str
     aliases: ['region_id']
