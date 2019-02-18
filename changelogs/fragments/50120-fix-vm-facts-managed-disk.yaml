@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_virtualmachine_facts - fixed crash related to VM with managed disk attached
