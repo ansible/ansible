@@ -5,7 +5,7 @@
   shell: pkg install -y subversion >/dev/null 2>&1
 
 - name: silently checkout a tested revision of the ports tree to make the tests more stable
-  svn checkout -r 493256 https://svn.FreeBSD.org/ports/head /usr/ports >/dev/null 2>&1
+  shell: svn checkout -r 493256 https://svn.FreeBSD.org/ports/head /usr/ports >/dev/null 2>&1
 
 ###
 # check ports setup
