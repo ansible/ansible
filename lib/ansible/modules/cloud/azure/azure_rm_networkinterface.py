@@ -536,7 +536,7 @@ class AzureRMNetworkInterface(AzureRMModuleBase):
                                                                  types='applicationSecurityGroups',
                                                                  resource_group=asg['resource_group'])
                         asgs.append(asg_resource_id)
-                    if asgs:
+                    if len(asgs) == 0:
                         config['application_security_groups'] = asgs
 
         if self.state == 'present' and not self.ip_configurations:
