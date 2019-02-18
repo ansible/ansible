@@ -40,8 +40,8 @@ options:
         description:
             - Whether the certificate should exist or not, taking action if the state is different from what is stated.
         type: str
-        choices: [ absent, present ]
         default: present
+        choices: [ absent, present ]
 
     path:
         description:
@@ -53,8 +53,8 @@ options:
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
             - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
-        required: true
         type: str
+        required: true
         choices: [ acme, assertonly, ownca, selfsigned ]
 
     force:
@@ -312,6 +312,7 @@ options:
         type: bool
         default: no
         aliases: [ subjectAltName_strict ]
+
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.

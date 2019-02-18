@@ -26,9 +26,9 @@ options:
     action:
         description:
             - C(export) or C(parse) a PKCS#12.
-        choices: [ export, parse ]
-        default: export
         type: str
+        default: export
+        choices: [ export, parse ]
     ca_certificates:
         description:
             - List of CA certificate to include.
@@ -66,7 +66,7 @@ options:
         description:
             - Filename to write the PKCS#12 file to.
         type: path
-        required: True
+        required: true
     privatekey_passphrase:
         description:
             - Passphrase source to decrypt any input private keys with.

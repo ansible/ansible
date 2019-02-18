@@ -37,8 +37,8 @@ options:
         description:
             - Whether the private key should exist or not, taking action if the state is different from what is stated.
         type: str
-        choices: [ absent, present ]
         default: present
+        choices: [ absent, present ]
     size:
         description:
             - Size (in bits) of the TLS/SSL key to generate.
@@ -50,9 +50,9 @@ options:
             - Note that C(ECC) requires the C(cryptography) backend.
             - Depending on the curve, you need a newer version of the cryptography backend.
         type: str
+        default: RSA
         #choices: [ DSA, ECC, RSA, X448, X25519 ]
         choices: [ DSA, ECC, RSA ]
-        default: RSA
     curve:
         description:
             - Note that not all curves are supported by all versions of C(cryptography).
@@ -108,8 +108,8 @@ options:
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
         type: str
-        choices: [ auto, cryptography, pyopenssl ]
         default: auto
+        choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.8"
 extends_documentation_fragment:
 - files

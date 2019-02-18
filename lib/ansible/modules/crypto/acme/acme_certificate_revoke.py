@@ -47,6 +47,7 @@ options:
   certificate:
     description:
       - "Path to the certificate to revoke."
+    type: path
     required: yes
   account_key_src:
     description:

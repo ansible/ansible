@@ -49,17 +49,17 @@ options:
          deactivated."
       - "If the state is C(changed_key), the account must exist. The account
          key will be changed; no other information will be touched."
+    type: str
     required: true
     choices:
     - present
     - absent
     - changed_key
-    type: str
   allow_creation:
     description:
       - "Whether account creation is allowed (when state is C(present))."
-    default: yes
     type: bool
+    default: yes
   contact:
     description:
       - "A list of contact URLs."
@@ -68,14 +68,14 @@ options:
          for what is allowed."
       - "Must be specified when state is C(present). Will be ignored
          if state is C(absent) or C(changed_key)."
-    default: []
     type: list
+    default: []
   terms_agreed:
     description:
       - "Boolean indicating whether you agree to the terms of service document."
       - "ACME servers can require this to be true."
-    default: no
     type: bool
+    default: no
   new_account_key_src:
     description:
       - "Path to a file containing the ACME account RSA or Elliptic Curve key to change to."

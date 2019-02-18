@@ -97,7 +97,7 @@ options:
       - "ACME servers can require this to be true."
       - This option will only be used when C(acme_version) is not 1.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.5"
   modify_account:
     description:
@@ -108,13 +108,13 @@ options:
          using an old key if you changed the account key with M(acme_account)."
       - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "2.6"
   challenge:
     description: The challenge to be performed.
-    choices: [ 'http-01', 'dns-01', 'tls-alpn-01' ]
-    default: 'http-01'
     type: str
+    default: 'http-01'
+    choices: [ 'http-01', 'dns-01', 'tls-alpn-01' ]
   csr:
     description:
       - "File containing the CSR for the new certificate."
@@ -126,9 +126,9 @@ options:
          account key. This is a bad idea from a security point of view, and
          the CA should not accept the CSR. The ACME server should return an
          error in this case."
+    type: path
     required: true
     aliases: ['src']
-    type: path
   data:
     description:
       - "The data to validate ongoing challenges. This must be specified for
@@ -149,22 +149,22 @@ options:
     description:
       - "The destination file for the certificate."
       - "Required if C(fullchain_dest) is not specified."
-    aliases: ['cert']
     type: path
+    aliases: ['cert']
   fullchain_dest:
     description:
       - "The destination file for the full chain (i.e. certificate followed
          by chain of intermediate certificates)."
       - "Required if C(dest) is not specified."
+    type: path
     version_added: 2.5
     aliases: ['fullchain']
-    type: path
   chain_dest:
     description:
       - If specified, the intermediate certificate will be written to this file.
-    aliases: ['chain']
-    version_added: 2.5
     type: path
+    version_added: 2.5
+    aliases: ['chain']
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -173,8 +173,8 @@ options:
          include C(challenge_data)."
       - "To make sure that the certificate is renewed in any case, you can
          use the C(force) option."
-    default: 10
     type: int
+    default: 10
   deactivate_authzs:
     description:
       - "Deactivate authentication objects (authz) after issuing a certificate,
@@ -184,7 +184,7 @@ options:
          without having to re-authenticate the domain. This can be a security
          concern."
     type: bool
-    default: 'no'
+    default: no
     version_added: 2.6
   force:
     description:
@@ -193,7 +193,7 @@ options:
       - This is especially helpful when having an updated CSR e.g. with
         additional domains for which a new certificate is desired.
     type: bool
-    default: 'no'
+    default: no
     version_added: 2.6
 '''
 

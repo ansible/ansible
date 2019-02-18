@@ -22,25 +22,23 @@ options:
     host:
       description:
         - The host to get the cert for (IP is fine)
-      required: True
       type: str
+      required: true
     ca_certs:
       description:
         - A PEM file containing a list of root certificates; if present, the cert will be validated against these root certs.
         - Note that this only validates the certificate is signed by the chain; not that the cert is valid for the host presenting it.
-      required: False
       type: path
     port:
       description:
         - The port to connect to
-      required: True
       type: int
+      required: true
     timeout:
       description:
         - The timeout in seconds
-      required: False
-      default: 10
       type: int
+      default: 10
 
 notes:
   - When using ca_certs on OS X it has been reported that in some conditions the validate will always succeed.

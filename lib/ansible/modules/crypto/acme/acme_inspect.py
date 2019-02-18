@@ -63,12 +63,12 @@ options:
          and a regular GET request for ACME v1."
       - "The value C(directory-only) only retrieves the directory, without doing
          a request."
+    type: str
+    default: get
     choices:
     - get
     - post
     - directory-only
-    default: get
-    type: str
   content:
     description:
       - "An encoded JSON object which will be sent as the content if I(method)

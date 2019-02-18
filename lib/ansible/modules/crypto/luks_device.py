@@ -47,9 +47,9 @@ options:
               does not exist it will be created.
               Requires I(device) and I(keyfile) options to be provided. If
               container does already exist I(device) or I(name) will suffice."
+        type: str
         default: present
         choices: [present, absent, opened, closed]
-        type: str
     name:
         description:
             - "Sets container name when I(state=opened). Can be used

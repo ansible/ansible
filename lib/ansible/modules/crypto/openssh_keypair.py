@@ -28,14 +28,12 @@ requirements:
     - "ssh-keygen"
 options:
     state:
-        required: false
-        default: present
-        choices: [ present, absent ]
         description:
             - Whether the private and public keys should exist or not, taking action if the state is different from what is stated.
         type: str
+        default: present
+        choices: [ present, absent ]
     size:
-        required: false
         description:
             - "Specifies the number of bits in the private key to create. For RSA keys, the minimum size is 1024 bits and the default is 4096 bits.
               Generally, 2048 bits is considered sufficient.  DSA keys must be exactly 1024 bits as specified by FIPS 186-2.
@@ -44,26 +42,23 @@ options:
               Ed25519 keys have a fixed length and the size will be ignored."
         type: int
     type:
-        required: false
-        default: rsa
-        choices: ['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']
         description:
             - "The algorithm used to generate the SSH private key. C(rsa1) is for protocol version 1.
               C(rsa1) is deprecated and may not be supported by every version of ssh-keygen."
         type: str
+        default: rsa
+        choices: ['rsa', 'dsa', 'rsa1', 'ecdsa', 'ed25519']
     force:
-        required: false
-        default: false
-        type: bool
         description:
             - Should the key be regenerated even if it already exists
+        type: bool
+        default: false
     path:
-        required: true
         description:
             - Name of the files containing the public and private key. The file containing the public key will have the extension C(.pub).
         type: path
+        required: true
     comment:
-        required: false
         description:
             - Provides a new comment to the public key. When checking if the key is in the correct state this will be ignored.
         type: str
