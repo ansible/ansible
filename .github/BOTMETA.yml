@@ -135,11 +135,10 @@ files:
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
-  $modules/cloud/misc/ovirt.py: &virt
-    ignored: skvidal vincentvdk
-    keywords: [ kvm, libvirt, ovirt, proxmox, qemu, RHEV, RHV ]
-    labels: [ cloud, virt ]
-    maintainers: $team_virt
+  $modules/cloud/misc/ovirt.py: &ovirt
+    keywords: [ ovirt, RHEV, RHV ]
+    labels: [ cloud, ovirt ]
+    maintainers: $team_ovirt
   $modules/cloud/misc/proxmox.py: *virt
   $modules/cloud/misc/proxmox_kvm.py: *virt
   $modules/cloud/misc/proxmox_template.py: *virt
@@ -151,7 +150,7 @@ files:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
-  $modules/cloud/ovirt/: *virt
+  $modules/cloud/ovirt/: *ovirt
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
     ignored: sivel angstwad
@@ -487,7 +486,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  contrib/inventory/ovirt4.py: *virt
+  contrib/inventory/ovirt4.py: *ovirt
   contrib/inventory/infoblox.py:
     keywords:
       - infoblox dynamic inventory script
@@ -751,7 +750,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  $module_utils/ovirt.py: *virt
+  $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
   $module_utils/pure.py:
@@ -1372,6 +1371,7 @@ macros:
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
+  team_ovirt: machacekondra mwperina
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
@@ -1382,7 +1382,7 @@ macros:
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb
   team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9
-  team_virt: joshainglis karmab machacekondra mwperina
+  team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93
