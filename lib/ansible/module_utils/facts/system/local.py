@@ -95,7 +95,7 @@ class LocalFactCollector(BaseFactCollector):
                 out = get_file_content(fn, default='')
 
             else:
-                out =  '{"run_error": "facts non readable by running user"}' 
+                out = '{"run_error": "facts non readable by running user"}'
 
             # load raw json
             fact = 'loading %s' % fact_base
