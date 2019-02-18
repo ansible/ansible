@@ -205,6 +205,15 @@
       - output.changed
       - output.name == 'testdatabase'
 
+- name: xxxx - get facts
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+  register: output
+- debug:
+    var: output
+
 - name: Create again instance of MySQL Database
   azure_rm_mysqldatabase:
     resource_group: "{{ resource_group }}"
