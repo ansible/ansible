@@ -121,7 +121,7 @@ options:
         from Docker Hub. To build the image, provide a path value set to a directory containing a context and
         Dockerfile. To load an image, specify load_path to provide a path to an archive file. To tag an image to a
         repository, provide a repository path. If the name contains a repository path, it will be pushed.
-      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.3. Specifying C(build) will behave the
+      - "NOTE: C(build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
          same as C(present)."
     required: false
     default: present
@@ -163,14 +163,16 @@ options:
           - CPUs in which to allow execution, e.g., "0-3", "0,1".
   use_tls:
     description:
-      - "DEPRECATED. Whether to use tls to connect to the docker server. Set to C(no) when TLS will not be used. Set to
-        C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that the server's certificate is valid for the
-        server. NOTE: If you specify this option, it will set the value of the tls or tls_verify parameters."
+      - "DEPRECATED. Whether to use tls to connect to the docker server. Set to
+        C(encrypt) to use TLS. And set to C(verify) to use TLS and verify that
+        the server's certificate is valid for the server."
+      - "NOTE: If you specify this option, it will set the value of the I(tls) or
+        I(tls_verify) parameters if not set to I(no)."
+      - Will be removed in Ansible 2.11.
     choices:
       - 'no'
       - 'encrypt'
       - 'verify'
-    default: 'no'
     required: false
     version_added: "2.0"
 
@@ -628,7 +630,7 @@ def main():
         rm=dict(type='bool', default=True),
         state=dict(type='str', choices=['absent', 'present', 'build'], default='present'),
         tag=dict(type='str', default='latest'),
-        use_tls=dict(type='str', default='no', choices=['no', 'encrypt', 'verify']),
+        use_tls=dict(type='str', choices=['no', 'encrypt', 'verify'], removed_in_version='2.11'),
         buildargs=dict(type='dict', default=None),
     )
 
@@ -644,6 +646,15 @@ def main():
         min_docker_api_version='1.20',
         option_minimal_versions=option_minimal_versions,
     )
+
+    if client.module.params['state'] == 'build':
+        client.module.warn('The "build" state has been deprecated for a long time '
+                           'and will be removed in Ansible 2.11. Please use '
+                           '"present", which has the same meaning as "build".')
+    if client.module.params['use_tls']:
+        client.module.warn('The "use_tls" option has been deprecated for a long time '
+                           'and will be removed in Ansible 2.11. Please use the'
+                           '"tls" and "tls_verify" options instead.')
 
     results = dict(
         changed=False,
