@@ -55,6 +55,8 @@ def ansible_native_concat(nodes):
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
+        # Stringifying the nodes is important as it takes care of
+        # StrictUndefined by side-effect - by raising an exception.
         out = u''.join([text_type(v) for v in nodes])
 
     try:
