@@ -117,7 +117,7 @@ class Block(Base, Become, Conditional, Taggable):
 
         return super(Block, self).preprocess_data(ds)
 
-    def _load_block(self, attr, ds):
+    def _load_block(self, attr, ds, templar):
         try:
             return load_list_of_tasks(
                 ds,
@@ -132,7 +132,7 @@ class Block(Base, Become, Conditional, Taggable):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading a block", obj=self._ds, orig_exc=e)
 
-    def _load_rescue(self, attr, ds):
+    def _load_rescue(self, attr, ds, templar):
         try:
             return load_list_of_tasks(
                 ds,
@@ -147,7 +147,7 @@ class Block(Base, Become, Conditional, Taggable):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading rescue.", obj=self._ds, orig_exc=e)
 
-    def _load_always(self, attr, ds):
+    def _load_always(self, attr, ds, templar):
         try:
             return load_list_of_tasks(
                 ds,

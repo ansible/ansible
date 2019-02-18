@@ -21,6 +21,7 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -202,6 +203,18 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 return method(ds)
         return ds
 
+    def get_play(self):
+        parent = getattr(self, '_parent', None)
+        play = getattr(self, '_play', None)
+        if not parent:
+            if play:
+                return play
+            return self
+        try:
+            return self._play
+        except AttributeError:
+            return parent._play
+
     def load_data(self, ds, variable_manager=None, loader=None):
         ''' walk the input datastructure and assign any values '''
 
@@ -221,6 +234,9 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         else:
             self._loader = DataLoader()
 
+        all_vars = variable_manager.get_vars(play=self.get_play())
+        templar = Templar(self._loader, variables=all_vars)
+
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
@@ -237,7 +253,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
                 if method:
-                    self._attributes[target_name] = method(name, ds[name])
+                    self._attributes[target_name] = method(name, ds[name], templar)
                 else:
                     self._attributes[target_name] = ds[name]
 
@@ -457,7 +473,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         self._finalized = True
 
-    def _load_vars(self, attr, ds):
+    def _load_vars(self, attr, ds, templar):
         '''
         Vars in a play can be specified either as a dictionary directly, or
         as a list of dictionaries. If the later, this method will turn the
@@ -468,6 +484,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             for key in ds:
                 if not isidentifier(key):
                     raise TypeError("'%s' is not a valid variable name" % key)
+
+        ds = templar.template(ds)
 
         try:
             if isinstance(ds, dict):

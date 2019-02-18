@@ -36,6 +36,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 
@@ -211,7 +212,8 @@ class Task(Base, Conditional, Taggable, Become):
         if 'vars' in ds:
             # _load_vars is defined in Base, and is used to load a dictionary
             # or list of dictionaries in a standard way
-            new_ds['vars'] = self._load_vars(None, ds.get('vars'))
+            templar = Templar(self._loader, variables=self._variable_manager.get_vars(play=self.get_play()))
+            new_ds['vars'] = self._load_vars(None, ds.get('vars'), templar)
         else:
             new_ds['vars'] = dict()
 
@@ -238,7 +240,7 @@ class Task(Base, Conditional, Taggable, Become):
 
         return super(Task, self).preprocess_data(new_ds)
 
-    def _load_loop_control(self, attr, ds):
+    def _load_loop_control(self, attr, ds, templar):
         if not isinstance(ds, dict):
             raise AnsibleParserError(
                 "the `loop_control` value must be specified as a dictionary and cannot "

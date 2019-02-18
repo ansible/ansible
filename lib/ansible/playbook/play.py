@@ -135,7 +135,7 @@ class Play(Base, Taggable, Become):
 
         return super(Play, self).preprocess_data(ds)
 
-    def _load_tasks(self, attr, ds):
+    def _load_tasks(self, attr, ds, templar):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
@@ -145,7 +145,7 @@ class Play(Base, Taggable, Become):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading tasks", obj=self._ds, orig_exc=e)
 
-    def _load_pre_tasks(self, attr, ds):
+    def _load_pre_tasks(self, attr, ds, templar):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
@@ -155,7 +155,7 @@ class Play(Base, Taggable, Become):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading pre_tasks", obj=self._ds, orig_exc=e)
 
-    def _load_post_tasks(self, attr, ds):
+    def _load_post_tasks(self, attr, ds, templar):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
@@ -165,7 +165,7 @@ class Play(Base, Taggable, Become):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading post_tasks", obj=self._ds, orig_exc=e)
 
-    def _load_handlers(self, attr, ds):
+    def _load_handlers(self, attr, ds, templar):
         '''
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
@@ -179,7 +179,7 @@ class Play(Base, Taggable, Become):
         except AssertionError as e:
             raise AnsibleParserError("A malformed block was encountered while loading handlers", obj=self._ds, orig_exc=e)
 
-    def _load_roles(self, attr, ds):
+    def _load_roles(self, attr, ds, templar):
         '''
         Loads and returns a list of RoleInclude objects from the datastructure
         list of role definitions and creates the Role from those objects
@@ -203,7 +203,7 @@ class Play(Base, Taggable, Become):
             prepend=True
         )
 
-    def _load_vars_prompt(self, attr, ds):
+    def _load_vars_prompt(self, attr, ds, templar):
         new_ds = preprocess_vars(ds)
         vars_prompts = []
         if new_ds is not None:

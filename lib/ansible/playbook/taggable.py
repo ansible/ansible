@@ -30,7 +30,7 @@ class Taggable:
     untagged = frozenset(['untagged'])
     _tags = FieldAttribute(isa='list', default=list, listof=(string_types, int), extend=True)
 
-    def _load_tags(self, attr, ds):
+    def _load_tags(self, attr, ds, templar):
         if isinstance(ds, list):
             return ds
         elif isinstance(ds, string_types):

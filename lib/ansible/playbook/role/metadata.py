@@ -59,7 +59,7 @@ class RoleMetadata(Base):
         m = RoleMetadata(owner=owner).load_data(data, variable_manager=variable_manager, loader=loader)
         return m
 
-    def _load_dependencies(self, attr, ds):
+    def _load_dependencies(self, attr, ds, templar):
         '''
         This is a helper loading function for the dependencies list,
         which returns a list of RoleInclude objects
@@ -93,7 +93,7 @@ class RoleMetadata(Base):
         except AssertionError as e:
             raise AnsibleParserError("A malformed list of role dependencies was encountered.", obj=self._ds, orig_exc=e)
 
-    def _load_galaxy_info(self, attr, ds):
+    def _load_galaxy_info(self, attr, ds, templar):
         '''
         This is a helper loading function for the galaxy info entry
         in the metadata, which returns a GalaxyInfo object rather than
