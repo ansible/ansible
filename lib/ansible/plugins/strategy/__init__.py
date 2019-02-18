@@ -35,7 +35,6 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
-from ansible.executor.process.model import keyboard_interrupt_event
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
@@ -46,6 +45,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.loader import action_loader, connection_loader
+from ansible.plugins.process import keyboard_interrupt_event
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars

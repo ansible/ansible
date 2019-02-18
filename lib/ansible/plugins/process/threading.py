@@ -29,22 +29,22 @@ from collections import deque
 from jinja2.exceptions import TemplateNotFound
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.executor.process.model import ProcessModelBase, ResultsSentinel, keyboard_interrupt_event
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.plugins.process import ProcessModelBase, ResultsSentinel, keyboard_interrupt_event
 from ansible.utils.display import Display
 
 
 display = Display()
 
 
-__all__ = ['ProcessModelThreading', ]
+__all__ = ['ProcessModel', ]
 
 
-class ProcessModelThreading(ProcessModelBase):
+class ProcessModel(ProcessModelBase):
     def __init__(self, tqm):
-        super(ProcessModelThreading, self).__init__(tqm)
+        super(ProcessModel, self).__init__(tqm)
 
         self._job_queue = deque()
         self._job_queue_lock = threading.Lock()

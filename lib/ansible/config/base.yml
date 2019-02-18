@@ -598,7 +598,7 @@ DEFAULT_FORKS:
   type: integer
 DEFAULT_PROCESS_MODEL:
   name: Sets the Ansible process model
-  default: "threading"
+  default: "forking"
   description:
     - "Ansible supports two process models: forking (default) and threading."
     - "The threading model is currently a technology preview."

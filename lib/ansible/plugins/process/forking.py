@@ -39,11 +39,11 @@ except Exception:
     pass
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.executor.process.model import ProcessModelBase, ResultsSentinel
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import queue as Queue
+from ansible.plugins.process import ProcessModelBase, ResultsSentinel
 from ansible.utils.display import Display
 
 
@@ -66,9 +66,12 @@ def results_thread_main(pm):
             pass
 
 
-class ProcessModelForking(ProcessModelBase):
+__all__ = ['ProcessModel',]
+
+
+class ProcessModel(ProcessModelBase):
     def __init__(self, tqm):
-        super(ProcessModelForking, self).__init__(tqm)
+        super(ProcessModel, self).__init__(tqm)
 
         # save a couple of things from the TQM we need for forking
         self._loader = tqm._loader

@@ -29,7 +29,7 @@ from collections import deque
 from ansible.executor.shared_plugin_loader import SharedPluginLoaderObj
 from ansible.module_utils.six import with_metaclass
 
-__all__ = ["ProcessModelBase", "keyboard_interrupt_event"]
+__all__ = ["ProcessModelBase", "keyboard_interrupt_event", "ResultsSentinel"]
 
 
 class ResultsSentinel:

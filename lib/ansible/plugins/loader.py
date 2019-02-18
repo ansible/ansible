@@ -987,3 +987,11 @@ become_loader = PluginLoader(
     C.BECOME_PLUGIN_PATH,
     'become_plugins'
 )
+
+process_loader = PluginLoader(
+    'ProcessModel',
+    'ansible.plugins.process',
+    C.DEFAULT_PROCESS_MODEL,
+    'process_plugins',
+    required_base_class='ProcessModelBase',
+)

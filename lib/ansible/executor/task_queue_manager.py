@@ -33,7 +33,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
+from ansible.plugins.loader import callback_loader, strategy_loader, module_loader, process_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.collection_loader import is_collection_ref
@@ -92,17 +92,14 @@ class TaskQueueManager:
         # a special flag to help us exit cleanly
         self._terminated = False
 
-        self._process_manager = None
-        if C.DEFAULT_PROCESS_MODEL == 'threading':
-            from ansible.executor.process.threading import ProcessModelThreading
-            self._process_manager = ProcessModelThreading(self)
-        else:
-            if C.DEFAULT_PROCESS_MODEL != 'forking' and C.DEFAULT_PROCESS_MODEL not in (None, ""):
-                display.warning(
-                    'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
-                )
-            from ansible.executor.process.forking import ProcessModelForking
-            self._process_manager = ProcessModelForking(self)
+        try:
+            pm_class = process_loader.get(C.DEFAULT_PROCESS_MODEL, class_only=True)
+        except:
+            display.warning(
+                'Invalid process model specified: "%s". Defaulting to the "forking" process model.' % (C.DEFAULT_PROCESS_MODEL,)
+            )
+            pm_class = process_loader.get('forking', class_only=True)
+        self._process_manager = pm_class(self)
 
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts = dict()
