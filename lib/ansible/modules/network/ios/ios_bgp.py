@@ -1,20 +1,13 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #
-# This file is part of Ansible
+# (c) 2019, Ansible by Red Hat, inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -26,264 +19,246 @@ DOCUMENTATION = """
 module: ios_bgp
 version_added: "2.8"
 author: "Nilashish Chakraborty (@nilashishc)"
-short_description: Configure global BGP protocol settings on Cisco IOS
+short_description: Configure global BGP protocol settings on Cisco IOS.
 description:
   - This module provides configuration management of global BGP parameters
     on devices running Cisco IOS
 notes:
   - Tested against Cisco IOS Version 15.6(3)M2
 options:
-  bgp_as:
+  config:
     description:
-      - Specifies the BGP Autonomous System number to configure on the device
-    type: int
-    required: true
-  router_id:
-    description:
-      - Configures the BGP routing process router-id value
-    default: null
-  log_neighbor_changes:
-    description:
-      - Enable/Disable logging neighbor up/down and reset reason
-    type: bool
-  neighbors:
-    description:
-      - Specifies BGP neighbor related configurations
+      - Specifies the BGP related configuration.
     suboptions:
-      neighbor:
+      bgp_as:
         description:
-          - Neighbor router address
-        required: True
-      remote_as:
-        description:
-          - Remote AS of the BGP neighbor to configure
+          - Specifies the BGP Autonomous System (AS) number to configure on the device.
         type: int
-        required: True
-      route_reflector_client:
+        required: true
+      router_id:
         description:
-          - Specify a neighbor as a route reflector client
+          - Configures the BGP routing process router-id value.
+        default: null
+      log_neighbor_changes:
+        description:
+          - Enable/disable logging neighbor up/down and reset reason.
         type: bool
-      update_source:
+      neighbors:
         description:
-          - Source of the routing updates
-      password:
-        description:
-          - Password to authenticate BGP peer connection
-      enabled:
-        description:
-          - Administratively shutdown or enable a neighbor
-        type: bool
-      description:
-        description:
-          - Neighbor specific description
-      ebgp_multihop:
-        description:
-          - Specifies the maximum hop count for EBGP neighbors not on directly connected networks
-        type: int
-      peer_group:
-        description:
-          - Name of peer-group of which the neighbor is a member
-      timers:
-        description:
-          - Specifies BGP neighbor timer related configurations
+          - Specifies BGP neighbor related configurations.
         suboptions:
-          keepalive:
+          neighbor:
             description:
-              - Frequency (in seconds) with which the Cisco IOS software sends keepalive messages to its peer.
-              - The range is from 0 to 65535.
+              - Neighbor router address.
+            required: True
+          remote_as:
+            description:
+              - Remote AS of the BGP neighbor to configure.
             type: int
             required: True
-          holdtime:
+          update_source:
             description:
-              - Interval (in seconds) after not receiving a keepalive message that the software declares a peer dead.
-              - The range is from 0 to 65535.
+              - Source of the routing updates.
+          password:
+            description:
+              - Password to authenticate the BGP peer connection.
+          enabled:
+            description:
+              - Administratively shutdown or enable a neighbor.
+            type: bool
+          description:
+            description:
+              - Neighbor specific description.
+          ebgp_multihop:
+            description:
+              - Specifies the maximum hop count for EBGP neighbors not on directly connected networks.
+              - The range is from 1 to 255.
             type: int
-            required: True
-          min_neighbor_holdtime:
+          peer_group:
             description:
-              - Interval (in seconds) specifying the minimum acceptable hold-time from a BGP neighbor.
-              - The minimum acceptable hold-time must be less than, or equal to, the interval specified in the holdtime argument.
-              - The range is from 0 to 65535.
+              - Name of the peer group that the neighbor is a member of.
+          timers:
+            description:
+              - Specifies BGP neighbor timer related configurations.
+            suboptions:
+              keepalive:
+                description:
+                  - Frequency (in seconds) with which the device sends keepalive messages to its peer.
+                  - The range is from 0 to 65535.
+                type: int
+                required: True
+              holdtime:
+                description:
+                  - Interval (in seconds) after not receiving a keepalive message that IOS declares a peer dead.
+                  - The range is from 0 to 65535.
+                type: int
+                required: True
+              min_neighbor_holdtime:
+                description:
+                  - Interval (in seconds) specifying the minimum acceptable hold-time from a BGP neighbor.
+                  - The minimum acceptable hold-time must be less than, or equal to, the interval specified in the holdtime argument.
+                  - The range is from 0 to 65535.
+                type: int
+          local_as:
+            description:
+              - The local AS number for the neighbor.
             type: int
-      state:
-        description:
-          - Specifies the state of the BGP neighbor
-        default: present
-        choices:
-          - present
-          - absent
-  networks:
-    description:
-      - Specify networks to announce via BGP
-    suboptions:
-      network:
-        description:
-          - Network ID to announce via BGP
-        required: True
-      mask:
-        description:
-          - Subnet Mask for the Network to announce
-      route_map:
-        description:
-          - Route-map to modify the attributes
-      state:
-        description:
-          - Specifies the state of network
-        default: present
-        choices:
-          - present
-          - absent
-  address_families:
-    description:
-      - Specifies BGP address family related configurations
-    suboptions:
-      name:
-        description:
-          - Type of address family to configure
-        choices:
-          - ipv4
-          - ipv6
-        required: True
-      cast:
-        description:
-          - Specifies the type of cast for the address family
-        choices:
-          - flowspec
-          - unicast
-          - multicast
-          - labeled-unicast
-        default: unicast
-      redistribute:
-        description:
-          - Specifies the redistribute information from another routing protocol
-        suboptions:
-          protocol:
-            description:
-              - Specifies the protocol for configuring redistribute information
-            required: True
-          id:
-            description:
-              - Identifier for the routing protocol for configuring redistribute information
-              - Not valid for protocol - RIP
-          metric:
-            description:
-              - Specifies the metric for redistributed routes
-          route_map:
-            description:
-              - Specifies the route map reference
-          state:
-            description:
-              - Specifies the state of redistribution
-            default: present
-            choices:
-              - present
-              - absent
       networks:
         description:
-          - Specify networks to announce via BGP
+          - Specify networks to announce via BGP.
         suboptions:
-          network:
+          prefix:
             description:
-              - Network ID to announce via BGP
+              - Network ID to announce via BGP.
             required: True
-          mask:
+          masklen:
             description:
-              - Subnet Mask for the Network to announce
+              - Subnet mask length for the network to announce(e.g, 8, 16, 24, etc.).
           route_map:
             description:
-              - Route-map to modify the attributes
-          state:
-            description:
-              - Specifies the state of network
-            default: present
-            choices:
-              - present
-              - absent
-      af_neighbors:
+              - Route map to modify the attributes.
+      address_family:
         description:
-          - Specifies Address Family neighbor related configurations
-          - This option extends the top-level parameter - neighbors 
+          - Specifies BGP address family related configurations.
         suboptions:
-          activate:
+          afi:
             description:
-              - Enable the Address Family for this Neighbor
-            type: bool
-          remove_private_as:
-            description:
-              - Remove private AS number from outbound updates
-            type: bool
-          route_map:
-            description:
-              - Specify the route map to apply to this neighbor
-          route_map_dir:
-            description:
-              - Specify the direction of route map to be applied
+              - Type of address family to configure.
             choices:
-              - in
-              - out
-            default: in
-          route_server_client:
+              - ipv4
+              - ipv6
+            required: True
+          safi:
             description:
-              - Configure a neighbor as Route Server client
-            type: bool
-          weight:
+              - Specifies the type of cast for the address family.
+            choices:
+              - flowspec
+              - unicast
+              - multicast
+              - labeled-unicast
+            default: unicast
+          redistribute:
             description:
-              - Specify default weight for routes from this neighbor
-            type: int
-          next_hop_self:
+              - Specifies the redistribute information from another routing protocol.
+            suboptions:
+              protocol:
+                description:
+                  - Specifies the protocol for configuring redistribute information.
+                choices: ['ospf', 'ospfv3', 'eigrp', 'isis', 'static', 'connected', 'odr', 'lisp', 'mobile', 'rip']
+                required: True
+              id:
+                description:
+                  - Identifier for the routing protocol for configuring redistribute information.
+                  - Valid for protocols 'ospf', 'ospfv3' and 'eigrp'.
+              metric:
+                description:
+                  - Specifies the metric for redistributed routes.
+              route_map:
+                description:
+                  - Specifies the route map reference.
+          networks:
             description:
-              - Enable/Disable the next hop calculation for this neighbor
-            type: bool
-          next_hop_unchanged:
+              - Specify networks to announce via BGP.
+            suboptions:
+              prefix:
+                description:
+                  - Network ID to announce via BGP.
+                required: True
+              masklen:
+                description:
+                  - Subnet mask length for the network to announce(e.g, 8, 16, 24, etc.).
+              route_map:
+                description:
+                  - Route map to modify the attributes.
+          neighbors:
             description:
-              - Enable/Disable propagation of next hop unchanged for iBGP paths to this neighbor
-            type: bool
-      auto_summary:
-        description:
-          - Enable automatic network number summarization
-        type: bool
-      synchronization:
-        description:
-          - Enable IGP synchronization
-        type: bool
-      state:
-        description:
-          - Specifies the state of address family
-        default: present
-        choices:
-          - present
-          - absent
-  state:
+              - Specifies BGP neighbor related configurations in Address Family configuration mode.
+            suboptions:
+              neighbor:
+                description:
+                  - Neighbor router address.
+                required: True
+              advertisement_interval:
+                description:
+                  - Minimum interval between sending BGP routing updates for this neighbor.
+                type: int
+              route_reflector_client:
+                description:
+                  - Specify a neighbor as a route reflector client.
+                type: bool
+              route_server_client:
+                description:
+                  - Specify a neighbor as a route server client.
+                type: bool
+              activate:
+                description:
+                  - Enable the address family for this neighbor.
+                type: bool
+              remove_private_as:
+                description:
+                  - Remove the private AS number from outbound updates.
+                type: bool
+              next_hop_self:
+                description:
+                  - Enable/disable the next hop calculation for this neighbor.
+                type: bool
+              next_hop_unchanged:
+                description:
+                  - Propagate next hop unchanged for iBGP paths to this neighbor.
+                type: bool
+              maximum_prefix:
+                description:
+                  - Maximum number of prefixes to accept from this peer.
+                  - The range is from 1 to 2147483647.
+                type: int
+  operation:
     description:
-      - Specifies the state of the BGP process configured on the device
-    default: present
-    choices:
-      - present
-      - absent
-      - replace
-extends_documentation_fragment: ios
+      - Specifies the operation to be performed on the BGP process configured on the device.
+      - In case of merge, the input configuration will be merged with the existing BGP configuration on the device.
+      - In case of replace, if there is a diff between the existing configuration and the input configuration, the
+        existing configuration will be replaced by the input configuration for every option that has the diff.
+      - In case of override, all the existing BGP configuration will be removed from the device and replaced with
+        the input configuration.
+      - In case of delete the existing BGP configuration will be removed from the device.
+    default: merge
+    choices: ['merge', 'replace', 'override', 'delete']
 """
 
 EXAMPLES = """
-- name: configure global bgp as 65000
+- name: configure global bgp as 64496
   ios_bgp:
-    bgp_as: 65000
-    router_id: 1.1.1.1
-    log_neighbor_changes: True
-    neighbors:
-      - neighbor: 182.168.10.1
-        remote_as: 500
-      - neighbor: 192.168.20.1
-        remote_as: 500
-    networks:
-      - network: 10.0.0.0/8
-      - network: 11.0.0.0/8
-    state: present
+    config:
+      bgp_as: 64496
+      router_id: 192.0.2.1
+      log_neighbor_changes: True
+      neighbors:
+        - neighbor: 192.168.10.1
+          remote_as: 64497
+          timers:
+            keepalive: 300
+            holdtime: 360
+            min_neighbor_holdtime: 360
+        - neighbor: 198.51.100.2
+          remote_as: 64498
+      networks:
+        - prefix: 10.0.0.0
+          route_map: RMAP_1
+        - prefix: 192.168.2.0
+          mask: 255.255.254.0
+      address_family:
+        - afi: ipv4
+          safi: unicast
+          redistribute:
+            - protocol: ospf
+              id: 223
+              metric: 10
+    operation: merge
 
-- name: remove bgp as 65000 from config
+- name: remove bgp as 64496 from config
   ios_bgp:
-    bgp_as: 65000
-    state: absent
+    config:
+      bgp_as: 64496
+    operation: delete
 """
 
 RETURN = """
@@ -292,49 +267,99 @@ commands:
   returned: always
   type: list
   sample:
-    - router bgp 500
-    - neighbor 182.168.10.1 remote-as 500
+    - router bgp 64496
+    - bgp router-id 192.0.2.1
+    - bgp log-neighbor-changes
+    - neighbor 192.168.10.1 remote-as 64497
+    - neighbor 192.168.10.1 timers 300 360 360
+    - neighbor 198.51.100.2 remote-as 64498
+    - network 10.0.0.0 route-map RMAP_1
+    - network 192.168.2.0 mask 255.255.254.0
+    - address-family ipv4
+    - redistribute ospf 223 metric 70
+    - exit-address-family
 """
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.ios.ios import get_config, load_config
-from ansible.module_utils.network.ios.config.bgp import get_bgp_as
-from ansible.module_utils.network.ios.config.bgp.process import BgpProcess
-from ansible.module_utils.network.ios.ios import ios_argument_spec
+from ansible.module_utils._text import to_text
+from ansible.module_utils.network.ios.providers.module import NetworkModule
+from ansible.module_utils.network.ios.providers.cli.config.bgp.process import REDISTRIBUTE_PROTOCOLS
 
 
 def main():
     """ main entry point for module execution
     """
-    argument_spec = BgpProcess.argument_spec
-    argument_spec.update(ios_argument_spec)
+    network_spec = {
+        'prefix': dict(required=True),
+        'masklen': dict(type='int'),
+        'route_map': dict(),
+    }
 
-    module = AnsibleModule(argument_spec=argument_spec,
+    redistribute_spec = {
+        'protocol': dict(choices=REDISTRIBUTE_PROTOCOLS, required=True),
+        'id': dict(),
+        'metric': dict(type='int'),
+        'route_map': dict(),
+    }
+
+    timer_spec = {
+        'keepalive': dict(type='int', required=True),
+        'holdtime': dict(type='int', required=True),
+        'min_neighbor_holdtime': dict(type='int'),
+    }
+
+    neighbor_spec = {
+        'neighbor': dict(required=True),
+        'remote_as': dict(type='int', required=True),
+        'local_as': dict(type='int'),
+        'port': dict(type='int'),
+        'update_source': dict(),
+        'password': dict(no_log=True),
+        'enabled': dict(type='bool'),
+        'description': dict(),
+        'ebgp_multihop': dict(type='int'),
+        'timers': dict(type='dict', elements='dict', options=timer_spec),
+        'peer_group': dict(),
+    }
+
+    af_neighbor_spec = {
+        'neighbor': dict(required=True),
+        'activate': dict(type='bool'),
+        'advertisement_interval': dict(type='int'),
+        'remove_private_as': dict(type='bool'),
+        'next_hop_self': dict(type='bool'),
+        'route_reflector_client': dict(type='bool'),
+        'route_server_client': dict(type='bool'),
+        'maximum_prefix': dict(type='int')
+    }
+
+    address_family_spec = {
+        'afi': dict(choices=['ipv4', 'ipv6'], required=True),
+        'safi': dict(choices=['flowspec', 'labeled-unicast', 'multicast', 'unicast'], default='unicast'),
+        'networks': dict(type='list', elements='dict', options=network_spec),
+        'redistribute': dict(type='list', elements='dict', options=redistribute_spec),
+        'neighbors': dict(type='list', elements='dict', options=af_neighbor_spec),
+    }
+
+    config_spec = {
+        'bgp_as': dict(type='int', required=True),
+        'router_id': dict(),
+        'log_neighbor_changes': dict(type='bool'),
+        'neighbors': dict(type='list', elements='dict', options=neighbor_spec),
+        'address_family': dict(type='list', elements='dict', options=address_family_spec),
+        'networks': dict(type='list', elements='dict', options=network_spec)
+    }
+
+    argument_spec = {
+        'config': dict(type='dict', elements='dict', options=config_spec),
+        'operation': dict(default='merge', choices=['merge', 'replace', 'override', 'delete'])
+    }
+
+    module = NetworkModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    config = get_config(module, flags=['| section bgp'])
-
-    result = {'changed': False}
-    commands = list()
-
-    bgp_as = get_bgp_as(config)
-
-    if all((module.params['bgp_as'] is None, bgp_as is None)):
-        module.fail_json(msg='missing required argument: bgp_as')
-    elif module.params['bgp_as'] is None and bgp_as:
-        module.params['bgp_as'] = bgp_as
-
-    process = BgpProcess(**module.params)
-
-    resp = process.render(config)
-    if resp:
-        commands.extend(resp)
-    if commands:
-        if not module.check_mode:
-            load_config(module, commands)
-        result['changed'] = True
-
-    result['commands'] = commands
+    try:
+        result = module.edit_config(config_filter='| section bgp')
+    except Exception as exc:
+        module.fail_json(msg=to_text(exc))
 
     module.exit_json(**result)
 
