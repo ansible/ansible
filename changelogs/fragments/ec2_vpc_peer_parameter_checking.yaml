@@ -1,0 +1,2 @@
+minor_changes:
+ - Added parameter checking before the module attempts to do an action to give helpful error message
