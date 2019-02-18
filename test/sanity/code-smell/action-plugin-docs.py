@@ -2,6 +2,7 @@
 """Test to verify action plugins have an associated module to provide documentation."""
 
 import os
+import sys
 
 
 def main():
@@ -40,30 +41,34 @@ def main():
         'vyos',
     ])
 
+    paths = sys.argv[1:] or sys.stdin.read().splitlines()
+
     module_names = set()
 
-    for root, dirs, files in os.walk('lib/ansible/modules'):
-        for filename in files:
-            name, ext = os.path.splitext(filename)
+    for path in paths:
+        if not path.startswith('lib/ansible/modules/'):
+            continue
 
-            if ext == '.py' and name != '__init__':
-                if name.startswith('_'):
-                    name = name[1:]
+        name = os.path.splitext(os.path.basename(path))[0]
 
-                module_names.add(name)
+        if name != '__init__':
+            if name.startswith('_'):
+                name = name[1:]
 
-    action_plugin_dir = 'lib/ansible/plugins/action'
+            module_names.add(name)
+
     unused_skip = set(skip)
 
-    for filename in os.listdir(action_plugin_dir):
-        name, ext = os.path.splitext(filename)
+    for path in paths:
+        if not path.startswith('lib/ansible/plugins/action/'):
+            continue
 
-        if ext == '.py' and name not in module_names:
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        if name not in module_names:
             if name in skip:
                 unused_skip.remove(name)
                 continue
-
-            path = os.path.join(action_plugin_dir, filename)
 
             print('%s: action plugin has no matching module to provide documentation' % path)
 

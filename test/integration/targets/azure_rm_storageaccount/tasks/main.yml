@@ -18,6 +18,7 @@
        resource_group: "{{ resource_group }}" 
        name: "{{ storage_account }}"
        state: absent
+       force_delete_nonempty: True
 
  - name: Create new storage account
    azure_rm_storageaccount:
@@ -25,6 +26,19 @@
        name: "{{ storage_account }}"
        account_type: Standard_LRS
        append_tags: no
+       blob_cors:
+          - allowed_origins:
+              - http://www.example.com/
+            allowed_methods:
+              - GET
+              - POST
+            allowed_headers:
+              - x-ms-meta-data*
+              - x-ms-meta-target*
+              - x-ms-meta-abc
+            exposed_headers:
+              - x-ms-meta-*
+            max_age_in_seconds: 200
        tags:
            test: test
            galaxy: galaxy
@@ -35,6 +49,35 @@
      that:
        - output.changed
        - output.state.id is defined
+       - output.state.blob_cors | length == 1
+
+ - name: Create new storage account (idempotence)
+   azure_rm_storageaccount:
+       resource_group: "{{ resource_group }}" 
+       name: "{{ storage_account }}"
+       account_type: Standard_LRS
+       append_tags: no
+       blob_cors:
+          - allowed_origins:
+              - http://www.example.com/
+            allowed_methods:
+              - GET
+              - POST
+            allowed_headers:
+              - x-ms-meta-data*
+              - x-ms-meta-target*
+              - x-ms-meta-abc
+            exposed_headers:
+              - x-ms-meta-*
+            max_age_in_seconds: 200
+       tags:
+           test: test
+           galaxy: galaxy
+   register: output
+  
+ - assert:
+     that:
+        - not output.changed
 
  - name: Gather facts by tags
    azure_rm_storageaccount_facts:
@@ -77,22 +120,6 @@
        tags:
            testing: testing
            delete: never
-           galaxy: 'no'
-   register: output
-
- - assert:
-       that:
-           - "output.state.tags | length == 3"
-           - "output.state.tags.galaxy == 'no'"
-
- - name: Update account tags
-   azure_rm_storageaccount:
-       resource_group: "{{ resource_group }}"
-       name: "{{ storage_account }}"
-       append_tags: no
-       tags:
-           testing: testing
-           delete: never
    register: output
 
  - assert:
@@ -105,10 +132,17 @@
    azure_rm_storageaccount_facts:
        resource_group: "{{ resource_group }}"
        name: "{{ storage_account }}"
+       show_connection_string: True
+       show_blob_cors: True
 
  - assert:
        that:
            - "azure_storageaccounts| length == 1"
+           - "storageaccounts | length == 1"
+           - not storageaccounts[0].custom_domain
+           - storageaccounts[0].account_type == "Standard_GRS"
+           - storageaccounts[0].primary_endpoints.blob.connectionstring
+           - storageaccounts[0].blob_cors
 
  - name: Gather facts
    azure_rm_storageaccount_facts:

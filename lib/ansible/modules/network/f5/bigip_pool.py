@@ -143,9 +143,25 @@ options:
     aliases:
       - minimum_active_members
     version_added: 2.6
+  aggregate:
+    description:
+      - List of pool definitions to be created, modified or removed.
+    aliases:
+      - pools
+    version_added: 2.8
+  replace_all_with:
+    description:
+      - Remove pools not defined in the C(aggregate) parameter.
+      - This operation is all or none, meaning that it will stop if there are some pools
+        that cannot be removed.
+    default: no
+    type: bool
+    aliases:
+      - purge
+    version_added: 2.8
 notes:
-  - To add members do a pool, use the C(bigip_pool_member) module. Previously, the
-    C(bigip_pool) module allowed the management of users, but this has been removed
+  - To add members to a pool, use the C(bigip_pool_member) module. Previously, the
+    C(bigip_pool) module allowed the management of members, but this has been removed
     in version 2.5 of Ansible.
 extends_documentation_fragment: f5
 author:
@@ -173,19 +189,6 @@ EXAMPLES = r'''
     name: my-pool
     partition: Common
     lb_method: round-robin
-    provider:
-      server: lb.mydomain.com
-      user: admin
-      password: secret
-  delegate_to: localhost
-
-- name: Add pool member
-  bigip_pool_member:
-    state: present
-    pool: my-pool
-    partition: Common
-    host: "{{ ansible_default_ipv4['address'] }}"
-    port: 80
     provider:
       server: lb.mydomain.com
       user: admin
@@ -250,19 +253,6 @@ EXAMPLES = r'''
       password: secret
   delegate_to: localhost
 
-- name: Remove pool member from pool
-  bigip_pool_member:
-    state: absent
-    pool: my-pool
-    partition: Common
-    host: "{{ ansible_default_ipv4['address'] }}"
-    port: 80
-    provider:
-      server: lb.mydomain.com
-      user: admin
-      password: secret
-  delegate_to: localhost
-
 - name: Delete pool
   bigip_pool:
     state: absent
@@ -282,6 +272,49 @@ EXAMPLES = r'''
     metadata:
       ansible: 2.4
       updated_at: 2017-12-20T17:50:46Z
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Add pools Aggregate
+  bigip_pool:
+    aggregate:
+      - name: my-pool
+        partition: Common
+        lb_method: least-connections-member
+        slow_ramp_time: 120
+      - name: my-pool2
+        partition: Common
+        lb_method: least-sessions
+        slow_ramp_time: 120
+      - name: my-pool3
+        partition: Common
+        lb_method: round-robin
+        slow_ramp_time: 120
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+  delegate_to: localhost
+
+- name: Add pools Aggregate, purge others
+  bigip_pool:
+    aggregate:
+      - name: my-pool
+        partition: Common
+        lb_method: least-connections-member
+        slow_ramp_time: 120
+      - name: my-pool2
+        partition: Common
+        lb_method: least-sessions
+        slow_ramp_time: 120
+      - name: my-pool3
+        partition: Common
+        lb_method: round-robin
+        slow_ramp_time: 120
+    replace_all_with: yes
     provider:
       server: lb.mydomain.com
       user: admin
@@ -336,17 +369,27 @@ metadata:
   type: dict
   sample: {'key1': 'foo', 'key2': 'bar'}
 priority_group_activation:
-  description: The new minimum number of members to activate the priorty group.
+  description: The new minimum number of members to activate the priority group.
   returned: changed
   type: int
   sample: 10
+replace_all_with:
+  description: Purges all non-aggregate pools from device
+  returned: changed
+  type: bool
+  sample: yes
 '''
 
 import re
 
+from copy import deepcopy
+
+from ansible.module_utils.urls import urlparse
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.six import iteritems
+from ansible.module_utils.network.common.utils import remove_default_spec
+
 
 try:
     from library.module_utils.network.f5.bigip import F5RestClient
@@ -359,6 +402,7 @@ try:
     from library.module_utils.network.f5.common import exit_json
     from library.module_utils.network.f5.common import fail_json
     from library.module_utils.network.f5.compare import cmp_str_with_none
+    from library.module_utils.network.f5.icontrol import TransactionContextManager
 except ImportError:
     from ansible.module_utils.network.f5.bigip import F5RestClient
     from ansible.module_utils.network.f5.common import F5ModuleError
@@ -370,6 +414,7 @@ except ImportError:
     from ansible.module_utils.network.f5.common import exit_json
     from ansible.module_utils.network.f5.common import fail_json
     from ansible.module_utils.network.f5.compare import cmp_str_with_none
+    from ansible.module_utils.network.f5.icontrol import TransactionContextManager
 
 
 class Parameters(AnsibleF5Parameters):
@@ -383,21 +428,44 @@ class Parameters(AnsibleF5Parameters):
     }
 
     api_attributes = [
-        'description', 'name', 'loadBalancingMode', 'monitor', 'slowRampTime',
-        'reselectTries', 'serviceDownAction', 'metadata', 'minActiveMembers',
+        'description',
+        'name',
+        'loadBalancingMode',
+        'monitor',
+        'slowRampTime',
+        'reselectTries',
+        'serviceDownAction',
+        'metadata',
+        'minActiveMembers',
     ]
 
     returnables = [
-        'monitor_type', 'quorum', 'monitors', 'service_down_action',
-        'description', 'lb_method', 'slow_ramp_time',
-        'reselect_tries', 'monitor', 'name', 'partition', 'metadata',
+        'monitor_type',
+        'quorum',
+        'monitors',
+        'service_down_action',
+        'description',
+        'lb_method',
+        'slow_ramp_time',
+        'reselect_tries',
+        'monitor',
+        'name',
+        'partition',
+        'metadata',
         'priority_group_activation',
     ]
 
     updatables = [
-        'monitor_type', 'quorum', 'monitors', 'service_down_action',
-        'description', 'lb_method', 'slow_ramp_time', 'reselect_tries',
-        'metadata', 'priority_group_activation',
+        'monitor_type',
+        'quorum',
+        'monitors',
+        'service_down_action',
+        'description',
+        'lb_method',
+        'slow_ramp_time',
+        'reselect_tries',
+        'metadata',
+        'priority_group_activation',
     ]
 
     @property
@@ -732,14 +800,79 @@ class ModuleManager(object):
     def __init__(self, *args, **kwargs):
         self.module = kwargs.get('module', None)
         self.client = kwargs.get('client', None)
-        self.want = ModuleParameters(params=self.module.params)
+        self.want = None
+        self.have = None
+        self.changes = None
+        self.replace_all_with = False
+        self.purge_links = None
+
+    def exec_module(self):
+        wants = None
+        if self.module.params['replace_all_with']:
+            self.replace_all_with = True
+
+        if self.module.params['aggregate']:
+            wants = self.merge_defaults_for_aggregate(self.module.params)
+
+        result = dict()
+        changed = False
+
+        if self.replace_all_with and self.purge_links:
+            self.purge()
+            changed = True
+
+        if self.module.params['aggregate']:
+            result['aggregate'] = list()
+            for want in wants:
+                output = self.execute(want)
+                if output['changed']:
+                    changed = output['changed']
+                result['aggregate'].append(output)
+        else:
+            output = self.execute(self.module.params)
+            if output['changed']:
+                changed = output['changed']
+            result.update(output)
+        if changed:
+            result['changed'] = True
+        return result
+
+    def merge_defaults_for_aggregate(self, params):
+        defaults = deepcopy(params)
+        aggregate = defaults.pop('aggregate')
+
+        for i, j in enumerate(aggregate):
+            for k, v in iteritems(defaults):
+                if k != 'replace_all_with':
+                    if j.get(k, None) is None and v is not None:
+                        aggregate[i][k] = v
+
+        if self.replace_all_with:
+            self.compare_aggregate_names(aggregate)
+
+        return aggregate
+
+    def compare_aggregate_names(self, items):
+        on_device = self._read_purge_collection()
+        if not on_device:
+            return False
+        aggregates = [item['name'] for item in items]
+        collection = [item['name'] for item in on_device]
+
+        diff = set(collection) - set(aggregates)
+
+        if diff:
+            to_purge = [item['selfLink'] for item in on_device if item['name'] in diff]
+            self.purge_links = to_purge
+
+    def execute(self, params=None):
+        self.want = ModuleParameters(params=params)
         self.have = ApiParameters()
         self.changes = UsableChanges()
 
-    def exec_module(self):
         changed = False
         result = dict()
-        state = self.want.state
+        state = params['state']
 
         if state == "present":
             changed = self.present()
@@ -821,6 +954,12 @@ class ModuleManager(object):
             raise F5ModuleError("Failed to delete the Pool")
         return True
 
+    def purge(self):
+        if self.module.check_mode:
+            return True
+        self.purge_from_device()
+        return True
+
     def create(self):
         if self.want.monitor_type is not None:
             if not self.want.monitors_list:
@@ -851,6 +990,29 @@ class ModuleManager(object):
             return True
         self.create_on_device()
         return True
+
+    def _read_purge_collection(self):
+        uri = "https://{0}:{1}/mgmt/tm/ltm/pool/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+
+        query = "?$select=name,selfLink"
+        resp = self.client.api.get(uri + query)
+
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+        if 'items' in response:
+            return response['items']
+        return []
 
     def create_on_device(self):
         params = self.changes.api_params()
@@ -937,6 +1099,38 @@ class ModuleManager(object):
                 raise F5ModuleError(resp.content)
         return ApiParameters(params=response)
 
+    def _prepare_links(self, collection):
+        purge_links = list()
+        purge_paths = [urlparse(link).path for link in collection]
+
+        for path in purge_paths:
+            link = "https://{0}:{1}{2}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                path
+            )
+            purge_links.append(link)
+        return purge_links
+
+    def purge_from_device(self):
+        links = self._prepare_links(self.purge_links)
+
+        with TransactionContextManager(self.client) as transact:
+            for link in links:
+                resp = transact.api.delete(link)
+
+                try:
+                    response = resp.json()
+                except ValueError as ex:
+                    raise F5ModuleError(str(ex))
+
+                if 'code' in response and response['code'] == 400:
+                    if 'message' in response:
+                        raise F5ModuleError(response['message'])
+                    else:
+                        raise F5ModuleError(resp.content)
+        return True
+
 
 class ArgumentSpec(object):
     def __init__(self):
@@ -962,9 +1156,8 @@ class ArgumentSpec(object):
             'weighted-least-connections-node'
         ]
         self.supports_check_mode = True
-        argument_spec = dict(
+        element_spec = dict(
             name=dict(
-                required=True,
                 aliases=['pool']
             ),
             lb_method=dict(
@@ -999,16 +1192,48 @@ class ArgumentSpec(object):
                 default='present',
                 choices=['present', 'absent']
             ),
+            priority_group_activation=dict(
+                type='int',
+                aliases=['minimum_active_members']
+            ),
+            partition=dict(
+                default='Common',
+                fallback=(env_fallback, ['F5_PARTITION'])
+            )
+        )
+
+        aggregate_spec = deepcopy(element_spec)
+
+        # remove default in aggregate spec, to handle common arguments
+        remove_default_spec(aggregate_spec)
+
+        argument_spec = dict(
+            aggregate=dict(
+                type='list',
+                elements='dict',
+                options=aggregate_spec,
+                aliases=['pools']
+            ),
             partition=dict(
                 default='Common',
                 fallback=(env_fallback, ['F5_PARTITION'])
             ),
-            priority_group_activation=dict(
-                type='int',
-                aliases=['minimum_active_members']
+            replace_all_with=dict(
+                default='no',
+                type='bool',
+                aliases=['purge']
             )
         )
+
+        self.mutually_exclusive = [
+            ['name', 'aggregate']
+        ]
+        self.required_one_of = [
+            ['name', 'aggregate']
+        ]
+
         self.argument_spec = {}
+        self.argument_spec.update(element_spec)
         self.argument_spec.update(f5_argument_spec)
         self.argument_spec.update(argument_spec)
 
@@ -1019,6 +1244,8 @@ def main():
     module = AnsibleModule(
         argument_spec=spec.argument_spec,
         supports_check_mode=spec.supports_check_mode,
+        mutually_exclusive=spec.mutually_exclusive,
+        required_one_of=spec.required_one_of
     )
 
     client = F5RestClient(**module.params)

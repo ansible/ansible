@@ -19,6 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: voss
+short_description: Use voss cliconf to run command on Extreme VOSS platform
+description:
+  - This voss plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Extreme VOSS network devices.
+version_added: "2.7"
+"""
+
 import re
 import json
 

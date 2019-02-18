@@ -224,7 +224,7 @@ class PullCLI(CLI):
                                                               context.CLIARGS['module_name'],
                                                               repo_opts, limit_opts)
         for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e "%s"' % shlex_quote(ev)
+            cmd += ' -e %s' % shlex_quote(ev)
 
         # Nap?
         if context.CLIARGS['sleep']:
@@ -259,8 +259,8 @@ class PullCLI(CLI):
                 cmd += " --vault-id=%s" % vault_id
 
         for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e "%s"' % shlex_quote(ev)
-        if context.CLIARGS['ask_sudo_pass'] or context.CLIARGS['ask_su_pass'] or context.CLIARGS['become_ask_pass']:
+            cmd += ' -e %s' % shlex_quote(ev)
+        if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
             cmd += ' --skip-tags "%s"' % to_native(u','.join(context.CLIARGS['skip_tags']))

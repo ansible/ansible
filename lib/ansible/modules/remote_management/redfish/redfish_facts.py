@@ -131,11 +131,11 @@ from ansible.module_utils.redfish_utils import RedfishUtils
 CATEGORY_COMMANDS_ALL = {
     "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
                 "GetNicInventory", "GetStorageControllerInventory",
-                "GetDiskInventory", "GetBiosAttributes", "GetBiosBootOrder"],
+                "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
     "Chassis": ["GetFanInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
-    "Manager": ["GetManagerAttributes", "GetManagerNicInventory", "GetLogs"],
+    "Manager": ["GetManagerNicInventory", "GetLogs"],
 }
 
 CATEGORY_COMMANDS_DEFAULT = {
@@ -143,7 +143,7 @@ CATEGORY_COMMANDS_DEFAULT = {
     "Chassis": "GetFanInventory",
     "Accounts": "ListUsers",
     "Update": "GetFirmwareInventory",
-    "Manager": "GetManagerAttributes"
+    "Manager": "GetManagerNicInventory"
 }
 
 
@@ -223,8 +223,8 @@ def main():
                     result["disk"] = rf_utils.get_disk_inventory()
                 elif command == "GetBiosAttributes":
                     result["bios_attribute"] = rf_utils.get_bios_attributes()
-                elif command == "GetBiosBootOrder":
-                    result["bios_boot_order"] = rf_utils.get_bios_boot_order()
+                elif command == "GetBootOrder":
+                    result["boot_order"] = rf_utils.get_boot_order()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
@@ -263,9 +263,7 @@ def main():
                 module.fail_json(msg=resource['msg'])
 
             for command in command_list:
-                if command == "GetManagerAttributes":
-                    result["manager_attributes"] = rf_utils.get_manager_attributes()
-                elif command == "GetManagerNicInventory":
+                if command == "GetManagerNicInventory":
                     result["manager_nics"] = rf_utils.get_nic_inventory(resource_type=category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()

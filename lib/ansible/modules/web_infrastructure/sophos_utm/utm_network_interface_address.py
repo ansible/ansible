@@ -17,9 +17,9 @@ DOCUMENTATION = """
 module: utm_network_interface_address
 
 author:
-    - Juergen Wiebe (@example)
+    - Juergen Wiebe (@steamx)
 
-short_description: create, update or destroy network/interface_address object
+short_description: Create, update or destroy network/interface_address object
 
 description:
     - Create, update or destroy a network/interface_address object in SOPHOS UTM.

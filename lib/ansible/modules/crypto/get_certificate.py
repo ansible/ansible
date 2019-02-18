@@ -22,20 +22,22 @@ options:
     host:
       description:
         - The host to get the cert for (IP is fine)
-      required: True
+      type: str
+      required: true
     ca_certs:
       description:
         - A PEM file containing a list of root certificates; if present, the cert will be validated against these root certs.
         - Note that this only validates the certificate is signed by the chain; not that the cert is valid for the host presenting it.
-      required: False
+      type: path
     port:
       description:
         - The port to connect to
-      required: True
+      type: int
+      required: true
     timeout:
       description:
         - The timeout in seconds
-      required: False
+      type: int
       default: 10
 
 notes:
@@ -107,15 +109,19 @@ EXAMPLES = '''
   register: cert
 '''
 
-from ansible.module_utils.basic import AnsibleModule
+import traceback
+
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 from os.path import isfile
 from ssl import get_server_certificate
 from socket import setdefaulttimeout
 
+PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
 except ImportError:
+    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
@@ -124,10 +130,10 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ca_certs=dict(required=False, type='path', default=None),
-            host=dict(required=True),
-            port=dict(required=True, type='int'),
-            timeout=dict(required=False, type='int', default=10),
+            ca_certs=dict(type='path'),
+            host=dict(type='str', required=True),
+            port=dict(type='int', required=True),
+            timeout=dict(type='int', default=10),
         ),
     )
 
@@ -141,7 +147,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg='the python pyOpenSSL module is required')
+        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
 
     if timeout:
         setdefaulttimeout(timeout)

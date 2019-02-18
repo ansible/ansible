@@ -84,15 +84,19 @@ EXAMPLES = '''
     body: Error rate on signup service is over 90% for more than 2 minutes
 '''
 
+import traceback
+
+PUSHBULLET_IMP_ERR = None
 try:
     from pushbullet import PushBullet
     from pushbullet.errors import InvalidKeyError, PushError
 except ImportError:
+    PUSHBULLET_IMP_ERR = traceback.format_exc()
     pushbullet_found = False
 else:
     pushbullet_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 # ===========================================
@@ -125,7 +129,7 @@ def main():
     url = module.params['url']
 
     if not pushbullet_found:
-        module.fail_json(msg="Python 'pushbullet.py' module is required. Install via: $ pip install pushbullet.py")
+        module.fail_json(msg=missing_required_lib('pushbullet.py'), exception=PUSHBULLET_IMP_ERR)
 
     # Init pushbullet
     try:

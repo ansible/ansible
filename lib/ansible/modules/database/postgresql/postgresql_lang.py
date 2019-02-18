@@ -77,6 +77,11 @@ options:
     description:
       - Host running PostgreSQL where you want to execute the actions.
     default: localhost
+  session_role:
+    version_added: "2.8"
+    description: |
+      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   state:
     description:
       - The state of the language for the selected database
@@ -153,16 +158,19 @@ EXAMPLES = '''
 '''
 import traceback
 
+PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
 except ImportError:
+    PSYCOPG2_IMP_ERR = traceback.format_exc()
     postgresqldb_found = False
 else:
     postgresqldb_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
+from ansible.module_utils.database import pg_quote_identifier
 
 
 def lang_exists(cursor, lang):
@@ -230,6 +238,7 @@ def main():
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None),
+            session_role=dict(),
         ),
         supports_check_mode=True
     )
@@ -242,9 +251,10 @@ def main():
     cascade = module.params["cascade"]
     fail_on_drop = module.params["fail_on_drop"]
     sslrootcert = module.params["ssl_rootcert"]
+    session_role = module.params["session_role"]
 
     if not postgresqldb_found:
-        module.fail_json(msg="the python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -280,6 +290,12 @@ def main():
 
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
+    if session_role:
+        try:
+            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+        except Exception as e:
+            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     changed = False
     kw = {'db': db, 'lang': lang, 'trust': trust}

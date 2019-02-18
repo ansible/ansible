@@ -103,15 +103,18 @@ RETURN = '''
 '''
 
 import time
+import traceback
 import warnings
 
+HPILO_IMP_ERR = None
 try:
     import hpilo
     HAS_HPILO = True
 except ImportError:
+    HPILO_IMP_ERR = traceback.format_exc()
     HAS_HPILO = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 # Suppress warnings from hpilo
@@ -134,7 +137,7 @@ def main():
     )
 
     if not HAS_HPILO:
-        module.fail_json(msg='The hpilo python module is required')
+        module.fail_json(msg=missing_required_lib('python-hpilo'), exception=HPILO_IMP_ERR)
 
     host = module.params['host']
     login = module.params['login']

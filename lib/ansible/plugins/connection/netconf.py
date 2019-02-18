@@ -67,6 +67,8 @@ options:
     vars:
       - name: ansible_password
       - name: ansible_ssh_pass
+      - name: ansible_ssh_password
+      - name: ansible_netconf_password
   private_key_file:
     description:
       - The private SSH key or certificate file used to authenticate to the
@@ -272,7 +274,7 @@ class Connection(NetworkConnectionBase):
     def _connect(self):
         if not HAS_NCCLIENT:
             raise AnsibleError(
-                'ncclient is required to use the netconf connection type: %s.\n'
+                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
                 'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
             )
 

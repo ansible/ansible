@@ -119,14 +119,17 @@ EXAMPLES = """
 
 
 import os
+import traceback
 
+PSUTIL_IMP_ERR = None
 try:
     import psutil
     psutil_found = True
 except ImportError:
+    PSUTIL_IMP_ERR = traceback.format_exc()
     psutil_found = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class DBusWrapper(object):
@@ -350,7 +353,7 @@ def main():
     )
 
     if not psutil_found:
-        module.fail_json(msg="Python module psutil is required on managed machine")
+        module.fail_json(msg=missing_required_lib("psutil"), exception=PSUTIL_IMP_ERR)
 
     # If present state was specified, value must be provided.
     if module.params['state'] == 'present' and module.params['value'] is None:

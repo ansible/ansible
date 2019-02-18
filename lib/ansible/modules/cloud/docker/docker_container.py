@@ -586,30 +586,22 @@ options:
       - Path to the working directory.
     version_added: "2.4"
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - "Cove Schneider (@cove)"
-    - "Joshua Conner (@joshuaconner)"
-    - "Pavel Antonov (@softzilla)"
-    - "Thomas Steinbach (@ThomasSteinbach)"
-    - "Philippe Jandot (@zfil)"
-    - "Daan Oosterveld (@dusdanig)"
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Kassian Sun (@kassiansun)"
+  - "Cove Schneider (@cove)"
+  - "Joshua Conner (@joshuaconner)"
+  - "Pavel Antonov (@softzilla)"
+  - "Thomas Steinbach (@ThomasSteinbach)"
+  - "Philippe Jandot (@zfil)"
+  - "Daan Oosterveld (@dusdanig)"
+  - "Chris Houseknecht (@chouseknecht)"
+  - "Kassian Sun (@kassiansun)"
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.8.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "Docker API >= 1.20"
+  - "docker-py >= 1.8.0"
+  - "Docker API >= 1.20"
 '''
 
 EXAMPLES = '''
@@ -829,7 +821,8 @@ docker_container:
     description:
       - Before 2.3 this was 'ansible_docker_container' but was renamed due to conflicts with the connection plugin.
       - Facts representing the current state of the container. Matches the docker inspection output.
-      - Note that facts are not part of registered vars but accessible directly.
+      - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+        are also accessible directly.
       - Empty if C(state) is I(absent)
       - If detached is I(False), will include Output attribute containing any output from container run.
     returned: always
@@ -871,27 +864,30 @@ docker_container:
 import os
 import re
 import shlex
-from datetime import timedelta
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import human_to_bytes
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
-    DockerBaseClass, sanitize_result, is_image_name_id,
-    compare_generic, DifferenceTracker,
+    DifferenceTracker,
+    DockerBaseClass,
+    compare_generic,
+    is_image_name_id,
+    sanitize_result,
+    parse_healthcheck
 )
 from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
-    from ansible.module_utils.docker_common import docker_version
+    from ansible.module_utils.docker.common import docker_version
     if LooseVersion(docker_version) >= LooseVersion('1.10.0'):
         from docker.types import Ulimit, LogConfig
     else:
         from docker.utils.types import Ulimit, LogConfig
     from docker.errors import APIError, NotFound
 except Exception:
-    # missing docker-py handled in ansible.module_utils.docker
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
 
@@ -911,7 +907,7 @@ def is_volume_permissions(input):
     return True
 
 
-def parse_port_range(range_or_port, module):
+def parse_port_range(range_or_port, client):
     '''
     Parses a string containing either a single port or a range of ports.
 
@@ -920,13 +916,13 @@ def parse_port_range(range_or_port, module):
     if '-' in range_or_port:
         start, end = [int(port) for port in range_or_port.split('-')]
         if end < start:
-            module.fail_json(msg='Invalid port range: {0}'.format(range_or_port))
+            client.fail('Invalid port range: {0}'.format(range_or_port))
         return list(range(start, end + 1))
     else:
         return [int(range_or_port)]
 
 
-def split_colon_ipv6(input, module):
+def split_colon_ipv6(input, client):
     '''
     Split string by ':', while keeping IPv6 addresses in square brackets in one component.
     '''
@@ -941,7 +937,7 @@ def split_colon_ipv6(input, module):
             break
         j = input.find(']', i)
         if j < 0:
-            module.fail_json(msg='Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
+            client.fail('Cannot find closing "]" in input "{0}" for opening "[" at index {1}!'.format(input, i + 1))
         result.extend(input[start:i].split(':'))
         k = input.find(':', j)
         if k < 0:
@@ -1089,7 +1085,11 @@ class TaskParameters(DockerBaseClass):
         self.ulimits = self._parse_ulimits()
         self.sysctls = self._parse_sysctls()
         self.log_config = self._parse_log_config()
-        self.healthcheck, self.disable_healthcheck = self._parse_healthcheck()
+        try:
+            self.healthcheck, self.disable_healthcheck = parse_healthcheck(self.healthcheck)
+        except ValueError as e:
+            self.fail(str(e))
+
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
         self.pid_mode = self._replace_container_names(self.pid_mode)
@@ -1131,7 +1131,7 @@ class TaskParameters(DockerBaseClass):
                 self._process_rate_iops(option=param_name)
 
     def fail(self, msg):
-        self.client.module.fail_json(msg=msg)
+        self.client.fail(msg)
 
     @property
     def update_parameters(self):
@@ -1341,25 +1341,25 @@ class TaskParameters(DockerBaseClass):
 
         binds = {}
         for port in self.published_ports:
-            parts = split_colon_ipv6(str(port), self.client.module)
+            parts = split_colon_ipv6(str(port), self.client)
             container_port = parts[-1]
             protocol = ''
             if '/' in container_port:
                 container_port, protocol = parts[-1].split('/')
-            container_ports = parse_port_range(container_port, self.client.module)
+            container_ports = parse_port_range(container_port, self.client)
 
             p_len = len(parts)
             if p_len == 1:
                 port_binds = len(container_ports) * [(default_ip,)]
             elif p_len == 2:
-                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client.module)]
+                port_binds = [(default_ip, port) for port in parse_port_range(parts[0], self.client)]
             elif p_len == 3:
                 # We only allow IPv4 and IPv6 addresses for the bind address
                 if not re.match(r'^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$', parts[0]) and not re.match(r'^\[[0-9a-fA-F:]+\]$', parts[0]):
                     self.fail(('Bind addresses for published ports must be IPv4 or IPv6 addresses, not hostnames. '
                                'Use the dig lookup to resolve hostnames. (Found hostname: {0})').format(parts[0]))
                 if parts[1]:
-                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client.module)]
+                    port_binds = [(parts[0], port) for port in parse_port_range(parts[1], self.client)]
                 else:
                     port_binds = len(container_ports) * [(parts[0],)]
 
@@ -1506,81 +1506,6 @@ class TaskParameters(DockerBaseClass):
         except ValueError as exc:
             self.fail('Error parsing logging options - %s' % (exc))
 
-    def _parse_healthcheck(self):
-        '''
-        Return dictionary of healthcheck parameters
-        '''
-        if (not self.healthcheck) or (not self.healthcheck.get('test')):
-            return None, None
-
-        result = dict()
-
-        # all the supported healthecheck parameters
-        options = dict(
-            test='test',
-            interval='interval',
-            timeout='timeout',
-            start_period='start_period',
-            retries='retries'
-        )
-
-        duration_options = ['interval', 'timeout', 'start_period']
-
-        for (key, value) in options.items():
-            if value in self.healthcheck:
-                if self.healthcheck.get(value) is None:
-                    # due to recursive argument_spec, all keys are always present
-                    # (but have default value None if not specified)
-                    continue
-                if value in duration_options:
-                    time = self._convert_duration_to_nanosecond(self.healthcheck.get(value))
-                    if time:
-                        result[key] = time
-                elif self.healthcheck.get(value):
-                    result[key] = self.healthcheck.get(value)
-                    if key == 'test':
-                        if isinstance(result[key], (tuple, list)):
-                            result[key] = [str(e) for e in result[key]]
-                        else:
-                            result[key] = ["CMD-SHELL", str(result[key])]
-                    elif key == 'retries':
-                        try:
-                            result[key] = int(result[key])
-                        except Exception as e:
-                            self.fail('Cannot parse number of retries for healthcheck. '
-                                      'Expected an integer, got "{0}".'.format(result[key]))
-
-        if result['test'] == ['NONE']:
-            # If the user explicitly disables the healthcheck, return None
-            # as the healthcheck object, and set disable_healthcheck to True
-            return None, True
-
-        return result, False
-
-    def _convert_duration_to_nanosecond(self, time_str):
-        '''
-        Return time duration in nanosecond
-        '''
-        if not isinstance(time_str, str):
-            self.fail("Missing unit in duration - %s" % time_str)
-
-        regex = re.compile(r'^(((?P<hours>\d+)h)?((?P<minutes>\d+)m(?!s))?((?P<seconds>\d+)s)?((?P<milliseconds>\d+)ms)?((?P<microseconds>\d+)us)?)$')
-        parts = regex.match(time_str)
-
-        if not parts:
-            self.fail("Invalid time duration - %s" % time_str)
-
-        parts = parts.groupdict()
-        time_params = {}
-        for (name, value) in parts.items():
-            if value:
-                time_params[name] = int(value)
-
-        time = timedelta(**time_params)
-        time_in_nanoseconds = int(time.total_seconds() * 1000000000)
-
-        return time_in_nanoseconds
-
     def _parse_tmpfs(self):
         '''
         Turn tmpfs into a hash of Tmpfs objects
@@ -1704,7 +1629,7 @@ class Container(DockerBaseClass):
         self.parameters_map['expected_healthcheck'] = 'healthcheck'
 
     def fail(self, msg):
-        self.parameters.client.module.fail_json(msg=msg)
+        self.parameters.client.fail(msg)
 
     @property
     def exists(self):
@@ -2272,6 +2197,7 @@ class ContainerManager(DockerBaseClass):
 
         if self.facts:
             self.results['ansible_facts'] = {'docker_container': self.facts}
+            self.results['docker_container'] = self.facts
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
@@ -2363,7 +2289,7 @@ class ContainerManager(DockerBaseClass):
             self.container_remove(container.Id)
 
     def fail(self, msg, **kwargs):
-        self.client.module.fail_json(msg=msg, **sanitize_result(kwargs))
+        self.client.fail(msg, **kwargs)
 
     def _output_logs(self, msg):
         self.client.module.log(msg=msg)
@@ -2555,7 +2481,7 @@ class ContainerManager(DockerBaseClass):
             while True:
                 try:
                     response = self.client.remove_container(container_id, v=volume_state, link=link, force=force)
-                except NotFound as exc:
+                except NotFound as dummy:
                     pass
                 except APIError as exc:
                     if 'Unpause the container before stopping or killing' in exc.explanation:

@@ -6,4 +6,4 @@ azure_rm_postgresqldatabase
 azure_rm_postgresqldatabase_facts
 azure_rm_postgresqlfirewallrule
 azure_rm_postgresqlfirewallrule_facts
-disabled
+azure_rm_postgresqlserverconfiguration_facts

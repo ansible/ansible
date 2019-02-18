@@ -13,8 +13,11 @@ import json
 
 from os.path import expanduser
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+try:
+    from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+except Exception:
+    ANSIBLE_VERSION = 'unknown'
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
@@ -99,6 +102,7 @@ AZURE_FAILED_STATE = "Failed"
 HAS_AZURE = True
 HAS_AZURE_EXC = None
 HAS_AZURE_CLI_CORE = True
+HAS_AZURE_CLI_CORE_EXC = None
 
 HAS_MSRESTAZURE = True
 HAS_MSRESTAZURE_EXC = None
@@ -114,16 +118,16 @@ try:
     from packaging.version import Version
     HAS_PACKAGING_VERSION = True
     HAS_PACKAGING_VERSION_EXC = None
-except ImportError as exc:
+except ImportError:
     Version = None
     HAS_PACKAGING_VERSION = False
-    HAS_PACKAGING_VERSION_EXC = exc
+    HAS_PACKAGING_VERSION_EXC = traceback.format_exc()
 
 # NB: packaging issue sometimes cause msrestazure not to be installed, check it separately
 try:
     from msrest.serialization import Serializer
-except ImportError as exc:
-    HAS_MSRESTAZURE_EXC = exc
+except ImportError:
+    HAS_MSRESTAZURE_EXC = traceback.format_exc()
     HAS_MSRESTAZURE = False
 
 try:
@@ -161,7 +165,7 @@ try:
     from azure.mgmt.containerregistry import ContainerRegistryManagementClient
     from azure.mgmt.containerinstance import ContainerInstanceManagementClient
 except ImportError as exc:
-    HAS_AZURE_EXC = exc
+    HAS_AZURE_EXC = traceback.format_exc()
     HAS_AZURE = False
 
 try:
@@ -170,6 +174,7 @@ try:
     from azure.common.cloud import get_cli_active_cloud
 except ImportError:
     HAS_AZURE_CLI_CORE = False
+    HAS_AZURE_CLI_CORE_EXC = None
     CLIError = Exception
 
 
@@ -200,7 +205,7 @@ def normalize_location_name(name):
 AZURE_PKG_VERSIONS = {
     'StorageManagementClient': {
         'package_name': 'storage',
-        'expected_version': '1.5.0'
+        'expected_version': '3.1.0'
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
@@ -266,16 +271,16 @@ class AzureRMModuleBase(object):
                                     required_if=merged_required_if)
 
         if not HAS_PACKAGING_VERSION:
-            self.fail("Do you have packaging installed? Try `pip install packaging`"
-                      "- {0}".format(HAS_PACKAGING_VERSION_EXC))
+            self.fail(msg=missing_required_lib('packaging'),
+                      exception=HAS_PACKAGING_VERSION_EXC)
 
         if not HAS_MSRESTAZURE:
-            self.fail("Do you have msrestazure installed? Try `pip install msrestazure`"
-                      "- {0}".format(HAS_MSRESTAZURE_EXC))
+            self.fail(msg=missing_required_lib('msrestazure'),
+                      exception=HAS_MSRESTAZURE_EXC)
 
         if not HAS_AZURE:
-            self.fail("Do you have azure>={1} installed? Try `pip install ansible[azure]`"
-                      "- {0}".format(HAS_AZURE_EXC, AZURE_MIN_RELEASE))
+            self.fail(msg=missing_required_lib('ansible[azure] (azure >= {0})'.format(AZURE_MIN_RELEASE)),
+                      exception=HAS_AZURE_EXC)
 
         self._network_client = None
         self._storage_client = None
@@ -374,6 +379,7 @@ class AzureRMModuleBase(object):
         :param tags: metadata tags from the object
         :return: bool, dict
         '''
+        tags = tags or dict()
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
         append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
@@ -785,12 +791,12 @@ class AzureRMModuleBase(object):
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
+                                                            api_version='2018-07-01')
         return self._storage_client
 
     @property
     def storage_models(self):
-        return StorageManagementClient.models("2017-10-01")
+        return StorageManagementClient.models("2018-07-01")
 
     @property
     def network_client(self):
@@ -1024,24 +1030,24 @@ class AzureRMAuth(object):
         elif self.credentials.get('client_id') is not None and \
                 self.credentials.get('secret') is not None and \
                 self.credentials.get('tenant') is not None:
-                self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                                                     secret=self.credentials['secret'],
-                                                                     tenant=self.credentials['tenant'],
-                                                                     cloud_environment=self._cloud_environment,
-                                                                     verify=self._cert_validation_mode == 'validate')
+            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                 secret=self.credentials['secret'],
+                                                                 tenant=self.credentials['tenant'],
+                                                                 cloud_environment=self._cloud_environment,
+                                                                 verify=self._cert_validation_mode == 'validate')
 
         elif self.credentials.get('ad_user') is not None and \
                 self.credentials.get('password') is not None and \
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(
-                    self._adfs_authority_url,
-                    self._resource,
-                    self.credentials['ad_user'],
-                    self.credentials['password'],
-                    self.credentials['client_id'],
-                    self.credentials['tenant'])
+            self.azure_credentials = self.acquire_token_with_username_password(
+                self._adfs_authority_url,
+                self._resource,
+                self.credentials['ad_user'],
+                self.credentials['password'],
+                self.credentials['client_id'],
+                self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')
@@ -1146,7 +1152,8 @@ class AzureRMAuth(object):
 
         if auth_source == 'cli':
             if not HAS_AZURE_CLI_CORE:
-                self.fail("Azure auth_source is `cli`, but azure-cli package is not available. Try `pip install azure-cli --upgrade`")
+                self.fail(msg=missing_required_lib('azure-cli', reason='for `cli` auth_source'),
+                          exception=HAS_AZURE_CLI_CORE_EXC)
             try:
                 self.log('Retrieving credentials from Azure CLI profile')
                 cli_credentials = self._get_azure_cli_credentials()

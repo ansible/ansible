@@ -305,7 +305,7 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {
-        u'projectNumber': response.get(u'number'),
+        u'projectNumber': response.get(u'projectNumber'),
         u'lifecycleState': response.get(u'lifecycleState'),
         u'name': response.get(u'name'),
         u'createTime': response.get(u'createTime'),
@@ -336,10 +336,10 @@ def wait_for_operation(module, response):
 def wait_for_completion(status, op_result, module):
     op_id = navigate_hash(op_result, ['name'])
     op_uri = async_op_url(module, {'op_id': op_id})
-    if not status:
+    while not status:
         raise_if_errors(op_result, ['error'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri)
+        op_result = fetch_resource(module, op_uri, False)
         status = navigate_hash(op_result, ['done'])
     return op_result
 

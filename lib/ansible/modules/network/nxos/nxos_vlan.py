@@ -212,10 +212,6 @@ def map_obj_to_commands(updates, module):
 
         if state == 'absent':
             if obj_in_have:
-                if obj_in_have['mapped_vni'] != 'None':
-                    commands.append('vlan {0}'.format(vlan_id))
-                    commands.append('no vn-segment')
-                    commands.append('exit')
                 commands.append('no vlan {0}'.format(vlan_id))
 
         elif state == 'present':

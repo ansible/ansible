@@ -56,6 +56,28 @@ WINDOWS_ARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 """
 
 
+def _action_base():
+    fake_loader = DictDataLoader({
+    })
+    mock_module_loader = MagicMock()
+    mock_shared_loader_obj = MagicMock()
+    mock_shared_loader_obj.module_loader = mock_module_loader
+    mock_connection_loader = MagicMock()
+
+    mock_shared_loader_obj.connection_loader = mock_connection_loader
+    mock_connection = MagicMock()
+
+    play_context = MagicMock()
+
+    action_base = DerivedActionBase(task=None,
+                                    connection=mock_connection,
+                                    play_context=play_context,
+                                    loader=fake_loader,
+                                    templar=None,
+                                    shared_loader_obj=mock_shared_loader_obj)
+    return action_base
+
+
 class DerivedActionBase(ActionBase):
     TRANSFERS_FILES = False
 
@@ -111,6 +133,7 @@ class TestActionBase(unittest.TestCase):
         mock_module_loader.find_plugin.side_effect = mock_find_plugin
         mock_shared_obj_loader = MagicMock()
         mock_shared_obj_loader.module_loader = mock_module_loader
+        mock_templar = MagicMock()
 
         # we're using a real play context here
         play_context = PlayContext()
@@ -121,7 +144,7 @@ class TestActionBase(unittest.TestCase):
             connection=mock_connection,
             play_context=play_context,
             loader=fake_loader,
-            templar=None,
+            templar=mock_templar,
             shared_loader_obj=mock_shared_obj_loader,
         )
 
@@ -500,31 +523,43 @@ class TestActionBase(unittest.TestCase):
         fake_loader = MagicMock()
         fake_loader.get_basedir.return_value = os.getcwd()
         play_context = PlayContext()
-        action_base = DerivedActionBase(None, None, play_context, fake_loader, None, None)
-        action_base._connection = MagicMock(exec_command=MagicMock(return_value=(0, '', '')))
-        action_base._connection._shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
 
-        play_context.become = True
-        play_context.become_user = play_context.remote_user = 'root'
-        play_context.make_become_cmd = MagicMock(return_value='CMD')
+        action_base = DerivedActionBase(None, None, play_context, fake_loader, None, None)
+        action_base.get_become_option = MagicMock(return_value='root')
+        action_base._get_remote_user = MagicMock(return_value='root')
+
+        action_base._connection = MagicMock(exec_command=MagicMock(return_value=(0, '', '')))
+
+        action_base._connection._shell = shell = MagicMock(append_command=MagicMock(return_value=('JOINED CMD')))
+
+        action_base._connection.become = become = MagicMock()
+        become.build_become_command.return_value = 'foo'
 
         action_base._low_level_execute_command('ECHO', sudoable=True)
-        play_context.make_become_cmd.assert_not_called()
+        become.build_become_command.assert_not_called()
 
-        play_context.remote_user = 'apo'
+        action_base._get_remote_user.return_value = 'apo'
         action_base._low_level_execute_command('ECHO', sudoable=True, executable='/bin/csh')
-        play_context.make_become_cmd.assert_called_once_with("ECHO", executable='/bin/csh')
+        become.build_become_command.assert_called_once_with("ECHO", shell)
 
-        play_context.make_become_cmd.reset_mock()
+        become.build_become_command.reset_mock()
 
-        become_allow_same_user = C.BECOME_ALLOW_SAME_USER
-        C.BECOME_ALLOW_SAME_USER = True
-        try:
-            play_context.remote_user = 'root'
+        with patch.object(C, 'BECOME_ALLOW_SAME_USER', new=True):
+            action_base._get_remote_user.return_value = 'root'
             action_base._low_level_execute_command('ECHO SAME', sudoable=True)
-            play_context.make_become_cmd.assert_called_once_with("ECHO SAME", executable=None)
-        finally:
-            C.BECOME_ALLOW_SAME_USER = become_allow_same_user
+            become.build_become_command.assert_called_once_with("ECHO SAME", shell)
+
+    def test__remote_expand_user_relative_pathing(self):
+        action_base = _action_base()
+        action_base._play_context.remote_addr = 'bar'
+        action_base._low_level_execute_command = MagicMock(return_value={'stdout': b'../home/user'})
+        action_base._connection._shell.join_path.return_value = '../home/user/foo'
+        with self.assertRaises(AnsibleError) as cm:
+            action_base._remote_expand_user('~/foo')
+        self.assertEqual(
+            cm.exception.message,
+            "'bar' returned an invalid relative home directory path containing '..'"
+        )
 
 
 class TestActionBaseCleanReturnedData(unittest.TestCase):
@@ -577,27 +612,8 @@ class TestActionBaseCleanReturnedData(unittest.TestCase):
 
 class TestActionBaseParseReturnedData(unittest.TestCase):
 
-    def _action_base(self):
-        fake_loader = DictDataLoader({
-        })
-        mock_module_loader = MagicMock()
-        mock_shared_loader_obj = MagicMock()
-        mock_shared_loader_obj.module_loader = mock_module_loader
-        mock_connection_loader = MagicMock()
-
-        mock_shared_loader_obj.connection_loader = mock_connection_loader
-        mock_connection = MagicMock()
-
-        action_base = DerivedActionBase(task=None,
-                                        connection=mock_connection,
-                                        play_context=None,
-                                        loader=fake_loader,
-                                        templar=None,
-                                        shared_loader_obj=mock_shared_loader_obj)
-        return action_base
-
     def test_fail_no_json(self):
-        action_base = self._action_base()
+        action_base = _action_base()
         rc = 0
         stdout = 'foo\nbar\n'
         err = 'oopsy'
@@ -611,7 +627,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         self.assertEqual(res['module_stderr'], err)
 
     def test_json_empty(self):
-        action_base = self._action_base()
+        action_base = _action_base()
         rc = 0
         stdout = '{}\n'
         err = ''
@@ -625,7 +641,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         self.assertFalse(res)
 
     def test_json_facts(self):
-        action_base = self._action_base()
+        action_base = _action_base()
         rc = 0
         stdout = '{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"}}\n'
         err = ''
@@ -641,7 +657,7 @@ class TestActionBaseParseReturnedData(unittest.TestCase):
         # self.assertIsInstance(res['ansible_facts'], AnsibleUnsafe)
 
     def test_json_facts_add_host(self):
-        action_base = self._action_base()
+        action_base = _action_base()
         rc = 0
         stdout = '''{"ansible_facts": {"foo": "bar", "ansible_blip": "blip_value"},
         "add_host": {"host_vars": {"some_key": ["whatever the add_host object is"]}

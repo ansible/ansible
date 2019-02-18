@@ -20,12 +20,15 @@ from __future__ import absolute_import, division, print_function
 import copy
 import json
 import os
+import traceback
 
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.dict_transformations import recursive_diff
 from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils._text import to_native
 
+K8S_IMP_ERR = None
 try:
     import kubernetes
     import openshift
@@ -36,11 +39,14 @@ try:
 except ImportError as e:
     HAS_K8S_MODULE_HELPER = False
     k8s_import_exception = e
+    K8S_IMP_ERR = traceback.format_exc()
 
+YAML_IMP_ERR = None
 try:
     import yaml
     HAS_YAML = True
 except ImportError:
+    YAML_IMP_ERR = traceback.format_exc()
     HAS_YAML = False
 
 try:
@@ -142,6 +148,8 @@ class K8sAnsibleMixin(object):
             if auth_params.get(arg) is None:
                 env_value = os.getenv('K8S_AUTH_{0}'.format(arg.upper()), None)
                 if env_value is not None:
+                    if AUTH_ARG_SPEC[arg].get('type') == 'bool':
+                        env_value = env_value.lower() not in ['0', 'false', 'no']
                     auth[arg] = env_value
 
         def auth_set(*names):
@@ -244,11 +252,12 @@ class KubernetesAnsibleModule(AnsibleModule, K8sAnsibleMixin):
         AnsibleModule.__init__(self, *args, **kwargs)
 
         if not HAS_K8S_MODULE_HELPER:
-            self.fail_json(msg="This module requires the OpenShift Python client. Try `pip install openshift`", error=str(k8s_import_exception))
+            self.fail_json(msg=missing_required_lib('openshift'), exception=K8S_IMP_ERR,
+                           error=to_native(k8s_import_exception))
         self.openshift_version = openshift.__version__
 
         if not HAS_YAML:
-            self.fail_json(msg="This module requires PyYAML. Try `pip install PyYAML`")
+            self.fail_json(msg=missing_required_lib("PyYAML"), exception=YAML_IMP_ERR)
 
     def execute_module(self):
         raise NotImplementedError()

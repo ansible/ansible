@@ -27,7 +27,7 @@ Connections Available
 +---------------------------+-----------------------------------------------+
 | | **Enable Mode**         | | supported - use ``ansible_become: yes``     |
 | | (Privilege Escalation)  | | with ``ansible_become_method: enable``      |
-| |                         | | and ``ansible_become_pass:``                |
+| |                         | | and ``ansible_become_password:``            |
 +---------------------------+-----------------------------------------------+
 | **Returned Data Format**  | ``stdout[0].``                                |
 +---------------------------+-----------------------------------------------+
@@ -45,14 +45,14 @@ Example CLI ``group_vars/dellos10.yml``
    ansible_connection: network_cli
    ansible_network_os: dellos10
    ansible_user: myuser
-   ansible_ssh_pass: !vault...
+   ansible_password: !vault...
    ansible_become: yes
    ansible_become_method: enable
-   ansible_become_pass: !vault...
+   ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
-- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_ssh_pass`` configuration.
+- If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration.
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 

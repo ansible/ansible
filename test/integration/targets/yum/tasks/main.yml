@@ -71,3 +71,7 @@
     - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int > 6)
 
 - include: 'proxy.yml'
+
+- include: 'check_mode_consistency.yml'
+  when:
+    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int == 7)

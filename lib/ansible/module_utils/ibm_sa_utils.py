@@ -6,13 +6,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import traceback
+
 from functools import wraps
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import missing_required_lib
 
 PYXCLI_INSTALLED = True
+PYXCLI_IMP_ERR = None
 try:
     from pyxcli import client, errors
 except ImportError:
+    PYXCLI_IMP_ERR = traceback.format_exc()
     PYXCLI_INSTALLED = False
 
 AVAILABLE_PYXCLI_FIELDS = ['pool', 'size', 'snapshot_size',
@@ -83,6 +88,5 @@ def build_pyxcli_command(fields):
 
 def is_pyxcli_installed(module):
     if not PYXCLI_INSTALLED:
-        module.fail_json(
-            msg='pyxcli is required, use \'pip install pyxcli\' '
-            'in order to install it.')
+        module.fail_json(msg=missing_required_lib('pyxcli'),
+                         exception=PYXCLI_IMP_ERR)

@@ -117,7 +117,7 @@ Errors
   322       argument is listed in the argument_spec, but not documented in the module
   323       argument is listed in DOCUMENTATION.options, but not accepted by the module
   324       Value for "default" from the argument_spec does not match the documentation
-  325       argument_spec defines type="bool" but documentation does not
+  325       argument_spec defines type different than documentation does
   326       Value for "choices" from the argument_spec does not match the documentation
   327       Default value from the documentation is not compatible with type defined in the argument_spec
   328       Choices value from the documentation is not compatible with type defined in the argument_spec
@@ -127,6 +127,7 @@ Errors
   332       ``AnsibleModule`` schema validation error
   333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
   334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
+  335       argument_spec implies type="str" but documentation defines it as different data type
 
   ..
 ---------   -------------------

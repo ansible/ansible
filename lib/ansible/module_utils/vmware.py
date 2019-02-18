@@ -11,25 +11,30 @@ import os
 import re
 import ssl
 import time
+import traceback
 from random import randint
 
+REQUESTS_IMP_ERR = None
 try:
     # requests is required for exception handling of the ConnectionError
     import requests
     HAS_REQUESTS = True
 except ImportError:
+    REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
+PYVMOMI_IMP_ERR = None
 try:
     from pyVim import connect
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
 except ImportError:
+    PYVMOMI_IMP_ERR = traceback.format_exc()
     HAS_PYVMOMI = False
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 
 class TaskError(Exception):
@@ -314,11 +319,12 @@ def gather_vm_facts(content, vm):
             facts['hw_files'] = [files.vmPathName]
             for item in layout.snapshot:
                 for snap in item.snapshotFile:
-                    facts['hw_files'].append(files.snapshotDirectory + snap)
+                    if 'vmsn' in snap:
+                        facts['hw_files'].append(snap)
             for item in layout.configFile:
-                facts['hw_files'].append(os.path.dirname(files.vmPathName) + '/' + item)
+                facts['hw_files'].append(os.path.join(os.path.dirname(files.vmPathName), item))
             for item in vm.layout.logFile:
-                facts['hw_files'].append(files.logDirectory + item)
+                facts['hw_files'].append(os.path.join(files.logDirectory, item))
             for item in vm.layout.disk:
                 for disk in item.diskFile:
                     facts['hw_files'].append(disk)
@@ -775,11 +781,12 @@ class PyVmomi(object):
         Constructor
         """
         if not HAS_REQUESTS:
-            module.fail_json(msg="Unable to find 'requests' Python library which is required."
-                                 " Please install using 'pip install requests'")
+            module.fail_json(msg=missing_required_lib('requests'),
+                             exception=REQUESTS_IMP_ERR)
 
         if not HAS_PYVMOMI:
-            module.fail_json(msg='PyVmomi Python module required. Install using "pip install PyVmomi"')
+            module.fail_json(msg=missing_required_lib('PyVmomi'),
+                             exception=PYVMOMI_IMP_ERR)
 
         self.module = module
         self.params = module.params

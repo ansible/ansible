@@ -3,40 +3,45 @@
 service_expected_output:
   args: [sleep, '1800']
   configs: null
-  constraints: []
-  container_labels: {}
+  constraints: null
+  container_labels: null
   command: null
-  dns: []
-  dns_options: []
-  dns_search: []
+  dns: null
+  dns_options: null
+  dns_search: null
   endpoint_mode: vip
-  env: []
+  env: null
   force_update: null
-  hostname: ''
+  groups: null
+  healthcheck: null
+  healthcheck_disabled: null
+  hostname: null
   image: busybox
-  labels: {}
-  limit_cpu: 0.0
-  limit_memory: 0
-  log_driver: json-file
-  log_driver_options: {}
+  labels: null
+  limit_cpu: null
+  limit_memory: null
+  log_driver: null
+  log_driver_options: null
   mode: global
-  mounts: []
-  networks: []
+  mounts: null
+  networks: null
+  stop_signal: null
   placement_preferences: null
   publish:
     - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
     - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
   replicas: null
-  reserve_cpu: 0.0
-  reserve_memory: 0
-  restart_policy: none
-  restart_policy_attempts: 0
-  restart_policy_delay: 0
-  restart_policy_window: 0
-  tty: false
+  reserve_cpu: null
+  reserve_memory: null
+  restart_policy: null
+  restart_policy_attempts: null
+  restart_policy_delay: null
+  restart_policy_window: null
+  tty: null
   update_delay: 10
-  update_failure_action: continue
-  update_max_failure_ratio: 0.0
-  update_monitor: 5000000000
+  update_failure_action: null
+  update_max_failure_ratio: null
+  update_monitor: null
   update_order: null
   update_parallelism: 1
+  working_dir: null

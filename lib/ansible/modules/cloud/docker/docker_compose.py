@@ -140,22 +140,14 @@ options:
     default: 10
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.8.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "docker-compose >= 1.7.0"
-    - "Docker API >= 1.20"
-    - "PyYAML >= 3.11"
+  - "docker-py >= 1.8.0"
+  - "docker-compose >= 1.7.0"
+  - "Docker API >= 1.20"
+  - "PyYAML >= 3.11"
 '''
 
 EXAMPLES = '''
@@ -301,8 +293,12 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-service:
-  description: Name of the service.
+service_facts:
+  description:
+  - A dictionary mapping the service's name to a dictionary of containers.
+  - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+    are also accessible directly. The service's name is the variable with which the container dictionary
+    can be accessed.
   returned: success
   type: complex
   contains:
@@ -468,7 +464,7 @@ except ImportError as exc:
     HAS_COMPOSE_EXC = str(exc)
     DEFAULT_TIMEOUT = 10
 
-from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass
 
 
 AUTH_PARAM_MAPPING = {
@@ -681,7 +677,7 @@ class ContainerManager(DockerBaseClass):
         start_deps = self.dependencies
         service_names = self.services
         detached = True
-        result = dict(changed=False, actions=[], ansible_facts=dict())
+        result = dict(changed=False, actions=[], ansible_facts=dict(), service_facts=dict())
 
         up_options = {
             u'--no-recreate': False,
@@ -745,7 +741,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
                                                msg_format="Error starting project %s")
-                self.client.module.fail_json(**fail_reason)
+                self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
 
@@ -765,7 +761,9 @@ class ContainerManager(DockerBaseClass):
             result['actions'] += scale_output['actions']
 
         for service in self.project.services:
-            result['ansible_facts'][service.name] = dict()
+            service_facts = dict()
+            result['ansible_facts'][service.name] = service_facts
+            result['service_facts'][service.name] = service_facts
             for container in service.containers(stopped=True):
                 inspection = container.inspect()
                 # pare down the inspection data to the most useful bits
@@ -817,7 +815,7 @@ class ContainerManager(DockerBaseClass):
                         if networks[key].get('MacAddress', None) is not None:
                             facts['networks'][key]['macAddress'] = networks[key]['MacAddress']
 
-                result['ansible_facts'][service.name][container.name] = facts
+                service_facts[container.name] = facts
 
         return result
 
@@ -958,7 +956,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
                                                msg_format="Error stopping project %s")
-                self.client.module.fail_json(**fail_reason)
+                self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result
@@ -993,7 +991,7 @@ class ContainerManager(DockerBaseClass):
             except Exception as exc:
                 fail_reason = get_failure_info(exc, out_redir_name, err_redir_name,
                                                msg_format="Error restarting project %s")
-                self.client.module.fail_json(**fail_reason)
+                self.client.fail(**fail_reason)
             else:
                 cleanup_redirection_tempfiles(out_redir_name, err_redir_name)
         return result

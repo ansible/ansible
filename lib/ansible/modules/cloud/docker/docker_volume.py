@@ -51,8 +51,27 @@ options:
       - With state C(present) causes the volume to be deleted and recreated if the volume already
         exist and the driver, driver options or labels differ. This will cause any data in the existing
         volume to be lost.
+      - Deprecated. Will be removed in Ansible 2.12. Set I(recreate) to C(options-changed) instead
+        for the same behavior of setting I(force) to C(yes).
     type: bool
-    default: 'no'
+    default: no
+
+  recreate:
+    version_added: "2.8"
+    description:
+      - Controls when a volume will be recreated when I(state) is C(present). Please
+        note that recreating an existing volume will cause I(any data in the existing volume
+        to be lost!) The volume will be deleted and a new volume with the same name will be
+        created.
+      - The value C(always) forces the volume to be always recreated.
+      - The value C(never) makes sure the volume will not be recreated.
+      - The value C(options-changed) makes sure the volume will be recreated if the volume
+        already exist and the driver, driver options or labels differ.
+    choices:
+    - always
+    - never
+    - options-changed
+    default: never
 
   state:
     description:
@@ -64,23 +83,15 @@ options:
       - present
 
 extends_documentation_fragment:
-    - docker
+  - docker
+  - docker.docker_py_1_documentation
 
 author:
-    - Alex Grönholm (@agronholm)
+  - Alex Grönholm (@agronholm)
 
 requirements:
-    - "python >= 2.6"
-    - "docker-py >= 1.10.0"
-    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
-       module has been superseded by L(docker,https://pypi.org/project/docker/)
-       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
-       install the C(docker) Python module. Note that both modules should I(not)
-       be installed at the same time. Also note that when both modules are installed
-       and one of them is uninstalled, the other might no longer function and a
-       reinstall of it is required."
-    - "The docker server >= 1.9.0"
+  - "docker-py >= 1.10.0"
+  - "The docker server >= 1.9.0"
 '''
 
 EXAMPLES = '''
@@ -102,8 +113,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-facts:
-    description: Volume inspection results for the affected volume.
+docker_volume:
+    description:
+    - Volume inspection results for the affected volume.
+    - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+      are also accessible directly.
     returned: success
     type: dict
     sample: {}
@@ -112,10 +126,10 @@ facts:
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker_common
+    # missing docker-py handled in ansible.module_utils.docker.common
     pass
 
-from ansible.module_utils.docker_common import (
+from ansible.module_utils.docker.common import (
     DockerBaseClass,
     AnsibleDockerClient,
     DifferenceTracker,
@@ -133,10 +147,21 @@ class TaskParameters(DockerBaseClass):
         self.driver_options = None
         self.labels = None
         self.force = None
+        self.recreate = None
         self.debug = None
 
         for key, value in iteritems(client.module.params):
             setattr(self, key, value)
+
+        if self.force is not None:
+            if self.recreate != 'never':
+                client.fail('Cannot use the deprecated "force" '
+                            'option when "recreate" is set. Please stop '
+                            'using the force option.')
+            client.module.warn('The "force" option of docker_volume has been deprecated '
+                               'in Ansible 2.8. Please use the "recreate" '
+                               'option, which provides the same functionality as "force".')
+            self.recreate = 'options-changed' if self.force else 'never'
 
 
 class DockerVolumeManager(object):
@@ -249,7 +274,7 @@ class DockerVolumeManager(object):
             differences = self.has_different_config()
 
         self.diff_tracker.add('exists', parameter=True, active=self.existing_volume is not None)
-        if not differences.empty and self.parameters.force:
+        if (not differences.empty and self.parameters.recreate == 'options-changed') or self.parameters.recreate == 'always':
             self.remove_volume()
             self.existing_volume = None
 
@@ -262,7 +287,9 @@ class DockerVolumeManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'docker_volume': self.get_existing_volume()}
+        volume_facts = self.get_existing_volume()
+        self.results['ansible_facts'] = {u'docker_volume': volume_facts}
+        self.results['docker_volume'] = volume_facts
 
     def absent(self):
         self.diff_tracker.add('exists', parameter=False, active=self.existing_volume is not None)
@@ -276,7 +303,8 @@ def main():
         driver=dict(type='str', default='local'),
         driver_options=dict(type='dict', default={}),
         labels=dict(type='dict'),
-        force=dict(type='bool', default=False),
+        force=dict(type='bool', removed_in_version='2.12'),
+        recreate=dict(type='str', default='never', choices=['always', 'never', 'options-changed']),
         debug=dict(type='bool', default=False)
     )
 

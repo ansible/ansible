@@ -16,11 +16,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = """
+---
+cliconf: cnos
+short_description: Use cnos cliconf to run command on Lenovo CNOS platform
+description:
+  - This cnos plugin provides low level abstraction apis for
+    sending and receiving CLI commands from Lenovo CNOS network devices.
+version_added: 2.6
+"""
+
 import re
 import json
 
 from itertools import chain
-
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
@@ -76,12 +86,34 @@ class Cliconf(CliconfBase):
         return self.send_command(cmd)
 
     @enable_mode
-    def edit_config(self, command):
-        for cmd in chain(['configure terminal'], to_list(command), ['end']):
-            self.send_command(cmd)
+    def edit_config(self, candidate=None, commit=True,
+                    replace=None, comment=None):
+        resp = {}
+        results = []
+        requests = []
+        if commit:
+            self.send_command('configure terminal')
+            for line in to_list(candidate):
+                if not isinstance(line, Mapping):
+                    line = {'command': line}
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+                cmd = line['command']
+                if cmd != 'end' and cmd[0] != '!':
+                    results.append(self.send_command(**line))
+                    requests.append(cmd)
+
+            self.send_command('end')
+        else:
+            raise ValueError('check mode is not supported')
+
+        resp['request'] = requests
+        resp['response'] = results
+        return resp
+
+    def get(self, command, prompt=None, answer=None, sendonly=False,
+            check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer,
+                                 sendonly=sendonly, check_all=check_all)
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()

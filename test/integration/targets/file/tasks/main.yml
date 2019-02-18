@@ -498,6 +498,9 @@
     stat: path=/tmp/write_utime
     register: previous_time
 
+  - name: pause for 1 second to ensure the next touch is newer
+    pause: seconds=1
+
   - name: touch file as nobody
     file: dest=/tmp/write_utime state=touch
     become: True

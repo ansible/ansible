@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
+# Copyright: (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -67,7 +67,7 @@ try:
 except ImportError:
     HAS_CAPACITY = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.infinibox import HAS_INFINISDK, api_wrapper, get_system, infinibox_argument_spec
 
 
@@ -136,7 +136,7 @@ def main():
     module = AnsibleModule(argument_spec, supports_check_mode=True)
 
     if not HAS_INFINISDK:
-        module.fail_json(msg='infinisdk is required for this module')
+        module.fail_json(msg=missing_required_lib('infinisdk'))
 
     if module.params['size']:
         try:
@@ -150,7 +150,7 @@ def main():
     volume = get_volume(module, system)
 
     if pool is None:
-        module.fail_json(msg='Pool {} not found'.format(module.params['pool']))
+        module.fail_json(msg='Pool {0} not found'.format(module.params['pool']))
 
     if state == 'present' and not volume:
         create_volume(module, system)

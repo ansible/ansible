@@ -1,0 +1,36 @@
+Interface eth0 is up, line protocol is up
+  Link ups:       0    last: (never)
+  Link downs:     0    last: (never)
+  vrf: Default-IP-Routing-Table
+  index 2 metric 0 mtu 1450 speed 0
+  flags: <UP,BROADCAST,RUNNING,MULTICAST>
+  Type: Ethernet
+  HWaddr: fa:16:3e:d4:32:b2
+  bandwidth 4048 Mbps
+  inet 192.168.1.8/24 broadcast 192.168.1.255
+  inet6 fe80::f816:3eff:fed4:32b2/64
+  Interface Type Other
+Interface eth1 is up, line protocol is up
+  Link ups:       0    last: (never)
+  Link downs:     0    last: (never)
+  vrf: Default-IP-Routing-Table
+  Description: Secondary Interface
+  index 3 metric 0 mtu 1500 speed 0
+  flags: <UP,BROADCAST,RUNNING,MULTICAST>
+  Type: Ethernet
+  HWaddr: fa:16:3e:95:88:f7
+  inet 192.168.1.21/24 broadcast 192.168.1.255
+  inet 192.168.1.19/24 broadcast 192.168.1.255 secondary
+  inet 192.168.1.18/24 broadcast 192.168.1.255 secondary
+  inet6 fe80::f816:3eff:fe95:88f7/64
+  inet6 3ffe:506::1/48
+  inet6 3ffe:504::1/48
+  Interface Type Other
+Interface lo is up, line protocol is up
+  Link ups:       0    last: (never)
+  Link downs:     0    last: (never)
+  vrf: Default-IP-Routing-Table
+  index 1 metric 0 mtu 65536 speed 0
+  flags: <UP,LOOPBACK,RUNNING>
+  Type: Loopback
+  Interface Type Other

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Simon Dodsley (simon@purestorage.com)
+# Copyright: (c) 2017, Simon Dodsley (simon@purestorage.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -37,7 +37,7 @@ options:
     description:
     - Defines the host connection protocol for volumes.
     default: iscsi
-    choices: [ fc, iscsi, nvmef, mixed ]
+    choices: [ fc, iscsi, nvme, mixed ]
   wwns:
     description:
     - List of wwns of the host if protocol is fc or mixed.
@@ -46,7 +46,7 @@ options:
     - List of IQNs of the host if protocol is iscsi or mixed.
   nqn:
     description:
-    - List of NQNs of the host if protocol is nvmef or mixed.
+    - List of NQNs of the host if protocol is nvme or mixed.
     version_added: '2.8'
   volume:
     description:
@@ -102,10 +102,10 @@ EXAMPLES = r'''
     fa_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Make host bar with NVMeF ports
+- name: Make host bar with NVMe ports
   purefa_host:
     host: bar
-    protocol: nvmef
+    protocol: nvme
     nqn:
     - nqn.2014-08.com.vendor:nvme:nvm-subsystem-sn-d78432
     fa_url: 10.10.10.2
@@ -142,7 +142,7 @@ from ansible.module_utils.pure import get_system, purefa_argument_spec
 
 
 AC_REQUIRED_API_VERSION = '1.14'
-NVMEF_API_VERSION = '1.16'
+NVME_API_VERSION = '1.16'
 
 
 try:
@@ -154,13 +154,13 @@ except ImportError:
 
 def _set_host_initiators(module, array):
     """Set host initiators."""
-    if module.params['protocol'] in ['nvmef', 'mixed']:
+    if module.params['protocol'] in ['nvme', 'mixed']:
         if module.params['nqn']:
             try:
                 array.set_host(module.params['host'],
                                nqnlist=module.params['nqn'])
             except Exception:
-                module.fail_json(msg='Setting of NVMeF NQN failed.')
+                module.fail_json(msg='Setting of NVMe NQN failed.')
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
             try:
@@ -178,14 +178,14 @@ def _set_host_initiators(module, array):
 
 
 def _update_host_initiators(module, array):
-    """Change host initiator if iscsi or nvmef or add new FC WWNs"""
-    if module.params['protocol'] in ['nvmef', 'mixed']:
+    """Change host initiator if iscsi or nvme or add new FC WWNs"""
+    if module.params['protocol'] in ['nvme', 'mixed']:
         if module.params['nqn']:
             try:
                 array.set_host(module.params['host'],
                                nqnlist=module.params['nqn'])
             except Exception:
-                module.fail_json(msg='Change of NVMeF NQN failed.')
+                module.fail_json(msg='Change of NVMe NQN failed.')
     if module.params['protocol'] in ['iscsi', 'mixed']:
         if module.params['iqn']:
             try:
@@ -313,7 +313,7 @@ def main():
     argument_spec.update(dict(
         host=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['absent', 'present']),
-        protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi', 'nvmef', 'mixed']),
+        protocol=dict(type='str', default='iscsi', choices=['fc', 'iscsi', 'nvme', 'mixed']),
         nqn=dict(type='list'),
         iqn=dict(type='list'),
         wwns=dict(type='list'),
@@ -331,10 +331,9 @@ def main():
 
     array = get_system(module)
     api_version = array._list_available_rest_versions()
-    if module.params['nqn'] is not None and NVMEF_API_VERSION not in api_version:
-        module.fail_json(msg='NVMeF protocol not supported. Please upgrade your array.')
+    if module.params['nqn'] is not None and NVME_API_VERSION not in api_version:
+        module.fail_json(msg='NVMe protocol not supported. Please upgrade your array.')
     state = module.params['state']
-    protocol = module.params['protocol']
     host = get_host(module, array)
     if module.params['lun'] and not 1 <= module.params['lun'] <= 4095:
         module.fail_json(msg='LUN ID of {0} is out of range (1 to 4095)'.format(module.params['lun']))
@@ -342,7 +341,7 @@ def main():
         try:
             array.get_volume(module.params['volume'])
         except Exception:
-            module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
+            module.fail_json(msg='Volume {0} not found'.format(module.params['volume']))
 
     if host is None and state == 'present':
         make_host(module, array)

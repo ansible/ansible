@@ -140,7 +140,7 @@ except ImportError:
 else:
     pymongo_found = True
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils._text import to_native
@@ -190,7 +190,7 @@ def shard_find(client, shard):
     else:
         s = shard
     for shard in client["config"].shards.find({"_id": s}):
-                return shard
+        return shard
     return False
 
 
@@ -243,7 +243,7 @@ def main():
                            supports_check_mode=True)
 
     if not pymongo_found:
-        module.fail_json(msg='the python pymongo module is required')
+        module.fail_json(msg=missing_required_lib('pymongo'))
 
     login_user = module.params['login_user']
     login_password = module.params['login_password']

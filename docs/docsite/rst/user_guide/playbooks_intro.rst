@@ -1,6 +1,9 @@
 Intro to Playbooks
 ==================
 
+.. contents::
+   :local:
+
 .. _about_playbooks:
 
 About Playbooks
@@ -37,6 +40,10 @@ Playbook Language Example
 Playbooks are expressed in YAML format (see :ref:`yaml_syntax`) and have a minimum of syntax, which intentionally
 tries to not be a programming language or script, but rather a model of a configuration or a process.
 
+.. note::
+   Some editors have add-ons that can help you write clean YAML syntax in your playbooks. See :ref:`other_tools_and_programs` for details.
+
+
 Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
@@ -52,7 +59,9 @@ server group, then more commands back on the webservers group, etc.
 to do different things.  It's not as if you were just defining one particular state or model, and you
 can run different plays at different times.
 
-For starters, here's a playbook that contains just one play::
+.. _apache-playbook:
+
+For starters, here's a playbook, ``verify-apache.yml`` that contains just one play::
 
     ---
     - hosts: webservers
@@ -189,10 +198,10 @@ You can also use other privilege escalation methods, like su::
       become: yes
       become_method: su
 
-If you need to specify a password to sudo, run ``ansible-playbook`` with ``--ask-become-pass`` or
-when using the old sudo syntax ``--ask-sudo-pass`` (``-K``).  If you run a become playbook and the
-playbook seems to hang, it's probably stuck at the privilege escalation prompt.
-Just `Control-C` to kill it and run it again adding the appropriate password.
+If you need to specify a password for sudo, run ``ansible-playbook`` with ``--ask-become-pass`` or ``-K``.
+If you run a playbook utilizing ``become`` and the playbook seems to hang, it's probably stuck at the privilege
+escalation prompt and can be stopped using `Control-C`, allowing you to re-execute the playbook adding the
+appropriate password.
 
 .. important::
 
@@ -469,29 +478,47 @@ Run ``ansible-pull --help`` for details.
 
 There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ``ansible-pull`` via a crontab from push mode.
 
-.. _tips_and_tricks:
+.. _linting_playbooks:
 
-Tips and Tricks
-```````````````
+Linting playbooks
+`````````````````
 
-To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
-playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+You can use `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_ to run a detail check of your playbooks before you execute them.
 
-Look at the bottom of the playbook execution for a summary of the nodes that were targeted
-and how they performed.   General failures and fatal "unreachable" communication attempts are
-kept separate in the counts.
+For example, if you run ``ansible-lint`` on the :ref:`verify-apache.yml playbook <apache-playbook>` introduced earlier in this section, you'll get the following results:
 
-If you ever want to see detailed output from successful modules as well as unsuccessful ones,
-use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
+.. code-block:: bash
+
+    $ ansible-lint veryify-apache.yml
+    [403] Package installs should not use latest
+    verify-apache.yml:8
+    Task/Handler: ensure apache is at the latest version
+
+The `ansible-lint default rules <https://docs.ansible.com/ansible-lint/rules/default_rules.html>`_ page describes each error. For ``[403]``, the recommended fix is to change ``state: latest`` to ``state: present`` in the playbook.
 
 
-To see what hosts would be affected by a playbook before you run it, you
-can do this::
+Other playbook verification options
+```````````````````````````````````
+See :ref:`validate-playbook-tools` for a detailed list of tools you can use to verify your playbooks. Here are some others that you should consider:
 
-    ansible-playbook playbook.yml --list-hosts
+* To check the syntax of a playbook, use ``ansible-playbook`` with the ``--syntax-check`` flag. This will run the
+  playbook file through the parser to ensure its included files, roles, etc. have no syntax problems.
+
+* Look at the bottom of the playbook execution for a summary of the nodes that were targeted
+  and how they performed. General failures and fatal "unreachable" communication attempts are kept separate in the counts.
+
+* If you ever want to see detailed output from successful modules as well as unsuccessful ones,
+  use the ``--verbose`` flag.  This is available in Ansible 0.5 and later.
+
+* To see what hosts would be affected by a playbook before you run it, you
+  can do this::
+
+      ansible-playbook playbook.yml --list-hosts
 
 .. seealso::
 
+   `ansible-lint <https://docs.ansible.com/ansible-lint/index.html>`_
+       Learn how to test Ansible Playbooks syntax
    :ref:`yaml_syntax`
        Learn about YAML syntax
    :ref:`playbooks_best_practices`

@@ -9,33 +9,78 @@
   win_shell: '$PSVersionTable.PSVersion.Major'
   register: powershell_major_version
 
-- name: Perform integration tests for Powershell 5+
-  when: powershell_major_version.stdout | int >= 5
+- name: update PackageManagement and PowerShellGet when PowerShell < 5.0
+  when: powershell_major_version.stdout | int < 5
   block:
+    - name: download PackageManagement
+      win_get_url:
+        url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_psmodule/PackageManagement_x64.msi
+        dest: '{{ win_output_dir }}\PackageManagement_x64.msi'
 
-    - name: update NuGet version
-      win_shell: |
-        $nuget_exists = (Get-PackageProvider | Where-Object { $_.Name -eq 'Nuget' } | Measure-Object).Count -eq 1
+    - name: install PackageManagement
+      win_package:
+        path: '{{ win_output_dir }}\PackageManagement_x64.msi'
+        state: present
 
-        if ( $nuget_exists ) {
-          $nuget_outdated = (Get-PackageProvider -Name NuGet -ErrorAction Ignore).Version -lt [Version]"2.8.5.201"
-        }
+    - name: create the required folder
+      win_file:
+        path: 'C:\Program Files\PackageManagement\ProviderAssemblies'
+        state: directory
 
-        if ( -not $nuget_exists -or $nuget_outdated ) {
-          Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
-        }
+    - name: download nuget
+      win_get_url:
+        url: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/win_psmodule/nuget.exe
+        dest: 'C:\Program Files\PackageManagement\ProviderAssemblies\NuGet-anycpu.exe'
 
-    - name: ensure test repository is deleted
-      win_psrepository:
-        name: '{{ repository_name }}'
+    - name: update NuGet provider
+      win_shell: 'Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies'
+
+    - name: download and save the nevest version of the PackageManagement module from PowerShell Gallery
+      win_shell: 'Save-Module -Name PackageManagement, PowerShellGet -Path {{ win_output_dir }} -Force'
+
+    - name: unload PackageManagement and PowerShellGet modules
+      win_shell: 'Remove-Module -Name PackageManagement,PowerShellGet -Force -ErrorAction Ignore'
+      ignore_errors: yes
+
+    - name: get PSModulePath
+      win_shell: "$($Env:PSModulePath -Split ';')[0]"
+      register: psmodulepath
+
+    - name: remove older versions of the PackageManagement and PowerShellGet
+      win_file:
+        path: "{{ psmodulepath.stdout | trim }}\\{{ item }}"
         state: absent
+      with_items:
+        - PackageManagement
+        - PowerShellGet
 
-    - name: run all tests
-      include_tasks: tests.yml
+    - name: create required folder
+      win_file:
+        path:  "{{ psmodulepath.stdout | trim }}"
+        state: directory
 
-  always:
+    - name: update PowerShellGet and PackageManagement modules
+      win_shell: 'Copy-Item -Path {{ win_output_dir }}\{{ item }} -Destination {{ psmodulepath.stdout | trim }}\ -Recurse -Force'
+      with_items:
+        - PackageManagement
+        - PowerShellGet
 
-  - name: ensure test repository is deleted after tests run
-    win_psrepository:
-      name: '{{ repository_name }}'
-      state: absent
+- name: update NuGet version
+  when: powershell_major_version.stdout | int >= 5
+  win_shell: |
+    $nuget_exists = (Get-PackageProvider | Where-Object { $_.Name -eq 'Nuget' } | Measure-Object).Count -eq 1
+
+    if ( $nuget_exists ) {
+      $nuget_outdated = (Get-PackageProvider -Name NuGet -ErrorAction Ignore).Version -lt [Version]"2.8.5.201"
+    }
+
+    if ( -not $nuget_exists -or $nuget_outdated ) {
+      Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
+    }
+
+- name: unregister the repository
+  win_shell: 'Unregister-PSRepository {{ repository_name | quote }} -ErrorAction Ignore'
+  changed_when: false
+
+- name: run all tests
+  include_tasks: tests.yml
