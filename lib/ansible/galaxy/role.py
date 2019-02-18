@@ -115,16 +115,18 @@ class GalaxyRole(object):
         """
         if self._install_info is None:
 
-            info_path = os.path.join(self.path, self.META_INSTALL)
-            if os.path.isfile(info_path):
-                try:
-                    f = open(info_path, 'r')
-                    self._install_info = yaml.safe_load(f)
-                except Exception:
-                    display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
-                    return False
-                finally:
-                    f.close()
+            for path in self.paths:
+                info_path = os.path.join(path, self.META_INSTALL)
+                if os.path.isfile(info_path):
+                    try:
+                        f = open(info_path, 'r')
+                        self._install_info = yaml.safe_load(f)
+                        self.path = path
+                    except Exception:
+                        display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
+                        return False
+                    finally:
+                        f.close()
         return self._install_info
 
     def _write_galaxy_install_info(self):
