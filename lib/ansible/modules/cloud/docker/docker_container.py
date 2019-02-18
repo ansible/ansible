@@ -29,7 +29,7 @@ options:
     description:
       - enable auto-removal of the container on daemon side when the container's process exits
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.4"
   blkio_weight:
     description:
@@ -42,22 +42,21 @@ options:
   cap_drop:
     description:
       - List of capabilities to drop from the container.
-    version_added: "2.7"
     type: list
+    version_added: "2.7"
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.2"
   command:
     description:
       - Command to execute when the container starts.
         A command may be either a string or a list.
-        Prior to version 2.4, strings were split on commas.
+      - Prior to version 2.4, strings were split on commas.
     type: raw
   comparisons:
-    type: dict
     description:
       - Allows to specify how properties of existing containers are compared with
         module options to decide whether the container should be recreated / updated
@@ -76,6 +75,7 @@ options:
       - The wildcard option C(*) can be used to set one of the default values C(strict)
         or C(ignore) to I(all) comparisons.
       - See the examples for details.
+    type: dict
     version_added: "2.8"
   cpu_period:
     description:
@@ -102,7 +102,7 @@ options:
       - Enable detached mode to leave the container running in background.
         If disabled, the task will reflect the status of the container run (failed if the command failed).
     type: bool
-    default: true
+    default: yes
   devices:
     description:
       - "List of host device bindings to add to the container. Each binding is a mapping expressed
@@ -114,18 +114,18 @@ options:
     type: list
     suboptions:
       path:
-        type: str
-        required: true
         description:
         - Device path in the container.
-      rate:
         type: str
-        required: true
+        required: yes
+      rate:
         description:
         - "Device read limit. Format: <number>[<unit>]"
         - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
           C(T) (tebibyte), or C(P) (pebibyte)"
         - "Omitting the unit defaults to bytes."
+        type: str
+        required: yes
     version_added: "2.8"
   device_write_bps:
     description:
@@ -133,18 +133,18 @@ options:
     type: list
     suboptions:
       path:
-        type: str
-        required: true
         description:
         - Device path in the container.
-      rate:
         type: str
-        required: true
+        required: yes
+      rate:
         description:
         - "Device read limit. Format: <number>[<unit>]"
         - "Number is a positive integer. Unit can be one of C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
           C(T) (tebibyte), or C(P) (pebibyte)"
         - "Omitting the unit defaults to bytes."
+        type: str
+        required: yes
     version_added: "2.8"
   device_read_iops:
     description:
@@ -152,16 +152,16 @@ options:
     type: list
     suboptions:
       path:
-        type: str
-        required: true
         description:
         - Device path in the container.
+        type: str
+        required: yes
       rate:
-        type: int
-        required: true
         description:
         - "Device read limit."
         - "Must be a positive integer."
+        type: int
+        required: yes
     version_added: "2.8"
   device_write_iops:
     description:
@@ -169,16 +169,16 @@ options:
     type: list
     suboptions:
       path:
-        type: str
-        required: true
         description:
         - Device path in the container.
+        type: str
+        required: yes
       rate:
-        type: int
-        required: true
         description:
         - "Device read limit."
         - "Must be a positive integer."
+        type: int
+        required: yes
     version_added: "2.8"
   dns_opts:
     description:
@@ -195,19 +195,19 @@ options:
   domainname:
     description:
       - Container domainname.
-    version_added: "2.5"
     type: str
+    version_added: "2.5"
   env:
     description:
       - Dictionary of key,value pairs.
       - Values which might be parsed as numbers, booleans or other types by the YAML parser must be quoted (e.g. C("true")) in order to avoid data loss.
     type: dict
   env_file:
-    version_added: "2.2"
     description:
       - Path to a file, present on the target, containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
     type: path
+    version_added: "2.2"
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -223,15 +223,15 @@ options:
         listens on the specified network ports at runtime.
         If the port is already exposed using EXPOSE in a Dockerfile, it does not
         need to be exposed again.
+    type: list
     aliases:
       - exposed
       - expose
-    type: list
   force_kill:
     description:
       - Use the kill command when stopping a running container.
     type: bool
-    default: 'no'
+    default: no
     aliases:
       - forcekill
   groups:
@@ -239,19 +239,19 @@ options:
       - List of additional group names and/or IDs that the container process will run as.
     type: list
   healthcheck:
-    version_added: "2.8"
-    type: dict
     description:
       - 'Configure a check that is run to determine whether or not containers for this service are "healthy".
         See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
         for details on how healthchecks work.'
       - 'I(interval), I(timeout) and I(start_period) are specified as durations. They accept duration as a string in a format
         that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)'
+    type: dict
     suboptions:
       test:
         description:
           - Command to run to check health.
           - Must be either a string or a list. If it is a list, the first item must be one of C(NONE), C(CMD) or C(CMD-SHELL).
+        type: raw
       interval:
         description:
           - 'Time between running the check. (default: 30s)'
@@ -268,6 +268,7 @@ options:
         description:
           - 'Start period for the container to initialize before starting health-retries countdown. (default: 0s)'
         type: str
+    version_added: "2.8"
   hostname:
     description:
       - Container hostname.
@@ -280,7 +281,7 @@ options:
         recreated. Stop this behavior by setting C(ignore_image) to I(True).
       - I(Warning:) This option is ignored if C(image) or C(*) is used for the C(comparisons) option.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.2"
   image:
     description:
@@ -294,13 +295,13 @@ options:
       - Run an init inside the container that forwards signals and reaps processes.
         This option requires Docker API 1.25+.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.6"
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
     type: bool
-    default: 'no'
+    default: no
   ipc_mode:
     description:
       - Set the IPC mode for the container. Can be one of 'container:<name|id>' to reuse another
@@ -310,7 +311,7 @@ options:
     description:
       - Retain volumes associated with a removed container.
     type: bool
-    default: 'yes'
+    default: yes
   kill_signal:
     description:
       - Override default signal used to kill a running container.
@@ -335,15 +336,14 @@ options:
     description:
       - Specify the logging driver. Docker uses I(json-file) by default.
       - See L(here,https://docs.docker.com/config/containers/logging/configure/) for possible choices.
-    required: false
     type: str
   log_options:
     description:
       - Dictionary of options specific to the chosen log_driver. See https://docs.docker.com/engine/admin/logging/overview/
         for details.
+    type: dict
     aliases:
       - log_opt
-    type: dict
   mac_address:
     description:
       - Container MAC address (e.g. 92:d0:c6:0a:29:33)
@@ -354,8 +354,8 @@ options:
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
         C(T) (tebibyte), or C(P) (pebibyte)."
       - Omitting the unit defaults to bytes.
-    default: '0'
     type: str
+    default: '0'
   memory_reservation:
     description:
       - "Memory soft limit (format: C(<number>[<unit>])). Number is a positive integer.
@@ -379,8 +379,8 @@ options:
     description:
       - Assign a name to a new container or match an existing container.
       - When identifying an existing container name may be a name or a long or short container ID.
-    required: true
     type: str
+    required: yes
   network_mode:
     description:
       - Connect the container to a network. Choices are "bridge", "host", "none" or "container:<name|id>"
@@ -388,8 +388,8 @@ options:
   userns_mode:
     description:
       - Set the user namespace mode for the container. Currently, the only valid value is C(host).
-    version_added: "2.5"
     type: str
+    version_added: "2.5"
   networks:
     description:
       - List of networks the container belongs to.
@@ -398,31 +398,31 @@ options:
       - Note that as opposed to C(docker run ...), M(docker_container) does not remove the default
         network if C(networks) is specified. You need to explicity use C(purge_networks) to enforce
         the removal of the default network (and all other networks not explicitly mentioned in C(networks)).
-    version_added: "2.2"
     type: list
     suboptions:
       name:
-        type: str
-        required: true
         description:
           - The network's name.
-      ipv4_address:
         type: str
+        required: yes
+      ipv4_address:
         description:
           - The container's IPv4 address in this network.
-      ipv6_address:
         type: str
+      ipv6_address:
         description:
           - The container's IPv6 address in this network.
+        type: str
       links:
-        type: list
         description:
           - A list of containers to link to.
-      aliases:
         type: list
+      aliases:
         description:
           - List of aliases for this container in this network. These names
             can be used in the network to reach this container.
+        type: list
+    version_added: "2.2"
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -430,19 +430,19 @@ options:
   oom_score_adj:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
-    version_added: "2.2"
     type: int
+    version_added: "2.2"
   output_logs:
     description:
       - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.7"
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
     type: bool
-    default: 'no'
+    default: no
   pid_mode:
     description:
       - Set the PID namespace mode for the container.
@@ -458,7 +458,7 @@ options:
     description:
       - Give extended privileges to the container.
     type: bool
-    default: 'no'
+    default: no
   published_ports:
     description:
       - List of ports to publish from the container to the host.
@@ -478,9 +478,9 @@ options:
         will be bound to the host IP pointed to by com.docker.network.bridge.host_binding_ipv4.
         Note that the first bridge network with a com.docker.network.bridge.host_binding_ipv4
         value encountered in the list of C(networks) is the one that will be used.
+    type: list
     aliases:
       - ports
-    type: list
   pull:
     description:
        - If true, always pull the latest version of an image. Otherwise, will only pull an image
@@ -488,38 +488,38 @@ options:
        - I(Note) that images are only pulled when specified by name. If the image is specified
          as a image ID (hash), it cannot be pulled.
     type: bool
-    default: 'no'
+    default: no
   purge_networks:
     description:
        - Remove the container from ALL networks not included in C(networks) parameter.
        - Any default networks such as I(bridge), if not found in C(networks), will be removed as well.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.2"
   read_only:
     description:
       - Mount the container's root file system as read-only.
     type: bool
-    default: 'no'
+    default: no
   recreate:
     description:
       - Use with present and started states to force the re-creation of an existing container.
     type: bool
-    default: 'no'
+    default: no
   restart:
     description:
       - Use with started state to force a matching container to be stopped and restarted.
     type: bool
-    default: 'no'
+    default: no
   restart_policy:
     description:
       - Container restart policy. Place quotes around I(no) option.
+    type: str
     choices:
       - 'no'
       - 'on-failure'
       - 'always'
       - 'unless-stopped'
-    type: str
   restart_retries:
     description:
       - Use with restart policy to control maximum number of restart attempts.
@@ -527,8 +527,8 @@ options:
   runtime:
     description:
       - Runtime to use for the container.
-    version_added: "2.8"
     type: str
+    version_added: "2.8"
   shm_size:
     description:
       - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
@@ -561,13 +561,13 @@ options:
         with a removed container.'
       - 'I(stopped) - Asserts that the container is first I(present), and then if the container is running moves it to a stopped
         state. Use force_kill to kill a container rather than stopping it.'
+    type: str
     default: started
     choices:
       - absent
       - present
       - stopped
       - started
-    type: str
   stop_signal:
     description:
       - Override default signal used to stop the container.
@@ -587,17 +587,17 @@ options:
     description:
       - If C(yes), skip image verification.
     type: bool
-    default: 'no'
+    default: no
   tmpfs:
     description:
       - Mount a tmpfs directory
-    version_added: 2.4
     type: list
+    version_added: 2.4
   tty:
     description:
       - Allocate a pseudo-TTY.
     type: bool
-    default: 'no'
+    default: no
   ulimits:
     description:
       - "List of ulimit options. A ulimit is specified as C(nofile:262144:262144)"
@@ -605,8 +605,8 @@ options:
   sysctls:
     description:
       - Dictionary of key,value pairs.
-    version_added: 2.4
     type: dict
+    version_added: 2.4
   user:
     description:
       - Sets the username or UID used and optionally the groupname or GID for the specified command.
@@ -639,8 +639,8 @@ options:
   working_dir:
     description:
       - Path to the working directory.
-    version_added: "2.4"
     type: str
+    version_added: "2.4"
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation

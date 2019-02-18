@@ -14,34 +14,34 @@ DOCUMENTATION = '''
 module: docker_swarm_service
 author: "Dario Zanzico (@dariko), Jason Witkowski (@jwitko)"
 short_description: docker swarm service
-description: |
-  Manage docker services. Allows live altering of already defined services
+description:
+  - Manage docker services. Allows live altering of already defined services
 version_added: "2.7"
 options:
   name:
-    required: true
-    type: str
     description:
       - Service name.
       - Corresponds to the C(--name) option of C(docker service create).
-  image:
-    required: true
     type: str
+    required: true
+  image:
     description:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
+    type: str
+    required: true
   resolve_image:
-    type: bool
-    default: true
     description:
       - If the current image digest should be resolved from registry and updated if changed.
+    type: bool
+    default: true
     version_added: 2.8
   state:
-    required: true
-    type: str
-    default: present
     description:
       - Service state.
+    type: str
+    required: true
+    default: present
     choices:
       - present
       - absent
@@ -55,22 +55,21 @@ options:
       - Command to execute when the container starts.
       - A command may be either a string or a list or a list of strings.
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
-    version_added: 2.8
     type: raw
+    version_added: 2.8
   constraints:
-    type: list
     description:
       - List of the service constraints.
       - Corresponds to the C(--constraint) option of C(docker service create).
-  placement_preferences:
     type: list
+  placement_preferences:
     description:
       - List of the placement preferences as key value pairs.
       - Corresponds to the C(--placement-pref) option of C(docker service create).
       - Requires API version >= 1.27.
+    type: list
     version_added: 2.8
   healthcheck:
-    type: dict
     description:
       - Configure a check that is run to determine whether or not containers for this service are "healthy".
         See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
@@ -78,93 +77,94 @@ options:
       - "I(interval), I(timeout) and I(start_period) are specified as durations. They accept duration as a string in a format
         that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Requires API version >= 1.25.
+    type: dict
     suboptions:
       test:
         description:
           - Command to run to check health.
           - Must be either a string or a list. If it is a list, the first item must be one of C(NONE), C(CMD) or C(CMD-SHELL).
+        type: raw
       interval:
-        type: str
         description:
           - Time between running the check.
-      timeout:
         type: str
+      timeout:
         description:
           - Maximum time to allow one check to run.
+        type: str
       retries:
-        type: int
         description:
           - Consecutive failures needed to report unhealthy. It accept integer value.
+        type: int
       start_period:
-        type: str
         description:
           - Start period for the container to initialize before starting health-retries countdown.
+        type: str
     version_added: "2.8"
   hostname:
-    type: str
     description:
       - Container hostname.
       - Corresponds to the C(--hostname) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: str
   tty:
-    type: bool
     description:
       - Allocate a pseudo-TTY.
       - Corresponds to the C(--tty) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: bool
   dns:
-    type: list
     description:
       - List of custom DNS servers.
       - Corresponds to the C(--dns) option of C(docker service create).
       - Requires API version >= 1.25.
-  dns_search:
     type: list
+  dns_search:
     description:
       - List of custom DNS search domains.
       - Corresponds to the C(--dns-search) option of C(docker service create).
       - Requires API version >= 1.25.
-  dns_options:
     type: list
+  dns_options:
     description:
       - List of custom DNS options.
       - Corresponds to the C(--dns-option) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: list
   force_update:
-    type: bool
-    default: false
     description:
       - Force update even if no changes require it.
       - Corresponds to the C(--force) option of C(docker service update).
       - Requires API version >= 1.25.
+    type: bool
+    default: false
   groups:
-    type: list
     description:
       - List of additional group names and/or IDs that the container process will run as.
       - Corresponds to the C(--group) option of C(docker service update).
       - Requires API version >= 1.25.
+    type: list
     version_added: "2.8"
   labels:
-    type: dict
     description:
       - Dictionary of key value pairs.
       - Corresponds to the C(--label) option of C(docker service create).
-  container_labels:
     type: dict
+  container_labels:
     description:
       - Dictionary of key value pairs.
       - Corresponds to the C(--container-label) option of C(docker service create).
+    type: dict
   endpoint_mode:
-    type: str
     description:
       - Service endpoint mode.
       - Corresponds to the C(--endpoint-mode) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: str
     choices:
       - vip
       - dnsrr
   env:
-    type: raw
     description:
       - List or dictionary of the service environment variables.
       - If passed a list each items need to be in the format of C(KEY=VALUE).
@@ -172,36 +172,36 @@ options:
         booleans or other types by the YAML parser must be quoted (e.g. C("true"))
         in order to avoid data loss.
       - Corresponds to the C(--env) option of C(docker service create).
+    type: raw
   env_files:
-    type: list
     description:
       - List of paths to files, present on the target, containing environment variables C(FOO=BAR).
       - The order of the list is significant in determining the value assigned to a
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
+    type: list
     version_added: "2.8"
   log_driver:
-    type: str
     description:
       - Configure the logging driver for a service.
       - Corresponds to the C(--log-driver) option of C(docker service create).
+    type: str
   log_driver_options:
-    type: dict
     description:
       - Options for service logging driver.
       - Corresponds to the C(--log-opt) option of C(docker service create).
+    type: dict
   limit_cpu:
-    type: float
     description:
       - Service CPU limit. C(0) equals no limit.
       - Corresponds to the C(--limit-cpu) option of C(docker service create).
-  reserve_cpu:
     type: float
+  reserve_cpu:
     description:
       - Service CPU reservation. C(0) equals no reservation.
       - Corresponds to the C(--reserve-cpu) option of C(docker service create).
+    type: float
   limit_memory:
-    type: str
     description:
       - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -209,8 +209,8 @@ options:
       - C(0) equals no limit.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--limit-memory) option of C(docker service create).
-  reserve_memory:
     type: str
+  reserve_memory:
     description:
       - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -218,241 +218,242 @@ options:
       - C(0) equals no reservation.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--reserve-memory) option of C(docker service create).
-  mode:
     type: str
-    default: replicated
+  mode:
     description:
       - Service replication mode.
       - Corresponds to the C(--mode) option of C(docker service create).
+    type: str
+    default: replicated
   mounts:
-    type: list
     description:
       - List of dictionaries describing the service mounts.
       - Corresponds to the C(--mount) option of C(docker service create).
+    type: list
     suboptions:
       source:
-        type: str
-        required: true
         description:
           - Mount source (e.g. a volume name or a host path).
-      target:
         type: str
         required: true
+      target:
         description:
           - Container path.
+        type: str
+        required: true
       type:
+        description:
+          - The mount type.
         type: str
         default: bind
         choices:
           - bind
           - volume
           - tmpfs
-        description:
-          - The mount type.
       readonly:
-        type: bool
-        default: false
         description:
           - Whether the mount should be read-only.
+        type: bool
+        default: false
   secrets:
-    type: list
     description:
       - List of dictionaries describing the service secrets.
       - Corresponds to the C(--secret) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: list
     suboptions:
       secret_id:
-        type: str
-        required: true
         description:
           - Secret's ID.
-      secret_name:
         type: str
         required: true
+      secret_name:
         description:
           - Secret's name as defined at its creation.
-      filename:
         type: str
+        required: true
+      filename:
         description:
           - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
+        type: str
       uid:
-        type: int
-        default: 0
         description:
           - UID of the secret file's owner.
-      gid:
         type: int
         default: 0
+      gid:
         description:
           - GID of the secret file's group.
-      mode:
         type: int
-        default: 0o444
+        default: 0
+      mode:
         description:
           - File access mode inside the container.
+        type: int
+        default: 0o444
   configs:
-    type: list
     description:
       - List of dictionaries describing the service configs.
       - Corresponds to the C(--config) option of C(docker service create).
       - Requires API version >= 1.30.
+    type: list
     suboptions:
       config_id:
-        type: str
-        required: true
         description:
           - Config's ID.
-      config_name:
         type: str
         required: true
+      config_name:
         description:
           - Config's name as defined at its creation.
-      filename:
         type: str
         required: true
+      filename:
         description:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
+        type: str
+        required: true
       uid:
-        type: int
-        default: 0
         description:
           - UID of the config file's owner.
-      gid:
         type: int
         default: 0
+      gid:
         description:
           - GID of the config file's group.
+        type: int
+        default: 0
       mode:
-        type: str
-        default: "0o444"
         description:
           - File access mode inside the container.
+        type: str
+        default: "0o444"
   networks:
-    type: list
     description:
       - List of the service networks names.
       - Corresponds to the C(--network) option of C(docker service create).
+    type: list
   stop_signal:
-    type: str
     description:
       - Override default signal used to stop the container.
       - Corresponds to the C(--stop-signal) option of C(docker service create).
+    type: str
     version_added: "2.8"
   publish:
-    type: list
     description:
       - List of dictionaries describing the service published ports.
       - Corresponds to the C(--publish) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: list
     suboptions:
       published_port:
-        type: int
-        required: true
         description:
           - The port to make externally available.
-      target_port:
         type: int
         required: true
+      target_port:
         description:
           - The port inside the container to expose.
+        type: int
+        required: true
       protocol:
-        type: str
-        default: tcp
         description:
           - What protocol to use.
+        type: str
+        default: tcp
         choices:
           - tcp
           - udp
       mode:
-        type: str
         description:
           - What publish mode to use.
           - Requires API version >= 1.32.
+        type: str
         choices:
           - ingress
           - host
   replicas:
-    type: int
-    default: -1
     description:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
       - If set to C(-1), and service is not present, service replicas will be set to C(1).
       - If set to C(-1), and service is present, service replicas will be unchanged.
       - Corresponds to the C(--replicas) option of C(docker service create).
+    type: int
+    default: -1
   restart_policy:
-    type: str
     description:
       - Restart condition of the service.
       - Corresponds to the C(--restart-condition) option of C(docker service create).
+    type: str
     choices:
       - none
       - on-failure
       - any
   restart_policy_attempts:
-    type: int
     description:
       - Maximum number of service restarts.
       - Corresponds to the C(--restart-condition) option of C(docker service create).
-  restart_policy_delay:
     type: int
+  restart_policy_delay:
     description:
       - Delay between restarts.
       - Corresponds to the C(--restart-delay) option of C(docker service create).
-  restart_policy_window:
     type: int
+  restart_policy_window:
     description:
       - Restart policy evaluation window.
       - Corresponds to the C(--restart-window) option of C(docker service create).
-  update_delay:
     type: int
+  update_delay:
     description:
       - Rolling update delay in nanoseconds.
       - Corresponds to the C(--update-delay) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(10).
-  update_parallelism:
     type: int
+  update_parallelism:
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(1).
+    type: int
   update_failure_action:
-    type: str
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
+    type: str
     choices:
       - continue
       - pause
   update_monitor:
-    type: int
     description:
       - Time to monitor updated tasks for failures, in nanoseconds.
       - Corresponds to the C(--update-monitor) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: int
   update_max_failure_ratio:
-    type: float
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Corresponds to the C(--update-max-failure-ratio) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: float
   update_order:
-    type: str
     description:
       - Specifies the order of operations when rolling out an updated task.
       - Corresponds to the C(--update-order) option of C(docker service create).
       - Requires API version >= 1.29.
-  user:
     type: str
+  user:
     description:
       - Sets the username or UID used for the specified command.
       - Before Ansible 2.8, the default value for this option was C(root).
       - The default has been removed so that the user defined in the image is used if no user is specified here.
       - Corresponds to the C(--user) option of C(docker service create).
-  working_dir:
     type: str
+  working_dir:
     description:
       - Path to the working directory.
       - Corresponds to the C(--workdir) option of C(docker service create).
+    type: str
     version_added: "2.8"
 extends_documentation_fragment:
   - docker
