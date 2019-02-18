@@ -1404,7 +1404,7 @@ class ModuleValidator(Validator):
                     if existing_version:
                         break
                 current_version = details.get('version_added')
-                if current_version != existing_version:
+                if str(current_version) != str(existing_version):
                     self.reporter.error(
                         path=self.object_path,
                         code=309,
