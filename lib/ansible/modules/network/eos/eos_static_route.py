@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Ansible by Red Hat, inc
+# (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -224,7 +224,7 @@ def main():
 
     if address and prefix:
         if '/' not in address or not validate_ip_address(address.split('/')[0]):
-            module.fail_json(msg='{0} is not a valid IP address'.format(address))
+            module.fail_json(msg='{} is not a valid IP address'.format(address))
 
         if not validate_prefix(prefix):
             module.fail_json(msg='Length of prefix should be between 0 and 32 bits')

@@ -46,7 +46,7 @@ options:
   exclude_path:
     description:
       - Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive.
-    type: list
+    type: str
     version_added: '2.4'
   remove:
     description:
@@ -151,25 +151,21 @@ import tarfile
 import zipfile
 from traceback import format_exc
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 
-
-LZMA_IMP_ERR = None
 if PY3:
     try:
         import lzma
         HAS_LZMA = True
     except ImportError:
-        LZMA_IMP_ERR = format_exc()
         HAS_LZMA = False
 else:
     try:
         from backports import lzma
         HAS_LZMA = True
     except ImportError:
-        LZMA_IMP_ERR = format_exc()
         HAS_LZMA = False
 
 
@@ -206,8 +202,6 @@ def main():
 
     # Fail early
     if not HAS_LZMA and format == 'xz':
-        module.fail_json(msg=missing_required_lib("lzma or backports.lzma", reason="when using xz format"),
-                         exception=LZMA_IMP_ERR)
         module.fail_json(msg="lzma or backports.lzma is required when using xz format.")
 
     for path in paths:

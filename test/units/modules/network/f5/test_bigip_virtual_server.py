@@ -359,35 +359,13 @@ class TestManager(unittest.TestCase):
             self.p1 = patch('library.modules.bigip_virtual_server.modules_provisioned')
             self.m1 = self.p1.start()
             self.m1.return_value = ['ltm', 'gtm', 'asm']
-            self.p2 = patch(
-                'library.modules.bigip_virtual_server.Parameters._read_current_clientssl_profiles_from_device'
-            )
-            self.p3 = patch(
-                'library.modules.bigip_virtual_server.Parameters._read_current_serverssl_profiles_from_device'
-            )
-            self.m2 = self.p2.start()
-            self.m3 = self.p3.start()
-            self.m2.return_value = ['asda', 'clientssl', 'cs_foobar.star.local']
-            self.m3.return_value = ['baz', 'serverssl', 'ss_foobar.star.local']
         except Exception:
             self.p1 = patch('ansible.modules.network.f5.bigip_virtual_server.modules_provisioned')
             self.m1 = self.p1.start()
             self.m1.return_value = ['ltm', 'gtm', 'asm']
-            self.p2 = patch(
-                'ansible.modules.network.f5.bigip_virtual_server.Parameters._read_current_clientssl_profiles_from_device'
-            )
-            self.p3 = patch(
-                'ansible.modules.network.f5.bigip_virtual_server.Parameters._read_current_serverssl_profiles_from_device'
-            )
-            self.m2 = self.p2.start()
-            self.m3 = self.p3.start()
-            self.m2.return_value = ['asda', 'clientssl', 'cs_foobar.star.local']
-            self.m3.return_value = ['baz', 'serverssl', 'ss_foobar.star.local']
 
     def tearDown(self):
         self.p1.stop()
-        self.p2.stop()
-        self.p3.stop()
 
     def test_create_virtual_server(self, *args):
         set_module_args(dict(
@@ -604,6 +582,7 @@ class TestManager(unittest.TestCase):
         # Configure the parameters that would be returned by querying the
         # remote device
         current = ApiParameters(params=load_fixture('load_ltm_virtual_2.json'))
+
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
             supports_check_mode=self.spec.supports_check_mode

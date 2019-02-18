@@ -214,20 +214,18 @@ import select
 import socket
 import sys
 import time
-import traceback
 
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
 from ansible.module_utils._text import to_native
 
 
 HAS_PSUTIL = False
-PSUTIL_IMP_ERR = None
 try:
     import psutil
     HAS_PSUTIL = True
     # just because we can import it on Linux doesn't mean we will use it
 except ImportError:
-    PSUTIL_IMP_ERR = traceback.format_exc()
+    pass
 
 
 class TCPConnectionInfo(object):
@@ -263,7 +261,7 @@ class TCPConnectionInfo(object):
         self.port = int(self.module.params['port'])
         self.exclude_ips = self._get_exclude_ips()
         if not HAS_PSUTIL:
-            module.fail_json(msg=missing_required_lib('psutil'), exception=PSUTIL_IMP_ERR)
+            module.fail_json(msg="psutil module required for wait_for")
 
     def _get_exclude_ips(self):
         exclude_hosts = self.module.params['exclude_hosts']

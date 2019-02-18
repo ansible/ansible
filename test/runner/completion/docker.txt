@@ -1,4 +1,4 @@
-default name=quay.io/ansible/default-test-container:1.5.2 python=3
+default name=quay.io/ansible/default-test-container:1.4.1 python=3
 centos6 name=quay.io/ansible/centos6-test-container:1.4.0 seccomp=unconfined
 centos7 name=quay.io/ansible/centos7-test-container:1.4.0 seccomp=unconfined
 fedora28 name=quay.io/ansible/fedora28-test-container:1.5.0

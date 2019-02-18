@@ -17,6 +17,8 @@ description:
   - Windows defaults to C(balanced) which will cause CPU throttling. In some cases it can be preferable
     to change the mode to C(high performance) to increase CPU performance.
 version_added: "2.4"
+requirements:
+  - Windows Server 2008R2 (6.1)/Windows 7 or higher
 options:
   name:
     description:

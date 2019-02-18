@@ -49,11 +49,6 @@ options:
     description:
       - Database port to connect to.
     default: 5432
-  session_role:
-    version_added: "2.8"
-    description: |
-      Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-      Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   state:
     description:
       - The schema state.
@@ -119,17 +114,15 @@ schema:
 
 import traceback
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
     postgresqldb_found = False
 else:
     postgresqldb_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
@@ -225,20 +218,18 @@ def main():
             ssl_mode=dict(default='prefer', choices=[
                           'disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
             ssl_rootcert=dict(default=None),
-            session_role=dict(),
         ),
         supports_check_mode=True
     )
 
     if not postgresqldb_found:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
+        module.fail_json(msg="the python psycopg2 module is required")
 
     schema = module.params["schema"]
     owner = module.params["owner"]
     state = module.params["state"]
     sslrootcert = module.params["ssl_rootcert"]
     cascade_drop = module.params["cascade_drop"]
-    session_role = module.params["session_role"]
     changed = False
 
     # To use defaults values, keyword arguments must be absent, so
@@ -285,12 +276,6 @@ def main():
 
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:

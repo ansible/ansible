@@ -356,7 +356,7 @@ class MSOModule(object):
         if not t:
             self.module.fail_json(msg="Tenant '%s' is not valid tenant name." % tenant)
         if 'id' not in t:
-            self.module.fail_json(msg="Tenant lookup failed for tenant '%s': %s" % (tenant, t))
+                self.module.fail_json(msg="Tenant lookup failed for tenant '%s': %s" % (tenant, t))
         return t['id']
 
     def lookup_users(self, users):

@@ -704,7 +704,6 @@ class Changes(Parameters):
 
 
 class UsableChanges(Changes):
-
     @property
     def virtual_server_dependencies(self):
         if self._values['virtual_server_dependencies'] is None:
@@ -958,10 +957,21 @@ class ModuleManager(object):
         else:
             return self.create()
 
-    def absent(self):
-        if self.exists():
-            return self.remove()
-        return False
+    def exists(self):
+        uri = "https://{0}:{1}/mgmt/tm/gtm/server/{2}/virtual-servers/{3}".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+            transform_name(self.want.partition, self.want.server_name),
+            self.want.name
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        return True
 
     def update(self):
         self.have = self.read_current_from_device()
@@ -1003,22 +1013,6 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
-    def exists(self):
-        uri = "https://{0}:{1}/mgmt/tm/gtm/server/{2}/virtual-servers/{3}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            transform_name(self.want.partition, self.want.server_name),
-            transform_name(name=self.want.name)
-        )
-        resp = self.client.api.get(uri)
-        try:
-            response = resp.json()
-        except ValueError:
-            return False
-        if resp.status == 404 or 'code' in response and response['code'] == 404:
-            return False
-        return True
-
     def create_on_device(self):
         params = self.changes.api_params()
         params['name'] = self.want.name
@@ -1046,7 +1040,7 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
             transform_name(self.want.partition, self.want.server_name),
-            transform_name(name=self.want.name)
+            self.want.name
         )
         resp = self.client.api.patch(uri, json=params)
         try:
@@ -1060,12 +1054,17 @@ class ModuleManager(object):
             else:
                 raise F5ModuleError(resp.content)
 
+    def absent(self):
+        if self.exists():
+            return self.remove()
+        return False
+
     def remove_from_device(self):
         uri = "https://{0}:{1}/mgmt/tm/gtm/server/{2}/virtual-servers/{3}".format(
             self.client.provider['server'],
             self.client.provider['server_port'],
             transform_name(self.want.partition, self.want.server_name),
-            transform_name(name=self.want.name)
+            self.want.name
         )
         response = self.client.api.delete(uri)
         if response.status == 200:
@@ -1077,7 +1076,7 @@ class ModuleManager(object):
             self.client.provider['server'],
             self.client.provider['server_port'],
             transform_name(self.want.partition, self.want.server_name),
-            transform_name(name=self.want.name)
+            self.want.name
         )
         resp = self.client.api.get(uri)
         try:

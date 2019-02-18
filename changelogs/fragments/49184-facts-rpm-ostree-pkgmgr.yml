@@ -1,2 +1,0 @@
-bugfixes:
-- "facts - properly detect package manager for a Fedora/RHEL/CentOS system that has rpm-ostree installed"

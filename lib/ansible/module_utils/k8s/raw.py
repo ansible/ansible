@@ -23,9 +23,7 @@ from datetime import datetime
 from distutils.version import LooseVersion
 import time
 import sys
-import traceback
 
-from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.k8s.common import AUTH_ARG_SPEC, COMMON_ARG_SPEC
 from ansible.module_utils.six import string_types
 from ansible.module_utils.k8s.common import KubernetesAnsibleModule
@@ -47,12 +45,10 @@ try:
 except ImportError:
     HAS_KUBERNETES_VALIDATE = False
 
-K8S_CONFIG_HASH_IMP_ERR = None
 try:
     from openshift.helper.hashes import generate_hash
     HAS_K8S_CONFIG_HASH = True
 except ImportError:
-    K8S_CONFIG_HASH_IMP_ERR = traceback.format_exc()
     HAS_K8S_CONFIG_HASH = False
 
 
@@ -101,11 +97,10 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         self.append_hash = self.params.get('append_hash')
         if self.append_hash:
             if not HAS_K8S_CONFIG_HASH:
-                self.fail_json(msg=missing_required_lib("openshift >= 0.7.2", reason="for append_hash"),
-                               exception=K8S_CONFIG_HASH_IMP_ERR)
+                self.fail_json(msg="openshift >= 0.7.2 is required for append_hash")
         if self.params['merge_type']:
             if LooseVersion(self.openshift_version) < LooseVersion("0.6.2"):
-                self.fail_json(msg=missing_required_lib("openshift >= 0.6.2", reason="for merge_type"))
+                self.fail_json(msg="openshift >= 0.6.2 is required for merge_type")
         if resource_definition:
             if isinstance(resource_definition, string_types):
                 try:
@@ -161,18 +156,15 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         })
 
     def validate(self, resource):
-        def _prepend_resource_info(resource, msg):
-            return "%s %s: %s" % (resource['kind'], resource['metadata']['name'], msg)
-
         try:
             warnings, errors = self.client.validate(resource, self.params['validate'].get('version'), self.params['validate'].get('strict'))
         except KubernetesValidateMissing:
             self.fail_json(msg="kubernetes-validate python library is required to validate resources")
 
         if errors and self.params['validate']['fail_on_error']:
-            self.fail_json(msg="\n".join([_prepend_resource_info(resource, error) for error in errors]))
+            self.fail_json(msg="\n".join(errors))
         else:
-            return [_prepend_resource_info(resource, msg) for msg in warnings + errors]
+            return warnings + errors
 
     def set_defaults(self, resource, definition):
         definition['kind'] = resource.kind
@@ -375,14 +367,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             try:
                 response = resource.get(name=name, namespace=namespace)
                 if predicate(response):
-                    if response:
-                        return True, response.to_dict(), _wait_for_elapsed()
-                    else:
-                        return True, {}, _wait_for_elapsed()
+                    return True, response.to_dict(), _wait_for_elapsed()
                 time.sleep(timeout // 20)
             except NotFoundError:
                 if state == 'absent':
-                    return True, {}, _wait_for_elapsed()
+                    return True, response.to_dict(), _wait_for_elapsed()
         if response:
             response = response.to_dict()
         return False, response, _wait_for_elapsed()
@@ -418,4 +407,4 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             predicate = waiter.get(kind, lambda x: True)
         else:
             predicate = _resource_absent
-        return self._wait_for(resource, definition['metadata']['name'], definition['metadata'].get('namespace'), predicate, timeout, state)
+        return self._wait_for(resource, definition['metadata']['name'], definition['metadata']['namespace'], predicate, timeout, state)

@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -646,7 +644,7 @@ def main():
                 if not contact_list_id.isdigit() and contact_list_id != '':
                     contact_list = DME.getContactListByName(contact_list_id)
                     if not contact_list:
-                        module.fail_json(msg="Contact list {0} does not exist".format(contact_list_id))
+                        module.fail_json(msg="Contact list {} does not exist".format(contact_list_id))
                     contact_list_id = contact_list.get('id', '')
                 new_monitor['contactListId'] = contact_list_id
             else:

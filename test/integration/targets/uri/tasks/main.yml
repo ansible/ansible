@@ -488,16 +488,13 @@
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
 - name: Test follow_redirects=none
-  import_tasks: redirect-none.yml
+  include_tasks: redirect-none.yml
 
 - name: Test follow_redirects=safe
-  import_tasks: redirect-safe.yml
+  include_tasks: redirect-safe.yml
 
 - name: Test follow_redirects=urllib2
-  import_tasks: redirect-urllib2.yml
+  include_tasks: redirect-urllib2.yml
 
 - name: Test follow_redirects=all
-  import_tasks: redirect-all.yml
-
-- name: Check unexpected failures
-  import_tasks: unexpected-failures.yml
+  include_tasks: redirect-all.yml

@@ -8,20 +8,18 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from ansible.module_utils._text import to_native
-from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import env_fallback
 from mimetypes import MimeTypes
 
+import json
 import os
-import traceback
 
-PIKA_IMP_ERR = None
 try:
     import pika
     from pika import spec
     HAS_PIKA = True
 except ImportError:
-    PIKA_IMP_ERR = traceback.format_exc()
     HAS_PIKA = False
 
 
@@ -63,7 +61,7 @@ class RabbitClient():
 
     def check_required_library(self):
         if not HAS_PIKA:
-            self.module.fail_json(msg=missing_required_lib("pika"), exception=PIKA_IMP_ERR)
+            self.module.fail_json(msg="Unable to find 'pika' Python library which is required.")
 
     def check_host_params(self):
         # Fail if url is specified and other conflicting parameters have been specified

@@ -540,7 +540,6 @@ EXAMPLES = '''
 '''
 
 import time
-import datetime
 import traceback
 from ast import literal_eval
 from distutils.version import LooseVersion
@@ -1192,15 +1191,6 @@ def create_instances(module, ec2, vpc, override_count=None):
                     count=count_remaining,
                     type=spot_type,
                 ))
-
-                # Set spot ValidUntil
-                # ValidUntil -> (timestamp). The end date of the request, in
-                # UTC format (for example, YYYY -MM -DD T*HH* :MM :SS Z).
-                utc_valid_until = (
-                    datetime.datetime.utcnow()
-                    + datetime.timedelta(seconds=spot_wait_timeout))
-                params['valid_until'] = utc_valid_until.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-
                 res = ec2.request_spot_instances(spot_price, **params)
 
                 # Now we have to do the intermediate waiting

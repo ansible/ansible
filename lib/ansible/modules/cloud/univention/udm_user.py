@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# Copyright: (c) 2016, Adfinis SyGroup AG
+# Copyright (c) 2016, Adfinis SyGroup AG
 # Tobias Rueetschi <tobias.ruetschi@adfinis-sygroup.ch>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -415,18 +415,18 @@ def main():
     changed = False
 
     users = list(ldap_search(
-        '(&(objectClass=posixAccount)(uid={0}))'.format(username),
+        '(&(objectClass=posixAccount)(uid={}))'.format(username),
         attr=['uid']
     ))
     if position != '':
         container = position
     else:
         if ou != '':
-            ou = 'ou={0},'.format(ou)
+            ou = 'ou={},'.format(ou)
         if subpath != '':
-            subpath = '{0},'.format(subpath)
-        container = '{0}{1}{2}'.format(subpath, ou, base_dn())
-    user_dn = 'uid={0},{1}'.format(username, container)
+            subpath = '{},'.format(subpath)
+        container = '{}{}{}'.format(subpath, ou, base_dn())
+    user_dn = 'uid={},{}'.format(username, container)
 
     exists = bool(len(users))
 
@@ -438,12 +438,12 @@ def main():
                 obj = umc_module_for_edit('users/user', user_dn)
 
             if module.params['displayName'] is None:
-                module.params['displayName'] = '{0} {1}'.format(
+                module.params['displayName'] = '{} {}'.format(
                     module.params['firstname'],
                     module.params['lastname']
                 )
             if module.params['unixhome'] is None:
-                module.params['unixhome'] = '/home/{0}'.format(
+                module.params['unixhome'] = '/home/{}'.format(
                     module.params['username']
                 )
             for k in obj.keys():
@@ -479,7 +479,7 @@ def main():
                     obj.modify()
         except Exception:
             module.fail_json(
-                msg="Creating/editing user {0} in {1} failed".format(
+                msg="Creating/editing user {} in {} failed".format(
                     username,
                     container
                 )
@@ -487,7 +487,7 @@ def main():
         try:
             groups = module.params['groups']
             if groups:
-                filter = '(&(objectClass=posixGroup)(|(cn={0})))'.format(
+                filter = '(&(objectClass=posixGroup)(|(cn={})))'.format(
                     ')(cn='.join(groups)
                 )
                 group_dns = list(ldap_search(filter, attr=['dn']))
@@ -500,7 +500,7 @@ def main():
                         changed = True
         except Exception:
             module.fail_json(
-                msg="Adding groups to user {0} failed".format(username)
+                msg="Adding groups to user {} failed".format(username)
             )
 
     if state == 'absent' and exists:
@@ -511,7 +511,7 @@ def main():
             changed = True
         except Exception:
             module.fail_json(
-                msg="Removing user {0} failed".format(username)
+                msg="Removing user {} failed".format(username)
             )
 
     module.exit_json(

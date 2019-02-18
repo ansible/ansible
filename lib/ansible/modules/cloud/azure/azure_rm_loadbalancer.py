@@ -1,7 +1,5 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2016, Thomas Stringer <tomstr@microsoft.com>
+# Copyright (c) 2016 Thomas Stringer, <tomstr@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -784,7 +782,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
     def get_public_ip_address_instance(self, id):
         """Get a reference to the public ip address resource"""
-        self.log('Fetching public ip address {0}'.format(id))
+        self.log('Fetching public ip address {}'.format(id))
         resource_id = format_resource_id(id, self.subscription_id, 'Microsoft.Network', 'publicIPAddresses', self.resource_group)
         return self.network_models.PublicIPAddress(id=resource_id)
 
@@ -846,7 +844,7 @@ def default_compare(new, old, path):
 
 def frontend_ip_configuration_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a frontend ip configuration"""
-    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/loadBalancers/{2}/frontendIPConfigurations/{3}'.format(
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/frontendIPConfigurations/{}'.format(
         subscription_id,
         resource_group_name,
         load_balancer_name,
@@ -856,7 +854,7 @@ def frontend_ip_configuration_id(subscription_id, resource_group_name, load_bala
 
 def backend_address_pool_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a backend address pool"""
-    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/loadBalancers/{2}/backendAddressPools/{3}'.format(
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/backendAddressPools/{}'.format(
         subscription_id,
         resource_group_name,
         load_balancer_name,
@@ -866,7 +864,7 @@ def backend_address_pool_id(subscription_id, resource_group_name, load_balancer_
 
 def probe_id(subscription_id, resource_group_name, load_balancer_name, name):
     """Generate the id for a probe"""
-    return '/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/loadBalancers/{2}/probes/{3}'.format(
+    return '/subscriptions/{}/resourceGroups/{}/providers/Microsoft.Network/loadBalancers/{}/probes/{}'.format(
         subscription_id,
         resource_group_name,
         load_balancer_name,

@@ -100,6 +100,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     def post_process_args(self, options, args):
         options, args = super(ConsoleCLI, self).post_process_args(options, args)
         display.verbosity = options.verbosity
+        options = self.normalize_become_options(options)
         self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
         return options, args
 

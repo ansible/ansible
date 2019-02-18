@@ -36,12 +36,12 @@ For other installation options, we recommend installing via "pip", which is the 
 If you wish to track the development release to use and test the latest features, we will share
 information about running from source.  It's not necessary to install the program to run from source.
 
-.. _control_node_requirements:
+.. _control_machine_requirements:
 
-Control Node Requirements
+Control Machine Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows isn't supported for the control node.
+Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed. Windows isn't supported for the control machine.
 
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
 
@@ -90,11 +90,11 @@ later).
 
      .. code-block:: shell
 
-        $ ansible myhost --become -m raw -a "yum install -y python2"
+        $ ansible myhost --sudo -m raw -a "yum install -y python2"
 
-.. _installing_the_control_node:
+.. _installing_the_control_machine:
 
-Installing the Control Node
+Installing the Control Machine
 ``````````````````````````````
 .. _from_yum:
 
@@ -345,7 +345,7 @@ open source projects.
 
 .. note::
 
-   If you are intending to use Tower as the Control Node, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (like ``apt/yum``) or ``pip`` to install a stable version.
 
 
 To install from source, clone the Ansible git repository:

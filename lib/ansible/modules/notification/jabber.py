@@ -83,14 +83,12 @@ import time
 import traceback
 
 HAS_XMPP = True
-XMPP_IMP_ERR = None
 try:
     import xmpp
 except ImportError:
-    XMPP_IMP_ERR = traceback.format_exc()
     HAS_XMPP = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -110,7 +108,7 @@ def main():
     )
 
     if not HAS_XMPP:
-        module.fail_json(msg=missing_required_lib('xmpppy'), exception=XMPP_IMP_ERR)
+        module.fail_json(msg="The required python xmpp library (xmpppy) is not installed")
 
     jid = xmpp.JID(module.params['user'])
     user = jid.getNode()

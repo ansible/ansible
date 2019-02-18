@@ -105,20 +105,15 @@ EXAMPLES = '''
 '''
 
 RETURN = '''# '''
-import traceback
-
 from os import getenv
 from os.path import isfile
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
-
-TAIGA_IMP_ERR = None
 try:
     from taiga import TaigaAPI
     from taiga.exceptions import TaigaException
     TAIGA_MODULE_IMPORTED = True
 except ImportError:
-    TAIGA_IMP_ERR = traceback.format_exc()
     TAIGA_MODULE_IMPORTED = False
 
 
@@ -257,8 +252,8 @@ def main():
     )
 
     if not TAIGA_MODULE_IMPORTED:
-        module.fail_json(msg=missing_required_lib("python-taiga"),
-                         exception=TAIGA_IMP_ERR)
+        msg = "This module needs python-taiga module"
+        module.fail_json(msg=msg)
 
     taiga_host = module.params['taiga_host']
     project_name = module.params['project']

@@ -19,7 +19,12 @@ module: cloudscale_server
 short_description: Manages servers on the cloudscale.ch IaaS service
 description:
   - Create, start, stop and delete servers on the cloudscale.ch IaaS service.
+  - All operations are performed using the cloudscale.ch public API v1.
+  - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
+  - A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 notes:
+  - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new server at least the C(name), C(ssh_key), C(image) and C(flavor) options are required.
   - If more than one server with the name given by the C(name) option exists, execution is aborted.
   - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
@@ -80,12 +85,15 @@ options:
   user_data:
     description:
       - Cloud-init configuration (cloud-config) data to use for the server.
+  api_token:
+    description:
+      - cloudscale.ch API token.
+      - This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
   api_timeout:
     description:
       - Timeout in seconds for calls to the cloudscale.ch API.
     default: 30
     version_added: "2.5"
-extends_documentation_fragment: cloudscale
 '''
 
 EXAMPLES = '''

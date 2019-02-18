@@ -22,7 +22,6 @@ short_description: Manage LLDP service configuration on network devices
 description:
   - This module provides declarative management of LLDP service configuration
     on network devices.
-extends_documentation_fragment: network_agnostic
 options:
   state:
     description:

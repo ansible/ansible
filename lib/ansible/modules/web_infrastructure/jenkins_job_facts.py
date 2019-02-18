@@ -137,15 +137,13 @@ import ssl
 import fnmatch
 import traceback
 
-JENKINS_IMP_ERR = None
 try:
     import jenkins
     HAS_JENKINS = True
 except ImportError:
-    JENKINS_IMP_ERR = traceback.format_exc()
     HAS_JENKINS = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -173,9 +171,8 @@ def get_jenkins_connection(module):
 def test_dependencies(module):
     if not HAS_JENKINS:
         module.fail_json(
-            msg=missing_required_lib("python-jenkins",
-                                     url="https://python-jenkins.readthedocs.io/en/latest/install.html"),
-            exception=JENKINS_IMP_ERR)
+            msg="python-jenkins required for this module. "
+            "see http://python-jenkins.readthedocs.io/en/latest/install.html")
 
 
 def get_jobs(module):

@@ -8,7 +8,7 @@
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = """
 options:
   provider:
     description:
@@ -45,7 +45,7 @@ options:
           - Path to an ssh key used to authenticate the SSH session to the remote
             device.  If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
-        type: path
+        type: str
       timeout:
         description:
           - Specifies idle timeout (in seconds) for the connection. Useful if the
@@ -55,4 +55,4 @@ options:
         default: 10
 notes:
   - For more information on using Ansible to manage Dell EMC Network devices see U(https://www.ansible.com/ansible-dell-networking).
-'''
+"""

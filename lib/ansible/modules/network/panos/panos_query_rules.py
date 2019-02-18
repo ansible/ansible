@@ -237,7 +237,7 @@ def get_services(device, dev_group, svc_list, obj_list):
 
 def port_in_svc(orientation, port, protocol, obj):
     # Process address objects
-    if orientation == 'source':
+    if orientation is 'source':
         for x in obj.source_port.split(','):
             if '-' in x:
                 port_range = x.split('-')
@@ -248,7 +248,7 @@ def port_in_svc(orientation, port, protocol, obj):
             else:
                 if port == x and obj.protocol == protocol:
                     return True
-    elif orientation == 'destination':
+    elif orientation is 'destination':
         for x in obj.destination_port.split(','):
             if '-' in x:
                 port_range = x.split('-')

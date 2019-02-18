@@ -151,9 +151,19 @@ class PlayIterator:
         self._variable_manager = variable_manager
 
         # Default options to gather
-        gather_subset = self._play.gather_subset
-        gather_timeout = self._play.gather_timeout
-        fact_path = self._play.fact_path
+        gather_subset = play_context.gather_subset
+        gather_timeout = play_context.gather_timeout
+        fact_path = play_context.fact_path
+
+        # Retrieve subset to gather
+        if self._play.gather_subset is not None:
+            gather_subset = self._play.gather_subset
+        # Retrieve timeout for gather
+        if self._play.gather_timeout is not None:
+            gather_timeout = self._play.gather_timeout
+        # Retrieve fact_path
+        if self._play.fact_path is not None:
+            fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
@@ -180,11 +190,11 @@ class PlayIterator:
             setup_task.when = self._play._included_conditional[:]
         setup_block.block = [setup_task]
 
-        setup_block = setup_block.filter_tagged_tasks(all_vars)
+        setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
         self._blocks.append(setup_block)
 
         for block in self._play.compile():
-            new_block = block.filter_tagged_tasks(all_vars)
+            new_block = block.filter_tagged_tasks(play_context, all_vars)
             if new_block.has_tasks():
                 self._blocks.append(new_block)
 

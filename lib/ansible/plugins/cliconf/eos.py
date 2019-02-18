@@ -23,11 +23,11 @@ DOCUMENTATION = """
 ---
 author: Ansible Networking Team
 cliconf: eos
-short_description: Use eos cliconf to run command on Arista EOS platform
+short_description: Use eos cliconf to run command on eos platform
 description:
-  - This eos plugin provides low level abstraction apis for
-    sending and receiving CLI commands from Arista EOS network devices.
-version_added: "2.4"
+  - This eos plugin provides low level abstraction api's for
+    sending and receiving CLI commands from eos network devices.
+version_added: "2.7"
 options:
   eos_use_sessions:
     type: int
@@ -69,7 +69,7 @@ class Cliconf(CliconfBase):
             raise ValueError("fetching configuration from %s is not supported" % source)
 
         cmd = 'show %s ' % lookup[source]
-        if format and format != 'text':
+        if format and format is not 'text':
             cmd += '| %s ' % format
 
         cmd += ' '.join(to_list(flags))

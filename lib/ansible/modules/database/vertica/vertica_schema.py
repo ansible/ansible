@@ -94,16 +94,14 @@ EXAMPLES = """
 """
 import traceback
 
-PYODBC_IMP_ERR = None
 try:
     import pyodbc
 except ImportError:
-    PYODBC_IMP_ERR = traceback.format_exc()
     pyodbc_found = False
 else:
     pyodbc_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -248,7 +246,7 @@ def main():
         ), supports_check_mode=True)
 
     if not pyodbc_found:
-        module.fail_json(msg=missing_required_lib('pyodbc'), exception=PYODBC_IMP_ERR)
+        module.fail_json(msg="The python pyodbc module is required.")
 
     schema = module.params['schema']
     usage_roles = []

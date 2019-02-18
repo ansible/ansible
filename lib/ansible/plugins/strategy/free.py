@@ -235,7 +235,7 @@ class StrategyModule(StrategyBase):
 
                     for new_block in new_blocks:
                         task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent)
-                        final_block = new_block.filter_tagged_tasks(task_vars)
+                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)

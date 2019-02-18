@@ -6,7 +6,7 @@
 
 class ModuleDocFragment(object):
     # Standard files documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = '''
 options:
   host:
     description:

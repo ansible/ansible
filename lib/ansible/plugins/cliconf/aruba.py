@@ -19,16 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-cliconf: aruba
-short_description: Use aruba cliconf to run command on Aruba platform
-description:
-  - This aruba plugin provides low level abstraction apis for
-    sending and receiving CLI commands from Aruba network devices.
-version_added: 2.4
-"""
-
 import re
 import json
 

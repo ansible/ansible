@@ -11,10 +11,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_product_facts
-short_description: Provides Windows product and license information
+short_description: Provides Windows product information (product id, product key)
 description:
-- Provides Windows product and license information.
+- Provides Windows product information.
 version_added: '2.5'
+options: {}
 author:
 - Dag Wieers (@dagwieers)
 '''
@@ -26,36 +27,10 @@ EXAMPLES = r'''
 
 RETURN = r'''
 ansible_facts:
-  description: Dictionary containing all the detailed information about the Windows product and license.
+  description: returned facts by this module
   returned: always
-  type: complex
-  contains:
-    ansible_os_license_channel:
-      description: The Windows license channel.
-      returned: always
-      type: str
-      sample: Volume:MAK
-      version_added: '2.8'
-    ansible_os_license_edition:
-      description: The Windows license edition.
-      returned: always
-      type: str
-      sample: Windows(R) ServerStandard edition
-      version_added: '2.8'
-    ansible_os_license_status:
-      description: The Windows license status.
-      returned: always
-      type: str
-      sample: Licensed
-      version_added: '2.8'
-    ansible_os_product_id:
-      description: The Windows product ID.
-      returned: always
-      type: str
-      sample: 00326-10000-00000-AA698
-    ansible_os_product_key:
-      description: The Windows product key.
-      returned: always
-      type: str
-      sample: T49TD-6VFBW-VV7HY-B2PXY-MY47H
+  type: dict
+  sample:
+    ansible_os_product_id: 00326-10000-00000-AA698
+    ansible_os_product_key: T49TD-6VFBW-VV7HY-B2PXY-MY47H
 '''

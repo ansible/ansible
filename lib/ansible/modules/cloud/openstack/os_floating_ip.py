@@ -185,7 +185,7 @@ def main():
                 if nat_destination:
                     nat_floating_addrs = [addr for addr in server.addresses.get(
                         cloud.get_network(nat_destination)['name'], [])
-                        if addr['addr'] == public_ip and
+                        if addr.addr == public_ip and
                         addr['OS-EXT-IPS:type'] == 'floating']
 
                     if len(nat_floating_addrs) == 0:

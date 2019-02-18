@@ -83,7 +83,6 @@ namespace Ansible.Basic
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
             { "required", new List<object>() { false, typeof(bool) } },
-            { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "required_if", new List<object>() { typeof(List<List<object>>), null } },
             { "required_one_of", new List<object>() { typeof(List<List<string>>), null } },
             { "required_together", new List<object>() { typeof(List<List<string>>), null } },
@@ -793,7 +792,6 @@ namespace Ansible.Basic
             CheckRequiredTogether(param, (IList)spec["required_together"]);
             CheckRequiredOneOf(param, (IList)spec["required_one_of"]);
             CheckRequiredIf(param, (IList)spec["required_if"]);
-            CheckRequiredBy(param, (IDictionary)spec["required_by"]);
 
             // finally ensure all missing parameters are set to null and handle sub options
             foreach (DictionaryEntry entry in optionSpec)
@@ -811,18 +809,13 @@ namespace Ansible.Basic
         private void CheckUnsupportedArguments(IDictionary param, List<string> legalInputs)
         {
             HashSet<string> unsupportedParameters = new HashSet<string>();
-            HashSet<string> caseUnsupportedParameters = new HashSet<string>();
             List<string> removedParameters = new List<string>();
 
             foreach (DictionaryEntry entry in param)
             {
                 string paramKey = (string)entry.Key;
-                if (!legalInputs.Contains(paramKey, StringComparer.OrdinalIgnoreCase))
+                if (!legalInputs.Contains(paramKey))
                     unsupportedParameters.Add(paramKey);
-                else if (!legalInputs.Contains(paramKey))
-                    // For backwards compatibility we do not care about the case but we need to warn the users as this will
-                    // change in a future Ansible release.
-                    caseUnsupportedParameters.Add(paramKey);
                 else if (paramKey.StartsWith("_ansible_"))
                 {
                     removedParameters.Add(paramKey);
@@ -858,24 +851,6 @@ namespace Ansible.Basic
                 string msg = String.Format("Unsupported parameters for ({0}) module: {1}", ModuleName, String.Join(", ", unsupportedParameters));
                 msg = String.Format("{0}. Supported parameters include: {1}", FormatOptionsContext(msg), String.Join(", ", legalInputs));
                 FailJson(msg);
-            }
-
-            if (caseUnsupportedParameters.Count > 0)
-            {
-                legalInputs.RemoveAll(x => passVars.Keys.Contains(x.Replace("_ansible_", "")));
-                string msg = String.Format("Parameters for ({0}) was a case insensitive match: {1}", ModuleName, String.Join(", ", caseUnsupportedParameters));
-                msg = String.Format("{0}. Module options will become case sensitive in a future Ansible release. Supported parameters include: {1}",
-                    FormatOptionsContext(msg), String.Join(", ", legalInputs));
-                Warn(msg);
-            }
-
-            // Make sure we convert all the incorrect case params to the ones set by the module spec
-            foreach (string key in caseUnsupportedParameters)
-            {
-                string correctKey = legalInputs[legalInputs.FindIndex(s => s.Equals(key, StringComparison.OrdinalIgnoreCase))];
-                object value = param[key];
-                param.Remove(key);
-                param.Add(correctKey, value);
             }
         }
 
@@ -1009,28 +984,6 @@ namespace Ansible.Basic
                 {
                     string msg = String.Format("{0} is {1} but {2} of the following are missing: {3}",
                         key, val.ToString(), term, String.Join(", ", missing));
-                    FailJson(FormatOptionsContext(msg));
-                }
-            }
-        }
-
-        private void CheckRequiredBy(IDictionary param, IDictionary requiredBy)
-        {
-            foreach (DictionaryEntry entry in requiredBy)
-            {
-                string key = (string)entry.Key;
-                if (!param.Contains(key))
-                    continue;
-
-                List<string> missing = new List<string>();
-                List<string> requires = ParseList(entry.Value).Cast<string>().ToList();
-                foreach (string required in requires)
-                    if (!param.Contains(required))
-                        missing.Add(required);
-
-                if (missing.Count > 0)
-                {
-                    string msg =  String.Format("missing parameter(s) required by '{0}': {1}", key, String.Join(", ", missing));
                     FailJson(FormatOptionsContext(msg));
                 }
             }

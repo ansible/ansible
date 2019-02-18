@@ -26,7 +26,6 @@ description:
       the IETF. It is documented in RFC 6241.
     - This module allows the user to fetch configuration and state data from NETCONF
       enabled network devices.
-extends_documentation_fragment: network_agnostic
 options:
   source:
     description:

@@ -151,19 +151,14 @@ class TestManager(unittest.TestCase):
             monitor='tcp',
             member_order=2,
             partition='Common',
-            provider=dict(
-                server='localhost',
-                password='password',
-                user='admin'
-            )
+            server='localhost',
+            password='password',
+            user='admin'
         ))
 
         module = AnsibleModule(
             argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            mutually_exclusive=self.spec.mutually_exclusive,
-            required_one_of=self.spec.required_one_of,
-            required_together=self.spec.required_together,
+            supports_check_mode=self.spec.supports_check_mode
         )
 
         # Override methods in the specific type of manager
@@ -171,48 +166,6 @@ class TestManager(unittest.TestCase):
         mm.exists = Mock(side_effect=[False, True])
         mm.create_on_device = Mock(return_value=True)
         mm.module_provisioned = Mock(return_value=True)
-
-        results = mm.exec_module()
-
-        assert results['changed'] is True
-
-    def test_create_aggregate_pool_members(self, *args):
-        set_module_args(dict(
-            pool='fake_pool',
-            type='a',
-            aggregate=[
-                dict(
-                    server_name='my-name1',
-                    virtual_server='some-vs2',
-                    state='present',
-                    partition='Common',
-
-                ),
-                dict(
-                    server_name='my-name1',
-                    virtual_server='some-vs1',
-                    state='present',
-                    partition='Common'
-                )
-            ],
-            provider=dict(
-                server='localhost',
-                password='password',
-                user='admin'
-            )
-        ))
-
-        module = AnsibleModule(
-            argument_spec=self.spec.argument_spec,
-            supports_check_mode=self.spec.supports_check_mode,
-            mutually_exclusive=self.spec.mutually_exclusive,
-            required_one_of=self.spec.required_one_of,
-            required_together=self.spec.required_together,
-        )
-
-        mm = ModuleManager(module=module)
-        mm.create_on_device = Mock(return_value=True)
-        mm.exists = Mock(return_value=False)
 
         results = mm.exec_module()
 

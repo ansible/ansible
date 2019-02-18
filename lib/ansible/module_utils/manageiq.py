@@ -28,16 +28,11 @@
 
 
 import os
-import traceback
 
-from ansible.module_utils.basic import missing_required_lib
-
-CLIENT_IMP_ERR = None
 try:
     from manageiq_client.api import ManageIQClient
     HAS_CLIENT = True
 except ImportError:
-    CLIENT_IMP_ERR = traceback.format_exc()
     HAS_CLIENT = False
 
 
@@ -60,7 +55,7 @@ def manageiq_argument_spec():
 
 def check_client(module):
     if not HAS_CLIENT:
-        module.fail_json(msg=missing_required_lib('manageiq-client'), exception=CLIENT_IMP_ERR)
+        module.fail_json(msg='manageiq_client.api is required for this module')
 
 
 def validate_connection_params(module):

@@ -40,14 +40,10 @@ requirements:
 - requests >= 2.18.4
 - google-auth >= 1.3.0
 options:
-  location:
+  zone:
     description:
-    - The location where the node pool is deployed.
+    - The zone where the node pool is deployed.
     required: true
-    aliases:
-    - region
-    - zone
-    version_added: 2.8
   cluster:
     description:
     - The cluster this node pool belongs to.
@@ -63,7 +59,7 @@ EXAMPLES = '''
 - name:  a node pool facts
   gcp_container_node_pool_facts:
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: test_project
       auth_kind: serviceaccount
       service_account_file: "/tmp/auth.pem"
@@ -252,9 +248,9 @@ items:
       - The cluster this node pool belongs to.
       returned: success
       type: str
-    location:
+    zone:
       description:
-      - The location where the node pool is deployed.
+      - The zone where the node pool is deployed.
       returned: success
       type: str
 '''
@@ -271,7 +267,7 @@ import json
 
 
 def main():
-    module = GcpModule(argument_spec=dict(location=dict(required=True, type='str', aliases=['region', 'zone']), cluster=dict(required=True)))
+    module = GcpModule(argument_spec=dict(zone=dict(required=True, type='str'), cluster=dict(required=True)))
 
     if not module.params['scopes']:
         module.params['scopes'] = ['https://www.googleapis.com/auth/cloud-platform']
@@ -286,8 +282,8 @@ def main():
 
 
 def collection(module):
-    res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools".format(**res)
+    res = {'project': module.params['project'], 'zone': module.params['zone'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
 
 
 def fetch_list(module, link):

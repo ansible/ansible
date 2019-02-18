@@ -94,12 +94,12 @@ class NetAppONTAPCommand(object):
 
 
 def main():
-    """
-    Execute action from playbook
-    """
-    command = NetAppONTAPCommand()
-    command.apply()
+        """
+        Execute action from playbook
+        """
+        command = NetAppONTAPCommand()
+        command.apply()
 
 
 if __name__ == '__main__':
-    main()
+        main()

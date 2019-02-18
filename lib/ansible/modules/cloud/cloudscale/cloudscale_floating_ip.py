@@ -19,7 +19,12 @@ module: cloudscale_floating_ip
 short_description: Manages floating IPs on the cloudscale.ch IaaS service
 description:
   - Create, assign and delete floating IPs on the cloudscale.ch IaaS service.
+  - All operations are performed using the cloudscale.ch public API v1.
+  - "For details consult the full API documentation: U(https://www.cloudscale.ch/en/api/v1)."
+  - A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 notes:
+  - Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
   - To create a new floating IP at least the C(ip_version) and C(server) options are required.
   - Once a floating_ip is created all parameters except C(server) are read-only.
   - It's not possible to request a floating IP without associating it with a server at the same time.
@@ -56,7 +61,14 @@ options:
     description:
       - Reverse PTR entry for this address.
       - You cannot set a reverse PTR entry for IPv6 floating networks. Reverse PTR entries are only allowed for single addresses.
-extends_documentation_fragment: cloudscale
+  api_token:
+    description:
+      - cloudscale.ch API token.
+      - This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
+  api_timeout:
+    description:
+      - Timeout in seconds for calls to the cloudscale.ch API.
+    default: 30
 '''
 
 EXAMPLES = '''
@@ -139,17 +151,14 @@ state:
 '''
 
 import os
-import traceback
 
-IPADDRESS_IMP_ERR = None
 try:
     from ipaddress import ip_network
     HAS_IPADDRESS = True
 except ImportError:
-    IPADDRESS_IMP_ERR = traceback.format_exc()
     HAS_IPADDRESS = False
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.cloudscale import AnsibleCloudscaleBase, cloudscale_argument_spec
 
 
@@ -240,7 +249,7 @@ def main():
     )
 
     if not HAS_IPADDRESS:
-        module.fail_json(msg=missing_required_lib('ipaddress'), exception=IPADDRESS_IMP_ERR)
+        module.fail_json(msg='Could not import the python library ipaddress required by this module')
 
     target_state = module.params['state']
     target_server = module.params['server']

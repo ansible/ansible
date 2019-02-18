@@ -35,16 +35,15 @@ options:
         versions of BIG-IP. The opposite, however, is true; you can import older into
         newer.
       - The file format can be binary of XML.
-    type: path
   force:
     description:
       - When set to C(yes) any existing policy with the same name will be overwritten by the new import.
-      - Works for both inline and file imports, if the policy does not exist this setting is ignored.
+      - Works in both inline and file imports, if policy does not exist this setting is ignored.
     default: no
     type: bool
   partition:
     description:
-      - Device partition to create policy on.
+      - Device partition to manage resources on.
     default: Common
 extends_documentation_fragment: f5
 author:
@@ -85,8 +84,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-source:
-  description: Local path to an ASM policy file.
+file:
+  description: Local path to ASM policy file.
   returned: changed
   type: str
   sample: /root/some_policy.xml
@@ -366,10 +365,10 @@ class ModuleManager(object):
 
         if response['status'] == 'FAILURE':
             raise F5ModuleError(
-                'Failed to import ASM policy.'
+                'Failed to export ASM policy.'
             )
         if response['status'] == 'COMPLETED':
-            return True
+                return True
 
     def import_file_to_device(self):
         name = os.path.split(self.want.source)[1]

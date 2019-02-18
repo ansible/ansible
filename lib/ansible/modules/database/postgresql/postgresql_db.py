@@ -1,17 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+
+DOCUMENTATION = '''
 ---
 module: postgresql_db
 short_description: Add or remove PostgreSQL databases from a remote host.
@@ -22,100 +23,82 @@ options:
   name:
     description:
       - name of the database to add or remove
-    type: str
     required: true
     aliases: [ db ]
   owner:
     description:
       - Name of the role to set as owner of the database
-    type: str
   template:
     description:
       - Template used to create the database
-    type: str
   encoding:
     description:
       - Encoding of the database
-    type: str
   lc_collate:
     description:
       - Collation order (LC_COLLATE) to use in the database. Must match collation order of template database unless C(template0) is used as template.
-    type: str
   lc_ctype:
     description:
       - Character classification (LC_CTYPE) to use in the database (e.g. lower, upper, ...) Must match LC_CTYPE of template database unless C(template0)
         is used as template.
-    type: str
-  session_role:
-    description:
-    - Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
-    - Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
-    type: str
-    version_added: "2.8"
   state:
-    description:
-    - The database state.
-    - C(present) implies that the database should be created if necessary.
-    - C(absent) implies that the database should be removed if present.
-    - C(dump) requires a target definition to which the database will be backed up. (Added in Ansible 2.4)
-    - C(restore) also requires a target definition from which the database will be restored. (Added in Ansible 2.4)
-    - The format of the backup will be detected based on the target name.
-    - Supported compression formats for dump and restore include C(.bz2), C(.gz) and C(.xz)
-    - Supported formats for dump and restore include C(.sql) and C(.tar)
-    type: str
-    choices: [ absent, dump, present, restore ]
+    description: |
+        The database state. present implies that the database should be created if necessary.
+        absent implies that the database should be removed if present.
+        dump requires a target definition to which the database will be backed up.
+        (Added in 2.4) restore also requires a target definition from which the database will be restored.
+        (Added in 2.4) The format of the backup will be detected based on the target name.
+        Supported compression formats for dump and restore are: .bz2, .gz, and .xz
+        Supported formats for dump and restore are: .sql and .tar
     default: present
+    choices: [ "present", "absent", "dump", "restore" ]
   target:
-    description:
-    - File to back up or restore from.
-    - Used when I(state) is C(dump) or C(restore).
-    type: path
     version_added: "2.4"
+    description:
+      - File to back up or restore from. Used when state is "dump" or "restore"
   target_opts:
-    description:
-    - Further arguments for pg_dump or pg_restore.
-    - Used when I(state) is C(dump) or C(restore).
-    type: str
     version_added: "2.4"
+    description:
+      - Further arguments for pg_dump or pg_restore. Used when state is "dump" or "restore"
   maintenance_db:
+    version_added: "2.5"
     description:
       - The value specifies the initial database (which is also called as maintenance DB) that Ansible connects to.
-    type: str
     default: postgres
-    version_added: "2.5"
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
 '''
 
-EXAMPLES = r'''
-- name: Create a new database with name "acme"
-  postgresql_db:
+EXAMPLES = '''
+# Create a new database with name "acme"
+- postgresql_db:
     name: acme
 
-# Note: If a template different from "template0" is specified, encoding and locale settings must match those of the template.
-- name: Create a new database with name "acme" and specific encoding and locale # settings.
-  postgresql_db:
+# Create a new database with name "acme" and specific encoding and locale
+# settings. If a template different from "template0" is specified, encoding
+# and locale settings must match those of the template.
+- postgresql_db:
     name: acme
     encoding: UTF-8
     lc_collate: de_DE.UTF-8
     lc_ctype: de_DE.UTF-8
     template: template0
 
-- name: Dump an existing database to a file
-  postgresql_db:
+# Dump an existing database to a file
+- postgresql_db:
     name: acme
     state: dump
     target: /tmp/acme.sql
 
-- name: Dump an existing database to a file (with compression)
-  postgresql_db:
+# Dump an existing database to a file (with compression)
+- postgresql_db:
     name: acme
     state: dump
     target: /tmp/acme.sql.gz
 
-- name: Dump a single schema for an existing database
-  postgresql_db:
+# Dump a single schema for an existing database
+- postgresql_db:
     name: acme
     state: dump
     target: /tmp/acme.sql
@@ -127,18 +110,16 @@ import pipes
 import subprocess
 import traceback
 
-PSYCOPG2_IMP_ERR = None
 try:
     import psycopg2
     import psycopg2.extras
 except ImportError:
-    PSYCOPG2_IMP_ERR = traceback.format_exc()
     HAS_PSYCOPG2 = False
 else:
     HAS_PSYCOPG2 = True
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
@@ -378,19 +359,18 @@ def do_with_password(module, cmd, password):
 
 def main():
     argument_spec = pgutils.postgres_common_argument_spec()
-    argument_spec.update(
-        db=dict(type='str', required=True, aliases=['name']),
-        owner=dict(type='str', default=''),
-        template=dict(type='str', default=''),
-        encoding=dict(type='str', default=''),
-        lc_collate=dict(type='str', default=''),
-        lc_ctype=dict(type='str', default=''),
-        state=dict(type='str', default='present', choices=['absent', 'dump', 'present', 'restore']),
-        target=dict(type='path', default=''),
-        target_opts=dict(type='str', default=''),
-        maintenance_db=dict(type='str', default="postgres"),
-        session_role=dict(type='str'),
-    )
+    argument_spec.update(dict(
+        db=dict(required=True, aliases=['name']),
+        owner=dict(default=""),
+        template=dict(default=""),
+        encoding=dict(default=""),
+        lc_collate=dict(default=""),
+        lc_ctype=dict(default=""),
+        state=dict(default="present", choices=["absent", "present", "dump", "restore"]),
+        target=dict(default="", type="path"),
+        target_opts=dict(default=""),
+        maintenance_db=dict(default="postgres"),
+    ))
 
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -398,7 +378,7 @@ def main():
     )
 
     if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
+        module.fail_json(msg="the python psycopg2 module is required")
 
     db = module.params["db"]
     owner = module.params["owner"]
@@ -411,7 +391,6 @@ def main():
     state = module.params["state"]
     changed = False
     maintenance_db = module.params['maintenance_db']
-    session_role = module.params["session_role"]
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -459,12 +438,6 @@ def main():
 
     except Exception as e:
         module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    if session_role:
-        try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
-        except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:

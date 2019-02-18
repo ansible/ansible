@@ -151,8 +151,8 @@ class Parameters(AnsibleF5Parameters):
         if self._values['name']:
             return self._values['name']
         if self._values['content']:
-            name = self._get_template_name()
-            return name
+                name = self._get_template_name()
+                return name
         return None
 
     @property

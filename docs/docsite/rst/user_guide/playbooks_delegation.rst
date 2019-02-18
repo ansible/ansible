@@ -34,7 +34,7 @@ By default, Ansible will try to manage all of the machines referenced in a play 
       gather_facts: False
       tasks:
       - name: task one
-        command: hostname
+        comand: hostname
       - name: task two
         command: hostname
 

@@ -140,20 +140,17 @@ EXAMPLES = '''
 RETURN = r"""# """
 
 import os
-import traceback
 from distutils.version import LooseVersion
 
-DNSIMPLE_IMP_ERR = None
 try:
     from dnsimple import DNSimple
     from dnsimple.dnsimple import __version__ as dnsimple_version
     from dnsimple.dnsimple import DNSimpleException
     HAS_DNSIMPLE = True
 except ImportError:
-    DNSIMPLE_IMP_ERR = traceback.format_exc()
     HAS_DNSIMPLE = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
@@ -179,7 +176,7 @@ def main():
     )
 
     if not HAS_DNSIMPLE:
-        module.fail_json(msg=missing_required_lib('dnsimple'), exception=DNSIMPLE_IMP_ERR)
+        module.fail_json(msg="dnsimple required for this module")
 
     if LooseVersion(dnsimple_version) < LooseVersion('1.0.0'):
         module.fail_json(msg="Current version of dnsimple Python module [%s] uses 'v1' API which is deprecated."

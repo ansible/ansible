@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -229,7 +227,7 @@ def _find_address_by_ip(ec2, public_ip):
     try:
         return ec2.get_all_addresses([public_ip])[0]
     except boto.exception.EC2ResponseError as e:
-        if "Address '{0}' not found.".format(public_ip) not in e.message:
+        if "Address '{}' not found.".format(public_ip) not in e.message:
             raise
 
 
@@ -387,10 +385,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=True,
-        required_together=[
-            ['device_id', 'private_ip_address'],
-        ],
+        supports_check_mode=True
     )
 
     if not HAS_BOTO:
@@ -408,6 +403,10 @@ def main():
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
     allow_reassociation = module.params.get('allow_reassociation')
+
+    # Parameter checks
+    if private_ip_address is not None and device_id is None:
+        module.fail_json(msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
         warnings = ["instance_id is no longer used, please use device_id going forward"]

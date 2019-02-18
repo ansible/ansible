@@ -1,21 +1,33 @@
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2016 Matt Davis, <mdavis@ansible.com>
-# Copyright: (c) 2016 Chris Houseknecht, <house@redhat.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright (c) 2016 Matt Davis, <mdavis@ansible.com>
+#                    Chris Houseknecht, <house@redhat.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 
 class ModuleDocFragment(object):
 
     # Azure doc fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = '''
 
 options:
     ad_user:
         description:
             - Active Directory username. Use when authenticating with an Active Directory user rather than service
               principal.
-        type: str
     password:
         description:
             - Active Directory user password. Use when authenticating with an Active Directory user rather than service
@@ -23,44 +35,38 @@ options:
     profile:
         description:
             - Security profile found in ~/.azure/credentials file.
-        type: str
     subscription_id:
         description:
             - Your Azure subscription Id.
-        type: str
     client_id:
         description:
             - Azure client ID. Use when authenticating with a Service Principal.
-        type: str
     secret:
         description:
             - Azure client secret. Use when authenticating with a Service Principal.
-        type: str
     tenant:
         description:
             - Azure tenant ID. Use when authenticating with a Service Principal.
-        type: str
     cloud_environment:
         description:
             - For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, C(AzureChinaCloud),
               C(AzureUSGovernment)), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or
               the C(AZURE_CLOUD_ENVIRONMENT) environment variable.
-        type: str
         default: AzureCloud
-        version_added: '2.4'
+        version_added: 2.4
     adfs_authority_url:
         description:
             - Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
-        type: str
-        version_added: '2.6'
+        required: false
+        default: null
+        version_added: 2.6
     cert_validation_mode:
         description:
             - Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but
               when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing C(ignore). Can also be
               set via credential file profile or the C(AZURE_CERT_VALIDATION) environment variable.
-        type: str
-        choices: [ ignore, validate ]
-        version_added: '2.5'
+        choices: [validate, ignore]
+        version_added: 2.5
     auth_source:
         description:
             - Controls the source of the credentials to use for authentication.
@@ -73,24 +79,22 @@ options:
               environment variable C(AZURE_SUBSCRIPTION_ID) can be used to identify the subscription ID if the resource is granted
               access to more than one subscription, otherwise the first subscription is chosen.
             - The C(msi) was added in Ansible 2.6.
-        type: str
         choices:
         - auto
         - cli
         - credential_file
         - env
         - msi
-        version_added: '2.5'
+        version_added: 2.5
     api_profile:
         description:
         - Selects an API profile to use when communicating with Azure services. Default value of C(latest) is appropriate for public clouds;
           future values will allow use with Azure Stack.
-        type: str
         default: latest
-        version_added: '2.5'
+        version_added: 2.5
 requirements:
-    - python >= 2.7
-    - azure >= 2.0.0
+    - "python >= 2.7"
+    - "azure >= 2.0.0"
 
 notes:
     - For authentication with Azure you can pass parameters, set environment variables or use a profile stored

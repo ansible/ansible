@@ -176,28 +176,28 @@ class ElementSWNetworkInterfaces(object):
 
     def __init__(self):
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
-        self.argument_spec.update(
-            method=dict(type='str', required=True, choices=['loopback', 'manual', 'dhcp', 'static']),
-            ip_address_1g=dict(type='str', required=True),
-            ip_address_10g=dict(type='str', required=True),
-            subnet_1g=dict(type='str', required=True),
-            subnet_10g=dict(type='str', required=True),
-            gateway_address_1g=dict(type='str', required=True),
-            gateway_address_10g=dict(type='str', required=True),
-            mtu_1g=dict(type='str', default='1500'),
-            mtu_10g=dict(type='str', default='1500'),
-            dns_nameservers=dict(type='list'),
-            dns_search_domains=dict(type='list'),
-            bond_mode_1g=dict(type='str', default='ActivePassive', choices=['ActivePassive', 'ALB', 'LACP']),
-            bond_mode_10g=dict(type='str', default='ActivePassive', choices=['ActivePassive', 'ALB', 'LACP']),
-            lacp_1g=dict(type='str', default='Slow', choices=['Fast', 'Slow']),
-            lacp_10g=dict(type='str', default='Slow', choices=['Fast', 'Slow']),
-            virtual_network_tag=dict(type='str'),
-        )
+        self.argument_spec.update(dict(
+            method=dict(required=True, type='str', choices=['loopback', 'manual', 'dhcp', 'static']),
+            ip_address_1g=dict(required=True, type='str'),
+            ip_address_10g=dict(required=True, type='str'),
+            subnet_1g=dict(required=True, type='str'),
+            subnet_10g=dict(required=True, type='str'),
+            gateway_address_1g=dict(required=True, type='str'),
+            gateway_address_10g=dict(required=True, type='str'),
+            mtu_1g=dict(required=False, type='str', default='1500'),
+            mtu_10g=dict(required=False, type='str', default='1500'),
+            dns_nameservers=dict(required=False, type=list),
+            dns_search_domains=dict(required=False, type=list),
+            bond_mode_1g=dict(required=False, type='str', choices=['ActivePassive', 'ALB', 'LACP'], default='ActivePassive'),
+            bond_mode_10g=dict(required=False, type='str', choices=['ActivePassive', 'ALB', 'LACP'], default='ActivePassive'),
+            lacp_1g=dict(required=False, type='str', choices=['Fast', 'Slow'], default='Slow'),
+            lacp_10g=dict(required=False, type='str', choices=['Fast', 'Slow'], default='Slow'),
+            virtual_network_tag=dict(required=False, type='str')
+        ))
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True,
+            supports_check_mode=True
         )
 
         input_params = self.module.params

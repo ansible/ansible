@@ -117,16 +117,14 @@ EXAMPLES = '''
 
 import traceback
 
-REDIS_IMP_ERR = None
 try:
     import redis
 except ImportError:
-    REDIS_IMP_ERR = traceback.format_exc()
     redis_found = False
 else:
     redis_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -176,7 +174,7 @@ def main():
     )
 
     if not redis_found:
-        module.fail_json(msg=missing_required_lib('redis'), exception=REDIS_IMP_ERR)
+        module.fail_json(msg="python redis module is required")
 
     login_password = module.params['login_password']
     login_host = module.params['login_host']

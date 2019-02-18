@@ -63,7 +63,7 @@ options:
                 description:
                     - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
                        unique for the list of access policies."
-                    - Please note this is not application id. Object id can be obtained by running "az ad sp show --id <application id>".
+                    - Please note this is not application id. Object id can be obtained by running "az ad show sp --id <application id>".
                 required: True
             application_id:
                 description:

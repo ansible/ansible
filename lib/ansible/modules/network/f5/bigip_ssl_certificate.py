@@ -296,7 +296,7 @@ class Difference(object):
             if self.content:
                 return self.want.source_path
         if self.want.source_path != self.have.source_path:
-            return self.want.source_path
+                return self.want.source_path
 
     @property
     def content(self):

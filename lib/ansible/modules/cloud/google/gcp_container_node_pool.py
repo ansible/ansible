@@ -207,14 +207,10 @@ options:
       Alternatively, you can add `register: name-of-resource` to a gcp_container_cluster
       task and then set this cluster field to "{{ name-of-resource }}"'
     required: true
-  location:
+  zone:
     description:
-    - The location where the node pool is deployed.
+    - The zone where the node pool is deployed.
     required: true
-    aliases:
-    - region
-    - zone
-    version_added: 2.8
 extends_documentation_fragment: gcp
 '''
 
@@ -223,7 +219,7 @@ EXAMPLES = '''
   gcp_container_cluster:
       name: "cluster-nodepool"
       initial_node_count: 4
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -235,7 +231,7 @@ EXAMPLES = '''
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "test_project"
       auth_kind: "serviceaccount"
       service_account_file: "/tmp/auth.pem"
@@ -419,9 +415,9 @@ cluster:
   - The cluster this node pool belongs to.
   returned: success
   type: str
-location:
+zone:
   description:
-  - The location where the node pool is deployed.
+  - The zone where the node pool is deployed.
   returned: success
   type: str
 '''
@@ -472,7 +468,7 @@ def main():
                 ),
             ),
             cluster=dict(required=True),
-            location=dict(required=True, type='str', aliases=['region', 'zone']),
+            zone=dict(required=True, type='str'),
         )
     )
 
@@ -546,16 +542,16 @@ def fetch_resource(module, link, allow_not_found=True):
 def self_link(module):
     res = {
         'project': module.params['project'],
-        'location': module.params['location'],
+        'zone': module.params['zone'],
         'cluster': replace_resource_dict(module.params['cluster'], 'name'),
         'name': module.params['name'],
     }
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools/{name}".format(**res)
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools/{name}".format(**res)
 
 
 def collection(module):
-    res = {'project': module.params['project'], 'location': module.params['location'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
-    return "https://container.googleapis.com/v1/projects/{project}/zones/{location}/clusters/{cluster}/nodePools".format(**res)
+    res = {'project': module.params['project'], 'zone': module.params['zone'], 'cluster': replace_resource_dict(module.params['cluster'], 'name')}
+    return "https://container.googleapis.com/v1/projects/{project}/zones/{zone}/clusters/{cluster}/nodePools".format(**res)
 
 
 def return_if_object(module, response, allow_not_found=False):
@@ -634,7 +630,7 @@ def wait_for_completion(status, op_result, module):
     while status != 'DONE':
         raise_if_errors(op_result, ['error', 'errors'], module)
         time.sleep(1.0)
-        op_result = fetch_resource(module, op_uri, False)
+        op_result = fetch_resource(module, op_uri)
         status = navigate_hash(op_result, ['status'])
     return op_result
 

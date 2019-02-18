@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright: (c) 2016, Roman Belyakovsky <ihryamzik () gmail.com>
+# (c) 2016, Roman Belyakovsky <ihryamzik () gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -350,19 +350,16 @@ def write_changes(module, lines, dest):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(type='path', default='/etc/network/interfaces'),
-            iface=dict(type='str'),
-            address_family=dict(type='str'),
-            option=dict(type='str'),
-            value=dict(type='str'),
-            backup=dict(type='bool', default=False),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
+            dest=dict(default='/etc/network/interfaces', required=False, type='path'),
+            iface=dict(required=False),
+            address_family=dict(required=False),
+            option=dict(required=False),
+            value=dict(required=False),
+            backup=dict(default='no', type='bool'),
+            state=dict(default='present', choices=['present', 'absent']),
         ),
         add_file_common_args=True,
-        supports_check_mode=True,
-        required_by=dict(
-            option=('iface'),
-        ),
+        supports_check_mode=True
     )
 
     dest = module.params['dest']
@@ -372,6 +369,9 @@ def main():
     value = module.params['value']
     backup = module.params['backup']
     state = module.params['state']
+
+    if option is not None and iface is None:
+        module.fail_json(msg="Inteface must be set if option is defined")
 
     if option is not None and state == "present" and value is None:
         module.fail_json(msg="Value must be set if option is defined and state is 'present'")

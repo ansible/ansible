@@ -95,18 +95,15 @@ EXAMPLES = """
 """
 
 import time
-import traceback
 
-KAZOO_IMP_ERR = None
 try:
     from kazoo.client import KazooClient
     from kazoo.handlers.threading import KazooTimeoutError
     KAZOO_INSTALLED = True
 except ImportError:
-    KAZOO_IMP_ERR = traceback.format_exc()
     KAZOO_INSTALLED = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
 
 
@@ -125,7 +122,7 @@ def main():
     )
 
     if not KAZOO_INSTALLED:
-        module.fail_json(msg=missing_required_lib('kazoo >= 2.1'), exception=KAZOO_IMP_ERR)
+        module.fail_json(msg='kazoo >= 2.1 is required to use this module. Use pip to install it.')
 
     check = check_params(module.params)
     if not check['success']:

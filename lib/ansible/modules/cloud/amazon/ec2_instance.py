@@ -926,8 +926,6 @@ def build_network_spec(params, ec2=None):
                 ec2=ec2
             )
             spec['Groups'] = [g['GroupId'] for g in groups]
-        if network.get('description') is not None:
-            spec['Description'] = network['description']
         # TODO more special snowflake network things
 
         return [spec]

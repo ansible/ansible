@@ -47,7 +47,6 @@ DOCUMENTATION = '''
           vars:
               - name: ansible_password
               - name: ansible_ssh_pass
-              - name: ansible_ssh_password
       ssh_args:
           description: Arguments to pass to all ssh cli tools
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
@@ -443,6 +442,7 @@ class Connection(ConnectionBase):
 
     transport = 'ssh'
     has_pipelining = True
+    become_methods = frozenset(C.BECOME_METHODS).difference(['runas'])
 
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)
@@ -605,7 +605,7 @@ class Connection(ConnectionBase):
                     b"-o", b"PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                     b"-o", b"PasswordAuthentication=no"
                 ),
-                u"ansible_password/ansible_ssh_password not set"
+                u"ansible_password/ansible_ssh_pass not set"
             )
 
         user = self._play_context.remote_user
@@ -707,18 +707,18 @@ class Connection(ConnectionBase):
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
-            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
+            if self._play_context.prompt and self.check_password_prompt(b_line):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
-            elif self.become.success and self.become.check_success(b_line):
+            elif self._play_context.success_key and self.check_become_success(b_line):
                 display.debug("become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
-            elif sudoable and self.become.check_incorrect_password(b_line):
+            elif sudoable and self.check_incorrect_password(b_line):
                 display.debug("become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_error'] = True
-            elif sudoable and self.become.check_missing_password(b_line):
+            elif sudoable and self.check_missing_password(b_line):
                 display.debug("become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_nopasswd_error'] = True
 
@@ -810,12 +810,11 @@ class Connection(ConnectionBase):
 
         state = states.index('ready_to_send')
         if to_bytes(self.get_option('ssh_executable')) in cmd and sudoable:
-            prompt = getattr(self.become, 'prompt', None)
-            if prompt:
+            if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
-                display.debug(u'Initial state: %s: %s' % (states[state], prompt))
+                display.debug(u'Initial state: %s: %s' % (states[state], self._play_context.prompt))
             elif self._play_context.become and self._play_context.success_key:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
@@ -925,7 +924,7 @@ class Connection(ConnectionBase):
 
                 if states[state] == 'awaiting_prompt':
                     if self._flags['become_prompt']:
-                        display.debug('Sending become_password in response to prompt')
+                        display.debug('Sending become_pass in response to prompt')
                         stdin.write(to_bytes(self._play_context.become_pass) + b'\n')
                         # On python3 stdin is a BufferedWriter, and we don't have a guarantee
                         # that the write will happen without a flush

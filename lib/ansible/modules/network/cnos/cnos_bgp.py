@@ -361,6 +361,8 @@ def bgpNeighborConfig(module, cmd, prompt, answer):
         command = command + bgpNeighborArg1 + " "
         if(bgpNeighborArg2 is not None and bgpNeighborArg2 == "mutihop"):
             command = command + bgpNeighborArg2
+        else:
+            command = command
 
     elif(bgpNeighborArg1 == "connection-retry-time"):
         command = command + bgpNeighborArg1 + " "
@@ -563,6 +565,8 @@ def bgpNeighborAFConfig(module, cmd, prompt, answer):
             else:
                 retVal = "Error-325"
                 return retVal
+        else:
+            command = command
 
     elif(bgpNeighborAFArg1 == "default-originate"):
         command = command + bgpNeighborAFArg1 + " "
@@ -639,6 +643,8 @@ def bgpNeighborAFConfig(module, cmd, prompt, answer):
         command = command + bgpNeighborAFArg1 + " "
         if(bgpNeighborAFArg2 is not None and bgpNeighborAFArg2 == "extended"):
             command = command + bgpNeighborAFArg2
+        else:
+            command = command
 
     elif(bgpNeighborAFArg1 == "soft-reconfiguration"):
         command = command + bgpNeighborAFArg1 + " inbound"

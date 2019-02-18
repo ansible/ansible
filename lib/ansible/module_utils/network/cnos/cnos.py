@@ -34,7 +34,6 @@
 import time
 import socket
 import re
-import json
 try:
     from ansible.module_utils.network.cnos import cnos_errorcodes
     from ansible.module_utils.network.cnos import cnos_devicerules
@@ -193,23 +192,11 @@ def run_cnos_commands(module, commands, check_rc=True):
     return str(retVal)
 
 
-def get_capabilities(module):
-    if hasattr(module, '_cnos_capabilities'):
-        return module._cnos_capabilities
-    try:
-        capabilities = Connection(module._socket_path).get_capabilities()
-    except ConnectionError as exc:
-        module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
-    module._cnos_capabilities = json.loads(capabilities)
-    return module._cnos_capabilities
-
-
 def load_config(module, config):
     try:
         conn = get_connection(module)
         conn.get('enable')
-        resp = conn.edit_config(config)
-        return resp.get('response')
+        conn.edit_config(config)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 
@@ -300,9 +287,9 @@ def waitForDeviceResponse(command, prompt, timeout, obj):
         except Exception:
             # debugOutput(prompt)
             if prompt == "(yes/no)?":
-                pass
+                retVal = retVal
             elif prompt == "Password:":
-                pass
+                retVal = retVal
             else:
                 retVal = retVal + "\n Error-101"
             flag = True

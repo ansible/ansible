@@ -146,20 +146,18 @@ attached_file:
 '''
 
 import os
-import traceback
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
 # Pull in pysnow
 HAS_PYSNOW = False
-PYSNOW_IMP_ERR = None
 try:
     import pysnow
     HAS_PYSNOW = True
 
 except ImportError:
-    PYSNOW_IMP_ERR = traceback.format_exc()
+    pass
 
 
 def run_module():
@@ -189,7 +187,7 @@ def run_module():
 
     # check for pysnow
     if not HAS_PYSNOW:
-        module.fail_json(msg=missing_required_lib('pysnow'), exception=PYSNOW_IMP_ERR)
+        module.fail_json(msg='pysnow module required')
 
     params = module.params
     instance = params['instance']

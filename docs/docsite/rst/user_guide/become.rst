@@ -73,7 +73,7 @@ ansible_become_method
 ansible_become_user
     set the user you become through privilege escalation; does not imply ``ansible_become: yes``
 
-ansible_become_password
+ansible_become_pass
     set the privilege escalation password. See :doc:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this::
@@ -298,7 +298,7 @@ Passwords for enable mode
 If you need a password to enter ``enable`` mode, you can specify it in one of two ways:
 
 * providing the :option:`--ask-become-pass <ansible-playbook --ask-become-pass>` command line option
-* setting the ``ansible_become_password`` connection variable
+* setting the ``ansible_become_pass`` connection variable
 
 .. warning::
 
@@ -553,8 +553,8 @@ option for a Scheduled Task. In this scenario, the become process will not be
 able to access any network resources like a normal WinRM process.
 
 To make a distinction between using become with no password and becoming an
-account that has no password make sure to keep ``ansible_become_password`` as
-undefined or set ``ansible_become_password:``.
+account that has no password make sure to keep ``ansible_become_pass`` as
+undefined or set ``ansible_become_pass:``.
 
 .. Note:: Because there are no guarantees an existing token will exist for a
   user when Ansible runs, there's a high change the become process will only
@@ -568,7 +568,7 @@ Accounts without a Password
 
 Ansible can be used to become an account that does not have a password (like the
 ``Guest`` account). To become an account without a password, set up the
-variables like normal but set ``ansible_become_password: ''``.
+variables like normal but set ``ansible_become_pass: ''``.
 
 Before become can work on an account like this, the local policy
 `Accounts: Limit local account use of blank passwords to console logon only <https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/jj852174(v=ws.11)>`_
@@ -586,7 +586,7 @@ or with this Ansible task:
        state: present
 
 .. Note:: This is only for accounts that do not have a password. You still need
-    to set the account's password under ``ansible_become_password`` if the
+    to set the account's password under ``ansible_become_pass`` if the
     become_user has a password.
 
 Become Flags
@@ -661,7 +661,7 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
       ansible_become: yes
       ansible_become_method: runas
       ansible_become_user: DOMAIN\user
-      ansible_become_password: Password01
+      ansible_become_pass: Password01
       ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
 
   - name: run a command under a batch logon

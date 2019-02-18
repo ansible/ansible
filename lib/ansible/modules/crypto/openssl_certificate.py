@@ -1,334 +1,281 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2016-2017, Yanis Guenane <yanis+ansible@guenane.org>
-# Copyright: (c) 2017, Markus Teufelberger <mteufelberger+ansible@mgit.at>
+# (c) 2016-2017, Yanis Guenane <yanis+ansible@guenane.org>
+# (c) 2017, Markus Teufelberger <mteufelberger+ansible@mgit.at>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+
+DOCUMENTATION = '''
 ---
 module: openssl_certificate
-version_added: "2.4"
-short_description: Generate and/or check OpenSSL certificates
-description:
-    - This module allows one to (re)generate OpenSSL certificates.
-    - It implements a notion of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly))
-      for your certificate.
-    - The C(assertonly) provider is intended for use cases where one is only interested in
-      checking properties of a supplied certificate.
-    - The C(ownca) provider is intended for generate OpenSSL certificate signed with your own
-      CA (Certificate Authority) certificate (self-signed certificate).
-    - Many properties that can be specified in this module are for validation of an
-      existing or newly generated certificate. The proper place to specify them, if you
-      want to receive a certificate with these properties is a CSR (Certificate Signing Request).
-    - It uses the pyOpenSSL python library to interact with OpenSSL.
-requirements:
-    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) or C(assertonly) provider)
-    - acme-tiny (if using the C(acme) provider)
 author:
   - Yanis Guenane (@Spredzy)
   - Markus Teufelberger (@MarkusTeufelberger)
+version_added: "2.4"
+short_description: Generate and/or check OpenSSL certificates
+description:
+    - "This module allows one to (re)generate OpenSSL certificates. It implements a notion
+       of provider (ie. C(selfsigned), C(ownca), C(acme), C(assertonly)) for your certificate.
+       The 'assertonly' provider is intended for use cases where one is only interested in
+       checking properties of a supplied certificate.
+       The 'ownca' provider is intended for generate OpenSSL certificate signed with your own
+       CA (Certificate Authority) certificate (self-signed certificate).
+       Many properties that can be specified in this module are for validation of an
+       existing or newly generated certificate. The proper place to specify them, if you
+       want to receive a certificate with these properties is a CSR (Certificate Signing Request).
+       It uses the pyOpenSSL python library to interact with OpenSSL."
+requirements:
+    - python-pyOpenSSL >= 0.15 (if using C(selfsigned) or C(assertonly) provider)
+    - acme-tiny (if using the C(acme) provider)
 options:
     state:
+        default: "present"
+        choices: [ present, absent ]
         description:
             - Whether the certificate should exist or not, taking action if the state is different from what is stated.
-        type: str
-        default: present
-        choices: [ absent, present ]
 
     path:
+        required: true
         description:
             - Remote absolute path where the generated certificate file should be created or is already located.
-        type: path
-        required: true
 
     provider:
+        required: true
+        choices: [ 'selfsigned', 'ownca', 'assertonly', 'acme' ]
         description:
             - Name of the provider to use to generate/retrieve the OpenSSL certificate.
-            - The C(assertonly) provider will not generate files and fail if the certificate file is missing.
-        type: str
-        required: true
-        choices: [ acme, assertonly, ownca, selfsigned ]
+              The C(assertonly) provider will not generate files and fail if the certificate file is missing.
 
     force:
+        default: False
+        type: bool
         description:
             - Generate the certificate, even if it already exists.
-        type: bool
-        default: no
 
     csr_path:
         description:
-            - Path to the Certificate Signing Request (CSR) used to generate this certificate.
-            - This is not required in C(assertonly) mode.
-        type: path
+            - Path to the Certificate Signing Request (CSR) used to generate this certificate. This is not required in C(assertonly) mode.
 
     privatekey_path:
         description:
             - Path to the private key to use when signing the certificate.
-        type: path
 
     privatekey_passphrase:
         description:
             - The passphrase for the I(privatekey_path).
-        type: str
 
     selfsigned_version:
-        description:
-            - Version of the C(selfsigned) certificate.
-            - Nowadays it should almost always be C(3).
-        type: int
         default: 3
+        description:
+            - Version of the C(selfsigned) certificate. Nowadays it should almost always be C(3).
         version_added: "2.5"
 
     selfsigned_digest:
+        default: "sha256"
         description:
-            - Digest algorithm to be used when self-signing the certificate.
-        type: str
-        default: sha256
+            - Digest algorithm to be used when self-signing the certificate
 
     selfsigned_not_before:
-        description:
-            - The point in time the certificate is valid from.
-            - Time can be specified either as relative time or as absolute timestamp.
-            - Time will always be interpreted as UTC.
-            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
-              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
-            - If this value is not specified, the certificate will start being valid from now.
-        type: str
         default: +0s
+        description:
+            - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will start being valid from now."
         aliases: [ selfsigned_notBefore ]
 
     selfsigned_not_after:
-        description:
-            - The point in time at which the certificate stops being valid.
-            - Time can be specified either as relative time or as absolute timestamp.
-            - Time will always be interpreted as UTC.
-            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
-              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
-            - If this value is not specified, the certificate will stop being valid 10 years from now.
-        type: str
         default: +3650d
+        description:
+            - "The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will stop being valid 10 years from now."
         aliases: [ selfsigned_notAfter ]
 
     ownca_path:
         description:
             - Remote absolute path of the CA (Certificate Authority) certificate.
-        type: path
         version_added: "2.7"
 
     ownca_privatekey_path:
         description:
             - Path to the CA (Certificate Authority) private key to use when signing the certificate.
-        type: path
         version_added: "2.7"
 
     ownca_privatekey_passphrase:
         description:
             - The passphrase for the I(ownca_privatekey_path).
-        type: str
         version_added: "2.7"
 
     ownca_digest:
+        default: "sha256"
         description:
-            - The digest algorithm to be used for the C(ownca) certificate.
-        type: str
-        default: sha256
+            - Digest algorithm to be used for the C(ownca) certificate.
         version_added: "2.7"
 
     ownca_version:
-        description:
-            - The version of the C(ownca) certificate.
-            - Nowadays it should almost always be C(3).
-        type: int
         default: 3
+        description:
+            - Version of the C(ownca) certificate. Nowadays it should almost always be C(3).
         version_added: "2.7"
 
     ownca_not_before:
-        description:
-            - The point in time the certificate is valid from.
-            - Time can be specified either as relative time or as absolute timestamp.
-            - Time will always be interpreted as UTC.
-            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
-              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
-            - If this value is not specified, the certificate will start being valid from now.
-        type: str
         default: +0s
+        description:
+            - "The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will start being valid from now."
         version_added: "2.7"
 
     ownca_not_after:
-        description:
-            - The point in time at which the certificate stops being valid.
-            - Time can be specified either as relative time or as absolute timestamp.
-            - Time will always be interpreted as UTC.
-            - Valid format is C([+-]timespec | ASN.1 TIME) where timespec can be an integer
-              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using relative time this module is NOT idempotent.
-            - If this value is not specified, the certificate will stop being valid 10 years from now.
-        type: str
         default: +3650d
+        description:
+            - "The point in time at which the certificate stops being valid. Time can be specified either as relative time or as absolute timestamp.
+               Time will always be interpreted as UTC. Valid formats are: C([+-]timespec | ASN.1 TIME)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using relative time this module is NOT idempotent.
+               If this value is not specified, the certificate will stop being valid 10 years from now."
         version_added: "2.7"
 
     acme_accountkey_path:
         description:
-            - The path to the accountkey for the C(acme) provider.
-        type: path
+            - Path to the accountkey for the C(acme) provider
 
     acme_challenge_path:
         description:
-            - The path to the ACME challenge directory that is served on U(http://<HOST>:80/.well-known/acme-challenge/)
-        type: path
+            - Path to the ACME challenge directory that is served on U(http://<HOST>:80/.well-known/acme-challenge/)
 
     acme_chain:
+        default: True
         description:
             - Include the intermediate certificate to the generated certificate
-        type: bool
-        default: yes
         version_added: "2.5"
 
     signature_algorithms:
         description:
-            - A list of algorithms that you would accept the certificate to be signed with
+            - list of algorithms that you would accept the certificate to be signed with
               (e.g. ['sha256WithRSAEncryption', 'sha512WithRSAEncryption']).
-        type: list
 
     issuer:
         description:
-            - The key/value pairs that must be present in the issuer name field of the certificate.
-            - If you need to specify more than one value with the same key, use a list as value.
-        type: dict
+            - Key/value pairs that must be present in the issuer name field of the certificate.
+              If you need to specify more than one value with the same key, use a list as value.
 
     issuer_strict:
-        description:
-            - If set to C(yes), the I(issuer) field must contain only these values.
+        default: False
         type: bool
-        default: no
+        description:
+            - If set to True, the I(issuer) field must contain only these values.
         version_added: "2.5"
 
     subject:
         description:
-            - The key/value pairs that must be present in the subject name field of the certificate.
-            - If you need to specify more than one value with the same key, use a list as value.
-        type: dict
+            - Key/value pairs that must be present in the subject name field of the certificate.
+              If you need to specify more than one value with the same key, use a list as value.
 
     subject_strict:
-        description:
-            - If set to C(yes), the I(subject) field must contain only these values.
+        default: False
         type: bool
-        default: no
+        description:
+            - If set to True, the I(subject) field must contain only these values.
         version_added: "2.5"
 
     has_expired:
+        default: False
+        type: bool
         description:
             - Checks if the certificate is expired/not expired at the time the module is executed.
-        type: bool
-        default: no
 
     version:
         description:
-            - The version of the certificate.
-            - Nowadays it should almost always be 3.
-        type: int
+            - Version of the certificate. Nowadays it should almost always be 3.
 
     valid_at:
         description:
-            - The certificate must be valid at this point in time.
-            - The timestamp is formatted as an ASN.1 TIME.
-        type: str
+            - The certificate must be valid at this point in time. The timestamp is formatted as an ASN.1 TIME.
 
     invalid_at:
         description:
-            - The certificate must be invalid at this point in time.
-            - The timestamp is formatted as an ASN.1 TIME.
-        type: str
+            - The certificate must be invalid at this point in time. The timestamp is formatted as an ASN.1 TIME.
 
     not_before:
         description:
-            - The certificate must start to become valid at this point in time.
-            - The timestamp is formatted as an ASN.1 TIME.
-        type: str
+            - The certificate must start to become valid at this point in time. The timestamp is formatted as an ASN.1 TIME.
         aliases: [ notBefore ]
 
     not_after:
         description:
-            - The certificate must expire at this point in time.
-            - The timestamp is formatted as an ASN.1 TIME.
-        type: str
+            - The certificate must expire at this point in time. The timestamp is formatted as an ASN.1 TIME.
         aliases: [ notAfter ]
 
 
     valid_in:
         description:
-            - The certificate must still be valid at this relative time offset from now.
-            - Valid format is C([+-]timespec | number_of_seconds) where timespec can be an integer
-              + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
-            - Note that if using this parameter, this module is NOT idempotent.
-        type: str
+            - "The certificate must still be valid at this relative time offset from now.
+               Valid formats are: C([+-]timespec | number_of_seconds)
+               where timespec can be an integer + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
+               Note that if using this parameter, this module is NOT idempotent."
 
     key_usage:
         description:
             - The I(key_usage) extension field must contain all these values.
-        type: list
         aliases: [ keyUsage ]
 
     key_usage_strict:
-        description:
-            - If set to C(yes), the I(key_usage) extension field must contain only these values.
+        default: False
         type: bool
-        default: no
+        description:
+            - If set to True, the I(key_usage) extension field must contain only these values.
         aliases: [ keyUsage_strict ]
 
     extended_key_usage:
         description:
             - The I(extended_key_usage) extension field must contain all these values.
-        type: list
         aliases: [ extendedKeyUsage ]
 
     extended_key_usage_strict:
-        description:
-            - If set to C(yes), the I(extended_key_usage) extension field must contain only these values.
+        default: False
         type: bool
-        default: no
+        description:
+            - If set to True, the I(extended_key_usage) extension field must contain only these values.
         aliases: [ extendedKeyUsage_strict ]
 
     subject_alt_name:
         description:
             - The I(subject_alt_name) extension field must contain these values.
-        type: list
         aliases: [ subjectAltName ]
 
     subject_alt_name_strict:
-        description:
-            - If set to C(yes), the I(subject_alt_name) extension field must contain only these values.
+        default: False
         type: bool
-        default: no
+        description:
+            - If set to True, the I(subject_alt_name) extension field must contain only these values.
         aliases: [ subjectAltName_strict ]
-
 extends_documentation_fragment: files
 notes:
     - All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
-    - Date specified should be UTC. Minutes and seconds are mandatory.
+      Date specified should be UTC. Minutes and seconds are mandatory.
     - For security reason, when you use C(ownca) provider, you should NOT run M(openssl_certificate) on
       a target machine, but on a dedicated CA machine. It is recommended not to store the CA private key
       on the target machine. Once signed, the certificate can be moved to the target machine.
-seealso:
-- module: openssl_csr
-- module: openssl_dhparam
-- module: openssl_pkcs12
-- module: openssl_privatekey
-- module: openssl_publickey
 '''
 
-EXAMPLES = r'''
+
+EXAMPLES = '''
 - name: Generate a Self Signed OpenSSL certificate
   openssl_certificate:
     path: /etc/ssl/crt/ansible.com.crt
@@ -359,7 +306,7 @@ EXAMPLES = r'''
     provider: acme
     acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: /etc/ssl/challenges/ansible.com/
-    force: yes
+    force: True
 
 # Examples for some checks one could use the assertonly provider for:
 
@@ -368,8 +315,8 @@ EXAMPLES = r'''
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
     provider: assertonly
-    has_expired: no
-  ignore_errors: yes
+    has_expired: False
+  ignore_errors: True
   register: validity_check
 
 - name: Run custom task(s) to get a new, valid certificate in case the initial check failed
@@ -380,7 +327,7 @@ EXAMPLES = r'''
   openssl_certificate:
     path: /etc/ssl/crt/example.com.crt
     provider: assertonly
-    has_expired: no
+    has_expired: False
   when: validity_check.failed
 
 # Some other checks that assertonly could be used for:
@@ -390,7 +337,7 @@ EXAMPLES = r'''
     provider: assertonly
     issuer:
       O: Let's Encrypt
-    has_expired: no
+    has_expired: False
 
 - name: Ensure that a certificate uses a modern signature algorithm (no SHA1, MD5 or DSA)
   openssl_certificate:
@@ -458,7 +405,8 @@ EXAMPLES = r'''
       - test.example.com
 '''
 
-RETURN = r'''
+
+RETURN = '''
 filename:
     description: Path to the generated Certificate
     returned: changed or success
@@ -470,18 +418,15 @@ filename:
 from random import randint
 import datetime
 import os
-import traceback
 
 from ansible.module_utils import crypto as crypto_utils
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native, to_bytes
 
-PYOPENSSL_IMP_ERR = None
 try:
     import OpenSSL
     from OpenSSL import crypto
 except ImportError:
-    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
@@ -762,14 +707,14 @@ class AssertOnlyCertificate(Certificate):
         self.issuer_strict = module.params['issuer_strict']
         self.has_expired = module.params['has_expired']
         self.version = module.params['version']
-        self.keyUsage = module.params['key_usage']
-        self.keyUsage_strict = module.params['key_usage_strict']
-        self.extendedKeyUsage = module.params['extended_key_usage']
-        self.extendedKeyUsage_strict = module.params['extended_key_usage_strict']
-        self.subjectAltName = module.params['subject_alt_name']
-        self.subjectAltName_strict = module.params['subject_alt_name_strict']
-        self.notBefore = module.params['not_before']
-        self.notAfter = module.params['not_after']
+        self.keyUsage = module.params['keyUsage']
+        self.keyUsage_strict = module.params['keyUsage_strict']
+        self.extendedKeyUsage = module.params['extendedKeyUsage']
+        self.extendedKeyUsage_strict = module.params['extendedKeyUsage_strict']
+        self.subjectAltName = module.params['subjectAltName']
+        self.subjectAltName_strict = module.params['subjectAltName_strict']
+        self.notBefore = module.params['notBefore']
+        self.notAfter = module.params['notAfter']
         self.valid_at = module.params['valid_at']
         self.invalid_at = module.params['invalid_at']
         self.valid_in = module.params['valid_in']
@@ -1052,9 +997,9 @@ class AcmeCertificate(Certificate):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['present', 'absent']),
+            state=dict(type='str', choices=['present', 'absent'], default='present'),
             path=dict(type='path', required=True),
-            provider=dict(type='str', choices=['acme', 'assertonly', 'ownca', 'selfsigned']),
+            provider=dict(type='str', choices=['selfsigned', 'ownca', 'assertonly', 'acme']),
             force=dict(type='bool', default=False,),
             csr_path=dict(type='path'),
 
@@ -1068,30 +1013,32 @@ def main():
             issuer_strict=dict(type='bool', default=False),
             has_expired=dict(type='bool', default=False),
             version=dict(type='int'),
-            key_usage=dict(type='list', elements='str', aliases=['keyUsage']),
-            key_usage_strict=dict(type='bool', default=False, aliases=['keyUsage_strict']),
-            extended_key_usage=dict(type='list', elements='str', aliases=['extendedKeyUsage']),
-            extended_key_usage_strict=dict(type='bool', default=False, aliases=['extendedKeyUsage_strict']),
-            subject_alt_name=dict(type='list', elements='str', aliases=['subjectAltName']),
-            subject_alt_name_strict=dict(type='bool', default=False, aliases=['subjectAltName_strict']),
-            not_before=dict(type='str', aliases=['notBefore']),
-            not_after=dict(type='str', aliases=['notAfter']),
+            keyUsage=dict(type='list', aliases=['key_usage'], elements='str'),
+            keyUsage_strict=dict(type='bool', default=False, aliases=['key_usage_strict']),
+            extendedKeyUsage=dict(type='list', aliases=['extended_key_usage'], elements='str'),
+            extendedKeyUsage_strict=dict(type='bool', default=False, aliases=['extended_key_usage_strict']),
+            subjectAltName=dict(type='list', aliases=['subject_alt_name'], elements='str'),
+            subjectAltName_strict=dict(type='bool', default=False, aliases=['subject_alt_name_strict']),
+            notBefore=dict(type='str', aliases=['not_before']),
+            notAfter=dict(type='str', aliases=['not_after']),
             valid_at=dict(type='str'),
             invalid_at=dict(type='str'),
             valid_in=dict(type='str'),
 
             # provider: selfsigned
-            selfsigned_version=dict(type='int', default=3),
+            selfsigned_version=dict(type='int', default='3'),
             selfsigned_digest=dict(type='str', default='sha256'),
-            selfsigned_not_before=dict(type='str', default='+0s', aliases=['selfsigned_notBefore']),
-            selfsigned_not_after=dict(type='str', default='+3650d', aliases=['selfsigned_notAfter']),
+            selfsigned_not_before=dict(
+                type='str', default='+0s', aliases=['selfsigned_notBefore']),
+            selfsigned_not_after=dict(
+                type='str', default='+3650d', aliases=['selfsigned_notAfter']),
 
             # provider: ownca
             ownca_path=dict(type='path'),
             ownca_privatekey_path=dict(type='path'),
-            ownca_privatekey_passphrase=dict(type='str', no_log=True),
+            ownca_privatekey_passphrase=dict(type='path', no_log=True),
             ownca_digest=dict(type='str', default='sha256'),
-            ownca_version=dict(type='int', default=3),
+            ownca_version=dict(type='int', default='3'),
             ownca_not_before=dict(type='str', default='+0s'),
             ownca_not_after=dict(type='str', default='+3650d'),
 
@@ -1105,7 +1052,7 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+        module.fail_json(msg='The python pyOpenSSL library is required')
     if module.params['provider'] in ['selfsigned', 'ownca', 'assertonly']:
         try:
             getattr(crypto.X509Req, 'get_extensions')

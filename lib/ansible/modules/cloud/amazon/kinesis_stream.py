@@ -516,6 +516,7 @@ def recreate_tags_from_list(list_of_tags):
     """
     tags = list()
     i = 0
+    list_of_tags = list_of_tags
     for i in range(len(list_of_tags)):
         key_name = list_of_tags[i][0]
         key_val = list_of_tags[i][1]

@@ -5,16 +5,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
----
-cliconf: edgeos
-short_description: Use edgeos cliconf to run command on EdgeOS platform
-description:
-  - This edgeos plugin provides low level abstraction apis for
-    sending and receiving CLI commands from Ubiquiti EdgeOS network devices.
-version_added: "2.5"
-"""
-
 import re
 import json
 

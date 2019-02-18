@@ -135,7 +135,7 @@ EXAMPLES = """
 
 - name: Fetch all deployments
   set_fact:
-    deployments: "{{ lookup('k8s', kind='Deployment') }}"
+    deployments: "{{ lookup('k8s', kind='Deployment', namespace='testing') }}"
 
 - name: Fetch all deployments in a namespace
   set_fact:

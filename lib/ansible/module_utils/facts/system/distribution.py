@@ -1,7 +1,17 @@
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) Ansible Project
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -136,7 +146,7 @@ class DistributionFiles:
             return parsed, dist_file_dict
         except AttributeError as exc:
             print('exc: %s' % exc)
-            # this should never happen, but if it does fail quietly and not with a traceback
+            # this should never happen, but if it does fail quitely and not with a traceback
             return False, dist_file_dict
 
         return True, dist_file_dict
@@ -151,14 +161,14 @@ class DistributionFiles:
     def _guess_distribution(self):
         # try to find out which linux distribution this is
         dist = (get_distribution(), get_distribution_version(), get_distribution_codename())
-        distribution_guess = {
-            'distribution': dist[0] or 'NA',
-            'distribution_version': dist[1] or 'NA',
-            # distribution_release can be the empty string
-            'distribution_release': 'NA' if dist[2] is None else dist[2]
-        }
+        distribution_guess = {}
+        distribution_guess['distribution'] = dist[0] or 'NA'
+        distribution_guess['distribution_version'] = dist[1] or 'NA'
+        distribution_guess['distribution_major_version'] = \
+            distribution_guess['distribution_version'].split('.')[0] or 'NA'
+        # distribution_release can be the empty string
+        distribution_guess['distribution_release'] = 'NA' if dist[2] is None else dist[2]
 
-        distribution_guess['distribution_major_version'] = distribution_guess['distribution_version'].split('.')[0] or 'NA'
         return distribution_guess
 
     def process_dist_files(self):
@@ -218,11 +228,10 @@ class DistributionFiles:
     def parse_distribution_file_Amazon(self, name, data, path, collected_facts):
         amazon_facts = {}
         if 'Amazon' not in data:
-            return False, amazon_facts
+            # return False  # TODO: remove   # huh?
+            return False, amazon_facts  # TODO: remove
         amazon_facts['distribution'] = 'Amazon'
-        version = [n for n in data.split() if n.isdigit()]
-        version = version[0] if version else 'NA'
-        amazon_facts['distribution_version'] = version
+        amazon_facts['distribution_version'] = data.split()[-1]
         return True, amazon_facts
 
     def parse_distribution_file_OpenWrt(self, name, data, path, collected_facts):
@@ -334,23 +343,6 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1)
-        elif 'Cumulus' in data:
-            debian_facts['distribution'] = 'Cumulus Linux'
-            version = re.search(r"VERSION_ID=(.*)", data)
-            if version:
-                major, _minor, _dummy_ver = version.group(1).split(".")
-                debian_facts['distribution_version'] = version.group(1)
-                debian_facts['distribution_major_version'] = major
-
-            release = re.search(r'VERSION="(.*)"', data)
-            if release:
-                debian_facts['distribution_release'] = release.groups()[0]
-        elif "Mint" in data:
-            debian_facts['distribution'] = 'Linux Mint'
-            version = re.search(r"VERSION_ID=\"(.*)\"", data)
-            if version:
-                debian_facts['distribution_version'] = version.group(1)
-                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
         else:
             return False, debian_facts
 
@@ -466,7 +458,7 @@ class Distribution(object):
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux'],
+                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Ansible by Red Hat, inc
+# (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -187,7 +187,7 @@ def parse_shutdown(configobj, name):
     cfg = configobj['interface %s' % name]
     cfg = '\n'.join(cfg.children)
     match = re.search(r'shutdown', cfg, re.M)
-    return bool(match)
+    return True if match else False
 
 
 def parse_config_argument(configobj, name, arg=None):
@@ -368,7 +368,7 @@ def check_declarative_intent_params(module, want, result):
             have_host = []
             have_port = []
             if have_neighbors is None:
-                command = {'command': 'show lldp neighbors {0}'.format(w['name']), 'output': 'text'}
+                command = {'command': 'show lldp neighbors {}'.format(w['name']), 'output': 'text'}
                 have_neighbors = run_commands(module, [command])
 
             if have_neighbors[0]:

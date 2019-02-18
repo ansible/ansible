@@ -1,7 +1,7 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2016 Julien Stroheker, <juliens@microsoft.com>
 
-# Copyright: (c) 2016, Julien Stroheker <juliens@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -126,7 +126,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
     def get_item(self):
         """Get a single availability set"""
 
-        self.log('Get properties for {0}'.format(self.name))
+        self.log('Get properties for {}'.format(self.name))
 
         item = None
         result = []
@@ -153,7 +153,7 @@ class AzureRMAvailabilitySetFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.availability_sets.list(self.resource_group)
         except CloudError as exc:
-            self.fail('Failed to list all items - {0}'.format(str(exc)))
+            self.fail('Failed to list all items - {}'.format(str(exc)))
 
         results = []
         for item in response:

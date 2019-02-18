@@ -79,15 +79,19 @@ options:
     default: no
 
 extends_documentation_fragment:
-  - docker
-  - docker.docker_py_2_documentation
+    - docker
 
 author:
-  - "Felix Fontein (@felixfontein)"
+    - "Felix Fontein (@felixfontein)"
 
 requirements:
-  - "docker >= 2.1.0"
-  - "Docker API >= 1.25"
+    - "python >= 2.6"
+    - "docker >= 2.1.0"
+    - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+       module has been superseded by L(docker,https://pypi.org/project/docker/)
+       (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+       Version 2.1.0 or newer is only available with the C(docker) module."
+    - "Docker API >= 1.25"
 '''
 
 EXAMPLES = '''
@@ -169,12 +173,12 @@ builder_cache_space_reclaimed:
 
 from distutils.version import LooseVersion
 
-from ansible.module_utils.docker.common import AnsibleDockerClient
+from ansible.module_utils.docker_common import AnsibleDockerClient
 
 try:
-    from ansible.module_utils.docker.common import docker_version, clean_dict_booleans_for_docker_api
+    from ansible.module_utils.docker_common import docker_version, clean_dict_booleans_for_docker_api
 except Exception as dummy:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing docker-py handled in ansible.module_utils.docker
     pass
 
 
@@ -202,7 +206,7 @@ def main():
     cache_min_version = '3.3.0'
     if client.module.params['builder_cache'] and client.docker_py_version < LooseVersion(cache_min_version):
         msg = "Error: docker version is %s. Minimum version required for builds option is %s. Use `pip install --upgrade docker` to upgrade."
-        client.fail(msg % (docker_version, cache_min_version))
+        client.module.fail(msg=(msg % (docker_version, cache_min_version)))
 
     result = dict()
 

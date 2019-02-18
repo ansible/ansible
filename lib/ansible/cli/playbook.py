@@ -13,10 +13,9 @@ from ansible.cli import CLI
 from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
-from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
+from ansible.playbook.play_context import PlayContext
 from ansible.utils.display import Display
-from ansible.plugins.loader import add_all_plugin_dirs
 
 display = Display()
 
@@ -62,6 +61,8 @@ class PlaybookCLI(CLI):
         display.verbosity = options.verbosity
         self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
 
+        options = self.normalize_become_options(options)
+
         return options, args
 
     def run(self):
@@ -81,14 +82,6 @@ class PlaybookCLI(CLI):
                 raise AnsibleError("the playbook: %s could not be found" % playbook)
             if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
                 raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
-            # load plugins from all playbooks in case they add callbacks/inventory/etc
-            add_all_plugin_dirs(
-                os.path.dirname(
-                    os.path.abspath(
-                        to_bytes(playbook, errors='surrogate_or_strict')
-                    )
-                )
-            )
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
@@ -96,7 +89,6 @@ class PlaybookCLI(CLI):
             (sshpass, becomepass) = self.ask_passwords()
             passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
 
-        # create base objects
         loader, inventory, variable_manager = self._play_prereqs()
 
         # (which is not returned in list_hosts()) is taken into account for
@@ -105,7 +97,7 @@ class PlaybookCLI(CLI):
         # limit if only implicit localhost was in inventory to start with.
         #
         # Fix this when we rewrite inventory by making localhost a real host (and thus show up in list_hosts())
-        CLI.get_host_list(inventory, context.CLIARGS['subset'])
+        hosts = self.get_host_list(inventory, context.CLIARGS['subset'])
 
         # flush fact cache if requested
         if context.CLIARGS['flush_cache']:
@@ -169,8 +161,9 @@ class PlaybookCLI(CLI):
                             return taskmsg
 
                         all_vars = variable_manager.get_vars(play=play)
+                        play_context = PlayContext(play=play)
                         for block in play.compile():
-                            block = block.filter_tagged_tasks(all_vars)
+                            block = block.filter_tagged_tasks(play_context, all_vars)
                             if not block.has_tasks():
                                 continue
                             taskmsg += _process_block(block)

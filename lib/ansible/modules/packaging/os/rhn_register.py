@@ -1,129 +1,123 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
-# Copyright: (c) James Laska
+# (c) James Laska
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+
+DOCUMENTATION = '''
 ---
 module: rhn_register
 short_description: Manage Red Hat Network registration using the C(rhnreg_ks) command
 description:
     - Manage registration to the Red Hat Network.
 version_added: "1.2"
-author:
-- James Laska (@jlaska)
+author: James Laska (@jlaska)
 notes:
     - This is for older Red Hat products. You probably want the M(redhat_subscription) module instead.
-    - In order to register a system, C(rhnreg_ks) requires either a username and password, or an activationkey.
+    - In order to register a system, rhnreg_ks requires either a username and password, or an activationkey.
 requirements:
     - rhnreg_ks
     - either libxml2 or lxml
 options:
     state:
         description:
-          - Whether to register (C(present)), or unregister (C(absent)) a system.
-        type: str
-        choices: [ absent, present ]
-        default: present
+          - whether to register (C(present)), or unregister (C(absent)) a system
+        choices: [ "present", "absent" ]
+        default: "present"
     username:
         description:
-            - Red Hat Network username.
-        type: str
+            - Red Hat Network username
     password:
         description:
-            - Red Hat Network password.
-        type: str
+            - Red Hat Network password
     server_url:
         description:
-            - Specify an alternative Red Hat Network server URL.
-            - The default is the current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date).
-        type: str
+            - Specify an alternative Red Hat Network server URL
+        default: Current value of I(serverURL) from C(/etc/sysconfig/rhn/up2date) is the default
     activationkey:
         description:
-            - Supply an activation key for use with registration.
-        type: str
+            - supply an activation key for use with registration
     profilename:
         description:
-            - Supply an profilename for use with registration.
-        type: str
+            - supply an profilename for use with registration
         version_added: "2.0"
     sslcacert:
         description:
-            - Supply a custom ssl CA certificate file for use with registration.
-        type: path
+            - supply a custom ssl CA certificate file for use with registration
         version_added: "2.1"
     systemorgid:
         description:
-            - Supply an organizational id for use with registration.
-        type: str
+            - supply an organizational id for use with registration
         version_added: "2.1"
     channels:
         description:
-            - Optionally specify a list of channels to subscribe to upon successful registration.
-        type: list
+            - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
         default: []
     enable_eus:
         description:
             - If C(no), extended update support will be requested.
         type: bool
-        default: no
+        default: 'no'
     nopackages:
         description:
-            - If C(yes), the registered node will not upload its installed packages information to Satellite server.
+            - If C(yes), the registered node will not upload its installed packages information to Satellite server
         type: bool
-        default: no
+        default: 'no'
         version_added: "2.5"
 '''
 
-EXAMPLES = r'''
-- name: Unregister system from RHN
-  rhn_register:
+EXAMPLES = '''
+# Unregister system from RHN.
+- rhn_register:
     state: absent
     username: joe_user
     password: somepass
 
-- name: Register as user with password and auto-subscribe to available content
-  rhn_register:
+# Register as user (joe_user) with password (somepass) and auto-subscribe to available content.
+- rhn_register:
     state: present
     username: joe_user
     password: somepass
 
-- name: Register with activationkey and enable extended update support
-  rhn_register:
+# Register with activationkey (1-222333444) and enable extended update support.
+- rhn_register:
     state: present
     activationkey: 1-222333444
-    enable_eus: yes
+    enable_eus: true
 
-- name: Register with activationkey and set a profilename which may differ from the hostname
-  rhn_register:
+# Register with activationkey (1-222333444) and set a profilename which may differ from the hostname.
+- rhn_register:
     state: present
     activationkey: 1-222333444
     profilename: host.example.com.custom
 
-- name: Register as user with password against a satellite server
-  rhn_register:
+# Register as user (joe_user) with password (somepass) against a satellite
+# server specified by (server_url).
+- rhn_register:
     state: present
     username: joe_user
-    password: somepass
+    password: somepass'
     server_url: https://xmlrpc.my.satellite/XMLRPC
 
-- name: Register as user with password and enable channels
-  rhn_register:
+# Register as user (joe_user) with password (somepass) and enable
+# channels (rhel-x86_64-server-6-foo-1) and (rhel-x86_64-server-6-bar-1).
+- rhn_register:
     state: present
     username: joe_user
     password: somepass
     channels: rhel-x86_64-server-6-foo-1,rhel-x86_64-server-6-bar-1
 '''
 
-RETURN = r'''
+RETURN = '''
 # Default return values
 '''
 
@@ -344,24 +338,24 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            username=dict(type='str'),
-            password=dict(type='str', no_log=True),
-            server_url=dict(type='str'),
-            activationkey=dict(type='str', no_log=True),
-            profilename=dict(type='str'),
-            sslcacert=dict(type='path'),
-            systemorgid=dict(type='str'),
-            enable_eus=dict(type='bool', default=False),
-            nopackages=dict(type='bool', default=False),
-            channels=dict(type='list', default=[]),
+            state=dict(default='present', choices=['present', 'absent']),
+            username=dict(default=None, required=False),
+            password=dict(default=None, required=False, no_log=True),
+            server_url=dict(default=None, required=False),
+            activationkey=dict(default=None, required=False, no_log=True),
+            profilename=dict(default=None, required=False),
+            sslcacert=dict(default=None, required=False, type='path'),
+            systemorgid=dict(default=None, required=False),
+            enable_eus=dict(default=False, type='bool'),
+            nopackages=dict(default=False, type='bool'),
+            channels=dict(default=[], type='list'),
         ),
         # username/password is required for state=absent, or if channels is not empty
         # (basically anything that uses self.api requires username/password) but it doesnt
         # look like we can express that with required_if/required_together/mutually_exclusive
 
         # only username+password can be used for unregister
-        required_if=[['state', 'absent', ['username', 'password']]],
+        required_if=[['state', 'absent', ['username', 'password']]]
     )
 
     if not HAS_UP2DATE_CLIENT:

@@ -66,11 +66,6 @@ from __future__ import unicode_literals
 import itertools
 import struct
 
-
-# The following makes it easier for us to script updates of the bundled code and is not part of
-# upstream
-_BUNDLED_METADATA = {"pypi_name": "ipaddress", "version": "1.0.22"}
-
 __version__ = '1.0.22'
 
 # Compatibility functions

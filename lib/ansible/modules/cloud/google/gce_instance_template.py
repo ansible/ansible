@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -418,7 +416,7 @@ def create_instance_template(module, gce):
             changed = True
         except GoogleBaseError as err:
             module.fail_json(
-                msg='Unexpected error attempting to create instance {0}, error: {1}'
+                msg='Unexpected error attempting to create instance {}, error: {}'
                 .format(
                     instance,
                     err.value

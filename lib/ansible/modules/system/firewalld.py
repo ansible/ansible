@@ -452,7 +452,7 @@ class InterfaceTransaction(FirewallTransaction):
                 # Even it shouldn't happen, it's actually possible that
                 # the same interface is in several zone XML files
                 self.module.fail_json(
-                    msg='ERROR: interface {0} is in {1} zone XML file, can only be in one'.format(
+                    msg='ERROR: interface {} is in {} zone XML file, can only be in one'.format(
                         interface,
                         len(iface_zone_objs)
                     )
@@ -647,11 +647,7 @@ def main():
             masquerade=dict(type='str'),
             offline=dict(type='bool'),
         ),
-        supports_check_mode=True,
-        required_by=dict(
-            interface=('zone'),
-            source=('permanent'),
-        ),
+        supports_check_mode=True
     )
 
     permanent = module.params['permanent']

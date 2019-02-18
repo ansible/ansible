@@ -307,9 +307,6 @@
     that:
     - test_dsc_custom is changed
     - test_dsc_custom_output.content|b64decode|strip_newline == test_dsc_custom_expected|strip_newline
-    - test_dsc_custom.warnings | length == 2
-    - "'[[xTestResource]DirectResourceAccess] test warning' in test_dsc_custom.warnings[0]"
-    - "'[[xTestResource]DirectResourceAccess] set warning' in test_dsc_custom.warnings[1]"
 
 - name: run custom DSC resource with version
   win_dsc:

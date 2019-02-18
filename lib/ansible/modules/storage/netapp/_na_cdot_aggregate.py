@@ -197,7 +197,8 @@ class NetAppCDOTAggregate(object):
                 changed = True
 
             elif self.state == 'present':
-                if self.name is not None and not self.name == self.name:
+                if self.name is not None and not self.name == \
+                        self.name:
                     rename_aggregate = True
                     changed = True
 

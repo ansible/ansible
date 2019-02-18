@@ -316,19 +316,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return boto_params
 
-    def _get_connection(self, credentials, region='us-east-1'):
-        try:
-            connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
-        except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-            if self.boto_profile:
-                try:
-                    connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
-                except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
-            else:
-                raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
-        return connection
-
     def _boto3_conn(self, regions):
         '''
             :param regions: A list of regions to create a boto3 client
@@ -336,12 +323,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             Generator that yields a boto3 client and the region
         '''
 
-        credentials = self._get_credentials()
-
         if not regions:
             try:
                 # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
-                client = self._get_connection(credentials)
+                client = boto3.client('ec2')
                 resp = client.describe_regions()
                 regions = [x['RegionName'] for x in resp.get('Regions', [])]
             except botocore.exceptions.NoRegionError:
@@ -357,8 +342,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not regions:
             raise AnsibleError('Unable to get regions list from available methods, you must specify the "regions" option to continue.')
 
+        credentials = self._get_credentials()
+
         for region in regions:
-            connection = self._get_connection(credentials, region)
+            try:
+                connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
+            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                if self.boto_profile:
+                    try:
+                        connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
+                    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                        raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+                else:
+                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
             yield connection, region
 
     def _get_instances_by_region(self, regions, filters, strict_permissions):

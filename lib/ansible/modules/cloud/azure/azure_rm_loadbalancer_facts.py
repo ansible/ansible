@@ -1,9 +1,22 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2016, Thomas Stringer <tomstr@microsoft.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+#
+# Copyright (c) 2016 Thomas Stringer, <tomstr@microsoft.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -123,7 +136,7 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
     def get_item(self):
         """Get a single load balancer"""
 
-        self.log('Get properties for {0}'.format(self.name))
+        self.log('Get properties for {}'.format(self.name))
 
         item = None
         result = []
@@ -147,12 +160,12 @@ class AzureRMLoadBalancerFacts(AzureRMModuleBase):
             try:
                 response = self.network_client.load_balancers.list(self.resource_group)
             except AzureHttpError as exc:
-                self.fail('Failed to list items in resource group {0} - {1}'.format(self.resource_group, str(exc)))
+                self.fail('Failed to list items in resource group {} - {}'.format(self.resource_group, str(exc)))
         else:
             try:
                 response = self.network_client.load_balancers.list_all()
             except AzureHttpError as exc:
-                self.fail('Failed to list all items - {0}'.format(str(exc)))
+                self.fail('Failed to list all items - {}'.format(str(exc)))
 
         results = []
         for item in response:

@@ -16,6 +16,3 @@
     state: disabled
 - name: "Loading tasks from {{ item }}"
   include_tasks: "{{ item }}"
-- name: Reset to factory defaults
-  ufw:
-    state: reset

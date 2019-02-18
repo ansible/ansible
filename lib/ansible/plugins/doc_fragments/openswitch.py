@@ -1,13 +1,26 @@
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2015, Peter Sprygada <psprygada@ansible.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
+# (c) 2015, Peter Sprygada <psprygada@ansible.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = r'''
+    DOCUMENTATION = """
 options:
   host:
     description:
@@ -15,7 +28,7 @@ options:
         device over the specified transport.  The value of host is used as
         the destination address for the transport.  Note this argument
         does not affect the SSH argument.
-    type: str
+    required: true
   port:
     description:
       - Specifies the port to use when building the connection to the remote
@@ -23,7 +36,6 @@ options:
         value will default to the appropriate transport common port if
         none is provided in the task.  (cli=22, http=80, https=443).  Note
         this argument does not affect the SSH transport.
-    type: int
     default: 0 (use common port)
   username:
     description:
@@ -33,7 +45,6 @@ options:
         transport is used. Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
-    type: str
   password:
     description:
       - Specifies the password to use to authenticate the connection to
@@ -41,13 +52,11 @@ options:
         or I(rest) transports.  Note this argument does not affect the SSH
         transport. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
-    type: str
   timeout:
     description:
       - Specifies the timeout in seconds for communicating with the network device
         for either connecting or sending commands.  If the timeout is
         exceeded before the operation is completed, the module will error.
-    type: int
     default: 10
   ssh_keyfile:
     description:
@@ -55,27 +64,25 @@ options:
         the remote device.  This argument is only used for the I(cli)
         transports. If the value is not specified in the task, the value of
         environment variable C(ANSIBLE_NET_SSH_KEYFILE) will be used instead.
-    type: path
   transport:
     description:
       - Configures the transport connection to use when connecting to the
         remote device.  The transport argument supports connectivity to the
         device over ssh, cli or REST.
     required: true
-    type: str
-    choices: [ cli, rest, ssh ]
     default: ssh
+    choices: ['ssh', 'cli', 'rest']
   use_ssl:
     description:
-      - Configures the I(transport) to use SSL if set to C(yes) only when the
+      - Configures the I(transport) to use SSL if set to true only when the
         I(transport) argument is configured as rest.  If the transport
         argument is not I(rest), this value is ignored.
     type: bool
-    default: yes
+    default: 'yes'
   provider:
     description:
       - Convenience method that allows all I(openswitch) arguments to be passed as
         a dict object.  All constraints (required, choices, etc) must be
         met either by individual arguments or values in this dict.
-    type: dict
-'''
+
+"""

@@ -1,78 +1,82 @@
 # -*- coding: utf-8 -*-
-
-# Copyright: (c) 2019, Guillaume Martinez (lunik@tiwabbit.fr)
+# Copyright (c) 2018 Pierre-Louis Bonicoli <pierre-louis@libregerbil.fr>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import
+import json
 
-from ansible.modules.source_control.gitlab_project import GitLabProject
+from units.compat.mock import MagicMock
+from ansible.modules.source_control import gitlab_project
 
-from .gitlab import (GitlabModuleTestCase,
-                     python_version_match_requirement,
-                     resp_get_group, resp_get_project_by_name, resp_create_project,
-                     resp_get_project, resp_delete_project, resp_get_user)
-
-# Gitlab module requirements
-if python_version_match_requirement():
-    from gitlab.v4.objects import Project
-
-# Unit tests requirements
-from httmock import with_httmock  # noqa
+import pytest
 
 
-class TestGitlabProject(GitlabModuleTestCase):
-    @with_httmock(resp_get_user)
-    def setUp(self):
-        super(TestGitlabProject, self).setUp()
+@pytest.fixture
+def patch_gitlab_project(mocker):
+    mocker.patch.object(gitlab_project, 'HAS_GITLAB_PACKAGE', mocker.PropertyMock(return_value=True))
 
-        self.gitlab_instance.user = self.gitlab_instance.users.get(1)
-        self.moduleUtil = GitLabProject(module=self.mock_module, gitlab_instance=self.gitlab_instance)
 
-    @with_httmock(resp_get_group)
-    @with_httmock(resp_get_project_by_name)
-    def test_project_exist(self):
-        group = self.gitlab_instance.groups.get(1)
+@pytest.mark.parametrize('patch_ansible_module', [{}], indirect=['patch_ansible_module'])
+@pytest.mark.usefixtures('patch_ansible_module')
+def test_without_required_parameters(capfd):
+    """Failure must occurs when all parameters are missing"""
 
-        rvalue = self.moduleUtil.existsProject(group, "diaspora-client")
+    with pytest.raises(SystemExit):
+        gitlab_project.main()
+    out, err = capfd.readouterr()
+    results = json.loads(out)
+    assert results['failed']
+    assert 'missing required arguments' in results['msg']
 
-        self.assertEqual(rvalue, True)
 
-        rvalue = self.moduleUtil.existsProject(group, "missing-project")
+TEST_CASES = [
+    [
+        {
+            'server_url': 'http://gitlab.test/gitlab',
+            'validate_certs': True,
+            'login_user': 'john',
+            'login_token': 'TOKEN',
+            'name': 'new_test_repo',
+            'group': 'my_repo_group',
+            'public': True,
+            'visibility_level': 20,
+            'issues_enabled': False,
+            'wiki_enabled': True,
+            'snippets_enabled': True,
+            'import_url': 'http://gitlab.test/gitlab/gitrepothatdoesnotexist.git',
+            'state': 'present'
+        },
+        {
+            'msg': "Failed to create project 'new_test_repo'",
+            'failed': True,
+        }
+    ],
+]
 
-        self.assertEqual(rvalue, False)
 
-    @with_httmock(resp_get_group)
-    @with_httmock(resp_create_project)
-    def test_create_project(self):
-        group = self.gitlab_instance.groups.get(1)
-        project = self.moduleUtil.createProject(group, {"name": "Diaspora Client", "path": "diaspora-client", "namespace_id": group.id})
+@pytest.mark.parametrize('patch_ansible_module, testcase', TEST_CASES, indirect=['patch_ansible_module'])
+@pytest.mark.usefixtures('patch_ansible_module')
+def test_fail_if_url_import_doesnt_exist(mocker, capfd, patch_gitlab_project, testcase):
+    """ Test for #36495
 
-        self.assertEqual(type(project), Project)
-        self.assertEqual(project.name, "Diaspora Client")
+    Ensure errors are reported (meaning task report a failure),
+    for example when url_import doesn't exist, an error must occur.
+    """
 
-    @with_httmock(resp_get_project)
-    def test_update_project(self):
-        project = self.gitlab_instance.projects.get(1)
+    git = MagicMock()
+    git.createprojectuser.return_value = False
 
-        changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
+    gitlab = MagicMock()
+    gitlab.Gitlab.return_value = git
+    gitlab_project.gitlab = gitlab
 
-        self.assertEqual(changed, True)
-        self.assertEqual(type(newProject), Project)
-        self.assertEqual(newProject.name, "New Name")
+    with pytest.raises(SystemExit):
+        gitlab_project.main()
 
-        changed, newProject = self.moduleUtil.updateProject(project, {"name": "New Name"})
+    # Check that 1. createprojectuser method has been called 2. with expected parameter
+    assert git.createprojectuser.call_count == 1
+    assert git.createprojectuser.call_args[1]['import_url'] == 'http://gitlab.test/gitlab/gitrepothatdoesnotexist.git'
 
-        self.assertEqual(changed, False)
-        self.assertEqual(newProject.name, "New Name")
-
-    @with_httmock(resp_get_group)
-    @with_httmock(resp_get_project_by_name)
-    @with_httmock(resp_delete_project)
-    def test_delete_project(self):
-        group = self.gitlab_instance.groups.get(1)
-
-        self.moduleUtil.existsProject(group, "diaspora-client")
-
-        rvalue = self.moduleUtil.deleteProject()
-
-        self.assertEqual(rvalue, None)
+    out, err = capfd.readouterr()
+    results = json.loads(out)
+    assert results.get('failed') == testcase.get('failed')
+    assert results['msg'] == testcase['msg']

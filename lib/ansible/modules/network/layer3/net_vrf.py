@@ -22,7 +22,6 @@ short_description: Manage VRFs on network devices
 description:
   - This module provides declarative management of VRFs
     on network devices.
-extends_documentation_fragment: network_agnostic
 options:
   name:
     description:

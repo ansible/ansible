@@ -1,9 +1,7 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
-# Copyright: (c) 2015, Quentin Stafford-Fraser
+# (c) Quentin Stafford-Fraser 2015
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+#
 # Create Webfaction website using Ansible and the Webfaction API
 
 from __future__ import absolute_import, division, print_function
@@ -192,7 +190,7 @@ def main():
             )
 
     else:
-        module.fail_json(msg="Unknown state specified: {0}".format(site_state))
+        module.fail_json(msg="Unknown state specified: {}".format(site_state))
 
     module.exit_json(
         changed=True,

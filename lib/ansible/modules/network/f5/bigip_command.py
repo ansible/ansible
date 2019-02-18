@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: bigip_command
-short_description: Run TMSH and BASH commands on F5 devices
+short_description: Run arbitrary command on F5 devices
 description:
-  - Sends a TMSH or BASH command to an BIG-IP node and returns the results
+  - Sends an arbitrary command to an BIG-IP node and returns the results
     read from the device. This module includes an argument that will cause
     the module to wait for a specific condition before returning or timing
     out if the condition is not met.

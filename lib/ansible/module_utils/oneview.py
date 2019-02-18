@@ -34,16 +34,14 @@ import json
 import os
 import traceback
 
-HPE_ONEVIEW_IMP_ERR = None
 try:
     from hpOneView.oneview_client import OneViewClient
     HAS_HPE_ONEVIEW = True
 except ImportError:
-    HPE_ONEVIEW_IMP_ERR = traceback.format_exc()
     HAS_HPE_ONEVIEW = False
 
 from ansible.module_utils import six
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
 
@@ -204,6 +202,7 @@ class OneViewModuleBase(object):
     MSG_ALREADY_PRESENT = 'Resource is already present.'
     MSG_ALREADY_ABSENT = 'Resource is already absent.'
     MSG_DIFF_AT_KEY = 'Difference found at key \'{0}\'. '
+    HPE_ONEVIEW_SDK_REQUIRED = 'HPE OneView Python SDK is required for this module.'
 
     ONEVIEW_COMMON_ARGS = dict(
         config=dict(type='path'),
@@ -258,7 +257,7 @@ class OneViewModuleBase(object):
 
     def _check_hpe_oneview_sdk(self):
         if not HAS_HPE_ONEVIEW:
-            self.module.fail_json(msg=missing_required_lib('hpOneView'), exception=HPE_ONEVIEW_IMP_ERR)
+            self.module.fail_json(msg=self.HPE_ONEVIEW_SDK_REQUIRED)
 
     def _create_oneview_client(self):
         if self.module.params.get('hostname'):

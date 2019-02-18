@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+#
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -183,7 +183,7 @@ def ensure_key_present(module, session, name, pubkey, force, check_mode):
         if new_signature == existing_signature and key['title'] != name:
             module.fail_json(msg=(
                 "another key with the same content is already registered "
-                "under the name |{0}|").format(key['title']))
+                "under the name |{}|").format(key['title']))
 
     if matching_keys and force and matching_keys[0]['key'].split(' ')[1] != new_signature:
         delete_keys(session, matching_keys, check_mode=check_mode)

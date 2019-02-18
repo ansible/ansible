@@ -737,7 +737,7 @@ class VaultLib:
                     file_slug = ''
                     if filename:
                         file_slug = ' of "%s"' % filename
-                    display.vvvvv(u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), vault_secret, vault_secret_id))
+                    display.vvvvv('Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), vault_secret, vault_secret_id))
                     break
             except AnsibleVaultFormatError as exc:
                 msg = "There was a vault format error"

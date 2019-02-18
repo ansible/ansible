@@ -68,11 +68,14 @@ options:
       - present
 
 extends_documentation_fragment:
-  - docker
-  - docker.docker_py_2_documentation
+    - docker
 
 requirements:
-  - "docker >= 2.1.0"
+  - "docker-py >= 2.1.0"
+  - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
+     module has been superseded by L(docker,https://pypi.org/project/docker/)
+     (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
+     Version 2.1.0 or newer is only available with the C(docker) module."
   - "Docker API >= 1.25"
 
 author:
@@ -158,10 +161,10 @@ import hashlib
 try:
     from docker.errors import APIError
 except ImportError:
-    # missing docker-py handled in ansible.module_utils.docker.common
+    # missing docker-py handled in ansible.module_utils.docker_common
     pass
 
-from ansible.module_utils.docker.common import AnsibleDockerClient, DockerBaseClass, compare_generic
+from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass, compare_generic
 from ansible.module_utils._text import to_native, to_bytes
 
 

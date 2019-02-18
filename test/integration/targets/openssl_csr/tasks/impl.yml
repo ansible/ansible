@@ -41,48 +41,6 @@
   check_mode: yes
   register: generate_csr_check_idempotent_check
 
-- name: Generate CSR without SAN (check mode)
-  openssl_csr:
-    path: '{{ output_dir }}/csr-nosan.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    subject:
-      commonName: www.ansible.com
-    useCommonNameForSAN: no
-    select_crypto_backend: '{{ select_crypto_backend }}'
-  check_mode: yes
-  register: generate_csr_nosan_check
-
-- name: Generate CSR without SAN
-  openssl_csr:
-    path: '{{ output_dir }}/csr-nosan.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    subject:
-      commonName: www.ansible.com
-    useCommonNameForSAN: no
-    select_crypto_backend: '{{ select_crypto_backend }}'
-  register: generate_csr_nosan
-
-- name: Generate CSR without SAN (idempotent)
-  openssl_csr:
-    path: '{{ output_dir }}/csr-nosan.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    subject:
-      commonName: www.ansible.com
-    useCommonNameForSAN: no
-    select_crypto_backend: '{{ select_crypto_backend }}'
-  register: generate_csr_nosan_check_idempotent
-
-- name: Generate CSR without SAN (idempotent, check mode)
-  openssl_csr:
-    path: '{{ output_dir }}/csr-nosan.csr'
-    privatekey_path: '{{ output_dir }}/privatekey.pem'
-    subject:
-      commonName: www.ansible.com
-    useCommonNameForSAN: no
-    select_crypto_backend: '{{ select_crypto_backend }}'
-  check_mode: yes
-  register: generate_csr_nosan_check_idempotent_check
-
 # keyUsage longname and shortname should be able to be used
 # interchangeably. Hence the long name is specified here
 # but the short name is used to test idempotency for ipsecuser

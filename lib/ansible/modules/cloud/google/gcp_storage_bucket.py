@@ -1281,7 +1281,7 @@ class BucketCondition(object):
     def from_response(self):
         return remove_nones_from_dict(
             {
-                u'age': self.request.get(u'age'),
+                u'age': self.request.get(u'ageDays'),
                 u'createdBefore': self.request.get(u'createdBefore'),
                 u'isLive': self.request.get(u'isLive'),
                 u'matchesStorageClass': self.request.get(u'matchesStorageClass'),

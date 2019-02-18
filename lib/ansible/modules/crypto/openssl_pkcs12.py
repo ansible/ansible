@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# Copyright: (c) 2017, Guillaume Delpierre <gde@llew.me>
+#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Copyright (c) 2017 Guillaume Delpierre <gde@llew.me>
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -11,147 +11,128 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = r'''
+DOCUMENTATION = '''
 ---
 module: openssl_pkcs12
-author:
-- Guillaume Delpierre (@gdelpierre)
+author: "Guillaume Delpierre (@gdelpierre)"
 version_added: "2.7"
-short_description: Generate OpenSSL PKCS#12 archive
+short_description: Generate OpenSSL PKCS#12 archive.
 description:
     - This module allows one to (re-)generate PKCS#12.
 requirements:
     - python-pyOpenSSL
 options:
     action:
+        default: export
+        choices: ['parse', 'export']
         description:
             - C(export) or C(parse) a PKCS#12.
-        type: str
-        default: export
-        choices: [ export, parse ]
     ca_certificates:
         description:
             - List of CA certificate to include.
-        type: list
     certificate_path:
         description:
-            - The path to read certificates and private keys from.
-            - Must be in PEM format.
-        type: path
+            - The path to read certificates and private keys from.  Must be in PEM format.
     force:
+        default: False
+        type: bool
         description:
             - Should the file be regenerated even if it already exists.
-        type: bool
-        default: no
     friendly_name:
+        aliases: ['name']
         description:
             - Specifies the friendly name for the certificate and private key.
-        type: str
-        aliases: [ name ]
     iter_size:
+        default: 2048
         description:
             - Number of times to repeat the encryption step.
-        type: int
-        default: 2048
     maciter_size:
+        default: 1
         description:
             - Number of times to repeat the MAC step.
-        type: int
-        default: 1
     passphrase:
         description:
             - The PKCS#12 password.
-        type: str
     path:
+        required: True
         description:
             - Filename to write the PKCS#12 file to.
-        type: path
-        required: true
     privatekey_passphrase:
         description:
             - Passphrase source to decrypt any input private keys with.
-        type: str
     privatekey_path:
         description:
             - File to read private key from.
-        type: path
     state:
+        default: 'present'
+        choices: ['present', 'absent']
         description:
             - Whether the file should exist or not.
               All parameters except C(path) are ignored when state is C(absent).
-        choices: [ absent, present ]
-        default: present
-        type: str
     src:
         description:
             - PKCS#12 file path to parse.
-        type: path
+
 extends_documentation_fragment:
     - files
-seealso:
-- module: openssl_certificate
-- module: openssl_csr
-- module: openssl_dhparam
-- module: openssl_privatekey
-- module: openssl_publickey
 '''
 
-EXAMPLES = r'''
-- name: Generate PKCS#12 file
+EXAMPLES = '''
+- name: 'Generate PKCS#12 file'
   openssl_pkcs12:
     action: export
-    path: /opt/certs/ansible.p12
-    friendly_name: raclette
-    privatekey_path: /opt/certs/keys/key.pem
-    certificate_path: /opt/certs/cert.pem
-    ca_certificates: /opt/certs/ca.pem
+    path: '/opt/certs/ansible.p12'
+    friendly_name: 'raclette'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    certificate_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
     state: present
 
-- name: Change PKCS#12 file permission
+- name: 'Change PKCS#12 file permission'
   openssl_pkcs12:
     action: export
-    path: /opt/certs/ansible.p12
-    friendly_name: raclette
-    privatekey_path: /opt/certs/keys/key.pem
-    certificate_path: /opt/certs/cert.pem
-    ca_certificates: /opt/certs/ca.pem
+    path: '/opt/certs/ansible.p12'
+    friendly_name: 'raclette'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    certificate_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
     state: present
-    mode: '0600'
+    mode: 0600
 
-- name: Regen PKCS#12 file
+- name: 'Regen PKCS#12 file'
   openssl_pkcs12:
     action: export
-    src: /opt/certs/ansible.p12
-    path: /opt/certs/ansible.p12
-    friendly_name: raclette
-    privatekey_path: /opt/certs/keys/key.pem
-    certificate_path: /opt/certs/cert.pem
-    ca_certificates: /opt/certs/ca.pem
+    src: '/opt/certs/ansible.p12'
+    path: '/opt/certs/ansible.p12'
+    friendly_name: 'raclette'
+    privatekey_path: '/opt/certs/keys/key.pem'
+    certificate_path: '/opt/certs/cert.pem'
+    ca_certificates: '/opt/certs/ca.pem'
     state: present
-    mode: '0600'
-    force: yes
+    mode: 0600
+    force: True
 
-- name: Dump/Parse PKCS#12 file
+- name: 'Dump/Parse PKCS#12 file'
   openssl_pkcs12:
     action: parse
-    src: /opt/certs/ansible.p12
-    path: /opt/certs/ansible.pem
+    src: '/opt/certs/ansible.p12'
+    path: '/opt/certs/ansible.pem'
     state: present
 
-- name: Remove PKCS#12 file
+- name: 'Remove PKCS#12 file'
   openssl_pkcs12:
-    path: /opt/certs/ansible.p12
+    path: '/opt/certs/ansible.p12'
     state: absent
 '''
 
-RETURN = r'''
+RETURN = '''
 filename:
     description: Path to the generate PKCS#12 file.
     returned: changed or success
     type: str
     sample: /opt/certs/ansible.p12
 privatekey:
-    description: Path to the TLS/SSL private key the public key was generated from.
+    description: Path to the TLS/SSL private key the public key was generated from
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
@@ -159,18 +140,15 @@ privatekey:
 
 import stat
 import os
-import traceback
 
-PYOPENSSL_IMP_ERR = None
 try:
     from OpenSSL import crypto
 except ImportError:
-    PYOPENSSL_IMP_ERR = traceback.format_exc()
     pyopenssl_found = False
 else:
     pyopenssl_found = True
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -299,7 +277,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
 
 def main():
     argument_spec = dict(
-        action=dict(type='str', default='export', choices=['export', 'parse']),
+        action=dict(type='str', default='export',
+                    choices=['parse', 'export']),
         ca_certificates=dict(type='list', elements='path'),
         certificate_path=dict(type='path'),
         force=dict(type='bool', default=False),
@@ -310,7 +289,8 @@ def main():
         path=dict(type='path', required=True),
         privatekey_passphrase=dict(type='str', no_log=True),
         privatekey_path=dict(type='path'),
-        state=dict(type='str', default='present', choices=['absent', 'present']),
+        state=dict(type='str', default='present',
+                   choices=['present', 'absent']),
         src=dict(type='path'),
     )
 
@@ -331,13 +311,14 @@ def main():
     )
 
     if not pyopenssl_found:
-        module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
+        module.fail_json(msg='The python pyOpenSSL library is required')
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
         module.fail_json(
             name=base_dir,
-            msg="The directory '%s' does not exist or the path is not a directory" % base_dir
+            msg='The directory %s does not exist or '
+                'the path is not a directory' % base_dir
         )
 
     pkcs12 = Pkcs(module)

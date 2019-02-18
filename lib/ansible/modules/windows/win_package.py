@@ -130,13 +130,6 @@ options:
     type: bool
     default: yes
     version_added: '2.4'
-  log_path:
-    description:
-    - Specifies the path to a log file that is persisted after an MSI package is installed or uninstalled.
-    - When omitted, a temporary log file is used for MSI packages.
-    - This is only valid for MSI files, use C(arguments) for other package types.
-    type: path
-    version_added: '2.8'
 notes:
 - When C(state=absent) and the product is an exe, the path may be different
   from what was used to install the package originally. If path is not set then
@@ -170,7 +163,7 @@ EXAMPLES = r'''
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
     arguments: /install /passive /norestart
 
-- name: Install Visual C thingy with list of arguments instead of a string, and permanent log
+- name: Install Visual C thingy with list of arguments instead of a string
   win_package:
     path: http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe
     product_id: '{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}'
@@ -178,7 +171,6 @@ EXAMPLES = r'''
     - /install
     - /passive
     - /norestart
-    log_path: D:\logs\vcredist_x64-exe-{{lookup('pipe', 'date +%Y%m%dT%H%M%S')}}.log
 
 - name: Install Remote Desktop Connection Manager from msi
   win_package:

@@ -69,15 +69,7 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-   port_security_enabled:
-     description:
-        -  Whether port security is enabled on the network or not.
-           Network will use OpenStack defaults if this option is
-           not utilised.
-     type: bool
-     version_added: "2.8"
-requirements:
-     - "openstacksdk"
+requirements: ["openstacksdk"]
 '''
 
 EXAMPLES = '''
@@ -163,8 +155,7 @@ def main():
         provider_network_type=dict(required=False),
         provider_segmentation_id=dict(required=False),
         state=dict(default='present', choices=['absent', 'present']),
-        project=dict(default=None),
-        port_security_enabled=dict(default=False, type='bool')
+        project=dict(default=None)
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -179,7 +170,6 @@ def main():
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
-    port_security_enabled = module.params['port_security_enabled']
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -206,12 +196,10 @@ def main():
 
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider, project_id,
-                                               port_security_enabled=port_security_enabled)
+                                               external, provider, project_id)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider,
-                                               port_security_enabled=port_security_enabled)
+                                               external, provider)
                 changed = True
             else:
                 changed = False

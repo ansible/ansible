@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
@@ -55,10 +54,10 @@ class Play(Base, Taggable, Become):
     _hosts = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
 
     # Facts
+    _fact_path = FieldAttribute(isa='string', default=None)
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
     _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
-    _gather_timeout = FieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
-    _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
+    _gather_timeout = FieldAttribute(isa='int', default=None, always_post_validate=True)
 
     # Variable Attributes
     _vars_files = FieldAttribute(isa='list', default=list, priority=99)
@@ -74,7 +73,7 @@ class Play(Base, Taggable, Become):
     _tasks = FieldAttribute(isa='list', default=list)
 
     # Flag/Setting Attributes
-    _force_handlers = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('force_handlers'), always_post_validate=True)
+    _force_handlers = FieldAttribute(isa='bool', always_post_validate=True)
     _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
     _serial = FieldAttribute(isa='list', default=list, always_post_validate=True)
     _strategy = FieldAttribute(isa='string', default=C.DEFAULT_STRATEGY, always_post_validate=True)
@@ -89,9 +88,6 @@ class Play(Base, Taggable, Become):
         self._included_path = None
         self._removed_hosts = []
         self.ROLE_CACHE = {}
-
-        self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
-        self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
     def __repr__(self):
         return self.get_name()

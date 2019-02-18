@@ -41,7 +41,7 @@ Reasons for using an Ansible module over a DSC resource:
   better checks
 * DSC resources do not support diff mode, while some Ansible modules do
 * Custom resources require further installation steps to be run on the host
-  beforehand, while Ansible modules are built-in to Ansible
+  beforehand, while Ansible modules are in built-in to Ansible
 * There are bugs in a DSC resource where an Ansible module works
 
 Reasons for using a DSC resource over an Ansible module:

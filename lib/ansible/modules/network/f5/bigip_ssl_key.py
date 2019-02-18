@@ -267,7 +267,7 @@ class Difference(object):
             if self.key_checksum:
                 return self.want.key_source_path
         if self.want.key_source_path != self.have.key_source_path:
-            return self.want.key_source_path
+                return self.want.key_source_path
 
 
 class ModuleManager(object):

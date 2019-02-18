@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2017, Ansible by Red Hat, inc
+# (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -322,7 +322,7 @@ class CliConfiguration(ConfigBase):
                 'speed': self.parse_config_argument(intf_config, 'speed'),
                 'duplex': self.parse_config_argument(intf_config, 'duplex'),
                 'mtu': self.parse_config_argument(intf_config, 'mtu'),
-                'enabled': not bool(self.parse_shutdown(intf_config)),
+                'enabled': True if not self.parse_shutdown(intf_config) else False,
                 'active': active,
                 'state': 'present'
             }
@@ -385,7 +385,7 @@ class CliConfiguration(ConfigBase):
             if self._result['changed']:
                 sleep(want_item['delay'])
 
-            command = 'show interfaces {0!s}'.format(want_item['name'])
+            command = 'show interfaces {!s}'.format(want_item['name'])
             out = run_commands(self._module, command)[0]
 
             if want_state in ('up', 'down'):
@@ -399,7 +399,7 @@ class CliConfiguration(ConfigBase):
                             have_state = match.group(1)
 
                 if have_state is None or not conditional(want_state, have_state.strip()):
-                    failed_conditions.append('state ' + 'eq({0!s})'.format(want_state))
+                    failed_conditions.append('state ' + 'eq({!s})'.format(want_state))
 
             if want_tx_rate:
                 match = re.search(r'%s (\d+)' % 'output rate', out, re.M)
@@ -575,7 +575,7 @@ class NCConfiguration(ConfigBase):
 
             if want_state in ('up', 'down'):
                 if want_state not in line_state_map[want_item['name']]:
-                    failed_conditions.append('state ' + 'eq({0!s})'.format(want_state))
+                    failed_conditions.append('state ' + 'eq({!s})'.format(want_state))
 
             if want_tx_rate:
                 if want_tx_rate != data_rate_map[want_item['name']]['output-data-rate']:

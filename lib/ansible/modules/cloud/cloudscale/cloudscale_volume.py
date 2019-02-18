@@ -19,7 +19,15 @@ module: cloudscale_volume
 short_description: Manages volumes on the cloudscale.ch IaaS service
 description:
   - Create, attach/detach and delete volumes on the cloudscale.ch IaaS service.
+  - All operations are performed using the cloudscale.ch public API v1.
+  - "For details consult the full API documentation:
+     U(https://www.cloudscale.ch/en/api/v1)."
+  - A valid API token is required for all operations. You can create as many
+    tokens as you like using the cloudscale.ch control panel at
+    U(https://control.cloudscale.ch).
 notes:
+  - Instead of the I(api_token) parameter the C(CLOUDSCALE_API_TOKEN) environment
+    variable can be used.
   - To create a new volume at least the I(name) and I(size_gb) options
     are required.
   - A volume can be created and attached to a server in the same task.
@@ -53,7 +61,15 @@ options:
         detach the volume. Currently a volume can only be attached to a
         single server.
     aliases: [ server_uuid ]
-extends_documentation_fragment: cloudscale
+  api_token:
+    description:
+      - cloudscale.ch API token.
+      - This can also be passed in the C(CLOUDSCALE_API_TOKEN) environment
+        variable.
+  api_timeout:
+    description:
+      - Timeout in seconds for calls to the cloudscale.ch API.
+    default: 30
 '''
 
 EXAMPLES = '''

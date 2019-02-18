@@ -113,6 +113,7 @@ def poll_reload_status(api_key=None, job_id=None, payload=None):
     if response.json()['error']:
         # the reload job was submitted but polling failed. Don't return this as an overall task failure.
         stderr = "Reload submitted successfully, but the Memset API returned a job error when attempting to poll the reload status."
+        msg = msg
     else:
         memset_api = response.json()
         msg = None

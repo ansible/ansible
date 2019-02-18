@@ -16,38 +16,39 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: create test directory
-  win_file:
-    path: '{{ test_win_service_dir }}'
-    state: directory
-
-# This binary has been pre-compiled with the code in the files directory of this role
-- name: download service executable
-  win_get_url:
-    url: '{{ test_win_service_binary_url }}'
-    dest: '{{ test_win_service_path }}'
-
 - name: remove the dummy test services if it is left over from previous tests
   win_service:
-    name: '{{ item }}'
+    name: '{{item}}'
     force_dependent_services: True
     state: absent
   with_items:
-  - '{{ test_win_service_name }}'
+  - '{{test_win_service_name}}'
   - TestServiceParent2
   - TestServiceDependency
+
+- name: get details of the {{test_win_service_pause_name}} service
+  win_service:
+    name: '{{test_win_service_pause_name}}'
+  register: pause_service_details
 
 - block:
   - include_tasks: tests.yml
 
   always:
-  - name: remove test services
+  - name: ensure the {{test_win_service_pause_name}} is set to stopped if it was stopped
     win_service:
-      name: '{{ item }}'
+      name: '{{test_win_service_pause_name}}'
+      state: stopped
+      force_dependent_services: True
+    when: pause_service_details.state == 'stopped'
+
+  - name: make sure all services are removed in the end
+    win_service:
+      name: '{{item}}'
       force_dependent_services: True
       state: absent
     with_items:
-    - '{{ test_win_service_name }}'
+    - '{{test_win_service_name}}'
     - TestServiceParent2
     - TestServiceDependency
 
@@ -55,9 +56,4 @@
     win_environment:
       name: TEST_SERVICE_PATH
       level: machine
-      state: absent
-
-  - name: remove test directory
-    win_file:
-      path: '{{ test_win_service_dir }}'
       state: absent

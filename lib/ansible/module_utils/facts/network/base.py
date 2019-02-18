@@ -41,7 +41,7 @@ class Network:
 
 
 class NetworkCollector(BaseFactCollector):
-    # MAYBE: we could try to build this based on the arch specific implementation of Network() or its kin
+    # MAYBE: we could try to build this based on the arch specific implemementation of Network() or its kin
     name = 'network'
     _fact_class = Network
     _fact_ids = set(['interfaces',

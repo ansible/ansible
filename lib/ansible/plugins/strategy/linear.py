@@ -365,7 +365,7 @@ class StrategyModule(StrategyBase):
                                     task=new_block._parent
                                 )
                                 display.debug("filtering new block on tags")
-                                final_block = new_block.filter_tagged_tasks(task_vars)
+                                final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                                 display.debug("done filtering new block on tags")
 
                                 noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)

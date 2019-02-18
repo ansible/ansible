@@ -294,7 +294,7 @@
       - range_query_from_to is not changed
       - range_query_from_to.url.endswith("class/fvnsEncapBlk.json")
       - '"eq(fvnsEncapBlk.from, \"vlan-20\")" in range_query_from_to.filter_string|urldecode'
-      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in range_query_from_to.filter_string|urldecode'
+      - '"eq(fvnsEncapBlk.to, \"vlan-40\")" in range_query_from_to.filter_string#urldecode'
       - range_query_from_to.current.0.fvnsEncapBlk.attributes.from == "vlan-20"
       - range_query_from_to.current.0.fvnsEncapBlk.attributes.to == "vlan-40"
 

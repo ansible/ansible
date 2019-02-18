@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 # Created on July 24, 2017
 #
@@ -7,8 +6,8 @@
 #
 # module_check: not supported
 #
-# Copyright: (c) 2017, Gaurav Rastogi <grastogi@avinetworks.com>
-# Copyright: (c) 2017, Vilian Atmadzhov <vilian.atmadzhov@paddypowerbetfair.com>
+# Copyright: (c) 2017 Gaurav Rastogi, <grastogi@avinetworks.com>
+#                     Vilian Atmadzhov, <vilian.atmadzhov@paddypowerbetfair.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 #
 """
@@ -84,7 +83,7 @@ def main():
         api.close()
         module.exit_json(changed=False, obj=remote)
     except Exception as e:
-        module.fail_json(msg="Unable to get an AVI session. {0}".format(e))
+        module.fail_json(msg="Unable to get an AVI session. {}".format(e))
 
 
 if __name__ == '__main__':

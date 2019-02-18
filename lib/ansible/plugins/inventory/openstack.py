@@ -108,7 +108,6 @@ fail_on_errors: yes
 '''
 
 import collections
-import sys
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
@@ -173,10 +172,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             else:
                 config_files = None
 
-            # Redict logging to stderr so it does not mix with output
-            # particular ansible-inventory JSON output
             # TODO(mordred) Integrate openstack's logging with ansible's logging
-            sdk.enable_logging(stream=sys.stderr)
+            sdk.enable_logging()
 
             cloud_inventory = sdk_inventory.OpenStackInventory(
                 config_files=config_files,

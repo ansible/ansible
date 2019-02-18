@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template to change.
-    type: str
+    type: list
     required: yes
   anp:
     description:

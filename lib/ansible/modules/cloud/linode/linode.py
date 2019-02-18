@@ -264,17 +264,14 @@ EXAMPLES = '''
 
 import os
 import time
-import traceback
 
-LINODE_IMP_ERR = None
 try:
     from linode import api as linode_api
     HAS_LINODE = True
 except ImportError:
-    LINODE_IMP_ERR = traceback.format_exc()
     HAS_LINODE = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 
 
 def randompass():
@@ -611,7 +608,7 @@ def main():
     )
 
     if not HAS_LINODE:
-        module.fail_json(msg=missing_required_lib('linode-python'), exception=LINODE_IMP_ERR)
+        module.fail_json(msg='linode-python required for this module')
 
     state = module.params.get('state')
     api_key = module.params.get('api_key')

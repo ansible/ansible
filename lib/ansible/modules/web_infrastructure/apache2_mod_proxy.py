@@ -190,13 +190,10 @@ members:
 '''
 
 import re
-import traceback
 
-BEAUTIFUL_SOUP_IMP_ERR = None
 try:
     from BeautifulSoup import BeautifulSoup
 except ImportError:
-    BEAUTIFUL_SOUP_IMP_ERR = traceback.format_exc()
     HAS_BEAUTIFULSOUP = False
 else:
     HAS_BEAUTIFULSOUP = True
@@ -360,7 +357,7 @@ def main():
     )
 
     if HAS_BEAUTIFULSOUP is False:
-        module.fail_json(msg=missing_required_lib('BeautifulSoup'), exception=BEAUTIFUL_SOUP_IMP_ERR)
+        module.fail_json(msg="python module 'BeautifulSoup' is required!")
 
     if module.params['state'] is not None:
         states = module.params['state'].split(',')
@@ -438,7 +435,7 @@ def main():
             module.fail_json(msg=str(module.params['member_host']) + ' is not a member of the balancer ' + str(module.params['balancer_vhost']) + '!')
 
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
 if __name__ == '__main__':
     main()

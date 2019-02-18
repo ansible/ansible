@@ -218,6 +218,7 @@ class Connection(ConnectionBase):
 
     transport = 'psrp'
     module_implementation_preferences = ('.ps1', '.exe', '')
+    become_methods = ['runas']
     allow_executable = False
     has_pipelining = True
     allow_extras = True
@@ -292,32 +293,31 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data,
                                              sudoable=sudoable)
 
-        if cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
+        if cmd == "-" and not in_data.startswith(b"#!"):
+            # The powershell plugin sets cmd to '-' when we are executing a
+            # PowerShell script with in_data being the script to execute.
+            script = in_data
+            in_data = None
+            display.vvv("PSRP: EXEC (via pipeline wrapper)",
+                        host=self._psrp_host)
+        elif cmd == "-":
+            # ANSIBALLZ wrapper, we need to get the interpreter and execute
+            # that as the script - note this won't work as basic.py relies
+            # on packages not available on Windows, once fixed we can enable
+            # this path
+            interpreter = to_native(in_data.splitlines()[0][2:])
+            # script = "$input | &'%s' -" % interpreter
+            # in_data = to_text(in_data)
+            raise AnsibleError("cannot run the interpreter '%s' on the psrp "
+                               "connection plugin" % interpreter)
+        elif cmd.startswith(" ".join(_common_args) + " -EncodedCommand"):
             # This is a PowerShell script encoded by the shell plugin, we will
             # decode the script and execute it in the runspace instead of
             # starting a new interpreter to save on time
             b_command = base64.b64decode(cmd.split(" ")[-1])
             script = to_text(b_command, 'utf-16-le')
             in_data = to_text(in_data, errors="surrogate_or_strict", nonstring="passthru")
-
-            if in_data and in_data.startswith(u"#!"):
-                # ANSIBALLZ wrapper, we need to get the interpreter and execute
-                # that as the script - note this won't work as basic.py relies
-                # on packages not available on Windows, once fixed we can enable
-                # this path
-                interpreter = to_native(in_data.splitlines()[0][2:])
-                # script = "$input | &'%s' -" % interpreter
-                # in_data = to_text(in_data)
-                raise AnsibleError("cannot run the interpreter '%s' on the psrp "
-                                   "connection plugin" % interpreter)
-
-            # call build_module_command to get the bootstrap wrapper text
-            bootstrap_wrapper = self._shell.build_module_command('', '', '')
-            if bootstrap_wrapper == cmd:
-                # Do not display to the user each invocation of the bootstrap wrapper
-                display.vvv("PSRP: EXEC (via pipeline wrapper)")
-            else:
-                display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
+            display.vvv("PSRP: EXEC %s" % script, host=self._psrp_host)
         else:
             # in other cases we want to execute the cmd as the script
             script = cmd

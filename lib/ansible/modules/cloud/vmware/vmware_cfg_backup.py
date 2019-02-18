@@ -128,7 +128,7 @@ class VMwareConfigurationBackup(PyVmomi):
 
     def load_configuration(self):
         if not os.path.isfile(self.src):
-            self.module.fail_json(msg="Source file {0} does not exist".format(self.src))
+            self.module.fail_json(msg="Source file {} does not exist".format(self.src))
 
         url = self.host.configManager.firmwareSystem.QueryFirmwareConfigUploadURL()
         url = url.replace('*', self.host.name)

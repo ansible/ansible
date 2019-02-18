@@ -152,7 +152,7 @@ def get_connection(module):
     elif network_api == 'netconf':
         module.connection = NetconfConnection(module._socket_path)
     else:
-        module.fail_json(msg='Invalid connection type {0!s}'.format(network_api))
+        module.fail_json(msg='Invalid connection type {!s}'.format(network_api))
 
     return module.connection
 
@@ -318,7 +318,7 @@ def etree_findall(root, node):
 
 def is_cliconf(module):
     capabilities = get_device_capabilities(module)
-    return (capabilities.get('network_api') == 'cliconf')
+    return True if capabilities.get('network_api') == 'cliconf' else False
 
 
 def is_netconf(module):
@@ -477,10 +477,10 @@ def load_config(module, command_filter, commit=False, replace=False,
     return diff
 
 
-def run_commands(module, commands, check_rc=True, return_timestamps=False):
+def run_commands(module, commands, check_rc=True):
     connection = get_connection(module)
     try:
-        return connection.run_commands(commands=commands, check_rc=check_rc, return_timestamps=return_timestamps)
+        return connection.run_commands(commands=commands, check_rc=check_rc)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc))
 

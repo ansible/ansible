@@ -29,7 +29,7 @@ options:
   template:
     description:
     - The name of the template.
-    type: str
+    type: list
     required: yes
   externalepg:
     description:
@@ -43,7 +43,7 @@ options:
   vrf:
     description:
     - The VRF associated to this ANP.
-    type: dict
+    type: str
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.

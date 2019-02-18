@@ -50,12 +50,12 @@ options:
     service_dir:
         description:
             - Directory svscan watches for services
-        type: str
+        type: path
         default: /service
     service_src:
         description:
             - Directory where services are defined, the source of symlinks to service_dir.
-        type: str
+        type: path
         default: /etc/service
 '''
 

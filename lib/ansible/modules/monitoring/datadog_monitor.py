@@ -141,15 +141,13 @@ EXAMPLES = '''
 import traceback
 
 # Import Datadog
-DATADOG_IMP_ERR = None
 try:
     from datadog import initialize, api
     HAS_DATADOG = True
 except Exception:
-    DATADOG_IMP_ERR = traceback.format_exc()
     HAS_DATADOG = False
 
-from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 
 
@@ -182,7 +180,7 @@ def main():
 
     # Prepare Datadog
     if not HAS_DATADOG:
-        module.fail_json(msg=missing_required_lib('datadogpy'), exception=DATADOG_IMP_ERR)
+        module.fail_json(msg='datadogpy required for this module')
 
     options = {
         'api_key': module.params['api_key'],

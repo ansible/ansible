@@ -5,12 +5,11 @@
       set_fact:
         secret1: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret1 auth_method=token token=' ~ user_token) }}"
         secret2: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret2 token=' ~ user_token) }}"
-        secret3: "{{ lookup('hashi_vault', conn_params ~ ' secret=' ~ vault_base_path ~ '/secret2  token=' ~ user_token) }}"
 
     - name: 'Check secret values'
       fail:
         msg: 'unexpected secret values'
-      when: secret1['data']['value'] != 'foo1' or secret2['data']['value'] != 'foo2' or secret3['data']['value'] != 'foo2'
+      when: secret1['data']['value'] != 'foo1' or secret2['data']['value'] != 'foo2'
 
     - name: 'Failure expected when erroneous credentials are used'
       vars:

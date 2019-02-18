@@ -24,8 +24,7 @@ Compat selectors library.  Python-3.5 has this builtin.  The selectors2
 package exists on pypi to backport the functionality as far as python-2.6.
 '''
 # The following makes it easier for us to script updates of the bundled code
-_BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.0", "version_constraints": ">1.0,<2.0"}
-
+_BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.0"}
 # Added these bugfix commits from 2.1.0:
 # * https://github.com/SethMichaelLarson/selectors2/commit/3bd74f2033363b606e1e849528ccaa76f5067590
 #   Wrap kqueue.control so that timeout is a keyword arg

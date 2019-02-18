@@ -69,7 +69,7 @@ Now that you've rebased your branch, you need to push your changes to GitHub to 
 
 Since rebasing re-writes git history, you will need to use a force push::
 
-   $ git push --force-with-lease
+   $ git push --force
 
 Your PR on GitHub has now been updated. This will automatically trigger testing of your changes.
 You should check in on the status of your PR after tests have completed to see if further changes are required.

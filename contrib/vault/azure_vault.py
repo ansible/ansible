@@ -262,13 +262,13 @@ class AzureRM(object):
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-            self.azure_credentials = self.acquire_token_with_username_password(
-                self._adfs_authority_url,
-                self._resource,
-                self.credentials['ad_user'],
-                self.credentials['password'],
-                self.credentials['client_id'],
-                self.credentials['tenant'])
+                self.azure_credentials = self.acquire_token_with_username_password(
+                    self._adfs_authority_url,
+                    self._resource,
+                    self.credentials['ad_user'],
+                    self.credentials['password'],
+                    self.credentials['client_id'],
+                    self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')

@@ -1,4 +1,0 @@
-minor_changes:
-- "docker_volume - the ``force`` option has been deprecated, and a new option ``recreate``
-   has been added with default value ``never``. If you use ``force: yes`` in a playbook,
-   change it to ``recreate: options-changed`` instead."

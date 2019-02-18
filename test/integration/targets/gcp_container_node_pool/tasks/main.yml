@@ -17,7 +17,7 @@
   gcp_container_cluster:
       name: "cluster-nodepool"
       initial_node_count: 4
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -28,7 +28,7 @@
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -39,7 +39,7 @@
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -52,7 +52,7 @@
 - name: verify that node_pool was created
   gcp_container_node_pool_facts:
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -69,7 +69,7 @@
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -85,7 +85,7 @@
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -98,7 +98,7 @@
 - name: verify that node_pool was deleted
   gcp_container_node_pool_facts:
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -115,7 +115,7 @@
       name: my-pool
       initial_node_count: 4
       cluster: "{{ cluster }}"
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -132,7 +132,7 @@
   gcp_container_cluster:
       name: "cluster-nodepool"
       initial_node_count: 4
-      location: us-central1-a
+      zone: us-central1-a
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"

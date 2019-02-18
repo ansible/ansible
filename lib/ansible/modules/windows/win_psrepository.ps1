@@ -1,7 +1,7 @@
 #!powershell
 
-# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
 # Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# Copyright: (c) 2018, Wojciech Sciesinski <wojciech[at]sciesinski[dot]net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -18,21 +18,13 @@ $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" 
 
 $result = @{"changed" = $false}
 
-Function Update-NuGetPackageProvider {
-    $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
-    if ($null -eq $PackageProvider) {
-        Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force | Out-Null
-    }
-}
-
 $Repo = Get-PSRepository -Name $name -ErrorAction Ignore
 if ($state -eq "present") {
-    if ($null -eq $Repo) {
+    if ($null -eq $Repo){
         if ($null -eq $installationpolicy) {
             $installationpolicy = "trusted"
         }
         if (-not $check_mode) {
-            Update-NuGetPackageProvider
             Register-PSRepository -Name $name -SourceLocation $source -InstallationPolicy $installationpolicy
         }
         $result.changed = $true
@@ -50,7 +42,6 @@ if ($state -eq "present") {
 
         if ($changed_properties.Count -gt 0) {
             if (-not $check_mode) {
-                Update-NuGetPackageProvider
                 Set-PSRepository -Name $name @changed_properties
             }
             $result.changed = $true
@@ -59,7 +50,6 @@ if ($state -eq "present") {
 }
 elseif ($state -eq "absent" -and $null -ne $Repo) {
     if (-not $check_mode) {
-        Update-NuGetPackageProvider
         Unregister-PSRepository -Name $name
     }
     $result.changed = $true
