@@ -404,6 +404,7 @@ uid:
 
 import errno
 import grp
+import calendar
 import os
 import re
 import pty
@@ -1150,7 +1151,7 @@ class FreeBsdUser(User):
             if self.expires < time.gmtime(0):
                 cmd.append('0')
             else:
-                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                cmd.append(str(calendar.timegm(self.expires)))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -1268,7 +1269,7 @@ class FreeBsdUser(User):
                 # Current expires is negative or we compare year, month, and day only
                 if current_expires <= 0 or current_expire_date[:3] != self.expires[:3]:
                     cmd.append('-e')
-                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    cmd.append(str(calendar.timegm(self.expires)))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
