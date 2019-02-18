@@ -62,7 +62,7 @@ options:
   columns:
     description:
     - Columns that are needed.
-    type: str
+    type: list
   rename:
     description:
     - New table name. Mutually exclusive with I(tablespace), I(owner),
