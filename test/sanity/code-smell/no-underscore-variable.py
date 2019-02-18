@@ -33,7 +33,7 @@ def main():
         'lib/ansible/modules/cloud/amazon/route53_zone.py',
         'lib/ansible/modules/cloud/amazon/s3_sync.py',
         'lib/ansible/modules/cloud/azure/azure_rm_loadbalancer.py',
-        'lib/ansible/modules/cloud/google/gce.py',
+        'lib/ansible/modules/cloud/google/_gce.py',
         'lib/ansible/modules/cloud/google/gce_eip.py',
         'lib/ansible/modules/cloud/google/gce_img.py',
         'lib/ansible/modules/cloud/google/gce_instance_template.py',
