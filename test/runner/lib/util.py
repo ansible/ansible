@@ -41,6 +41,11 @@ except ImportError:
 DOCKER_COMPLETION = {}
 COVERAGE_PATHS = {}  # type: dict[str, str]
 
+try:
+    MAXFD = subprocess.MAXFD
+except AttributeError:
+    MAXFD = -1
+
 
 def get_docker_completion():
     """
