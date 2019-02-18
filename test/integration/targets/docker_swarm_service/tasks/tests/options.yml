@@ -890,6 +890,69 @@
   when: docker_api_version is version('1.25', '<')
 
 ####################################################################
+## groups ##########################################################
+####################################################################
+
+- name: groups
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - 1234
+      - 5678
+  register: groups_1
+
+- name: groups (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - 1234
+      - 5678
+  register: groups_2
+
+- name: groups (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - 1234
+  register: groups_3
+
+- name: groups (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups: []
+  register: groups_4
+
+- name: groups (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups: []
+  register: groups_5
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - groups_1 is changed
+    - groups_2 is not changed
+    - groups_3 is changed
+    - groups_4 is changed
+    - groups_5 is not changed
+
+####################################################################
 ## healthcheck #####################################################
 ####################################################################
 
