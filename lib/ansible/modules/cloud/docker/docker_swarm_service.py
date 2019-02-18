@@ -292,6 +292,12 @@ options:
     description:
       - List of the service networks names.
       - Corresponds to the C(--network) option of C(docker service create).
+  stop_signal:
+    type: str
+    description:
+      - Override default signal used to stop the container.
+      - Corresponds to the C(--stop-signal) option of C(docker service create).
+    version_added: "2.8"
   publish:
     type: list
     description:
@@ -664,6 +670,7 @@ class DockerService(DockerBaseClass):
         self.secrets = None
         self.constraints = None
         self.networks = None
+        self.stop_signal = None
         self.publish = None
         self.placement_preferences = None
         self.replicas = -1
@@ -706,6 +713,7 @@ class DockerService(DockerBaseClass):
             'replicas': self.replicas,
             'endpoint_mode': self.endpoint_mode,
             'restart_policy': self.restart_policy,
+            'stop_signal': self.stop_signal,
             'limit_cpu': self.limit_cpu,
             'limit_memory': self.limit_memory,
             'reserve_cpu': self.reserve_cpu,
@@ -742,6 +750,7 @@ class DockerService(DockerBaseClass):
         s.reserve_cpu = ap['reserve_cpu']
         s.mode = ap['mode']
         s.networks = ap['networks']
+        s.stop_signal = ap['stop_signal']
         s.restart_policy = ap['restart_policy']
         s.restart_policy_attempts = ap['restart_policy_attempts']
         s.restart_policy_delay = ap['restart_policy_delay']
@@ -894,6 +903,8 @@ class DockerService(DockerBaseClass):
             differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
         if self.container_labels is not None and self.container_labels != (os.container_labels or {}):
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
+        if self.stop_signal is not None and self.stop_signal != os.stop_signal:
+            differences.add('stop_signal', parameter=self.stop_signal, active=os.stop_signal)
         if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
         if self.restart_policy is not None and self.restart_policy != os.restart_policy:
@@ -1042,6 +1053,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['labels'] = self.container_labels
         if self.hostname is not None:
             container_spec_args['hostname'] = self.hostname
+        if self.stop_signal is not None:
+            container_spec_args['stop_signal'] = self.stop_signal
         if self.tty is not None:
             container_spec_args['tty'] = self.tty
         if secrets is not None:
@@ -1232,6 +1245,7 @@ class DockerServiceManager(object):
         ds.env = task_template_data['ContainerSpec'].get('Env')
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args')
+        ds.stop_signal = task_template_data['ContainerSpec'].get('StopSignal')
 
         update_config_data = raw_data['Spec'].get('UpdateConfig')
         if update_config_data:
@@ -1570,6 +1584,7 @@ def main():
         mode=dict(default='replicated', type='str'),
         replicas=dict(default=-1, type='int'),
         endpoint_mode=dict(choices=['vip', 'dnsrr']),
+        stop_signal=dict(type='str'),
         limit_cpu=dict(type='float'),
         limit_memory=dict(type='str'),
         reserve_cpu=dict(type='float'),
@@ -1601,6 +1616,7 @@ def main():
         update_max_failure_ratio=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_monitor=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
+        stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         placement_preferences=dict(docker_py_version='2.4.0', docker_api_version='1.27'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         # specials
