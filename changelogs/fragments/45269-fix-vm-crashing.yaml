@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_virtualmachine - fixed several crashes in module
