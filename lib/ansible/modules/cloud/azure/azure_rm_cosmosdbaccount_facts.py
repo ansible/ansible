@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, (@zikalino)
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -251,7 +251,25 @@ accounts:
             type: bool
             sample: true
         virtual_network_rules:
+            description:
+                - List of Virtual Network ACL rules configured for the Cosmos DB account.
+            type: list
+            contains:
+                subnet:
+                    description:
+                        - Resource id of a subnet.
+                    type: str
+                    sample: /subscriptions/subid/resourceGroups/testrg/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/testsubnet1
+                ignore_missing_vnet_service_endpoint:
+                    description:
+                        - Create Cosmos DB account without existing virtual network service endpoint.
+                    type: bool
         enable_multiple_write_locations:
+            description:
+                - Enable multiple write locations.
+            returned: always
+            type: bool
+            sample: true
         document_endpoint:
             description:
                 - Document endpoint.
