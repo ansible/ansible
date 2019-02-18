@@ -265,7 +265,7 @@ class SecretManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
-        state=dict(type='str', choices=['absent', 'present'], default='present'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
         data=dict(type='str', no_log=True),
         data_is_b64=dict(type='bool', default=False),
         labels=dict(type='dict'),

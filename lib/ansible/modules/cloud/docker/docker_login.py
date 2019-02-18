@@ -293,9 +293,9 @@ class LoginManager(DockerBaseClass):
 def main():
 
     argument_spec = dict(
-        registry_url=dict(type='str', required=False, default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
-        username=dict(type='str', required=False),
-        password=dict(type='str', required=False, no_log=True),
+        registry_url=dict(type='str', default=DEFAULT_DOCKER_REGISTRY, aliases=['registry', 'url']),
+        username=dict(type='str'),
+        password=dict(type='str', no_log=True),
         email=dict(type='str'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),

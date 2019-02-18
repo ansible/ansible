@@ -641,10 +641,10 @@ def main():
         push=dict(type='bool', default=False),
         repository=dict(type='str'),
         rm=dict(type='bool', default=True),
-        state=dict(type='str', choices=['absent', 'present', 'build'], default='present'),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'build']),
         tag=dict(type='str', default='latest'),
         use_tls=dict(type='str', choices=['no', 'encrypt', 'verify'], removed_in_version='2.11'),
-        buildargs=dict(type='dict', default=None),
+        buildargs=dict(type='dict'),
     )
 
     option_minimal_versions = dict(

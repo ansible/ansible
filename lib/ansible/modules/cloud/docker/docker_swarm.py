@@ -489,7 +489,7 @@ class SwarmManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
-        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
+        state=dict(type='str', default='present', choices=['present', 'join', 'absent', 'remove', 'inspect']),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list', elements='str'),

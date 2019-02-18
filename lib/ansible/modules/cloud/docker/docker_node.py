@@ -262,7 +262,7 @@ def main():
     argument_spec = dict(
         hostname=dict(type='str', required=True),
         labels=dict(type='dict'),
-        labels_state=dict(type='str', choices=['merge', 'replace'], default='merge'),
+        labels_state=dict(type='str', default='merge', choices=['merge', 'replace']),
         labels_to_remove=dict(type='list', elements='str'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),

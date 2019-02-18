@@ -595,19 +595,19 @@ class DockerNetworkManager(object):
 def main():
     argument_spec = dict(
         network_name=dict(type='str', required=True, aliases=['name']),
-        connected=dict(type='list', default=[], aliases=['containers'], elements='str'),
+        connected=dict(type='list', default=[], elements='str', aliases=['containers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='bridge'),
         driver_options=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str'),
-        ipam_options=dict(type='dict', default={}, removed_in_version='2.12', options=dict(
+        ipam_options=dict(type='dict', default={}, options=dict(
             subnet=dict(type='str'),
             iprange=dict(type='str'),
             gateway=dict(type='str'),
             aux_addresses=dict(type='dict'),
-        )),
+        ), removed_in_version='2.12'),
         ipam_config=dict(type='list', elements='dict', options=dict(
             subnet=dict(type='str'),
             iprange=dict(type='str'),

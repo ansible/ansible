@@ -210,12 +210,12 @@ def docker_stack_rm(module, stack_name, retries, interval):
 def main():
     module = AnsibleModule(
         argument_spec={
-            'name': dict(required=True, type='str'),
-            'compose': dict(required=False, type='list', default=[]),
-            'prune': dict(default=False, type='bool'),
-            'with_registry_auth': dict(default=False, type='bool'),
+            'name': dict(type='str', required=True),
+            'compose': dict(type='list', default=[]),
+            'prune': dict(type='bool', default=False),
+            'with_registry_auth': dict(type='bool', default=False),
             'resolve_image': dict(type='str', choices=['always', 'changed', 'never']),
-            'state': dict(default='present', choices=['present', 'absent']),
+            'state': dict(tpye='str', default='present', choices=['present', 'absent']),
             'absent_retries': dict(type='int', default=0),
             'absent_retries_interval': dict(type='int', default=1)
         },
