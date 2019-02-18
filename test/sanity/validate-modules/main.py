@@ -1401,8 +1401,8 @@ class ModuleValidator(Validator):
                         path=self.object_path,
                         code=309,
                         msg=('version_added for new option (%s) should '
-                             'be \'%r\'. Currently %r' %
-                             (option, existing_version, current_version))
+                             'be %r. Currently %r' %
+                             (option, str(existing_version), current_version))
                     )
                 continue
 
