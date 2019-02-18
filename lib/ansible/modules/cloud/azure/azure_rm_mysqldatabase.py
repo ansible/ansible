@@ -145,6 +145,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
+        self.force_update = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -199,6 +200,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if not self.check_mode:
                     self.delete_mysqldatabase()
             else:
+                self.fail("Database properties cannot be updated without setting 'force_update' option")
                 self.to_do = Actions.NoAction
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
