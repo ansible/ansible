@@ -56,8 +56,7 @@ class ProcessModel(ProcessModelBase):
         for i in range(num):
             w_thread = threading.Thread(target=run_worker, args=(self, self._shared_loader_obj))
             w_thread.start()
-            w_lock = threading.Lock()
-            self._workers.append([w_thread, w_lock])
+            self._workers.append(w_thread)
 
     def get_job(self):
         data = None
@@ -85,7 +84,7 @@ class ProcessModel(ProcessModelBase):
 
     def cleanup(self):
         self.terminate()
-        for (w_thread, w_lock) in self._workers:
+        for w_thread in self._workers:
             if w_thread and not w_thread.is_alive():
                 w_thread.join()
 
