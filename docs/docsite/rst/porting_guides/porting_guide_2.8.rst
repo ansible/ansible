@@ -137,6 +137,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
 * ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
 
 
 Noteworthy module changes
