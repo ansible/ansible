@@ -1,6 +1,8 @@
 #!/usr/bin/python
-
-
+# -*- coding: utf-8 -*-
+#
+# (c) 2019, Nate River <vitikc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -15,8 +17,8 @@ module: vultr_server_metal
 short_description: Manages baremetal servers on Vultr.
 description:
   - Deploy and destroy servers.
-version_added: ""
-author: "@vitikc"
+version_added: "2.8"
+author: "Nate River (@vitikc)"
 options:
   name:
     description:
@@ -65,6 +67,11 @@ options:
     description:
       - Region the server is deployed into.
       - Required if the server does not yet exist.
+ state:
+    description:
+      - State of the server.
+    default: present
+    choices: [ present, absent ]
 extends_documentation_fragment: vultr
 '''
 
@@ -491,7 +498,6 @@ def main():
         hostname=dict(),
         os=dict(),
         plan=dict(),
-        force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),
