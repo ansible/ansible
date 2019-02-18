@@ -137,6 +137,14 @@ options:
               - multicast
               - labeled-unicast
             default: unicast
+          synchronization:
+            description:
+              - Enable/disable IGP synchronization.
+            type: bool
+          auto_summary:
+            description:
+              - Enable/disable automatic network number summarization.
+            type: bool
           redistribute:
             description:
               - Specifies the redistribute information from another routing protocol.
@@ -334,6 +342,8 @@ def main():
     address_family_spec = {
         'afi': dict(choices=['ipv4', 'ipv6'], required=True),
         'safi': dict(choices=['flowspec', 'labeled-unicast', 'multicast', 'unicast'], default='unicast'),
+        'auto_summary': dict(type='bool'),
+        'synchronization': dict(type='bool'),
         'networks': dict(type='list', elements='dict', options=network_spec),
         'redistribute': dict(type='list', elements='dict', options=redistribute_spec),
         'neighbors': dict(type='list', elements='dict', options=af_neighbor_spec),
