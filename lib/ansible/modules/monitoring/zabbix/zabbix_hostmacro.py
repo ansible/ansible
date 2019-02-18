@@ -186,7 +186,7 @@ def main():
     force = module.params['force']
 
     if ':' in macro_name:
-        macro_name = ':'.join([macro_name.split(':')[0].upper(), macro_name.split(':')[1]])
+        macro_name = ':'.join([macro_name.split(':')[0].upper(), ':'.join(macro_name.split(':')[1:])])
     else:
         macro_name = macro_name.upper()
 
