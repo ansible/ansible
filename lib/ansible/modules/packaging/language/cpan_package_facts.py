@@ -64,7 +64,7 @@ class CPAN(CLIMgr):
         found = super(CPAN, self).is_available()
         if found:
             # perldoc is always present, but perllocal topic is only available if cpan(m) is in use.
-            rc, out, err = self.m.run_command([self.cli, 'perllocal'])
+            rc, out, err = self.m.run_command([self._cli, 'perllocal'])
             if rc != 0 or err == 'No documentation found for "perllocal"':
                 found = False
         return found
@@ -91,7 +91,7 @@ def main():
             found += 1
             packages = cpan.get_packages()
     except Exception as e:
-        module.warn('Failed to retrieve packages with %s: %s' % (cpan.cli, to_text(e)))
+        module.warn('Failed to retrieve packages with %s: %s' % (cpan._cli, to_text(e)))
 
     if found == 0:
         module.fail_json(msg='Unable to find a usable cpan')
