@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
-module: cpan_package_ingo
+module: cpan_package_facts
 short_description: Perl's cpan package information
 description:
   - Return information about installed pip packages as facts
