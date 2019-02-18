@@ -501,8 +501,9 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
         if self.retrieve_connection_strings:
             connection_strings = self.mgmt_client.database_accounts.list_connection_strings(resource_group_name=self.resource_group,
                                                                                             account_name=self.name)
-            d['connection_strings'] = connection_strings.as_dict()                                                       
+            d['connection_strings'] = connection_strings.as_dict()
         return d
+
 
 def main():
     AzureRMCosmosDBAccountFacts()
