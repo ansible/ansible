@@ -1,0 +1,2 @@
+bugfixes:
+    - always correctly template no log for tasks https://github.com/ansible/ansible/issues/43294
