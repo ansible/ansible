@@ -1,8 +1,11 @@
 ####
-# setup ports
+# setup portstree
 
-- name: portsnap interactive fetch forced in non login shell session and extract or update silently
-  shell: portsnap --interactive auto >/dev/null 2>&1
+- name: silent install of subversion without module dependency
+  shell: pkg install -y subversion >/dev/null 2>&1
+
+- name: silently checkout a tested revision of the ports tree to make the tests more stable
+  svn checkout -r 493256 https://svn.FreeBSD.org/ports/head /usr/ports >/dev/null 2>&1
 
 ###
 # check ports setup
