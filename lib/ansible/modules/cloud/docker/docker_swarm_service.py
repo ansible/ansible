@@ -446,6 +446,12 @@ options:
       - Before Ansible 2.8, the default value for this option was C(root).
       - The default has been removed so that the user defined in the image is used if no user is specified here.
       - Corresponds to the C(--user) option of C(docker service create).
+  working_dir:
+    type: str
+    description:
+      - Path to the working directory.
+      - Corresponds to the C(--workdir) option of C(docker service create).
+    version_added: "2.8"
 extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
@@ -743,6 +749,7 @@ class DockerService(DockerBaseClass):
         self.update_monitor = None
         self.update_max_failure_ratio = None
         self.update_order = None
+        self.working_dir = None
 
     def get_facts(self):
         return {
@@ -786,7 +793,8 @@ class DockerService(DockerBaseClass):
             'update_failure_action': self.update_failure_action,
             'update_monitor': self.update_monitor,
             'update_max_failure_ratio': self.update_max_failure_ratio,
-            'update_order': self.update_order
+            'update_order': self.update_order,
+            'working_dir': self.working_dir,
         }
 
     @staticmethod
@@ -823,6 +831,7 @@ class DockerService(DockerBaseClass):
         s.update_max_failure_ratio = ap['update_max_failure_ratio']
         s.update_order = ap['update_order']
         s.user = ap['user']
+        s.working_dir = ap['working_dir']
 
         s.command = ap['command']
         if isinstance(s.command, string_types):
@@ -1012,6 +1021,8 @@ class DockerService(DockerBaseClass):
             differences.add('hostname', parameter=self.hostname, active=os.hostname)
         if self.tty is not None and self.tty != os.tty:
             differences.add('tty', parameter=self.tty, active=os.tty)
+        if self.working_dir is not None and self.working_dir != os.working_dir:
+            differences.add('working_dir', parameter=self.working_dir, active=os.working_dir)
         if self.force_update:
             force_update = True
         return not differences.empty or force_update, differences, needs_rebuild, force_update
@@ -1138,9 +1149,11 @@ class DockerService(DockerBaseClass):
             container_spec_args['tty'] = self.tty
         if self.groups is not None:
             container_spec_args['groups'] = self.groups
+        if self.working_dir is not None:
+            container_spec_args['workdir'] = self.working_dir
         if secrets is not None:
             container_spec_args['secrets'] = secrets
-        if self.mounts is not None:
+        if mounts is not None:
             container_spec_args['mounts'] = mounts
         if dns_config is not None:
             container_spec_args['dns_config'] = dns_config
@@ -1328,6 +1341,7 @@ class DockerServiceManager(object):
         ds.args = task_template_data['ContainerSpec'].get('Args')
         ds.groups = task_template_data['ContainerSpec'].get('Groups')
         ds.stop_signal = task_template_data['ContainerSpec'].get('StopSignal')
+        ds.working_dir = task_template_data['ContainerSpec'].get('Dir')
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
         if healthcheck_data:
@@ -1703,7 +1717,8 @@ def main():
         update_monitor=dict(type='int'),
         update_max_failure_ratio=dict(type='float'),
         update_order=dict(type='str'),
-        user=dict(type='str')
+        user=dict(type='str'),
+        working_dir=dict(type='str'),
     )
 
     option_minimal_versions = dict(
