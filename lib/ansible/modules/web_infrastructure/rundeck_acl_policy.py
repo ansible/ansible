@@ -132,7 +132,7 @@ class RundeckACLManager:
             resp = resp.read()
             if resp != "":
                 try:
-                    json_resp = json.loads(resp)
+                    json_resp = json.loads(resp.decode("utf-8"))
                     return json_resp, info
                 except ValueError as e:
                     self.module.fail_json(msg="Rundeck response was not a valid JSON. Exception was: %s. "
