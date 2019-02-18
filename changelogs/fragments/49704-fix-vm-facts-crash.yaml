@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_virtualmachine_facts - fix crash when vm created from custom image
