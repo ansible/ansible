@@ -33,7 +33,6 @@ options:
     - If you pass including and excluding values to the filter, for example, I(filter=!settings,ver),
       the excluding values will be ignored.
     type: list
-    default: "*"
   db:
     description:
     - Name of database to connect.
@@ -840,7 +839,7 @@ def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
         db=dict(type='str'),
-        filter=dict(type='str', default="*"),
+        filter=dict(type='list'),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
     )
@@ -893,9 +892,10 @@ def main():
     # Do job:
     pg_facts = PgClusterFacts(module, cursor)
 
-    if filter_ != "*":
-        val_list = [s.strip(" \'][") for s in filter_.split(',')]
-        kw['ansible_facts'] = pg_facts.collect(val_list)
+    if filter_:
+        #val_list = [s.strip(" \'][") for s in filter_.split(',')]
+        #kw['ansible_facts'] = pg_facts.collect(val_list)
+        kw['ansible_facts'] = pg_facts.collect(filter_)
 
     else:
         kw['ansible_facts'] = pg_facts.collect()
