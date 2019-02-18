@@ -206,7 +206,7 @@
       - output.name == 'testdatabase'
 
 - name: xxxx - get facts
-  azure_rm_mysqldatabase:
+  azure_rm_mysqldatabase_facts:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
