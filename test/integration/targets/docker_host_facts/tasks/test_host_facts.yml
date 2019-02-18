@@ -17,8 +17,6 @@
   - name: Create random container name prefix
     set_fact:
       cname_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
-      cnames: []
-      dnetworks: []
 
   - debug:
       msg: "Using container name prefix {{ cname_prefix }}"
@@ -26,9 +24,6 @@
   - name: Registering container name
     set_fact:
       cname: "{{ cname_prefix ~ '-hi' }}"
-  - name: Registering container name
-    set_fact:
-      cnames: "{{ cnames }} + [cname]"
 
   - name: Create container
     docker_container:
@@ -36,8 +31,6 @@
       command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: started
-      volumes:
-        - "/tmp:/tmp"
     register: container_output
 
   - assert:
@@ -225,7 +218,6 @@
          - 'output.docker_disk_usage.LayersSize is number'
          - 'output.docker_disk_usage.BuilderSize is number'
 
-  always:
   - name: Delete container
     docker_container:
       image: alpine:3.8
