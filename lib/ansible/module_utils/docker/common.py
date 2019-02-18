@@ -78,9 +78,9 @@ MIN_DOCKER_VERSION = "1.8.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST, fallback=(env_fallback, ['DOCKER_HOST'])),
+    docker_host=dict(type='str', default=DEFAULT_DOCKER_HOST, fallback=(env_fallback, ['DOCKER_HOST']), aliases=['docker_url']),
     tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME, fallback=(env_fallback, ['DOCKER_TLS_HOSTNAME'])),
-    api_version=dict(type='str', aliases=['docker_api_version'], default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION'])),
+    api_version=dict(type='str', default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION']), aliases=['docker_api_version']),
     timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS, fallback=(env_fallback, ['DOCKER_TIMEOUT'])),
     cacert_path=dict(type='path', aliases=['tls_ca_cert']),
     cert_path=dict(type='path', aliases=['tls_client_cert']),
