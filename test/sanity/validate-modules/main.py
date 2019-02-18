@@ -1394,12 +1394,14 @@ class ModuleValidator(Validator):
                     if existing_version:
                         break
                 current_version = details.get('version_added')
-                if current_version != existing_version:
+
+                # We expect the added_version to be a string, not a float
+                if current_version and existing_version and current_version != str(existing_version):
                     self.reporter.error(
                         path=self.object_path,
                         code=309,
                         msg=('version_added for new option (%s) should '
-                             'be %r. Currently %r' %
+                             'be \'%r\'. Currently %r' %
                              (option, existing_version, current_version))
                     )
                 continue
