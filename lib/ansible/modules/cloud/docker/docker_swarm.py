@@ -54,7 +54,7 @@ options:
       - Set to C(remove), to remove an absent node from the cluster.
       - Set to C(inspect) to display swarm informations.
     type: str
-    required: true
+    required: yes
     default: present
     choices:
       - present

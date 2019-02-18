@@ -26,7 +26,7 @@ options:
             - If more than one node is registered using the same hostname the ID must be used,
               otherwise module will fail.
         type: str
-        required: true
+        required: yes
     labels:
         description:
             - User-defined key/value metadata that will be assigned as node attribute.

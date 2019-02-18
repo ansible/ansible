@@ -50,7 +50,7 @@ options:
       - Use with state I(absent) to un-tag and remove all images matching the specified name. Use with state
         C(present) to build, load or pull an image when the image already exists.
     type: bool
-    default: false
+    default: no
     version_added: "2.1"
   http_timeout:
     description:
@@ -64,7 +64,7 @@ options:
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
       - Note that image IDs (hashes) are not supported.
     type: str
-    required: true
+    required: yes
   path:
     description:
       - Use with state 'present' to build an image. Will be the path to a directory containing the context and
@@ -76,19 +76,19 @@ options:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
     type: bool
-    default: true
+    default: yes
     version_added: "2.1"
   push:
     description:
       - Push the image to the registry. Specify the registry as part of the I(name) or I(repository) parameter.
     type: bool
-    default: false
+    default: no
     version_added: "2.2"
   rm:
     description:
       - Remove intermediate containers after build.
     type: bool
-    default: true
+    default: yes
     version_added: "2.1"
   network:
     description:
@@ -99,7 +99,7 @@ options:
     description:
       - Do not use cache when building an image.
     type: bool
-    default: false
+    default: no
   repository:
     description:
       - Full path to a repository. Use with state C(present) to tag the image into the repository. Expects

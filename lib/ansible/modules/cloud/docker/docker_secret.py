@@ -38,7 +38,7 @@ options:
       - To use binary C(data), it is better to keep it Base64 encoded and let it
         be decoded by this option.
     type: bool
-    default: false
+    default: no
     version_added: "2.8"
   labels:
     description:
@@ -50,12 +50,12 @@ options:
       - Use with state C(present) to always remove and recreate an existing secret.
       - If I(true), an existing secret will be replaced, even if it has not changed.
     type: bool
-    default: false
+    default: no
   name:
     description:
       - The name of the secret.
     type: str
-    required: true
+    required: yes
   state:
     description:
       - Set to C(present), if the secret should exist, and C(absent), if it should not.

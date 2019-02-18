@@ -24,7 +24,7 @@ options:
     description:
       - Name of the volume to inspect.
     type: str
-    required: true
+    required: yes
     aliases:
       - volume_name
 

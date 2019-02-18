@@ -25,7 +25,7 @@ options:
     description:
       - Name of the volume to operate on.
     type: str
-    required: true
+    required: yes
     aliases:
       - name
 

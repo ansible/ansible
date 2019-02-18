@@ -40,12 +40,12 @@ options:
     description:
       - The username for the registry account
     type: str
-    required: true
+    required: yes
   password:
     description:
       - The plaintext password for the registry account
     type: str
-    required: true
+    required: yes
   email:
     required: False
     description:

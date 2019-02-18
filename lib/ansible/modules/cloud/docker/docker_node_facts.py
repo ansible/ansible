@@ -39,7 +39,7 @@ options:
       - If C(true) then I(name) is ignored.
       - If C(false) then query depends on I(name) presence and value.
     type: bool
-    default: false
+    default: no
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation

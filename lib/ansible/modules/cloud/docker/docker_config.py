@@ -38,7 +38,7 @@ options:
       - To use binary C(data), it is better to keep it Base64 encoded and let it
         be decoded by this option.
     type: bool
-    default: false
+    default: no
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
@@ -49,12 +49,12 @@ options:
       - Use with state C(present) to always remove and recreate an existing config.
       - If I(true), an existing config will be replaced, even if it has not been changed.
     type: bool
-    default: false
+    default: no
   name:
     description:
       - The name of the config.
     type: str
-    required: true
+    required: yes
   state:
     description:
       - Set to C(present), if the config should exist, and C(absent), if it should not.

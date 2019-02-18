@@ -23,24 +23,24 @@ options:
       - Service name.
       - Corresponds to the C(--name) option of C(docker service create).
     type: str
-    required: true
+    required: yes
   image:
     description:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
     type: str
-    required: true
+    required: yes
   resolve_image:
     description:
       - If the current image digest should be resolved from registry and updated if changed.
     type: bool
-    default: true
+    default: yes
     version_added: 2.8
   state:
     description:
       - Service state.
     type: str
-    required: true
+    required: yes
     default: present
     choices:
       - present
@@ -137,7 +137,7 @@ options:
       - Corresponds to the C(--force) option of C(docker service update).
       - Requires API version >= 1.25.
     type: bool
-    default: false
+    default: no
   groups:
     description:
       - List of additional group names and/or IDs that the container process will run as.
@@ -235,12 +235,12 @@ options:
         description:
           - Mount source (e.g. a volume name or a host path).
         type: str
-        required: true
+        required: yes
       target:
         description:
           - Container path.
         type: str
-        required: true
+        required: yes
       type:
         description:
           - The mount type.
@@ -254,7 +254,7 @@ options:
         description:
           - Whether the mount should be read-only.
         type: bool
-        default: false
+        default: no
   secrets:
     description:
       - List of dictionaries describing the service secrets.
@@ -266,12 +266,12 @@ options:
         description:
           - Secret's ID.
         type: str
-        required: true
+        required: yes
       secret_name:
         description:
           - Secret's name as defined at its creation.
         type: str
-        required: true
+        required: yes
       filename:
         description:
           - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
@@ -302,17 +302,17 @@ options:
         description:
           - Config's ID.
         type: str
-        required: true
+        required: yes
       config_name:
         description:
           - Config's name as defined at its creation.
         type: str
-        required: true
+        required: yes
       filename:
         description:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
         type: str
-        required: true
+        required: yes
       uid:
         description:
           - UID of the config file's owner.
@@ -350,12 +350,12 @@ options:
         description:
           - The port to make externally available.
         type: int
-        required: true
+        required: yes
       target_port:
         description:
           - The port inside the container to expose.
         type: int
-        required: true
+        required: yes
       protocol:
         description:
           - What protocol to use.
