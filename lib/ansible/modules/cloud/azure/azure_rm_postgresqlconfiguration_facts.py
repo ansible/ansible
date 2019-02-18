@@ -124,8 +124,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         )
         # store the results of the module operation
         self.results = dict(
-            changed=False,
-            ansible_facts=dict()
+            changed=False
         )
         self.mgmt_client = None
         self.resource_group = None
@@ -159,7 +158,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
                                                            configuration_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Configurations.')
+            self.fail('Could not get requested setting.')
 
         if response is not None:
             results.append(self.format_item(response))
@@ -179,7 +178,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
                                                                       server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Configurations.')
+            self.fail('Could not get settings for server.')
 
         if response is not None:
             for item in response:
