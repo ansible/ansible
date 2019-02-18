@@ -1,0 +1,51 @@
+---
+- hosts: lockhost0
+  vars:
+    testfile: ~/ansible_testing/locked.file
+  gather_facts: false
+  tasks:
+  - name: create /tmp/locked.file
+    lineinfile:
+      line: "{{ inventory_hostname }}"
+      path: "{{ testfile }}"
+      state: present
+      create: true
+
+  - name: lock testfile with flock and sleep 20s
+    command: flock -x {{ testfile }} -c "sleep 20"
+    async: 60
+    poll: 0
+    register: flock_waiter
+
+  - name: remove inventory_hostname line from testfile
+    lineinfile:
+      path: "{{ testfile }}"
+      line: "{{ inventory_hostname }}"
+      state: absent
+    ignore_errors: true
+    register: rm_line
+
+  - name: assert that removal of inventory_hostname from testfile failed
+    assert:
+      that:
+        - rm_line is failed
+
+  - name: wait for flock job to finish
+    async_status:
+      jid: "{{ flock_waiter.ansible_job_id }}"
+    register: job_result
+    until: job_result.finished
+    retries: 30
+
+  - name: inventory_hostname in testfile
+    lineinfile:
+      path: "{{ testfile }}"
+      line: "{{ inventory_hostname }}"
+      state: present
+    register: check_line
+
+  - name: assert that testfile is unchanged
+    assert:
+      that:
+        - check_line is not changed
+        - check_line is not failed

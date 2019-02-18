@@ -1,0 +1,36 @@
+---
+- hosts: lockhosts
+  gather_facts: false
+  become: true
+  vars:
+    testfile: ~/ansible_testing/lock.test
+  tasks:
+  - name: write inventory_hostname to testfile
+    lineinfile:
+      path: "{{ testfile }}"
+      line: "{{ inventory_hostname }}"
+      create: true
+      state: present
+    async: 60
+    poll: 0
+    register: write_waiter
+
+  - name: wait for write jobs to finish
+    async_status:
+      jid: "{{ write_waiter.ansible_job_id }}"
+    register: write_job_result
+    until: write_job_result.finished
+    retries: 60
+
+  - name: check testfile for inventory_hostname entries
+    lineinfile:
+      path: "{{ testfile }}"
+      line: "{{ inventory_hostname }}"
+      state: present
+    register: check_lockfile
+
+  - name: assert locking results
+    assert:
+      that:
+        - check_lockfile is not changed
+        - check_lockfile is not failed
