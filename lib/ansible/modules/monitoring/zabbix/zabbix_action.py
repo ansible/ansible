@@ -790,7 +790,7 @@ class Action(object):
                 'enabled',
                 'disabled'], kwargs['status'])
         }
-        if float(self._zapi.api_version().rsplit('.',1)[0]) >= 4.0:
+        if float(self._zapi.api_version().rsplit('.', 1)[0]) >= 4.0:
             _params['pause_suppressed'] = '1' if kwargs['pause_in_maintenance'] else '0'
         else:
             _params['maintenance_mode'] = '1' if kwargs['pause_in_maintenance'] else '0'
