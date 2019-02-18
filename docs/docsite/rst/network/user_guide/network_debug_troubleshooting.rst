@@ -646,6 +646,12 @@ no additional changes necessary.  The network module will now connect to the
 network device by first connecting to the host specified in
 ``ansible_ssh_common_args``, which is ``bastion01`` in the above example.
 
+You can also set the proxy target for all hosts by using environment variables.
+
+.. code-block:: sh
+
+    export ANSIBLE_SSH_ARGS='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
+
 Using bastion/jump host with netconf connection
 -----------------------------------------------
 
