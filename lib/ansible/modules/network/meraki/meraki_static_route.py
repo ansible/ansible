@@ -364,12 +364,12 @@ def main():
                 meraki.result['data'] = meraki.request(path, method="PUT", payload=json.dumps(payload))
                 meraki.result['changed'] = True
         else:
-                if module.check_mode:
-                    meraki.result['data'] = payload
-                    meraki.exit_json(**meraki.result)
-                path = meraki.construct_path('create', net_id=net_id)
-                meraki.result['data'] = meraki.request(path, method="POST", payload=json.dumps(payload))
-                meraki.result['changed'] = True
+            if module.check_mode:
+                meraki.result['data'] = payload
+                meraki.exit_json(**meraki.result)
+            path = meraki.construct_path('create', net_id=net_id)
+            meraki.result['data'] = meraki.request(path, method="POST", payload=json.dumps(payload))
+            meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         if module.check_mode:
             meraki.exit_json(**meraki.result)
