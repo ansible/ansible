@@ -125,7 +125,7 @@ class TestIosBgpModule(TestIosModule):
 
     def test_ios_bgp_address_family_networks_idempotent(self):
         net = dict(prefix='203.0.113.0', masklen=27, route_map='RMAP_1')
-        net2 = dict(prefix='20.0.0.0', masklen=23, route_map='RMAP_2')
+        net2 = dict(prefix='192.0.2.0', masklen=26, route_map='RMAP_2')
 
         config = dict(bgp_as=64496, address_family=[dict(afi='ipv4', safi='multicast', networks=[net, net2])])
 
@@ -164,7 +164,7 @@ class TestIosBgpModule(TestIosModule):
     def test_ios_bgp_operation_replace(self):
         rd = dict(protocol='ospf', id=223, metric=110, route_map=None)
         net = dict(prefix='203.0.113.0', masklen=27, route_map='RMAP_1')
-        net2 = dict(prefix='20.0.0.0', masklen=23, route_map='RMAP_2')
+        net2 = dict(prefix='192.0.2.0', masklen=26, route_map='RMAP_2')
 
         af_1 = dict(afi='ipv4', safi='unicast', redistribute=[rd])
         af_2 = dict(afi='ipv4', safi='multicast', networks=[net, net2])

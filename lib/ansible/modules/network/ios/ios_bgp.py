@@ -105,7 +105,7 @@ options:
             type: int
       networks:
         description:
-          - Specify networks to announce via BGP.
+          - Specify Networks to announce via BGP.
         suboptions:
           prefix:
             description:
@@ -113,7 +113,7 @@ options:
             required: True
           masklen:
             description:
-              - Subnet mask length for the network to announce(e.g, 8, 16, 24, etc.).
+              - Subnet mask length for the Network to announce(e.g, 8, 16, 24, etc.).
           route_map:
             description:
               - Route map to modify the attributes.
@@ -158,7 +158,7 @@ options:
                   - Specifies the route map reference.
           networks:
             description:
-              - Specify networks to announce via BGP.
+              - Specify Networks to announce via BGP.
             suboptions:
               prefix:
                 description:
@@ -166,7 +166,7 @@ options:
                 required: True
               masklen:
                 description:
-                  - Subnet mask length for the network to announce(e.g, 8, 16, 24, etc.).
+                  - Subnet mask length for the Network to announce(e.g, 8, 16, 24, etc.).
               route_map:
                 description:
                   - Route map to modify the attributes.
@@ -192,7 +192,7 @@ options:
                 type: bool
               activate:
                 description:
-                  - Enable the address family for this neighbor.
+                  - Enable the Address Family for this Neighbor.
                 type: bool
               remove_private_as:
                 description:
@@ -232,8 +232,8 @@ EXAMPLES = """
       router_id: 192.0.2.1
       log_neighbor_changes: True
       neighbors:
-        - neighbor: 192.168.10.1
-          remote_as: 64497
+        - neighbor: 203.0.113.5
+          remote_as: 64511
           timers:
             keepalive: 300
             holdtime: 360
@@ -241,10 +241,10 @@ EXAMPLES = """
         - neighbor: 198.51.100.2
           remote_as: 64498
       networks:
-        - prefix: 10.0.0.0
+        - prefix: 198.51.100.0
           route_map: RMAP_1
-        - prefix: 192.168.2.0
-          mask: 255.255.254.0
+        - prefix: 192.0.2.0
+          masklen: 23
       address_family:
         - afi: ipv4
           safi: unicast
@@ -270,11 +270,11 @@ commands:
     - router bgp 64496
     - bgp router-id 192.0.2.1
     - bgp log-neighbor-changes
-    - neighbor 192.168.10.1 remote-as 64497
-    - neighbor 192.168.10.1 timers 300 360 360
+    - neighbor 203.0.113.5 remote-as 64511
+    - neighbor 203.0.113.5 timers 300 360 360
     - neighbor 198.51.100.2 remote-as 64498
-    - network 10.0.0.0 route-map RMAP_1
-    - network 192.168.2.0 mask 255.255.254.0
+    - network 198.51.100.0 route-map RMAP_1
+    - network 192.0.2.0 mask 255.255.254.0
     - address-family ipv4
     - redistribute ospf 223 metric 70
     - exit-address-family
