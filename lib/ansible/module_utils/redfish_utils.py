@@ -271,6 +271,15 @@ class RedfishUtils(object):
                         return response
         return {'ret': True}
 
+    def aggregate(self, func):
+        ret = True
+        entries = []
+        for systems_uri in self.systems_uris:
+            inventory = func(systems_uri)
+            ret = inventory.pop('ret') and ret
+            entries.append(inventory['entries'])
+        return dict(ret=ret, entries=entries)
+
     def get_storage_controller_inventory(self, systems_uri):
         result = {}
         controller_list = []
@@ -320,13 +329,7 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "Storage resource not found"}
 
     def get_multi_storage_controller_inventory(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            inventory = self.get_storage_controller_inventory(systems_uri)
-            ret = inventory.pop('ret') and ret
-            entries.append(inventory)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_storage_controller_inventory)
 
     def get_disk_inventory(self, systems_uri):
         result = {}
@@ -412,13 +415,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_disk_inventory(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            inventory = self.get_disk_inventory(systems_uri)
-            ret = inventory.pop('ret') and ret
-            entries.append(inventory)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_disk_inventory)
 
     def restart_manager_gracefully(self):
         result = {}
@@ -438,12 +435,12 @@ class RedfishUtils(object):
             return response
         return {'ret': True}
 
-    def manage_system_power(self, command, systems_uri):
+    def manage_system_power(self, command):
         result = {}
         key = "Actions"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -478,15 +475,6 @@ class RedfishUtils(object):
             return response
         result['ret'] = True
         return result
-
-    def manage_multi_system_power(self, command):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            system = self.manage_system_power(command, systems_uri)
-            ret = system.pop('ret') and ret
-            entries.append(system)
-        return dict(ret=ret, entries=entries)
 
     def list_users(self):
         result = {}
@@ -628,13 +616,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_bios_attributes(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            bios_attributes = self.get_bios_attributes(systems_uri)
-            ret = bios_attributes.pop('ret') and ret
-            entries.append(bios_attributes)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_bios_attributes)
 
     def get_boot_order(self, systems_uri):
         result = {}
@@ -706,13 +688,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_boot_order(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            boot_order = self.get_boot_order(systems_uri)
-            ret = boot_order.pop('ret') and ret
-            entries.append(boot_order)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_boot_order)
 
     def set_bios_default_settings(self, systems_uri):
         result = {}
@@ -744,13 +720,7 @@ class RedfishUtils(object):
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
     def set_multi_bios_default_settings(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            bios_default_settings = self.set_bios_default_settings(systems_uri)
-            ret = bios_default_settings.pop('ret') and ret
-            entries.append(bios_default_settings)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.set_bios_default_settings)
 
     def set_one_time_boot_device(self, bootdevice, systems_uri):
         result = {}
@@ -790,7 +760,7 @@ class RedfishUtils(object):
         for systems_uri in self.systems_uris:
             boot_device = self.set_one_time_boot_device(bootdevice, systems_uri)
             ret = boot_device.pop('ret') and ret
-            entries.append(boot_device)
+            entries.append(boot_device['entries'])
         return dict(ret=ret, entries=entries)
 
     def set_bios_attributes(self, attr, systems_uri):
@@ -840,7 +810,7 @@ class RedfishUtils(object):
         for systems_uri in self.systems_uris:
             bios_attributes = self.set_bios_attributes(attr, systems_uri)
             ret = bios_attributes.pop('ret') and ret
-            entries.append(bios_attributes)
+            entries.append(bios_attributes['entries'])
         return dict(ret=ret, entries=entries)
 
     def get_fan_inventory(self):
@@ -923,13 +893,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_cpu_inventory(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            inventory = self.get_cpu_inventory(systems_uri)
-            ret = inventory.pop('ret') and ret
-            entries.append(inventory)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_cpu_inventory)
 
     def get_nic_inventory(self, resource_type, systems_uri):
         result = {}
@@ -990,7 +954,7 @@ class RedfishUtils(object):
         for systems_uri in self.systems_uris:
             inventory = self.get_nic_inventory(resource_type, systems_uri)
             ret = inventory.pop('ret') and ret
-            entries.append(inventory)
+            entries.append(inventory['entries'])
         return dict(ret=ret, entries=entries)
 
     def get_psu_inventory(self, systems_uri):
@@ -1066,13 +1030,7 @@ class RedfishUtils(object):
         return result
 
     def get_multi_psu_inventory(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            inventory = self.get_psu_inventory(systems_uri)
-            ret = inventory.pop('ret') and ret
-            entries.append(inventory)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_psu_inventory)
 
     def get_system_inventory(self, systems_uri):
         result = {}
@@ -1097,10 +1055,4 @@ class RedfishUtils(object):
         return result
 
     def get_multi_system_inventory(self):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            inventory = self.get_system_inventory(systems_uri)
-            ret = inventory.pop('ret') and ret
-            entries.append(inventory)
-        return dict(ret=ret, entries=entries)
+        return self.aggregate(self.get_system_inventory)
