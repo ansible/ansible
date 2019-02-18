@@ -1157,6 +1157,24 @@ SUPPORT_URL="http://support.cumulusnetworks.com/"
             'distribution_version': '2.5.4',
         }
     },
+    {
+        "platform.dist": [
+            "LinuxMint",
+            "18.3",
+            "sylvia",
+        ],
+        "input": {
+            "/etc/os-release": "NAME=\"Linux Mint\"\nVERSION=\"18.3 (Sylvia)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 18.3\"\nVERSION_ID=\"18.3\"\nHOME_URL=\"http://www.linuxmint.com/\"\nSUPPORT_URL=\"http://forums.linuxmint.com/\"\nBUG_REPORT_URL=\"http://bugs.launchpad.net/linuxmint/\"\nVERSION_CODENAME=sylvia\nUBUNTU_CODENAME=xenial",  # noqa
+        },
+        "name": "Linux Mint 18.3",
+        "result": {
+            "distribution_release": "sylvia",
+            "distribution": "Linux Mint",
+            "distribution_major_version": "18",
+            "os_family": "Debian",
+            "distribution_version": "18.3"
+        }
+    }
 ]
 
 
