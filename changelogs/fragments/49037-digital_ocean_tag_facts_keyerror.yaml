@@ -1,3 +1,0 @@
----
-minor_changes:
-- "digital_ocean_tag_facts - Fixed KeyError exception when using tag_name parameter"
