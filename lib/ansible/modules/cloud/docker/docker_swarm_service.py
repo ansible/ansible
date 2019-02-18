@@ -339,12 +339,12 @@ options:
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
   stop_grace_period:
-    type: str
     description:
         - Time to wait before force killing a container.
         - "Accepts a duration as a string in a format that look like:
           C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
         - Corresponds to the C(--stop-grace-period) option of C(docker service create).
+    type: str
   stop_signal:
     description:
       - Override default signal used to stop the container.
