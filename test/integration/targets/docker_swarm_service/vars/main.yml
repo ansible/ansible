@@ -44,3 +44,4 @@ service_expected_output:
   update_monitor: null
   update_order: null
   update_parallelism: 1
+  working_dir: null
