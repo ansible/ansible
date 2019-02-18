@@ -33,6 +33,7 @@ options:
          private keys in PEM format can be used as well."
       - "Mutually exclusive with C(account_key_content)."
       - "Required if C(account_key_content) is not used."
+    type: path
     aliases: [ account_key ]
   account_key_content:
     description:
@@ -48,18 +49,21 @@ options:
          temporary file. It can still happen that it is written to disk by
          Ansible in the process of moving the module with its argument to
          the node where it is executed."
+    type: str
     version_added: "2.5"
   account_uri:
     description:
       - "If specified, assumes that the account URI is as given. If the
          account key does not match this account, or an account with this
          URI does not exist, the module fails."
+    type: str
     version_added: "2.7"
   acme_version:
     description:
       - "The ACME version of the endpoint."
       - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
          new standardized ACME v2 endpoint."
+    type: int
     default: 1
     choices: [1, 2]
     version_added: "2.5"
@@ -78,6 +82,7 @@ options:
       - "I(Warning): So far, the module has only been tested against Let's Encrypt
          (staging and production) and against the
          L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
+    type: str
     default: https://acme-staging.api.letsencrypt.org/directory
   validate_certs:
     description:
@@ -85,7 +90,7 @@ options:
       - "I(Warning): Should I(only ever) be set to C(no) for testing purposes,
          for example when testing against a local Pebble server."
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "2.5"
   select_crypto_backend:
     description:
