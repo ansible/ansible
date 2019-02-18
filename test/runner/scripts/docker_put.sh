@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
-set -o pipefail
+set -eu -o pipefail
 
 container="$1"
 files_from="$2"
