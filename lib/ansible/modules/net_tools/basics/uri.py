@@ -170,7 +170,7 @@ options:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
     default: yes
-    unix_socket:
+  unix_socket:
     description:
     - Path to Unix domain socket to use for connection
     version_added: '2.8'
