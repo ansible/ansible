@@ -12,6 +12,7 @@ service_expected_output:
   endpoint_mode: vip
   env: null
   force_update: null
+  groups: null
   healthcheck: null
   healthcheck_disabled: null
   hostname: null

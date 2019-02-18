@@ -135,6 +135,13 @@ options:
       - Force update even if no changes require it.
       - Corresponds to the C(--force) option of C(docker service update).
       - Requires API version >= 1.25.
+  groups:
+    type: list
+    description:
+      - List of additional group names and/or IDs that the container process will run as.
+      - Corresponds to the C(--group) option of C(docker service update).
+      - Requires API version >= 1.25.
+    version_added: "2.8"
   labels:
     type: dict
     description:
@@ -704,6 +711,7 @@ class DockerService(DockerBaseClass):
         self.dns_options = None
         self.env = None
         self.force_update = None
+        self.groups = None
         self.log_driver = None
         self.log_driver_options = None
         self.labels = None
@@ -753,6 +761,7 @@ class DockerService(DockerBaseClass):
             'hostname': self.hostname,
             'env': self.env,
             'force_update': self.force_update,
+            'groups': self.groups,
             'log_driver': self.log_driver,
             'log_driver_options': self.log_driver_options,
             'publish': self.publish,
@@ -849,6 +858,11 @@ class DockerService(DockerBaseClass):
         if ap['force_update']:
             s.force_update = int(str(time.time()).replace('.', ''))
 
+        if ap['groups'] is not None:
+            # In case integers are passed as groups, we need to convert them to
+            # strings as docker internally treats them as strings.
+            s.groups = [str(g) for g in ap['groups']]
+
         if ap['replicas'] == -1:
             if old_service:
                 s.replicas = old_service.replicas
@@ -943,6 +957,8 @@ class DockerService(DockerBaseClass):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
         if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
+        if self.groups is not None and self.groups != (os.groups or []):
+            differences.add('groups', parameter=self.groups, active=os.groups)
         if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
         if self.limit_cpu is not None and self.limit_cpu != os.limit_cpu:
@@ -1120,6 +1136,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['stop_signal'] = self.stop_signal
         if self.tty is not None:
             container_spec_args['tty'] = self.tty
+        if self.groups is not None:
+            container_spec_args['groups'] = self.groups
         if secrets is not None:
             container_spec_args['secrets'] = secrets
         if self.mounts is not None:
@@ -1308,6 +1326,7 @@ class DockerServiceManager(object):
         ds.env = task_template_data['ContainerSpec'].get('Env')
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args')
+        ds.groups = task_template_data['ContainerSpec'].get('Groups')
         ds.stop_signal = task_template_data['ContainerSpec'].get('StopSignal')
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
@@ -1640,6 +1659,7 @@ def main():
         env=dict(type='raw'),
         env_files=dict(type='list', elements='path'),
         force_update=dict(default=False, type='bool'),
+        groups=dict(type='list', elements='str'),
         log_driver=dict(type='str'),
         log_driver_options=dict(type='dict'),
         publish=dict(type='list', elements='dict', options=dict(
@@ -1694,6 +1714,7 @@ def main():
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+        groups=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
