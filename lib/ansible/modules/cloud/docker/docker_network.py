@@ -70,7 +70,6 @@ options:
     description:
       - Enable IPv6 networking.
     type: bool
-    required: false
     version_added: 2.8
 
   ipam_driver:

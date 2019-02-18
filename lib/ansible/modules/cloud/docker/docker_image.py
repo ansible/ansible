@@ -70,7 +70,6 @@ options:
       - Use with state 'present' to build an image. Will be the path to a directory containing the context and
         Dockerfile for building an image.
     type: path
-    required: false
     aliases:
       - build_path
   pull:
