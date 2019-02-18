@@ -433,7 +433,7 @@ class JenkinsPlugin(object):
                 with open(plugin_file, 'rb') as sh1_plugin_fh:
                     sha1_plugin_content = sha1_plugin_fh.read()
                 sha1sum_old = hashlib.sha1(sha1_plugin_content).hexdigest()
-          
+
             if self.params['version'] in [None, 'latest']:
                 # Take latest version
                 plugin_url = (
