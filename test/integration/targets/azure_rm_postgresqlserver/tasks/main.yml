@@ -170,6 +170,41 @@
       - output.servers[1]['user_visible_state'] != None
       - output.servers[1]['fully_qualified_domain_name'] != None
 
+#
+# azure_rm_postgresqlconfiguration_facts tests below
+#
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length == 1
+
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Get all settings
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length > 1
 
 #
 # azure_rm_postgresqldatabase tests below
