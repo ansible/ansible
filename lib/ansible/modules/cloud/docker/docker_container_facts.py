@@ -30,8 +30,8 @@ options:
     description:
       - The name of the container to inspect.
       - When identifying an existing container name may be a name or a long or short container ID.
-    required: true
     type: str
+    required: true
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation

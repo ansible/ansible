@@ -28,97 +28,85 @@ options:
   archive_path:
     description:
       - Use with state C(present) to archive an image to a .tar file.
-    required: false
-    version_added: "2.1"
     type: path
+    version_added: "2.1"
   cache_from:
     description:
       - List of image names to consider as cache source.
-    required: false
     type: list
     version_added: "2.8"
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
-    required: false
-    version_added: "2.2"
     type: path
+    version_added: "2.2"
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
-    required: false
-    version_added: "2.0"
     type: str
+    version_added: "2.0"
   force:
     description:
       - Use with state I(absent) to un-tag and remove all images matching the specified name. Use with state
         C(present) to build, load or pull an image when the image already exists.
-    default: false
-    required: false
-    version_added: "2.1"
     type: bool
+    default: false
+    version_added: "2.1"
   http_timeout:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
         seconds.
-    required: false
-    version_added: "2.1"
     type: int
+    version_added: "2.1"
   name:
     description:
       - "Image name. Name format will be one of: name, repository/name, registry_server:port/name.
         When pushing or pulling an image the name can optionally include the tag by appending ':tag_name'."
       - Note that image IDs (hashes) are not supported.
-    required: true
     type: str
+    required: true
   path:
     description:
       - Use with state 'present' to build an image. Will be the path to a directory containing the context and
         Dockerfile for building an image.
+    type: path
+    required: false
     aliases:
       - build_path
-    required: false
-    type: path
   pull:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
-    default: true
-    required: false
-    version_added: "2.1"
     type: bool
+    default: true
+    version_added: "2.1"
   push:
     description:
       - Push the image to the registry. Specify the registry as part of the I(name) or I(repository) parameter.
-    default: false
-    required: false
-    version_added: "2.2"
     type: bool
+    default: false
+    version_added: "2.2"
   rm:
     description:
       - Remove intermediate containers after build.
-    default: true
-    required: false
-    version_added: "2.1"
     type: bool
+    default: true
+    version_added: "2.1"
   network:
     description:
       - The network to use for C(RUN) build instructions.
-    required: false
-    version_added: "2.8"
     type: str
+    version_added: "2.8"
   nocache:
     description:
       - Do not use cache when building an image.
-    default: false
-    required: false
     type: bool
+    default: false
   repository:
     description:
       - Full path to a repository. Use with state C(present) to tag the image into the repository. Expects
         format I(repository:tag). If no tag is provided, will use the value of the C(tag) parameter or I(latest).
-    required: false
-    version_added: "2.1"
     type: str
+    version_added: "2.1"
   state:
     description:
       - Make assertions about the state of an image.
@@ -131,48 +119,48 @@ options:
         repository, provide a repository path. If the name contains a repository path, it will be pushed.
       - "NOTE: C(build) is DEPRECATED and will be removed in release 2.11. Specifying C(build) will behave the
          same as C(present)."
-    required: false
+    type: str
     default: present
     choices:
       - absent
       - present
       - build
-    type: str
   tag:
     description:
       - Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to
         I(latest).
       - If C(name) parameter format is I(name:tag), then tag value from C(name) will take precedence.
-    default: latest
-    required: false
     type: str
+    default: latest
   buildargs:
     description:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
       - Requires Docker API >= 1.21.
-    required: false
-    version_added: "2.2"
     type: dict
+    version_added: "2.2"
   container_limits:
     description:
       - A dictionary of limits applied to each container created by the build process.
-    required: false
-    version_added: "2.1"
     type: dict
     suboptions:
       memory:
         description:
           - Set memory limit for build.
+        type: int
       memswap:
         description:
           - Total memory (memory + swap), -1 to disable swap.
+        type: int
       cpushares:
         description:
           - CPU shares (relative weight).
+        type: int
       cpusetcpus:
         description:
           - CPUs in which to allow execution, e.g., "0-3", "0,1".
+        type: str
+    version_added: "2.1"
   use_tls:
     description:
       - "DEPRECATED. Whether to use tls to connect to the docker server. Set to
@@ -181,13 +169,12 @@ options:
       - "NOTE: If you specify this option, it will set the value of the I(tls) or
         I(tls_verify) parameters if not set to I(no)."
       - Will be removed in Ansible 2.11.
+    type: str
     choices:
       - 'no'
       - 'encrypt'
       - 'verify'
-    required: false
     version_added: "2.0"
-    type: str
 
 extends_documentation_fragment:
   - docker

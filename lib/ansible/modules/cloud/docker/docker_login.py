@@ -31,21 +31,21 @@ options:
     required: False
     description:
       - The registry URL.
+    type: str
     default: "https://index.docker.io/v1/"
     aliases:
       - registry
       - url
-    type: str
   username:
     description:
       - The username for the registry account
-    required: True
     type: str
+    required: true
   password:
     description:
       - The plaintext password for the registry account
-    required: True
     type: str
+    required: true
   email:
     required: False
     description:
@@ -55,17 +55,17 @@ options:
     description:
       - Refresh existing authentication found in the configuration file.
     type: bool
-    default: 'no'
+    default: no
     aliases:
       - reauth
   config_path:
     description:
       - Custom path to the Docker CLI configuration file.
+    type: path
     default: ~/.docker/config.json
     aliases:
       - self.config_path
       - dockercfg_path
-    type: path
   state:
     version_added: '2.3'
     description:
@@ -73,9 +73,9 @@ options:
       - To logout you only need the registry server, which defaults to DockerHub.
       - Before 2.1 you could ONLY log in.
       - docker does not support 'logout' with a custom config file.
-    choices: ['present', 'absent']
-    default: 'present'
     type: str
+    default: 'present'
+    choices: ['present', 'absent']
 
 extends_documentation_fragment:
   - docker

@@ -32,14 +32,12 @@ options:
       - If empty then return information of all nodes in Swarm cluster.
       - When identifying the node use either the hostname of the node (as registered in Swarm) or node ID.
       - If I(self) is C(true) then this parameter is ignored.
-    required: false
     type: list
   self:
     description:
       - If C(true), queries the node (i.e. the docker daemon) the module communicates with.
       - If C(true) then I(name) is ignored.
       - If C(false) then query depends on I(name) presence and value.
-    required: false
     type: bool
     default: false
 extends_documentation_fragment:

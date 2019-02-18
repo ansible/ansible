@@ -24,16 +24,16 @@ options:
   volume_name:
     description:
       - Name of the volume to operate on.
-    required: true
     type: str
+    required: true
     aliases:
       - name
 
   driver:
     description:
       - Specify the type of volume. Docker provides the C(local) driver, but 3rd party drivers can also be used.
-    default: local
     type: str
+    default: local
 
   driver_options:
     description:
@@ -67,22 +67,22 @@ options:
       - The value C(never) makes sure the volume will not be recreated.
       - The value C(options-changed) makes sure the volume will be recreated if the volume
         already exist and the driver, driver options or labels differ.
+    type: str
+    default: never
     choices:
     - always
     - never
     - options-changed
-    default: never
-    type: str
 
   state:
     description:
       - C(absent) deletes the volume.
       - C(present) creates the volume, if it does not already exist.
+    type: str
     default: present
     choices:
       - absent
       - present
-    type: str
 
 extends_documentation_fragment:
   - docker

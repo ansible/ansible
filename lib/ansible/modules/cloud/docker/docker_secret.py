@@ -30,7 +30,6 @@ options:
   data:
     description:
       - The value of the secret. Required when state is C(present).
-    required: false
     type: str
   data_is_b64:
     description:
@@ -38,35 +37,33 @@ options:
         decoded before being used.
       - To use binary C(data), it is better to keep it Base64 encoded and let it
         be decoded by this option.
-    default: false
     type: bool
+    default: false
     version_added: "2.8"
   labels:
     description:
       - "A map of key:value meta data, where both the I(key) and I(value) are expected to be a string."
       - If new meta data is provided, or existing meta data is modified, the secret will be updated by removing it and creating it again.
-    required: false
     type: dict
   force:
     description:
       - Use with state C(present) to always remove and recreate an existing secret.
       - If I(true), an existing secret will be replaced, even if it has not changed.
-    default: false
     type: bool
+    default: false
   name:
     description:
       - The name of the secret.
-    required: true
     type: str
+    required: true
   state:
     description:
       - Set to C(present), if the secret should exist, and C(absent), if it should not.
-    required: false
+    type: str
     default: present
     choices:
       - absent
       - present
-    type: str
 
 extends_documentation_fragment:
   - docker
