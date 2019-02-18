@@ -289,7 +289,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                     if 'service_endpoints' in results:
                         for item in results['service_endpoints']:
                             name = item['service']
-                            locations = item.get('locations) or []
+                            locations = item.get('locations') or []
                             newd[name] = {'service': name, 'locations': locations.sort()}
                     if newd != oldd:
                         changed = True
