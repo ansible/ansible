@@ -32,6 +32,17 @@ options:
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+    retrieve_keys:
+        description:
+            - Retrieve keys and connection strings.
+        type: str
+        choices:
+            - all
+            - readonly
+    retrieve_connection_strings:
+        description:
+            - Retrieve connection strings.
+        type: bool
 
 extends_documentation_fragment:
     - azure
@@ -315,6 +326,14 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
             ),
             tags=dict(
                 type='list'
+            ),
+            retrieve_keys=dict(
+                type='str',
+                choices=['all', 'readonly', 'none'],
+                default='none'
+            ),
+            retrieve_connection_string=dict(
+                type='bool'
             )
         )
         # store the results of the module operation
@@ -325,6 +344,9 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
+        self.retrieve_keys = None
+        self.retrieve_connection_strings = None
+
         super(AzureRMDatabaseAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -407,7 +429,23 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
             'provisioning_state': d.get('provisioning_state'),
             'tags': d.get('tags', None)
         }
-        return d
+
+        if self.retrieve_keys == 'all':
+            keys = self.mgmt_client.database_accounts.list_keys(resource_group_name=self.resource_group,
+                                                                account_name=self.name)
+            d['primary_master_key'] = keys.primary_master_key
+            d['secondary_master_key'] = keys.secondary_master_key
+            d['primary_readonly_master_key'] = keys.primary_readonly_master_key
+            d['secondary_readonly_master_key'] = keys.secondary_readonly_master_key
+        elif self.retrieve_keys == 'readonly':
+            keys = self.mgmt_client.database_accounts.get_read_only_keys(resource_group_name=self.resource_group,
+                                                                         account_name=self.name)
+            d['primary_readonly_master_key'] = keys.primary_readonly_master_key
+            d['secondary_readonly_master_key'] = keys.secondary_readonly_master_key
+        if self.retrieve_connection_strings:
+            connection_strings = self.mgmt_client.database_accounts.list_connection_strings(resource_group_name=self.resource_group,
+                                                                                            account_name=self.name)
+            d['connection_strings'] = connection_strings.as_dict()                                                       
 
 
 def main():
