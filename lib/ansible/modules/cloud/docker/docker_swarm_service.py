@@ -403,16 +403,16 @@ options:
       - Corresponds to the C(--restart-window) option of C(docker service create).
   update_delay:
     type: int
-    default: 10
     description:
       - Rolling update delay in nanoseconds.
       - Corresponds to the C(--update-delay) option of C(docker service create).
+      - Before Ansible 2.8, the default value for this option was C(10).
   update_parallelism:
     type: int
-    default: 1
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
+      - Before Ansible 2.8, the default value for this option was C(1).
   update_failure_action:
     type: str
     description:
@@ -1711,8 +1711,8 @@ def main():
         restart_policy_delay=dict(type='int'),
         restart_policy_attempts=dict(type='int'),
         restart_policy_window=dict(type='int'),
-        update_delay=dict(default=10, type='int'),
-        update_parallelism=dict(default=1, type='int'),
+        update_delay=dict(type='int'),
+        update_parallelism=dict(type='int'),
         update_failure_action=dict(choices=['continue', 'pause']),
         update_monitor=dict(type='int'),
         update_max_failure_ratio=dict(type='float'),
