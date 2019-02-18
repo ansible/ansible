@@ -222,21 +222,24 @@ The above will create the following directory structure in the current working d
 
 ::
 
-   README.md
-   .travis.yml
-   defaults/
-       main.yml
-   files/
-   handlers/
-       main.yml
-   meta/
-       main.yml
-   templates/
-   tests/
-       inventory
-       test.yml
-   vars/
-       main.yml
+   role_name/
+       README.md
+       .travis.yml
+       defaults/
+           main.yml
+       files/
+       handlers/
+           main.yml
+       meta/
+           main.yml
+       templates/
+       tests/
+           inventory
+           test.yml
+       vars/
+           main.yml
+
+If you want to create a repository for the role the repository root should be `role_name`.
 
 Force
 =====
