@@ -303,12 +303,7 @@ def create_network_profiles_dict(network):
 
 
 def create_aad_profiles_dict(aad):
-    return dict(
-        client_app_id=aad.client_app_id,
-        server_app_id=aad.server_app_id,
-        server_app_secret=aad.server_app_secret,
-        tanant_id=aad.tanant_id
-    ) if aad else dict()
+    return aad.as_dict() if aad else dict()
 
 
 def create_addon_dict(addon):
