@@ -146,7 +146,7 @@ accounts:
                         - Read location ID.
                     returned: always
                     type: str
-                    sample: cosmosdbaccounxx-eastus
+                    sample: testaccount-eastus
         read_locations:
             description:
                 - Read locations
@@ -170,13 +170,13 @@ accounts:
                         - Read location ID.
                     returned: always
                     type: str
-                    sample: cosmosdbaccounxx-eastus
+                    sample: testaccount-eastus
                 document_endpoint:
                     description:
                         - Document endpoint.
                     returned: always
                     type: str
-                    sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
+                    sample: https://testaccount-eastus.documents.azure.com:443/
                 provisioning_state:
                     description:
                         - Provisioning state.
@@ -206,13 +206,13 @@ accounts:
                         - Read location ID.
                     returned: always
                     type: str
-                    sample: cosmosdbaccounxx-eastus
+                    sample: testaccount-eastus
                 document_endpoint:
                     description:
                         - Document endpoint.
                     returned: always
                     type: str
-                    sample: https://cosmosdbaccounxx-eastus.documents.azure.com:443/
+                    sample: https://testaccount-eastus.documents.azure.com:443/
                 provisioning_state:
                     description:
                         - Provisioning state.
@@ -286,13 +286,56 @@ accounts:
                 - Document endpoint.
             returned: always
             type: str
-            sample: Succeeded
+            sample: https://testaccount.documents.azure.com:443/
         provisioning_state:
             description:
                 - Provisioning state of Cosmos DB.
             returned: always
             type: str
             sample: Succeeded
+        primary_master_key:
+            description:
+                - Primary master key.
+            returned: when requested
+            type: str
+            sample: UIWoYD4YaD4LxW6k3Jy69qcHDMLX4aSttECQkEcwWF1RflLd6crWSGJs0R9kJwujehtfLGeQx4ISVSJfTpJkYw==
+        secondary_master_key:
+            description:
+                - Primary master key.
+            returned: when requested
+            type: str
+            sample: UIWoYD4YaD4LxW6k3Jy69qcHDMLX4aSttECQkEcwWF1RflLd6crWSGJs0R9kJwujehtfLGeQx4ISVSJfTpJkYw==
+        primary_readonly_master_key:
+            description:
+                - Primary master key.
+            returned: when requested
+            type: str
+            sample: UIWoYD4YaD4LxW6k3Jy69qcHDMLX4aSttECQkEcwWF1RflLd6crWSGJs0R9kJwujehtfLGeQx4ISVSJfTpJkYw==
+        secondary_readonly_master_key:
+            description:
+                - Primary master key.
+            returned: when requested
+            type: str
+            sample: UIWoYD4YaD4LxW6k3Jy69qcHDMLX4aSttECQkEcwWF1RflLd6crWSGJs0R9kJwujehtfLGeQx4ISVSJfTpJkYw==
+        connection_strings:
+            description:
+                - List of connection strings.
+            type: list
+            returned: when requested
+            contains:
+                connection_string:
+                    description:
+                        - Description of connection string.
+                    type: str
+                    returned: always
+                    sample: Primary SQL Connection String
+                description:
+                    description:
+                        - Connection string.
+                    type: str
+                    returned: always
+                    sample: "AccountEndpoint=https://testaccountyyaa.documents.azure.com:443/;AccountKey=fSEjathnk6ZeBTrXkud9j5kfhtSEQ
+                             q3dpJxJga76h9BZkK2BJJrDzSO6DDn6yKads017OZBZ1YZWyq1cW4iuvA=="
         tags:
             description:
                 - Tags
@@ -332,7 +375,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
                 choices=['all', 'readonly', 'none'],
                 default='none'
             ),
-            retrieve_connection_string=dict(
+            retrieve_connection_strings=dict(
                 type='bool'
             )
         )
@@ -446,7 +489,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
             connection_strings = self.mgmt_client.database_accounts.list_connection_strings(resource_group_name=self.resource_group,
                                                                                             account_name=self.name)
             d['connection_strings'] = connection_strings.as_dict()                                                       
-
+        return d
 
 def main():
     AzureRMDatabaseAccountFacts()
