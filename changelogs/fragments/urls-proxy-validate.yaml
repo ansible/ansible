@@ -1,0 +1,2 @@
+bugfixes:
+- 'urls - When validating SSL certs using an a non-SSL proxy, do not send "Connection: close" when requesting a tunnel. This prevents some proxy servers from dropping the connection (https://github.com/ansible/ansible/issues/32750)'
