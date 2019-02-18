@@ -356,7 +356,7 @@ except ImportError:
     pass
 
 
-class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
+class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -390,7 +390,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
         self.retrieve_keys = None
         self.retrieve_connection_strings = None
 
-        super(AzureRMDatabaseAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMCosmosDBAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -492,7 +492,7 @@ class AzureRMDatabaseAccountFacts(AzureRMModuleBase):
         return d
 
 def main():
-    AzureRMDatabaseAccountFacts()
+    AzureRMCosmosDBAccountFacts()
 
 
 if __name__ == '__main__':
