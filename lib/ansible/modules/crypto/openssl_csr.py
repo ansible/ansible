@@ -31,9 +31,8 @@ options:
         description:
             - Whether the certificate signing request should exist or not, taking action if the state is different from what is stated.
         type: str
-        required: false
-        choices: [ absent, present ]
         default: present
+        choices: [ absent, present ]
     digest:
         description:
             - The digest used when signing the certificate signing request with the private key.
@@ -127,8 +126,8 @@ options:
               C(subject_alt_name) with C(DNS:) prefix if no SAN is specified.
         type: bool
         default: yes
-        aliases: [ useCommonNameForSAN ]
         version_added: '2.8'
+        aliases: [ useCommonNameForSAN ]
     key_usage:
         description:
             - This defines the purpose (e.g. encipherment, signature, certificate signing)
@@ -155,21 +154,21 @@ options:
         description:
             - Indicates basic constraints, such as if the certificate is a CA.
         type: list
-        aliases: [ basicConstraints ]
         version_added: '2.5'
+        aliases: [ basicConstraints ]
     basic_constraints_critical:
         description:
             - Should the basicConstraints extension be considered as critical.
         type: bool
-        aliases: [ basicConstraints_critical ]
         version_added: '2.5'
+        aliases: [ basicConstraints_critical ]
     ocsp_must_staple:
         description:
             - Indicates that the certificate should contain the OCSP Must Staple
               extension (U(https://tools.ietf.org/html/rfc7633)).
         type: bool
-        aliases: [ ocspMustStaple ]
         version_added: '2.5'
+        aliases: [ ocspMustStaple ]
     ocsp_must_staple_critical:
         description:
             - Should the OCSP Must Staple extension be considered as critical
@@ -178,8 +177,8 @@ options:
               are required to reject such certificates
               (see U(https://tools.ietf.org/html/rfc7633#section-4)).
         type: bool
-        aliases: [ ocspMustStaple_critical ]
         version_added: '2.5'
+        aliases: [ ocspMustStaple_critical ]
     select_crypto_backend:
         description:
             - Determines which crypto backend to use.
@@ -187,8 +186,8 @@ options:
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
         type: str
-        choices: [ auto, cryptography, pyopenssl ]
         default: auto
+        choices: [ auto, cryptography, pyopenssl ]
         version_added: '2.8'
 extends_documentation_fragment:
 - files

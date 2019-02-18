@@ -37,8 +37,8 @@ options:
         description:
             - Whether the private key should exist or not, taking action if the state is different from what is stated.
         type: str
-        choices: [ absent, present ]
         default: present
+        choices: [ absent, present ]
     size:
         description:
             - Size (in bits) of the TLS/SSL key to generate.
@@ -50,9 +50,9 @@ options:
             - Note that C(ECC) requires the C(cryptography) backend.
             - Depending on the curve, you need a newer version of the cryptography backend.
         type: str
+        default: RSA
         #choices: [ DSA, ECC, RSA, X448, X25519 ]
         choices: [ DSA, ECC, RSA ]
-        default: RSA
     curve:
         description:
             - Note that not all curves are supported by all versions of C(cryptography).
@@ -108,8 +108,8 @@ options:
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
         type: str
-        choices: [ auto, cryptography, pyopenssl ]
         default: auto
+        choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.8"
 extends_documentation_fragment:
 - files
@@ -551,25 +551,25 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            size=dict(default=4096, type='int'),
-            type=dict(default='RSA', choices=[
+            state=dict(type='str', default='present', choices=['present', 'absent']),
+            size=dict(type='int', default=4096),
+            type=dict(type='str', default='RSA', choices=[
                 'RSA', 'DSA', 'ECC',
                 # x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
                 # x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
                 # 'X448', 'X25519',
-            ], type='str'),
-            curve=dict(choices=[
+            ]),
+            curve=dict(type='str', choices=[
                 'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
                 'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
                 'sect571k1', 'sect409k1', 'sect283k1', 'sect233k1', 'sect163k1',
                 'sect571r1', 'sect409r1', 'sect283r1', 'sect233r1', 'sect163r2',
-            ], type='str'),
-            force=dict(default=False, type='bool'),
-            path=dict(required=True, type='path'),
+            ]),
+            force=dict(type='bool', default=False),
+            path=dict(type='path', required=True),
             passphrase=dict(type='str', no_log=True),
             cipher=dict(type='str'),
-            select_crypto_backend=dict(required=False, choices=['auto', 'pyopenssl', 'cryptography'], default='auto', type='str'),
+            select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,
