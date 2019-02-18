@@ -233,4 +233,3 @@
       name: "{{ cname }}"
       state: absent
     register: volume_output
-
