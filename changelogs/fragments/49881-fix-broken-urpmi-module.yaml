@@ -1,0 +1,2 @@
+bugfixes:
+    - urpmi module - fixed issue #47154 can't install package with urpmi
