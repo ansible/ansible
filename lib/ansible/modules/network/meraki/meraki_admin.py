@@ -146,8 +146,10 @@ EXAMPLES = r'''
     orgAccess: read-only
     email: jane@doe.com
     tags:
-        - { "tag": "tenant", "access": "full" }
-        - { "tag": "corporate", "access": "read-only" }
+        - tag: tenant
+          access: full
+        - tag: corporate
+          access: read-only
 
 - name: Create a new administrator with full access to a network
   meraki_admin:
@@ -158,7 +160,8 @@ EXAMPLES = r'''
     orgAccess: read-only
     email: jane@doe.com
     networks:
-        - { "id": "N_12345", "access": "full" }
+        - id: N_12345
+          access: full
 '''
 
 RETURN = r'''
