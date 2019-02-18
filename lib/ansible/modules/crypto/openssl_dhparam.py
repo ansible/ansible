@@ -29,8 +29,8 @@ options:
             - Whether the parameters should exist or not,
               taking action if the state is different from what is stated.
         type: str
-        choices: [ absent, present ]
         default: present
+        choices: [ absent, present ]
     size:
         description:
             - Size (in bits) of the generated DH-params.

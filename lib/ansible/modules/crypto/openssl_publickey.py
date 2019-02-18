@@ -30,8 +30,8 @@ options:
         description:
             - Whether the public key should exist or not, taking action if the state is different from what is stated.
         type: str
-        choices: [ absent, present ]
         default: present
+        choices: [ absent, present ]
     force:
         description:
             - Should the key be regenerated even it it already exists.
@@ -41,8 +41,8 @@ options:
         description:
             - The format of the public key.
         type: str
-        choices: [ OpenSSH, PEM ]
         default: PEM
+        choices: [ OpenSSH, PEM ]
         version_added: "2.4"
     path:
         description:

@@ -111,11 +111,11 @@ def main():
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(required=False, type='str'),
-            acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
-            validate_certs=dict(required=False, default=True, type='bool'),
-            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
+            account_uri=dict(type='str'),
+            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
+            acme_version=dict(type='int', default=1, choices=[1, 2]),
+            validate_certs=dict(type='bool', default=True),
+            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],
