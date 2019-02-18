@@ -33,13 +33,12 @@ requirements:
     - "cryptography >= 1.5"
 options:
     input_chain:
-        required: yes
         description:
             - A concatenated set of certificates in PEM format forming a chain.
             - The module will try to complete this chain.
-    root_certificates:
+        type: str
         required: yes
-        type: list
+    root_certificates:
         description:
             - "A list of filenames or directories."
             - "A filename is assumed to point to a file containing one or more certificates
@@ -49,19 +48,20 @@ options:
                subdirectories will be scanned and tried to be parsed as concatenated
                certificates in PEM format."
             - "Symbolic links will be followed."
+        type: list
+        required: yes
     intermediate_certificates:
-        required: no
+        description:
+            - "A list of filenames or directories."
+            - "A filename is assumed to point to a file containing one or more certificates
+               in PEM format. All certificates in this file will be added to the set of
+               root certificates."
+            - "If a directory name is given, all files in the directory and its
+               subdirectories will be scanned and tried to be parsed as concatenated
+               certificates in PEM format."
+            - "Symbolic links will be followed."
         type: list
         default: []
-        description:
-            - "A list of filenames or directories."
-            - "A filename is assumed to point to a file containing one or more certificates
-               in PEM format. All certificates in this file will be added to the set of
-               root certificates."
-            - "If a directory name is given, all files in the directory and its
-               subdirectories will be scanned and tried to be parsed as concatenated
-               certificates in PEM format."
-            - "Symbolic links will be followed."
 '''
 
 
@@ -284,9 +284,9 @@ def format_cert(cert):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            input_chain=dict(required=True, type='str'),
-            root_certificates=dict(required=True, type='list', elements='path'),
-            intermediate_certificates=dict(required=False, type='list', elements='path', default=[]),
+            input_chain=dict(type='str', required=True),
+            root_certificates=dict(type='list', required=True, elements='path'),
+            intermediate_certificates=dict(type='list', default=[], elements='path'),
         ),
         supports_check_mode=True,
     )

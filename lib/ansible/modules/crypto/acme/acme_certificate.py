@@ -83,19 +83,21 @@ options:
          used the M(acme_account) module to specify more than one contact
          for your account, this module will update your account and restrict
          it to the (at most one) contact email address specified here."
+    type: str
   agreement:
     description:
       - "URI to a terms of service document you agree to when using the
          ACME v1 service at C(acme_directory)."
       - Default is latest gathered from C(acme_directory) URL.
       - This option will only be used when C(acme_version) is 1.
+    type: str
   terms_agreed:
     description:
       - "Boolean indicating whether you agree to the terms of service document."
       - "ACME servers can require this to be true."
       - This option will only be used when C(acme_version) is not 1.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.5"
   modify_account:
     description:
@@ -106,12 +108,13 @@ options:
          using an old key if you changed the account key with M(acme_account)."
       - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "2.6"
   challenge:
     description: The challenge to be performed.
-    choices: [ 'http-01', 'dns-01', 'tls-alpn-01' ]
+    type: str
     default: 'http-01'
+    choices: [ 'http-01', 'dns-01', 'tls-alpn-01' ]
   csr:
     description:
       - "File containing the CSR for the new certificate."
@@ -123,6 +126,7 @@ options:
          account key. This is a bad idea from a security point of view, and
          the CA should not accept the CSR. The ACME server should return an
          error in this case."
+    type: path
     required: true
     aliases: ['src']
   data:
@@ -140,23 +144,27 @@ options:
          as it causes error messages to be come unusable, and C(data) does
          not contain any information which can be used without having
          access to the account key or which are not public anyway."
+    type: dict
   dest:
     description:
       - "The destination file for the certificate."
       - "Required if C(fullchain_dest) is not specified."
+    type: path
     aliases: ['cert']
   fullchain_dest:
     description:
       - "The destination file for the full chain (i.e. certificate followed
          by chain of intermediate certificates)."
       - "Required if C(dest) is not specified."
+    type: path
     version_added: 2.5
     aliases: ['fullchain']
   chain_dest:
     description:
       - If specified, the intermediate certificate will be written to this file.
-    aliases: ['chain']
+    type: path
     version_added: 2.5
+    aliases: ['chain']
   remaining_days:
     description:
       - "The number of days the certificate must have left being valid.
@@ -165,6 +173,7 @@ options:
          include C(challenge_data)."
       - "To make sure that the certificate is renewed in any case, you can
          use the C(force) option."
+    type: int
     default: 10
   deactivate_authzs:
     description:
@@ -175,7 +184,7 @@ options:
          without having to re-authenticate the domain. This can be a security
          concern."
     type: bool
-    default: 'no'
+    default: no
     version_added: 2.6
   force:
     description:
@@ -184,7 +193,7 @@ options:
       - This is especially helpful when having an updated CSR e.g. with
         additional domains for which a new certificate is desired.
     type: bool
-    default: 'no'
+    default: no
     version_added: 2.6
 '''
 
@@ -890,24 +899,24 @@ def main():
         argument_spec=dict(
             account_key_src=dict(type='path', aliases=['account_key']),
             account_key_content=dict(type='str', no_log=True),
-            account_uri=dict(required=False, type='str'),
-            modify_account=dict(required=False, type='bool', default=True),
-            acme_directory=dict(required=False, default='https://acme-staging.api.letsencrypt.org/directory', type='str'),
-            acme_version=dict(required=False, default=1, choices=[1, 2], type='int'),
-            validate_certs=dict(required=False, default=True, type='bool'),
-            account_email=dict(required=False, default=None, type='str'),
-            agreement=dict(required=False, type='str'),
-            terms_agreed=dict(required=False, default=False, type='bool'),
-            challenge=dict(required=False, default='http-01', choices=['http-01', 'dns-01', 'tls-alpn-01'], type='str'),
-            csr=dict(required=True, aliases=['src'], type='path'),
-            data=dict(required=False, default=None, type='dict'),
-            dest=dict(aliases=['cert'], type='path'),
-            fullchain_dest=dict(aliases=['fullchain'], type='path'),
-            chain_dest=dict(required=False, default=None, aliases=['chain'], type='path'),
-            remaining_days=dict(required=False, default=10, type='int'),
-            deactivate_authzs=dict(required=False, default=False, type='bool'),
-            force=dict(required=False, default=False, type='bool'),
-            select_crypto_backend=dict(required=False, choices=['auto', 'openssl', 'cryptography'], default='auto', type='str'),
+            account_uri=dict(type='str'),
+            modify_account=dict(type='bool', default=True),
+            acme_directory=dict(type='str', default='https://acme-staging.api.letsencrypt.org/directory'),
+            acme_version=dict(type='int', default=1, choices=[1, 2]),
+            validate_certs=dict(default=True, type='bool'),
+            account_email=dict(type='str'),
+            agreement=dict(type='str'),
+            terms_agreed=dict(type='bool', default=False),
+            challenge=dict(type='str', default='http-01', choices=['http-01', 'dns-01', 'tls-alpn-01']),
+            csr=dict(type='path', required=True, aliases=['src']),
+            data=dict(type='dict'),
+            dest=dict(type='path', aliases=['cert']),
+            fullchain_dest=dict(type='path', aliases=['fullchain']),
+            chain_dest=dict(type='path', aliases=['chain']),
+            remaining_days=dict(type='int', default=10),
+            deactivate_authzs=dict(type='bool', default=False),
+            force=dict(type='bool', default=False),
+            select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
         ),
         required_one_of=(
             ['account_key_src', 'account_key_content'],

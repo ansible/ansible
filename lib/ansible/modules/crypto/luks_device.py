@@ -47,9 +47,9 @@ options:
               does not exist it will be created.
               Requires I(device) and I(keyfile) options to be provided. If
               container does already exist I(device) or I(name) will suffice."
+        type: str
         default: present
         choices: [present, absent, opened, closed]
-        type: str
     name:
         description:
             - "Sets container name when I(state=opened). Can be used
@@ -407,15 +407,12 @@ class ConditionsHandler(Handler):
 def run_module():
     # available arguments/parameters that a user can pass
     module_args = dict(
-        state=dict(type='str',
-                   choices=['present', 'absent', 'opened', 'closed'],
-                   required=False,
-                   default='present'),
-        device=dict(type='str', required=False),
-        name=dict(type='str', required=False),
-        keyfile=dict(type='path', required=False),
-        new_keyfile=dict(type='path', required=False),
-        remove_keyfile=dict(type='path', required=False)
+        state=dict(type='str', default='present', choices=['present', 'absent', 'opened', 'closed']),
+        device=dict(type='str'),
+        name=dict(type='str'),
+        keyfile=dict(type='path'),
+        new_keyfile=dict(type='path'),
+        remove_keyfile=dict(type='path')
     )
 
     # seed the result dict in the object
