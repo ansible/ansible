@@ -821,7 +821,8 @@ docker_container:
     description:
       - Before 2.3 this was 'ansible_docker_container' but was renamed due to conflicts with the connection plugin.
       - Facts representing the current state of the container. Matches the docker inspection output.
-      - Note that facts are not part of registered vars but accessible directly.
+      - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+        are also accessible directly.
       - Empty if C(state) is I(absent)
       - If detached is I(False), will include Output attribute containing any output from container run.
     returned: always
@@ -2196,6 +2197,7 @@ class ContainerManager(DockerBaseClass):
 
         if self.facts:
             self.results['ansible_facts'] = {'docker_container': self.facts}
+            self.results['docker_container'] = self.facts
 
     def present(self, state):
         container = self._get_container(self.parameters.name)
