@@ -89,7 +89,7 @@ options:
    port_security_enabled:
      description:
         - Should port_security_enabled be set on this port.
-    version_added: "2.9"     
+     version_added: "2.9"
 '''
 
 EXAMPLES = '''
@@ -321,7 +321,7 @@ def main():
         extra_dhcp_opts=dict(type='list', default=None),
         device_owner=dict(default=None),
         device_id=dict(default=None),
-        port_security_enabled=dict(default=True, type='bool'),        
+        port_security_enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
         vnic_type=dict(default='normal',
                        choices=['normal', 'direct', 'direct-physical',
