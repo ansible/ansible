@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from collections import defaultdict
+from distutils.version import Version
 
 from ansible.module_utils.k8s.common import list_dict_str
 from ansible.module_utils.k8s.raw import KubernetesRawModule
@@ -16,8 +17,10 @@ except ImportError:
     # Handled in k8s common:
     pass
 
+import re
 
-API_VERSION = 'kubevirt.io/v1alpha3'
+MAX_SUPPORTED_API_VERSION = 'v1alpha3'
+API_GROUP = 'kubevirt.io'
 
 
 VM_COMMON_ARG_SPEC = {
@@ -34,11 +37,12 @@ VM_COMMON_ARG_SPEC = {
         'type': 'path',
     },
     'namespace': {},
-    'api_version': {'type': 'str', 'default': API_VERSION, 'aliases': ['api', 'version']},
+    'api_version': {'type': 'str', 'default': '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION), 'aliases': ['api', 'version']},
     'merge_type': {'type': 'list', 'choices': ['json', 'merge', 'strategic-merge']},
     'wait': {'type': 'bool', 'default': True},
     'wait_timeout': {'type': 'int', 'default': 120},
     'memory': {'type': 'str'},
+    'cpu_cores': {'type': 'int'},
     'disks': {'type': 'list'},
     'labels': {'type': 'dict'},
     'interfaces': {'type': 'list'},
@@ -54,9 +58,63 @@ def virtdict():
     return defaultdict(virtdict)
 
 
+class KubeAPIVersion(Version):
+    component_re = re.compile(r'(\d+ | [a-z]+)', re.VERBOSE)
+
+    def __init__(self, vstring=None):
+        if vstring:
+            self.parse(vstring)
+
+    def parse(self, vstring):
+        self.vstring = vstring
+        components = [x for x in self.component_re.split(vstring) if x]
+        for i, obj in enumerate(components):
+            try:
+                components[i] = int(obj)
+            except ValueError:
+                pass
+
+        errmsg = "version '{0}' does not conform to kubernetes api versioning guidelines".format(vstring)
+        c = components
+
+        if len(c) not in (2, 4) or c[0] != 'v' or not isinstance(c[1], int):
+            raise ValueError(errmsg)
+        if len(c) == 4 and (c[2] not in ('alpha', 'beta') or not isinstance(c[3], int)):
+            raise ValueError(errmsg)
+
+        self.version = components
+
+    def __str__(self):
+        return self.vstring
+
+    def __repr__(self):
+        return "KubeAPIVersion ('{0}')".format(str(self))
+
+    def _cmp(self, other):
+        if isinstance(other, str):
+            other = KubeAPIVersion(other)
+
+        myver = self.version
+        otherver = other.version
+
+        for ver in myver, otherver:
+            if len(ver) == 2:
+                ver.extend(['zeta', 9999])
+
+        if myver == otherver:
+            return 0
+        if myver < otherver:
+            return -1
+        if myver > otherver:
+            return 1
+
+    # python2 compatibility
+    def __cmp__(self, other):
+        return self._cmp(other)
+
+
 class KubeVirtRawModule(KubernetesRawModule):
     def __init__(self, *args, **kwargs):
-        self.api_version = API_VERSION
         super(KubeVirtRawModule, self).__init__(*args, **kwargs)
 
     @staticmethod
@@ -99,8 +157,7 @@ class KubeVirtRawModule(KubernetesRawModule):
     def _define_cloud_init(self, cloud_init_nocloud, template_spec):
         """
         Takes the user's cloud_init_nocloud parameter and fill it in kubevirt
-        API strucuture. The name of the volume is hardcoded to ansiblecloudinitvolume
-        and the name for disk is hardcoded to ansiblecloudinitdisk.
+        API strucuture. The name for disk is hardcoded to ansiblecloudinitdisk.
         """
         if cloud_init_nocloud:
             if not template_spec['volumes']:
@@ -108,10 +165,9 @@ class KubeVirtRawModule(KubernetesRawModule):
             if not template_spec['domain']['devices']['disks']:
                 template_spec['domain']['devices']['disks'] = []
 
-            template_spec['volumes'].append({'name': 'ansiblecloudinitvolume', 'cloudInitNoCloud': cloud_init_nocloud})
+            template_spec['volumes'].append({'name': 'ansiblecloudinitdisk', 'cloudInitNoCloud': cloud_init_nocloud})
             template_spec['domain']['devices']['disks'].append({
                 'name': 'ansiblecloudinitdisk',
-                'volumeName': 'ansiblecloudinitvolume',
                 'disk': {'bus': 'virtio'},
             })
 
@@ -125,7 +181,9 @@ class KubeVirtRawModule(KubernetesRawModule):
             spec_interfaces = []
             for i in interfaces:
                 spec_interfaces.append(dict((k, v) for k, v in i.items() if k != 'network'))
-            template_spec['domain']['devices']['interfaces'] = spec_interfaces
+            if 'interfaces' not in template_spec['domain']['devices']:
+                template_spec['domain']['devices']['interfaces'] = []
+            template_spec['domain']['devices']['interfaces'].extend(spec_interfaces)
 
             # Extract networks k8s specification from interfaces list passed to Ansible:
             spec_networks = []
@@ -133,7 +191,9 @@ class KubeVirtRawModule(KubernetesRawModule):
                 net = i['network']
                 net['name'] = i['name']
                 spec_networks.append(net)
-            template_spec['networks'] = spec_networks
+            if 'networks' not in template_spec:
+                template_spec['networks'] = []
+            template_spec['networks'].extend(spec_networks)
 
     def _define_disks(self, disks, template_spec):
         """
@@ -145,7 +205,9 @@ class KubeVirtRawModule(KubernetesRawModule):
             spec_disks = []
             for d in disks:
                 spec_disks.append(dict((k, v) for k, v in d.items() if k != 'volume'))
-            template_spec['domain']['devices']['disks'] = spec_disks
+            if 'disks' not in template_spec['domain']['devices']:
+                template_spec['domain']['devices']['disks'] = []
+            template_spec['domain']['devices']['disks'].extend(spec_disks)
 
             # Extract volumes k8s specification from disks list passed to Ansible:
             spec_volumes = []
@@ -153,23 +215,39 @@ class KubeVirtRawModule(KubernetesRawModule):
                 volume = d['volume']
                 volume['name'] = d['name']
                 spec_volumes.append(volume)
-            template_spec['volumes'] = spec_volumes
+            if 'volumes' not in template_spec:
+                template_spec['volumes'] = []
+            template_spec['volumes'].extend(spec_volumes)
 
-    def execute_crud(self, kind, definition, template):
-        """ Module execution """
+    def find_supported_resource(self, kind):
+        results = self.client.resources.search(kind=kind, group=API_GROUP)
+        if not results:
+            self.fail('Failed to find resource {0} in {1}'.format(kind, API_GROUP))
+        sr = sorted(results, key=lambda r: KubeAPIVersion(r.api_version), reverse=True)
+        for r in sr:
+            if KubeAPIVersion(r.api_version) <= KubeAPIVersion(MAX_SUPPORTED_API_VERSION):
+                return r
+        self.fail("API versions {0} are too recent. Max supported is {1}/{2}.".format(
+            str([r.api_version for r in sr]), API_GROUP, MAX_SUPPORTED_API_VERSION))
+
+    def _construct_vm_definition(self, kind, definition, template, params):
         self.client = self.get_api_client()
 
-        disks = self.params.get('disks', [])
-        memory = self.params.get('memory')
-        labels = self.params.get('labels')
-        interfaces = self.params.get('interfaces')
-        cloud_init_nocloud = self.params.get('cloud_init_nocloud')
-        machine_type = self.params.get('machine_type')
+        disks = params.get('disks', [])
+        memory = params.get('memory')
+        cpu_cores = params.get('cpu_cores')
+        labels = params.get('labels')
+        interfaces = params.get('interfaces')
+        cloud_init_nocloud = params.get('cloud_init_nocloud')
+        machine_type = params.get('machine_type')
         template_spec = template['spec']
 
         # Merge additional flat parameters:
         if memory:
             template_spec['domain']['resources']['requests']['memory'] = memory
+
+        if cpu_cores is not None:
+            template_spec['domain']['cpu']['cores'] = cpu_cores
 
         if labels:
             template['metadata']['labels'] = labels
@@ -188,6 +266,28 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         # Perform create/absent action:
         definition = dict(self.merge_dicts(self.resource_definitions[0], definition))
-        resource = self.find_resource(kind, self.api_version, fail=True)
+        resource = self.find_supported_resource(kind)
+        return dict(self.merge_dicts(self.resource_definitions[0], definition))
+
+    def construct_vm_definition(self, kind, definition, template):
+        definition = self._construct_vm_definition(kind, definition, template, self.params)
+        resource = self.find_supported_resource(kind)
+        definition = self.set_defaults(resource, definition)
+        return resource, definition
+
+    def construct_vm_template_definition(self, kind, definition, template, params):
+        definition = self._construct_vm_definition(kind, definition, template, params)
+        resource = self.find_resource(kind, definition['apiVersion'], fail=True)
+
+        # Set defaults:
+        definition['kind'] = kind
+        definition['metadata']['name'] = params.get('name')
+        definition['metadata']['namespace'] = params.get('namespace')
+
+        return resource, definition
+
+    def execute_crud(self, kind, definition):
+        """ Module execution """
+        resource = self.find_supported_resource(kind)
         definition = self.set_defaults(resource, definition)
         return self.perform_action(resource, definition)

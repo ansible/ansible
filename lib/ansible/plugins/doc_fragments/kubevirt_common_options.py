@@ -14,6 +14,12 @@ options:
             - "I(True) if the module should wait for the resource to get into desired state."
         type: bool
         default: yes
+    kind:
+        description:
+            - Use to specify an object model. Use to create, delete, or discover an object without providing a full
+              resource definition. Use in conjunction with I(api_version), I(name), and I(namespace) to identify a
+              specific object. If I(resource definition) is provided, the I(kind) from the I(resource_definition)
+              will override this option.
     force:
        description:
             - If set to C(no), and I(state) is C(present), an existing object will be replaced.
@@ -55,7 +61,9 @@ options:
               is simply C(strategic-merge).
         type: list
         choices: [ json, merge, strategic-merge ]
-
+    cpu_cores:
+        description:
+            - "Number of CPU cores."
 requirements:
     - python >= 2.7
     - openshift >= 0.8.2
