@@ -92,10 +92,8 @@ class ProcessModel(ProcessModelBase):
         self._cur_worker = 0
         self._workers = [None for i in range(num)]
 
-    def put_job(self, data):
+    def put_job(self, host, task, play_context, task_vars):
         try:
-            (host, task, play_context, task_vars) = data
-
             queued = False
             starting_worker = self._cur_worker
             while True:

@@ -86,7 +86,7 @@ class ProcessModelBase(with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def put_job(self, data):
+    def put_job(self, host, task, play_context, task_vars):
         pass
 
     @abstractmethod

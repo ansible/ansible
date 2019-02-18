@@ -246,7 +246,7 @@ class StrategyBase:
             'play_context': play_context
         }
         # use the process manager to queue the task for its workers
-        self._tqm._process_manager.put_job([host, task, play_context, task_vars])
+        self._tqm._process_manager.put_job(host=host, task=task, play_context=play_context, task_vars=task_vars)
 
         self._pending_results += 1
 

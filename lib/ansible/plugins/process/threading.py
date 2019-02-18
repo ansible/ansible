@@ -69,10 +69,9 @@ class ProcessModel(ProcessModelBase):
             pass
         return data
 
-    def put_job(self, data):
+    def put_job(self, host, task, play_context, task_vars):
         try:
-            host, task, dummy, dummy = data
-            self._job_queue.append(data)
+            self._job_queue.append((host, task, play_context, task_vars))
             self._tqm.send_callback('v2_runner_on_start', host, task)
         finally:
             pass
