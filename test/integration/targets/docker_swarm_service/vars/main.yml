@@ -22,6 +22,7 @@ service_expected_output:
   mode: global
   mounts: null
   networks: null
+  stop_signal: null
   placement_preferences: null
   publish:
     - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
