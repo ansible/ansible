@@ -67,7 +67,7 @@ options:
     description:
       - Region the server is deployed into.
       - Required if the server does not yet exist.
- state:
+  state:
     description:
       - State of the server.
     default: present
