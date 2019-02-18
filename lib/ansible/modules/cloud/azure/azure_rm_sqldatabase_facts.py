@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -51,20 +51,20 @@ author:
 EXAMPLES = '''
   - name: Get instance of SQL Database
     azure_rm_sqldatabase_facts:
-      resource_group: resource_group_name
-      server_name: server_name
-      name: database_name
+      resource_group: testrg
+      server_name: testserver
+      name: testdb
 
   - name: List instances of SQL Database
     azure_rm_sqldatabase_facts:
-      resource_group: resource_group_name
-      server_name: server_name
-      elastic_pool_name: elastic_pool_name
+      resource_group: testrg
+      server_name: testserver
+      elastic_pool_name: testep
 
   - name: List instances of SQL Database
     azure_rm_sqldatabase_facts:
-      resource_group: resource_group_name
-      server_name: server_name
+      resource_group: testrg
+      server_name: testserver
 '''
 
 RETURN = '''
@@ -78,11 +78,10 @@ databases:
                 - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/servers/testsvr/dat
-                    abases/testdb"
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testrg/providers/Microsoft.Sql/servers/testserver/databases/testdb
         name:
             description:
-                - Resource name.
+                - Database name.
             returned: always
             type: str
             sample: testdb
@@ -107,20 +106,19 @@ databases:
             contains:
                 name:
                     description:
-                        - The name of the SKU. Ex - P3. It is typically a letter+number code
+                        - The name of the SKU.
                     returned: always
                     type: str
                     sample: BC_Gen4_2
                 tier:
                     description:
-                        - This field is required to be implemented by the Resource Provider if the service has more than one tier, but is not required on a PUT.
+                        - Service tier.
                     returned: always
                     type: str
                     sample: BusinessCritical
                 capacity:
                     description:
-                        - "If the SKU supports scale out/in then the capacity integer should be included. If scale out/in is not possible for the resource
-                           this may be omitted."
+                        - Capacity.
                     returned: always
                     type: int
                     sample: 2
@@ -138,9 +136,7 @@ databases:
             sample: SQL_Latin1_General_CP1_CI_AS
         status:
             description:
-                - "The status of the database. Possible values include: 'Online', 'Restoring', 'RecoveryPending', 'Recovering', 'Suspect', 'Offline',
-                   'Standby', 'Shutdown', 'EmergencyMode', 'AutoClosed', 'Copying', 'Creating', 'Inaccessible', 'OfflineSecondary', 'Pausing', 'Paused',
-                   'Resuming', 'Scaling'"
+                - "The status of the database.
             returned: always
             type: str
             sample: Online
@@ -148,8 +144,8 @@ databases:
             description:
                 - Whether or not this database is zone redundant, which means the replicas of this database will be spread across multiple availability zones.
             returned: always
-            type: str
-            sample: zone_redundant
+            type: bool
+            sample: true
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
