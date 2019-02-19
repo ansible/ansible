@@ -98,7 +98,8 @@ dnsrecordsets:
     contains:
         id:
             description: ID of the dns recordset.
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/newzone.com/A/servera"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/newzone.
+                     com/A/servera"
         relative_name:
             description: Name of the dns recordset.
             sample: servera
