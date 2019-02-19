@@ -1,0 +1,131 @@
+# Test code for the Meraki Content Filteringmodule
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  # - name: Test an API key is provided
+  #   fail:
+  #     msg: Please define an API key
+  #   when: auth_key is not defined
+    
+  # - name: Use an invalid domain
+  #   meraki_config_template:
+  #     auth_key: '{{ auth_key }}'
+  #     host: marrrraki.com
+  #     state: query
+  #     org_name: DevTestOrg
+  #     output_level: debug
+  #   delegate_to: localhost
+  #   register: invalid_domain
+  #   ignore_errors: yes
+
+  # - name: Connection assertions
+  #   assert:
+  #     that:
+  #       - '"Failed to connect to" in invalid_domain.msg'
+
+  - name: Set single allowed URL pattern
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed
+
+  - debug:
+      var: single_allowed.data.allowedUrlPatterns
+
+  - assert:
+      that:
+        - single_allowed.data.allowedUrlPatterns | length == 1
+
+  - name: Set single allowed URL pattern for idempotency
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+    register: single_allowed_idempotent
+
+  - debug:
+      var: single_allowed_idempotent
+
+  - assert:
+      that:
+        - single_allowed_idempotent.changed == False
+
+  - name: Set single blocked URL pattern
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      blocked_urls:
+        - "http://www.ansible.com/*"
+    register: single_blocked
+
+  - debug:
+      var: single_blocked
+
+  - assert:
+      that:
+        - single_blocked.data.blockedUrlPatterns | length == 1
+
+  - name: Set two allowed URL pattern
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      allowed_urls:
+        - "http://www.ansible.com/*"
+        - "http://www.redhat.com"
+    register: two_allowed
+
+  - debug:
+      var: two_allowed
+
+  - assert:
+      that:
+        - two_allowed.changed == True
+        - two_allowed.data.allowedUrlPatterns | length == 2
+
+  - name: Set blocked URL category
+    meraki_content_filtering:
+      auth_key: '{{auth_key}}'
+      org_name: '{{test_org_name}}'
+      net_name: '{{test_net_name}}'
+      state: present
+      category_list_size: full list
+      blocked_categories:
+        - "Adult and Pornography"
+    register: blocked_cateogry
+
+  - debug:
+      var: blocked_cateogry
+
+  - assert:
+      that:
+        - blocked_cateogry.changed == True
+        - blocked_cateogry.data.blockedUrlCategories | length == 1
+        - blocked_cateogry.data.urlCategoryListSize == "fullList"
+
+  always:
+    - name: Reset policies
+      meraki_content_filtering:
+        auth_key: '{{auth_key}}'
+        org_name: '{{test_org_name}}'
+        net_name: '{{test_net_name}}'
+        state: present
+        category_list_size: full list
+        allowed_urls:
+          -
+        blocked_urls:
+          -
+        # blocked_categories:
+        #   -
