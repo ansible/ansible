@@ -139,7 +139,10 @@ files:
     keywords: [ ovirt, RHEV, RHV ]
     labels: [ cloud, ovirt ]
     maintainers: $team_ovirt
-  $modules/cloud/misc/proxmox.py: *virt
+  $modules/cloud/misc/proxmox.py: &virt
+    keywords: [ kvm, libvirt, proxmox, qemu ]
+    labels: [ cloud, virt ]
+    maintainers: $team_virt
   $modules/cloud/misc/proxmox_kvm.py: *virt
   $modules/cloud/misc/proxmox_template.py: *virt
   $modules/cloud/misc/rhevm.py: *virt
