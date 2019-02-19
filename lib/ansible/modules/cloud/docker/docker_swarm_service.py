@@ -15,7 +15,7 @@ module: docker_swarm_service
 author: "Dario Zanzico (@dariko), Jason Witkowski (@jwitko)"
 short_description: docker swarm service
 description:
-  - Manages dockers services via a swarm manager node.
+  - Manages docker services via a swarm manager node.
 version_added: "2.7"
 options:
   name:
