@@ -152,8 +152,7 @@ def main():
     """
     argument_spec = dict(
         state=dict(default='present',
-                   choices=['present', 'absent',
-                            'enabled', 'disabled'])
+                   choices=['present', 'absent'])
     )
 
     argument_spec.update(cnos_argument_spec)
@@ -204,4 +203,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
