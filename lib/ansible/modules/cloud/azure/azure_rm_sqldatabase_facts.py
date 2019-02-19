@@ -95,8 +95,10 @@ databases:
             description:
                 - Resource tags.
             returned: always
-            type: complex
-            sample: tags
+            type: dict
+            sample:
+                taga: aaa
+                tagb: bbb
         sku:
             description:
                 - The name and tier of the SKU.
@@ -159,7 +161,7 @@ except ImportError:
     pass
 
 
-class AzureRMDatabasesFacts(AzureRMModuleBase):
+class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -185,19 +187,16 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         self.results = dict(
             changed=False
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.server_name = None
         self.name = None
         self.elastic_pool_name = None
         self.tags = None
-        super(AzureRMDatabasesFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSqlDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(SqlManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name is not None:
             self.results['databases'] = self.get()
@@ -211,9 +210,9 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.databases.get(resource_group_name=self.resource_group,
-                                                      server_name=self.server_name,
-                                                      database_name=self.name)
+            response = self.sql_client.databases.get(resource_group_name=self.resource_group,
+                                                     server_name=self.server_name,
+                                                     database_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Databases.')
@@ -227,12 +226,12 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.databases.list_by_elastic_pool(resource_group_name=self.resource_group,
-                                                                       server_name=self.server_name,
-                                                                       elastic_pool_name=self.elastic_pool_name)
+            response = self.sql_client.databases.list_by_elastic_pool(resource_group_name=self.resource_group,
+                                                                      server_name=self.server_name,
+                                                                      elastic_pool_name=self.elastic_pool_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Databases.')
+            self.fail('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
@@ -245,11 +244,11 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.mgmt_client.databases.list_by_server(resource_group_name=self.resource_group,
-                                                                 server_name=self.server_name)
+            response = self.sql_client.databases.list_by_server(resource_group_name=self.resource_group,
+                                                                server_name=self.server_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Databases.')
+            self.fail('Could not get facts for Databases.')
 
         if response is not None:
             for item in response:
@@ -280,7 +279,7 @@ class AzureRMDatabasesFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDatabasesFacts()
+    AzureRMSqlDatabaseFacts()
 
 
 if __name__ == '__main__':
