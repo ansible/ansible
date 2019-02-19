@@ -118,10 +118,12 @@ options:
         description:
             - "If I(True) "
         type: bool
+        version_added: "2.8"
     fence_skip_if_gluster_quorum_not_met:
         description:
             - "If I(True) "
         type: bool
+        version_added: "2.8"
     fence_skip_if_sd_active:
         description:
             - "If I(True) any hosts in the cluster that are Non Responsive
