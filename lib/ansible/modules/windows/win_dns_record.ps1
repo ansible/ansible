@@ -96,8 +96,9 @@ if ($records -ne $null)
             # This record matches one of the values; but does it match the TTL?
             if ($record.TimeToLive -ne $ttl)
             {
-                $record.TimeToLive = $ttl
-                Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode @extra_args
+                $new_record = $record.Clone()
+                $new_record.TimeToLive = $ttl
+                Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $new_record -WhatIf:$check_mode @extra_args
             }
 
             # Cross this one off the list, so we don't try adding it later
