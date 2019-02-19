@@ -55,17 +55,17 @@ author:
 EXAMPLES = '''
     - name: Get facts for a virtual machine scale set
       azure_rm_virtualmachine_scaleset_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: testvmss001
         format: curated
 
     - name: Get facts for all virtual networks
       azure_rm_virtualmachine_scaleset_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_virtualmachine_scaleset_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         tags:
           - testing
 '''
@@ -81,7 +81,7 @@ vmss:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.Compute/scalesets/myscaleset
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/scalesets/myscaleset
         admin_username:
             description:
                 - Admin username used to access the host after it is created.
@@ -192,7 +192,7 @@ vmss:
                 - Resource group.
             type: str
             returned: always
-            sample: testrg
+            sample: myResourceGroup
         ssh_password_enabled:
             description:
                 - Is SSH password authentication enabled. Valid only for Linux.

@@ -84,7 +84,7 @@ EXAMPLES = '''
       azure_rm_virtualmachinescalesetextension:
         name: myvmssextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         vmss_name: myvm
         publisher: Microsoft.Azure.Extensions
         type: CustomScript
@@ -96,7 +96,7 @@ EXAMPLES = '''
       azure_rm_virtualmachinescalesetextension:
         name: myvmssextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         vmss_name: myvm
         state: absent
 '''
@@ -107,7 +107,7 @@ id:
         - VMSS extension resource ID
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.Compute/scalesets/myscaleset/extensions/myext
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/scalesets/myscaleset/extensions/myext
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase

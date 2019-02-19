@@ -144,14 +144,14 @@ author:
 EXAMPLES = '''
   - name: Create (or update) SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: testdb
       location: eastus
 
   - name: Restore SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: restoreddb
       location: eastus
@@ -161,12 +161,12 @@ EXAMPLES = '''
 
   - name: Create SQL Database in Copy Mode
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: copydb
       location: eastus
       create_mode: copy
-      source_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/servers/tests
+      source_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/tests
                           vr/databases/testdb"
 
 '''
@@ -177,7 +177,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-4799/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
             estdb"
 database_id:
     description:

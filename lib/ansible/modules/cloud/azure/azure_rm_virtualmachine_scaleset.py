@@ -227,7 +227,7 @@ EXAMPLES = '''
 
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2
@@ -252,7 +252,7 @@ EXAMPLES = '''
 
 - name: Create a VMSS with a custom image
   azure_rm_virtualmachine_scaleset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2
@@ -265,7 +265,7 @@ EXAMPLES = '''
 
 - name: Create a VMSS with a custom image from a particular resource group
   azure_rm_virtualmachine_scaleset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2

@@ -80,18 +80,18 @@ author:
 EXAMPLES = '''
     - name: Create virtual network peering
       azure_rm_virtualnetworkpeering:
-        resource_group: myResourceGroup1
+        resource_group: myResourceGroup
         name: vnet_peer1
         virtual_network: myVnet1
         remote_virtual_network:
-          resource_group: myResourceGroup2
+          resource_group: mySecondResourceGroup
           name: myVnet2
         allow_virtual_network_access: false
         allow_forwarded_traffic: true
 
     - name: Delete the virtual network peering
       azure_rm_virtualnetworkpeering:
-        resource_group: myResourceGroup1
+        resource_group: myResourceGroup
         name: vnet_peer1
         virtual_network: myVnet1
         state: absent
