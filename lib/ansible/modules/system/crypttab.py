@@ -73,7 +73,7 @@ EXAMPLES = r'''
     name: '{{ item.device }}'
     state: opts_present
     opts: discard
-  with_items: '{{ ansible_mounts }}'
+  loop: '{{ ansible_mounts }}'
   when: "'/dev/mapper/luks-' in {{ item.device }}"
 '''
 
