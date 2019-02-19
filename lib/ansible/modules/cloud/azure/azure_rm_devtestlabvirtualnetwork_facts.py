@@ -163,7 +163,7 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
         results = []
         try:
             response = self.mgmt_client.virtual_networks.list(resource_group_name=self.resource_group,
-                                                             lab_name=self.lab_name)
+                                                              lab_name=self.lab_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.fail('Could not list Virtual Networks for DevTest Lab.')
