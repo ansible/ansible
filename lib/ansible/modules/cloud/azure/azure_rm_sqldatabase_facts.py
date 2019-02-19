@@ -136,7 +136,7 @@ databases:
             sample: SQL_Latin1_General_CP1_CI_AS
         status:
             description:
-                - "The status of the database.
+                - The status of the database.
             returned: always
             type: str
             sample: Online
