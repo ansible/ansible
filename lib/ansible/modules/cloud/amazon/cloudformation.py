@@ -20,7 +20,7 @@ description:
 notes:
      - Cloudformation features change often, and this module tries to keep up. That means your botocore version should be fresh.
        The version listed is a minimum possible version, but some features may require more, and it's difficult to find what ancient version is good enough.
-       So, instead, keep botocore up-to-date. AWS is always releasing features and fixing bugs.
+       Instead of relying on the minimum version, keep botocore up to date. AWS is always releasing features and fixing bugs.
 version_added: "1.1"
 options:
   stack_name:
