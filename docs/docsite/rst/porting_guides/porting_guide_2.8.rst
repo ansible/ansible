@@ -55,6 +55,12 @@ In Ansible 2.7 and older::
     
     {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
 
+Command line facts
+------------------
+
+``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter
+contains multiple values with the same key.
+
 Command Line
 ============
 
