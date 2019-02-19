@@ -59,6 +59,12 @@ options:
     description:
        - List of SSH public keys.
        - Use the full content of your .pub file here.
+  password:
+    description:
+       - Password to be set for the default user.
+       - If omitted, no password will be set.
+    type: str
+    version_added: "2.8"
   use_public_network:
     description:
       - Attach a public network interface to the server.
@@ -90,7 +96,6 @@ extends_documentation_fragment: cloudscale
 
 EXAMPLES = '''
 # Start a server (if it does not exist) and register the server details
-
 - name: Start cloudscale.ch server
   cloudscale_server:
     name: my-shiny-cloudscale-server
@@ -110,6 +115,15 @@ EXAMPLES = '''
     flavor: flex-8
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
     anti_affinity_with: '{{ server1.uuid }}'
+    api_token: xxxxxx
+
+# Create a server with a SSH password
+- name: Start second cloudscale.ch server
+  cloudscale_server:
+    name: my-other-shiny-server
+    image: debian-9
+    flavor: flex-2
+    password: "{{ password }}"
     api_token: xxxxxx
 
 # Stop the first server
@@ -285,7 +299,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
         # check for required parameters to create a server
         missing_parameters = []
-        for p in ('name', 'ssh_keys', 'image', 'flavor'):
+        for p in ('name', 'image', 'flavor'):
             if p not in data or not data[p]:
                 missing_parameters.append(p)
 
@@ -339,6 +353,7 @@ def main():
         volume_size_gb=dict(type='int', default=10),
         bulk_volume_size_gb=dict(type='int'),
         ssh_keys=dict(type='list'),
+        password=dict(no_log=True),
         use_public_network=dict(type='bool', default=True),
         use_private_network=dict(type='bool', default=False),
         use_ipv6=dict(type='bool', default=True),
