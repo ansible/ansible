@@ -62,12 +62,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for one account
       azure_rm_storageaccount_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: clh0002
 
     - name: Get facts for all accounts in a resource group
       azure_rm_storageaccount_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Get facts for all accounts by tags
       azure_rm_storageaccount_facts:
@@ -109,7 +109,8 @@ storageaccounts:
         id:
             description:
                 - Resource ID.
-            sample: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Storage/storageAccounts/testaccount001"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/t
+                     estaccount001"
         name:
             description:
                 - Name of the storage account to update or create.

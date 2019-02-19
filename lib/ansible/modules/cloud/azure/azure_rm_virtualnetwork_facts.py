@@ -48,12 +48,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for one virtual network
       azure_rm_virtualnetwork_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all virtual networks
       azure_rm_virtualnetwork_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_virtualnetwork_facts:
@@ -90,7 +90,7 @@ virtualnetworks:
             id:
                 description:
                     - Resource ID.
-                sample: /subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Network/virtualNetworks/vnet2001
+                sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet2001
                 type: str
             address_prefixes:
                 description:
