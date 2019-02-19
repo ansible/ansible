@@ -109,7 +109,7 @@ storageaccounts:
         id:
             description:
                 - Resource ID.
-            sample: "/subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Storage/storageAccounts/testaccount001"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/testaccount001"
         name:
             description:
                 - Name of the storage account to update or create.

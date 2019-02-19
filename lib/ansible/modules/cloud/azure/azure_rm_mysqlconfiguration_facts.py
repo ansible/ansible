@@ -66,7 +66,7 @@ settings:
                 - Setting resource ID
             returned: always
             type: str
-            sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/testrg/providers/Microsoft.DBforMySQL/servers/testmysqlser
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testmysqlser
                      ver/configurations/deadlock_timeout"
         name:
             description:

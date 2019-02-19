@@ -66,7 +66,7 @@ rules:
                 - Resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testgroup/providers/Microsoft.Sql/servers/testser
+            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/testser
                     ver/firewallRules/testrule"
         resource_group:
             description:
