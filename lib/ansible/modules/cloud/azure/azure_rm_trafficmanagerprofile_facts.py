@@ -46,7 +46,7 @@ EXAMPLES = '''
     - name: Get facts for one Traffic Manager profile
       azure_rm_trafficmanager_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all Traffic Manager profiles
       azure_rm_trafficmanager_facts:
@@ -148,7 +148,8 @@ tms:
                     description:
                         - Fully qualified resource Id for the resource.
                     type: str
-                    sample: /subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/tmt/providers/Microsoft.Network/trafficManagerProfiles/tmtest/externalEndpoints/e1
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/trafficMan
+                             agerProfiles/tmtest/externalEndpoints/e1"
                 name:
                     description:
                         - The name of the endpoint.
@@ -163,7 +164,8 @@ tms:
                     description:
                         - The Azure Resource URI of the of the endpoint.
                     type: str
-                    sample: /subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/vscjavaci/providers/Microsoft.ClassicCompute/domainNames/vscjavaci
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ClassicCompute/dom
+                             ainNames/vscjavaci"
                 target:
                     description:
                         - The fully-qualified DNS name of the endpoint.

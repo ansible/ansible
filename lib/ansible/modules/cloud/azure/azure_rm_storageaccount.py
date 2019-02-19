@@ -139,13 +139,13 @@ author:
 EXAMPLES = '''
     - name: remove account, if it exists
       azure_rm_storageaccount:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: clh0002
         state: absent
 
     - name: create an account
       azure_rm_storageaccount:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: clh0002
         type: Standard_RAGRS
         tags:
@@ -154,7 +154,7 @@ EXAMPLES = '''
 
     - name: create an account with blob CORS
       azure_rm_storageaccount:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: clh002
         type: Standard_RAGRS
         blob_cors:

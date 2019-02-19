@@ -67,7 +67,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) SQL Server
     azure_rm_sqlserver:
-      resource_group: resource_group
+      resource_group: myResourceGroup
       name: server_name
       location: westus
       admin_username: mylogin
@@ -80,7 +80,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: /subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-7398/providers/Microsoft.Sql/servers/sqlcrudtest-4645
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-4645
 version:
     description:
         - The version of the server.

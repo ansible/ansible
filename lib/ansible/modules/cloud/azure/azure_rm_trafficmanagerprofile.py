@@ -113,7 +113,7 @@ EXAMPLES = '''
     - name: Create a Traffic Manager Profile
       azure_rm_trafficmanagerprofile:
         name: tmtest
-        resource_group: tmt
+        resource_group: myResourceGroup
         location: global
         profile_status: enabled
         routing_method: priority
@@ -131,7 +131,7 @@ EXAMPLES = '''
       azure_rm_trafficmanagerprofile:
         state: absent
         name: tmtest
-        resource_group: tmt
+        resource_group: myResourceGroup
 '''
 RETURN = '''
 id:
