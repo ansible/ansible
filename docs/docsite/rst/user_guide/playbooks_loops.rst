@@ -22,8 +22,24 @@ Comparing ``loop`` and ``with_*``
 * The ``loop`` keyword is equivalent to ``with_list``, and is the best choice for simple loops.
 * The ``loop`` keyword will not accept a string as input, see :ref:`query_vs_lookup`.
 * Generally speaking, any use of ``with_*`` covered in :ref:`migrating_to_loop` can be updated to use ``loop``.
-* Be careful when changing ``with_items`` to ``loop``, as ``with_items`` performed implicit single-level flattening. You may need to use ``flatten(1)`` with ``loop`` to match the exact outcome.
-* Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword.
+* Be careful when changing ``with_items`` to ``loop``, as ``with_items`` performed implicit single-level flattening. You may need to use ``flatten(1)`` with ``loop`` to match the exact outcome. For example, to get the same output as::
+
+  with_items:
+    - 1
+    - [2,3]
+    - 4
+
+you would need::
+
+  loop: [1, [2,3] ,4] | flatten(1)
+
+* Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword. For example, instead of doing::
+
+  loop: "{{ lookup('fileglob', '*.txt', wantlist=True) }}"
+
+it's cleaner to keep::
+
+  with_fileglob: '*.txt'
 
 .. _standard_loops:
 
