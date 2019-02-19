@@ -652,9 +652,13 @@ try:
     from docker.utils import (
         parse_repository_tag,
         parse_env_file,
-        format_environment
+        format_environment,
     )
-    from docker.errors import APIError, DockerException
+    from docker.errors import (
+        APIError,
+        DockerException,
+        NotFound,
+    )
 except ImportError:
     # missing docker-py handled in ansible.module_utils.docker.common
     pass
@@ -1320,20 +1324,10 @@ class DockerServiceManager(object):
         return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
     def get_service(self, name):
-        # The Docker API allows filtering services by name but the filter looks
-        # for a substring match, not an exact match. (Filtering for "foo" would
-        # return information for services "foobar" and "foobuzz" even if the
-        # service "foo" doesn't exist.) Avoid incorrectly determining that a
-        # service is present by filtering the list of services returned from the
-        # Docker API so that the name must be an exact match.
-        raw_data = [
-            service for service in self.client.services(filters={'name': name})
-            if service['Spec']['Name'] == name
-        ]
-        if len(raw_data) == 0:
+        try:
+            raw_data = self.client.inspect_service(name)
+        except NotFound:
             return None
-
-        raw_data = raw_data[0]
         ds = DockerService()
 
         task_template_data = raw_data['Spec']['TaskTemplate']
