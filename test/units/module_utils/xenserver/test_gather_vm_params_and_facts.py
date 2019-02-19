@@ -68,7 +68,7 @@ def test_gather_vm_params_and_facts(mocker, fake_ansible_module, XenAPI, xenserv
 
     mocked_xenapi.configure_mock(**mocked_returns)
 
-    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=['7', '2'])
+    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
 
     vm_ref = list(fixture_data_from_file[params_file]['VM'].keys())[0]
 
