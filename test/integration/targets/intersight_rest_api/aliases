@@ -1,0 +1,3 @@
+# Not enabled, but can be used with Intersight by specifying API keys.
+# See tasks/main.yml for examples.
+unsupported
