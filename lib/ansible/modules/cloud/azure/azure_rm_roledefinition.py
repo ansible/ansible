@@ -329,8 +329,6 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
                 role_type='CustomRole')
             if self.role:
                 role_definition.name = self.role['name']
-                #print("role is:")
-                print(self.role)
             response = self._client.role_definitions.create_or_update(role_definition_id=self.role['name'] if self.role else str(uuid.uuid4()),
                                                                       scope=self.scope,
                                                                       role_definition=role_definition)
