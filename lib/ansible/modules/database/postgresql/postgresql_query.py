@@ -234,7 +234,7 @@ def main():
     )
 
     if not HAS_PSYCOPG2:
-        module.fail_json(msg="The python psycopg2 module is required")
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     query = module.params["query"]
     positional_args = module.params["positional_args"]
