@@ -1,0 +1,14 @@
+- name: Clean slate
+  import_tasks: clean.yml
+
+- block:
+   - name: Create the zone
+     win_shell: Add-DnsServerPrimaryZone -Name '{{ win_dns_record_zone }}' -ReplicationScope forest
+
+   - name: Test
+     import_tasks: tests.yml
+
+  always:
+   - name: Clean slate
+     import_tasks: clean.yml
+
