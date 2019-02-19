@@ -1,9 +1,6 @@
 
 PLAY [localhost] ***************************************************************
 
-TASK [Gathering Facts] *********************************************************
-ok: [localhost]
-
 TASK [assert] ******************************************************************
 ok: [localhost] => (item=item_A)
 
@@ -15,5 +12,5 @@ ok: [localhost] => (item=item_A) => {
 }
 
 PLAY RECAP *********************************************************************
-localhost                  : ok=3    changed=0    unreachable=0    failed=0   
+localhost                  : ok=2    changed=0    unreachable=0    failed=0   
 
