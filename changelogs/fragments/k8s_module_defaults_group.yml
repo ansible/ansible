@@ -1,3 +1,4 @@
 minor_changes:
   - A k8s module defaults group has now been added to reduce the amount of parameters required for multiple k8s tasks.
-    This group contains all non-deprecated kubernetes modules - `k8s`, `k8s_facts`, `k8s_scale` and `k8s_service`.
+    This group contains all non-deprecated kubernetes modules - `k8s`, `k8s_auth`, `k8s_facts`, `k8s_scale` and
+    `k8s_service` as well as the CRD-handling `kubevirt_*` modules.

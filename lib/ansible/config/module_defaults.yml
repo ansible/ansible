@@ -596,9 +596,13 @@ groupings:
   - azure
   k8s:
   - k8s
+  k8s_auth:
+  - k8s
   k8s_facts:
   - k8s
   k8s_service:
   - k8s
   k8s_scale:
+  - k8s
+  kubevirt_vm:
   - k8s
