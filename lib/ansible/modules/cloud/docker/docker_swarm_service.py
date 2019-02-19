@@ -652,9 +652,13 @@ try:
     from docker.utils import (
         parse_repository_tag,
         parse_env_file,
-        format_environment
+        format_environment,
     )
-    from docker.errors import APIError, DockerException
+    from docker.errors import (
+        APIError,
+        DockerException,
+        NotFound,
+    )
 except ImportError:
     # missing docker-py handled in ansible.module_utils.docker.common
     pass
@@ -1320,7 +1324,10 @@ class DockerServiceManager(object):
         return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
     def get_service(self, name):
-        raw_data = self.client.inspect_service(name)
+        try:
+            raw_data = self.client.inspect_service(name)
+        except NotFound:
+            return
         ds = DockerService()
 
         task_template_data = raw_data['Spec']['TaskTemplate']
