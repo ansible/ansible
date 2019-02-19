@@ -1327,7 +1327,7 @@ class DockerServiceManager(object):
         try:
             raw_data = self.client.inspect_service(name)
         except NotFound:
-            return
+            return None
         ds = DockerService()
 
         task_template_data = raw_data['Spec']['TaskTemplate']
