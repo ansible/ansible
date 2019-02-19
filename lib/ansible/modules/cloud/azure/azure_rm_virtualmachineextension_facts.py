@@ -69,7 +69,8 @@ extensions:
                 - Resource Id
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/myvm/testVM/extensions/myextension
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/myvm/testVM/extens
+                     ions/myextension"
         resource_group:
             description:
                 - Resource group name
