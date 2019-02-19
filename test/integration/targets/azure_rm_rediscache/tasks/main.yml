@@ -29,11 +29,28 @@
       size: C1
   register: output
 
-- name: Assert creating redis cache check mode
+- name: Assert creating redis cache
   assert:
     that:
       - output.changed
       - output.id
+
+- name: Get facts
+  azure_rm_rediscache_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}"
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts.rediscaches | length == 1
+      - facts.rediscaches[0].id != None
+      - facts.rediscaches[0].host_name != None
+      - facts.rediscaches[0].provisioning_state != None
+      - facts.rediscaches[0].sku.name == 'basic'
+      - facts.rediscaches[0].sku.size == 'C1'
+
 
 - name: Update the redis cache (idempotent)
   azure_rm_rediscache:
@@ -158,6 +175,20 @@
     that:
       - output.changed
       - output.id
+
+- name: Get facts
+  azure_rm_rediscache_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ redis_name }}2"
+    return_access_keys: True
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts.rediscaches | length == 1
+      - facts.rediscaches[0].subnet != None
+      - facts.rediscaches[0].access_keys.primary != None
 
 # - name: Delete the redis cache
 #   azure_rm_rediscache:
