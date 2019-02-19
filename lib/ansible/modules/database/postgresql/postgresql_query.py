@@ -233,6 +233,9 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAS_PSYCOPG2:
+        module.fail_json(msg="The python psycopg2 module is required")
+
     query = module.params["query"]
     positional_args = module.params["positional_args"]
     named_args = module.params["named_args"]
