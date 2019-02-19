@@ -12,5 +12,5 @@ ok: [localhost] => (item=item_A) => {
 }
 
 PLAY RECAP *********************************************************************
-localhost                  : ok=2    changed=0    unreachable=0    failed=0   
+localhost                  : ok=2    changed=0    unreachable=0    failed=0    skipped=0   
 
