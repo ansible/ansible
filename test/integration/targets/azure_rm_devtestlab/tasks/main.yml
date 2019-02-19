@@ -96,6 +96,32 @@
     that:
       - output.changed
 
+- name: Get DevTest Lab Virtual Network facts
+  azure_rm_devtestlabvirtualnetwork_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vn_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      #- output.labs[0]['id'] != None
+      #- output.labs[0]['resource_group'] != None
+      #- output.labs[0]['name'] != None
+      #- output.labs[0]['location'] != None
+      #- output.labs[0]['storage_type'] != None
+      #- output.labs[0]['premium_data_disks'] != None
+      #- output.labs[0]['provisioning_state'] != None
+      #- output.labs[0]['artifacts_storage_account'] != None
+      #- output.labs[0]['default_premium_storage_account'] != None
+      #- output.labs[0]['default_storage_account'] != None
+      #- output.labs[0]['premium_data_disk_storage_account'] != None
+      #- output.labs[0]['vault_name'] != None
+
+- debug:
+    var: output
+
 - name: Delete instance of Lab -- check mode
   azure_rm_devtestlab:
     resource_group: "{{ resource_group }}"
