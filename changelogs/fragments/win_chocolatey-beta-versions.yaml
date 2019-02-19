@@ -1,0 +1,2 @@
+bugfixes:
+- win_chocolatey - Fix issue when parsing a beta Chocolatey install - https://github.com/ansible/ansible/issues/52331
