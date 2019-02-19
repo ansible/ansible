@@ -333,7 +333,7 @@ accounts:
                         - Connection string.
                     type: str
                     returned: always
-                    sample: "AccountEndpoint=https://testaccountyyaa.documents.azure.com:443/;AccountKey=fSEjathnk6ZeBTrXkud9j5kfhtSEQ
+                    sample: "AccountEndpoint=https://testaccount.documents.azure.com:443/;AccountKey=fSEjathnk6ZeBTrXkud9j5kfhtSEQ
                              q3dpJxJga76h9BZkK2BJJrDzSO6DDn6yKads017OZBZ1YZWyq1cW4iuvA=="
         tags:
             description:
