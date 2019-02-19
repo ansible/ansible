@@ -19,7 +19,7 @@ description:
      - Launches or updates an AWS CloudFormation stack and waits for it complete.
 notes:
      - Cloudformation features change often, and this module tries to keep up. That means your botocore version should be fresh.
-       The version listed in the requirements is the oldest version that works with the module as a whole. 
+       The version listed in the requirements is the oldest version that works with the module as a whole.
        Some features may require recent versions, and we do not pinpoint a minimum version for each feature.
        Instead of relying on the minimum version, keep botocore up to date. AWS is always releasing features and fixing bugs.
 version_added: "1.1"
