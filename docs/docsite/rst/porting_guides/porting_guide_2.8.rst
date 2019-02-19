@@ -61,6 +61,12 @@ Command line facts
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter
 contains multiple values with the same key.
 
+Retry File Creation default
+---------------------------
+
+In Ansible 2.8, ``retry_files_enabled`` now defaults to ``False`` instead of ``True``.  The behavior can be
+modified to previous version by editing the default ``ansible.cfg`` file and setting the value to ``True``.
+
 Command Line
 ============
 
