@@ -67,6 +67,8 @@ See :ref:`ansible_variable_precedence` for more details on variable inheritance 
 
 Task include and import statements can be used at arbitrary depth.
 
+See :ref:`playbooks_reuse_include_tasks_example` for a worked example of include_tasks.
+
 .. note::
     - Static and dynamic can be mixed, however this is not recommended as it may lead to difficult-to-diagnose bugs in your playbooks.
     - The ``key=value`` syntax for passing variables to import and include is deprecated. Use YAML ``vars:`` instead.
