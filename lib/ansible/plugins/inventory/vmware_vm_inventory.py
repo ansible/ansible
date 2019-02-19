@@ -373,8 +373,16 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         'customValue',
                     ]
                     for vm_prop in vm_properties:
-                        vm_value = self._get_vm_prop(temp_vm_object.obj, vm_prop.split("."))
-                        self.inventory.set_variable(current_host, vm_prop, vm_value)
+                        if vm_prop == 'customValue':
+                            field_mgr = self.content.customFieldsManager.field
+                            for cust_value in temp_vm_object.obj.customValue:
+                                self.inventory.set_variable(current_host,
+                                                            [y.name for y in field_mgr if y.key == cust_value.key][0],
+                                                            cust_value.value)
+                        else:
+                            vm_value = self._get_vm_prop(temp_vm_object.obj, vm_prop.split("."))
+                            self.inventory.set_variable(current_host, vm_prop, vm_value)
+
                     # Only gather facts related to tag if vCloud and vSphere is installed.
                     if HAS_VCLOUD and HAS_VSPHERE and self.with_tags:
                         # Add virtual machine to appropriate tag group
@@ -387,7 +395,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                             cacheable_results[tags_info[tag_id]]['hosts'].append(current_host)
 
                     # Based on power state of virtual machine
-                    vm_power = temp_vm_object.obj.summary.runtime.powerState
+                    vm_power = str(temp_vm_object.obj.summary.runtime.powerState)
                     if vm_power not in cacheable_results:
                         cacheable_results[vm_power] = []
                         self.inventory.add_group(vm_power)
