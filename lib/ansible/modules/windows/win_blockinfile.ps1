@@ -276,7 +276,6 @@ For ($i = 0; $i -lt $lines.Count; $i++) {
         }
     }
 }
-$result.logA = "0: $marker0Line, 1: $marker1Line, I: $insertLine"
 
 If (($null -eq $marker0Line) -Or ($null -eq $marker1Line)) {
     If ($null -ne $insre) {
@@ -302,7 +301,6 @@ Else {
     $lines.RemoveRange($marker1Line, ($marker0Line - $marker1Line) + 1);
     $insertLine = $marker1Line;
 }
-$result.logB = "0: $marker0Line, 1: $marker1Line, I: $insertLine"
 
 $lines.InsertRange($insertLine, $blocklines);
 
@@ -319,10 +317,10 @@ If ($origContent -ne $after) {
     }
     WriteLines $lines $path $linesep $encodingobj $validate $check_mode
     If ($blocklines.Count > 0) {
-        $result.msg = "Block removed"
+        $result.msg = "Block inserted"
     }
     else {
-        $result.msg = "Block inserted"
+        $result.msg = "Block removed"
     }
 }
 Else {
