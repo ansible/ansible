@@ -41,7 +41,7 @@ options:
             - 'premium'
     premium_data_disks:
         description:
-            - "Allow creation of C(premium) data disks."
+            - "Allow creation of premium data disks."
         type: bool
     state:
       description:
