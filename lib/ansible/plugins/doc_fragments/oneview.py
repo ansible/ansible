@@ -1,25 +1,13 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (2016-2017) Hewlett Packard Enterprise Development LP
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2016-2017, Hewlett Packard Enterprise Development LP
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # OneView doc fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
     config:
       description:
@@ -27,6 +15,7 @@ options:
           The configuration file is optional and when used should be present in the host running the ansible commands.
           If the file path is not provided, the configuration will be loaded from environment variables.
           For links to example configuration files or how to use the environment variables verify the notes section.
+      type: path
 
 requirements:
   - python >= 2.7.9
@@ -43,17 +32,17 @@ notes:
        U(https://github.com/HewlettPackard/oneview-ansible#setting-your-oneview-version)"
     '''
 
-    VALIDATEETAG = '''
+    VALIDATEETAG = r'''
 options:
     validate_etag:
         description:
             - When the ETag Validation is enabled, the request will be conditionally processed only if the current ETag
                 for the resource matches the ETag provided in the data.
-        default: true
         type: bool
+        default: yes
 '''
 
-    FACTSPARAMS = '''
+    FACTSPARAMS = r'''
 options:
     params:
         description:
@@ -63,4 +52,5 @@ options:
             - C(count): The number of resources to return.
             - C(filter): A general filter/query string to narrow the list of items returned.
             - C(sort): The sort order of the returned data set."
+        type: dict
 '''
