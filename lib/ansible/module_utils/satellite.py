@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # (c) 2018, Luc Stroobant (luc.stroobant@wdc.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -60,14 +57,14 @@ def request(url, user, password, verify=True, pagination=False, params={}):
         items.extend(response["results"])
         if response["subtotal"]:
             while done < response["subtotal"]:
-                    response = None
-                    params["page"] += 1
-                    req = requests.get(url, timeout=60, verify=verify, params=params,
-                                       auth=HTTPBasicAuth(user, password))
-                    req.raise_for_status()
-                    response = req.json()
-                    items.extend(response["results"])
-                    done += per_page
+                response = None
+                params["page"] += 1
+                req = requests.get(url, timeout=60, verify=verify, params=params,
+                                   auth=HTTPBasicAuth(user, password))
+                req.raise_for_status()
+                response = req.json()
+                items.extend(response["results"])
+                done += per_page
     # not pagination: just return the response
     else:
         return response

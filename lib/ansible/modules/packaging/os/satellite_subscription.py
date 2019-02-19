@@ -21,7 +21,7 @@ description:
     Your hosts or hypervisors should be in the Satellite already. The module will run subscription
     related tasks (assign, remove, autoattach or replace with hypervisor subscriptions) for the
     hosts through the Satellite API.
-version_added: "2.7"
+version_added: "2.8"
 requirements:
   - requests
 author:
@@ -49,7 +49,10 @@ options:
       - "absent: remove subscription of subscription_type from host"
       - "autoattach: run subscription autoattach for host (autoattach will be enabled if necessary)"
       - "disable_autoattach: disable subscription autoattach for host"
-      - "vdcguests: remove all Red Hat subscriptions from a hypervisor's guests and run autoattach to replace them with virtual guest subscriptions. Run this against a virt-who hypervisor to remove all other subscriptions assigned to the guests. Useful if you configured a VDC subscription on a hypervisor that didn't have it before."
+      - "vdcguests: remove all Red Hat subscriptions from a hypervisor's guests and run autoattach
+         to replace them with virtual guest subscriptions. Run this against a virt-who hypervisor to
+         remove all other subscriptions assigned to the guests. Useful if you configured a VDC
+         subscription on a hypervisor that didn't have it before."
       - "optimize: use to replace subscriptions on physical servers with a higher multiplier with subscriptions with a lower multiplier."
     choices: [present, absent, autoattach, disable_autoattach, vdcguests, optimize]
     default: autoattach
@@ -61,7 +64,9 @@ options:
     description:
       - List of subscriptions to assign or remove
       - Required when action is assign or remove
-      - "This field is used for the search for subscriptions, it can contain (part of) the subscription name, eg 'Red Hat Enterprise Linux Server Entry Level, Self-support' or another search query as used in the satellite, eg: 'product_id=RH00005S'"
+      - "This field is used for the search for subscriptions, it can contain (part of) the subscription
+         name, eg 'Red Hat Enterprise Linux Server Entry Level, Self-support' or another search query
+         as used in the satellite, eg: 'product_id=RH00005S'"
   unique:
     description:
      - Set to true to remove all other subscriptions attached to the host
@@ -169,9 +174,6 @@ from ansible.module_utils import six
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.satellite import requests_available, request, host_list, put
 
-if not requests_available:
-    module.fail_json(msg="Library 'requests' is required.")
-
 
 def subscription_assign(sat_url, user, password, matched_subscriptions, host, module, verify):
 
@@ -271,11 +273,14 @@ def main():
             ),
             content_host=dict(type=list, required=True),
             subscription=dict(type=list),
-            unique=dict(type=bool, default=False),
-            verify_ssl=dict(type=bool, default=True),
+            unique=dict(type='bool', default=False),
+            verify_ssl=dict(type='bool', default=True),
         ),
         supports_check_mode=False,
     )
+
+    if not requests_available:
+        module.fail_json(msg="Library 'requests' is required.")
 
     sat = module.params["satellite_hostname"]
     state = module.params["state"]
