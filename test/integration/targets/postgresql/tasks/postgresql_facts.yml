@@ -13,13 +13,13 @@
 
 - assert:
     that:
-      - result.ansible_facts.version != {}
-      - result.ansible_facts.databases.{{ db_default }}.collate
-      - result.ansible_facts.languages
-      - result.ansible_facts.namespaces.information_schema
-      - result.ansible_facts.settings
-      - result.ansible_facts.tablespaces
-      - result.ansible_facts.roles
+      - result.postgresql_facts.version != {}
+      - result.postgresql_facts.databases.{{ db_default }}.collate
+      - result.postgresql_facts.languages
+      - result.postgresql_facts.namespaces.information_schema
+      - result.postgresql_facts.settings
+      - result.postgresql_facts.tablespaces
+      - result.postgresql_facts.roles
 
 - name: postgresql_facts - check filter param passed by list
   become_user: "{{ pg_user }}"
@@ -35,16 +35,16 @@
 
 - assert:
     that:
-      - result.ansible_facts.version != {}
-      - result.ansible_facts.roles
-      - result.ansible_facts.databases == {}
-      - result.ansible_facts.extensions == {}
-      - result.ansible_facts.namespaces == {}
-      - result.ansible_facts.languages == {}
-      - result.ansible_facts.repl_slots == {}
-      - result.ansible_facts.replications == {}
-      - result.ansible_facts.settings == {}
-      - result.ansible_facts.tablespaces == {}
+      - result.postgresql_facts.version != {}
+      - result.postgresql_facts.roles
+      - result.postgresql_facts.databases == {}
+      - result.postgresql_facts.extensions == {}
+      - result.postgresql_facts.namespaces == {}
+      - result.postgresql_facts.languages == {}
+      - result.postgresql_facts.repl_slots == {}
+      - result.postgresql_facts.replications == {}
+      - result.postgresql_facts.settings == {}
+      - result.postgresql_facts.tablespaces == {}
 
 - name: postgresql_facts - check filter param passed by string
   become_user: "{{ pg_user }}"
@@ -58,16 +58,16 @@
 
 - assert:
     that:
-      - result.ansible_facts.version != {}
-      - result.ansible_facts.roles
-      - result.ansible_facts.databases == {}
-      - result.ansible_facts.extensions == {}
-      - result.ansible_facts.namespaces == {}
-      - result.ansible_facts.languages == {}
-      - result.ansible_facts.repl_slots == {}
-      - result.ansible_facts.replications == {}
-      - result.ansible_facts.settings == {}
-      - result.ansible_facts.tablespaces == {}
+      - result.postgresql_facts.version != {}
+      - result.postgresql_facts.roles
+      - result.postgresql_facts.databases == {}
+      - result.postgresql_facts.extensions == {}
+      - result.postgresql_facts.namespaces == {}
+      - result.postgresql_facts.languages == {}
+      - result.postgresql_facts.repl_slots == {}
+      - result.postgresql_facts.replications == {}
+      - result.postgresql_facts.settings == {}
+      - result.postgresql_facts.tablespaces == {}
 
 - name: postgresql_facts - check filter param passed by string
   become_user: "{{ pg_user }}"
@@ -81,8 +81,8 @@
 
 - assert:
     that:
-      - result.ansible_facts.version
-      - result.ansible_facts.roles == {}
+      - result.postgresql_facts.version
+      - result.postgresql_facts.roles == {}
 
 - name: postgresql_facts - check excluding filter param passed by list
   become_user: "{{ pg_user }}"
@@ -98,6 +98,6 @@
 
 - assert:
     that:
-      - result.ansible_facts.version == {}
-      - result.ansible_facts.roles == {}
-      - result.ansible_facts.databases
+      - result.postgresql_facts.version == {}
+      - result.postgresql_facts.roles == {}
+      - result.postgresql_facts.databases
