@@ -1149,7 +1149,7 @@ class Connection(ConnectionBase):
             sudoable = False
 
             # Make sure our first command is to set the console encoding to
-            # utf-8, this must be done to get unicode output chars instead of ?
+            # utf-8, this must be done via chcp to get utf-8 (65001)
             cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]
             cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))
             cmd = ' '.join(cmd_parts)
