@@ -45,13 +45,13 @@ author:
 EXAMPLES = '''
   - name: Get instance of PostgreSQL Firewall Rule
     azure_rm_postgresqlfirewallrule_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
       name: firewall_rule_name
 
   - name: List instances of PostgreSQL Firewall Rule
     azure_rm_postgresqlfirewallrule_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       server_name: server_name
 '''
 
