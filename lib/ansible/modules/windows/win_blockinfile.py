@@ -105,7 +105,8 @@ notes:
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - When more then one block should be handled in one file you must change the I(marker) per task.
   - Unlike I(blockinfile), this module will not create parent folders for the destination file when I(create) is specified and the file does not exist.
-  - When using an I(insertbefore) or I(insertafter) directive the block will be inserted before/after the last matching line (to maintain parity with I(blockinfile)).
+  - When using an I(insertbefore) or I(insertafter) directive the block will be inserted before/after the last matching 
+    line (to maintain parity with I(blockinfile)).
 seealso:
 - module: win_lineinfile
 - module: blockinfile
@@ -146,4 +147,8 @@ EXAMPLES = r'''
   - { name: host1, ip: 10.10.1.10 }
   - { name: host2, ip: 10.10.1.11 }
   - { name: host3, ip: 10.10.1.12 }
+'''
+
+RETURN = r'''
+
 '''
