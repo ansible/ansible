@@ -49,12 +49,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of Registry
     azure_rm_containerregistry_facts:
-      resource_group: sampleresourcegroup
+      resource_group: myResourceGroup
       name: sampleregistry
 
   - name: List instances of Registry
     azure_rm_containerregistry_facts:
-      resource_group: sampleresourcegroup
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''

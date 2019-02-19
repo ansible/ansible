@@ -54,7 +54,7 @@ author:
 EXAMPLES = '''
   - name: Create application security group
     azure_rm_applicationsecuritygroup:
-      resource_group: myRG
+      resource_group: myResourceGroup
       name: MyAsg
       location: eastus
       tags:

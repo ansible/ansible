@@ -45,7 +45,7 @@ EXAMPLES = '''
     - name: Get facts for one Azure Kubernetes Service
       azure_rm_aks_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all Azure Kubernetes Services
       azure_rm_aks_facts:

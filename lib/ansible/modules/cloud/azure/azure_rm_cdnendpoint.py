@@ -124,7 +124,7 @@ author:
 EXAMPLES = '''
     - name: Create a Azure CDN endpoint
       azure_rm_cdnendpoint:
-          resource_group: TestRg
+          resource_group: myResourceGroup
           name: TestEndpoint
           profile_name: TestProfile
           origins:
@@ -136,7 +136,7 @@ EXAMPLES = '''
               foo: bar
     - name: Delete a Azure CDN endpoint
       azure_rm_cdnendpoint:
-          resource_group: TestRg
+          resource_group: myResourceGroup
           name: TestEndpoint
           profile_name: TestProfile
           state: absent
