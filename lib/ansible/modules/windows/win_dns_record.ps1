@@ -49,11 +49,11 @@ if ($ttl -lt 1 -or $ttl -gt 31557600)
 $ttl = New-TimeSpan -Seconds $ttl
 
 
-if ($type -eq 'CNAME' -and $values -ne $null -and $values.Count -gt 0 -and $zone[-1] -ne '.')
+if (($type -eq 'CNAME' -or $type -eq 'PTR') -and $values -ne $null -and $values.Count -gt 0 -and $zone[-1] -ne '.')
 {
-    # CNAMES that point to zone items should be '.'-terminated, or record matching will fail
+    # CNAMEs and PTRs should be '.'-terminated, or record matching will fail
     $values = $values | ForEach-Object {
-        if ($_ -Like "*$zone") { "$($_)." } else { $_ }
+        if ($_ -Like "*.") { $_ } else { "$_." }
     }
 }
 
