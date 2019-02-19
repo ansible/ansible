@@ -26,7 +26,7 @@ description:
 - You can supply an esxi_hostname or a cluster_name
 version_added: '2.8'
 author:
-- Michael Eaton (@if-meaton)
+- Michael Eaton (@michaeldeaton)
 notes:
 - Tested on vSphere 6.0
 requirements:
