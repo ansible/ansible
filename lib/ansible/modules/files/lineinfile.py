@@ -121,8 +121,12 @@ options:
     default: no
     version_added: "2.5"
   others:
-     description:
-       - All arguments accepted by the M(file) module also work here.
+    description:
+      - All arguments accepted by the M(file) module also work here.
+    type: str
+extends_documentation_fragment:
+    - files
+    - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 seealso:
@@ -180,6 +184,13 @@ EXAMPLES = r'''
     line: 192.168.1.99 foo.lab.net foo
     create: yes
 
+# Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
+- lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%wheel\s'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+
 # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
 - name: Ensure the JBoss memory settings are exactly as needed
   lineinfile:
@@ -204,12 +215,12 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import lock
+from ansible.module_utils.common.file import open_locked
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 
 
-def write_changes(module, fd, b_lines, dest):
+def write_changes(module, b_lines, dest):
 
     tmpfd, tmpfile = tempfile.mkstemp()
     with open(tmpfile, 'wb') as f:
@@ -226,12 +237,9 @@ def write_changes(module, fd, b_lines, dest):
             module.fail_json(msg='failed to validate: '
                                  'rc:%s error:%s' % (rc, err))
     if valid:
-        fd.seek(0)
-        fd.truncate()
-        fd.writelines(b_lines)
-#        module.atomic_move(tmpfile,
-#                           to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
-#                           unsafe_writes=module.params['unsafe_writes'])
+        module.atomic_move(tmpfile,
+                           to_native(os.path.realpath(to_bytes(dest, errors='surrogate_or_strict')), errors='surrogate_or_strict'),
+                           unsafe_writes=module.params['unsafe_writes'])
 
 
 def check_file_attrs(module, changed, message, diff):
@@ -252,12 +260,10 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
     diff = {'before': '',
             'after': '',
-            'before_header': '{0} (content)'.format(dest),
-            'after_header': '{0} (content)'.format(dest)}
-    attr_diff = {}
-    b_dest = to_bytes(dest, errors='surrogate_or_strict')
-    backupdest = ''
+            'before_header': '%s (content)' % dest,
+            'after_header': '%s (content)' % dest}
 
+    b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
         if not create:
             module.fail_json(rc=257, msg='Destination %s does not exist !' % dest)
@@ -266,249 +272,221 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
-                module.fail_json(msg='Error creating {0} Error code: {1} Error description: {2}'.format(b_destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
         # destination must exist to be able to lock it
         if not module.check_mode:
             open(b_dest, 'ab').close()
 
-    if module.check_mode:
-        if create:
-            b_lines = []
-        else:
-            with open(b_dest, 'rb') as fd:
-                b_lines = fd.readlines()
-
-        msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
-                                                                   insertbefore, backrefs, firstmatch)
-        if not os.path.exists(b_dest):
-            if module._diff:
-                diff['before'] = to_native(b('').join(b_lines))
-                diff['after'] = to_native(b('').join(b_modified_lines))
-            return msg, changed, backupdest, diff
-
-        msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+        b_lines = []
     else:
-        with lock(dest) as fd:
+        b_lines = None
+
+    # NOTE: Avoid opening the same file in this context !
+    with open_locked(dest, module.check_mode) as fd:
+        if b_lines is None:
             b_lines = fd.readlines()
 
-            msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
-                                                                       insertbefore, backrefs, firstmatch)
+        if module._diff:
+            diff['before'] = to_native(b('').join(b_lines))
 
-            if changed:
-                if backup and os.path.exists(b_dest):
-                    backupdest = module.backup_local(dest)
-                write_changes(module, fd, b_modified_lines, dest)
-
-        msg, changed = check_file_attrs(module, changed, msg, attr_diff)
-
-    if module._diff:
-        diff['before'] = to_native(b('').join(b_lines))
-        diff['after'] = to_native(b('').join(b_modified_lines))
-        attr_diff['before_header'] = '{0} (file attributes)'.format(dest)
-        attr_diff['after_header'] = '{0} (file attributes)'.format(dest)
-    difflist = [diff, attr_diff]
-
-    return msg, changed, backupdest, difflist
-
-
-def _present_data_manipulator(b_lines, regexp, line, insertafter, insertbefore, backrefs, firstmatch):
-
-    if regexp is not None:
-        bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
-
-    if insertafter not in (None, 'BOF', 'EOF'):
-        bre_ins = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
-    elif insertbefore not in (None, 'BOF'):
-        bre_ins = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
-    else:
-        bre_ins = None
-
-    # index[0] is the line num where regexp has been found
-    # index[1] is the line num where insertafter/inserbefore has been found
-    index = [-1, -1]
-    m = None
-    b_line = to_bytes(line, errors='surrogate_or_strict')
-    for lineno, b_cur_line in enumerate(b_lines):
         if regexp is not None:
-            match_found = bre_m.search(b_cur_line)
+            bre_m = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
+
+        if insertafter not in (None, 'BOF', 'EOF'):
+            bre_ins = re.compile(to_bytes(insertafter, errors='surrogate_or_strict'))
+        elif insertbefore not in (None, 'BOF'):
+            bre_ins = re.compile(to_bytes(insertbefore, errors='surrogate_or_strict'))
         else:
-            match_found = b_line == b_cur_line.rstrip(b('\r\n'))
-        if match_found:
-            index[0] = lineno
-            m = match_found
-        elif bre_ins is not None and bre_ins.search(b_cur_line):
-            if insertafter:
-                # + 1 for the next line
-                index[1] = lineno + 1
-                if firstmatch:
-                    break
-            if insertbefore:
-                # index[1] for the previous line
-                index[1] = lineno
-                if firstmatch:
-                    break
+            bre_ins = None
 
-    msg = ''
-    changed = False
-    b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
-    # Exact line or Regexp matched a line in the file
-    if index[0] != -1:
-        if backrefs:
-            b_new_line = m.expand(b_line)
-        else:
-            # Don't do backref expansion if not asked.
-            b_new_line = b_line
+        # index[0] is the line num where regexp has been found
+        # index[1] is the line num where insertafter/inserbefore has been found
+        index = [-1, -1]
+        m = None
+        b_line = to_bytes(line, errors='surrogate_or_strict')
+        for lineno, b_cur_line in enumerate(b_lines):
+            if regexp is not None:
+                match_found = bre_m.search(b_cur_line)
+            else:
+                match_found = b_line == b_cur_line.rstrip(b('\r\n'))
+            if match_found:
+                index[0] = lineno
+                m = match_found
+            elif bre_ins is not None and bre_ins.search(b_cur_line):
+                if insertafter:
+                    # + 1 for the next line
+                    index[1] = lineno + 1
+                    if firstmatch:
+                        break
+                if insertbefore:
+                    # index[1] for the previous line
+                    index[1] = lineno
+                    if firstmatch:
+                        break
 
-        if not b_new_line.endswith(b_linesep):
-            b_new_line += b_linesep
+        msg = ''
+        changed = False
+        b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
+        # Exact line or Regexp matched a line in the file
+        if index[0] != -1:
+            if backrefs:
+                b_new_line = m.expand(b_line)
+            else:
+                # Don't do backref expansion if not asked.
+                b_new_line = b_line
 
-        # If no regexp was given and no line match is found anywhere in the file,
-        # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and m is None:
+            if not b_new_line.endswith(b_linesep):
+                b_new_line += b_linesep
 
-            # Insert lines
-            if insertafter and insertafter != 'EOF':
-                # Ensure there is a line separator after the found string
-                # at the end of the file.
-                if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
-                    b_lines[-1] = b_lines[-1] + b_linesep
+            # If no regexp was given and no line match is found anywhere in the file,
+            # insert the line appropriately if using insertbefore or insertafter
+            if regexp is None and m is None:
 
-                # If the line to insert after is at the end of the file
-                # use the appropriate index value.
-                if len(b_lines) == index[1]:
-                    if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
-                        b_lines.append(b_line + b_linesep)
-                        msg = 'line added'
-                        changed = True
-                elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
-                    b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line added'
-                    changed = True
+                # Insert lines
+                if insertafter and insertafter != 'EOF':
+                    # Ensure there is a line separator after the found string
+                    # at the end of the file.
+                    if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                        b_lines[-1] = b_lines[-1] + b_linesep
 
-            elif insertbefore and insertbefore != 'BOF':
-                # If the line to insert before is at the beginning of the file
-                # use the appropriate index value.
-                if index[1] <= 0:
-                    if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                    # If the line to insert after is at the end of the file
+                    # use the appropriate index value.
+                    if len(b_lines) == index[1]:
+                        if b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                            b_lines.append(b_line + b_linesep)
+                            msg = 'line added'
+                            changed = True
+                    elif b_lines[index[1]].rstrip(b('\r\n')) != b_line:
                         b_lines.insert(index[1], b_line + b_linesep)
                         msg = 'line added'
                         changed = True
 
-                elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
-                    b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line added'
-                    changed = True
+                elif insertbefore and insertbefore != 'BOF':
+                    # If the line to insert before is at the beginning of the file
+                    # use the appropriate index value.
+                    if index[1] <= 0:
+                        if b_lines[index[1]].rstrip(b('\r\n')) != b_line:
+                            b_lines.insert(index[1], b_line + b_linesep)
+                            msg = 'line added'
+                            changed = True
 
-        elif b_lines[index[0]] != b_new_line:
-            b_lines[index[0]] = b_new_line
-            msg = 'line replaced'
+                    elif b_lines[index[1] - 1].rstrip(b('\r\n')) != b_line:
+                        b_lines.insert(index[1], b_line + b_linesep)
+                        msg = 'line added'
+                        changed = True
+
+            elif b_lines[index[0]] != b_new_line:
+                b_lines[index[0]] = b_new_line
+                msg = 'line replaced'
+                changed = True
+
+        elif backrefs:
+            # Do absolutely nothing, since it's not safe generating the line
+            # without the regexp matching to populate the backrefs.
+            pass
+        # Add it to the beginning of the file
+        elif insertbefore == 'BOF' or insertafter == 'BOF':
+            b_lines.insert(0, b_line + b_linesep)
+            msg = 'line added'
+            changed = True
+        # Add it to the end of the file if requested or
+        # if insertafter/insertbefore didn't match anything
+        # (so default behaviour is to add at the end)
+        elif insertafter == 'EOF' or index[1] == -1:
+
+            # If the file is not empty then ensure there's a newline before the added line
+            if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
+                b_lines.append(b_linesep)
+
+            b_lines.append(b_line + b_linesep)
+            msg = 'line added'
+            changed = True
+        # insert matched, but not the regexp
+        else:
+            b_lines.insert(index[1], b_line + b_linesep)
+            msg = 'line added'
             changed = True
 
-    elif backrefs:
-        # Do absolutely nothing, since it's not safe generating the line
-        # without the regexp matching to populate the backrefs.
-        pass
-    # Add it to the beginning of the file
-    elif insertbefore == 'BOF' or insertafter == 'BOF':
-        b_lines.insert(0, b_line + b_linesep)
-        msg = 'line added'
-        changed = True
-    # Add it to the end of the file if requested or
-    # if insertafter/insertbefore didn't match anything
-    # (so default behaviour is to add at the end)
-    elif insertafter == 'EOF' or index[1] == -1:
+        if module._diff:
+            diff['after'] = to_native(b('').join(b_lines))
 
-        # If the file is not empty then ensure there's a newline before the added line
-        if b_lines and not b_lines[-1][-1:] in (b('\n'), b('\r')):
-            b_lines.append(b_linesep)
+        backupdest = ""
+        if changed and not module.check_mode:
+            if backup and os.path.exists(b_dest):
+                backupdest = module.backup_local(dest)
+            write_changes(module, b_lines, dest)
 
-        b_lines.append(b_line + b_linesep)
-        msg = 'line added'
-        changed = True
-    # insert matched, but not the regexp
-    else:
-        b_lines.insert(index[1], b_line + b_linesep)
-        msg = 'line added'
-        changed = True
+    if module.check_mode and not os.path.exists(b_dest):
+        module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
 
-    return msg, changed, b_lines
+    attr_diff = {}
+    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+    attr_diff['before_header'] = '%s (file attributes)' % dest
+    attr_diff['after_header'] = '%s (file attributes)' % dest
+
+    difflist = [diff, attr_diff]
+    module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=difflist)
 
 
 def absent(module, dest, regexp, line, backup):
 
-    diff = {'before': '',
-            'after': '',
-            'before_header': '{0} (content)'.format(dest),
-            'after_header': '{0} (content)'.format(dest)}
-    attr_diff = {}
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
-    backupdest = ''
-
     if not os.path.exists(b_dest):
         module.exit_json(changed=False, msg="file not present")
 
-    if module.check_mode:
-        with open(b_dest, 'rb') as fd:
-            b_lines = fd.readlines()
-
-        msg, changed, b_modified_lines = _absent_data_manipulator(b_lines, regexp, line)
-        found = len(b_lines) - len(b_modified_lines)
-
-        if module._diff:
-            diff['before'] = to_native(b('').join(b_lines))
-            diff['after'] = to_native(b('').join(b_modified_lines))
-
-        return msg, changed, found, backupdest, diff
-
-    else:
-        with lock(dest) as fd:
-            b_lines = fd.readlines()
-
-            msg, changed, b_modified_lines = _absent_data_manipulator(b_lines, regexp, line)
-            if changed:
-                if backup:
-                    backupdest = module.backup_local(dest)
-                write_changes(module, fd, b_modified_lines, dest)
-
-        msg, changed = check_file_attrs(module, changed, msg, attr_diff)
-
-        found = len(b_lines) - len(b_modified_lines)
-
-        if module._diff:
-            diff['before'] = to_native(b('').join(b_lines))
-            diff['after'] = to_native(b('').join(b_modified_lines))
-            attr_diff['before_header'] = '{0} (file attributes)'.format(dest)
-            attr_diff['after_header'] = '{0} (file attributes)'.format(dest)
-        difflist = [diff, attr_diff]
-
-        return msg, changed, found, backupdest, difflist
-
-
-def _absent_data_manipulator(b_lines, regexp, line):
     msg = ''
-    bre_c = None
-    b_line = to_bytes(line, errors='surrogate_or_strict')
-    changed = False
+    diff = {'before': '',
+            'after': '',
+            'before_header': '%s (content)' % dest,
+            'after_header': '%s (content)' % dest}
 
-    if regexp:
-        bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
+    # NOTE: Avoid opening the same file in this context !
+    with open_locked(dest, module.check_mode) as fd:
+        b_lines = fd.readlines()
 
-    b_lines_new = [l for l in b_lines if _matcher(l, b_line, bre_c)]
-    lines_changed = len(b_lines) - len(b_lines_new)
+        if module._diff:
+            diff['before'] = to_native(b('').join(b_lines))
 
-    if lines_changed > 0:
-        changed = True
-        msg = "{0} line(s) removed".format(lines_changed)
+        if regexp is not None:
+            bre_c = re.compile(to_bytes(regexp, errors='surrogate_or_strict'))
+        found = []
 
-    return msg, changed, b_lines_new
+        b_line = to_bytes(line, errors='surrogate_or_strict')
 
+        def matcher(b_cur_line):
+            if regexp is not None:
+                match_found = bre_c.search(b_cur_line)
+            else:
+                match_found = b_line == b_cur_line.rstrip(b('\r\n'))
+            if match_found:
+                found.append(b_cur_line)
+            return not match_found
 
-def _matcher(b_cur_line, b_line, bre_c):
-    if bre_c is not None:
-        match_found = bre_c.search(b_cur_line)
-    else:
-        match_found = b_line == b_cur_line.rstrip(b('\r\n'))
-    return not match_found
+        b_lines = [l for l in b_lines if matcher(l)]
+        changed = len(found) > 0
+
+        if module._diff:
+            diff['after'] = to_native(b('').join(b_lines))
+
+        backupdest = ""
+        if changed and not module.check_mode:
+            if backup:
+                backupdest = module.backup_local(dest)
+            write_changes(module, b_lines, dest)
+
+    if changed:
+        msg = "%s line(s) removed" % len(found)
+
+    attr_diff = {}
+    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+
+    attr_diff['before_header'] = '%s (file attributes)' % dest
+    attr_diff['after_header'] = '%s (file attributes)' % dest
+
+    difflist = [diff, attr_diff]
+
+    module.exit_json(changed=changed, found=len(found), msg=msg, backup=backupdest, diff=difflist)
 
 
 def main():
@@ -523,7 +501,7 @@ def main():
             backrefs=dict(type='bool', default=False),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
-            firstmatch=dict(default=False, type='bool'),
+            firstmatch=dict(type='bool', default=False),
             validate=dict(type='str'),
         ),
         mutually_exclusive=[['insertbefore', 'insertafter']],
@@ -563,15 +541,13 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        msg, changed, backupdest, diff = present(module, path, regexp, line, ins_aft, ins_bef, create,
-                                                 backup, backrefs, firstmatch)
-        module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
+        present(module, path, regexp, line,
+                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        msg, changed, found, backupdest, diff = absent(module, path, regexp, line, backup)
-        module.exit_json(changed=changed, found=found, msg=msg, backup=backupdest, diff=diff)
+        absent(module, path, regexp, line, backup)
 
 
 if __name__ == '__main__':
