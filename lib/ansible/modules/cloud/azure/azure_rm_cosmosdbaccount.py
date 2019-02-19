@@ -147,7 +147,7 @@ author:
 EXAMPLES = '''
   - name: Create Cosmos DB Account - min
     azure_rm_cosmosdbaccount:
-      resource_group: testResourceGroup
+      resource_group: myResourceGroup
       name: ddb1
       location: westus
       geo_rep_locations:
@@ -157,7 +157,7 @@ EXAMPLES = '''
 
   - name: Create Cosmos DB Account - max
     azure_rm_cosmosdbaccount:
-      resource_group: testResourceGroup
+      resource_group: myResourceGroup
       name: ddb1
       location: westus
       kind: mongo_db
@@ -181,7 +181,7 @@ id:
         - The unique resource identifier of the database account.
     returned: always
     type: str
-    sample: /subscriptions/subid/resourceGroups/rg1/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
 '''
 
 import time

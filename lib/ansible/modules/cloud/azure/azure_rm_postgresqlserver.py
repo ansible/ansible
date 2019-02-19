@@ -110,7 +110,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/12345678-1234-1234-1234-123412341234/resourceGroups/samplerg/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/mysqlsrv1b6dd89593
 version:
     description:
         - 'Server version. Possible values include: C(9.5), C(9.6), C(10)'
