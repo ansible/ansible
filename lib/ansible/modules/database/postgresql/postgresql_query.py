@@ -49,6 +49,7 @@ options:
       be a role that the current login_user is a member of.
     - Permissions checking for SQL commands is carried out as though
       the session_role were the one that had logged in originally.
+    type: str
   db:
     description:
     - Name of database to connect to and run queries against.
@@ -228,6 +229,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive=(('positional_args', 'named_args'),),
         supports_check_mode=True,
     )
 
