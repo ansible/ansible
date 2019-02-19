@@ -140,8 +140,7 @@ options:
     required: true
     description:
     - The url to the SANtricity Web Services Proxy or Embedded Web Services API.
-    example:
-    - https://prod-1.wahoo.acme.com/devmgr/v2
+      Example https://prod-1.wahoo.acme.com/devmgr/v2
   validate_certs:
     required: false
     default: true

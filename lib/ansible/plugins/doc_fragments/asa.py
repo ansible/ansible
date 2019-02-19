@@ -41,7 +41,7 @@ options:
           - Specifies the DNS host name or address for connecting to the remote
             device over the specified transport.  The value of host is used as
             the destination address for the transport.
-        type: host
+        type: str
       port:
         description:
           - Specifies the port to use when building the connection to the remote
