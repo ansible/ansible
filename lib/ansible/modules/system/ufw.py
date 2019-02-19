@@ -347,8 +347,6 @@ def main():
 
     params = module.params
 
-    # Ensure at least one of the command arguments are given
-
     commands = dict((key, params[key]) for key in command_keys if params[key])
 
     if (params['interface'] is not None and params['direction'] is None):
