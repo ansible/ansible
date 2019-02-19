@@ -1,0 +1,3 @@
+bugfixes:
+  - ec2 - if the private_ip has been provided for the new network interface it shouldn't also be added to top level
+    parameters for run_instances()
