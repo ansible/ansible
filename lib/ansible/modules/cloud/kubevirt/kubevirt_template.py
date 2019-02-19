@@ -32,7 +32,7 @@ options:
               will be created exactly as defined here, with any parameter values substituted in prior to creation.
               The definition of these objects can reference parameters defined earlier.
             - As part of the the list user can pass also I(VirtualMachine) kind. When passing I(VirtualMachine)
-              user must use Ansible strucutre of the paramters not the Kubernetes API structure. For more information
+              user must use Ansible structure of the parameters not the Kubernetes API structure. For more information
               please take a look at M(kubevirt_vm) module and at EXAMPLES section, where you can see example.
         type: list
     display_name:
@@ -41,7 +41,8 @@ options:
         type: str
     description:
         description:
-            - "A description of the template. Include enough detail that the user will understand what is being deployed
+            - A description of the template.
+            - Include enough detail that the user will understand what is being deployed...
                and any caveats they need to know before deploying. It should also provide links to additional information,
                such as a README file."
         type: str
