@@ -21,7 +21,6 @@ short_description: Run PostgreSQL queries
 description:
 - Runs arbitraty PostgreSQL queries.
 - Can run queries from SQL script files.
-- Query result can be assigned to a variable to reuse during Ansible runtime.
 version_added: "2.8"
 options:
   query:
