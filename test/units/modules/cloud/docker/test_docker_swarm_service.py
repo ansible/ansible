@@ -101,11 +101,14 @@ def test_get_docker_environment(mocker, docker_swarm_service):
 
 
 def test_get_nanoseconds_from_raw_option(docker_swarm_service):
-    value = docker_swarm_service.get_nanoseconds_from_raw_option(None)
+    value = docker_swarm_service.get_nanoseconds_from_raw_option('test', None)
     assert value is None
 
-    value = docker_swarm_service.get_nanoseconds_from_raw_option('1m30s535ms')
+    value = docker_swarm_service.get_nanoseconds_from_raw_option('test', '1m30s535ms')
     assert value == 90535000000
 
-    value = docker_swarm_service.get_nanoseconds_from_raw_option(10000000000)
+    value = docker_swarm_service.get_nanoseconds_from_raw_option('test', 10000000000)
     assert value == 10000000000
+
+    with pytest.raises(ValueError):
+        docker_swarm_service.get_nanoseconds_from_raw_option('test', [])

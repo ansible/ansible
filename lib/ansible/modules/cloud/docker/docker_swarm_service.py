@@ -712,15 +712,21 @@ def get_docker_environment(env, env_files):
     return sorted(env_list)
 
 
-def get_nanoseconds_from_raw_option(value):
+def get_nanoseconds_from_raw_option(name, value):
     if value is None:
         return None
     elif isinstance(value, int):
         return value
     elif isinstance(value, string_types):
-        return convert_duration_to_nanosecond(value)
+        try:
+            return int(value)
+        except ValueError:
+            return convert_duration_to_nanosecond(value)
     else:
-        raise ValueError
+        raise ValueError(
+            'Invalid type for %s %s (%s). Only string or int allowed.'
+            % (name, value, type(value))
+        )
 
 
 class DockerService(DockerBaseClass):
@@ -883,15 +889,19 @@ class DockerService(DockerBaseClass):
         s.env = get_docker_environment(ap['env'], ap['env_files'])
 
         s.restart_policy_delay = get_nanoseconds_from_raw_option(
+            'restart_policy_delay',
             ap['restart_policy_delay']
         )
         s.restart_policy_window = get_nanoseconds_from_raw_option(
+            'restart_policy_window',
             ap['restart_policy_window']
         )
         s.update_delay = get_nanoseconds_from_raw_option(
+            'update_delay',
             ap['update_delay']
         )
         s.update_monitor = get_nanoseconds_from_raw_option(
+            'update_monitor',
             ap['update_monitor']
         )
 
