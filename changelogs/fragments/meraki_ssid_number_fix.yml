@@ -1,0 +1,2 @@
+bugfixes:
+- meraki_ssid - Fix module to actually perform changes when state is present and SSID is referenced by number and not name.

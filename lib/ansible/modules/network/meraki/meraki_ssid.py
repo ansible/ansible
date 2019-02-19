@@ -375,8 +375,8 @@ def main():
     meraki.params['follow_redirects'] = 'all'
 
     query_urls = {'ssid': '/networks/{net_id}/ssids'}
-    query_url = {'ssid': 'networks/{net_id}/ssids/'}
-    update_url = {'ssid': 'networks/{net_id}/ssids/'}
+    query_url = {'ssid': '/networks/{net_id}/ssids/'}
+    update_url = {'ssid': '/networks/{net_id}/ssids/'}
 
     meraki.url_catalog['get_all'].update(query_urls)
     meraki.url_catalog['get_one'].update(query_url)
@@ -434,8 +434,10 @@ def main():
             if meraki.params[v] is not None:
                 payload[k] = meraki.params[v]
         ssids = get_ssids(meraki, net_id)
-        original = ssids[get_ssid_number(meraki.params['name'], ssids)]
-        # meraki.fail_json(msg=meraki.is_update_required(original, payload), original=original, payload=payload)
+        number = meraki.params['number']
+        if number is None:
+            number = get_ssid_number(meraki.params['name'], ssids)
+        original = ssids[number]
         if meraki.is_update_required(original, payload):
             ssid_id = meraki.params['number']
             if ssid_id is None:  # Name should be used to lookup number
