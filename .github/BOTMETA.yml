@@ -140,6 +140,7 @@ files:
     labels: [ cloud, ovirt ]
     maintainers: $team_ovirt
   $modules/cloud/misc/proxmox.py: &virt
+    ignored: skvidal vincentvdk
     keywords: [ kvm, libvirt, proxmox, qemu ]
     labels: [ cloud, virt ]
     maintainers: $team_virt
