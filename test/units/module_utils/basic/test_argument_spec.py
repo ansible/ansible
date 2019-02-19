@@ -345,11 +345,12 @@ class TestComplexOptions:
          ),
         # Check required_by options
         ({"foobar": [{"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}]},
-         [{'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required'}]
+         [{'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required',
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}]
          ),
         # Check for elements in sub-options
         ({"foobar": [{"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"], "bar2": ['1', 1], "bar3":['1.3', 1.3, 1]}]},
-         [{'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': None, 'baz': None, 'bam': 'required_one_of',
+         [{'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': None, 'baz': None, 'bam': 'required_one_of',
            'bar1': ["1", "good", "yes"], 'bar2': [1, 1], 'bar3': [1.3, 1.3, 1.0], 'bar4': None}]
          ),
     )
@@ -377,15 +378,16 @@ class TestComplexOptions:
          ),
         # Check required_by options
         ({"foobar": {"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}},
-         {'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required'}
-        ),
+         {'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None,
+          'foo': 'required', 'bar1': None, 'bar3': None, 'bar2': None, 'bar4': None}
+         ),
         # Check for elements in sub-options
         ({"foobar": {"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"],
                      "bar2": ['1', 1], "bar3": ['1.3', 1.3, 1]}},
-         {'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': None,
+         {'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': None,
           'baz': None, 'bam': 'required_one_of',
           'bar1': ["1", "good", "yes"], 'bar2': [1, 1], 'bar3': [1.3, 1.3, 1.0], 'bar4': None}
-        ),
+         ),
     )
 
     # (Parameters, failure message)
