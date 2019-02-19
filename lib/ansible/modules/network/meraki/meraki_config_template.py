@@ -164,9 +164,9 @@ def bind(meraki, net_id, template_id):
 
 
 def unbind(meraki, net_id):
-        path = meraki.construct_path('unbind', net_id=net_id)
-        meraki.result['changed'] = True
-        return meraki.request(path, method='POST')
+    path = meraki.construct_path('unbind', net_id=net_id)
+    meraki.result['changed'] = True
+    return meraki.request(path, method='POST')
 
 
 def main():
