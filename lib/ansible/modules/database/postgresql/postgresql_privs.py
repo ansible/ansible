@@ -294,6 +294,7 @@ VALID_DEFAULT_OBJS = {'TABLES': ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 
 class Error(Exception):
     pass
 
+
 def role_exists(module, cursor, rolname):
     """Check user exists or not"""
     query = "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % rolname
@@ -306,6 +307,7 @@ def role_exists(module, cursor, rolname):
         module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
 
     return False
+
 
 # We don't have functools.partial in Python < 2.5
 def partial(f, *args, **kwargs):
