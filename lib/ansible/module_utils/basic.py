@@ -779,7 +779,7 @@ class AnsibleModule(object):
         self._string_conversion_action = ''
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
+        self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
 
@@ -1574,7 +1574,7 @@ class AnsibleModule(object):
             param = self.params
 
         # this uses exceptions as it happens before we can safely call fail_json
-        alias_results, legal_inputs = handle_aliases(spec, param, self._legal_inputs)
+        alias_results, legal_inputs = handle_aliases(spec, param)
         self._legal_inputs = legal_inputs
         return alias_results
 
