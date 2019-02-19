@@ -1,65 +1,77 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, GeekChimp - Franck Nijhof <franck@geekchimp.com>
+# Copyright: (c) 2014, GeekChimp - Franck Nijhof <franck@geekchimp.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: osx_defaults
-author: Franck Nijhof (@frenck)
-short_description: osx_defaults allows users to read, write, and delete macOS user defaults from Ansible
+author:
+- Franck Nijhof (@frenck)
+short_description: Manage macOS user defaults
 description:
   - osx_defaults allows users to read, write, and delete macOS user defaults from Ansible scripts.
-    macOS applications and other programs use the defaults system to record user preferences and other
-    information that must be maintained when the applications aren't running (such as default font for new
+  - macOS applications and other programs use the defaults system to record user preferences and other
+    information that must be maintained when the applications are not running (such as default font for new
     documents, or the position of an Info panel).
 version_added: "2.0"
 options:
   domain:
     description:
-      - The domain is a domain name of the form com.companyname.appname.
+      - The domain is a domain name of the form C(com.companyname.appname).
+    type: str
     default: NSGlobalDomain
   host:
     description:
-      - The host on which the preference should apply. The special value "currentHost" corresponds to the
-        "-currentHost" switch of the defaults commandline tool.
+      - The host on which the preference should apply.
+      - The special value C(currentHost) corresponds to the C(-currentHost) switch of the defaults commandline tool.
+    type: str
     version_added: "2.1"
   key:
     description:
-      - The key of the user preference
+      - The key of the user preference.
+    type: str
     required: true
   type:
     description:
       - The type of value to write.
+    type: str
+    choices: [ array, bool, boolean, date, float, int, integer, string ]
     default: string
-    choices: [ "array", "bool", "boolean", "date", "float", "int", "integer", "string" ]
   array_add:
     description:
       - Add new elements to the array for a key which has an array as its value.
     type: bool
-    default: 'no'
+    default: no
   value:
     description:
-      - The value to write. Only required when state = present.
+      - The value to write.
+      - Only required when C(state=present).
+    type: raw
   state:
     description:
-      - The state of the user defaults
+      - The state of the user defaults.
+    type: str
+    choices: [ absent, present ]
     default: present
-    choices: [ "present", "absent" ]
+  path:
+    description:
+      - The path in which to search for C(osx_defaults).
+    type: str
+    default: /usr/bin:/usr/local/bin
 notes:
     - Apple Mac caches defaults. You may need to logout and login to apply the changes.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - osx_defaults:
     domain: com.apple.Safari
     key: IncludeInternalDebugMenu
@@ -345,52 +357,14 @@ class OSXDefaults(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            domain=dict(
-                default="NSGlobalDomain",
-                required=False,
-            ),
-            host=dict(
-                default=None,
-                required=False,
-            ),
-            key=dict(
-                default=None,
-            ),
-            type=dict(
-                default="string",
-                required=False,
-                choices=[
-                    "array",
-                    "bool",
-                    "boolean",
-                    "date",
-                    "float",
-                    "int",
-                    "integer",
-                    "string",
-                ],
-            ),
-            array_add=dict(
-                default=False,
-                required=False,
-                type='bool',
-            ),
-            value=dict(
-                default=None,
-                required=False,
-                type='raw'
-            ),
-            state=dict(
-                default="present",
-                required=False,
-                choices=[
-                    "absent", "present"
-                ],
-            ),
-            path=dict(
-                default="/usr/bin:/usr/local/bin",
-                required=False,
-            )
+            domain=dict(type='str', default='NSGlobalDomain'),
+            host=dict(type='str'),
+            key=dict(type='str'),
+            type=dict(type='str', default='string', choices=['array', 'bool', 'boolean', 'date', 'float', 'int', 'integer', 'string']),
+            array_add=dict(type='bool', default=False),
+            value=dict(type='raw'),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            path=dict(type='str', default='/usr/bin:/usr/local/bin'),
         ),
         supports_check_mode=True,
     )

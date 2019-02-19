@@ -1,20 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Michael Scherer <misc@zarb.org>
+# Copyright: (c) 2015, Michael Scherer <misc@zarb.org>
 # inspired by code of github.com/dandiker/
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: selinux_permissive
 short_description: Change permissive domain in SELinux policy
@@ -25,29 +23,34 @@ options:
   domain:
     description:
         - The domain that will be added or removed from the list of permissive domains.
+    type: str
     required: true
+    default: ''
+    aliases: [ name ]
   permissive:
     description:
         - Indicate if the domain should or should not be set as permissive.
-    required: true
     type: bool
+    required: true
   no_reload:
     description:
         - Disable reloading of the SELinux policy after making change to a domain's permissive setting.
         - The default is C(no), which causes policy to be reloaded when a domain changes state.
         - Reloading the policy does not work on older versions of the C(policycoreutils-python) library, for example in EL 6."
     type: bool
-    default: 'no'
+    default: no
   store:
     description:
-      - "Name of the SELinux policy store to use."
+      - Name of the SELinux policy store to use.
+    type: str
 notes:
     - Requires a recent version of SELinux and C(policycoreutils-python) (EL 6 or newer).
 requirements: [ policycoreutils-python ]
-author: Michael Scherer (@mscherer) <misc@zarb.org>
+author:
+- Michael Scherer (@mscherer) <misc@zarb.org>
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Change the httpd_t domain to permissive
   selinux_permissive:
     name: httpd_t
@@ -71,12 +74,12 @@ from ansible.module_utils._text import to_native
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            domain=dict(aliases=['name'], required=True),
-            store=dict(required=False, default=''),
+            domain=dict(type='str', required=True, aliases=['name']),
+            store=dict(type='str', default=''),
             permissive=dict(type='bool', required=True),
-            no_reload=dict(type='bool', required=False, default=False),
+            no_reload=dict(type='bool', default=False),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     # global vars

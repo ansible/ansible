@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: user
 version_added: "0.2"
 short_description: Manage user accounts
@@ -38,7 +38,6 @@ options:
             - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be C(yes) if the I(system) option is used.
         type: bool
-        required: false
         version_added: "2.6"
     non_unique:
         description:
@@ -163,8 +162,8 @@ options:
         description:
             - Optionally specify the SSH key filename.
             - If this is a relative filename then it will be relative to the user's home directory.
+            - This parameter defaults to I(.ssh/id_rsa).
         type: path
-        default: .ssh/id_rsa
         version_added: "0.9"
     ssh_key_comment:
         description:
@@ -259,7 +258,7 @@ author:
 - Stephen Fromm (@sfromm)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
   user:
     name: johnd
@@ -300,7 +299,7 @@ EXAMPLES = '''
     expires: -1
 '''
 
-RETURN = '''
+RETURN = r'''
 append:
   description: Whether or not to append the user to groups
   returned: When state is 'present' and the user exists

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Hewlett-Packard Development Company, L.P.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -10,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: puppet
 short_description: Runs puppet
@@ -21,65 +22,80 @@ options:
   timeout:
     description:
       - How long to wait for I(puppet) to finish.
+    type: str
     default: 30m
   puppetmaster:
     description:
       - The hostname of the puppetmaster to contact.
+    type: str
   modulepath:
     description:
       - Path to an alternate location for puppet modules.
+    type: str
     version_added: "2.4"
   manifest:
     description:
       - Path to the manifest file to run puppet apply on.
+    type: str
   noop:
     description:
       - Override puppet.conf noop mode.
-      - Undefined, use default or puppet.conf value if defined.
-      - true, Run Puppet agent with C(--noop) switch set.
-      - false, Run Puppet agent with C(--no-noop) switch set.
+      - When C(yes), run Puppet agent with C(--noop) switch set.
+      - When C(no), run Puppet agent with C(--no-noop) switch set.
+      - When unset (default), use default or puppet.conf value if defined.
+    type: bool
     version_added: "2.8"
   facts:
     description:
       - A dict of values to pass in as persistent external facter facts.
+    type: dict
   facter_basename:
     description:
       - Basename of the facter output file.
+    type: str
     default: ansible
   environment:
     description:
       - Puppet environment to be used.
+    type: str
   logdest:
-    description: |
-      Where the puppet logs should go, if puppet apply is being used. C(all)
-      will go to both C(stdout) and C(syslog).
-    choices: [ stdout, syslog, all ]
+    description:
+    - Where the puppet logs should go, if puppet apply is being used.
+    - C(all) will go to both C(stdout) and C(syslog).
+    type: str
+    choices: [ all, stdout, syslog ]
     default: stdout
     version_added: "2.1"
   certname:
     description:
       - The name to use when handling certificates.
+    type: str
     version_added: "2.1"
   tags:
     description:
-      - A comma-separated list of puppet tags to be used.
+      - A list of puppet tags to be used.
+    type: list
     version_added: "2.1"
   execute:
     description:
       - Execute a specific piece of Puppet code.
       - It has no effect with a puppetmaster.
+    type: str
     version_added: "2.1"
   summarize:
     description:
-      - Whether to print a transaction summary
+      - Whether to print a transaction summary.
+    type: bool
     version_added: "2.7"
   verbose:
     description:
-      - Print extra information
+      - Print extra information.
+    type: bool
     version_added: "2.7"
   debug:
     description:
-      - Enable full debugging
+      - Enable full debugging.
+    type: bool
     version_added: "2.7"
 requirements:
 - puppet
@@ -87,7 +103,7 @@ author:
 - Monty Taylor (@emonty)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Run puppet agent and fail if anything goes wrong
   puppet:
 
@@ -109,11 +125,13 @@ EXAMPLES = '''
 
 - name: Run puppet using a specific tags
   puppet:
-    tags: update,nginx
+    tags:
+    - update
+    - nginx
 
 - name: Run puppet agent in noop mode
   puppet:
-    noop: true
+    noop: yes
 
 - name: Run a manifest with debug, log to both syslog and stdout, specify module path
   puppet:
@@ -160,9 +178,9 @@ def main():
             modulepath=dict(type='str'),
             manifest=dict(type='str'),
             noop=dict(required=False, type='bool'),
-            logdest=dict(type='str', default='stdout', choices=['stdout',
-                                                                'syslog',
-                                                                'all']),
+            logdest=dict(type='str', default='stdout', choices=['all',
+                                                                'stdout',
+                                                                'syslog']),
             # internal code to work with --diff, do not use
             show_diff=dict(type='bool', default=False, aliases=['show-diff']),
             facts=dict(type='dict'),
@@ -179,7 +197,7 @@ def main():
         mutually_exclusive=[
             ('puppetmaster', 'manifest'),
             ('puppetmaster', 'manifest', 'execute'),
-            ('puppetmaster', 'modulepath')
+            ('puppetmaster', 'modulepath'),
         ],
     )
     p = module.params
