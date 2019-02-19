@@ -25,23 +25,29 @@ options:
     auth_key:
         description:
         - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        type: str
     net_name:
         description:
         - Name of a network.
         aliases: [network]
+        type: str
     net_id:
         description:
         - ID number of a network.
+        type: str
     org_name:
         description:
         - Name of organization associated to a network.
+        type: str
     org_id:
         description:
         - ID of organization associated to a network.
+        type: str
     subset:
         description:
         - Display only certain facts.
         choices: [categories, policy]
+        type: str
 
 author:
     - Kevin Breit (@kbreit)
