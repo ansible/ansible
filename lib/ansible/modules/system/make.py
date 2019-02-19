@@ -1,23 +1,22 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
+# Copyright: (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: make
 short_description: Run targets in a Makefile
-requirements: [ make ]
+requirements:
+- make
 version_added: "2.1"
 author: Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 description:
@@ -26,21 +25,25 @@ options:
   target:
     description:
       - The target to run.
-      - "Examples: C(install) or C(test)"
+      - Typically this would be something like C(install),C(test) or C(all)."
+    type: str
   params:
     description:
-      - Any extra parameters to pass to make
+      - Any extra parameters to pass to make.
+    type: dict
   chdir:
     description:
-      - Change to this directory before running make
+      - Change to this directory before running make.
+    type: path
     required: true
   file:
     description:
-      - Use a custom Makefile
-    version_added: 2.5
+      - Use a custom Makefile.
+    type: path
+    version_added: '2.5'
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Build the default target
   make:
     chdir: /home/ubuntu/cool-project
@@ -66,9 +69,7 @@ EXAMPLES = '''
     file: /some-project/Makefile
 '''
 
-# TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
-# fix this
-RETURN = '''# '''
+RETURN = r'''# '''
 
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
@@ -105,13 +106,13 @@ def sanitize_output(output):
 
 def main():
     module = AnsibleModule(
-        supports_check_mode=True,
         argument_spec=dict(
-            target=dict(required=False, default=None, type='str'),
-            params=dict(required=False, default=None, type='dict'),
-            chdir=dict(required=True, default=None, type='path'),
-            file=dict(required=False, default=None, type='path')
+            target=dict(type='str'),
+            params=dict(type='dict'),
+            chdir=dict(type='path', required=True),
+            file=dict(type='path'),
         ),
+        supports_check_mode=True,
     )
     # Build up the invocation of `make` we are going to use
     # For non-Linux OSes, prefer gmake (GNU make) over make

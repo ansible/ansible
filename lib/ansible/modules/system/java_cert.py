@@ -1,5 +1,6 @@
 #!/usr/bin/python
-#
+# -*- coding: utf-8 -*-
+
 # Copyright: (c) 2013, RSD Services S.A
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -10,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: java_cert
 version_added: '2.3'
@@ -21,62 +22,75 @@ description:
 options:
   cert_url:
     description:
-      - Basic URL to fetch SSL certificate from. One of cert_url or cert_path is required to load certificate.
+      - Basic URL to fetch SSL certificate from.
+      - One of iC(cert_url) or C(cert_path) is required to load certificate.
+    type: str
   cert_port:
     description:
-      - Port to connect to URL. This will be used to create server URL:PORT
+      - Port to connect to URL.
+      - This will be used to create server URL:PORT.
+    type: int
     default: 443
   cert_path:
     description:
-      - Local path to load certificate from. One of cert_url or cert_path is required to load certificate.
+      - Local path to load certificate from.
+      - One of cert_url or cert_path is required to load certificate.
+    type: path
   cert_alias:
     description:
-      - Imported certificate alias. The alias is used when checking for the
-        presence of a certificate in the keystore.
+      - Imported certificate alias.
+      - The alias is used when checking for the presence of a certificate in the keystore.
+    type: str
   pkcs12_path:
     description:
       - Local path to load PKCS12 keystore from.
+    type: path
     version_added: "2.4"
   pkcs12_password:
     description:
       - Password for importing from PKCS12 keystore.
+    type: str
     default: ''
     version_added: "2.4"
   pkcs12_alias:
     description:
       - Alias in the PKCS12 keystore.
-    default: 1
+    type: str
     version_added: "2.4"
   keystore_path:
     description:
       - Path to keystore.
+    type: path
   keystore_pass:
     description:
       - Keystore password.
+    type: str
     required: true
   keystore_create:
     description:
-      - Create keystore if it doesn't exist
+      - Create keystore if it does not exist.
     type: bool
   keystore_type:
     description:
       - Keystore type (JCEKS, JKS).
-    default: None
+    type: str
     version_added: "2.8"
   executable:
     description:
       - Path to keytool binary if not used we search in PATH for it.
+    type: str
     default: keytool
   state:
     description:
       - Defines action which can be either certificate import or removal.
+    type: str
     choices: [ absent, present ]
     default: present
 author:
 - Adam Hamsik (@haad)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Import SSL certificate from google.com to a given cacerts keystore
   java_cert:
     cert_url: google.com
@@ -123,7 +137,7 @@ EXAMPLES = '''
     state: present
 '''
 
-RETURN = '''
+RETURN = r'''
 msg:
   description: Output from stdout of keytool command after execution of given command.
   returned: success
@@ -131,13 +145,13 @@ msg:
   sample: "Module require existing keystore at keystore_path '/tmp/test/cacerts'"
 
 rc:
-  description: Keytool command execution return value
+  description: Keytool command execution return value.
   returned: success
   type: int
   sample: "0"
 
 cmd:
-  description: Executed command to get action done
+  description: Executed command to get action done.
   returned: success
   type: str
   sample: "keytool -importcert -noprompt -keystore"
@@ -310,11 +324,11 @@ def main():
         pkcs12_password=dict(type='str', no_log=True),
         pkcs12_alias=dict(type='str'),
         cert_alias=dict(type='str'),
-        cert_port=dict(type='int', default='443'),
+        cert_port=dict(type='int', default=443),
         keystore_path=dict(type='path'),
         keystore_pass=dict(type='str', required=True, no_log=True),
         keystore_create=dict(type='bool', default=False),
-        keystore_type=dict(type='str', default=None),
+        keystore_type=dict(type='str'),
         executable=dict(type='str', default='keytool'),
         state=dict(type='str', default='present', choices=['absent', 'present']),
     )
