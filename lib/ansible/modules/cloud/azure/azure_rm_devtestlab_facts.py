@@ -64,7 +64,7 @@ labs:
                 - The identifier of the resource.
             returned: always
             type: str
-            sample: /subscriptions/{subscription-id}/resourcegroups/testrg/providers/microsoft.devtestlab/labs/testlab
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/testrg/providers/microsoft.devtestlab/labs/testlab
         resource_group:
             description:
                 - The name of the resource.
@@ -150,7 +150,7 @@ except ImportError:
     pass
 
 
-class AzureRMLabFacts(AzureRMModuleBase):
+class AzureRMDevTestLabFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -172,7 +172,7 @@ class AzureRMLabFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMLabFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDevTestLabFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -257,7 +257,7 @@ class AzureRMLabFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMLabFacts()
+    AzureRMDevTestLabFacts()
 
 
 if __name__ == '__main__':
