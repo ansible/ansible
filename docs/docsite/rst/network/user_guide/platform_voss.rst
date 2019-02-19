@@ -5,7 +5,7 @@ VOSS Platform Options
 ***************************************
 
 Extreme VOSS Ansible modules only support CLI connections today. This page offers details on how to
-use ``network_cli`` on VOSS in Ansible >= 2.7.
+use ``network_cli`` on VOSS in Ansible.
 
 .. contents:: Topics
 
@@ -36,8 +36,8 @@ Connections Available
 
 VOSS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
-Using CLI in Ansible >= 2.7
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI ``group_vars/voss.yml``
 -----------------------------------

@@ -4,7 +4,7 @@
 IronWare Platform Options
 ***************************************
 
-IronWare supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IronWare in Ansible 2.7. 
+IronWare supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IronWare in Ansible.
 
 .. contents:: Topics
 
@@ -34,8 +34,8 @@ Connections Available
 
 For legacy playbooks, IronWare still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
 
-Using CLI in Ansible 2.6
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI ``group_vars/mlx.yml``
 ----------------------------------
