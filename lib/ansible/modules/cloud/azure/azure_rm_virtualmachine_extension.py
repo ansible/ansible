@@ -80,7 +80,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_extension:
         name: myvmextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_machine_name: myvm
         publisher: Microsoft.Azure.Extensions
         virtual_machine_extension_type: CustomScript
@@ -92,7 +92,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_extension:
         name: myvmextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_machine_name: myvm
         state: absent
 '''
