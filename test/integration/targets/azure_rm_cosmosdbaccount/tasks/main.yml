@@ -112,6 +112,104 @@
     that:
       - output.changed
 
+- name: Get facts of single account
+  azure_rm_cosmosdbaccount_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.accounts[0]['id'] != None
+      - output.accounts[0]['resource_group'] != None
+      - output.accounts[0]['name'] != None
+      - output.accounts[0]['location'] != None
+      - output.accounts[0]['kind'] != None
+      - output.accounts[0]['consistency_policy'] != None
+      - output.accounts[0]['failover_policies'] != None
+      - output.accounts[0]['read_locations'] != None
+      - output.accounts[0]['write_locations'] != None
+      - output.accounts[0]['database_account_offer_type'] != None
+      - output.accounts[0]['ip_range_filter'] != None
+      - output.accounts[0]['is_virtual_network_filter_enabled'] != None
+      - output.accounts[0]['enable_automatic_failover'] != None
+      - output.accounts[0]['enable_cassandra'] != None
+      - output.accounts[0]['enable_table'] != None
+      - output.accounts[0]['enable_gremlin'] != None
+      - output.accounts[0]['virtual_network_rules'] != None
+      - output.accounts[0]['enable_multiple_write_locations'] != None
+      - output.accounts[0]['document_endpoint'] != None
+      - output.accounts[0]['provisioning_state'] != None
+      - output.accounts[0]['tags'] != None
+
+- name: Get facts with keys
+  azure_rm_cosmosdbaccount_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    retrieve_keys: all
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.accounts[0]['primary_master_key'] != None
+      - output.accounts[0]['secondary_master_key'] != None
+      - output.accounts[0]['primary_readonly_master_key'] != None
+      - output.accounts[0]['secondary_readonly_master_key'] != None
+
+- name: Get facts with readonly keys
+  azure_rm_cosmosdbaccount_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+    retrieve_keys: readonly
+    retrieve_connection_strings: yes
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - "'primary_master_key' not in output.accounts[0]"
+      - "'secondary_master_key' not in output.accounts[0]"
+      - output.accounts[0]['primary_readonly_master_key'] != None
+      - output.accounts[0]['secondary_readonly_master_key'] != None
+      - output.accounts[0]['connection_strings'] | length > 0
+
+- name: List acounts by resource group
+  azure_rm_cosmosdbaccount_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ dbname }}"
+  register: output
+
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.accounts[0]['id'] != None
+      - output.accounts[0]['resource_group'] != None
+      - output.accounts[0]['name'] != None
+      - output.accounts[0]['location'] != None
+      - output.accounts[0]['kind'] != None
+      - output.accounts[0]['consistency_policy'] != None
+      - output.accounts[0]['failover_policies'] != None
+      - output.accounts[0]['read_locations'] != None
+      - output.accounts[0]['write_locations'] != None
+      - output.accounts[0]['database_account_offer_type'] != None
+      - output.accounts[0]['ip_range_filter'] != None
+      - output.accounts[0]['is_virtual_network_filter_enabled'] != None
+      - output.accounts[0]['enable_automatic_failover'] != None
+      - output.accounts[0]['enable_cassandra'] != None
+      - output.accounts[0]['enable_table'] != None
+      - output.accounts[0]['enable_gremlin'] != None
+      - output.accounts[0]['virtual_network_rules'] != None
+      - output.accounts[0]['enable_multiple_write_locations'] != None
+      - output.accounts[0]['document_endpoint'] != None
+      - output.accounts[0]['provisioning_state'] != None
+      - output.accounts[0]['tags'] != None
+
 - name: Delete instance of Database Account -- check mode
   azure_rm_cosmosdbaccount:
     resource_group: "{{ resource_group }}"
