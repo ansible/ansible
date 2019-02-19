@@ -499,9 +499,9 @@ def main():
         mutually_exclusive=[('failover', 'region', 'weight')],
         # failover, region and weight require identifier
         required_by=dict(
-            failover=('identifier'),
-            region=('identifier'),
-            weight=('identifier'),
+            failover=('identifier',),
+            region=('identifier',),
+            weight=('identifier',),
         ),
     )
 
