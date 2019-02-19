@@ -98,6 +98,8 @@ if ($records -ne $null)
             {
                 $record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode @extra_args
+
+                $result.changed = $true
             }
 
             # Cross this one off the list, so we don't try adding it later
@@ -108,6 +110,8 @@ if ($records -ne $null)
             # This record doesn't match any of the values, and must be removed
 
             $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$check_mode @extra_args
+
+            $result.changed = $true
         }
     }
 
@@ -123,6 +127,7 @@ if ($values -ne $null -and $values.Count -gt 0)
         $splat_args = @{ $type = $true; $record_argument_name = $value }
         Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$check_mode @extra_args
     }
+    $result.changed = $true
 }
 
 $records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
@@ -144,7 +149,9 @@ function are_different ($x,$y) {
   return [bool](Compare-Object -DifferenceObject $a -ReferenceObject $b)
 }
 
-$result.changed = are_different $after $before
+if (-not $check_mode) {
+  $result.changed = are_different $after $before
+}
 
 
 Exit-Json -obj $result
