@@ -294,6 +294,18 @@ VALID_DEFAULT_OBJS = {'TABLES': ('ALL', 'SELECT', 'INSERT', 'UPDATE', 'DELETE', 
 class Error(Exception):
     pass
 
+def role_exists(module, cursor, rolname):
+    """Check user exists or not"""
+    query = "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % rolname
+    try:
+        cursor.execute(query)
+        if cursor.rowcount > 0:
+            return True
+
+    except Exception as e:
+        module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
+
+    return False
 
 # We don't have functools.partial in Python < 2.5
 def partial(f, *args, **kwargs):
@@ -313,8 +325,9 @@ def partial(f, *args, **kwargs):
 class Connection(object):
     """Wrapper around a psycopg2 connection with some convenience methods"""
 
-    def __init__(self, params):
+    def __init__(self, params, module):
         self.database = params.database
+        self.module = module
         # To use defaults values, keyword arguments must be absent, so
         # check which values are empty and don't include in the **kw
         # dictionary
@@ -545,7 +558,14 @@ class Connection(object):
         if roles == 'PUBLIC':
             for_whom = 'PUBLIC'
         else:
-            for_whom = ','.join(pg_quote_identifier(r, 'role') for r in roles)
+            for_whom = []
+            for r in roles:
+                if not role_exists(self.module, self.cursor, r):
+                    self.module.warn("Role '%s' does not exist, pass it" % r.strip())
+                else:
+                    for_whom.append(pg_quote_identifier(r, 'role'))
+
+            for_whom = ','.join(for_whom)
 
         status_before = get_status(objs)
 
@@ -719,7 +739,7 @@ def main():
     if not psycopg2:
         module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
     try:
-        conn = Connection(p)
+        conn = Connection(p, module)
     except psycopg2.Error as e:
         module.fail_json(msg='Could not connect to database: %s' % to_native(e), exception=traceback.format_exc())
     except TypeError as e:
@@ -775,6 +795,11 @@ def main():
             roles = 'PUBLIC'
         else:
             roles = p.roles.split(',')
+
+        if roles != 'PUBLIC':
+            if len(roles) == 1 and not role_exists(module, conn.cursor, roles[0]):
+                module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
+                module.exit_json(changed=False)
 
         changed = conn.manipulate_privs(
             obj_type=p.type,
