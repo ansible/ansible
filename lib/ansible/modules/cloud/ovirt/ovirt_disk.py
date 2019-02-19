@@ -504,7 +504,7 @@ class DisksModule(BaseModule):
                 ],
             ) if logical_unit else None,
         )
-        if hasattr(disk, 'initial_size'):
+        if hasattr(disk, 'initial_size') and self._module.params['upload_image_path']:
             disk.initial_size = convert_to_bytes(
                 self._module.params.get('size')
             )
