@@ -330,6 +330,18 @@ class ConfigManager(object):
                     pvars.append(var_entry['name'])
         return pvars
 
+    def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
+
+        ret = {}
+        if plugin_type is None:
+            ret = self._base_defs.get(name, None)
+        elif plugin_name is None:
+            ret = self._plugins.get(plugin_type, {}).get(name, None)
+        else:
+            ret = self._plugins.get(plugin_type, {}).get(plugin_name, {}).get(name, None)
+
+        return ret
+
     def get_configuration_definitions(self, plugin_type=None, name=None):
         ''' just list the possible settings, either base or for specific plugins or plugin '''
 
@@ -398,8 +410,8 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and defs[config].get('keywords'):
-                    value, origin = self._loop_entries(keys, defs[config]['keywords'])
+                if value is None and keys and config in keys:
+                    value, origin = keys[config], 'keyword'
                     origin = 'keyword: %s' % origin
 
                 # env vars are next precedence

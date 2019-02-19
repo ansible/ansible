@@ -23,24 +23,28 @@ options:
   name:
     description:
       - Name of the network to operate on.
-    required: true
+    type: str
+    required: yes
     aliases:
       - network_name
 
   connected:
     description:
       - List of container names or container IDs to connect to a network.
+    type: list
     aliases:
       - containers
 
   driver:
     description:
       - Specify the type of network. Docker provides bridge and overlay drivers, but 3rd party drivers can also be used.
+    type: str
     default: bridge
 
   driver_options:
     description:
       - Dictionary of network settings. Consult docker docs for valid options and values.
+    type: dict
 
   force:
     description:
@@ -51,28 +55,27 @@ options:
         driver options and want an existing network to be updated to use the
         new options.
     type: bool
-    default: 'no'
+    default: no
 
   appends:
     description:
       - By default the connected list is canonical, meaning containers not on the list are removed from the network.
         Use C(appends) to leave existing containers connected.
     type: bool
-    default: 'no'
+    default: no
     aliases:
       - incremental
 
   enable_ipv6:
-    version_added: 2.8
     description:
       - Enable IPv6 networking.
     type: bool
-    default: null
-    required: false
+    version_added: 2.8
 
   ipam_driver:
     description:
       - Specify an IPAM driver.
+    type: str
 
   ipam_options:
     description:
@@ -80,16 +83,14 @@ options:
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(ipam_config) instead. In Docker 1.10.0, IPAM
         options were introduced (see L(here,https://github.com/moby/moby/pull/17316)). This module parameter addresses
         the IPAM config not the newly introduced IPAM options.
+    type: dict
 
   ipam_config:
-    version_added: 2.8
     description:
       - List of IPAM config blocks. Consult
         L(Docker docs,https://docs.docker.com/compose/compose-file/compose-file-v2/#ipam) for valid options and values.
         Note that I(iprange) is spelled differently here (we use the notation from the Docker Python SDK).
     type: list
-    default: null
-    required: false
     suboptions:
       subnet:
         description:
@@ -107,6 +108,7 @@ options:
         description:
           - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
         type: dict
+    version_added: 2.8
 
   state:
     description:
@@ -119,46 +121,39 @@ options:
         An empty list will leave no containers connected to the network. Use the
         C(appends) option to leave existing containers connected. Use the C(force)
         options to force re-creation of the network.
+    type: str
     default: present
     choices:
       - absent
       - present
 
   internal:
-    version_added: 2.8
     description:
       - Restrict external access to the network.
     type: bool
-    default: null
-    required: false
+    version_added: 2.8
 
   labels:
-    version_added: 2.8
     description:
       - Dictionary of labels.
     type: dict
-    default: null
-    required: false
+    version_added: 2.8
 
   scope:
-    version_added: 2.8
     description:
       - Specify the network's scope.
     type: str
-    default: null
-    required: false
     choices:
       - local
       - global
       - swarm
+    version_added: 2.8
 
   attachable:
-    version_added: 2.8
     description:
       - If enabled, and the network is in the global scope, non-service containers on worker nodes will be able to connect to the network.
     type: bool
-    default: null
-    required: false
+    version_added: 2.8
 
 extends_documentation_fragment:
   - docker
@@ -246,8 +241,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-facts:
-    description: Network inspection results for the affected network.
+docker_network:
+    description:
+    - Network inspection results for the affected network.
+    - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+      are also accessible directly.
     returned: success
     type: dict
     sample: {}
@@ -575,7 +573,9 @@ class DockerNetworkManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'docker_network': self.get_existing_network()}
+        network_facts = self.get_existing_network()
+        self.results['ansible_facts'] = {u'docker_network': network_facts}
+        self.results['docker_network'] = network_facts
 
     def absent(self):
         self.diff_tracker.add('exists', parameter=False, active=self.existing_network is not None)
@@ -585,19 +585,19 @@ class DockerNetworkManager(object):
 def main():
     argument_spec = dict(
         network_name=dict(type='str', required=True, aliases=['name']),
-        connected=dict(type='list', default=[], aliases=['containers'], elements='str'),
+        connected=dict(type='list', default=[], elements='str', aliases=['containers']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
         driver=dict(type='str', default='bridge'),
         driver_options=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         appends=dict(type='bool', default=False, aliases=['incremental']),
         ipam_driver=dict(type='str'),
-        ipam_options=dict(type='dict', default={}, removed_in_version='2.12', options=dict(
+        ipam_options=dict(type='dict', default={}, options=dict(
             subnet=dict(type='str'),
             iprange=dict(type='str'),
             gateway=dict(type='str'),
             aux_addresses=dict(type='dict'),
-        )),
+        ), removed_in_version='2.12'),
         ipam_config=dict(type='list', elements='dict', options=dict(
             subnet=dict(type='str'),
             iprange=dict(type='str'),

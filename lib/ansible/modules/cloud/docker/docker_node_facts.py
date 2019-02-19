@@ -11,7 +11,6 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: docker_node_facts
@@ -29,8 +28,18 @@ options:
   name:
     description:
       - The name of the node to inspect.
-      - When identifying an existing node name may either the hostname of the node (as registered in Swarm) or node ID.
-    required: true
+      - The list of nodes names to inspect.
+      - If empty then return information of all nodes in Swarm cluster.
+      - When identifying the node use either the hostname of the node (as registered in Swarm) or node ID.
+      - If I(self) is C(true) then this parameter is ignored.
+    type: list
+  self:
+    description:
+      - If C(true), queries the node (i.e. the docker daemon) the module communicates with.
+      - If C(true) then I(name) is ignored.
+      - If C(false) then query depends on I(name) presence and value.
+    type: bool
+    default: no
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
@@ -44,30 +53,39 @@ requirements:
 '''
 
 EXAMPLES = '''
+- name: Get info on all nodes
+  docker_node_facts:
+  register: result
+
 - name: Get info on node
   docker_node_facts:
     name: mynode
   register: result
 
+- name: Get info on list of nodes
+  docker_node_facts:
+    name:
+      - mynode1
+      - mynode2
+  register: result
+
+- name: Get info on host if it is Swarm Manager
+  docker_node_facts:
+    self: true
+  register: result
 '''
 
 RETURN = '''
-exists:
+nodes_facts:
     description:
-      - Returns whether the node exists in docker swarm cluster.
-    type: bool
+      - Facts representing the current state of the nodes. Matches the C(docker node inspect) output.
+      - Can contain multiple entries if more than one node provided in I(name), or I(name) is not provided.
+      - If I(name) contains a list of nodes, the output will provide information on all nodes registered
+        at the swarm, including nodes that left the swarm but haven't been removed from the cluster on swarm
+        managers and nodes that are unreachable.
     returned: always
-    sample: true
-node_facts:
-    description:
-      - Facts representing the current state of the node. Matches the C(docker node inspect) output.
-      - Will be C(None) if node does not exist.
-    returned: always
-    type: dict
-
+    type: list
 '''
-
-from ansible.module_utils._text import to_native
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
 
@@ -78,22 +96,35 @@ except ImportError:
     pass
 
 
-def get_node_facts(client, name):
-    try:
-        return client.inspect_node(name)
-    except NotFound:
-        return None
-    except APIError as exc:
-        if exc.status_code == 503:
-            client.fail(msg="Cannot inspect node: To inspect node execute module on Swarm Manager")
-        client.fail(msg="Error while reading from Swarm manager: %s" % to_native(exc))
-    except Exception as exc:
-        client.module.fail_json(msg="Error inspecting swarm node: %s" % exc)
+def get_node_facts(client):
+
+    results = []
+
+    if client.module.params['self'] is True:
+        self_node_id = client.get_swarm_node_id()
+        node_info = client.get_node_inspect(node_id=self_node_id)
+        results.append(node_info)
+        return results
+
+    if client.module.params['name'] is None:
+        node_info = client.get_all_nodes_inspect()
+        return node_info
+
+    nodes = client.module.params['name']
+    if not isinstance(nodes, list):
+        nodes = [nodes]
+
+    for next_node_name in nodes:
+        next_node_info = client.get_node_inspect(node_id=next_node_name, skip_missing=True)
+        if next_node_info:
+            results.append(next_node_info)
+    return results
 
 
 def main():
     argument_spec = dict(
-        name=dict(type='str', required=True),
+        name=dict(type='list', elements='str'),
+        self=dict(type='bool', default=False),
     )
 
     client = AnsibleDockerSwarmClient(
@@ -103,12 +134,13 @@ def main():
         min_docker_api_version='1.24',
     )
 
-    node = get_node_facts(client, client.module.params['name'])
+    client.fail_task_if_not_swarm_manager()
+
+    node = get_node_facts(client)
 
     client.module.exit_json(
         changed=False,
-        exists=(True if node else False),
-        node_facts=node,
+        nodes_facts=node,
     )
 
 

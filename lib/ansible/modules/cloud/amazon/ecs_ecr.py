@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -191,8 +193,8 @@ class EcsEcr:
         if registry_id:
             default_registry_id = self.sts.get_caller_identity().get('Account')
             if registry_id != default_registry_id:
-                raise Exception('Cannot create repository in registry {}.'
-                                'Would be created in {} instead.'.format(
+                raise Exception('Cannot create repository in registry {0}.'
+                                'Would be created in {1} instead.'.format(
                                     registry_id, default_registry_id))
         if not self.check_mode:
             repo = self.ecr.create_repository(repositoryName=name).get('repository')
@@ -216,9 +218,9 @@ class EcsEcr:
             if self.get_repository(registry_id, name) is None:
                 printable = name
                 if registry_id:
-                    printable = '{}:{}'.format(registry_id, name)
+                    printable = '{0}:{1}'.format(registry_id, name)
                 raise Exception(
-                    'could not find repository {}'.format(printable))
+                    'could not find repository {0}'.format(printable))
             return
 
     def delete_repository(self, registry_id, name):

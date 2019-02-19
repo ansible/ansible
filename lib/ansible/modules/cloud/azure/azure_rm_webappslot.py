@@ -248,7 +248,7 @@ swap_spec = dict(
         type='str'
     ),
     preserve_vnet=dict(
-        type=bool,
+        type='bool',
         default=True
     )
 )
@@ -671,7 +671,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
             if self.site_config.get(fx_version):
                 if not getattr(existing_config, fx_version) or \
                         getattr(existing_config, fx_version).upper() != self.site_config.get(fx_version).upper():
-                            return True
+                    return True
 
         if self.auto_swap_slot_name is False and existing_config.auto_swap_slot_name is not None:
             return True

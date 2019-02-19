@@ -1,0 +1,2 @@
+minor_changes:
+  - yum - provide consistent return data structure when run in check mode and not in check mode

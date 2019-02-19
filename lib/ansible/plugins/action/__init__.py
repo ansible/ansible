@@ -108,6 +108,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return result
 
+    def get_plugin_option(self, plugin, option, default=None):
+        """Helper to get an option from a plugin without having to use
+        the try/except dance everywhere to set a default
+        """
+        try:
+            return plugin.get_option(option)
+        except (AttributeError, KeyError):
+            return default
+
+    def get_become_option(self, option, default=None):
+        return self.get_plugin_option(self._connection.become, option, default=default)
+
+    def get_connection_option(self, option, default=None):
+        return self.get_plugin_option(self._connection, option, default=default)
+
+    def get_shell_option(self, option, default=None):
+        return self.get_plugin_option(self._connection._shell, option, default=default)
+
     def _remote_file_exists(self, path):
         cmd = self._connection._shell.exists(path)
         result = self._low_level_execute_command(cmd=cmd, sudoable=True)
@@ -241,12 +259,23 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Returns a list of admin users that are configured for the current shell
         plugin
         '''
+
+        return self.get_shell_option('admin_users', ['root'])
+
+    def _get_remote_user(self):
+        ''' consistently get the 'remote_user' for the action plugin '''
+        # TODO: use 'current user running ansible' as fallback when moving away from play_context
+        # pwd.getpwuid(os.getuid()).pw_name
+        remote_user = None
         try:
-            admin_users = self._connection._shell.get_option('admin_users')
-        except AnsibleError:
-            # fallback for old custom plugins w/o get_option
-            admin_users = ['root']
-        return admin_users
+            remote_user = self._connection.get_option('remote_user')
+        except KeyError:
+            # plugin does not have remote_user option, fallback to default and/play_context
+            remote_user = getattr(self._connection, 'default_user', None) or self._play_context.remote_user
+        except AttributeError:
+            # plugin does not use config system, fallback to old play_context
+            remote_user = self._play_context.remote_user
+        return remote_user
 
     def _is_become_unprivileged(self):
         '''
@@ -261,11 +290,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # if we use become and the user is not an admin (or same user) then
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
-        try:
-            remote_user = self._connection.get_option('remote_user')
-        except AnsibleError:
-            remote_user = self._play_context.remote_user
-        return bool(self._play_context.become_user not in admin_users + [remote_user])
+        remote_user = self._get_remote_user()
+        return bool(self.get_become_option('become_user') not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
@@ -273,10 +299,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         become_unprivileged = self._is_become_unprivileged()
-        try:
-            remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except AnsibleError:
-            remote_tmp = '~/.ansible/tmp'
+        remote_tmp = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -409,7 +432,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           "allow_world_readable_tmpfiles" in the ansible.cfg
         """
         if remote_user is None:
-            remote_user = self._play_context.remote_user
+            remote_user = self._get_remote_user()
 
         if self._connection._shell.SHELL_FAMILY == 'powershell':
             # This won't work on Powershell as-is, so we'll just completely skip until
@@ -432,7 +455,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # start to we'll have to fix this.
                 setfacl_mode = 'r-X'
 
-            res = self._remote_set_user_facl(remote_paths, self._play_context.become_user, setfacl_mode)
+            res = self._remote_set_user_facl(remote_paths, self.get_become_option('become_user'), setfacl_mode)
             if res['rc'] != 0:
                 # File system acls failed; let's try to use chown next
                 # Set executable bit first as on some systems an
@@ -442,7 +465,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
-                res = self._remote_chown(remote_paths, self._play_context.become_user)
+                res = self._remote_chown(remote_paths, self.get_become_option('become_user'))
                 if res['rc'] != 0 and remote_user in self._get_admin_users():
                     # chown failed even if remote_user is administrator/root
                     raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
@@ -579,13 +602,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
             # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
             # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
+            become_user = self.get_become_option('become_user')
             if getattr(self._connection, '_remote_is_local', False):
                 pass
-            elif sudoable and self._play_context.become and self._play_context.become_user:
-                expand_path = '~%s' % self._play_context.become_user
+            elif sudoable and self._play_context.become and become_user:
+                expand_path = '~%s' % become_user
             else:
                 # use remote user instead, if none set default to current user
-                expand_path = '~%s' % (self._play_context.remote_user or self._connection.default_user or '')
+                expand_path = '~%s' % (self._get_remote_user() or '')
 
         # use shell to construct appropriate command and execute
         cmd = self._connection._shell.expand_user(expand_path)
@@ -610,6 +634,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             expanded = self._connection._shell.join_path(initial_fragment, *split_path[1:])
         else:
             expanded = initial_fragment
+
+        if '..' in os.path.dirname(expanded).split('/'):
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
 
         return expanded
 
@@ -673,26 +700,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
 
         # make sure the remote_tmp value is sent through in case modules needs to create their own
-        try:
-            module_args['_ansible_remote_tmp'] = self._connection._shell.get_option('remote_tmp')
-        except KeyError:
-            # here for 3rd party shell plugin compatibility in case they do not define the remote_tmp option
-            module_args['_ansible_remote_tmp'] = '~/.ansible/tmp'
-
-    def _update_connection_options(self, options, variables=None):
-        ''' ensures connections have the appropriate information '''
-        update = {}
-
-        if getattr(self.connection, 'glob_option_vars', False):
-            # if the connection allows for it, pass any variables matching it.
-            if variables is not None:
-                for varname in variables:
-                    if varname.match('ansible_%s_' % self.connection._load_name):
-                        update[varname] = variables[varname]
-
-        # always override existing with options
-        update.update(options)
-        self.connection.set_options(update)
+        module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
         '''
@@ -748,11 +756,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
                 # from the shell option and temporarily add to the environment
                 # list for async_wrapper to pick up
-                try:
-                    async_dir = self._connection._shell.get_option('async_dir')
-                except KeyError:
-                    # in case 3rd party plugin has not set this, use the default
-                    async_dir = "~/.ansible_async"
+                async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
                 remove_async_dir = len(self._task.environment)
                 self._task.environment.append({"ANSIBLE_ASYNC_DIR": async_dir})
 
@@ -851,6 +855,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
             if self._is_pipelining_enabled(module_style):
                 in_data = module_data
+                display.vvv("Pipelining is enabled.")
             else:
                 cmd = remote_module_path
 
@@ -861,7 +866,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_files:
             # remove none/empty
             remote_files = [x for x in remote_files if x]
-            self._fixup_perms2(remote_files, self._play_context.remote_user)
+            self._fixup_perms2(remote_files, self._get_remote_user())
 
         # actually execute
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
@@ -934,6 +939,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 data['rc'] = res['rc']
         return data
 
+    # FIXME: move to connection base
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None, encoding_errors='surrogate_then_replace', chdir=None):
         '''
         This is the function which executes the low level shell command, which
@@ -951,21 +957,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         display.debug("_low_level_execute_command(): starting")
-#        if not cmd:
-#            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-#            display.debug("_low_level_execute_command(): no command, exiting")
-#           return dict(stdout='', stderr='', rc=254)
+        # if not cmd:
+        #     # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
+        #     display.debug("_low_level_execute_command(): no command, exiting")
+        #     return dict(stdout='', stderr='', rc=254)
 
         if chdir:
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
-        allow_same_user = C.BECOME_ALLOW_SAME_USER
-        same_user = self._play_context.become_user == self._play_context.remote_user
-        if sudoable and self._play_context.become and (allow_same_user or not same_user):
+        if (sudoable and self._connection.transport != 'network_cli' and self._connection.become and
+                (C.BECOME_ALLOW_SAME_USER or
+                 self.get_become_option('become_user') != self._get_remote_user())):
             display.debug("_low_level_execute_command(): using become for this command")
-            if self._connection.transport != 'network_cli' and self._play_context.become_method != 'enable':
-                cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
 
         if self._connection.allow_executable:
             if executable is None:

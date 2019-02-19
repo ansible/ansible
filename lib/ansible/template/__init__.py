@@ -84,20 +84,22 @@ else:
     from jinja2.utils import concat as j2_concat
 
 
-def generate_ansible_template_vars(path):
+def generate_ansible_template_vars(path, dest_path=None):
     b_path = to_bytes(path)
     try:
         template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
     except (KeyError, TypeError):
         template_uid = os.stat(b_path).st_uid
 
-    temp_vars = {}
-    temp_vars['template_host'] = to_text(os.uname()[1])
-    temp_vars['template_path'] = path
-    temp_vars['template_mtime'] = datetime.datetime.fromtimestamp(os.path.getmtime(b_path))
-    temp_vars['template_uid'] = to_text(template_uid)
-    temp_vars['template_fullpath'] = os.path.abspath(path)
-    temp_vars['template_run_date'] = datetime.datetime.now()
+    temp_vars = {
+        'template_host': to_text(os.uname()[1]),
+        'template_path': path,
+        'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
+        'template_uid': to_text(template_uid),
+        'template_fullpath': os.path.abspath(path),
+        'template_run_date': datetime.datetime.now(),
+        'template_destpath': to_native(dest_path) if dest_path else None,
+    }
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
@@ -189,6 +191,19 @@ def tests_as_filters_warning(name, func):
         )
         return func(*args, **kwargs)
     return wrapper
+
+
+class AnsibleUndefined(StrictUndefined):
+    '''
+    A custom Undefined class, which returns further Undefined objects on access,
+    rather than throwing an exception.
+    '''
+    def __getattr__(self, name):
+        # Return original Undefined object to preserve the first failure context
+        return self
+
+    def __repr__(self):
+        return 'AnsibleUndefined'
 
 
 class AnsibleContext(Context):
@@ -285,7 +300,7 @@ class Templar:
 
         self.environment = AnsibleEnvironment(
             trim_blocks=True,
-            undefined=StrictUndefined,
+            undefined=AnsibleUndefined,
             extensions=self._get_extensions(),
             finalize=self._finalize,
             loader=FileSystemLoader(self._basedir),
@@ -695,7 +710,7 @@ class Templar:
                 if getattr(new_context, 'unsafe', False):
                     res = wrap_var(res)
             except TypeError as te:
-                if 'StrictUndefined' in to_native(te):
+                if 'AnsibleUndefined' in to_native(te):
                     errmsg = "Unable to look up a name or access an attribute in template string (%s).\n" % to_native(data)
                     errmsg += "Make sure your variable name does not contain invalid characters like '-': %s" % to_native(te)
                     raise AnsibleUndefinedVariable(errmsg)

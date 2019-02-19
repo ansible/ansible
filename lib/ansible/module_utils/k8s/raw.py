@@ -375,11 +375,14 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             try:
                 response = resource.get(name=name, namespace=namespace)
                 if predicate(response):
-                    return True, response.to_dict(), _wait_for_elapsed()
+                    if response:
+                        return True, response.to_dict(), _wait_for_elapsed()
+                    else:
+                        return True, {}, _wait_for_elapsed()
                 time.sleep(timeout // 20)
             except NotFoundError:
                 if state == 'absent':
-                    return True, response.to_dict(), _wait_for_elapsed()
+                    return True, {}, _wait_for_elapsed()
         if response:
             response = response.to_dict()
         return False, response, _wait_for_elapsed()
@@ -415,4 +418,4 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             predicate = waiter.get(kind, lambda x: True)
         else:
             predicate = _resource_absent
-        return self._wait_for(resource, definition['metadata']['name'], definition['metadata']['namespace'], predicate, timeout, state)
+        return self._wait_for(resource, definition['metadata']['name'], definition['metadata'].get('namespace'), predicate, timeout, state)

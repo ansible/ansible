@@ -19,15 +19,17 @@ description:
        (U(http://jinja.pocoo.org/docs/)) - documentation on the template
        formatting can be found in the Template Designer Documentation
        (U(http://jinja.pocoo.org/docs/templates/)).
-     - "Six additional variables can be used in templates: C(ansible_managed)
+     - "Additional variables can be used in templates: C(ansible_managed)
        (configurable via the C(defaults) section of C(ansible.cfg)) contains a string
        which can be used to describe the template name, host, modification time of the
-       template file and the owner uid, C(template_host) contains the node name of
-       the template's machine, C(template_uid) the owner, C(template_path) the
-       absolute path of the template, C(template_fullpath) is the absolute path of the
-       template, and C(template_run_date) is the date that the template was rendered. Note that including
-       a string that uses a date in the template will result in the template being marked 'changed'
-       each time."
+       template file and the owner uid."
+     - "C(template_host) contains the node name of the template's machine."
+     - "C(template_uid) the owner."
+     - "C(template_path) the absolute path of the template."
+     - "C(template_fullpath) is the absolute path of the template."
+     - "C(template_destpath) is the path of the template on the remote system (added in 2.8)."
+     - "C(template_run_date) is the date that the template was rendered."
+     - "Note that including a string that uses a date in the template will result in the template being marked 'changed' each time."
      - For other platforms you can use M(template) which uses '\n' as C(newline_sequence).
 options:
   src:

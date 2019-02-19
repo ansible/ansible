@@ -923,7 +923,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if set(current_nics) != set(network_interfaces):
                         self.log('CHANGED: virtual machine {0} - network interfaces are different.'.format(self.name))
                         differences.append('Network Interfaces')
-                        updated_nics = [dict(id=id, primary=(i is 0))
+                        updated_nics = [dict(id=id, primary=(i == 0))
                                         for i, id in enumerate(network_interfaces)]
                         vm_dict['properties']['networkProfile']['networkInterfaces'] = updated_nics
                         changed = True
@@ -1067,7 +1067,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     if not self.short_hostname:
                         self.short_hostname = self.name
 
-                    nics = [self.compute_models.NetworkInterfaceReference(id=id, primary=(i is 0))
+                    nics = [self.compute_models.NetworkInterfaceReference(id=id, primary=(i == 0))
                             for i, id in enumerate(network_interfaces)]
 
                     # os disk
@@ -1217,7 +1217,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
 
                     self.log("Update virtual machine {0}".format(self.name))
                     self.results['actions'].append('Updated VM {0}'.format(self.name))
-                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'], primary=(i is 0))
+                    nics = [self.compute_models.NetworkInterfaceReference(id=interface['id'], primary=(i == 0))
                             for i, interface in enumerate(vm_dict['properties']['networkProfile']['networkInterfaces'])]
 
                     # os disk
@@ -1641,7 +1641,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
         try:
             self.storage_client.storage_accounts.delete(self.resource_group, name)
         except Exception as exc:
-            self.fail("Error deleting storage account {0} - {2}".format(name, str(exc)))
+            self.fail("Error deleting storage account {0} - {1}".format(name, str(exc)))
         return True
 
     def delete_vm_storage(self, vhd_uris):
@@ -1779,10 +1779,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
+        sku = self.storage_models.Sku(name=self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
         kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
+        parameters = self.storage_models.StorageAccountCreateParameters(sku=sku, kind=kind, location=self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:

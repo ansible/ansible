@@ -1,0 +1,3 @@
+bugfixes:
+  - "docker_swarm_service - Don't set ``1`` as default for ``update_parallelism``."
+  - "docker_swarm_service - Don't set ``10`` as default for ``update_delay``."

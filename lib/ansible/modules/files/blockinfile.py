@@ -129,7 +129,7 @@ EXAMPLES = r'''
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
-    content: |
+    block: |
       <h1>Welcome to {{ ansible_hostname }}</h1>
       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
@@ -137,7 +137,7 @@ EXAMPLES = r'''
   blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
-    content: ""
+    block: ""
 
 - name: Add mappings to /etc/hosts
   blockinfile:

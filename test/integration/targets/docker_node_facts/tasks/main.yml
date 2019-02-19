@@ -1,0 +1,5 @@
+- include_tasks: test_node_facts.yml
+  when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.24', '>=')
+
+- fail: msg="Too old docker / docker-py version to run docker_swarm_facts tests!"
+  when: not(docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.24', '>=')) and (ansible_distribution != 'CentOS' or ansible_distribution_major_version|int > 6)

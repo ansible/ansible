@@ -140,7 +140,7 @@ class AnsibleCloudStack:
             'api_region': api_region,
             'api_url': api_config['endpoint'],
             'api_key': api_config['key'],
-            'api_timeout': api_config['timeout'],
+            'api_timeout': int(api_config['timeout']),
             'api_http_method': api_config['method'],
         })
         if not all([api_config['endpoint'], api_config['key'], api_config['secret']]):

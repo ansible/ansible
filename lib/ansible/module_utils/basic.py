@@ -748,7 +748,7 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None):
+                 required_if=None, required_by=None):
 
         '''
         Common code for quickly building an ansible module in Python
@@ -777,6 +777,7 @@ class AnsibleModule(object):
         self.required_together = required_together
         self.required_one_of = required_one_of
         self.required_if = required_if
+        self.required_by = required_by
         self.cleanup_files = []
         self._debug = False
         self._diff = False
@@ -848,6 +849,7 @@ class AnsibleModule(object):
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
             self._check_required_if(required_if)
+            self._check_required_by(required_by)
 
         self._set_defaults(pre=False)
 
@@ -1706,6 +1708,24 @@ class AnsibleModule(object):
                         msg += " found in %s" % " -> ".join(self._options_context)
                     self.fail_json(msg=msg)
 
+    def _check_required_by(self, spec, param=None):
+        if spec is None:
+            return
+        if param is None:
+            param = self.params
+        for (key, value) in spec.items():
+            if key not in param or param[key] is None:
+                continue
+            missing = []
+            # Support strings (single-item lists)
+            if isinstance(value, string_types):
+                value = [value, ]
+            for required in value:
+                if required not in param or param[required] is None:
+                    missing.append(required)
+            if len(missing) > 0:
+                self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
+
     def _check_required_arguments(self, spec=None, param=None):
         ''' ensure all required arguments are present '''
         missing = []
@@ -2008,6 +2028,7 @@ class AnsibleModule(object):
                         self._check_required_together(v.get('required_together', None), param)
                         self._check_required_one_of(v.get('required_one_of', None), param)
                         self._check_required_if(v.get('required_if', None), param)
+                        self._check_required_by(v.get('required_by', None), param)
 
                     self._set_defaults(pre=False, spec=spec, param=param)
 
@@ -2849,8 +2870,6 @@ class AnsibleModule(object):
                     if prompt_re.search(stdout) and not data:
                         if encoding:
                             stdout = to_native(stdout, encoding=encoding, errors=errors)
-                        else:
-                            stdout = stdout
                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and

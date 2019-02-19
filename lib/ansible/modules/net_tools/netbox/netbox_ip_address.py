@@ -22,6 +22,7 @@ notes:
   - This should be ran with connection C(local) and hosts C(localhost)
 author:
   - Mikhail Yohman (@FragmentedPacket)
+  - Anthony Ruhier (@Anthony25)
 requirements:
   - pynetbox
 version_added: '2.8'
@@ -47,6 +48,18 @@ options:
       address:
         description:
           - Required if state is C(present)
+      prefix:
+        description:
+          - |
+            With state C(present), if an interface is given, it will ensure
+            that an IP inside this prefix (and vrf, if given) is attached
+            to this interface. Otherwise, it will get the next available IP
+            of this prefix and attach it.
+            With state C(new), it will force to get the next available IP in
+            this prefix. If an interface is given, it will also force to attach
+            it.
+            Required if state is C(present) or C(new) when no address is given.
+            Unused if an address is specified.
       vrf:
         description:
           - VRF that IP address is associated with
@@ -75,7 +88,9 @@ options:
           - CARP
       interface:
         description:
-          - The name and device of the interface that the IP address should be assigned to
+          - |
+            The name and device of the interface that the IP address should be assigned to
+            Required if state is C(present) and a prefix specified.
       description:
         description:
           - The description of the interface
@@ -91,8 +106,12 @@ options:
     required: true
   state:
     description:
-      - Use C(present) or C(absent) for adding or removing.
-    choices: [ absent, present ]
+      - |
+        Use C(present), C(new) or C(absent) for adding, force adding or removing.
+        C(present) will check if the IP is already created, and return it if
+        true. C(new) will force to create it anyway (useful for anycasts, for
+        example).
+    choices: [ absent, new, present ]
     default: present
   validate_certs:
     description:
@@ -115,7 +134,20 @@ EXAMPLES = r'''
         data:
           address: 192.168.1.10
         state: present
-
+    - name: Force to create (even if it already exists) the IP
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          address: 192.168.1.10
+        state: new
+    - name: Get a new available IP inside 192.168.1.0/24
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          prefix: 192.168.1.0/24
+        state: new
     - name: Delete IP address within netbox
       netbox_ip_address:
         netbox_url: http://netbox.local
@@ -123,7 +155,6 @@ EXAMPLES = r'''
         data:
           address: 192.168.1.10
         state: absent
-
     - name: Create IP address with several specified options
       netbox_ip_address:
         netbox_url: http://netbox.local
@@ -139,7 +170,6 @@ EXAMPLES = r'''
           tags:
             - Schnozzberry
         state: present
-
     - name: Create IP address and assign a nat_inside IP
       netbox_ip_address:
         netbox_url: http://netbox.local
@@ -154,13 +184,39 @@ EXAMPLES = r'''
           interface:
             name: GigabitEthernet1
             device: test100
+    - name: Ensure that an IP inside 192.168.1.0/24 is attached to GigabitEthernet1
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          prefix: 192.168.1.0/24
+          vrf: Test
+          interface:
+            name: GigabitEthernet1
+            device: test100
+        state: present
+    - name: Attach a new available IP of 192.168.1.0/24 to GigabitEthernet1
+      netbox_ip_address:
+        netbox_url: http://netbox.local
+        netbox_token: thisIsMyToken
+        data:
+          prefix: 192.168.1.0/24
+          vrf: Test
+          interface:
+            name: GigabitEthernet1
+            device: test100
+        state: new
 '''
 
 RETURN = r'''
-meta:
-  description: Message indicating failure or returns results with the object created within Netbox
+ip_address:
+  description: Serialized object as created or already existent within Netbox
+  returned: on creation
+  type: dict
+msg:
+  description: Message indicating failure or info about what has been achieved
   returned: always
-  type: list
+  type: str
 '''
 
 import json
@@ -168,6 +224,9 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, IP_ADDRESS_ROLE, IP_ADDRESS_STATUS
+from ansible.module_utils.compat import ipaddress
+from ansible.module_utils._text import to_text
+
 
 PYNETBOX_IMP_ERR = None
 try:
@@ -178,62 +237,6 @@ except ImportError:
     HAS_PYNETBOX = False
 
 
-def netbox_create_ip_address(nb, nb_endpoint, data):
-    result = []
-    if data.get('vrf'):
-        norm_data = normalize_data(data)
-        if norm_data.get("status"):
-            norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
-        if norm_data.get("role"):
-            norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
-        data = find_ids(nb, norm_data)
-        if data.get('failed'):
-            result.append(data)
-            return result
-
-        if not nb_endpoint.get(address=data["address"], vrf_id=data['vrf']):
-            try:
-                return nb_endpoint.create([data])
-            except pynetbox.RequestError as e:
-                return json.loads(e.error)
-        else:
-            result.append({'failed': '%s already exists in Netbox' % (data["address"])})
-    else:
-        if not nb_endpoint.get(address=data["address"]):
-            norm_data = normalize_data(data)
-            if norm_data.get("status"):
-                norm_data["status"] = IP_ADDRESS_STATUS.get(norm_data["status"].lower())
-            if norm_data.get("role"):
-                norm_data["role"] = IP_ADDRESS_ROLE.get(norm_data["role"].lower())
-            data = find_ids(nb, norm_data)
-
-            try:
-                return nb_endpoint.create([data])
-            except pynetbox.RequestError as e:
-                return json.loads(e.error)
-        else:
-            result.append({'failed': '%s already exists in Netbox' % (data["address"])})
-
-    return result
-
-
-def netbox_delete_ip_address(nb, nb_endpoint, data):
-    norm_data = normalize_data(data)
-    result = []
-    if data.get('vrf'):
-        data = find_ids(nb, norm_data)
-        endpoint = nb_endpoint.get(address=norm_data["address"], vrf_id=data['vrf'])
-    else:
-        endpoint = nb_endpoint.get(address=norm_data["address"])
-
-    try:
-        if endpoint.delete():
-            result.append({'success': '%s deleted from Netbox' % (norm_data["address"])})
-    except AttributeError:
-        result.append({'failed': '%s not found' % (norm_data["address"])})
-    return result
-
-
 def main():
     '''
     Main entry point for module execution
@@ -242,7 +245,7 @@ def main():
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
         data=dict(type="dict", required=True),
-        state=dict(required=False, default='present', choices=['present', 'absent']),
+        state=dict(required=False, default='present', choices=['present', 'absent', 'new']),
         validate_certs=dict(type="bool", default=True)
     )
 
@@ -274,15 +277,214 @@ def main():
         module.fail_json(msg="Incorrect application specified: %s" % (app))
 
     nb_endpoint = getattr(nb_app, endpoint)
-    if 'present' in state:
-        response = netbox_create_ip_address(nb, nb_endpoint, data)
-        if response[0].get('created'):
-            changed = True
+    norm_data = normalize_data(data)
+    try:
+        norm_data = _check_and_adapt_data(nb, norm_data)
+        if state in ("new", "present"):
+            return _handle_state_new_present(
+                module, state, nb_app, nb_endpoint, norm_data
+            )
+        elif state == "absent":
+            return module.exit_json(
+                **ensure_ip_address_absent(nb_endpoint, norm_data)
+            )
+        else:
+            return module.fail_json(msg="Invalid state %s" % state)
+    except pynetbox.RequestError as e:
+        return module.fail_json(msg=json.loads(e.error))
+    except ValueError as e:
+        return module.fail_json(msg=str(e))
+
+
+def _check_and_adapt_data(nb, data):
+    data = find_ids(nb, data)
+
+    if data.get("vrf") and not isinstance(data["vrf"], int):
+        raise ValueError(
+            "%s does not exist - Please create VRF" % (data["vrf"])
+        )
+    if data.get("status"):
+        data["status"] = IP_ADDRESS_STATUS.get(data["status"].lower())
+    if data.get("role"):
+        data["role"] = IP_ADDRESS_ROLE.get(data["role"].lower())
+
+    return data
+
+
+def _handle_state_new_present(module, state, nb_app, nb_endpoint, data):
+    if data.get("address"):
+        if state == "present":
+            return module.exit_json(
+                **ensure_ip_address_present(nb_endpoint, data)
+            )
+        elif state == "new":
+            return module.exit_json(
+                **create_ip_address(nb_endpoint, data)
+            )
     else:
-        response = netbox_delete_ip_address(nb, nb_endpoint, data)
-        if 'success' in response[0]:
-            changed = True
-    module.exit_json(changed=changed, meta=response)
+        if state == "present":
+            return module.exit_json(
+                **ensure_ip_in_prefix_present_on_netif(
+                    nb_app, nb_endpoint, data
+                )
+            )
+        elif state == "new":
+            return module.exit_json(
+                **get_new_available_ip_address(nb_app, data)
+            )
+
+
+def ensure_ip_address_present(nb_endpoint, data):
+    """
+    :returns dict(ip_address, msg, changed): dictionary resulting of the request,
+    where 'ip_address' is the serialized ip fetched or newly created in Netbox
+    """
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    try:
+        ip_addr = _search_ip(nb_endpoint, data)
+    except ValueError:
+        return _error_multiple_ip_results(data)
+
+    if not ip_addr:
+        return create_ip_address(nb_endpoint, data)
+    else:
+        ip_addr = ip_addr.serialize()
+        changed = False
+        msg = "IP Address %s already exists" % (data["address"])
+
+        return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def _search_ip(nb_endpoint, data):
+    get_query_params = {"address": data["address"]}
+    if data.get("vrf"):
+        get_query_params["vrf_id"] = data["vrf"]
+
+    ip_addr = nb_endpoint.get(**get_query_params)
+    return ip_addr
+
+
+def _error_multiple_ip_results(data):
+    changed = False
+    if "vrf" in data:
+        return {"msg": "Returned more than result", "changed": changed}
+    else:
+        return {
+            "msg": "Returned more than one result - Try specifying VRF.",
+            "changed": changed
+        }
+
+
+def create_ip_address(nb_endpoint, data):
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    ip_addr = nb_endpoint.create(data).serialize()
+    changed = True
+    msg = "IP Addresses %s created" % (data["address"])
+
+    return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def ensure_ip_in_prefix_present_on_netif(nb_app, nb_endpoint, data):
+    """
+    :returns dict(ip_address, msg, changed): dictionary resulting of the request,
+    where 'ip_address' is the serialized ip fetched or newly created in Netbox
+    """
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    if not data.get("interface") or not data.get("prefix"):
+        raise ValueError("A prefix and interface are required")
+
+    get_query_params = {
+        "interface_id": data["interface"], "parent": data["prefix"],
+    }
+    if data.get("vrf"):
+        get_query_params["vrf_id"] = data["vrf"]
+
+    attached_ips = nb_endpoint.filter(**get_query_params)
+    if attached_ips:
+        ip_addr = attached_ips[-1].serialize()
+        changed = False
+        msg = "IP Address %s already attached" % (ip_addr["address"])
+
+        return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+    else:
+        return get_new_available_ip_address(nb_app, data)
+
+
+def get_new_available_ip_address(nb_app, data):
+    prefix_query = {"prefix": data["prefix"]}
+    if data.get("vrf"):
+        prefix_query["vrf_id"] = data["vrf"]
+
+    prefix = nb_app.prefixes.get(**prefix_query)
+    if not prefix:
+        changed = False
+        msg = "%s does not exist - please create first" % (data["prefix"])
+        return {"msg": msg, "changed": changed}
+    elif prefix.available_ips.list():
+        ip_addr = prefix.available_ips.create(data)
+        changed = True
+        msg = "IP Addresses %s created" % (ip_addr["address"])
+    else:
+        changed = False
+        msg = "No available IPs available within %s" % (data['prefix'])
+        return {"msg": msg, "changed": changed}
+
+    return {"ip_address": ip_addr, "msg": msg, "changed": changed}
+
+
+def _get_prefix_id(nb_app, prefix, vrf_id=None):
+    ipaddr_prefix = ipaddress.ip_network(prefix)
+    network = to_text(ipaddr_prefix.network_address)
+    mask = ipaddr_prefix.prefixlen
+
+    prefix_query_params = {
+        "prefix": network,
+        "mask_length": mask
+    }
+    if vrf_id:
+        prefix_query_params["vrf_id"] = vrf_id
+
+    prefix_id = nb_app.prefixes.get(prefix_query_params)
+    if not prefix_id:
+        if vrf_id:
+            raise ValueError("Prefix %s does not exist in VRF %s - Please create it" % (prefix, vrf_id))
+        else:
+            raise ValueError("Prefix %s does not exist - Please create it" % (prefix))
+
+    return prefix_id
+
+
+def ensure_ip_address_absent(nb_endpoint, data):
+    """
+    :returns dict(msg, changed)
+    """
+    if not isinstance(data, dict):
+        changed = False
+        return {"msg": data, "changed": changed}
+
+    try:
+        ip_addr = _search_ip(nb_endpoint, data)
+    except ValueError:
+        return _error_multiple_ip_results(data)
+
+    if ip_addr:
+        ip_addr.delete()
+        changed = True
+        msg = "IP Address %s deleted" % (data["address"])
+    else:
+        changed = False
+        msg = "IP Address %s already absent" % (data["address"])
+
+    return {"msg": msg, "changed": changed}
 
 
 if __name__ == "__main__":
