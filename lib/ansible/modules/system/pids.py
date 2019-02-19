@@ -53,7 +53,7 @@ except ImportError:
 
 
 def get_pid(name):
-    return [p.info['pid'] for p in psutil.process_iter(attrs=['pid', 'name']) if name == p.info['name']]
+    return [p.info['pid'] for p in psutil.process_iter(attrs=['pid', 'name']) if name.lower() == p.info['name'].lower()]
 
 
 def main():
