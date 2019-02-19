@@ -324,10 +324,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         disks = result['properties']['storageProfile']['dataDisks']
         for disk_index in range(len(disks)):
             new_result['data_disks'].append({
-                'lun': disks[disk_index]['lun'],
-                'disk_size_gb': disks[disk_index]['diskSizeGB'],
-                'managed_disk_type': disks[disk_index]['managedDisk']['storageAccountType'],
-                'caching': disks[disk_index]['caching']
+                'lun': disks[disk_index].get('lun'),
+                'disk_size_gb': disks[disk_index].get('diskSizeGB'),
+                'managed_disk_type': disks[disk_index].get('managedDisk', {}).get('storageAccountType'),
+                'caching': disks[disk_index].get('caching')
             })
 
         new_result['network_interface_names'] = []
