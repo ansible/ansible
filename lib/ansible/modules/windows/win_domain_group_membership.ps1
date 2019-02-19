@@ -53,7 +53,7 @@ if ($diff_mode) {
 }
 
 try {
-    $group_obj = Get-ADGroup -Identity $name -Properties * @extra_args
+    Get-ADGroup -Identity $name -Properties * @extra_args
 }
 catch {
     Fail-Json -obj $result "Could not find domain group $name"
