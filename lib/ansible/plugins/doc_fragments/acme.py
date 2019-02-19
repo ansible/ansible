@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-# (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
+# Copyright: (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = """
+    DOCUMENTATION = r'''
 notes:
   - "If a new enough version of the C(cryptography) library
      is available (see Requirements for details), it will be used
@@ -20,9 +20,8 @@ notes:
      the L(Let's Encrypt,https://letsencrypt.org/) CA, the module can in
      principle be used with any CA providing an ACME endpoint."
 requirements:
-  - "python >= 2.6"
-  - "either openssl, ..."
-  - "... or L(cryptography,https://cryptography.io/) >= 1.5"
+  - python >= 2.6
+  - either openssl or L(cryptography,https://cryptography.io/) >= 1.5
 options:
   account_key_src:
     description:
@@ -65,7 +64,7 @@ options:
          new standardized ACME v2 endpoint."
     type: int
     default: 1
-    choices: [1, 2]
+    choices: [ 1, 2 ]
     version_added: "2.5"
   acme_directory:
     description:
@@ -94,17 +93,14 @@ options:
     version_added: "2.5"
   select_crypto_backend:
     description:
-      - "Determines which crypto backend to use. The default choice is C(auto),
-         which tries to use C(cryptography) if available, and falls back to
-         C(openssl)."
-      - "If set to C(openssl), will try to use the C(openssl) binary."
-      - "If set to C(cryptography), will try to use the
-         L(cryptography,https://cryptography.io/) library."
+      - Determines which crypto backend to use.
+      - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to
+        C(openssl).
+      - If set to C(openssl), will try to use the C(openssl) binary.
+      - If set to C(cryptography), will try to use the
+        L(cryptography,https://cryptography.io/) library.
     type: str
-    default: 'auto'
-    choices:
-      - auto
-      - cryptography
-      - openssl
+    default: auto
+    choices: [ auto, cryptography, openssl ]
     version_added: "2.7"
-"""
+'''
