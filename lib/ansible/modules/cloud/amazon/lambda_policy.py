@@ -110,7 +110,8 @@ EXAMPLES = '''
       statement_id: lambda-s3-myBucket-create-data-log
       action: lambda:InvokeFunction
       principal: s3.amazonaws.com
-      source_arn: arn:aws:s3:eu-central-1:123456789012:bucketName
+      source_arn: arn:aws:s3:::bucketName
+      region: eu-central-1
       source_account: 123456789012
 
   - name: show results
