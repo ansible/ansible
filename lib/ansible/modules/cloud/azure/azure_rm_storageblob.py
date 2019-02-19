@@ -125,14 +125,14 @@ author:
 EXAMPLES = '''
 - name: Remove container foo
   azure_rm_storageblob:
-    resource_group: testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     state: absent
 
 - name: Create container foo and upload a file
   azure_rm_storageblob:
-    resource_group: Testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     blob: graylog.png
@@ -142,7 +142,7 @@ EXAMPLES = '''
 
 - name: Download the file
   azure_rm_storageblob:
-    resource_group: Testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     blob: graylog.png
