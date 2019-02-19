@@ -87,7 +87,7 @@ virtualnetworks:
             returned: always
             type: str
             sample: myVirtualNetwork
-        name:
+        description:
             description:
                 - Description of the virtual network.
             returned: always
