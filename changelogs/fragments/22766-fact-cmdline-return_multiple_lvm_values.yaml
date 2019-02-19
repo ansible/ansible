@@ -1,0 +1,2 @@
+minor_changes:
+- cmdline fact parsing can return multiple values of a single key. Deprecate cmdline fact in favor of proc_cmdline.
