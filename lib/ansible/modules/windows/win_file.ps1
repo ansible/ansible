@@ -102,7 +102,7 @@ if ($state -eq "touch") {
 }
 
 if (Test-Path -LiteralPath $path) {
-    $fileinfo = Get-Item -LiteralPath $path
+    $fileinfo = Get-Item -LiteralPath $path -force
     if ($state -eq "absent") {
         Remove-File -file $fileinfo -checkmode $check_mode
         $result.changed = $true
