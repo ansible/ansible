@@ -649,8 +649,8 @@ def main():
         ),
         supports_check_mode=True,
         required_by=dict(
-            interface=('zone'),
-            source=('permanent'),
+            interface=('zone',),
+            source=('permanent',),
         ),
     )
 
