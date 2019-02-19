@@ -3,60 +3,29 @@ import pytest
 
 from units.compat.mock import patch, MagicMock
 
-from ansible.module_utils import basic
-from ansible.module_utils._text import to_bytes
 from ansible.module_utils.k8s.common import K8sAnsibleMixin
 from ansible.module_utils.k8s.raw import KubernetesRawModule
 
 from ansible.modules.cloud.kubevirt import kubevirt_vm as mymodule
 
-openshiftdynamic = pytest.importorskip("openshift.dynamic", minversion="0.6.2")
+openshift = pytest.importorskip("openshift", minversion="0.6.2")
+openshiftdynamic = openshift.dynamic
 helpexceptions = pytest.importorskip("openshift.helper.exceptions", minversion="0.6.2")
 
+from units.modules.cloud.kubevirt.utils import (
+    set_module_args,
+    AnsibleExitJson,
+    exit_json,
+    AnsibleFailJson,
+    fail_json,
+    RESOURCE_DEFAULT_ARGS
+)
+
 KIND = 'VirtulMachine'
-RESOURCE_DEFAULT_ARGS = {'api_version': 'v1', 'group': 'kubevirt.io',
-                         'prefix': 'apis', 'namespaced': True}
-
-
-def set_module_args(args):
-    args = json.dumps({'ANSIBLE_MODULE_ARGS': args})
-    basic._ANSIBLE_ARGS = to_bytes(args)
-
-
-class AnsibleExitJson(Exception):
-    """Exception class to be raised by module.exit_json and caught
-    by the test case"""
-    def __init__(self, **kwargs):
-        for k in kwargs:
-            setattr(self, k, kwargs[k])
-
-    def __getitem__(self, attr):
-        return getattr(self, attr)
-
-
-class AnsibleFailJson(Exception):
-    """Exception class to be raised by module.fail_json and caught
-    by the test case"""
-    def __init__(self, **kwargs):
-        for k in kwargs:
-            setattr(self, k, kwargs[k])
-
-    def __getitem__(self, attr):
-        return getattr(self, attr)
-
-
-def exit_json(*args, **kwargs):
-    if 'changed' not in kwargs:
-        kwargs['changed'] = False
-    raise AnsibleExitJson(**kwargs)
-
-
-def fail_json(*args, **kwargs):
-    raise AnsibleFailJson(**kwargs)
 
 
 @pytest.fixture(autouse=True)
-def setup_mixtures(self, monkeypatch):
+def setup_mixtures(monkeypatch):
     monkeypatch.setattr(
         KubernetesRawModule, "exit_json", exit_json)
     monkeypatch.setattr(
@@ -74,7 +43,7 @@ def setup_mixtures(self, monkeypatch):
     K8sAnsibleMixin.find_resource = MagicMock()
 
 
-def test_vm_multus_creation(self):
+def test_vm_multus_creation():
     args = dict(
         state='present', name='testvm',
         namespace='vms', api_version='v1',
@@ -98,7 +67,7 @@ def test_vm_multus_creation(self):
 
 
 @pytest.mark.parametrize("_wait", (False, True))
-def test_resource_absent(self, _wait):
+def test_resource_absent(_wait):
     # Desired state:
     args = dict(
         state='absent', name='testvmi',
@@ -118,7 +87,7 @@ def test_resource_absent(self, _wait):
 
 
 @patch('openshift.watch.Watch')
-def test_stream_creation(self, mock_watch):
+def test_stream_creation(mock_watch):
     # Desired state:
     args = dict(
         state='running', name='testvmi', namespace='vms',
@@ -132,21 +101,21 @@ def test_stream_creation(self, mock_watch):
         mymodule.KubeVirtVM().execute_module()
 
 
-def test_simple_merge_dicts(self):
+def test_simple_merge_dicts():
     dict1 = {'labels': {'label1': 'value'}}
     dict2 = {'labels': {'label2': 'value'}}
     dict3 = json.dumps({'labels': {'label1': 'value', 'label2': 'value'}}, sort_keys=True)
     assert dict3 == json.dumps(dict(mymodule.KubeVirtVM.merge_dicts(dict1, dict2)), sort_keys=True)
 
 
-def test_simple_multi_merge_dicts(self):
+def test_simple_multi_merge_dicts():
     dict1 = {'labels': {'label1': 'value', 'label3': 'value'}}
     dict2 = {'labels': {'label2': 'value'}}
     dict3 = json.dumps({'labels': {'label1': 'value', 'label2': 'value', 'label3': 'value'}}, sort_keys=True)
     assert dict3 == json.dumps(dict(mymodule.KubeVirtVM.merge_dicts(dict1, dict2)), sort_keys=True)
 
 
-def test_double_nested_merge_dicts(self):
+def test_double_nested_merge_dicts():
     dict1 = {'metadata': {'labels': {'label1': 'value', 'label3': 'value'}}}
     dict2 = {'metadata': {'labels': {'label2': 'value'}}}
     dict3 = json.dumps({'metadata': {'labels': {'label1': 'value', 'label2': 'value', 'label3': 'value'}}}, sort_keys=True)
