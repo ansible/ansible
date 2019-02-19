@@ -82,7 +82,8 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroups/providers/Microsoft.DBforPostgreSQL/servers/testserver/databases/db1
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroups/providers/Microsoft.DBforPostgreSQL/servers/testserve
+             r/databases/db1"
 name:
     description:
         - Resource name.
