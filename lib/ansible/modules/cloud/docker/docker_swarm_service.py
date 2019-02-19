@@ -345,6 +345,7 @@ options:
           C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
         - Corresponds to the C(--stop-grace-period) option of C(docker service create).
     type: str
+    version_added: "2.8"
   stop_signal:
     description:
       - Override default signal used to stop the container.
