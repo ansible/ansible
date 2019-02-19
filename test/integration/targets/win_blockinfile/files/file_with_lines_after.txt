@@ -1,0 +1,12 @@
+Line 1
+
+Line 2
+Line 3
+Line x
+Line x
+# BEGIN ANSIBLE MANAGED BLOCK
+Foo
+Bar
+# END ANSIBLE MANAGED BLOCK
+Line 4
+Line 5

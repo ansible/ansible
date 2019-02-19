@@ -1,0 +1,127 @@
+# Test code for the win_blockinfile module
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# vars: 
+# test_name
+# start_file
+# blockinfile_args
+# result_file
+
+- name: "{{ test_name }}: Stat the source file to get the checksum"
+  local_action: stat path={{ role_path }}/files/{{ start_file }}
+  register: start_stat
+
+- name: "{{ test_name }}: Stat the reference file to get the checksum"
+  local_action: stat path={{ role_path }}/files/{{ result_file }}
+  register: reference_stat
+
+- name: "{{ test_name }}: deploy the source test file"
+  win_copy: 
+    src: "{{ start_file }}"
+    dest: "{{win_output_dir}}/test.txt"
+  register: copy_stat
+
+- name: "{{ test_name }}: Assert that the copy checksum matches {{ start_file }}"
+  assert:
+    that:
+    - "start_stat.stat.checksum == copy_stat.checksum"
+
+- name: "{{ test_name }}: Run blockinfile with requested args (checkmode)"
+  win_blockinfile: "{{ blockinfile_args | combine({'path': win_output_dir+'/test.txt'}) }}"
+  check_mode: yes
+  register: result
+
+- name: "{{ test_name }}: Assert that check mode reported the proper change state"
+  assert:
+    that:
+    - "result.changed == should_change"
+
+- name: "{{ test_name }}: Stat the file to verify check mode didn't change it"
+  win_stat:
+    path: "{{win_output_dir}}/test.txt"
+  register: result
+
+- name: "{{ test_name }}: Assert that the file matches the original copy ({{ start_file }})"
+  assert:
+    that:
+    - "result.stat.checksum == start_stat.stat.checksum"
+
+- name: "{{ test_name }}: Run blockinfile with requested args (first real)"
+  win_blockinfile: "{{ blockinfile_args | combine({'path': win_output_dir+'/test.txt'}) }}"
+  register: result
+
+- name: "{{ test_name }}: Assert that non-check-mode reported the proper change state"
+  assert:
+    that:
+    - "result.changed == should_change"
+
+- name: "{{ test_name }}: Ensure the backup file is present"
+  assert:
+    that:
+    - "result.backup is defined"
+  when: "'backup' in blockinfile_args and blockinfile_args.backup and should_change"
+
+- name: "{{ test_name }}: Ensure the backup file is not present"
+  assert:
+    that:
+    - "result.backup == ''"
+  when: "'backup' not in blockinfile_args or blockinfile_args.backup == false or not should_change"
+
+- name: "{{ test_name }}: Stat the backup file"
+  win_stat:
+    path: "{{result.backup}}"
+  register: result
+  when: "'backup' in blockinfile_args and blockinfile_args.backup and should_change"
+
+- name: "{{ test_name }}: Assert that backup file matches {{ start_file }}"
+  assert:
+    that:
+    - "result.stat.checksum == start_stat.stat.checksum"
+  when: "'backup' in blockinfile_args and blockinfile_args.backup and should_change"
+
+- name: "{{ test_name }}: Stat the file to verify it changed"
+  win_stat:
+    path: "{{win_output_dir}}/test.txt"
+  register: result
+
+- name: "{{ test_name }}: Assert that the changed file matches {{ result_file }}"
+  assert:
+    that:
+    - "result.stat.checksum == reference_stat.stat.checksum"
+
+- name: "{{ test_name }}: Run blockinfile again to verify idempotency"
+  win_blockinfile: "{{ blockinfile_args | combine({'path': win_output_dir+'/test.txt'}) }}"
+  register: result
+  when: should_change
+
+- name: "{{ test_name }}: Assert that non-check-mode reported a change"
+  assert:
+    that:
+    - "result.changed == false"
+  when: should_change
+
+- name: "{{ test_name }}: Stat the file to verify it didn't change on second run"
+  win_stat:
+    path: "{{win_output_dir}}/test.txt"
+  register: result
+  when: should_change
+
+- name: "{{ test_name }}: Assert that the file matches the reference copy"
+  assert:
+    that:
+    - "result.stat.checksum == reference_stat.stat.checksum"
+  when: should_change

@@ -1,0 +1,208 @@
+# Test code for the win_blockinfile module
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Test no trailing newline
+  include_tasks: run_test.yml
+  vars:
+    test_name: No trailing newline
+    start_file: no_trailing_newline.txt
+    result_file: no_trailing_newline_bof.txt
+    should_change: yes
+    blockinfile_args:
+      insertbefore: BOF
+      block: |-
+        Foo
+        Bar
+
+- name: Test default line ending on empty file
+  include_tasks: run_test.yml
+  vars:
+    test_name: Default line ending
+    start_file: empty.txt
+    result_file: default_block_only_crlf.txt
+    should_change: yes
+    blockinfile_args:
+      block: |-
+        Foo
+        Bar
+
+- name: Test unix line ending on empty file
+  include_tasks: run_test.yml
+  vars:
+    test_name: Unix line ending
+    start_file: empty.txt
+    result_file: default_block_only_lf.txt
+    should_change: yes
+    blockinfile_args:
+      newline: unix
+      block: |-
+        Foo
+        Bar
+
+- name: Test state absent when no markers exist
+  include_tasks: run_test.yml
+  vars:
+    test_name: Absent without markers
+    start_file: file_with_lines.txt
+    result_file: file_with_lines.txt
+    should_change: no
+    blockinfile_args:
+      backup: yes
+      state: absent
+
+- name: Test state absent when markers exist
+  include_tasks: run_test.yml
+  vars:
+    test_name: Absent without markers
+    start_file: file_with_lines_eof.txt
+    result_file: file_with_lines.txt
+    should_change: yes
+    blockinfile_args:
+      state: absent
+
+- name: Test insert at BoF
+  include_tasks: run_test.yml
+  vars:
+    test_name: BOF
+    start_file: file_with_lines.txt
+    result_file: file_with_lines_bof.txt
+    should_change: yes
+    blockinfile_args:
+      insertafter: BOF
+      backup: yes
+      block: |-
+        Foo
+        Bar
+
+- name: Test insert at EoF (before)
+  include_tasks: run_test.yml
+  vars:
+    test_name: EOF before
+    start_file: file_with_lines.txt
+    result_file: file_with_lines_eof.txt
+    should_change: yes
+    blockinfile_args:
+      insertbefore: EOF
+      block: |-
+        Foo
+        Bar
+
+- name: Test insert at EoF (after)
+  include_tasks: run_test.yml
+  vars:
+    test_name: EOF before
+    start_file: file_with_lines.txt
+    result_file: file_with_lines_eof.txt
+    should_change: yes
+    blockinfile_args:
+      insertafter: EOF
+      block: |-
+        Foo
+        Bar
+
+- name: Test insert before
+  include_tasks: run_test.yml
+  vars:
+    test_name: Insert before
+    start_file: file_with_lines.txt
+    result_file: file_with_lines_before.txt
+    should_change: yes
+    blockinfile_args:
+      insertbefore: Line\s+x
+      block: |-
+        Foo
+        Bar
+
+- name: Test insert after
+  include_tasks: run_test.yml
+  vars:
+    test_name: Insert after
+    start_file: file_with_lines.txt
+    result_file: file_with_lines_after.txt
+    should_change: yes
+    blockinfile_args:
+      insertafter: Line\s+x
+      block: |-
+        Foo
+        Bar
+
+- name: Test custom marker
+  include_tasks: run_test.yml
+  vars:
+    test_name: Custom marker
+    start_file: file_with_lines.txt
+    result_file: file_with_lines_custom_marker.txt
+    should_change: yes
+    blockinfile_args:
+      insertbefore: Line 3
+      marker: "<!-- {mark} MyBlock! -->"
+      marker_begin: START
+      marker_end: FINISH
+      block: |-
+        Foo
+        Bar
+
+- name: Test remove inverted marker
+  include_tasks: run_test.yml
+  vars:
+    test_name: Inverted marker
+    start_file: file_with_lines_inverted_marker.txt
+    result_file: file_with_lines.txt
+    should_change: yes
+    blockinfile_args:
+      state: absent
+
+- name: "Does not exist (nocreate): Test failure when file does not exist and create is false"
+  win_blockinfile:
+    block: Foo
+    path: "{{win_output_dir}}/doesnotexist.txt"
+  ignore_errors: yes
+  register: output
+
+
+- name: "Does not exist (nocreate): Assert we failed when we were supposed to"
+  assert:
+    that:
+    - "output.failed == true"
+
+- name: "Does not exist (create): Test file create"
+  win_blockinfile: 
+    path: "{{ win_output_dir }}/shouldcreate.txt"
+    create: yes
+    block: |-
+      Foo
+      Bar
+  register: result
+
+- name: "Does not exist (create): Assert that it changed on file create"
+  assert:
+    that:
+    - "result.changed"
+
+- name: "Does not exist (create): Stat the created file to ensure it matches the reference file"
+  win_stat:
+    path: "{{win_output_dir}}/shouldcreate.txt"
+  register: result
+
+- name: "Does not exist (create): Stat the reference file to get the checksum"
+  local_action: stat path={{ role_path }}/files/default_block_only_crlf.txt
+  register: start_stat
+
+- name: "Does not exist (create): Assert that the file matches the reference copy ({{ start_file }})"
+  assert:
+    that:
+    - "result.stat.checksum == start_stat.stat.checksum"

@@ -1,0 +1,12 @@
+Line 1
+
+Line 2
+<!-- START MyBlock! -->
+Foo
+Bar
+<!-- FINISH MyBlock! -->
+Line 3
+Line x
+Line x
+Line 4
+Line 5
