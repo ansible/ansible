@@ -31,5 +31,8 @@
 
     - import_tasks: run_all_tests.yml
       when: check_output.rc == 0
-  when: not (ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7) and
-        not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "14.04")
+  when:
+  - not (ansible_os_family == "RedHat" and ansible_distribution_major_version|int < 7)
+  - not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "14.04")
+  # Firewalld package on OpenSUSE (15+) require Python 3, so we skip on OpenSUSE running py2 on these newer distros
+  - not (ansible_os_family == "Suse" and ansible_distribution_major_version|int != 42 and ansible_python.version.major != 3)
