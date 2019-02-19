@@ -269,7 +269,15 @@ Function Install-Chocolatey {
     }
 
     $actual_version = Get-ChocolateyPackageVersion -choco_path $choco_app.Path -name chocolatey
-    if ([Version]$actual_version -lt [Version]"0.10.5") {
+    try {
+        # The Chocolatey version may not be in the strict form of major.minor.build and will fail to cast to
+        # System.Version. We want to warn if this is the case saying module behaviour may be incorrect.
+        $actual_version = [Version]$actual_version
+    } catch {
+        Add-Warning -obj $result -message "Failed to parse Chocolatey version '$actual_version' for checking module requirements, module may not work correctly: $($_.Exception.Message)"
+        $actual_version = $null
+    }
+    if ($null -ne $actual_version -and $actual_version -lt [Version]"0.10.5") {
         if ($check_mode) {
             $result.skipped = $true
             $result.msg = "Skipped check mode run on win_chocolatey as choco.exe is too old, a real run would have upgraded the executable. Actual: '$actual_version', Minimum Version: '0.10.5'"
