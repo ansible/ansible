@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, NetApp, Inc
+# (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -163,6 +163,10 @@ class ElementSWClusterConfig(object):
         ntp_details = self.sfe.get_ntp_info()
         return ntp_details
 
+    def cmp(self, provided_ntp_servers, existing_ntp_servers):
+        # As python3 doesn't have default cmp function, defining manually to provide same fuctionality.
+        return (provided_ntp_servers > existing_ntp_servers) - (provided_ntp_servers < existing_ntp_servers)
+
     def get_cluster_details(self):
         """
         get cluster info
@@ -289,7 +293,7 @@ class ElementSWClusterConfig(object):
             # has either the broadcastclient or the ntp server list changed?
 
             if self.parameters.get('set_ntp_info')['broadcastclient'] != broadcast_client or \
-               cmp(self.parameters.get('set_ntp_info')['ntp_servers'], ntp_servers) != 0:
+               self.cmp(self.parameters.get('set_ntp_info')['ntp_servers'], ntp_servers) != 0:
                 changed = True
                 self.setup_ntp_info(self.parameters.get('set_ntp_info')['ntp_servers'],
                                     self.parameters.get('set_ntp_info')['broadcastclient'])
