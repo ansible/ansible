@@ -184,8 +184,8 @@ class NetworksModule(BaseModule):
         if self.param('label') is None:
             return
 
-        labels = [lbl.id for lbl in self._connection.follow_link(entity.network_labels)]
         labels_service = self._service.service(entity.id).network_labels_service()
+        labels = [lbl.id for lbl in labels_service.list()]
         if not self.param('label') in labels:
             if not self._module.check_mode:
                 if labels:
