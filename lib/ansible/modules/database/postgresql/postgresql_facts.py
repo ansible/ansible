@@ -137,7 +137,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-ansible_facts:
+postgresql_facts:
   description: Dictionary containing the detailed information about the PostgreSQL instance.
   returned: always
   type: complex
@@ -893,10 +893,10 @@ def main():
     pg_facts = PgClusterFacts(module, cursor)
 
     if filter_:
-        kw['ansible_facts'] = pg_facts.collect(filter_)
+        kw['postgresql_facts'] = pg_facts.collect(filter_)
 
     else:
-        kw['ansible_facts'] = pg_facts.collect()
+        kw['postgresql_facts'] = pg_facts.collect()
 
     module.exit_json(**kw)
 
