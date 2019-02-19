@@ -80,7 +80,7 @@ class DocCLI(CLI):
 
         # process all plugins of type
         if options.all_plugins:
-            args = self.get_all_plugins_of_type(options['type'])
+            args = self.get_all_plugins_of_type(options.type)
             if options.module_path:
                 display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
 
@@ -281,6 +281,10 @@ class DocCLI(CLI):
 
         if not os.path.exists(path):
             display.vvvv("%s does not exist" % path)
+            return plugin_list
+
+        if not os.path.isdir(path):
+            display.vvvv("%s is not a directory" % path)
             return plugin_list
 
         bkey = ptype.upper()
