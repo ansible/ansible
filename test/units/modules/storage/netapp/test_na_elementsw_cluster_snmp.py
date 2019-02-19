@@ -48,6 +48,7 @@ def fail_json(*args, **kwargs):  # pylint: disable=unused-argument
     kwargs['failed'] = True
     raise AnsibleFailJson(kwargs)
 
+
 GET_ERROR = 'some_error_in_get_snmp_info'
 
 
