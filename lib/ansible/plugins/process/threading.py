@@ -19,6 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    process: threading
+    short_description: Spawn workers using threading.
+    description:
+        - This process model creates workers using the Python threading library. Workers are created
+          as a pool and pick jobs off a shared queue (which is a simple deque type, as opposed to a
+          multiprocessing.Queue).
+    author: ansible (@core)
+    version_added: 2.8
+    options: {}
+'''
+
 import os
 import sys
 import threading
@@ -62,6 +74,7 @@ class ProcessModel(ProcessModelBase):
         data = None
         try:
             data = self._job_queue.popleft()
+            self._tqm.send_callback('v2_runner_on_start', host, task)
         except:
             pass
         finally:
@@ -71,7 +84,6 @@ class ProcessModel(ProcessModelBase):
     def put_job(self, host, task, play_context, task_vars):
         try:
             self._job_queue.append((host, task, play_context, task_vars))
-            self._tqm.send_callback('v2_runner_on_start', host, task)
         finally:
             pass
 

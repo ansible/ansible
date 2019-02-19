@@ -25,6 +25,7 @@ This section covers the various types of plugins that are included with Ansible:
    shell
    strategy
    vars
+   process
    ../user_guide/playbooks_filters
    ../user_guide/playbooks_tests
    ../user_guide/plugin_filtering_config

@@ -19,6 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+DOCUMENTATION = '''
+    process: forking
+    short_description: Spawn workers using multiprocessing forks.
+    description:
+        - This process model creates workers using the Python multiprocessing library. Workers are created
+          on-demand as jobs are queued up, up to the maximum number of forks allowed.
+    author: ansible (@core)
+    version_added: 2.8
+    options: {}
+'''
+
 import multiprocessing
 import os
 import sys

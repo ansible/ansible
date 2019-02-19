@@ -1,0 +1,3 @@
+---
+major_changes:
+- "Added process model as a plugin. This supports two major methods of creating workers for doing work in Ansible: forking (the previous hard-coded and default method), and threading."
