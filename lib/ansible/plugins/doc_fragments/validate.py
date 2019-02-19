@@ -13,4 +13,5 @@ options:
     - The validation command to run before copying into place.
     - The path to the file to validate is passed in via '%s' which must be present as in the examples below.
     - The command is passed securely so shell features like expansion and pipes will not work.
+    type: str
 '''
