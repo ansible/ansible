@@ -236,7 +236,6 @@ EXAMPLES = """
         size_unit: mb
         space_guarantee: none
         policy: default
-        vserver: ansible
         percent_snapshot_space: 60
         vserver: ansibleVServer
         wait_for_completion: True
