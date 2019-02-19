@@ -361,7 +361,7 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
         required_by=dict(
-            option=('iface'),
+            option=('iface',),
         ),
     )
 
