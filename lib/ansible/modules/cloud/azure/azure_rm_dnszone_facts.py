@@ -46,12 +46,12 @@ author:
 EXAMPLES = '''
 - name: Get facts for one zone
   azure_rm_dnszone_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: foobar22
 
 - name: Get facts for all zones in a resource group
   azure_rm_dnszone_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
 
 - name: Get facts by tags
   azure_rm_dnszone_facts:
@@ -81,7 +81,7 @@ dnszones:
         id:
             description:
                 - id of the DNS Zone.
-            sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Network/dnszones/azure.com"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/azure.com"
         name:
             description:
                 - name of the DNS Zone.
@@ -93,11 +93,11 @@ dnszones:
         registration_virtual_networks:
             description:
                 - A list of references to virtual networks that register hostnames in this DNS zone.
-            sample:  ["/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Network/virtualNetworks/bar"]
+            sample:  ["/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/bar"]
         resolution_virtual_networks:
             description:
                 - A list of references to virtual networks that resolve records in this DNS zone.
-            sample:  ["/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.Network/virtualNetworks/deadbeef"]
+            sample:  ["/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/deadbeef"]
         number_of_record_sets:
             description:
                 - The current number of record sets in this DNS zone.

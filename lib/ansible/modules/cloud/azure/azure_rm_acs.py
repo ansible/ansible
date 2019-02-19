@@ -133,7 +133,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice1
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: Kubernetes
         master_profile:
             - count: 3
@@ -158,7 +158,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice2
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: DCOS
         master_profile:
             - count: 3
@@ -180,7 +180,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice3
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         orchestration_platform: Swarm
         master_profile:
             - count: 3
@@ -206,7 +206,7 @@ EXAMPLES = '''
       azure_rm_acs:
         name: acctestcontservice3
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
         orchestration_platform: Swarm
         master_profile:

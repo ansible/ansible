@@ -45,12 +45,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for app service plan by name
       azure_rm_appserviceplan_facts:
-        resource_group: testrg
+        resource_group: myResourceGroup
         name: winwebapp1
 
     - name: Get azure_rm_appserviceplan_facts for app service plan in resource group
       azure_rm_webapp_facts:
-        resource_group: testrg
+        resource_group: myResourceGroup
 
     - name: Get facts for app service plan with tags
       azure_rm_appserviceplan_facts:
@@ -69,7 +69,7 @@ appserviceplans:
             description: Id of the app service plan.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroupsxxx/providers/Microsoft.Web/serverfarms/xxx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/myPlan
         name:
             description: Name of the app service plan.
             returned: always
@@ -78,6 +78,7 @@ appserviceplans:
             description: Resource group of the app service plan.
             returned: always
             type: str
+            sample: myResourceGroup
         location:
             description: Location of the app service plan.
             returned: always

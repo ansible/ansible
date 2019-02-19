@@ -62,7 +62,7 @@ author:
 EXAMPLES = '''
     - name: Create a CDN profile
       azure_rm_cdnprofile:
-          resource_group: Testing
+          resource_group: myResourceGroup
           name: cdntest
           sku: standard_akamai
           tags:
@@ -70,7 +70,7 @@ EXAMPLES = '''
 
     - name: Delete the CDN profile
       azure_rm_cdnprofile:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: cdntest
         state: absent
 '''

@@ -52,18 +52,18 @@ author:
 EXAMPLES = '''
 - name: Get facts for one Record Set
   azure_rm_dnsrecordset_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: example.com
     relative_name: server10
     record_type: A
 - name: Get facts for all Type A Record Sets in a Zone
   azure_rm_dnsrecordset_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: example.com
     record_type: A
 - name: Get all record sets in one zone
   azure_rm_dnsrecordset_facts:
-    resource_group: Testing
+    resource_group: myResourceGroup
     zone_name: example.com
 '''
 
@@ -98,7 +98,8 @@ dnsrecordsets:
     contains:
         id:
             description: ID of the dns recordset.
-            sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/testing/providers/Microsoft.Network/dnszones/newzone.com/A/servera"
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/dnszones/newzone.
+                     com/A/servera"
         relative_name:
             description: Name of the dns recordset.
             sample: servera
