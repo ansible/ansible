@@ -114,6 +114,14 @@ options:
             - "If I(True) enables fencing on the cluster."
             - "Fencing is enabled by default."
         type: bool
+    fence_skip_if_gluster_bricks_up:
+        description:
+            - "If I(True) "
+        type: bool
+    fence_skip_if_gluster_quorum_not_met:
+        description:
+            - "If I(True) "
+        type: bool
     fence_skip_if_sd_active:
         description:
             - "If I(True) any hosts in the cluster that are Non Responsive
@@ -458,6 +466,8 @@ class ClustersModule(BaseModule):
             ) if self.param('resilience_policy') else None,
             fencing_policy=otypes.FencingPolicy(
                 enabled=self.param('fence_enabled'),
+                skip_if_gluster_bricks_up=self.param('fence_skip_if_gluster_bricks_up'),
+                skip_if_gluster_quorum_not_met=self.param('fence_skip_if_gluster_quorum_not_met'),
                 skip_if_connectivity_broken=otypes.SkipIfConnectivityBroken(
                     enabled=self.param('fence_skip_if_connectivity_broken'),
                     threshold=self.param('fence_connectivity_threshold'),
@@ -472,6 +482,8 @@ class ClustersModule(BaseModule):
                 self.param('fence_enabled') is not None or
                 self.param('fence_skip_if_sd_active') is not None or
                 self.param('fence_skip_if_connectivity_broken') is not None or
+                self.param('fence_skip_if_gluster_bricks_up') is not None or
+                self.param('fence_skip_if_gluster_quorum_not_met') is not None or
                 self.param('fence_connectivity_threshold') is not None
             ) else None,
             display=otypes.Display(
@@ -584,6 +596,8 @@ class ClustersModule(BaseModule):
             equal(self.param('vm_reason'), entity.optional_reason) and
             equal(self.param('spice_proxy'), getattr(entity.display, 'proxy', None)) and
             equal(self.param('fence_enabled'), entity.fencing_policy.enabled) and
+            equal(self.param('fence_skip_if_gluster_bricks_up'), entity.fencing_policy.skip_if_gluster_bricks_up) and
+            equal(self.param('fence_skip_if_gluster_quorum_not_met'), entity.fencing_policy.skip_if_gluster_quorum_not_met) and
             equal(self.param('fence_skip_if_sd_active'), entity.fencing_policy.skip_if_sd_active.enabled) and
             equal(self.param('fence_skip_if_connectivity_broken'), entity.fencing_policy.skip_if_connectivity_broken.enabled) and
             equal(self.param('fence_connectivity_threshold'), entity.fencing_policy.skip_if_connectivity_broken.threshold) and
@@ -638,6 +652,8 @@ def main():
         rng_sources=dict(default=None, type='list'),
         spice_proxy=dict(default=None),
         fence_enabled=dict(default=None, type='bool'),
+        fence_skip_if_gluster_bricks_up=dict(default=None, type='bool'),
+        fence_skip_if_gluster_quorum_not_met=dict(default=None, type='bool'),
         fence_skip_if_sd_active=dict(default=None, type='bool'),
         fence_skip_if_connectivity_broken=dict(default=None, type='bool'),
         fence_connectivity_threshold=dict(default=None, type='int'),
