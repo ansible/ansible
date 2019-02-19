@@ -184,8 +184,8 @@ EXAMPLES = r'''
     device: /dev/sdb
     number: '{{ item.num }}'
     state: absent
-  loop: "{{ sdb_info.partitions }}"
-"""
+  loop: '{{ sdb_info.partitions }}'
+'''
 
 
 from ansible.module_utils.basic import AnsibleModule
