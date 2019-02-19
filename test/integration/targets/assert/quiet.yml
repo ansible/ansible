@@ -13,4 +13,3 @@
       quiet: False
     with_items:
       - item_A
-
