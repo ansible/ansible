@@ -333,7 +333,7 @@ def main():
                          tags=dict(type='json'),
                          networks=dict(type='json'),
                          org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
+                         org_id=dict(type='str'),
                          )
 
     # seed the result dict in the object
