@@ -583,10 +583,10 @@ def main():
             ['insertafter', 'insertbefore'],
         ],
         required_by=dict(
-            cron_file=('user'),
+            cron_file=('user',),
         ),
         required_if=(
-            ('state', 'present', ('job')),
+            ('state', 'present', ('job',)),
         ),
     )
 
