@@ -1,7 +1,7 @@
 ---
 - name: Test create server
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
@@ -15,7 +15,7 @@
 
 - name: Test create server indempotence
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
@@ -29,7 +29,7 @@
 
 - name: Test create server stopped
   cloudscale_server:
-    name: '{{ resource_prefix }}-test-stopped'
+    name: '{{ cloudscale_resource_prefix }}-test-stopped'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
@@ -44,7 +44,7 @@
 
 - name: Test create server failure without required parameters
   cloudscale_server:
-    name: '{{ resource_prefix }}-test-failed'
+    name: '{{ cloudscale_resource_prefix }}-test-failed'
   register: server_failed
   ignore_errors: True
 - name: Verify create server failure without required parameters
@@ -55,7 +55,7 @@
 
 - name: Test server stopped
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     state: 'stopped'
   register: server
 - name: Verify server stopped
@@ -67,7 +67,7 @@
 
 - name: Test server stopped indempotence
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     state: 'stopped'
   register: server
 - name: Verify server stopped indempotence
@@ -79,7 +79,7 @@
 
 - name: Test server running
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     state: 'running'
   register: server
 - name: Verify server running
@@ -91,7 +91,7 @@
 
 - name: Test server running indempotence
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     state: 'running'
   register: server
 - name: Verify server running indempotence
@@ -103,7 +103,7 @@
 
 - name: Test server deletion by name
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     state: 'absent'
   register: server
 - name: Verify server deletion
@@ -127,7 +127,7 @@
 
 - name: Test server deletion indempotence
   cloudscale_server:
-    name: '{{ resource_prefix }}-test'
+    name: '{{ cloudscale_resource_prefix }}-test'
     state: 'absent'
   register: server
 - name: Verify server deletion

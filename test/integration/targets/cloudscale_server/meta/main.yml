@@ -1,2 +1,2 @@
 dependencies:
-  - prepare_tests
+  - cloudscale_common
