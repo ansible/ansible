@@ -92,7 +92,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) PostgreSQL Server
     azure_rm_postgresqlserver:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       name: testserver
       sku:
         name: B_Gen5_1

@@ -144,14 +144,14 @@ author:
 EXAMPLES = '''
   - name: Create (or update) SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: testdb
       location: eastus
 
   - name: Restore SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: restoreddb
       location: eastus
@@ -161,7 +161,7 @@ EXAMPLES = '''
 
   - name: Create SQL Database in Copy Mode
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: copydb
       location: eastus

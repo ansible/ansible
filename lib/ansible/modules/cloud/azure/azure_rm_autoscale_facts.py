@@ -44,12 +44,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of Auto Scale Setting
     azure_rm_autoscale_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       name: auto_scale_name
 
   - name: List instances of Auto Scale Setting
     azure_rm_autoscale_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
