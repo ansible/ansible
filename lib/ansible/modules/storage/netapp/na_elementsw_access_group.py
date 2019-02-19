@@ -41,14 +41,14 @@ options:
         description:
         - ID or Name of the access group to rename.
         - Required to create a new access group called 'name' by renaming 'from_name'.
-        - version_added: '2.8'
+        version_added: '2.8'
 
     name:
         description:
         - Name for the access group for create, modify and delete operations.
         required: True
         aliases:
-        - src_access_group_id 
+        - src_access_group_id
 
     initiators:
         description:
