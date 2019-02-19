@@ -1,0 +1,5 @@
+- name: Remove existing test zone, if able
+  win_shell: |
+    Trap { Continue }
+    Remove-DnsServerZone -Name '{{ win_dns_record_zone }}' -Force
+    $True
