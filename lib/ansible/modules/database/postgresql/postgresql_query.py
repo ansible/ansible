@@ -28,7 +28,6 @@ options:
     description:
     - SQL query to run. Variables can be escaped with psycopg2 syntax U(http://initd.org/psycopg/docs/usage.html).
     type: str
-    required: true
   positional_args:
     description:
     - List of values to be passed as positional arguments to the query.
@@ -39,6 +38,12 @@ options:
     - Dictionary of key-value arguments to pass to the query.
     - Mutually exclusive with I(positional_args).
     type: dict
+  path_to_script:
+    description:
+    - Path to SQL script on the remote host.
+    - Returns result of the last query in the script.
+    - Mutually exclusive with I(query).
+    type: path
   session_role:
     description:
     - Switch to session_role after connecting. The specified session_role must
@@ -80,7 +85,7 @@ options:
     - Default of C(prefer) matches libpq default.
     type: str
     default: prefer
-    choices: [ disable, allow, prefer, require, verify-ca, verify-full ]
+    choices: [ allow, disable, prefer, require, verify-ca, verify-full ]
   ssl_rootcert:
     description:
     - Specifies the name of a file containing SSL certificate authority (CA)
@@ -101,8 +106,8 @@ notes:
   on the remote host before using this module.
 requirements: [ psycopg2 ]
 author:
-- Andrew Klychkov (@Andersson007)
 - Felix Archambault (@archf)
+- Andrew Klychkov (@Andersson007)
 - Will Rouesnel (@wrouesnel)
 '''
 
@@ -134,6 +139,13 @@ EXAMPLES = r'''
   postgresql_query:
     db: test_db
     query: INSERT INTO test_db (id, story) VALUES (2, 'my_long_story')
+
+- name: Run queries from SQL script
+  postgresql_query:
+    db: test_db
+    path_to_script: /var/lib/pgsql/test.sql
+    positional_args:
+    - 1
 '''
 
 RETURN = r'''
@@ -204,13 +216,14 @@ def connect_to_db(module, kw, autocommit=False):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        query=dict(type='str', required=True),
+        query=dict(type='str'),
         db=dict(type='str'),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
         positional_args=dict(type='list'),
         named_args=dict(type='dict'),
         session_role=dict(type='str'),
+        path_to_script=dict(type='path'),
     )
 
     module = AnsibleModule(
@@ -223,9 +236,19 @@ def main():
     named_args = module.params["named_args"]
     sslrootcert = module.params["ssl_rootcert"]
     session_role = module.params["session_role"]
+    path_to_script = module.params["path_to_script"]
 
     if positional_args and named_args:
         module.fail_json(msg="positional_args and named_args params are mutually exclusive")
+
+    if path_to_script and query:
+        module.fail_json(msg="path_to_script is mutually exclusive with query")
+
+    if path_to_script:
+        try:
+            query = open(path_to_script, 'r').read()
+        except Exception as e:
+            module.fail_json(msg="Cannot read file '%s' : %s" % (path_to_script, to_native(e)))
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw

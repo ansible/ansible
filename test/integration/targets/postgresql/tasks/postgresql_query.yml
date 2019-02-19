@@ -1,7 +1,7 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Prepare for tests.
+# Prepare for tests:
 - name: postgresql_query - drop test table if exists
   become_user: "{{ pg_user }}"
   become: yes
@@ -20,6 +20,25 @@
   become: yes
   shell: psql postgres -U "{{ pg_user }}" -t -c "INSERT INTO test_table (id, story) VALUES (1, 'first'), (2, 'second'), (3, 'third');"
   ignore_errors: yes
+
+# Prepare SQL script:
+- name: postgresql_query - remove SQL script if exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  file:
+    path: '~{{ pg_user}}/test.sql'
+    state: absent
+  ignore_errors: yes
+
+- name: postgresql_query - prepare SQL script
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: 'echo "{{ item }}" >> ~{{ pg_user}}/test.sql'
+  ignore_errors: yes
+  with_items:
+  - SELECT version();
+  - SELECT story FROM test_table
+  - WHERE id = %s;
 
 ##############
 # Start tests:
@@ -43,6 +62,27 @@
     - result.rowcount == 0
     - result.statusmessage == 'ANALYZE'
     - result.query_result == {}
+
+# Run queries from SQL script:
+- name: postgresql_query - run queries from SQL script
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    path_to_script: '~{{ pg_user }}/test.sql'
+    positional_args:
+    - 1
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == false
+    - result.query == 'SELECT version();\nSELECT story FROM test_table\nWHERE id = 1;\n'
+    - result.rowcount == 1
+    - result.statusmessage == 'SELECT 1'
+    - result.query_result[0].story == 'first'
 
 # Simple select query:
 - name: postgresql_query - simple select query to test_table
