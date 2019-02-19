@@ -27,25 +27,31 @@ options:
     auth_key:
         description:
         - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        type: str
     state:
         description:
         - Query or edit syslog servers
         - To delete a syslog server, do not include server in list of servers
         choices: [present, query]
         default: present
+        type: str
     net_name:
         description:
         - Name of a network.
         aliases: [name, network]
+        type: str
     net_id:
         description:
         - ID number of a network.
+        type: str
     org_name:
         description:
         - Name of organization associated to a network.
+        type: str
     org_id:
         description:
         - ID of organization associated to a network.
+        type: str
     servers:
         description:
         - List of syslog server settings
@@ -188,7 +194,7 @@ def main():
     # the module
 
     server_arg_spec = dict(host=dict(type='str'),
-                           port=dict(type='str', default="514"),
+                           port=dict(type='int', default="514"),
                            roles=dict(type='list', choices=['Wireless Event log',
                                                             'Appliance event log',
                                                             'Switch event log',
