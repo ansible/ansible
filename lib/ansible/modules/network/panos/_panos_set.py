@@ -41,6 +41,10 @@ description:
   - The 'element' is "<timezone>Australia/Melbourne</timezone>"
 author: "Jasper Mackenzie (@spmp)"
 version_added: "2.7"
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.11"
+    why: Consolidating code base.
 requirements:
   - pan-python
 options:
@@ -99,7 +103,7 @@ RETURN = '''
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 from ansible.module_utils.basic import AnsibleModule
