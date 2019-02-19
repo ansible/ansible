@@ -55,25 +55,23 @@ class DocCLI(CLI):
         opt_help.add_module_options(self.parser)
 
         self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
-
-        self.parser.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
-                                 help='Show plugin names and their source files without summaries (implies --list)')
-        self.parser.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
-                                 help='List available plugins')
-        self.parser.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
-                                 help='Show playbook snippet for specified plugin(s)')
-        self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_dump',
-                                 help='**For internal testing only** Dump json metadata for all plugins.')
         self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
                                  help='Choose which plugin type (defaults to "module"). '
                                       'Available plugin types are : {0}'.format(C.DOCUMENTABLE_PLUGINS),
                                  choices=C.DOCUMENTABLE_PLUGINS)
 
+        exclusive = self.parser.add_mutually_exclusive_group()
+        exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
+                               help='Show plugin names and their source files without summaries (implies --list)')
+        exclusive.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
+                               help='List available plugins')
+        exclusive.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
+                               help='Show playbook snippet for specified plugin(s)')
+        exclusive.add_argument("-j", "--json", action="store_true", default=False, dest='json_dump',
+                               help='**For internal testing only** Dump json metadata for all plugins.')
+
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
-
-        if [options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -F, -s, or -j can be used at the same time.")
 
         display.verbosity = options.verbosity
 
