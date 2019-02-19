@@ -33,9 +33,6 @@ options:
     name:
         description:
             - The name of the virtual network.
-    tags:
-        description:
-            - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
 
 extends_documentation_fragment:
     - azure
@@ -51,26 +48,64 @@ EXAMPLES = '''
       resource_group: myResourceGroup
       lab_name: myLab
       name: myVirtualNetwork
+
+  - name: List all virtual networks in the Lab
+    azure_rm_devtestlabvirtualnetwork_facts:
+      resource_group: myResourceGroup
+      lab_name: myLab
+      name: myVirtualNetwork
 '''
 
 RETURN = '''
-virtual_networks:
+virtualnetworks:
     description: A list of dictionaries containing facts for DevTest Lab Virtual Network.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the virtual network.
             returned: always
             type: str
-            sample: id
-        tags:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/virt
+                     ualnetworks/myVirtualNetwork"
+        resource_group:
             description:
-                - The tags of the resource.
+                - Name of the resource group.
             returned: always
-            type: complex
-            sample: tags
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - Name of the virtual network.
+            returned: always
+            type: str
+            sample: myVirtualNetwork
+        name:
+            description:
+                - Description of the virtual network.
+            returned: always
+            type: str
+            sample: My Virtual Network
+        external_provider_resource_id:
+            description:
+                - Resource id of an external virtual network.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/my
+                     VirtualNetwork"
+        provisioning_state:
+            description:
+                - Provisioning state of the virtual network.
+            returned: always
+            type: str
+            sample: Succeeded
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -98,9 +133,6 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
             ),
             name=dict(
                 type='str'
-            ),
-            tags=dict(
-                type='list'
             )
         )
         # store the results of the module operation
@@ -111,8 +143,6 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
         self.resource_group = None
         self.lab_name = None
         self.name = None
-        self.expand = None
-        self.tags = None
         super(AzureRMDevTestLabVirtualNetworkFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
@@ -122,9 +152,9 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['virtual_networks'] = self.get()
+            self.results['virtualnetworks'] = self.get()
         else:
-            self.results['virtual_networks'] = self.list()
+            self.results['virtualnetworks'] = self.list()
 
         return self.results
 
@@ -141,8 +171,7 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
 
         if response is not None:
             for item in response:
-                if self.has_tags(item.tags, self.tags):
-                    results.append(self.format_response(item))
+                results.append(self.format_response(item))
 
         return results
 
@@ -155,20 +184,24 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
                                                              name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Virtual Network.')
+            self.fail('Could not get facts for Virtual Network.')
 
-        if response and self.has_tags(response.tags, self.tags):
+        if response:
             results.append(self.format_response(response))
 
         return results
 
     def format_response(self, item):
         d = item.as_dict()
-        #d = {
-        #    'resource_group': self.resource_group,
-        #    'id': d.get('id', None),
-        #    'tags': d.get('tags', None)
-        #}
+        d = {
+            'resource_group': self.resource_group,
+            'lab_name': self.lab_name,
+            'name': d.get('name', None),
+            'id': d.get('id', None),
+            'external_provider_resource_id': d.get('external_provider_resource_id', None),
+            'provisioning_state': d.get('provisioning_state', None),
+            'description': d.get('description', None)
+        }
         return d
 
 
