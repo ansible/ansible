@@ -84,20 +84,22 @@ else:
     from jinja2.utils import concat as j2_concat
 
 
-def generate_ansible_template_vars(path):
+def generate_ansible_template_vars(path, dest_path=None):
     b_path = to_bytes(path)
     try:
         template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
     except (KeyError, TypeError):
         template_uid = os.stat(b_path).st_uid
 
-    temp_vars = {}
-    temp_vars['template_host'] = to_text(os.uname()[1])
-    temp_vars['template_path'] = path
-    temp_vars['template_mtime'] = datetime.datetime.fromtimestamp(os.path.getmtime(b_path))
-    temp_vars['template_uid'] = to_text(template_uid)
-    temp_vars['template_fullpath'] = os.path.abspath(path)
-    temp_vars['template_run_date'] = datetime.datetime.now()
+    temp_vars = {
+        'template_host': to_text(os.uname()[1]),
+        'template_path': path,
+        'template_mtime': datetime.datetime.fromtimestamp(os.path.getmtime(b_path)),
+        'template_uid': to_text(template_uid),
+        'template_fullpath': os.path.abspath(path),
+        'template_run_date': datetime.datetime.now(),
+        'template_destpath': to_native(dest_path) if dest_path else None,
+    }
 
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(

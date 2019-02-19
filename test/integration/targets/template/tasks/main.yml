@@ -667,5 +667,23 @@
       - list_var.1.foo is not defined
       - list_var.1.foo | default('DEFAULT') == 'DEFAULT'
 
+- template:
+    src: template_destpath_test.j2
+    dest: "{{ output_dir }}/template_destpath.templated"
+
+- copy:
+    content: "{{ output_dir}}/template_destpath.templated\n"
+    dest: "{{ output_dir }}/template_destpath.expected"
+
+- name: compare templated file to known good template_destpath
+  shell: diff -uw {{output_dir}}/template_destpath.templated {{output_dir}}/template_destpath.expected
+  register: diff_result
+
+- name: verify templated template_destpath matches known good
+  assert:
+    that:
+        - 'diff_result.stdout == ""'
+        - "diff_result.rc == 0"
+
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml
