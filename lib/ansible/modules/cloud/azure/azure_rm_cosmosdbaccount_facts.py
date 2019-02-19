@@ -54,12 +54,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of Database Account
     azure_rm_cosmosdbaccount_facts:
-      resource_group: testrg
+      resource_group: myResourceGroup
       name: testaccount
 
   - name: List instances of Database Account
     azure_rm_cosmosdbaccousnt_facts:
-      resource_group: testrg
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -73,13 +73,14 @@ accounts:
                 - The unique resource identifier of the database account.
             returned: always
             type: str
-            sample: /subscriptions/subid/resourceGroups/testrg/providers/Microsoft.DocumentDB/databaseAccounts/testaccount
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccount
+                     s/testaccount"
         resource_group:
             description:
                 - Name of an Azure resource group.
             returned: always
             type: str
-            sample: testrg
+            sample: myResourceGroup
         name:
             description:
                 - The name of the database account.
@@ -269,7 +270,8 @@ accounts:
                     description:
                         - Resource id of a subnet.
                     type: str
-                    sample: /subscriptions/subid/resourceGroups/testrg/providers/Microsoft.Network/virtualNetworks/testvnet/subnets/testsubnet1
+                    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNet
+                             works/testvnet/subnets/testsubnet1"
                 ignore_missing_vnet_service_endpoint:
                     description:
                         - Create Cosmos DB account without existing virtual network service endpoint.
