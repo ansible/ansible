@@ -72,7 +72,7 @@ EXAMPLES = '''
       resource_group: myResourceGroup
       provider: compute
       resource_type: virtualmachinescalesets
-      resource_name: myVmssName
+      resource_name: myVmss
       api_version: "2017-12-01"
 '''
 
