@@ -368,6 +368,13 @@ integers into IP addresses::
 
     # {{ test_list | ipaddr('address') | ipaddr('int') }}
     [3222798849, 1, '3232243712/24', '338288524927261089654018896841347694848/10', '42540766412265424405338506004571095040/64']
+    
+You can convert IPv4 address to `Hexadecimal notation <https://en.wikipedia.org/wiki/Hexadecimal>`_ with optional delimiter::
+
+    # {{ '192.168.1.5' | ip4_hex }}
+    c0a80105
+    # {{ '192.168.1.5' | ip4_hex(':') }}
+    c0:a8:01:05
 
 You can convert IP addresses to PTR records::
 
