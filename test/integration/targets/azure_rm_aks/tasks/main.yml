@@ -1,13 +1,18 @@
  - set_fact:
      rpfx: "{{ resource_group | hash('md5') | truncate(8, True, '') }}"
 
+ - name: Find available k8s version
+   azure_rm_aks_facts:
+     show_available_version_in_location: eastus
+   register: versions
+
  - name: Create an AKS instance (check mode)
    azure_rm_aks:
      name: "aks{{ rpfx }}"
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ rpfx }}"
-     kubernetes_version: 1.11.5
+     kubernetes_version: "{{ versions.available_versions[0] }}"
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
          client_secret: "{{ lookup('env', 'AZURE_SECRET') }}"
@@ -38,7 +43,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ rpfx }}"
-     kubernetes_version: 1.11.5
+     kubernetes_version: "{{ versions.available_versions[0] }}"
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
          client_secret: "{{ lookup('env', 'AZURE_SECRET') }}"
@@ -76,7 +81,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ rpfx }}"
-     kubernetes_version: 1.11.5
+     kubernetes_version: "{{ versions.available_versions[0] }}"
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
      linux_profile:
@@ -100,7 +105,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ rpfx }}"
-     kubernetes_version: 1.11.6
+     kubernetes_version: "{{ versions.available_versions[1] }}"
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
      linux_profile:
@@ -121,7 +126,7 @@
    assert:
       that:
        - output.changed
-       - output.kubernetes_version == '1.11.6'
+       - output.kubernetes_version == versions.available_versions[1]
        - output.addon.httpApplicationRouting.enabled ==  True
        - output.agent_pool_profiles[0].count == 1
        - output.network_profile.network_plugin == 'kubenet'
@@ -132,7 +137,7 @@
      resource_group: "{{ resource_group }}"
      location: eastus
      dns_prefix: "aks{{ rpfx }}"
-     kubernetes_version: 1.11.6
+     kubernetes_version: "{{ versions.available_versions[1] }}"
      service_principal:
          client_id: "{{ lookup('env', 'AZURE_CLIENT_ID') }}"
      linux_profile:

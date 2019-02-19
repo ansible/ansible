@@ -388,7 +388,7 @@ linux_profile_spec = dict(
 
 service_principal_spec = dict(
     client_id=dict(type='str', required=True),
-    client_secret=dict(type='str')
+    client_secret=dict(type='str', no_log=True)
 )
 
 
@@ -419,7 +419,7 @@ network_profile_spec = dict(
 aad_profile_spec = dict(
     client_app_id=dict(type='str'),
     server_app_id=dict(type='str'),
-    server_app_secret=dict(type='str'),
+    server_app_secret=dict(type='str', no_log=True),
     tenant_id=dict(type='str')
 )
 

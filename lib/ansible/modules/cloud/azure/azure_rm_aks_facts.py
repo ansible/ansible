@@ -41,6 +41,11 @@ options:
         choices:
             - user
             - admin
+    show_available_version_in_location:
+        description:
+            - Show available kubernetes versions in a specific location.
+            - Note, When this field set, nothing will be queried in your subscription but only available kubernetes versions.
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -57,6 +62,10 @@ EXAMPLES = '''
 
     - name: Get facts for all Azure Kubernetes Services
       azure_rm_aks_facts:
+
+    - name: Get available versions for AKS in location eastus
+      azure_rm_aks_facts:
+        show_available_version_in_location: eastus
 
     - name: Get facts by tags
       azure_rm_aks_facts:
@@ -92,18 +101,21 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            show_kubeconfig=dict(type='str', choices=['user', 'admin'])
+            show_kubeconfig=dict(type='str', choices=['user', 'admin']),
+            show_available_versions_in_location=dict(type='str')
         )
 
         self.results = dict(
             changed=False,
-            aks=[]
+            aks=[],
+            available_versions=[]
         )
 
         self.name = None
         self.resource_group = None
         self.tags = None
         self.show_kubeconfig = None
+        self.show_available_versions_in_location = None
 
         super(AzureRMManagedClusterFacts, self).__init__(
             derived_arg_spec=self.module_args,
@@ -116,10 +128,13 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
-        self.results['aks'] = (
-            self.get_item() if self.name
-            else self.list_items()
-        )
+        if self.show_available_versions_in_location:
+            self.results['available_versions'] = self.get_all_versions(self.show_available_versions_in_location)
+        else:
+            self.results['aks'] = (
+                self.get_item() if self.name
+                else self.list_items()
+            )
 
         return self.results
 
@@ -175,6 +190,18 @@ class AzureRMManagedClusterFacts(AzureRMModuleBase):
         role_name = 'cluster{0}'.format(str.capitalize(self.show_kubeconfig))
         access_profile = self.managedcluster_client.managed_clusters.get_access_profile(resource_group, name, role_name)
         return access_profile.kube_config.decode('utf-8')
+
+    def get_all_versions(self, location):
+        '''
+        Get all kubernetes version supported by AKS
+        :return: version list
+        '''
+        try:
+            response = self.containerservice_client.container_services.list_orchestrators(location, resource_type='managedClusters')
+            orchestrators = response.orchestrators or []
+            return [item.orchestrator_version for item in orchestrators]
+        except Exception as exc:
+            self.fail('Error when getting AKS supported kubernetes version list for location {0} - {1}'.format(location, exc.message or str(exc)))
 
 
 def main():
