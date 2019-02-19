@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2019, NetApp, Inc
+# (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or
 # https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -95,7 +95,7 @@ from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 from ansible.module_utils.netapp_module import NetAppModule
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 if HAS_SF_SDK:
-    from solidfire.models import *
+    from solidfire.models import ModifyInitiator
 
 
 class ElementSWInitiators(object):
@@ -200,7 +200,7 @@ class ElementSWInitiators(object):
             else:
                 # if neither id nor name provided
                 # return everything
-                initiator_details = all_initiator_details
+                initiator_details = self.all_existing_initiators
         return initiator_details
 
     def create_initiators(self, initiator):
