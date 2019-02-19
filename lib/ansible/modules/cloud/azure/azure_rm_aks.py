@@ -112,7 +112,7 @@ EXAMPLES = '''
       azure_rm_aks:
         name: acctestaks1
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         dns_prefix: akstest
         linux_profile:
           admin_username: azureuser
@@ -130,7 +130,7 @@ EXAMPLES = '''
     - name: Remove a managed Azure Container Services (AKS) instance
       azure_rm_aks:
         name: acctestaks3
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 RETURN = '''

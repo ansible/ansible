@@ -46,7 +46,7 @@ EXAMPLES = '''
     - name: Get facts for one CDN profile
       azure_rm_cdnprofile_facts:
         name: Testing
-        resource_group: TestRG
+        resource_group: myResourceGroup
 
     - name: Get facts for all CDN profiles
       azure_rm_cdnprofile_facts:
@@ -68,7 +68,7 @@ cdnprofiles:
                 - Name of a resource group where the CDN profile exists.
             returned: always
             type: str
-            sample: testGroup
+            sample: myResourceGroup
         name:
             description:
                 - Name of the CDN profile.
@@ -84,7 +84,7 @@ cdnprofiles:
             description:
                 - ID of the CDN profile.
             type: str
-            sample: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/cdntest/providers/Microsoft.Cdn/profiles/cdntest
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/Microsoft.Cdn/profiles/cdntest
         provisioning_state:
             description:
                 - Provisioning status of the profile.

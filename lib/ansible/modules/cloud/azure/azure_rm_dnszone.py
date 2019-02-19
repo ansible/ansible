@@ -86,13 +86,13 @@ EXAMPLES = '''
 
 - name: Create a DNS zone
   azure_rm_dnszone:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: example.com
     state: present
 
 - name: Delete a DNS zone
   azure_rm_dnszone:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: example.com
     state: absent
 
