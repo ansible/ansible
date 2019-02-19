@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_virtualmachine_facts - fixed crash related to attached managed disks (https://github.com/ansible/ansible/issues/52181)
