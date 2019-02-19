@@ -26,14 +26,14 @@ description:
 options:
     resource_group:
         description:
-            - The resource group to search for the desired Azure redis cache
+            - The resource group to search for the desired Azure Redis Cache
         required: True
     name:
         description:
-            - Limit results to a specific Azure redis cache.
+            - Limit results to a specific Azure Redis Cache.
     return_access_keys:
         description:
-            - Indicate wheather to return access keys of the redis cache.
+            - Indicate weather to return access keys of the Redis Cache.
         default: False
         type: bool
     tags:
@@ -48,53 +48,46 @@ author:
 '''
 
 EXAMPLES = '''
-    rediscaches:
-    - configuration:
-        maxclients: '1000'
-        maxfragmentationmemory-reserved: '50'
-        maxmemory-delta: '50'
-        maxmemory-reserved: '50'
-      enable_non_ssl_port: false
-      host_name: testredis1.redis.cache.windows.net
-      id: /subscriptions/<subs_id>/resourceGroups/rerdistest1/providers/Microsoft.Cache/Redis/testredis1
-      location: East US
-      name: testredis1
-      provisioning_state: Creating
-      resource_group: testrg1
-      shard_count: null
-      sku:
-        name: Basic
-        size: C1
-      static_ip: 1.2.3.4
-      subnet: null
-      tags: {}
-      tenant_settings: null
+    - name: Get Redis Cache by name
+      azure_rm_rediscache_facts:
+        resource_group: myResourceGroup
+        name: myRedis
+
+    - name: Get Redis Cache with access keys by name
+      azure_rm_rediscache_facts:
+        resource_group: myResourceGroup
+        name: myRedis
+        return_access_keys: true
+
+    - name: Get Redis Cache in specific resource group
+      azure_rm_rediscache_facts:
+        resource_group: myResourceGroup
 '''
 
 RETURN = '''
 rediscaches:
-    description: List of Azure redis cache instances.
+    description: List of Azure Redis Cache instances.
     returned: always
     type: complex
     contains:
         resource_group:
             description:
-                - Name of a resource group where the Azure redis cache belongs to.
+                - Name of a resource group where the Azure Redis Cache belongs to.
             returned: always
             type: str
             sample: testGroup
         name:
             description:
-                - Name of the Azure redis cache.
+                - Name of the Azure Redis Cache.
             returned: always
             type: str
             sample: testRedis
         id:
             description:
-                - Id of the Azure redis cache.
+                - Id of the Azure Redis Cache.
             returned: always
             type: str
-            sample: /subscriptions/<subs_id>/resourceGroups/<resourcegroup>/providers/Microsoft.Cache/Redis/testredis1
+            sample: /subscriptions/<subs_id>/resourceGroups/myResourceGroup/providers/Microsoft.Cache/Redis/myRedis
         provisioning_state:
             description:
                 - Provisioning state of the redis cahe
@@ -103,7 +96,7 @@ rediscaches:
             sample: Creating
         location:
             description:
-                - Location of the Azure redis cache.
+                - Location of the Azure Redis Cache.
             type: str
             sample: WestUS
         enable_non_ssl_port:
@@ -122,7 +115,7 @@ rediscaches:
                     type: str
                     sample: standard
                 size:
-                    description: Size of the redis cache.
+                    description: Size of the Redis Cache.
                     returned: always
                     type: str
                     sample: C1
@@ -136,7 +129,7 @@ rediscaches:
                 - The full resource ID of a subnet in a virtual network to deploy the Redis cache in.
             type: str
             sample:
-                - /subscriptions/<subid>/resourceGroups/<resourceGroupName>/Microsoft.Network|ClassicNetwork/VirtualNetworks/vnet1/subnets/subnet1
+                - /subscriptions/<subid>/resourceGroups/myResourceGroup/Microsoft.Network|ClassicNetwork/VirtualNetworks/vnet1/subnets/subnet1
         configuration:
             description:
                 - Dict of redis configuration.
@@ -245,7 +238,7 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         return self.results
 
     def get_item(self):
-        """Get a single Azure redis cache"""
+        """Get a single Azure Redis Cache"""
 
         self.log('Get properties for {0}'.format(self.name))
 
@@ -263,9 +256,9 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         return result
 
     def list_by_resourcegroup(self):
-        """Get all Azure Azure redis cache within a resource group"""
+        """Get all Azure Azure Redis Cache within a resource group"""
 
-        self.log('List all Azure redis cache within a resource group')
+        self.log('List all Azure Redis Cache within a resource group')
 
         try:
             response = self._client.redis.list_by_resource_group(self.resource_group)
@@ -280,7 +273,7 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
         return results
 
     def list_keys(self):
-        """List Azure redis cache keys"""
+        """List Azure Redis Cache keys"""
 
         self.log('List keys for {0}'.format(self.name))
 
@@ -295,8 +288,8 @@ class AzureRMRedisCacheFacts(AzureRMModuleBase):
 
     def serialize_rediscache(self, rediscache):
         '''
-        Convert a Azure redis cache object to dict.
-        :param cdn: Azure redis cache object
+        Convert a Azure Redis Cache object to dict.
+        :param cdn: Azure Redis Cache object
         :return: dict
         '''
         new_result = dict(
