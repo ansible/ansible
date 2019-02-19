@@ -22,13 +22,14 @@ description:
 - Templates are processed by the L(Jinja2 templating language,http://jinja.pocoo.org/docs/).
 - Documentation on the template formatting can be found in the
   L(Template Designer Documentation,http://jinja.pocoo.org/docs/templates/).
-- The six additional variables, listed below, can be used in template.
+- Additional variables listed below can be used in templates.
 - C(ansible_managed) (configurable via the C(defaults) section of C(ansible.cfg)) contains a string which can be used to
   describe the template name, host, modification time of the template file and the owner uid.
 - C(template_host) contains the node name of the template's machine.
 - C(template_uid) is the numeric user id of the owner.
 - C(template_path) is the path of the template.
 - C(template_fullpath) is the absolute path of the template.
+- C(template_destpath) is the path of the template on the remote system (added in 2.8).
 - C(template_run_date) is the date that the template was rendered.
 options:
   src:
