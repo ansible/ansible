@@ -2036,6 +2036,38 @@ class AnsibleModule(object):
                     self._handle_options(spec, param)
                 self._options_context.pop()
 
+    def _get_wanted_type(self, wanted, k):
+        if not callable(wanted):
+            if wanted is None:
+                # Mostly we want to default to str.
+                # For values set to None explicitly, return None instead as
+                # that allows a user to unset a parameter
+                wanted = 'str'
+            try:
+                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+            except KeyError:
+                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+        else:
+            # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
+            type_checker = wanted
+            wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
+        return type_checker, wanted
+
+    def _handle_elements(self, wanted, param, values):
+        type_checker, wanted_name = self._get_wanted_type(wanted, param)
+        validated_params = []
+        for value in values:
+            try:
+                validated_params.append(type_checker(value))
+            except (TypeError, ValueError) as e:
+                msg = "Elements value for option %s" % param
+                if self._options_context:
+                    msg += " found in '%s'" % " -> ".join(self._options_context)
+                msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_name, to_native(e))
+                self.fail_json(msg=msg)
+        return validated_params
+
     def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
 
@@ -2053,28 +2085,25 @@ class AnsibleModule(object):
             if value is None:
                 continue
 
-            if not callable(wanted):
-                if wanted is None:
-                    # Mostly we want to default to str.
-                    # For values set to None explicitly, return None instead as
-                    # that allows a user to unset a parameter
-                    if param[k] is None:
-                        continue
-                    wanted = 'str'
-                try:
-                    type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-                except KeyError:
-                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-            else:
-                # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
-                type_checker = wanted
-                wanted = getattr(wanted, '__name__', to_native(type(wanted)))
-
+            type_checker, wanted_name = self._get_wanted_type(wanted, k)
             try:
                 param[k] = type_checker(value)
+                wanted_elements = v.get('elements', None)
+                if wanted_elements:
+                    if wanted != 'list' or not isinstance(param[k], list):
+                        msg = "Invalid type %s for option '%s'" % (wanted_name, param)
+                        if self._options_context:
+                            msg += " found in '%s'." % " -> ".join(self._options_context)
+                        msg += ", elements value check is supported only with 'list' type"
+                        self.fail_json(msg=msg)
+                    param[k] = self._handle_elements(wanted_elements, k, param[k])
+
             except (TypeError, ValueError) as e:
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" %
-                               (k, type(value), wanted, to_native(e)))
+                msg = "argument %s is of type %s" % (k, type(value))
+                if self._options_context:
+                    msg += " found in '%s'." % " -> ".join(self._options_context)
+                msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
+                self.fail_json(msg=msg)
 
     def _set_defaults(self, pre=True, spec=None, param=None):
         if spec is None:
