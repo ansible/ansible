@@ -318,7 +318,8 @@ def add_runas_prompt_options(parser, runas_group=None):
         runas_group = parser.add_argument_group("Privilege Escalation Options",
                                                 "control how and which user you become as on target hosts")
 
-    runas_group.add_argument('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
+    runas_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
+                             default=C.DEFAULT_BECOME_ASK_PASS,
                              help='ask for privilege escalation password')
 
     parser.add_argument_group(runas_group)
