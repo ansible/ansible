@@ -75,4 +75,6 @@ class ActionModule(ActionBase):
             result['skipped_reason'] = "Verbosity threshold not met."
             result['skipped'] = True
 
+        result['failed'] = False
+
         return result
