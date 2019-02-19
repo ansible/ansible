@@ -1,20 +1,15 @@
 # (c) 2018, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from mock import MagicMock
-
-from ansible.module_utils import basic, netapp
-from ansible.modules.storage.netapp import netapp_e_host
 from ansible.modules.storage.netapp.netapp_e_host import Host
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 __metaclass__ = type
-import unittest
-import mock
-import pytest
-import json
-from units.compat.mock import patch
-from ansible.module_utils._text import to_bytes
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 
 class HostTest(ModuleTestCase):
@@ -27,6 +22,7 @@ class HostTest(ModuleTestCase):
     }
     HOST = {
         'name': '1',
+        'hostRef': '123',
         'label': '1',
         'id': '0' * 30,
         'clusterRef': 40 * '0',
@@ -168,7 +164,7 @@ class HostTest(ModuleTestCase):
         })
         host = Host()
         host.host_obj = self.HOST.copy()
-        host.host_obj['hostSidePorts'] = [{'label': 'xyz', 'type': 'iscsi', 'port': '0', 'address': 'iqn:0'}]
+        host.host_obj['hostSidePorts'] = [{'id': '123', 'label': 'xyz', 'type': 'iscsi', 'address': 'iqn:0'}]
 
         with mock.patch.object(host, 'all_hosts', [self.HOST]):
             needs_update = host.needs_update
@@ -179,11 +175,11 @@ class HostTest(ModuleTestCase):
         self._set_args({
             'state': 'present',
             'host_type': self.HOST['hostTypeIndex'],
-            'ports': [{'label': 'abc', 'type': 'iscsi', 'port': '0'}],
+            'ports': [{'label': 'abc', 'type': 'iscsi', 'port': 'iqn:0'}],
         })
         host = Host()
         host.host_obj = self.HOST.copy()
-        host.host_obj['hostSidePorts'] = [{'label': 'xyz', 'type': 'iscsi', 'port': '0', 'address': 'iqn:0'}]
+        host.host_obj['hostSidePorts'] = [{'id': '123', 'label': 'xyz', 'type': 'iscsi', 'address': 'iqn:0'}]
 
         with mock.patch.object(host, 'all_hosts', [self.HOST]):
             needs_update = host.needs_update
