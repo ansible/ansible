@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Copyright: (c) 2014, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -19,10 +21,11 @@ options:
       a string and can do its own conversion from string into number.
     - Giving Ansible a number without following one of these rules will end up with a decimal
       number which will have unexpected results.
-    - As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
+    - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
       C(u=rw,g=r,o=r)).
-    - As of version 2.6, the mode may also be the special string C(preserve).
+    - As of Ansible 2.6, the mode may also be the special string C(preserve).
     - When set to C(preserve) the file will be given the same permissions as the source file.
+    type: str
   owner:
     description:
     - Name of the user that should own the file/directory, as would be fed to I(chown).
