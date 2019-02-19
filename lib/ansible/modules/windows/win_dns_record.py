@@ -22,41 +22,47 @@ author: John Nelson (@johnboy2)
 options:
   name:
     description:
-    - The name of the record
+    - The name of the record.
     required: yes
+    type: str
   state:
     description:
-    - Whether the record should exist or not
+    - Whether the record should exist or not.
     choices: [ absent, present ]
     default: present
+    type: str
   ttl:
     description:
     - The "time to live" of the record, in seconds. Ignored when
-      `state=absent`.
+      C(state=absent).
     - Note that an Active Directory forest can specify a minimum TTL, and will
       dynamically "round up" other values to that minimum.
     default: 3600
+    type: int
   type:
     description:
     - The type of DNS record to manage.
     choices: [ A, AAAA, CNAME, MX, NS, TXT, PTR ]
     required: yes
+    type: str
   value:
     description:
-    - The value(s) to specify. Required when `state=present`.
+    - The value(s) to specify. Required when C(state=present).
     aliases: [ values ]
+    type: str
   zone:
     description:
-    - The name of the zone to manage (eg "example.com"). The zone must already
+    - The name of the zone to manage (eg C(example.com)). The zone must already
       exist.
     required: yes
+    type: str
   computer_name:
     description:
       - Specifies a DNS server. You can specify an IP address or any value that
         resolves to an IP address, such as a fully qualified domain name
         (FQDN), host name, or NETBIOS name.
     required: false
-
+    type: str
 '''
 
 EXAMPLES = r'''
