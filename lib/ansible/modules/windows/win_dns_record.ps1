@@ -98,8 +98,6 @@ if ($records -ne $null)
             {
                 $record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $record -WhatIf:$check_mode @extra_args
-
-                $result.changed = $true
             }
 
             # Cross this one off the list, so we don't try adding it later
@@ -108,10 +106,7 @@ if ($records -ne $null)
         else
         {
             # This record doesn't match any of the values, and must be removed
-
             $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$check_mode @extra_args
-
-            $result.changed = $true
         }
     }
 
@@ -130,27 +125,28 @@ if ($values -ne $null -and $values.Count -gt 0)
     $result.changed = $true
 }
 
+
 $records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 
 $before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
 $after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
 
 if ($diff_mode) {
-  $diff = @{
-    before = $before
-    after = $after
-  }
-  $result.diff = $diff
+    $diff = @{
+        before = $before
+        after = $after
+    }
+    $result.diff = $diff
 }
 
 function are_different ($x,$y) {
-  if ($x) { $a=$x | ConvertTo-Json } else { $a="" }
-  if ($y) { $b=$y | ConvertTo-Json } else { $b="" }
-  return [bool](Compare-Object -DifferenceObject $a -ReferenceObject $b)
+    if ($x) { $a=$x | ConvertTo-Json } else { $a="" }
+    if ($y) { $b=$y | ConvertTo-Json } else { $b="" }
+    return [bool](Compare-Object -DifferenceObject $a -ReferenceObject $b)
 }
 
 if (-not $check_mode) {
-  $result.changed = are_different $after $before
+    $result.changed = are_different $after $before
 }
 
 
