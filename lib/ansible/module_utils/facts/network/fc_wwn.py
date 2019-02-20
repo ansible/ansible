@@ -48,7 +48,8 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             on solaris 10 or solaris 11 should use `fcinfo hba-port`
             on solaris 9, `prtconf -pv`
             """
-            cmd = "/usr/sbin/fcinfo hba-port | grep 'Port WWN'"
+            cmd = module.get_bin_path('fcinfo')
+            cmd = cmd + " hba-port | grep 'Port WWN'"
             rc, fcinfo_out, err = module.run_command(cmd, use_unsafe_shell=True)
             """
             # fcinfo hba-port  | grep "Port WWN"
