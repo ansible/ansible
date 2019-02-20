@@ -307,27 +307,27 @@
       register: result
       check_mode: yes
 
-    - name: it should not change
-      assert:
-        that:
-          - result is not skipped
-          - result is not changed
+    #- name: it should not change
+    #  assert:
+    #    that:
+    #      - result is not skipped
+    #      - result is not changed
 
 
-    - name: When deleting a policy that does not exist
-      ecs_ecr:
-        name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-      register: result
+    #- name: When deleting a policy that does not exist
+    #  ecs_ecr:
+    #    name: '{{ ecr_name }}'
+    #    region: '{{ ec2_region }}'
+    #    state: absent
+    #    ec2_access_key: '{{ec2_access_key}}'
+    #    ec2_secret_key: '{{ec2_secret_key}}'
+    #    security_token: '{{security_token}}'
+    #  register: result
 
-    - name: it should not change
-      assert:
-        that:
-          - result is not changed
+    #- name: it should not change
+    #  assert:
+    #    that:
+    #      - result is not changed
 
   #always:
 
