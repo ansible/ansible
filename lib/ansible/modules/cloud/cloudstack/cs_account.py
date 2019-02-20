@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,80 +16,93 @@ short_description: Manages accounts on Apache CloudStack based clouds.
 description:
     - Create, disable, lock, enable and remove accounts.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of account.
+    type: str
     required: true
   username:
     description:
       - Username of the user to be created if account did not exist.
       - Required on I(state=present).
+    type: str
   password:
     description:
       - Password of the user to be created if account did not exist.
       - Required on I(state=present) if I(ldap_domain) is not set.
+    type: str
   first_name:
     description:
       - First name of the user to be created if account did not exist.
       - Required on I(state=present) if I(ldap_domain) is not set.
+    type: str
   last_name:
     description:
       - Last name of the user to be created if account did not exist.
       - Required on I(state=present) if I(ldap_domain) is not set.
+    type: str
   email:
     description:
       - Email of the user to be created if account did not exist.
       - Required on I(state=present) if I(ldap_domain) is not set.
+    type: str
   timezone:
     description:
       - Timezone of the user to be created if account did not exist.
+    type: str
   network_domain:
     description:
       - Network domain of the account.
+    type: str
   account_type:
     description:
       - Type of the account.
-    default: 'user'
-    choices: [ 'user', 'root_admin', 'domain_admin' ]
+    type: str
+    choices: [ user, root_admin, domain_admin ]
+    default: user
   domain:
     description:
       - Domain the account is related to.
-    default: 'ROOT'
+    type: str
+    default: ROOT
   role:
     description:
       - Creates the account under the specified role name or id.
+    type: str
     version_added: 2.8
   ldap_domain:
     description:
       - Name of the LDAP group or OU to bind.
       - If set, account will be linked to LDAP.
+    type: str
     version_added: 2.8
   ldap_type:
     description:
       - Type of the ldap name. GROUP or OU, defaults to GROUP.
-    default: 'GROUP'
-    choices: [ 'GROUP', 'OU' ]
+    type: str
+    choices: [ GROUP, OU ]
+    default: GROUP
     version_added: 2.8
   state:
     description:
       - State of the account.
       - C(unlocked) is an alias for C(enabled).
-    default: 'present'
-    choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked' ]
+    type: str
+    choices: [ present, absent, enabled, disabled, locked, unlocked ]
+    default: present
   poll_async:
     description:
       - Poll async jobs until job has finished.
     type: bool
-    default: 'yes'
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create an account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: create an account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     username: customer_xy
     password: S3Cur3
@@ -112,50 +111,51 @@ EXAMPLES = '''
     email: john.doe@example.com
     domain: CUSTOMERS
     role: Domain Admin
+  delegate_to: localhost
 
-# Lock an existing account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Lock an existing account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: locked
+  delegate_to: localhost
 
-# Disable an existing account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Disable an existing account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: disabled
+  delegate_to: localhost
 
-# Enable an existing account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Enable an existing account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: enabled
+  delegate_to: localhost
 
-# Remove an account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Remove an account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: absent
+  delegate_to: localhost
 
-# Create a single user LDAP account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Create a single user LDAP account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     username: customer_xy
     domain: CUSTOMERS
     ldap_domain: cn=customer_xy,cn=team_xy,ou=People,dc=domain,dc=local
+  delegate_to: localhost
 
-# Create a LDAP account in domain 'CUSTOMERS' and bind it to a LDAP group
-- local_action:
-    module: cs_account
+- name: Create a LDAP account in domain 'CUSTOMERS' and bind it to a LDAP group
+  cs_account:
     name: team_xy
     username: customer_xy
     domain: CUSTOMERS
     ldap_domain: cn=team_xy,ou=People,dc=domain,dc=local
+  delegate_to: localhost
 '''
 
 RETURN = '''
