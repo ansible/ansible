@@ -1,2 +1,2 @@
 minor_changes:
-  - Changed output of tags dictionary in results by using boto3_tag_list_to_ansible_dict function
+  - Changed output of tags dictionary in results to standard Ansible format
