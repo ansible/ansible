@@ -94,7 +94,7 @@ options:
                             - Secret key.
                     server:
                         description:
-                            - [<name_str|ip_str>] Server CN domain name or IP.
+                            - Server CN domain name or IP.
                     source-ip:
                         description:
                             - Source IP address for communications to the RADIUS server.
@@ -281,7 +281,7 @@ options:
                     - Secret key to access the secondary server.
             secondary-server:
                 description:
-                    - [<name_str|ip_str>] secondary RADIUS CN domain name or IP.
+                    - Secondary RADIUS CN domain name or IP.
             secret:
                 description:
                     - Pre-shared secret key used to access the primary RADIUS server.
@@ -331,7 +331,7 @@ options:
                     - Secret key to access the tertiary server.
             tertiary-server:
                 description:
-                    - [<name_str|ip_str>] tertiary RADIUS CN domain name or IP.
+                    - Tertiary RADIUS CN domain name or IP.
             timeout:
                 description:
                     - Time in seconds between re-sending authentication requests.
