@@ -114,8 +114,8 @@ Deprecated
      instead.
 
 * Inventory plugins writers should know that supporting file-backed caching via self.cache is deprecated and will
-  be removed in Ansible 2.12. Instead, self._cache should be used as a dictionary. For implementation details, see the
-  developer guide on inventory plugins.
+  be removed in Ansible 2.12. Instead, self._cache should be used as a dictionary. For implementation details, see
+  the developer guide on inventory plugins.
 
 * Importing cache plugins directly is deprecated and will be removed in Ansible 2.12. The plugin_loader should be
   used so direct options, environment variables, and other means of configuration can be reconciled using the config
