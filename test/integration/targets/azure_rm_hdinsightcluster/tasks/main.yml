@@ -40,30 +40,28 @@
           #restAuthCredential.isEnabled: True
           restAuthCredential.username: http-user
           restAuthCredential.password: MuABCPassword!!@123 
-    storage_profile:
-      storageaccounts:
-        - name: storage{{ rpfx }}.blob.core.windows.net 
-          is_default: yes
-          container: "cluster{{ rpfx }}"
-          key: "{{ storage_output['response']['keys'][0]['value'] }}"
-    compute_profile:
-      roles:
-        - name: headnode
-          target_instance_count: 2
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
-        - name: workernode
-          target_instance_count: 2
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        os_profile:
+          linux_operating_system_profile:
+            username: sshuser
+            password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        os_profile:
+          linux_operating_system_profile:
+            username: sshuser
+            password: MuABCPassword!!@123
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -86,30 +84,28 @@
           #restAuthCredential.isEnabled: True
           restAuthCredential.username: http-user
           restAuthCredential.password: MuABCPassword!!@123 
-    storage_profile:
-      storageaccounts:
-        - name: storage{{ rpfx }}.blob.core.windows.net 
-          is_default: yes
-          container: "cluster{{ rpfx }}"
-          key: "{{ storage_output['response']['keys'][0]['value'] }}"
-    compute_profile:
-      roles:
-        - name: headnode
-          target_instance_count: 2
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
-        - name: workernode
-          target_instance_count: 2
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        os_profile:
+          linux_operating_system_profile:
+            username: sshuser
+            password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        os_profile:
+          linux_operating_system_profile:
+            username: sshuser
+            password: MuABCPassword!!@123
   register: output
 
 - name: Assert the resource instance is well created
@@ -132,30 +128,28 @@
           #restAuthCredential.isEnabled: True
           restAuthCredential.username: http-user
           restAuthCredential.password: MuABCPassword!!@123 
-    storage_profile:
-      storageaccounts:
-        - name: storage{{ rpfx }}.blob.core.windows.net 
-          is_default: yes
-          container: "cluster{{ rpfx }}"
-          key: "{{ storage_output['response']['keys'][0]['value'] }}"
-    compute_profile:
-      roles:
-        - name: headnode
-          target_instance_count: 2
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
-        - name: workernode
-          target_instance_count: 2
-          hardware_profile:
-            vm_size: Standard_D3
-          os_profile:
-            linux_operating_system_profile:
-              username: sshuser
-              password: MuABCPassword!!@123
+    storage_accounts:
+      - name: storage{{ rpfx }}.blob.core.windows.net 
+        is_default: yes
+        container: "cluster{{ rpfx }}"
+        key: "{{ storage_output['response']['keys'][0]['value'] }}"
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        os_profile:
+          linux_operating_system_profile:
+            username: sshuser
+            password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        os_profile:
+          linux_operating_system_profile:
+            username: sshuser
+            password: MuABCPassword!!@123
   register: output
 - name: Assert the state has not changed
   assert:
