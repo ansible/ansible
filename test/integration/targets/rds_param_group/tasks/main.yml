@@ -227,40 +227,40 @@
            - 'result.errors|length == 2'
 
     # ============================================================
-    - name: test state=absent with engine defined (expect changed=true)
-      rds_param_group:
-        name: "{{ rds_param_group.name }}"
-        engine: "{{ rds_param_group.engine }}"
-        state: absent
-        region: "{{ ec2_region }}"
-        ec2_access_key: '{{ aws_access_key }}'
-        ec2_secret_key: '{{ aws_secret_key }}'
-        security_token: '{{ security_token }}'
-      register: result
-      ignore_errors: true
+    #- name: test state=absent with engine defined (expect changed=true)
+    #  rds_param_group:
+    #    name: "{{ rds_param_group.name }}"
+    #    engine: "{{ rds_param_group.engine }}"
+    #    state: absent
+    #    region: "{{ ec2_region }}"
+    #    ec2_access_key: '{{ aws_access_key }}'
+    #    ec2_secret_key: '{{ aws_secret_key }}'
+    #    security_token: '{{ security_token }}'
+    #  register: result
+    #  ignore_errors: true
 
-    - name: assert state=absent with engine defined (expect changed=true)
-      assert:
-        that:
-           - 'result.changed'
+    #- name: assert state=absent with engine defined (expect changed=true)
+    #  assert:
+    #    that:
+    #       - 'result.changed'
 
     # ============================================================
-    - name: test repeating state=absent (expect changed=false)
-      rds_param_group:
-        name: "{{ rds_param_group.name }}"
-        engine: "{{ rds_param_group.engine }}"
-        state: absent
-        region: "{{ ec2_region }}"
-        ec2_access_key: '{{ aws_access_key }}'
-        ec2_secret_key: '{{ aws_secret_key }}'
-        security_token: '{{ security_token }}'
-      register: result
-      ignore_errors: true
+    #- name: test repeating state=absent (expect changed=false)
+    #  rds_param_group:
+    #    name: "{{ rds_param_group.name }}"
+    #    engine: "{{ rds_param_group.engine }}"
+    #    state: absent
+    #    region: "{{ ec2_region }}"
+    #    ec2_access_key: '{{ aws_access_key }}'
+    #    ec2_secret_key: '{{ aws_secret_key }}'
+    #    security_token: '{{ security_token }}'
+    #  register: result
+    #  ignore_errors: true
 
-    - name: assert repeating state=absent (expect changed=false)
-      assert:
-        that:
-           - 'not result.changed'
+    #- name: assert repeating state=absent (expect changed=false)
+    #  assert:
+    #    that:
+    #       - 'not result.changed'
 
     # ============================================================
     - name: test creating group with more than 20 parameters
@@ -302,20 +302,20 @@
         that:
            - 'not result.changed'
 
-  always:
+  #always:
     # ============================================================
-    - name: test state=absent (expect changed=false)
-      rds_param_group:
-        name: "{{ rds_param_group.name }}"
-        state: absent
-        region: "{{ ec2_region }}"
-        ec2_access_key: '{{ aws_access_key }}'
-        ec2_secret_key: '{{ aws_secret_key }}'
-        security_token: '{{ security_token }}'
-      register: result
-      ignore_errors: true
+    #- name: test state=absent (expect changed=false)
+    #  rds_param_group:
+    #    name: "{{ rds_param_group.name }}"
+    #    state: absent
+    #    region: "{{ ec2_region }}"
+    #    ec2_access_key: '{{ aws_access_key }}'
+    #    ec2_secret_key: '{{ aws_secret_key }}'
+    #    security_token: '{{ security_token }}'
+    #  register: result
+    #  ignore_errors: true
 
-    - name: assert state=absent (expect changed=false)
-      assert:
-        that:
-           - 'result.changed'
+    #- name: assert state=absent (expect changed=false)
+    #  assert:
+    #    that:
+    #       - 'result.changed'

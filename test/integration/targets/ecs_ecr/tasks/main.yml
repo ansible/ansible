@@ -280,20 +280,20 @@
           - not result.created
 
 
-    - name: When deleting a policy that exists
-      ecs_ecr:
-        name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
-      register: result
+    #- name: When deleting a policy that exists
+    #  ecs_ecr:
+    #    name: '{{ ecr_name }}'
+    #    region: '{{ ec2_region }}'
+    #    state: absent
+    #    ec2_access_key: '{{ec2_access_key}}'
+    #    ec2_secret_key: '{{ec2_secret_key}}'
+    #    security_token: '{{security_token}}'
+    #  register: result
 
-    - name: it should change
-      assert:
-        that:
-          - result is changed
+    #- name: it should change
+    #  assert:
+    #    that:
+    #      - result is changed
 
 
     - name: When in check mode, deleting a policy that does not exist
@@ -329,13 +329,13 @@
         that:
           - result is not changed
 
-  always:
+  #always:
 
-    - name: Delete lingering ECR repository
-      ecs_ecr:
-        name: '{{ ecr_name }}'
-        region: '{{ ec2_region }}'
-        state: absent
-        ec2_access_key: '{{ec2_access_key}}'
-        ec2_secret_key: '{{ec2_secret_key}}'
-        security_token: '{{security_token}}'
+    #- name: Delete lingering ECR repository
+    #  ecs_ecr:
+    #    name: '{{ ecr_name }}'
+    #    region: '{{ ec2_region }}'
+    #    state: absent
+    #    ec2_access_key: '{{ec2_access_key}}'
+    #    ec2_secret_key: '{{ec2_secret_key}}'
+    #    security_token: '{{security_token}}'

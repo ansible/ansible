@@ -495,9 +495,9 @@
         path: "{{ tmp2.path }}"
       ignore_errors: yes
 
-    - name: delete the bucket
-      aws_s3:
-        bucket: "{{ bucket_name }}"
-        mode: delete
-        <<: *aws_connection_info
-      ignore_errors: yes
+    #- name: delete the bucket
+    #  aws_s3:
+    #    bucket: "{{ bucket_name }}"
+    #    mode: delete
+    #    <<: *aws_connection_info
+    #  ignore_errors: yes

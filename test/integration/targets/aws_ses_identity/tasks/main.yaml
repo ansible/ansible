@@ -606,14 +606,14 @@
       assert:
         that:
           - '"Invalid Parameter Value" in result.msg'
-  always:
-    - name: cleanup topics
-      sns_topic:
-        name: "{{ notification_queue_name }}-complaint"
-        state: absent
-        <<: *aws_connection_info
-    - name: cleanup identity
-      aws_ses_identity:
-        identity: "{{ email_identity }}"
-        state: absent
-        <<: *aws_connection_info
+  #always:
+    #- name: cleanup topics
+    #  sns_topic:
+    #    name: "{{ notification_queue_name }}-complaint"
+    #    state: absent
+    #    <<: *aws_connection_info
+    #- name: cleanup identity
+    #  aws_ses_identity:
+    #    identity: "{{ email_identity }}"
+    #    state: absent
+    #    <<: *aws_connection_info

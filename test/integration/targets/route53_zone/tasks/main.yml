@@ -336,38 +336,38 @@
       register: output
       check_mode: yes
 
-    - assert:
-        that:
-          - output.changed
-          - "'Successfully deleted' in output.result"
+    #- assert:
+    #    that:
+    #      - output.changed
+    #      - "'Successfully deleted' in output.result"
 
-    - name: Delete zone using attribute hosted_zone_id
-      route53_zone:
-        zone: "{{ resource_prefix }}.public2"
-        hosted_zone_id: "{{new_zone.zone_id}}"
-        state: absent
-        <<: *aws_connection_info
-      register: output
+    #- name: Delete zone using attribute hosted_zone_id
+    #  route53_zone:
+    #    zone: "{{ resource_prefix }}.public2"
+    #    hosted_zone_id: "{{new_zone.zone_id}}"
+    #    state: absent
+    #    <<: *aws_connection_info
+    #  register: output
 
-    - assert:
-        that:
-          - output.changed
-          - "'Successfully deleted' in output.result"
+    #- assert:
+    #    that:
+    #      - output.changed
+    #      - "'Successfully deleted' in output.result"
 
   # ============================================================
   always:
-    - name: Ensure public zone is deleted
-      route53_zone:
-        zone: "{{ item }}"
-        state: absent
-        <<: *aws_connection_info
-      register: removed
-      until: removed is not failed
-      ignore_errors: yes
-      retries: 10
-      with_items:
-        - "{{ resource_prefix }}.public"
-        - "{{ resource_prefix }}.public2"
+    #- name: Ensure public zone is deleted
+    #  route53_zone:
+    #    zone: "{{ item }}"
+    #    state: absent
+    #    <<: *aws_connection_info
+    #  register: removed
+    #  until: removed is not failed
+    #  ignore_errors: yes
+    #  retries: 10
+    #  with_items:
+    #    - "{{ resource_prefix }}.public"
+    #    - "{{ resource_prefix }}.public2"
 
     - name: Ensure private zone is deleted
       route53_zone:
@@ -381,13 +381,13 @@
       ignore_errors: yes
       retries: 10
 
-    - name: remove the VPC
-      ec2_vpc_net:
-        name: "{{ resource_prefix }}-vpc"
-        cidr_block: 10.22.32.0/23
-        state: absent
-        <<: *aws_connection_info
-      register: removed
-      until: removed is not failed
-      ignore_errors: yes
-      retries: 10
+    #- name: remove the VPC
+    #  ec2_vpc_net:
+    #    name: "{{ resource_prefix }}-vpc"
+    #    cidr_block: 10.22.32.0/23
+    #    state: absent
+    #    <<: *aws_connection_info
+    #  register: removed
+    #  until: removed is not failed
+    #  ignore_errors: yes
+    #  retries: 10

@@ -98,11 +98,11 @@
 
 
     # ============================================================
-    - name: Delete key/value pair in aws parameter store
-      aws_ssm_parameter_store:
-        name: "/{{ssm_key_prefix}}/Hello"
-        state: absent
-        <<: *aws_connection_info
+    #- name: Delete key/value pair in aws parameter store
+    #  aws_ssm_parameter_store:
+    #    name: "/{{ssm_key_prefix}}/Hello"
+    #    state: absent
+    #    <<: *aws_connection_info
 
     # ============================================================
     - name: Attempt delete key/value pair in aws parameter store again
@@ -116,16 +116,16 @@
       assert:
         that:
           - result.changed == False
-  always:
+  #always:
     # ============================================================
-    - name: Delete remaining key/value pairs in aws parameter store
-      aws_ssm_parameter_store:
-        name: "{{item}}"
-        state: absent
-        <<: *aws_connection_info
-      with_items:
-        - "/{{ssm_key_prefix}}/Hello"
-        - "/{{ssm_key_prefix}}/path/wonvar"
-        - "/{{ssm_key_prefix}}/path/toovar"
-        - "/{{ssm_key_prefix}}/path/tree/treevar"
-        - "/{{ssm_key_prefix}}/deeppath/wondir/samevar"
+    #- name: Delete remaining key/value pairs in aws parameter store
+    #  aws_ssm_parameter_store:
+    #    name: "{{item}}"
+    #    state: absent
+    #    <<: *aws_connection_info
+    #  with_items:
+    #    - "/{{ssm_key_prefix}}/Hello"
+    #    - "/{{ssm_key_prefix}}/path/wonvar"
+    #    - "/{{ssm_key_prefix}}/path/toovar"
+    #    - "/{{ssm_key_prefix}}/path/tree/treevar"
+    #    - "/{{ssm_key_prefix}}/deeppath/wondir/samevar"

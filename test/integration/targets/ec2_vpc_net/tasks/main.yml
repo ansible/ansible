@@ -300,12 +300,12 @@
         <<: *aws_connection_info
       ignore_errors: true
 
-    - name: remove the DHCP option set
-      ec2_vpc_dhcp_option:
-        dhcp_options_id: "{{ new_dhcp.dhcp_options_id }}"
-        state: absent
-        <<: *aws_connection_info
-      ignore_errors: true
+    #- name: remove the DHCP option set
+    #  ec2_vpc_dhcp_option:
+    #    dhcp_options_id: "{{ new_dhcp.dhcp_options_id }}"
+    #    state: absent
+    #    <<: *aws_connection_info
+    #  ignore_errors: true
 
     - name: remove the VPC
       ec2_vpc_net:
