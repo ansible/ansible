@@ -41,7 +41,6 @@ options:
     - The text to insert inside the marker lines.
     - If it is missing or an empty string, the block will be removed as if C(state) were specified to C(absent).
     type: str
-    default: ''
     aliases: [ content ]
   insertafter:
     description:
