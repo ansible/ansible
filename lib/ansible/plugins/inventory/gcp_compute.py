@@ -317,7 +317,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
         image = None
         for disk in item['disks']:
-            if disk.get('boot') == True:
+            if disk.get('boot'):
                 if 'initializeParams' in disk:
                     image = disk['initializeParams']['sourceImage']
         return image
