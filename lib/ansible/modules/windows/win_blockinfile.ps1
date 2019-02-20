@@ -1,13 +1,111 @@
 #!powershell
 
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-#Requires -Module Ansible.ModuleUtils.Legacy
+#AnsibleRequires -CSharpUtil Ansible.Basic
 
 # Large portions borrowed from Brian Lloyd's (@brianlloyd) win_lineinfile 
 # and Yaegashi Takeshi's (@yaegashi) blockinfile
 
-function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_mode) {
+$spec = @{
+    options = @{
+        path = @{ type='path'; required=$true; aliases=@( "dest", "destfile", "name" )  }
+        state = @{ type='str'; default='present'; choices=@( "absent", "present" ) }
+        block = @{ type='str'; aliases=@( 'content' ) }
+        insertafter = @{ type='str' }
+        insertbefore = @{ type='str' }
+        create = @{ type='bool'; default=$false }
+        backup = @{ type='bool'; default=$false }
+        validate = @{ type='str' }
+        encoding = @{ type='str'; default="auto" }
+        newline = @{ type='str'; default="windows"; choices=@( "windows", "unix" ) }
+        marker = @{ type='str'; default="# {mark} ANSIBLE MANAGED BLOCK" }
+        marker_begin = @{ type='str'; default="BEGIN" }
+        marker_end = @{ type='str'; default="END" }
+    }
+    supports_check_mode = $true
+}
+
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+
+$path = $module.Params.path
+$state = $module.Params.state
+$block = $module.Params.block
+$insertafter = $module.Params.insertafter
+$insertbefore = $module.Params.insertbefore
+$create = $module.Params.create
+$backup = $module.Params.backup
+$validate = $module.Params.validate
+$encoding = $module.Params.encoding
+$newline = $module.Params.newline
+$marker = $module.Params.marker
+$marker_begin = $module.Params.marker_begin
+$marker_end = $module.Params.marker_end
+
+$check_mode = $module.CheckMode
+$diff_support = $module.Diff
+
+function ValidateFile {
+    param(
+        [String]$path,
+        [String]$validate
+    );
+
+    If (-not ($validate -like "*%s*")) {
+        throw "validate must contain %s: $validate";
+    }
+
+    $validate = $validate.Replace("%s", $path);
+
+    $parts = [System.Collections.ArrayList] $validate.Split(" ");
+    $cmdname = $parts[0];
+
+    $cmdargs = $validate.Substring($cmdname.Length + 1);
+
+    $process = new-object System.Diagnostics.Process
+    $process.StartInfo.FileName = $cmdname
+    $process.StartInfo.Arguments = $cmdargs
+    $process.StartInfo.RedirectStandardError = $true
+    $process.StartInfo.RedirectStandardOutput = $true
+    $process.StartInfo.UseShellExecute = $false
+    $process.start()
+    $process.WaitForExit();
+
+    If ($process.ExitCode -ne 0) {
+        [string] $output = $process.StandardOutput.ReadToEnd();
+        [string] $error = $process.StandardError.ReadToEnd();
+        throw "failed to validate $cmdname $cmdargs with error: $output $error";
+    }
+}
+
+function TempFile {
+    param([String]$forpath);
+
+    $temppath = [System.IO.Path]::GetTempFileName();
+    $extension = [System.IO.Path]::GetExtension($forpath);
+    If ($null -ne $extension -and $extension -ne "") {
+        Try {
+            Rename-Item -Path $temppath -NewName "$temppath$extension";
+            $temppath = "$temppath$extension"
+        }
+        Catch {
+            Remove-Item -Path $temppath -Force
+            throw $_
+        }
+    }
+    return $temppath;
+}
+
+function WriteLines {
+    param(
+        [System.Collections.ArrayList]$outlines,
+        [String]$path,
+        [String]$linesep,
+        [Object]$encodingobj,
+        [String]$validate,
+        [bool]$check_mode
+    );
 
     $acl = $null
 
@@ -17,153 +115,62 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
         }
     }
     Catch {
-        Fail-Json @{} "Cannot get ACL from original file temporary file! ($($_.Exception.Message))";
-    }
-    Try {
-        $temppath = [System.IO.Path]::GetTempFileName();
-    }
-    Catch {
-        Fail-Json @{} "Cannot create temporary file! ($($_.Exception.Message))";
-    }
-    $joined = $outlines -join $linesep;
-    [System.IO.File]::WriteAllText($temppath, $joined, $encodingobj);
-
-    If ($validate) {
-
-        If (-not ($validate -like "*%s*")) {
-            Fail-Json @{} "validate must contain %s: $validate";
-        }
-
-        $validate = $validate.Replace("%s", $temppath);
-
-        $parts = [System.Collections.ArrayList] $validate.Split(" ");
-        $cmdname = $parts[0];
-
-        $cmdargs = $validate.Substring($cmdname.Length + 1);
-
-        $process = [Diagnostics.Process]::Start($cmdname, $cmdargs);
-        $process.WaitForExit();
-
-        If ($process.ExitCode -ne 0) {
-            [string] $output = $process.StandardOutput.ReadToEnd();
-            [string] $error = $process.StandardError.ReadToEnd();
-            Remove-Item $temppath -force;
-            Fail-Json @{} "failed to validate $cmdname $cmdargs with error: $output $error";
-        }
-
+        $module.FailJson("Cannot get ACL from original file! ($($_.Exception.Message))", $_);
     }
 
-    # Commit changes to the path
     $cleanpath = $path.Replace("/", "\");
+   
     Try {
-        Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
+        $temppath = TempFile $cleanpath
     }
     Catch {
-        Fail-Json @{} "Cannot write to: $cleanpath ($($_.Exception.Message))";
+        $module.FailJson("Cannot create temporary file! ($($_.Exception.Message))", $_);
     }
 
-    If ($acl) {
+    Try {
+        $joined = $outlines -join $linesep;
+        [System.IO.File]::WriteAllText($temppath, $joined, $encodingobj);
+
+        If ($validate) {
+            Try {
+                ValidateFile $temppath $validate;
+            }
+            Catch {
+                Remove-Item -Path $temppath -Force
+                $module.FailJson("Validation error: ($($_.Exception.Message))", $_);
+            }
+        }
+
         Try {
-            Set-Acl -Path $cleanpath -AclObject $acl -WhatIf:$check_mode 
+            Move-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
         }
         Catch {
-            Fail-Json @{} "Cannot set ACL on new file! ($($_.Exception.Message))";
+            $module.FailJson("Cannot write to: $cleanpath ($($_.Exception.Message))", $_);
+        }
+
+        If ($acl) {
+            Try {
+                Set-Acl -Path $cleanpath -AclObject $acl -WhatIf:$check_mode 
+            }
+            Catch {
+                $module.FailJson("Cannot set ACL on new file! ($($_.Exception.Message))", $_);
+            }
         }
     }
-
-    Try {
-        Remove-Item $temppath -force -ErrorAction Stop;
-    }
-    Catch {
-        Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))";
+    Finally {
+        If (Test-Path $temppath) {
+            Remove-Item -Path $temppath -Force
+        }
     }
 
     return $joined;
 }
 
+function GuessFileEncoding {
+    param([String]$path);
 
-# Backup the file specified with a date/time filename
-function BackupFile($path, $check_mode) {
-    $backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-    Try {
-        Copy-Item $path $backuppath -WhatIf:$check_mode;
-    }
-    Catch {
-        Fail-Json @{} "Cannot copy backup file! ($($_.Exception.Message))";
-    }
-    If (-not $check_mode) {
-        Try {
-            Get-Acl -Path $path | Set-Acl -Path $backuppath
-        }
-        Catch {
-            Fail-Json @{} "Cannot copy ACL to backup file! ($($_.Exception.Message))";
-        }
-    }
-    return $backuppath;
-}
-
-# Parse the parameters file dropped by the Ansible machinery
-$params = Parse-Args $args -supports_check_mode $true;
-$check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false;
-$diff_support = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false;
-
-# Initialize defaults for input parameters.
-$path = Get-AnsibleParam -obj $params -name "path" -type "path" -failifempty $true -aliases "dest", "destfile", "name";
-$state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present", "absent";
-$block = Get-AnsibleParam -obj $params -name "block" -type "str";
-$insertafter = Get-AnsibleParam -obj $params -name "insertafter" -type "str";
-$insertbefore = Get-AnsibleParam -obj $params -name "insertbefore" -type "str";
-$create = Get-AnsibleParam -obj $params -name "create" -type "bool" -default $false;
-$backup = Get-AnsibleParam -obj $params -name "backup" -type "bool" -default $false;
-$validate = Get-AnsibleParam -obj $params -name "validate" -type "str";
-$encoding = Get-AnsibleParam -obj $params -name "encoding" -type "str" -default "auto";
-$newline = Get-AnsibleParam -obj $params -name "newline" -type "str" -default "windows" -validateset "unix", "windows";
-$marker = Get-AnsibleParam -obj $params -name "marker" -type "str" -default "# {mark} ANSIBLE MANAGED BLOCK";
-$marker_begin = Get-AnsibleParam -obj $params -name "marker_begin" -type "str" -default "BEGIN";
-$marker_end = Get-AnsibleParam -obj $params -name "marker_end" -type "str" -default "END";
-
-# Fail if the path is not a file
-If (Test-Path -LiteralPath $path -PathType "container") {
-    Fail-Json @{} "Path $path is a directory";
-}
-
-# Default to windows line separator - probably most common
-$linesep = "`r`n"
-If ($newline -eq "unix") {
-    $linesep = "`n";
-}
-
-If ($insertbefore -and $insertafter) {
-    Add-Warning $result "Both insertbefore and insertafter parameters found, ignoring `"insertafter=$insertafter`""
-}
-
-If (-not $insertbefore -and -not $insertafter) {
-    $insertafter = "EOF";
-}
-
-# Compile the regex for insertafter or insertbefore, if provided
-$insre = $null;
-If ($insertafter -and $insertafter -ne "BOF" -and $insertafter -ne "EOF") {
-    $insre = New-Object Regex $insertafter, 'Compiled';
-}
-ElseIf ($insertbefore -and $insertbefore -ne "BOF" -and $insertbefore -ne "EOF") {
-    $insre = New-Object Regex $insertbefore, 'Compiled';
-}
-
-
-# Figure out the proper encoding to use for reading / writing the target file.
-
-# The default encoding is UTF-8 without BOM
-$encodingobj = [System.Text.UTF8Encoding] $false;
-
-If ($encoding -ne "auto") {
-    # If an explicit encoding is specified, use that instead
-    $encodingobj = [System.Text.Encoding]::GetEncoding($encoding);
-}
-ElseIf (Test-Path -LiteralPath $path) {
-    # Otherwise see if we can determine the current encoding of the target file.
-    # If the file doesn't exist yet (create == 'yes') we use the default or
-    # explicitly specified encoding set above.
+    # The default encoding is UTF-8 without BOM
+    $encodingObject = [System.Text.UTF8Encoding] $false;
 
     # Get a sorted list of encodings with preambles, longest first
     $max_preamble_len = 0;
@@ -195,7 +202,7 @@ ElseIf (Test-Path -LiteralPath $path) {
                     break;
                 }
                 ElseIf ($i + 1 -eq $preamble.Length) {
-                    $encodingobj = $encoding;
+                    $encodingObject = $encoding;
                     $found = $true;
                 }
             }
@@ -204,26 +211,83 @@ ElseIf (Test-Path -LiteralPath $path) {
             }
         }
     }
+    return $encodingObject;
 }
 
-# Initialize result information
-$result = @{
-    backup  = "";
-    changed = $false;
-    msg     = "";
+function BackupFile {
+    param(
+        [String]$path,
+        [bool]$check_mode
+    );
+
+    $backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
+    Try {
+        Copy-Item $path $backuppath -WhatIf:$check_mode;
+    }
+    Catch {
+        $module.FailJson("Cannot copy backup file! ($($_.Exception.Message))", $_);
+    }
+    If (-not $check_mode) {
+        Try {
+            Get-Acl -Path $path | Set-Acl -Path $backuppath
+        }
+        Catch {
+            $module.FailJson("Cannot copy ACL to backup file! ($($_.Exception.Message))", $_);
+        }
+    }
+    return $backuppath;
 }
+
+If (Test-Path -LiteralPath $path -PathType "container") {
+    $module.FailJson("Path $path is a directory", $_);
+}
+
+$linesep = "`r`n"
+If ($newline -eq "unix") {
+    $linesep = "`n";
+}
+
+If ($insertbefore -and $insertafter) {
+    $module.Warn("Both insertbefore and insertafter parameters found, ignoring `"insertafter=$insertafter`"")
+}
+
+If (-not $insertbefore -and -not $insertafter) {
+    $insertafter = "EOF";
+}
+
+$insre = $null;
+If ($insertafter -and $insertafter -ne "BOF" -and $insertafter -ne "EOF") {
+    $insre = New-Object Regex $insertafter, 'Compiled';
+}
+ElseIf ($insertbefore -and $insertbefore -ne "BOF" -and $insertbefore -ne "EOF") {
+    $insre = New-Object Regex $insertbefore, 'Compiled';
+}
+
+
+# The default encoding is UTF-8 without BOM
+$encodingobj = [System.Text.UTF8Encoding] $false;
+
+If ($encoding -ne "auto") {
+    $encodingobj = [System.Text.Encoding]::GetEncoding($encoding);
+}
+ElseIf (Test-Path -LiteralPath $path) {
+    $encodingobj = GuessFileEncoding $path
+
+}
+
+$module.Result.backup = ""
+$module.Result.changed = $false
+$module.Result.msg = ""
 
 $cleanpath = $path.Replace("/", "\");
 If (-not (Test-Path -LiteralPath $path)) {
     If ($state -eq "absent") {
-        $result = @{
-            changed = $false
-            msg     = "File does not exist"
-        };
-        Exit-Json $result;
+        $module.Result.changed = $false
+        $module.Result.msg = "File does not exist"
+        $module.ExitJson()
     }
     If (-not $create) {
-        Fail-Json @{} "Path $path does not exist and create not specified";
+        $module.FailJson("Path $path does not exist and create not specified", $_);
     }
     $lines = New-Object System.Collections.ArrayList($null)
 }
@@ -231,6 +295,8 @@ Else {
     # Read the dest file lines using the indicated encoding into a mutable ArrayList. Note
     # that we have to clean up the path because ansible wants to treat / and \ as
     # interchangeable in windows pathnames, but .NET framework internals do not support that.
+
+    # We read the file using ReadAllText in order to preserve ending newlines
     $origContent = [System.IO.File]::ReadAllText($cleanpath, $encodingobj);
     If (($null -eq $origContent) -or ($origContent -eq "")) {
         $lines = New-Object System.Collections.ArrayList;
@@ -241,9 +307,7 @@ Else {
 }
 
 If ($diff_support) {
-    $result.diff = @{
-        before = $origContent
-    }
+    $module.Diff.before = $origContent
 }
 
 # This logic lifted from Yaegashi Takeshi's (@yaegashi) blockinfile
@@ -306,25 +370,25 @@ $lines.InsertRange($insertLine, $blocklines);
 
 $after = $lines -join $linesep;
 If ($diff_support) {
-    $result.diff.after = $after
+    $module.Diff.after = $after
 }
-$result.encoding = $encodingobj.WebName;
+$module.Result.encoding = $encodingobj.WebName;
 
 If ($origContent -ne $after) {
-    $result.changed = $true;
+    $module.Result.changed = $true;
     If ($backup) {
-        $result.backup = BackupFile $path $check_mode
+        $module.Result.backup = BackupFile $path $check_mode
     }
     WriteLines $lines $path $linesep $encodingobj $validate $check_mode
-    If ($blocklines.Count > 0) {
-        $result.msg = "Block inserted"
+    If ($blocklines.Count -gt 0) {
+        $module.Result.msg = "Block inserted"
     }
     else {
-        $result.msg = "Block removed"
+        $module.Result.msg = "Block removed"
     }
 }
 Else {
-    $result.changed = $false;
+    $module.Result.changed = $false;
 }
 
-Exit-Json $result;
+$module.ExitJson();

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -117,14 +118,14 @@ author:
 EXAMPLES = r'''
 - name: Add some hosts entries
   blockinfile:
-    path: C:/Windows/System32/drivers/etc/hosts
+    path: C:\Windows\System32\drivers\\etc\\hosts
     block: |
       127.0.0.1 foobar
       192.168.1.10 barfoo
 
 - name: Insert/Update HTML surrounded by custom markers after <body> line
   blockinfile:
-    path: C:/webserver/html/index.html
+    path: C:\webserver\\html\\index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
     content: |
@@ -133,13 +134,13 @@ EXAMPLES = r'''
 
 - name: Remove HTML as well as surrounding markers
   blockinfile:
-    path: C:/webserver/html/index.html
+    path: C:\webserver\\html\\index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     content: ""
 
 - name: Add mappings to /etc/hosts
   blockinfile:
-    path: C:/Windows/System32/drivers/etc/hosts
+    path: C:\Windows\System32\drivers\\etc\\hosts
     block: |
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
