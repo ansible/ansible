@@ -229,15 +229,20 @@ class SwarmNodeManager(DockerBaseClass):
 
             if self.parameters.labels_to_remove is not None:
                 for key in self.parameters.labels_to_remove:
-                    if not self.parameters.labels.get(key):
+                    if self.parameters.labels is not None:
+                        if not self.parameters.labels.get(key):
+                            if node_spec['Labels'].get(key):
+                                node_spec['Labels'].pop(key)
+                                changed = True
+                        else:
+                            self.client.module.warn(
+                                "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
+                                "Keeping the assigned label value."
+                                % to_native(key))
+                    else:
                         if node_spec['Labels'].get(key):
                             node_spec['Labels'].pop(key)
                             changed = True
-                    else:
-                        self.client.module.warn(
-                            "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
-                            "Keeping the assigned label value."
-                            % to_native(key))
 
         if changed is True:
             if not self.check_mode:
