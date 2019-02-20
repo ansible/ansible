@@ -14,6 +14,7 @@ DOCUMENTATION = '''
     extends_documentation_fragment:
         - constructed
         - inventory_cache
+        - gcp
     description:
         - Get inventory hosts from Google Cloud Platform GCE.
         - Uses a YAML configuration file that ends with gcp_compute.(yml|yaml) or gcp.(yml|yaml).
@@ -95,6 +96,10 @@ class GcpMockModule(object):
     def __init__(self, params):
         self.params = params
         self._set_fallbacks()
+
+        if 'service_account_file' in self.params:
+            self.params['service_account_file'] = os.path.expanduser(self.params['service_account_file'])
+
 
     def fail_json(self, *args, **kwargs):
         raise AnsibleError(kwargs['msg'])
