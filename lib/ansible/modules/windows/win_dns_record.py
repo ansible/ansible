@@ -33,8 +33,8 @@ options:
     type: str
   ttl:
     description:
-    - The "time to live" of the record, in seconds. Ignored when
-      C(state=absent).
+    - The "time to live" of the record, in seconds.
+    - Ignored when C(state=absent).
     - Note that an Active Directory forest can specify a minimum TTL, and will
       dynamically "round up" other values to that minimum.
     default: 3600
@@ -52,15 +52,16 @@ options:
     type: str
   zone:
     description:
-    - The name of the zone to manage (eg C(example.com)). The zone must already
-      exist.
+    - The name of the zone to manage (eg C(example.com)).
+    - The zone must already exist.
     required: yes
     type: str
   computer_name:
     description:
-      - Specifies a DNS server. You can specify an IP address or any value that
-        resolves to an IP address, such as a fully qualified domain name
-        (FQDN), host name, or NETBIOS name.
+      - Specifies a DNS server.
+      - You can specify an IP address or any value that resolves to an IP
+        address, such as a fully qualified domain name (FQDN), host name, or
+        NETBIOS name.
     type: str
 '''
 
