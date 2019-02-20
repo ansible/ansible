@@ -331,6 +331,8 @@ options:
   networks:
     description:
       - List of the service networks names.
+      - Prior to API version 1.29, updating and removing networks is not supported.
+        If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
   stop_signal:
@@ -367,6 +369,7 @@ options:
       mode:
         description:
           - What publish mode to use.
+          - Service will be removed and recreated when changed.
           - Requires API version >= 1.32.
         type: str
         choices:
@@ -757,6 +760,7 @@ class DockerService(DockerBaseClass):
         self.update_max_failure_ratio = None
         self.update_order = None
         self.working_dir = None
+        self.can_update_networks = None
 
     def get_facts(self):
         return {
@@ -805,9 +809,10 @@ class DockerService(DockerBaseClass):
         }
 
     @staticmethod
-    def from_ansible_params(ap, old_service, image_digest):
+    def from_ansible_params(ap, old_service, image_digest, can_update_networks):
         s = DockerService()
         s.image = image_digest
+        s.can_update_networks = can_update_networks
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
         s.args = ap['args']
@@ -962,7 +967,7 @@ class DockerService(DockerBaseClass):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
         if self.networks is not None and self.networks != (os.networks or []):
             differences.add('networks', parameter=self.networks, active=os.networks)
-            needs_rebuild = True
+            needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
         if self.command is not None and self.command != (os.command or []):
@@ -1520,6 +1525,10 @@ class DockerServiceManager(object):
         digest = distribution_data['Descriptor']['digest']
         return '%s@%s' % (name, digest)
 
+    def can_update_networks(self):
+        # Before Docker API 1.29 adding/removing networks was not supported
+        return self.client.docker_api_version >= LooseVersion('1.29')
+
     def run(self):
         self.diff_tracker = DifferenceTracker()
         module = self.client.module
@@ -1531,22 +1540,29 @@ class DockerServiceManager(object):
                 resolve=module.params['resolve_image']
             )
         except DockerException as e:
-            self.client.fail(
-                "Error looking for an image named %s: %s" % (image, e))
+            return self.client.fail(
+                'Error looking for an image named %s: %s'
+                % (image, e)
+            )
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
-            self.client.fail(
-                "Error looking for service named %s: %s" % (module.params['name'], e))
+            return self.client.fail(
+                'Error looking for service named %s: %s'
+                % (module.params['name'], e)
+            )
         try:
+            can_update_networks = self.can_update_networks()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
-                image_digest
+                image_digest,
+                can_update_networks
             )
         except Exception as e:
-            self.client.fail(
-                "Error parsing module parameters: %s" % e)
+            return self.client.fail(
+                'Error parsing module parameters: %s' % e
+            )
 
         changed = False
         msg = 'noop'
