@@ -181,7 +181,7 @@ class Task(Base, Conditional, Taggable, Become, Collection):
         # use the args parsing class to determine the action, args,
         # and the delegate_to value from the various possible forms
         # supported as legacy
-        args_parser = ModuleArgsParser(task_ds=ds)
+        args_parser = ModuleArgsParser(task_ds=ds, collection_list=self.collections)
         try:
             (action, args, delegate_to) = args_parser.parse()
         except AnsibleParserError as e:

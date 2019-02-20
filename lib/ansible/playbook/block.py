@@ -24,13 +24,14 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.collection import Collection
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
 
 
-class Block(Base, Become, Conditional, Taggable):
+class Block(Base, Become, Conditional, Collection, Taggable):
 
     # main block fields containing the task lists
     _block = FieldAttribute(isa='list', default=list, inherit=False)

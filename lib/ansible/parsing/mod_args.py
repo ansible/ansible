@@ -108,12 +108,13 @@ class ModuleArgsParser:
     Args may also be munged for certain shell command parameters.
     """
 
-    def __init__(self, task_ds=None):
+    def __init__(self, task_ds=None, collection_list=None):
         task_ds = {} if task_ds is None else task_ds
 
         if not isinstance(task_ds, dict):
             raise AnsibleAssertionError("the type of 'task_ds' should be a dict, but is a %s" % type(task_ds))
         self._task_ds = task_ds
+        self._collection_list = collection_list
 
     def _split_module_string(self, module_string):
         '''
@@ -285,13 +286,11 @@ class ModuleArgsParser:
 
         # module: <stuff> is the more new-style invocation
 
-        collection_list = self._task_ds.get('collections')
-
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
             if any([item in BUILTIN_TASKS,
-                   action_loader.has_plugin(item, collection_list=collection_list),
-                   module_loader.has_plugin(item, collection_list=collection_list)]):
+                   action_loader.has_plugin(item, collection_list=self._collection_list),
+                   module_loader.has_plugin(item, collection_list=self._collection_list)]):
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)

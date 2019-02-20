@@ -9,7 +9,8 @@ from ansible.playbook.attribute import FieldAttribute
 
 
 class Collection:
-    _collections = FieldAttribute(isa='list', listof=string_types)
+    # this needs to be populated before we can resolve tasks/roles/etc
+    _collections = FieldAttribute(isa='list', listof=string_types, priority=100)
 
     def __init__(self):
         super(Collection, self).__init__()

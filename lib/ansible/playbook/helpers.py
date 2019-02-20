@@ -117,7 +117,10 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
             )
             task_list.append(t)
         else:
-            args_parser = ModuleArgsParser(task_ds)
+            # HACK: figure out how to get this more cleanly/centrally for task action resolution, since the structure isn't built yet
+            # FIXME: add recursive parent block resolution here too
+            collection_list = task_ds.get('collections', block.collections)
+            args_parser = ModuleArgsParser(task_ds, collection_list=collection_list)
             try:
                 (action, args, delegate_to) = args_parser.parse()
             except AnsibleParserError as e:
