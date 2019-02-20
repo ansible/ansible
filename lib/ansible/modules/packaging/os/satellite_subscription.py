@@ -91,7 +91,7 @@ EXAMPLES = """
       - product_id=RH000XX
       - name=EPEL
       - name=Extra
-    unique: True
+    unique: true
     organization: 1
   delegate_to: localhost
 
@@ -104,7 +104,7 @@ EXAMPLES = """
     content_host:
       - "{{ inventory_hostname }}"
     subscription: "{{ redhat_subscriptions }}"
-    unique: True
+    unique: true
     organization: 1
   delegate_to: localhost
 
@@ -198,10 +198,10 @@ def subscription_assign(sat_url, user, password, matched_subscriptions, host, mo
         data = {"id": host["id"], "subscriptions": [{"id": available_subscription["id"], "quantity": 1}]}
 
         # attach the available subscription to this host
-        apicall = "{}/api/hosts/{}/subscriptions/add_subscriptions".format(sat_url, host["id"])
+        apicall = "{0}/api/hosts/{1}/subscriptions/add_subscriptions".format(sat_url, host["id"])
         put(apicall, user, password, data, verify)
 
-        result.append([host["name"], "Assigned: {}".format(sub["name"])])
+        result.append([host["name"], "Assigned: {0}".format(sub["name"])])
 
     return result, error
 
@@ -212,8 +212,8 @@ def subscription_search(sat_url, user, password, org, subscription, module, veri
     matched_subscriptions = {}
     for subsearch in subscription:
         # only search for normal subscriptions to avoid returning assigned ones
-        params = {"search": "type=NORMAL and ({})".format(subsearch)}
-        apicall = "{}/katello/api/organizations/{}/subscriptions".format(sat_url, org)
+        params = {"search": "type=NORMAL and ({0})".format(subsearch)}
+        apicall = "{0}/katello/api/organizations/{1}/subscriptions".format(sat_url, org)
         matched_subscriptions[subsearch] = request(apicall, user, password, verify, True, params)
         if matched_subscriptions[subsearch] == []:
             errors = "Sorry, no subscriptions matched. Please adjust your subscription search"
@@ -225,7 +225,7 @@ def subscription_search(sat_url, user, password, org, subscription, module, veri
 def subscription_remove(sat_url, user, password, host, sub, verify):
     """Remove a subscription from a host"""
 
-    apicall = "{}/api/hosts/{}/subscriptions/remove_subscriptions".format(sat_url, host["id"])
+    apicall = "{0}/api/hosts/{1}/subscriptions/remove_subscriptions".format(sat_url, host["id"])
     data = {"id": host["id"], "subscriptions": [{"id": sub["id"], "quantity": sub["quantity_consumed"]}]}
     result = put(apicall, user, password, data, verify)
 
@@ -243,7 +243,7 @@ def subscription_configure_autoattach(sat_url, user, password, host, autoheal, v
             "service_level": "",
         },
     }
-    apicall = "{}/api/hosts/{}".format(sat_url, host["id"])
+    apicall = "{0}/api/hosts/{1}".format(sat_url, host["id"])
     req = put(apicall, user, password, data, verify)
 
     return req
@@ -253,7 +253,7 @@ def subscription_autoattach(sat_url, user, password, host, verify):
     """Run subscription autoattach for host"""
 
     data = {"id": host["id"]}
-    apicall = "{}/api/hosts/{}/subscriptions/auto_attach".format(sat_url, host["id"])
+    apicall = "{0}/api/hosts/{1}/subscriptions/auto_attach".format(sat_url, host["id"])
     req = put(apicall, user, password, data, verify)
 
     return req["results"]
@@ -296,7 +296,7 @@ def main():
     changed = False
     result = []
 
-    sat_url = "https://{}".format(sat)
+    sat_url = "https://{0}".format(sat)
 
     # get the list of hosts to work on
     hosts = []
@@ -338,12 +338,12 @@ def main():
 
             if unique:
                 # get existing subscriptions on host
-                apicall = "{}/api/hosts/{}/subscriptions".format(sat_url, host["id"])
+                apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, host["id"])
                 hostsubs = request(apicall, user, password, verify)
                 # and remove them
                 for sub in hostsubs["results"]:
                     subscription_remove(sat_url, user, password, host, sub, verify)
-                    result.append([host["name"], "Removed: {}".format(sub["name"])])
+                    result.append([host["name"], "Removed: {0}".format(sub["name"])])
 
             # search for our subscriptions
             matched_subscriptions = subscription_search(sat_url, user, password, org, subscription, module, verify)
@@ -360,7 +360,7 @@ def main():
         # loop over hosts to remove
         for host in hosts:
             # get existing subscriptions on host
-            apicall = "{}/api/hosts/{}/subscriptions".format(sat_url, host["id"])
+            apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, host["id"])
             hostsubs = request(apicall, user, password, verify)
             for sub in hostsubs["results"]:
                 for subsearch in subscription:
@@ -369,31 +369,31 @@ def main():
                         (key, value) = subsearch.split("=")
                         if value in sub[key]:
                             subscription_remove(sat_url, user, password, host, sub, verify)
-                            result.append([host["name"], "Removed: {}".format(sub["name"])])
+                            result.append([host["name"], "Removed: {0}".format(sub["name"])])
                             changed = True
                     else:
                         # only match on name if no key is given
                         if subsearch in sub["name"]:
                             subscription_remove(sat_url, user, password, host, sub, verify)
-                            result.append([host["name"], "Removed: {}".format(sub["name"])])
+                            result.append([host["name"], "Removed: {0}".format(sub["name"])])
                             changed = True
 
     elif state == "vdcguests":
         # loop over hypervisors
         for host in hosts:
             # request detailed info for host
-            apicall = "{}/api/hosts/{}".format(sat_url, host["id"])
+            apicall = "{0}/api/hosts/{1}".format(sat_url, host["id"])
             host_info = request(apicall, user, password, verify, False)
             # loop over guests on hypervisor
             for guest in host_info["subscription_facet_attributes"]["virtual_guests"]:
                 # get existing guest subscriptions
-                apicall = "{}/api/hosts/{}/subscriptions".format(sat_url, guest["id"])
+                apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, guest["id"])
                 guest_subs = request(apicall, user, password, verify)
                 # remove existing Red Hat subscriptions, except the ones from the hypervisor
                 for sub in guest_subs["results"]:
                     if "hypervisor" not in sub and sub["account_number"]:
                         subscription_remove(sat_url, user, password, guest, sub, verify)
-                        result.append([guest["name"], "removed: {}".format(sub["name"])])
+                        result.append([guest["name"], "removed: {0}".format(sub["name"])])
                 # run autoattach
                 subscription_autoattach(sat_url, user, password, guest, verify)
 
@@ -405,7 +405,7 @@ def main():
                 continue
             else:
                 # get existing subscriptions on host
-                apicall = "{}/api/hosts/{}/subscriptions".format(sat_url, host["id"])
+                apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, host["id"])
                 hostsubs = request(apicall, user, password, verify)
                 for sub in hostsubs["results"]:
                     # remove subscription if it's using an entitlment per socket
@@ -429,7 +429,7 @@ def main():
                             module.fail_json(msg=result)
                         # remove the original subscription
                         subscription_remove(sat_url, user, password, host, sub, verify)
-                        result.append([host["name"], "Removed: {} {}".format(sub["quantity_consumed"], sub["name"])])
+                        result.append([host["name"], "Removed: {0} {1}".format(sub["quantity_consumed"], sub["name"])])
                         changed = True
                         # skip to next host
                         break

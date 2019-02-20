@@ -16,7 +16,7 @@ except ImportError:
 def host_list(sat_url, user, password, org, verify, content_host=None):
     """Get a list of hosts from the satellite"""
 
-    apicall = "{}/api/hosts".format(sat_url)
+    apicall = "{0}/api/hosts".format(sat_url)
     params = dict(
         organization_id=org,
         sort_by="name",
@@ -28,17 +28,19 @@ def host_list(sat_url, user, password, org, verify, content_host=None):
             params["search"] = str(content_host)
         else:
             # treat other patterns as hostnames
-            params["search"] = "name={}".format(content_host)
+            params["search"] = "name={0}".format(content_host)
 
     hosts = request(apicall, user, password, verify, True, params)
 
     return hosts
 
 
-def request(url, user, password, verify=True, pagination=False, params={}):
+def request(url, user, password, verify=True, pagination=False, params=None):
     """"Execute a Satellite GET API request"""
 
     per_page = 200
+    if not params:
+        params = dict()
     if params != {} or pagination:
         params["page"] = 1
         params["paged"] = True
