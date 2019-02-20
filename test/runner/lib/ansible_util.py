@@ -66,6 +66,11 @@ def ansible_environment(args, color=True, ansible_config=None):
 
     env.update(ansible)
 
+    if args.process_model:
+        env.update(dict(
+            ANSIBLE_PROCESS_MODEL=args.process_model,
+        ))
+
     if args.debug:
         env.update(dict(
             ANSIBLE_DEBUG='true',

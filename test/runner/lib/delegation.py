@@ -514,6 +514,7 @@ def filter_options(args, argv, options, exclude, require):
             '--metadata': 1,
             '--exclude': 1,
             '--require': 1,
+            '--process-model': 1,
         })
     elif isinstance(args, SanityConfig):
         options.update({
@@ -559,3 +560,7 @@ def filter_options(args, argv, options, exclude, require):
 
     if args.redact:
         yield '--redact'
+
+    if args.process_model:
+        yield '--process-model'
+        yield args.process_model

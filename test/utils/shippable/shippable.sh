@@ -9,6 +9,8 @@ script="${args[0]}"
 
 test="$1"
 
+export ANSIBLE_TEST_PROCESS_MODEL="${M:-auto}"
+
 docker images ansible/ansible
 docker images quay.io/ansible/*
 docker ps

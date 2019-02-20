@@ -144,6 +144,8 @@ def parse_args():
     else:
         epilog = 'Install the "argcomplete" python package to enable tab completion.'
 
+    process_models = ['forking', 'threading']
+
     parser = argparse.ArgumentParser(epilog=epilog)
 
     common = argparse.ArgumentParser(add_help=False)
@@ -185,6 +187,11 @@ def parse_args():
     common.add_argument('--check-python',
                         choices=SUPPORTED_PYTHON_VERSIONS,
                         help=argparse.SUPPRESS)
+
+    common.add_argument('--process-model',
+                        choices=process_models + ['auto'],
+                        help='override default process model for ansible commands')
+
 
     test = argparse.ArgumentParser(add_help=False, parents=[common])
 
@@ -536,6 +543,12 @@ def parse_args():
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)
 
     args = parser.parse_args()
+
+    if not args.process_model:
+        args.process_model = os.environ.get('ANSIBLE_TEST_PROCESS_MODEL')
+
+    if args.process_model not in process_models:
+        args.process_model = None
 
     if args.explain and not args.verbosity:
         args.verbosity = 1

@@ -862,6 +862,7 @@ class CommonConfig(object):
         self.debug = args.debug  # type: bool
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
+        self.process_model = args.process_model  # type: str
 
         if is_shippable():
             self.redact = True
