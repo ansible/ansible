@@ -32,7 +32,7 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-    - If C(absent), directories will be recursively deleted when C(recurse=yes), and files 
+    - If C(absent), directories will be recursively deleted when C(recurse=yes), and file
       or symlinks will be unlinked.
     - Note that C(absent) will not cause C(file) to fail if the C(path) does not exist as the state did not change.
       the C(path) does not exist as the state did not change.
