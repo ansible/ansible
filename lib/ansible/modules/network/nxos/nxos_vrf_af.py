@@ -51,15 +51,18 @@ options:
     description:
       - Specify the route-targets which should be imported under the AF
     type: list
+    version_added: "2.8"
   route_target_export:
     description:
       - Specify the route-targets which should be exported under the AF
     type: list
+    version_added: "2.8"
   route_target_both:
     description:
       - Specify the route-targets which should be imported & exported
         under the AF
     type: list
+    version_added: "2.8"
   state:
     description:
       - Determines whether the config should be present or
