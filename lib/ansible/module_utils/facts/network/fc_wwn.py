@@ -61,13 +61,16 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
                     fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         elif sys.platform.startswith('aix'):
             # get list of available fibre-channel devices (fcs)
-            rc, lsdev_out, err = module.run_command("/usr/sbin/lsdev -Cc adapter -l fcs*")
+            cmd = module.get_bin_path('lsdev')
+            cmd = cmd + " -Cc adapter -l fcs*"
+            rc, lsdev_out, err = module.run_command(cmd)
             if lsdev_out:
                 for line in lsdev_out.splitlines():
                     # if device is available (not in defined state), get its WWN
                     if 'Available' in line:
                         data = line.split(' ')
-                        cmd = "/usr/sbin/lscfg -vl %s | grep 'Network Address'" % data[0]
+                        cmd = module.get_bin_path('lscfg')
+                        cmd = cmd + " -vl %s | grep 'Network Address'" % data[0]
                         rc, lscfg_out, err = module.run_command(cmd, use_unsafe_shell=True)
                         # example output
                         # lscfg -vpl fcs3 | grep "Network Address"
