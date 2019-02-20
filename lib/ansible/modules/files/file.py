@@ -33,7 +33,8 @@ options:
   state:
     description:
     - If C(absent), directories will be recursively deleted when C(recurse=yes), and files 
-      or symlinks wil be unlinked. Note that C(absent) will not cause C(file) to fail if 
+      or symlinks will be unlinked.
+    - Note that C(absent) will not cause C(file) to fail if the C(path) does not exist as the state did not change.
       the C(path) does not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
