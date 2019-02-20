@@ -113,6 +113,19 @@ Deprecated
      removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
      instead.
 
+* Inventory plugins writers should know that supporting file-backed caching via self.cache is deprecated and will
+  be removed in Ansible 2.12. Instead, self._cache should be used as a dictionary. For implementation details, see the
+  developer guide on inventory plugins.
+
+* Importing cache plugins directly is deprecated and will be removed in Ansible 2.12. The plugin_loader should be
+  used so direct options, environment variables, and other means of configuration can be reconciled using the config
+  system rather than constants.
+
+  .. code-block:: python
+
+     from ansible.plugins.loader import cache_loader
+     cache = cache_loader.get('redis', **kwargs)
+
 Modules
 =======
 
