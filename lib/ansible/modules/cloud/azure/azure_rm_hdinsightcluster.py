@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_hdinsightcluster
 version_added: "2.8"
-short_description: Manage Azure Cluster instance.
+short_description: Manage Azure HDInsight Cluster instance.
 description:
-    - Create, update and delete instance of Azure Cluster.
+    - Create, update and delete instance of Azure HDInsight Cluster.
 
 options:
     resource_group:
@@ -195,8 +195,8 @@ options:
                       ityName}'."
     state:
       description:
-        - Assert the state of the Cluster.
-        - Use 'present' to create or update an Cluster and 'absent' to delete it.
+        - Assert the state of the cluster.
+        - Use C(present) to create or update a cluster and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -212,46 +212,48 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Cluster
-    azure_rm_hdinsightcluster:
-      resource_group: rg1
-      name: cluster1
-      location: eastus
-      cluster_version: 3.5
-      os_type: Linux
-      tier: Standard
-      cluster_definition:
-        kind: Hadoop
-        configurations: {
-  "gateway": {
-    "restAuthCredential.isEnabled": "true",
-    "restAuthCredential.username": "admin",
-    "restAuthCredential.password": "**********"
-  }
-}
-      compute_profile_roles:
-        - name: headnode
-          min_instance_count: 1
-          target_instance_count: 2
-          vm_size: Standard_D3_V2
-          linux_profile: {
-  "username": "sshuser",
-  "password": "**********"
-}
-      storage_accounts:
-        - name: mystorage
-          is_default: True
-          container: containername
-          key: storagekey
+- name: Create instance of HDInsight Cluster
+  azure_rm_hdinsightcluster:
+    resource_group: myResourceGroup
+    name: myCluster
+    location: eastus2
+    cluster_version: 3.6
+    os_type: linux
+    tier: standard
+    cluster_definition:
+      kind: spark
+      configurations:
+        gateway:
+          restAuthCredential.username: http-user
+          restAuthCredential.password: MuABCPassword!!@123 
+    storage_accounts:
+      - name: myStorageAccount.blob.core.windows.net 
+        is_default: yes
+        container: myContainer
+        key: GExmaxH4lDNdHA9nwAsCt8t4AOQas2y9vXQP1kKALTram7Q3/5xLVIab3+nYG1x63Xyak9/VXxQyNBHA9pDWw==
+    compute_profile_roles:
+      - name: headnode
+        target_instance_count: 2
+        hardware_profile:
+          vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
+      - name: workernode
+        target_instance_count: 2
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
 '''
 
 RETURN = '''
 id:
     description:
-        - Fully qualified resource Id for the resource.
+        - Fully qualified resource id of the cluster.
     returned: always
     type: str
-    sample: /subscriptions/subid/resourceGroups/rg1/providers/Microsoft.HDInsight/clusters/cluster1
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.HDInsight/clusters/myCluster
 '''
 
 import time
