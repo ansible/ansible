@@ -86,6 +86,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.gcp_utils import GcpSession, navigate_hash, GcpRequestException
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
 import json
+import os
 
 
 # The mappings give an array of keys to get from the filter name to the value
@@ -93,9 +94,22 @@ import json
 class GcpMockModule(object):
     def __init__(self, params):
         self.params = params
+        self._set_fallbacks()
 
     def fail_json(self, *args, **kwargs):
         raise AnsibleError(kwargs['msg'])
+
+    def _set_fallbacks(self):
+        self._set_fallback('project', 'GCP_PROJECT')
+        self._set_fallback('auth_kind', 'GCP_AUTH_KIND')
+        self._set_fallback('service_account_email', 'GCP_SERVICE_ACCOUNT_EMAIL')
+        self._set_fallback('service_account_file', 'GCP_SERVICE_ACCOUNT_FILE')
+        self._set_fallback('scopes', 'GCP_SCOPES')
+
+    def _set_fallback(self, param, env_value):
+        if param not in self.params:
+            if env_value in os.environ:
+                self.params[param] = os.environ[env_value]
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
