@@ -74,7 +74,7 @@ class ProcessModel(ProcessModelBase):
         data = None
         try:
             data = self._job_queue.popleft()
-            self._tqm.send_callback('v2_runner_on_start', host, task)
+            self._tqm.send_callback('v2_runner_on_start', data[0], data[1])
         except:
             pass
         finally:
