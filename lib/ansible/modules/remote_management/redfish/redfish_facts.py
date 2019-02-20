@@ -73,7 +73,7 @@ EXAMPLES = '''
   - name: Get several inventories
     redfish_facts:
       category: Systems
-      command: GetNicInventory,GetPsuInventory,GetBiosAttributes
+      command: GetNicInventory,GetBiosAttributes
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
