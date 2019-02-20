@@ -133,6 +133,28 @@
 - assert:
     that: not output.changed
 
+- name: Get subnet facts
+  azure_rm_subnet_facts:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- debug:
+    var: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.subnets[0]['id'] != None
+      - output.subnets[0]['resource_group'] != None
+      - output.subnets[0]['virtual_network_name'] != None
+      - output.subnets[0]['name'] != None
+      - output.subnets[0]['address_prefix_cidr'] != None
+      - output.subnets[0]['route_table'] != None
+      - output.subnets[0]['security_group'] != None
+      - output.subnets[0]['provisioning_state'] != None
+
 - name: Remove subnet
   azure_rm_subnet:
     state: absent
