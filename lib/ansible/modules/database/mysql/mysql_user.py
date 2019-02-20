@@ -8,6 +8,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -41,7 +42,7 @@ options:
     type: bool
     required: false
     default: "no"
-    version_added: "2.6"
+    version_added: "2.8"
   encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash.
@@ -154,21 +155,16 @@ EXAMPLES = r'''
     priv: '*.*:ALL,GRANT'
     state: present
 
-<<<<<<< HEAD
-# Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
 - name: Modify user to require SSL connections.
   mysql_user:
     name: bob
     append_privs: yes
-    priv: '*.*:REQUIRESSL'
+    priv: '*.*'
+    require_ssl: yes
     state: present
 
 - name: Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
   mysql_user:
-=======
-# Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
-- mysql_user:
->>>>>>> Make `mysql_user` idempotent with regards to SSL
     login_user: root
     login_password: 123456
     name: sally
@@ -249,7 +245,6 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
 
 class InvalidPrivsError(Exception):
     pass
-
 
 # ===========================================
 # MySQL module specific support methods.
@@ -354,12 +349,10 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, new_re
                         if not use_user_for_non_priv:
                             cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                         else:
-                            cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s",
-                                           (user, host, password))
+                            cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
                         changed = True
                 else:
-                    module.fail_json(
-                        msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
+                    module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
             else:
                 if not use_user_for_non_priv:
                     cursor.execute("SELECT PASSWORD(%s)", (password,))
@@ -372,8 +365,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, new_re
                     if not use_user_for_non_priv:
                         cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
                     else:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s",
-                                       (user, host, password))
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password BY %s", (user, host, password))
                     changed = True
 
         # Handle SSL
@@ -586,31 +578,33 @@ def user_set_require_ssl(cursor, user, host, use_user_for_non_priv):
 # ===========================================
 # Module execution.
 #
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            user=dict(required=True, aliases=['name']),
-            password=dict(default=None, no_log=True, type='str'),
-            require_ssl=dict(default=False, type='bool'),
-            encrypted=dict(default=False, type='bool'),
-            host=dict(default="localhost"),
-            host_all=dict(type="bool", default="no"),
-            state=dict(default="present", choices=["absent", "present"]),
-            priv=dict(default=None),
-            append_privs=dict(default=False, type='bool'),
-            check_implicit_admin=dict(default=False, type='bool'),
-            update_password=dict(default="always", choices=["always", "on_create"]),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type='path'),
-            sql_log_bin=dict(default=True, type='bool'),
-            ssl_cert=dict(default=None, type='path'),
-            ssl_key=dict(default=None, type='path'),
-            ssl_ca=dict(default=None, type='path'),
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            user=dict(type='str', required=True, aliases=['name']),
+            password=dict(type='str', no_log=True),
+            require_ssl=dict(type='bool', default=False),
+            encrypted=dict(type='bool', default=False),
+            host=dict(type='str', default='localhost'),
+            host_all=dict(type="bool", default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            priv=dict(type='str'),
+            append_privs=dict(type='bool', default=False),
+            check_implicit_admin=dict(type='bool', default=False),
+            update_password=dict(type='str', default='always', choices=['always', 'on_create']),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+            sql_log_bin=dict(type='bool', default=True),
+            ssl_cert=dict(type='path'),
+            ssl_key=dict(type='path'),
+            ssl_ca=dict(type='path'),
         ),
         supports_check_mode=True,
     )
@@ -651,9 +645,8 @@ def main():
             cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db,
                                    connect_timeout=connect_timeout)
     except Exception as e:
-        module.fail_json(
-            msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
-                "Exception message: %s" % (config_file, to_native(e)))
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
+                             "Exception message: %s" % (config_file, to_native(e)))
 
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
@@ -678,11 +671,9 @@ def main():
         if user_exists(cursor, user, host, host_all):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, require_ssl,
-                                       append_privs, module)
+                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, require_ssl, append_privs, module)
                 else:
-                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, require_ssl, append_privs,
-                                       module)
+                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, require_ssl, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
                 module.fail_json(msg=to_native(e))
@@ -690,10 +681,9 @@ def main():
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
-                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, require_ssl,
-                                   module.check_mode)
-            except (SQLParseError, InvalidPrivsError, MySQLdb.Error) as e:
-                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, require_ssl, module.check_mode)
+            except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
+                module.fail_json(msg=to_native(e))
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):
             changed = user_delete(cursor, user, host, host_all, module.check_mode)
