@@ -220,6 +220,7 @@ DEFAULTS = {
     'group_by_tag_none': 'True',
     'group_by_vpc_id': 'True',
     'hostname_variable': '',
+    'username_variable': '',
     'iam_role': '',
     'include_rds_clusters': 'False',
     'nested_groups': 'False',
@@ -367,6 +368,7 @@ class Ec2Inventory(object):
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
         self.hostname_variable = config.get('ec2', 'hostname_variable')
+        self.username_variable = config.get('ec2', 'username_variable')
 
         if config.has_option('ec2', 'destination_format') and \
            config.has_option('ec2', 'destination_format_tags'):
@@ -1079,6 +1081,14 @@ class Ec2Inventory(object):
 
         self.inventory["_meta"]["hostvars"][hostname] = self.get_host_info_dict_from_instance(instance)
         self.inventory["_meta"]["hostvars"][hostname]['ansible_host'] = dest
+
+        # Set the username
+        if self.username_variable:
+            if self.username_variable.startswith('tag_'):
+                username = instance.tags.get(self.username_variable[4:], None)
+            else:
+                username = getattr(instance, self.username_variable)
+            self.inventory["_meta"]["hostvars"][hostname]['ansible_user'] = username
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
