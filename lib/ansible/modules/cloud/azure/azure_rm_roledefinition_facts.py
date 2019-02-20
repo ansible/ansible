@@ -60,7 +60,7 @@ RETURN = '''
 roledefinitions:
     description: A list of Role Definition facts.
     returned: always
-    type: complext
+    type: complex
     contains:
       id:
         description: Role Definition id.
@@ -223,7 +223,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
                 if self.type:
                     roles = [r for r in response if r.role_type == self.type]
                 else:
-                    roles = response                
+                    roles = response
 
                 if len(roles) > 0:
                     return [roledefinition_to_dict(r) for r in roles]
@@ -232,7 +232,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
             self.log("Didn't find role definition in scope {0}".format(self.scope))
 
         return []
-    
+
     def get_by_id(self):
         '''
         Get Role Definition in scope by id.
@@ -295,4 +295,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
