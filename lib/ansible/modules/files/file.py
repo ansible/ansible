@@ -463,7 +463,7 @@ def ensure_absent(path, recurse):
 
     if prev_state != 'absent':
         if not module.check_mode:
-            if prev_state == 'directory':
+            if prev_state == 'directory' and recurse:
                 try:
                     if recurse:
                         shutil.rmtree(b_path, ignore_errors=False)
