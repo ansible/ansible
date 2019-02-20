@@ -233,6 +233,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                         network['subnetwork'] = self._format_network_info(network['subnetwork'])
 
             host['project'] = host['selfLink'].split('/')[6]
+            host['image'] = self._get_image(host)
         return items
 
     def _add_hosts(self, items, config_data, format_items=True):
@@ -308,6 +309,18 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     if 'natIP' in accessConfig:
                         return accessConfig[u'natIP']
         return None
+
+    def _get_image(self, item):
+        '''
+            :param item: A host response from GCP
+            :return the image of this instance or None
+        '''
+        image = None
+        for disk in item['disks']:
+            if disk.get('boot') == True:
+                if 'initializeParams' in disk:
+                    image = disk['initializeParams']['sourceImage']
+        return image
 
     def _get_privateip(self, item):
         '''
