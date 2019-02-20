@@ -294,3 +294,20 @@ module (and more!). Below is a mapping of `gce` fields over to
  preemptible                  scheduling.preemptible
  disk_size                    disks[].initialize_params.disk_size_gb
 ============================  ==========================================  ======================
+
+An example playbook is below:
+
+.. code:: yaml
+
+  gcp_compute_instance:
+      name: "{{ item }}"
+      machine_type: n1-standard-1
+      ... # any other settings
+      zone: us-central1-a
+      project: "my-project"
+      auth_kind: "service_account_file"
+      service_account_file: "~/my_account.json"
+      state: present
+  with_items:
+    - instance-1
+    - instance-2
