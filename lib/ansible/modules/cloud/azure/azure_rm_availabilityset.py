@@ -72,13 +72,13 @@ EXAMPLES = '''
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Create an availability set with advanced options
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         platform_update_domain_count: 5
         platform_fault_domain_count: 3
         sku: Aligned
@@ -87,7 +87,7 @@ EXAMPLES = '''
       azure_rm_availabilityset:
         name: myavailabilityset
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 

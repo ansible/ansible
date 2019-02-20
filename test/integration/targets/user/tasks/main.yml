@@ -364,7 +364,7 @@
     - name: BSD | Ensure proper expiration date was set
       assert:
         that:
-          - bsd_account_expiration.stdout == '2529878400'
+          - bsd_account_expiration.stdout == '2529881062'
   when: ansible_facts.os_family == 'FreeBSD'
 
 - name: Change timezone

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: ufw
 short_description: Manage firewall with UFW
@@ -36,20 +36,24 @@ options:
       - C(disabled) unloads firewall and disables firewall on boot.
       - C(reloaded) reloads firewall.
       - C(reset) disables and resets firewall to installation defaults.
+    type: str
     choices: [ disabled, enabled, reloaded, reset ]
-  policy:
+  default:
     description:
       - Change the default policy for incoming or outgoing traffic.
-    aliases: [ default ]
+    type: str
     choices: [ allow, deny, reject ]
+    aliases: [ policy ]
   direction:
     description:
       - Select direction for a rule or default policy command.
+    type: str
     choices: [ in, incoming, out, outgoing, routed ]
   logging:
     description:
       - Toggles logging. Logged packets use the LOG_KERN syslog facility.
-    choices: [ on, off, low, medium, high, full ]
+    type: str
+    choices: [ 'on', 'off', low, medium, high, full ]
   insert:
     description:
       - Insert the corresponding rule as rule number NUM.
@@ -72,18 +76,15 @@ options:
       - C(last-ipv6) interprets the rule number relative to the index of the
         last IPv6 rule, or relative to the position where the last IPv6 rule
         would be if there is currently none.
-    choices:
-      - zero
-      - first-ipv4
-      - last-ipv4
-      - first-ipv6
-      - last-ipv6
+    type: str
+    choices: [ first-ipv4, first-ipv6, last-ipv4, last-ipv6, zero ]
     default: zero
     version_added: "2.8"
   rule:
     description:
       - Add firewall rule
-    choices: ['allow', 'deny', 'limit', 'reject']
+    type: str
+    choices: [ allow, deny, limit, reject ]
   log:
     description:
       - Log new connections matched to this rule
@@ -91,27 +92,34 @@ options:
   from_ip:
     description:
       - Source IP address.
-    aliases: [ from, src ]
+    type: str
     default: any
+    aliases: [ from, src ]
   from_port:
     description:
       - Source port.
+    type: str
   to_ip:
     description:
       - Destination IP address.
-    aliases: [ dest, to]
+    type: str
     default: any
+    aliases: [ dest, to]
   to_port:
     description:
       - Destination port.
+    type: str
     aliases: [ port ]
   proto:
     description:
       - TCP/IP protocol.
+    type: str
     choices: [ any, tcp, udp, ipv6, esp, ah, gre, igmp ]
+    aliases: [ protocol ]
   name:
     description:
       - Use profile located in C(/etc/ufw/applications.d).
+    type: str
     aliases: [ app ]
   delete:
     description:
@@ -120,6 +128,7 @@ options:
   interface:
     description:
       - Specify interface for rule.
+    type: str
     aliases: [ if ]
   route:
     description:
@@ -128,10 +137,11 @@ options:
   comment:
     description:
       - Add a comment to the rule. Requires UFW version >=0.35.
+    type: str
     version_added: "2.4"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Allow everything and enable UFW
   ufw:
     state: enabled
@@ -290,6 +300,8 @@ def compile_ipv6_regexp():
 
 
 def main():
+    command_keys = ['state', 'default', 'rule', 'logging']
+
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', choices=['enabled', 'disabled', 'reloaded', 'reset']),
@@ -313,8 +325,12 @@ def main():
         ),
         supports_check_mode=True,
         mutually_exclusive=[
-            ['app', 'proto', 'logging']
+            ['app', 'proto', 'logging'],
         ],
+        required_one_of=([command_keys]),
+        required_by=dict(
+            interface=('direction', ),
+        ),
     )
 
     cmds = []
@@ -395,15 +411,7 @@ def main():
 
     params = module.params
 
-    # Ensure at least one of the command arguments are given
-    command_keys = ['state', 'default', 'rule', 'logging']
     commands = dict((key, params[key]) for key in command_keys if params[key])
-
-    if len(commands) < 1:
-        module.fail_json(msg="Not any of the command arguments %s given" % commands)
-
-    if (params['interface'] is not None and params['direction'] is None):
-        module.fail_json(msg="Direction must be specified when creating a rule on an interface")
 
     # Ensure ufw is available
     ufw_bin = module.get_bin_path('ufw', True)

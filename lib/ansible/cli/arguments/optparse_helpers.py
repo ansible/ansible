@@ -281,8 +281,10 @@ def add_meta_options(parser):
 
 def add_module_options(parser):
     """Add options for commands that load modules"""
+
+    module_path = C.config.get_configuration_definition('DEFAULT_MODULE_PATH').get('default', '')
     parser.add_option('-M', '--module-path', dest='module_path', default=None,
-                      help="prepend colon-separated path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
+                      help="prepend colon-separated path(s) to module library (default=%s)" % module_path,
                       action="callback", callback=unfrack_paths, type='str')
 
 
@@ -326,8 +328,8 @@ def add_runas_prompt_options(parser, runas_group=None):
         runas_group = optparse.OptionGroup(parser, "Privilege Escalation Options",
                                            "control how and which user you become as on target hosts")
 
-    runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
-                           help='ask for privilege escalation password')
+    runas_group.add_option('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
+                           help='ask for privilege escalation password', default=C.DEFAULT_BECOME_ASK_PASS)
 
     parser.add_option_group(runas_group)
 

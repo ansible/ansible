@@ -72,8 +72,8 @@ options:
         aliases: [ args ]
     use:
         description:
-            - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
-            - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+        - The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
+        - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         type: str
         default: auto
         version_added: 2.2

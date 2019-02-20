@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 module: user
 version_added: "0.2"
 short_description: Manage user accounts
@@ -38,7 +38,6 @@ options:
             - macOS only, optionally hide the user from the login window and system preferences.
             - The default will be C(yes) if the I(system) option is used.
         type: bool
-        required: false
         version_added: "2.6"
     non_unique:
         description:
@@ -163,8 +162,8 @@ options:
         description:
             - Optionally specify the SSH key filename.
             - If this is a relative filename then it will be relative to the user's home directory.
+            - This parameter defaults to I(.ssh/id_rsa).
         type: path
-        default: .ssh/id_rsa
         version_added: "0.9"
     ssh_key_comment:
         description:
@@ -259,7 +258,7 @@ author:
 - Stephen Fromm (@sfromm)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
   user:
     name: johnd
@@ -300,7 +299,7 @@ EXAMPLES = '''
     expires: -1
 '''
 
-RETURN = '''
+RETURN = r'''
 append:
   description: Whether or not to append the user to groups
   returned: When state is 'present' and the user exists
@@ -404,6 +403,7 @@ uid:
 
 import errno
 import grp
+import calendar
 import os
 import re
 import pty
@@ -1150,7 +1150,7 @@ class FreeBsdUser(User):
             if self.expires < time.gmtime(0):
                 cmd.append('0')
             else:
-                cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                cmd.append(str(calendar.timegm(self.expires)))
 
         # system cannot be handled currently - should we error if its requested?
         # create the user
@@ -1268,7 +1268,7 @@ class FreeBsdUser(User):
                 # Current expires is negative or we compare year, month, and day only
                 if current_expires <= 0 or current_expire_date[:3] != self.expires[:3]:
                     cmd.append('-e')
-                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    cmd.append(str(calendar.timegm(self.expires)))
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
@@ -2597,7 +2597,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             name=dict(type='str', required=True, aliases=['user']),
-            uid=dict(type='str'),
+            uid=dict(type='int'),
             non_unique=dict(type='bool', default=False),
             group=dict(type='str'),
             groups=dict(type='list'),

@@ -61,8 +61,6 @@ class DocCLI(CLI):
                                help='List available plugins')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                                help='Show playbook snippet for specified plugin(s)')
-        self.parser.add_option("-a", "--all", action="store_true", default=False, dest='all_plugins',
-                               help='**For internal testing only** Show documentation for all plugins.')
         self.parser.add_option("-j", "--json", action="store_true", default=False, dest='json_dump',
                                help='**For internal testing only** Dump json metadata for all plugins.')
         self.parser.add_option("-t", "--type", action="store", default='module', dest='type', type='choice',
@@ -73,16 +71,10 @@ class DocCLI(CLI):
     def post_process_args(self, options, args):
         options, args = super(DocCLI, self).post_process_args(options, args)
 
-        if [options.all_plugins, options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
-            raise AnsibleOptionsError("Only one of -l, -F, -s, -j or -a can be used at the same time.")
+        if [options.json_dump, options.list_dir, options.list_files, options.show_snippet].count(True) > 1:
+            raise AnsibleOptionsError("Only one of -l, -F, -s, or -j can be used at the same time.")
 
         display.verbosity = options.verbosity
-
-        # process all plugins of type
-        if options.all_plugins:
-            args = self.get_all_plugins_of_type(options['type'])
-            if options.module_path:
-                display.warning('Ignoring "--module-path/-M" option as "--all/-a" only displays builtins')
 
         return options, args
 
@@ -281,6 +273,10 @@ class DocCLI(CLI):
 
         if not os.path.exists(path):
             display.vvvv("%s does not exist" % path)
+            return plugin_list
+
+        if not os.path.isdir(path):
+            display.vvvv("%s is not a directory" % path)
             return plugin_list
 
         bkey = ptype.upper()

@@ -1,43 +1,28 @@
 # -*- coding: utf-8 -*-
-#
-# Copyright (c) 2016 Red Hat, Inc.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+# Copyright: (c) 2016, Red Hat, Inc.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # facts standard oVirt documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
     fetch_nested:
         description:
-            - "If I(True) the module will fetch additional data from the API."
-            - "It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
-               attributes of the nested entities by specifying C(nested_attributes)."
-        version_added: "2.3"
+            - If I(yes) the module will fetch additional data from the API.
+            - It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other
+              attributes of the nested entities by specifying C(nested_attributes).
         type: bool
+        version_added: "2.3"
     nested_attributes:
         description:
-            - "Specifies list of the attributes which should be fetched from the API."
-            - "This parameter apply only when C(fetch_nested) is I(true)."
+            - Specifies list of the attributes which should be fetched from the API.
+            - This parameter apply only when C(fetch_nested) is I(true).
+        type: list
         version_added: "2.3"
     auth:
-        required: True
         description:
             - "Dictionary with values needed to create HTTP/HTTPS connection to oVirt:"
             - C(username)[I(required)] - The name of the user, something like I(admin@internal).
@@ -59,6 +44,8 @@ options:
             - "C(kerberos) - A boolean flag indicating if Kerberos authentication
             should be used instead of the default basic authentication."
             - "C(headers) - Dictionary of HTTP headers to be added to each API call."
+        type: dict
+        required: true
 requirements:
   - python >= 2.7
   - ovirt-engine-sdk-python >= 4.2.4

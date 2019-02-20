@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -459,41 +460,50 @@ def invoke_with_throttling_retries(function_ref, *argv, **kwargs):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(aliases=['command'], choices=['present', 'absent', 'get', 'create', 'delete'], required=True),
-        zone=dict(required=True),
-        hosted_zone_id=dict(required=False, default=None),
-        record=dict(required=True),
-        ttl=dict(required=False, type='int', default=3600),
-        type=dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'CAA', 'NS', 'SOA'], required=True),
-        alias=dict(required=False, type='bool'),
-        alias_hosted_zone_id=dict(required=False),
-        alias_evaluate_target_health=dict(required=False, type='bool', default=False),
-        value=dict(required=False, type='list'),
-        overwrite=dict(required=False, type='bool'),
-        retry_interval=dict(required=False, default=500),
-        private_zone=dict(required=False, type='bool', default=False),
-        identifier=dict(required=False, default=None),
-        weight=dict(required=False, type='int'),
-        region=dict(required=False),
-        health_check=dict(required=False),
-        failover=dict(required=False, choices=['PRIMARY', 'SECONDARY']),
-        vpc_id=dict(required=False),
-        wait=dict(required=False, type='bool', default=False),
-        wait_timeout=dict(required=False, type='int', default=300),
+        state=dict(type='str', required=True, choices=['absent', 'create', 'delete', 'get', 'present'], aliases=['command']),
+        zone=dict(type='str', required=True),
+        hosted_zone_id=dict(type='str', ),
+        record=dict(type='str', required=True),
+        ttl=dict(type='int', default=3600),
+        type=dict(type='str', required=True, choices=['A', 'AAAA', 'CAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SPF', 'SRV', 'TXT']),
+        alias=dict(type='bool'),
+        alias_hosted_zone_id=dict(type='str'),
+        alias_evaluate_target_health=dict(type='bool', default=False),
+        value=dict(type='list'),
+        overwrite=dict(type='bool'),
+        retry_interval=dict(type='int', default=500),
+        private_zone=dict(type='bool', default=False),
+        identifier=dict(type='str'),
+        weight=dict(type='int'),
+        region=dict(type='str'),
+        health_check=dict(type='str'),
+        failover=dict(type='str', choices=['PRIMARY', 'SECONDARY']),
+        vpc_id=dict(type='str'),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(type='int', default=300),
     ))
 
-    # state=present, absent, create, delete THEN value is required
-    required_if = [('state', 'present', ['value']), ('state', 'create', ['value'])]
-    required_if.extend([('state', 'absent', ['value']), ('state', 'delete', ['value'])])
-
-    # If alias is True then you must specify alias_hosted_zone as well
-    required_together = [['alias', 'alias_hosted_zone_id']]
-
-    # failover, region, and weight are mutually exclusive
-    mutually_exclusive = [('failover', 'region', 'weight')]
-
-    module = AnsibleModule(argument_spec=argument_spec, required_together=required_together, required_if=required_if,
-                           mutually_exclusive=mutually_exclusive, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+        # If alias is True then you must specify alias_hosted_zone as well
+        required_together=[['alias', 'alias_hosted_zone_id']],
+        # state=present, absent, create, delete THEN value is required
+        required_if=(
+            ('state', 'present', ['value']),
+            ('state', 'create', ['value']),
+            ('state', 'absent', ['value']),
+            ('state', 'delete', ['value']),
+        ),
+        # failover, region and weight are mutually exclusive
+        mutually_exclusive=[('failover', 'region', 'weight')],
+        # failover, region and weight require identifier
+        required_by=dict(
+            failover=('identifier',),
+            region=('identifier',),
+            weight=('identifier',),
+        ),
+    )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
@@ -544,8 +554,6 @@ def main():
     if command_in == 'create' or command_in == 'delete':
         if alias_in and len(value_in) != 1:
             module.fail_json(msg="parameter 'value' must contain a single dns name for alias records")
-        if (weight_in is not None or region_in is not None or failover_in is not None) and identifier_in is None:
-            module.fail_json(msg="If you specify failover, region or weight you must also specify identifier")
         if (weight_in is None and region_in is None and failover_in is None) and identifier_in is not None:
             module.fail_json(msg="You have specified identifier which makes sense only if you specify one of: weight, region or failover.")
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
+# Copyright: (c) 2016, Hiroaki Nakamura <hnakamur@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -130,7 +130,7 @@ notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
-  - There are two ways to can run commands in containers, using the command
+  - There are two ways to run commands in containers, using the command
     module or using the ansible lxd connection plugin bundled in Ansible >=
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
@@ -585,11 +585,11 @@ def main():
             ),
             key_file=dict(
                 type='str',
-                default='{}/.config/lxc/client.key'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.key'.format(os.environ['HOME'])
             ),
             cert_file=dict(
                 type='str',
-                default='{}/.config/lxc/client.crt'.format(os.environ['HOME'])
+                default='{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
             trust_password=dict(type='str', no_log=True)
         ),

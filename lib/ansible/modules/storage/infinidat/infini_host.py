@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
+# Copyright: (c) 2016, Gregory Shulov (gregory.shulov@gmail.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -144,7 +144,7 @@ def main():
         try:
             system.volumes.get(name=module.params['volume'])
         except Exception:
-            module.fail_json(msg='Volume {} not found'.format(module.params['volume']))
+            module.fail_json(msg='Volume {0} not found'.format(module.params['volume']))
 
     if host and state == 'present':
         update_host(module, host)

@@ -18,6 +18,7 @@ matrix:
     - env: T=units/3.5
     - env: T=units/3.6
     - env: T=units/3.7
+    - env: T=units/3.8
 
     - env: T=windows/2008/1
     - env: T=windows/2008-R2/1

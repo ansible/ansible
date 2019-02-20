@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2015, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -30,53 +16,60 @@ short_description: Manages affinity groups on Apache CloudStack based clouds.
 description:
     - Create and remove affinity groups.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the affinity group.
+    type: str
     required: true
   affinity_type:
     description:
       - Type of the affinity group. If not specified, first found affinity type is used.
+    type: str
     aliases: [ affinty_type ]
   description:
     description:
       - Description of the affinity group.
+    type: str
   state:
     description:
       - State of the affinity group.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    choices: [ present, absent ]
+    default: present
   domain:
     description:
       - Domain the affinity group is related to.
+    type: str
   account:
     description:
       - Account the affinity group is related to.
+    type: str
   project:
     description:
       - Name of the project the affinity group is related to.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
     type: bool
-    default: 'yes'
+    default: yes
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a affinity group
-- local_action:
-    module: cs_affinitygroup
+- name: Create a affinity group
+  cs_affinitygroup:
     name: haproxy
     affinity_type: host anti-affinity
+  delegate_to: localhost
 
-# Remove a affinity group
-- local_action:
-    module: cs_affinitygroup
+- name: Remove a affinity group
+  cs_affinitygroup:
     name: haproxy
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
