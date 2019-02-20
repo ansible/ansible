@@ -140,6 +140,8 @@
     resource_group: "{{ resource_group }}"
   register: output
 
+- debug:
+    var: output
 - name: Assert that facts are returned
   assert:
     that:

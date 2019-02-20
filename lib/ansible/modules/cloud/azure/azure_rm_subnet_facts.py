@@ -211,7 +211,7 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
         d = item.as_dict()
         d = {
             'resource_group': self.resource_group,
-            'virtual_network_name': self.parse_resource_to_dict(d.get('id')).get('virtual_network'), 
+            'virtual_network_name': self.parse_resource_to_dict(d.get('id')), #.get('virtual_network'),
             'name': d.get('name'),
             'id': d.get('id'),
             'address_prefix_cidr': d.get('address_prefix'),
