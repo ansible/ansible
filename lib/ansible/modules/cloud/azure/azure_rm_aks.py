@@ -104,17 +104,24 @@ options:
                 description:
                     - Network plugin used for building Kubernetes network.
                     - This property cannot been changed.
+                    - With C(kubenet), nodes get an IP address from the Azure virtual network subnet.
+                    - AKS features such as Virtual Nodes or network policies aren't supported with C(kubenet).
+                    - C(azure) enables Azure Container Networking Interface(CNI), every pod gets an IP address from the subnet and can be accessed directly.
                 choices:
                     - azure
                     - kubenet
             network_policy:
                 description: Network policy used for building Kubernetes network.
             pod_cidr:
-                description: A CIDR notation IP range from which to assign pod IPs when kubenet is used.
+                description:
+                    - A CIDR notation IP range from which to assign pod IPs when kubenet is used.
+                    - It should be a large address space that isn't in use elsewhere in your network environment.
+                    - This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
             service_cidr:
                 description:
                     - A CIDR notation IP range from which to assign service cluster IPs.
                     - It must not overlap with any Subnet IP ranges.
+                    - It should be the *.10 address of your service IP address range.
             dns_service_ip:
                 description:
                     - An IP address assigned to the Kubernetes DNS service.

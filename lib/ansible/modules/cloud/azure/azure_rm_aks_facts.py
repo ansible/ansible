@@ -41,7 +41,7 @@ options:
         choices:
             - user
             - admin
-    show_available_version_in_location:
+    show_available_versions_in_location:
         description:
             - Show available kubernetes versions in a specific location.
             - Note, When this field set, nothing will be queried in your subscription but only available kubernetes versions.
@@ -65,7 +65,7 @@ EXAMPLES = '''
 
     - name: Get available versions for AKS in location eastus
       azure_rm_aks_facts:
-        show_available_version_in_location: eastus
+        show_available_versions_in_location: eastus
 
     - name: Get facts by tags
       azure_rm_aks_facts:
