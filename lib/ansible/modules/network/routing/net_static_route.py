@@ -22,6 +22,8 @@ short_description: Manage static IP routes on network appliances (routers, switc
 description:
   - This module provides declarative management of static
     IP routes on network appliances (routers, switches et. al.).
+extends_documentation_fragment: network_agnostic
+
 options:
   prefix:
     description:
