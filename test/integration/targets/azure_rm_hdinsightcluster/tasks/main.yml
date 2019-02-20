@@ -48,16 +48,14 @@
     compute_profile_roles:
       - name: headnode
         target_instance_count: 2
-        hardware_profile:
-          vm_size: Standard_D3
+        vm_size: Standard_D3
         os_profile:
           linux_operating_system_profile:
             username: sshuser
             password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 2
-        hardware_profile:
-          vm_size: Standard_D3
+        vm_size: Standard_D3
         os_profile:
           linux_operating_system_profile:
             username: sshuser
@@ -92,8 +90,7 @@
     compute_profile_roles:
       - name: headnode
         target_instance_count: 2
-        hardware_profile:
-          vm_size: Standard_D3
+        vm_size: Standard_D3
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -133,8 +130,7 @@
     compute_profile_roles:
       - name: headnode
         target_instance_count: 2
-        hardware_profile:
-          vm_size: Standard_D3
+        vm_size: Standard_D3
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
