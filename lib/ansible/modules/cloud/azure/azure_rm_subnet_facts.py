@@ -43,7 +43,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance ofsSubnet
+  - name: Get facts of specific subnet
+    azure_rm_subnet_facts:
+      resource_group: myResourceGroup
+      virtual_network_name: myVirtualNetwork
+      name: mySubnet
+
+  - name: List facts for all subnets in virtual network
     azure_rm_subnet_facts:
       resource_group: myResourceGroup
       virtual_network_name: myVirtualNetwork
