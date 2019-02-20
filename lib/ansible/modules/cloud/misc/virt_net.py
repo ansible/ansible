@@ -417,19 +417,24 @@ class VirtNetwork(object):
         return self.conn.set_autostart(entryid, state)
 
     def create(self, entryid):
-        return self.conn.create(entryid)
+        try:
+            return self.conn.create(entryid)
+        except libvirt.libvirtError as e:
+            if e.get_error_code() == libvirt.VIR_ERR_NETWORK_EXIST:
+                return None
 
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
 
     def start(self, entryid):
-        return self.conn.create(entryid)
+        return self.create(entryid)
 
     def stop(self, entryid):
-        return self.conn.destroy(entryid)
+        if self.conn.get_status(entryid) == "active":
+            return self.conn.destroy(entryid)
 
     def destroy(self, entryid):
-        return self.conn.destroy(entryid)
+        return self.stop(entryid)
 
     def undefine(self, entryid):
         return self.conn.undefine(entryid)
