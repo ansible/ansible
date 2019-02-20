@@ -82,7 +82,7 @@ class Group:
             g.deserialize(parent_data)
             self.parent_groups.append(g)
 
-    def _walk_relationship(self, rel):
+    def _walk_relationship(self, rel, include_self=False, preserve_ordering=False):
         '''
         Given `rel` that is an iterable property of Group,
         consitituting a directed acyclic graph among all groups,
@@ -98,21 +98,34 @@ class Group:
         '''
         seen = set([])
         unprocessed = set(getattr(self, rel))
+        if include_self:
+            unprocessed.add(self)
+        if preserve_ordering:
+            ordered = [self] if include_self else []
+            ordered.extend(getattr(self, rel))
 
         while unprocessed:
             seen.update(unprocessed)
-            unprocessed = set(chain.from_iterable(
-                getattr(g, rel) for g in unprocessed
-            ))
-            unprocessed.difference_update(seen)
+            new_unprocessed = set([])
 
+            for new_item in chain.from_iterable(getattr(g, rel) for g in unprocessed):
+                new_unprocessed.add(new_item)
+                if preserve_ordering:
+                    if new_item not in seen:
+                        ordered.append(new_item)
+
+            new_unprocessed.difference_update(seen)
+            unprocessed = new_unprocessed
+
+        if preserve_ordering:
+            return ordered
         return seen
 
     def get_ancestors(self):
         return self._walk_relationship('parent_groups')
 
-    def get_descendants(self):
-        return self._walk_relationship('child_groups')
+    def get_descendants(self, **kwargs):
+        return self._walk_relationship('child_groups', **kwargs)
 
     @property
     def host_names(self):
@@ -215,7 +228,7 @@ class Group:
 
         hosts = []
         seen = {}
-        for kid in self.get_descendants():
+        for kid in self.get_descendants(include_self=True, preserve_ordering=True):
             kid_hosts = kid.hosts
             for kk in kid_hosts:
                 if kk not in seen:
@@ -223,12 +236,6 @@ class Group:
                     if self.name == 'all' and kk.implicit:
                         continue
                     hosts.append(kk)
-        for mine in self.hosts:
-            if mine not in seen:
-                seen[mine] = 1
-                if self.name == 'all' and mine.implicit:
-                    continue
-                hosts.append(mine)
         return hosts
 
     def get_vars(self):

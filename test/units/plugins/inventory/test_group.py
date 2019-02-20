@@ -76,6 +76,33 @@ class TestGroup(unittest.TestCase):
         with self.assertRaises(AnsibleError):
             C.add_child_group(A)
 
+    def test_direct_host_ordering(self):
+        """Hosts are returned in order they are added
+        """
+        group = Group('A')
+        # host names not added in alphabetical order
+        host_name_list = ['z', 'b', 'c', 'a', 'p', 'q']
+        expected_hosts = []
+        for host_name in host_name_list:
+            h = Host(host_name)
+            group.add_host(h)
+            expected_hosts.append(h)
+        assert group.get_hosts() == expected_hosts
+
+    def test_sub_group_host_ordering(self):
+        """With multiple nested groups, asserts that hosts are returned
+        in deterministic order
+        """
+        top_group = Group('A')
+        expected_hosts = []
+        for name in ['z', 'b', 'c', 'a', 'p', 'q']:
+            child = Group('group_{0}'.format(name))
+            top_group.add_child_group(child)
+            host = Host('host_{0}'.format(name))
+            child.add_host(host)
+            expected_hosts.append(host)
+        assert top_group.get_hosts() == expected_hosts
+
     def test_populates_descendant_hosts(self):
         A = Group('A')
         B = Group('B')
