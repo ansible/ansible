@@ -1,9 +1,9 @@
 ####
 # setup portstree
 
-- name: silent install of subversion with pkgng
+- name: silent install of subversion and ca root certs with pkgng
   pkgng:
-    name: subversion
+    name: subversion,ca_root_nss
     state: present
 
 - name: checkout a tested revision of the ports tree to make the tests less dependent on externals
@@ -49,13 +49,13 @@
   ignore_errors: true
 
 - name: test make install screen to see wether port builds with vanilla method
-  shell: make install clean >/dev/null
+  shell: make install clean BATCH=YES >/dev/null
   args:
     chdir: /usr/ports/sysutils/screen
     creates: /usr/local/bin/screen  
 
 - name: test make install sudo to see wether port builds with vanilla method
-  shell: make install clean >/dev/null
+  shell: make install clean BATCH=YES >/dev/null
   args:
     chdir: /usr/ports/security/sudo
     creates: /usr/local/bin/sudo
@@ -75,7 +75,7 @@
 # test portmake absent
 
 #
-# using disable_vulnerabilities: true to allow build with possible existent vulnerabilities
+# using disable_vulnerabilities: true ffto allow build with possible existent vulnerabilities
 # testing disable_vulnerabilities function seperately below
 # 
 
