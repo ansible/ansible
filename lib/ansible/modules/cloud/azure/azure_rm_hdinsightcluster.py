@@ -471,7 +471,7 @@ class AzureRMClusters(AzureRMModuleBase):
             found = True
             self.log("Response : {0}".format(response))
             self.log("Cluster instance : {0} found".format(response.name))
-        except CloudError as e:
+        except Exception as e:
             self.log('Did not find the Cluster instance.')
         if found is True:
             return response.as_dict()
@@ -543,6 +543,8 @@ def expand(d, path, **kwargs):
                         new_value = _snake_to_camel(old_value, False)
                     elif upper:
                         new_value = old_value.upper()
+                    else:
+                        new_value = old_value
             if expandx is None:
                 # just rename
                 if new_name != old_name:
