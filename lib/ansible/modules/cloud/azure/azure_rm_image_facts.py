@@ -44,11 +44,11 @@ EXAMPLES = '''
 - name: List images with name
   azure_rm_image_facts:
     name: test-image
-    resource_group: test-resource-group
+    resource_group: myResourceGroup
 
 - name: List images by resource group
   azure_rm_image_facts:
-    resource_group: test-resource-group
+    resource_group: myResourceGroup
     tags:
       - testing
       - foo:bar
@@ -69,7 +69,7 @@ images:
                 - Id of the image.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Compute/images/xx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/xx
         name:
             description:
                 - Name of the image.
@@ -80,6 +80,7 @@ images:
                 - Resource group of the image.
             returned: always
             type: str
+            sample: myResourceGroup
         location:
             description:
                 - Location of the image.
@@ -89,7 +90,7 @@ images:
             description:
                 - Id of os disk for image.
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Compute/disks/xx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/xx
         os_disk_caching:
             description:
                 - Specifies caching requirements for the image.
@@ -122,7 +123,7 @@ images:
             description:
                 - Resource id of source VM from which the image is created
             type: str
-            sample: /subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Compute/virtualMachines/xx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/xx
         tags:
             description:
                 - Dictionary of tags associated with the image.
@@ -158,7 +159,7 @@ images:
                     description:
                         - Id of managed disk.
                     type: str
-                    sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Compute/disks/xx
+                    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/disks/xx
                 blob_uri:
                     description:
                         - The virtual hard disk.

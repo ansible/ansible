@@ -50,7 +50,7 @@ EXAMPLES = r'''
 - name: Get facts for one managed disk
   azure_rm_managed_disk_facts:
     name: Testing
-    resource_group: TestRG
+    resource_group: myResourceGroup
 
 - name: Get facts for all managed disks
   azure_rm_managed_disk_facts:

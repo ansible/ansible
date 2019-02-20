@@ -71,7 +71,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) PostgreSQL Database
     azure_rm_postgresqldatabase:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: db1
 '''
@@ -82,7 +82,8 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/databases/db1
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroups/providers/Microsoft.DBforPostgreSQL/servers/testserve
+             r/databases/db1"
 name:
     description:
         - Resource name.
