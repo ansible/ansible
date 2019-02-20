@@ -50,22 +50,22 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create a domain
-  local_action:
-    module: cs_domain
+  cs_domain:
     path: ROOT/customers
     network_domain: customers.example.com
+  delegate_to: localhost
 
 - name: Create another subdomain
-  local_action:
-    module: cs_domain
+  cs_domain:
     path: ROOT/customers/xy
     network_domain: xy.customers.example.com
+  delegate_to: localhost
 
 - name: Remove a domain
-  local_action:
-    module: cs_domain
+  cs_domain:
     path: ROOT/customers/xy
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

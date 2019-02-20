@@ -112,34 +112,34 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a cluster is present
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is present
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     hypervisor: KVM
     cluster_type: CloudManaged
+  delegate_to: localhost
 
-# Ensure a cluster is disabled
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is disabled
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     state: disabled
+  delegate_to: localhost
 
-# Ensure a cluster is enabled
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is enabled
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     state: enabled
+  delegate_to: localhost
 
-# Ensure a cluster is absent
-- local_action:
-    module: cs_cluster
+- name: Ensure a cluster is absent
+  cs_cluster:
     name: kvm-cluster-01
     zone: ch-zrh-ix-01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

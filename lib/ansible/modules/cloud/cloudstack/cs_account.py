@@ -101,9 +101,8 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# create an account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: create an account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     username: customer_xy
     password: S3Cur3
@@ -112,50 +111,51 @@ EXAMPLES = '''
     email: john.doe@example.com
     domain: CUSTOMERS
     role: Domain Admin
+  delegate_to: localhost
 
-# Lock an existing account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Lock an existing account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: locked
+  delegate_to: localhost
 
-# Disable an existing account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Disable an existing account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: disabled
+  delegate_to: localhost
 
-# Enable an existing account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Enable an existing account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: enabled
+  delegate_to: localhost
 
-# Remove an account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Remove an account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     domain: CUSTOMERS
     state: absent
+  delegate_to: localhost
 
-# Create a single user LDAP account in domain 'CUSTOMERS'
-- local_action:
-    module: cs_account
+- name: Create a single user LDAP account in domain 'CUSTOMERS'
+  cs_account:
     name: customer_xy
     username: customer_xy
     domain: CUSTOMERS
     ldap_domain: cn=customer_xy,cn=team_xy,ou=People,dc=domain,dc=local
+  delegate_to: localhost
 
-# Create a LDAP account in domain 'CUSTOMERS' and bind it to a LDAP group
-- local_action:
-    module: cs_account
+- name: Create a LDAP account in domain 'CUSTOMERS' and bind it to a LDAP group
+  cs_account:
     name: team_xy
     username: customer_xy
     domain: CUSTOMERS
     ldap_domain: cn=team_xy,ou=People,dc=domain,dc=local
+  delegate_to: localhost
 '''
 
 RETURN = '''

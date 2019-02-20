@@ -54,33 +54,33 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure global configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure global configuration
+  cs_configuration:
     name: router.reboot.when.outofband.migrated
     value: false
+  delegate_to: localhost
 
-# Ensure zone configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure zone configuration
+  cs_configuration:
     name: router.reboot.when.outofband.migrated
     zone: ch-gva-01
     value: true
+  delegate_to: localhost
 
-# Ensure storage configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure storage configuration
+  cs_configuration:
     name: storage.overprovisioning.factor
     storage: storage01
     value: 2.0
+  delegate_to: localhost
 
-# Ensure account configuration
-- local_action:
-    module: cs_configuration
+- name: Ensure account configuration
+  cs_configuration:
     name: allow.public.user.templates
     value: false
     account: acme inc
     domain: customers
+  delegate_to: localhost
 '''
 
 RETURN = '''

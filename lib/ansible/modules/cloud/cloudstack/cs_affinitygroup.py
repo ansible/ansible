@@ -59,17 +59,17 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a affinity group
-- local_action:
-    module: cs_affinitygroup
+- name: Create a affinity group
+  cs_affinitygroup:
     name: haproxy
     affinity_type: host anti-affinity
+  delegate_to: localhost
 
-# Remove a affinity group
-- local_action:
-    module: cs_affinitygroup
+- name: Remove a affinity group
+  cs_affinitygroup:
     name: haproxy
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

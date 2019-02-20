@@ -107,27 +107,27 @@ extends_documentation_fragment: cloudstack
 
 EXAMPLES = '''
 - name: Create a disk offering with local storage
-  local_action:
-    module: cs_disk_offering
+  cs_disk_offering:
     name: small
     display_text: Small 10GB
     disk_size: 10
     storage_type: local
+  delegate_to: localhost
 
 - name: Create or update a disk offering with shared storage
-  local_action:
-    module: cs_disk_offering
+  cs_disk_offering:
     name: small
     display_text: Small 10GB
     disk_size: 10
     storage_type: shared
     storage_tags: SAN01
+  delegate_to: localhost
 
 - name: Remove a disk offering
-  local_action:
-    module: cs_disk_offering
+  cs_disk_offering:
     name: small
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
