@@ -324,7 +324,7 @@ def main():
         'enabled': dict(type='bool'),
         'description': dict(),
         'ebgp_multihop': dict(type='int'),
-        'timers': dict(type='dict', elements='dict', options=timer_spec),
+        'timers': dict(type='dict', options=timer_spec),
         'peer_group': dict(),
     }
 
@@ -359,7 +359,7 @@ def main():
     }
 
     argument_spec = {
-        'config': dict(type='dict', elements='dict', options=config_spec),
+        'config': dict(type='dict', options=config_spec),
         'operation': dict(default='merge', choices=['merge', 'replace', 'override', 'delete'])
     }
 
