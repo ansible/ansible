@@ -130,7 +130,7 @@ notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already existed in the users namespace the module will
     simply return as "unchanged".
-  - There are two ways to can run commands in containers, using the command
+  - There are two ways to run commands in containers, using the command
     module or using the ansible lxd connection plugin bundled in Ansible >=
     2.1, the later requires python to be installed in the container which can
     be done with the command module.
