@@ -286,7 +286,7 @@ class AzureRMClusters(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                if (not default_compare(self.parameters, old_response, '')):
+                if (not default_compare(self.parameters, old_response, '', self.results)):
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
@@ -389,36 +389,49 @@ class AzureRMClusters(AzureRMModuleBase):
         return d
 
 
-def default_compare(new, old, path):
+def default_compare(new, old, path, result):
     if new is None:
         return True
     elif isinstance(new, dict):
         if not isinstance(old, dict):
+            result['compare'] = 'changed [' + path + '] old dict is null'
             return False
         for k in new.keys():
-            if not default_compare(new.get(k), old.get(k, None), path + '/' + k):
+            if not default_compare(new.get(k), old.get(k, None), path + '/' + k, result):
                 return False
         return True
     elif isinstance(new, list):
         if not isinstance(old, list) or len(new) != len(old):
+            result['compare'] = 'changed [' + path + '] length is different or null'
             return False
-        if isinstance(old[0], dict):
+        elif len(old) == 0:
+            return True
+        elif isinstance(old[0], dict):
             key = None
             if 'id' in old[0] and 'id' in new[0]:
                 key = 'id'
             elif 'name' in old[0] and 'name' in new[0]:
                 key = 'name'
-            new = sorted(new, key=lambda x: x.get(key, None))
-            old = sorted(old, key=lambda x: x.get(key, None))
+            else:
+                key = list(old[0])[0]
+            new = sorted(new, key=lambda x: x.get(key, ''))
+            old = sorted(old, key=lambda x: x.get(key, ''))
         else:
             new = sorted(new)
             old = sorted(old)
         for i in range(len(new)):
-            if not default_compare(new[i], old[i], path + '/*'):
+            if not default_compare(new[i], old[i], path + '/*', result):
                 return False
         return True
     else:
-        return new == old
+        if path == '/location' or path.endswith('location_name'):
+            new = new.replace(' ', '').lower()
+            old = new.replace(' ', '').lower()
+        if new == old:
+            return True
+        else:
+            result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+            return False
 
 
 def expand(d, path, **kwargs):
