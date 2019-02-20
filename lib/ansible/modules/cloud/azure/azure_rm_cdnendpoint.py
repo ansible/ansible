@@ -33,7 +33,7 @@ options:
             - Valid azure location. Defaults to location of the resource group.
     started:
         description:
-            - Use with I(state) C(present) to start the endpoint. Set to false to stop the endpoint. Set to true to start the endpoint.
+            - Use with I(state) C(present) to start the endpoint. Set to C(false) to stop the endpoint. Set to C(true) to start the endpoint.
         type: bool
     purge:
         description:
