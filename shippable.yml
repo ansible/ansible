@@ -120,6 +120,12 @@ matrix:
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
 
+    - env: T=threading/units/2.7
+    - env: T=threading/units/3.7
+    - env: T=threading/units/3.8
+    - env: T=threading/linux/centos7
+    - env: T=threading/linux/ubuntu1604py3
+
     - env: T=aws/2.7/1
     - env: T=aws/3.6/1
 
