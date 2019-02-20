@@ -59,7 +59,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) PostgreSQL firewall rule
     azure_rm_postgresqlfirewallrule:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: rule1
       start_ip_address: 10.0.0.16
@@ -72,8 +72,8 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver/firewallRule
-            s/rule1"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/testserver
+             /firewallRules/rule1"
 '''
 
 import time
