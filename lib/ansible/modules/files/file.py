@@ -462,9 +462,12 @@ def ensure_absent(path, recurse):
 
     if prev_state != 'absent':
         if not module.check_mode:
-            if prev_state == 'directory' and recurse:
+            if prev_state == 'directory':
                 try:
-                    shutil.rmtree(b_path, ignore_errors=False)
+                    if recurse:
+                        shutil.rmtree(b_path, ignore_errors=False)
+                    else:
+                        os.rmdir(b_path)
                 except Exception as e:
                     raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e)})
             else:
