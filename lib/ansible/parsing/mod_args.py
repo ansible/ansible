@@ -285,9 +285,13 @@ class ModuleArgsParser:
 
         # module: <stuff> is the more new-style invocation
 
+        collection_list = self._task_ds.get('collections')
+
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
-            if item in BUILTIN_TASKS or item in action_loader or item in module_loader:
+            if any([item in BUILTIN_TASKS,
+                   action_loader.has_plugin(item, collection_list=collection_list),
+                   module_loader.has_plugin(item, collection_list=collection_list)]):
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)

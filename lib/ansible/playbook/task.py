@@ -32,6 +32,7 @@ from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
+from ansible.playbook.collection import Collection
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
@@ -44,7 +45,7 @@ __all__ = ['Task']
 display = Display()
 
 
-class Task(Base, Conditional, Taggable, Become):
+class Task(Base, Conditional, Taggable, Become, Collection):
 
     """
     A task is a language feature that represents a call to a module, with given arguments and other parameters.

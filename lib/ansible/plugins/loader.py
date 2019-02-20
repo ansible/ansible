@@ -360,7 +360,7 @@ class PluginLoader:
 
         return found_files[0]
 
-    def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
+    def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
         ''' Find a plugin named name '''
 
         global _PLUGIN_FILTERS
@@ -381,8 +381,24 @@ class PluginLoader:
             name = self.aliases.get(name, name)
 
         # TODO: we should still probably require a well-known prefix on FQNS so we don't paint ourselves into a corner with future stuff
-        if '.' in name and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
-            return self._find_fq_plugin(name, suffix)
+        if ('.' in name or collection_list) and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
+            if '.' in name or not collection_list:
+                candidates = [name]
+            else:
+                candidates = ['{0}.{1}'.format(c, name) for c in collection_list]
+            # TODO: keep actual errors, not just assembled messages
+            errors = []
+            for candidate_name in candidates:
+                try:
+                    p = self._find_fq_plugin(candidate_name, suffix)
+                    if p:
+                        return p
+                except Exception as ex:
+                    errors.append(to_native(ex))
+
+            if errors:
+                raise Exception('; '.join(errors))
+            return None
 
         # The particular cache to look for modules within.  This matches the
         # requested mod_type
@@ -454,13 +470,13 @@ class PluginLoader:
 
         return None
 
-    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
+    def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
         ''' Find a plugin named name '''
 
         # Import here to avoid circular import
         from ansible.vars.reserved import is_reserved_name
 
-        plugin = self._find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases)
+        plugin = self._find_plugin(name, mod_type=mod_type, ignore_deprecated=ignore_deprecated, check_aliases=check_aliases, collection_list=collection_list)
         if plugin and self.package == 'ansible.modules' and name not in ('gather_facts',) and is_reserved_name(name):
             raise AnsibleError(
                 'Module "%s" shadows the name of a reserved keyword. Please rename or remove this module. Found at %s' % (name, plugin)
@@ -468,10 +484,14 @@ class PluginLoader:
 
         return plugin
 
-    def has_plugin(self, name):
+    def has_plugin(self, name, collection_list=None):
         ''' Checks if a plugin named name exists '''
 
-        return self.find_plugin(name) is not None
+        try:
+            return self.find_plugin(name, collection_list=collection_list) is not None
+        # TODO: limit this to only plugin load/resolution errors
+        except:
+            pass
 
     __contains__ = has_plugin
 
@@ -502,9 +522,10 @@ class PluginLoader:
 
         found_in_cache = True
         class_only = kwargs.pop('class_only', False)
+        collection_list = kwargs.pop('collection_list', None)
         if name in self.aliases:
             name = self.aliases[name]
-        path = self.find_plugin(name)
+        path = self.find_plugin(name, collection_list=collection_list)
         if path is None:
             return None
 
@@ -666,11 +687,11 @@ class Jinja2Loader(PluginLoader):
     The filter and test plugins are Jinja2 plugins encapsulated inside of our plugin format.
     The way the calling code is setup, we need to do a few things differently in the all() method
     """
-    def find_plugin(self, name):
+    def find_plugin(self, name, collection_list=None):
         # Nothing using Jinja2Loader use this method.  We can't use the base class version because
         # we deduplicate differently than the base class
         if '.' in name:
-            return super(Jinja2Loader, self).find_plugin(name)
+            return super(Jinja2Loader, self).find_plugin(name, collection_list=collection_list)
 
         raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
 

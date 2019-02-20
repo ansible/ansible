@@ -1010,13 +1010,17 @@ class TaskExecutor:
 
         module_prefix = self._task.action.split('_')[0]
 
+        collections = self._task.collections
+
         # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if self._task.action in self._shared_loader_obj.action_loader:
+        if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=self._task.collections):
             handler_name = self._task.action
         elif all((module_prefix in C.NETWORK_GROUP_MODULES, module_prefix in self._shared_loader_obj.action_loader)):
             handler_name = module_prefix
         else:
+            # FIXME: once we have ansible.core, preface this action with it so we don't allow it to be hijacked
             handler_name = 'normal'
+            collections = None  # FIXME: until we have ansible.core or a fallback, we have to say don't use the collections here
 
         handler = self._shared_loader_obj.action_loader.get(
             handler_name,
@@ -1026,6 +1030,7 @@ class TaskExecutor:
             loader=self._loader,
             templar=templar,
             shared_loader_obj=self._shared_loader_obj,
+            collection_list=collections
         )
 
         if not handler:
