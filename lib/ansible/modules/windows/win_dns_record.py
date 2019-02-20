@@ -42,7 +42,7 @@ options:
   type:
     description:
     - The type of DNS record to manage.
-    choices: [ A, AAAA, CNAME, MX, NS, TXT, PTR ]
+    choices: [ A, AAAA, CNAME, PTR ]
     required: yes
     type: str
   value:
