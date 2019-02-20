@@ -56,13 +56,47 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-id:
-    description: Id of current role assignment.
+roleassignments:
+    description: List of role assignments.
     returned: always
-    type: str
-    sample: {
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-    }
+    type: complex
+    contains:
+        id:
+            description:
+                - Id of role assignment.
+            type: str
+            returned: always
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        name:
+            description:
+                - Name of role assignment.
+            type: str
+            returned: always
+            sample: myRoleAssignment
+        type:
+            descripition:
+                - Type of role assignment.
+            type: str
+            returned: always
+            sample: custom
+        principal_id:
+            description:
+                - Principal Id of the role assigned to.
+            type: str
+            returned: always
+            sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        role_definition_id:
+            description:
+                - Role definition id that was assigned to principal_id.
+            type: str
+            returned: always
+            sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        scope:
+            description:
+                - The role assignment scope
+            type: str
+            returned: always
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 '''
 
 import time
@@ -70,7 +104,6 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
     from msrest.serialization import Model
     from azure.mgmt.authorization import AuthorizationManagementClient
 
@@ -102,16 +135,12 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
             ),
             assignee=dict(
                 type='str'
-            ),
-            resource_group=dict(
-                type='str'
             )
         )
 
         self.name = None
         self.scope = None
         self.assignee = None
-        self.resource_group = None
 
         self.results = dict(
             changed=False
@@ -119,9 +148,7 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
 
         self._client = None
 
-        mutually_exclusive = [['name', 'assignee'],
-                              ['name', 'resource_group'],
-                              ['assignee', 'resource_group']]
+        mutually_exclusive = [['name', 'assignee']]
 
         super(AzureRMRoleAssignmentFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                          supports_tags=False,
@@ -169,7 +196,7 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
             self.log("Didn't find role assignment {0} in scope {1}".format(self.name, self.scope))
 
         return []
-        
+
     def get_by_assignee(self):
         '''
         Gets the role assignments by assignee.
