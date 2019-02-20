@@ -100,7 +100,6 @@ class GcpMockModule(object):
         if 'service_account_file' in self.params:
             self.params['service_account_file'] = os.path.expanduser(self.params['service_account_file'])
 
-
     def fail_json(self, *args, **kwargs):
         raise AnsibleError(kwargs['msg'])
 
