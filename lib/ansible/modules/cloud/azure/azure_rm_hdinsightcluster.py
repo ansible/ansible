@@ -287,6 +287,7 @@ class AzureRMClusters(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 if (not default_compare(self.parameters, old_response, '', self.results)):
+                    self.results['old_response'] = old_response
                     self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
