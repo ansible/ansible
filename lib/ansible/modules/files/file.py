@@ -268,7 +268,7 @@ def additional_parameter_handling(params):
             params['state'] = 'file'
 
     # make sure the target path is a directory when we're doing a recursive operation
-    if params['recurse'] and params['state'] not in [  'directory', 'absent' ]:
+    if params['recurse'] and params['state'] not in ['directory', 'absent']:
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory' or 'absent'",
                                       "path": params["path"]})
 
