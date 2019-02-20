@@ -24,9 +24,9 @@
   # executable override
 
   - name: Test executable override
-    flatpak:
-      name: org.gnome.Characters
-      remote: flathub
+    flatpak_remote:
+      name: irrelevant
+      remote: irrelevant
       state: present
       executable: nothing-that-exists
     ignore_errors: true
