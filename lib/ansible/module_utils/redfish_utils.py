@@ -896,7 +896,7 @@ class RedfishUtils(object):
                 psu_data = {}
                 for property in properties:
                     if property in psu:
-                        if psu[property] != None:
+                        if psu[property] is not None:
                             psu_data[property] = psu[property]
                 psu_results.append(psu_data)
 
