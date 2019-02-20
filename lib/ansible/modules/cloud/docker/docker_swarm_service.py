@@ -12,7 +12,10 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: docker_swarm_service
-author: "Dario Zanzico (@dariko), Jason Witkowski (@jwitko)"
+author:
+  - "Dario Zanzico (@dariko)"
+  - "Jason Witkowski (@jwitko)"
+  - "Hannes Ljungberg (@hannseman)"
 short_description: docker swarm service
 description:
   - Manages docker services via a swarm manager node.
