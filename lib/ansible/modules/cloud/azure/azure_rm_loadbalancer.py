@@ -295,7 +295,7 @@ author:
 EXAMPLES = '''
 - name: create load balancer
   azure_rm_loadbalancer:
-    resource_group: testrg
+    resource_group: myResourceGroup
     name: testloadbalancer1
     frontend_ip_configurations:
       - name: frontendipconf0

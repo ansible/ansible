@@ -98,14 +98,14 @@ EXAMPLES = '''
       azure_rm_managed_disk:
         name: mymanageddisk
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         disk_size_gb: 4
 
     - name: Create managed operating system disk from page blob
       azure_rm_managed_disk:
         name: mymanageddisk
         location: eastus2
-        resource_group: Testing
+        resource_group: myResourceGroup
         create_option: import
         source_uri: https://storageaccountname.blob.core.windows.net/containername/blob-name.vhd
         os_type: windows
@@ -115,7 +115,7 @@ EXAMPLES = '''
       azure_rm_managed_disk:
         name: mymanageddisk
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         disk_size_gb: 4
         managed_by: testvm001
 
@@ -123,14 +123,14 @@ EXAMPLES = '''
       azure_rm_managed_disk:
         name: mymanageddisk
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         disk_size_gb: 4
 
     - name: Delete managed disk
       azure_rm_manage_disk:
         name: mymanageddisk
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 

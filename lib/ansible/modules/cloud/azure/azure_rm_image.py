@@ -70,13 +70,13 @@ author:
 EXAMPLES = '''
 - name: Create an image from a virtual machine
   azure_rm_image:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: foobar
     source: testvm001
 
 - name: Create an image from os disk
   azure_rm_image:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: foobar
     source: /subscriptions/XXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX/resourceGroups/Testing/providers/Microsoft.Compute/disks/disk001
     data_disk_sources:
@@ -86,11 +86,11 @@ EXAMPLES = '''
 
 - name: Create an image from os disk via dict
   azure_rm_image:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: foobar
     source:
         type: disks
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: disk001
     data_disk_sources:
         - datadisk001
@@ -100,7 +100,7 @@ EXAMPLES = '''
 - name: Delete an image
   azure_rm_image:
     state: absent
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: foobar
     source: testvm001
 '''
