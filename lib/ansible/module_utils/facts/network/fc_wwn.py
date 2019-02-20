@@ -65,12 +65,12 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             cmd = cmd + " -Cc adapter -l fcs*"
             rc, lsdev_out, err = module.run_command(cmd)
             if lsdev_out:
+                lscfg_cmd = module.get_bin_path('lscfg')
                 for line in lsdev_out.splitlines():
                     # if device is available (not in defined state), get its WWN
                     if 'Available' in line:
                         data = line.split(' ')
-                        cmd = module.get_bin_path('lscfg')
-                        cmd = cmd + " -vl %s | grep 'Network Address'" % data[0]
+                        cmd = lscfg_cmd + " -vl %s | grep 'Network Address'" % data[0]
                         rc, lscfg_out, err = module.run_command(cmd, use_unsafe_shell=True)
                         # example output
                         # lscfg -vpl fcs3 | grep "Network Address"
