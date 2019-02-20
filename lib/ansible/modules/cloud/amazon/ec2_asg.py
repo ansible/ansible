@@ -118,6 +118,7 @@ options:
   tags:
     description:
       - A list of tags to add to the Auto Scale Group. Optional key is 'propagate_at_launch', which defaults to true.
+      - If a tag has a colon in it's name, then use double quotes around the tag name.
     version_added: "1.7"
   health_check_period:
     description:
