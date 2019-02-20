@@ -24,7 +24,7 @@ notes:
   - If more than one server with the name given by the I(name) option exists, execution is aborted.
   - Only the I(name) and I(flavor) are evaluated for the update.
   - The option I(force=true) must be given to allow the reboot of existing running servers for applying the changes.
-version_added: "2.3"
+version_added: '2.3'
 author:
   - Gaudenz Steinlin (@gaudenz)
   - René Moser (@resmo)
@@ -91,12 +91,13 @@ options:
       - Cloud-init configuration (cloud-config) data to use for the server.
     type: str
   api_timeout:
-    version_added: "2.5"
+    version_added: '2.5'
   force:
     description:
-      - Allow to stop the server for changing the flavor if necessary.
+      - Allow to stop the running server for updating if necessary.
     default: no
     type: bool
+    version_added: '2.8'
 extends_documentation_fragment: cloudscale
 '''
 
