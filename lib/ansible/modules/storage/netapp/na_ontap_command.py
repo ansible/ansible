@@ -114,7 +114,7 @@ class NetAppONTAPCommand(object):
                                   exception=traceback.format_exc())
 
     def apply(self):
-        ''' calls the command and returs raw output '''
+        ''' calls the command and returns raw output '''
         changed = True
         output = self.run_command()
         self.module.exit_json(changed=changed, msg=output)
