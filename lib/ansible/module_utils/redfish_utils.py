@@ -872,7 +872,7 @@ class RedfishUtils(object):
                       'FirmwareVersion', 'PowerCapacityWatts', 'PowerSupplyType',
                       'Status']
 
-        # Get a list of all Chassis and build URIs, then get all PowerSupplies 
+        # Get a list of all Chassis and build URIs, then get all PowerSupplies
         # from each Power entry in the Chassis
         chassis_uri_list = self.chassis_uri_list
         for chassis_uri in chassis_uri_list:
@@ -896,7 +896,8 @@ class RedfishUtils(object):
                 psu_data = {}
                 for property in properties:
                     if property in psu:
-                        psu_data[property] = psu[property]
+                        if psu[property] != None:
+                            psu_data[property] = psu[property]
                 psu_results.append(psu_data)
 
         result["entries"] = psu_results
