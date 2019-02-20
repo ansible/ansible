@@ -218,7 +218,7 @@ class ElementSWAccessGroup(object):
         try:
             account_id = self.elementsw_helper.account_exists(self.account_id)
             return account_id
-        except:
+        except Exception:
             return None
 
     def get_volume_id(self):
