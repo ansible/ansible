@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed issue when a supported option isn't already set (https://github.com/ansible/ansible/issues/44561).
