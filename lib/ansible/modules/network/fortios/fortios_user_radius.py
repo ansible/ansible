@@ -66,7 +66,7 @@ options:
             - Indicates if the requests towards FortiGate must use HTTPS
               protocol
         type: bool
-        default: true
+        default: True
     user_radius:
         description:
             - Configure RADIUS server entries.
