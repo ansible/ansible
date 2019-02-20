@@ -41,11 +41,11 @@ except ImportError:
     # Exceptions handled in common
     pass
 
+RESOURCE_LIST_ERR = None
 try:
     from openshift.dynamic import ResourceList
 except ImportError:
-    # Exceptions handled by version check
-    pass
+    RESOURCE_LIST_ERR = traceback.format_exc()
 
 try:
     import kubernetes_validate
@@ -146,11 +146,11 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             if kind.endswith('List') and LooseVersion(self.openshift_version) < LooseVersion("0.8.1"):
                 self.fail(msg="Support for List kinds was added in version 0.8.1 of the OpenShift Python client, v{0} detected.".format(self.openshift_version))
             resource = self.find_resource(kind, api_version, fail=True)
-            definition = self.set_defaults(resource, definition)
+            metadata, definition = self.set_defaults(resource, definition)
             self.warnings = []
             if self.params['validate'] is not None:
                 self.warnings = self.validate(definition)
-            result = self.perform_action(resource, definition)
+            result = self.perform_action(resource, definition, metadata)
             result['warnings'] = self.warnings
             changed = changed or result['changed']
             results.append(result)
@@ -182,22 +182,21 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def set_defaults(self, resource, definition):
         definition['kind'] = resource.kind
         definition['apiVersion'] = resource.group_version
-        if not definition.get('metadata'):
-            definition['metadata'] = {}
-        if self.name and not definition['metadata'].get('name'):
-            definition['metadata']['name'] = self.name
-        if resource.namespaced and self.namespace and not definition['metadata'].get('namespace'):
-            definition['metadata']['namespace'] = self.namespace
-        return definition
+        metadata = definition.get('metadata', {})
+        if self.name and not metadata.get('name'):
+            metadata['name'] = self.name
+        if resource.namespaced and self.namespace and not metadata.get('namespace'):
+            metadata['namespace'] = self.namespace
+        if not RESOURCE_LIST_ERR and not isinstance(resource, ResourceList):
+            definition['metadata'] = metadata
+        return metadata, definition
 
-    def perform_action(self, resource, definition):
+    def perform_action(self, resource, definition, metadata):
         result = {'changed': False, 'result': {}}
         state = self.params.get('state', None)
         force = self.params.get('force', False)
-        name = definition['metadata'].get('name')
-        namespace = definition['metadata'].get('namespace')
-        if isinstance(resource, ResourceList):
-            definition.pop('metadata')
+        name = metadata.get('name')
+        namespace = metadata.get('namespace')
         existing = None
         wait = self.params.get('wait')
         wait_timeout = self.params.get('wait_timeout')
