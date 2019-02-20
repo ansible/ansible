@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -33,10 +33,6 @@ options:
     name:
         description:
             - The name of the subnet.
-        required: True
-    expand:
-        description:
-            - Expands referenced resources.
 
 extends_documentation_fragment:
     - azure
@@ -47,32 +43,89 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Subnet
+  - name: Get instance ofsSubnet
     azure_rm_subnet_facts:
-      resource_group: resource_group_name
-      virtual_network_name: virtual_network_name
-      name: subnet_name
-      expand: expand
+      resource_group: myResourceGroup
+      virtual_network_name: myVirtualNetwork
+      name: mySubnet
 '''
 
 RETURN = '''
 subnets:
-    description: A list of dictionaries containing facts for Subnet.
+    description: A list of dictionaries containing facts for subnet.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID.
+                - Subnet resource ID.
             returned: always
             type: str
-            sample: /subscriptions/subid/resourceGroups/subnet-test/providers/Microsoft.Network/virtualNetworks/vnetname/subnets/subnet1
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/my
+                     VirtualNetwork/subnets/mySubnet"
+        resource_group:
+            description:
+                - Name of resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        virtual_network_name:
+            description:
+                - Name of the containing virtual network.
+            returned: always
+            type: str
+            sample: myVirtualNetwork
         name:
             description:
-                - The name of the resource that is unique within a resource group. This name can be used to access the resource.
+                - Name of the subnet.
             returned: always
             type: str
-            sample: subnet1
+            sample: mySubnet
+        address_prefix_cidr:
+            description:
+                - CIDR defining the IPv4 address space of the subnet.
+            returned: always
+            type: str
+            sample: "10.1.0.0/16"
+        route_table:
+            description:
+                - Associated route table id.
+            returned: always
+            type: str
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/routeTables/myRouteTable
+        security_group:
+            description:
+                - Associated security group id.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/networkSecurityGr
+                     oups/myNsg"
+        service_endpoints:
+            description:
+                - List of service endpoints.
+            type: list
+            returned: when available
+            contains:
+                service:
+                    description:
+                        - The type of the endpoint service.
+                    required: True
+                locations:
+                    description:
+                        - A list of location names.
+                    type: list
+                provisioning_state:
+                    description:
+                        - Provisioning state.
+                    returned: always
+                    type: str
+                    sample: Succeeded
+        provisioning_state:
+            description:
+                - Provisioning state.
+            returned: always
+            type: str
+            sample: Succeeded
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -99,10 +152,6 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str',
-                required=True
-            ),
-            expand=dict(
                 type='str'
             )
         )
@@ -110,45 +159,67 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
         self.results = dict(
             changed=False
         )
-        self.mgmt_client = None
         self.resource_group = None
         self.virtual_network_name = None
         self.name = None
-        self.expand = None
         super(AzureRMSubnetFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
-        self.mgmt_client = self.get_mgmt_svc_client(NetworkManagementClient,
-                                                    base_url=self._cloud_environment.endpoints.resource_manager)
 
-        self.results['subnets'] = self.get()
+        if self.name is not None:
+            self.results['subnets'] = self.get()
+        else:
+            self.results['subnets'] = self.list()
+
         return self.results
 
     def get(self):
         response = None
         results = []
         try:
-            response = self.mgmt_client.subnets.get(resource_group_name=self.resource_group,
-                                                    virtual_network_name=self.virtual_network_name,
-                                                    subnet_name=self.name)
+            response = self.network_client.subnets.get(resource_group_name=self.resource_group,
+                                                       virtual_network_name=self.virtual_network_name,
+                                                       subnet_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Subnet.')
+            self.fail('Could not get facts for Subnet.')
 
         if response is not None:
             results.append(self.format_response(response))
 
         return results
 
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.network_client.subnets.get(resource_group_name=self.resource_group,
+                                                       virtual_network_name=self.virtual_network_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.fail('Could not get facts for Subnet.')
+
+        if response is not None:
+            for item in response:
+                results.append(self.format_item(item))
+
+        return results
+
     def format_response(self, item):
         d = item.as_dict()
-        # d = {
-        #    'resource_group': self.resource_group,
-        #    'id': d.get('id', None),
-        #    'name': d.get('name', None)
-        # }
+        d = {
+            'resource_group': self.resource_group,
+            'virtual_network_name': self.parse_resource_to_dict(d.get('id')).get('virtual_network'), 
+            'name': d.get('name'),
+            'id': d.get('id'),
+            'address_prefix_cidr': d.get('address_prefix'),
+            'route_table': d.get('route_table', {}).get('id'),
+            'security_group': d.get('network_security_group', {}).get('id'),
+            'provisioning_state': d.get('provisioning_state'),
+            'service_endpoints': d.get('service_endpoints')
+        }
         return d
 
 
