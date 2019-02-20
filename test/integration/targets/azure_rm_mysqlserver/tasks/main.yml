@@ -507,7 +507,7 @@
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
-    value: ON
+    value: "ON"
   register: output
 - name: Assert that change was registered
   assert:
@@ -519,7 +519,7 @@
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
-    value: ON
+    value: "ON"
   register: output
 - name: Assert that change was registered
   assert:
@@ -538,7 +538,7 @@
     that:
       - output.changed
 
-- name: Try to delete default configuration -- idempotent
+- name: Try to reset configuration -- idempotent
   azure_rm_mysqlconfiguration:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
