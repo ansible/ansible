@@ -291,7 +291,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
         remote_user = self._get_remote_user()
-        return bool(self.get_become_option('become_user') not in admin_users + [remote_user])
+        become_user = self.get_become_option('become_user')
+        return bool(become_user and become_user not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
