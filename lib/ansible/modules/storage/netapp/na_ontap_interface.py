@@ -250,7 +250,7 @@ class NetAppOntapInterface(object):
         if parameters.get('admin_status') is not None:
             options['administrative-status'] = parameters['admin_status']
         if parameters.get('force_subnet_association') is not None:
-            options['force-subnet-association'] = 'true' if parameters['force_subnet_association'] is True else 'false'
+            options['force-subnet-association'] = 'true' if parameters['force_subnet_association'] else 'false'
 
     def create_interface(self):
         ''' calling zapi to create interface '''
