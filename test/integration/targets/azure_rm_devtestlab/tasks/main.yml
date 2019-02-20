@@ -244,7 +244,7 @@
 #        source_path: "/Artifacts/linux-install-mongodb"
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
-  register: vm_output
+  register: output
 
 - name: Assert that change was registered
   assert:
