@@ -458,9 +458,6 @@ class StrategyBase:
                     else:
                         iterator.mark_host_failed(original_host)
 
-                    # increment the failed count for this host
-                    self._tqm._stats.increment('failures', original_host.name)
-
                     # grab the current state and if we're iterating on the rescue portion
                     # of a block then we save the failed task in a special var for use
                     # within the rescue/always
@@ -470,6 +467,7 @@ class StrategyBase:
                         self._tqm._failed_hosts[original_host.name] = True
 
                     if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
+                        self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host,
                             dict(
@@ -477,8 +475,11 @@ class StrategyBase:
                                 ansible_failed_result=task_result._result,
                             ),
                         )
+                    else:
+                        self._tqm._stats.increment('failures', original_host.name)
                 else:
                     self._tqm._stats.increment('ok', original_host.name)
+                    self._tqm._stats.increment('ignored', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
                 self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)

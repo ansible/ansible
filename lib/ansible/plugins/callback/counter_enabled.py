@@ -85,21 +85,25 @@ class CallbackModule(CallbackBase):
         for host in hosts:
             stat = stats.summarize(host)
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s %s %s" % (
                 hostcolor(host, stat),
                 colorize(u'ok', stat['ok'], C.COLOR_OK),
                 colorize(u'changed', stat['changed'], C.COLOR_CHANGED),
                 colorize(u'unreachable', stat['unreachable'], C.COLOR_UNREACHABLE),
-                colorize(u'failed', stat['failures'], C.COLOR_ERROR)),
+                colorize(u'failed', stat['failures'], C.COLOR_ERROR),
+                colorize(u'rescued', stat['rescued'], C.COLOR_OK),
+                colorize(u'ignored', stat['ignored'], C.COLOR_WARN)),
                 screen_only=True
             )
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s %s %s" % (
                 hostcolor(host, stat, False),
                 colorize(u'ok', stat['ok'], None),
                 colorize(u'changed', stat['changed'], None),
                 colorize(u'unreachable', stat['unreachable'], None),
-                colorize(u'failed', stat['failures'], None)),
+                colorize(u'failed', stat['failures'], None),
+                colorize(u'rescued', stat['rescued'], None),
+                colorize(u'ignored', stat['ignored'], None)),
                 log_only=True
             )
 
