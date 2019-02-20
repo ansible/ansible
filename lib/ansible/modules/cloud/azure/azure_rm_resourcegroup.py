@@ -24,7 +24,7 @@ description:
 options:
     force_delete_nonempty:
         description:
-            - Remove a resource group and all associated resources. Use with state C(absent) to delete a resource
+            - Remove a resource group and all associated resources. Use with state C(absent) to delete a resource.
               group that contains resources.
         type: bool
         aliases:
