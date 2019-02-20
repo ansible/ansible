@@ -91,7 +91,7 @@
   assert:
     that:
       - server_failed is failed
-      - "'Missing required parameter(s)' in server_failed.msg"
+      - "'missing required arguments' in server_failed.msg"
 
 - name: Test stop running server in check mode
   cloudscale_server:
