@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: win_blockinfile
-short_description: Ensure a particular line is in a file, or replace an existing line using a back-referenced regular expression
+short_description: Insert/update/remove a text block surrounded by marker lines
 version_added: '2.8'
 description:
 - This module will insert/update/remove a block of multi-line text surrounded by customizable marker lines.
@@ -19,7 +19,6 @@ options:
   path:
     description:
       - The path of the file to modify.
-      - Note that the Windows path delimiter C(\) must be escaped as C(\\) when the line is double quoted.
       - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     type: path
     required: yes
@@ -92,7 +91,6 @@ options:
     type: str
     default: BEGIN
   marker_end:
-    required: false
     description:
     - This will be inserted at C({mark}) in the closing ansible block marker.
     type: str
@@ -114,14 +112,14 @@ author:
 EXAMPLES = r'''
 - name: Add some hosts entries
   blockinfile:
-    path: C:\Windows\System32\drivers\\etc\\hosts
+    path: C:\Windows\System32\drivers\etc\hosts
     block: |
       127.0.0.1 foobar
       192.168.1.10 barfoo
 
 - name: Insert/Update HTML surrounded by custom markers after <body> line
   blockinfile:
-    path: C:\webserver\\html\\index.html
+    path: C:\webserver\html\index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
     content: |
@@ -130,13 +128,13 @@ EXAMPLES = r'''
 
 - name: Remove HTML as well as surrounding markers
   blockinfile:
-    path: C:\webserver\\html\\index.html
+    path: C:\webserver\html\index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     content: ""
 
 - name: Add mappings to /etc/hosts
   blockinfile:
-    path: C:\Windows\System32\drivers\\etc\\hosts
+    path: C:\Windows\System32\drivers\etc\hosts
     block: |
       {{ item.ip }} {{ item.name }}
     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
