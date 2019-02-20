@@ -42,7 +42,7 @@ options:
         default: false
     purge_content_paths:
         description:
-            - Use with I(state) C(present) and I(purge) 'true' to specify content paths to be purged.
+            - Use with I(state) C(present) and I(purge) C(true) to specify content paths to be purged.
         type: list
         default: ['/']
     profile_name:
