@@ -1,11 +1,16 @@
 ####
 # setup portstree
 
-- name: silent install of subversion without module dependency
-  shell: pkg install -y subversion >/dev/null 2>&1
+- name: silent install of subversion with pkgng
+  pkgng:
+    name: subversion
+    state: present
 
-- name: silently checkout a tested revision of the ports tree to make the tests more stable
-  shell: svn checkout -r 493256 https://svn.FreeBSD.org/ports/head /usr/ports >/dev/null 2>&1
+- name: checkout a tested revision of the ports tree to make the tests less dependent on externals
+  subversion:
+    repo: https://svn.FreeBSD.org/ports/head
+    dest: /usr/ports
+    revision: 493256
 
 ###
 # check ports setup
@@ -27,54 +32,55 @@
     msg: "could not find directory /usr/ports/security/sudo"
   when: dir_security_sudo.stat.exists == False
 
+
 ####
 # test manual compilation and installation of packages
 
-- name: pkg remove screen
-  shell: pkg remove screen
-  args:
-    deletes: /usr/local/bin/screen  
+- name: remove screen package. do not fail if it was not installed
+  pkgng:
+    name: screen
+    state: absent
   ignore_errors: true
   
-- name: pkg remove sudo
-  shell: pkg remove sudo
-  args:
-    deletes: /usr/local/bin/sudo
+- name: remove sudo package. do not fail if it was not installed
+  pkgng:
+    name: sudo
+    state: absent
   ignore_errors: true
 
-- name: test make install screen
-  shell: make install clean
+- name: test make install screen to see wether port builds with vanilla method
+  shell: make install clean >/dev/null
   args:
     chdir: /usr/ports/sysutils/screen
     creates: /usr/local/bin/screen  
 
-- name: test make install sudo
-  shell: make install clean
+- name: test make install sudo to see wether port builds with vanilla method
+  shell: make install clean >/dev/null
   args:
     chdir: /usr/ports/security/sudo
     creates: /usr/local/bin/sudo
    
-- name: pkg delete screen
-  shell: pkg delete screen
-  args:
-    deletes: /usr/local/bin/screen  
+- name: remove screen package
+  pkgng:
+    name: screen
+    state: absent   
 
-- name: pkg delete sudo
-  shell: pkg delete sudo
-  args:
-    deletes: /usr/local/bin/sudo
+- name: remove sudo package
+  pkgng:
+    name: sudo
+    state: absent
 
 
 ####
 # test portmake absent
 
 #
-# using disable_vulnerabilities: true to allow build with current vulnerabilities after porsnap
-# testing its function seperately below
+# using disable_vulnerabilities: true to allow build with possible existent vulnerabilities
+# testing disable_vulnerabilities function seperately below
 # 
 
 - name: check absence of package screen
-  shell: pkg info screen
+  command: pkg info screen
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
 
@@ -99,8 +105,11 @@
   ignore_errors: true
 
 - name: delete possibly installed pkg
-  shell: pkg delete screen
+  pkgng:
+    name: screen
+    state: absent
   ignore_errors: true
+
 
 # test portmake present
 
@@ -111,7 +120,7 @@
     disable_vulnerabilities: true
     
 - name: check for presence of package screen
-  shell: pkg info screen
+  command: pkg info screen
   register: pkg_info_out
   failed_when: pkg_info_out.rc != 0
 
@@ -122,7 +131,7 @@
     disable_vulnerabilities: true
     
 - name: check for presence of package screen - still installed?
-  shell: pkg info screen
+  command: pkg info screen
   register: pkg_info_out
   failed_when: pkg_info_out.rc != 0
  
@@ -185,12 +194,12 @@
     state: "present"
 
 - name: check for presence of package
-  shell: pkg info screen
+  command: pkg info screen
   register: pkg_info_out
   failed_when: pkg_info_out.rc != 0
 
 - name: check for presence of package
-  shell: pkg info sudo
+  command: pkg info sudo
   register: pkg_info_out
   failed_when: pkg_info_out.rc != 0
 
@@ -202,23 +211,23 @@
     state: "absent"
 
 - name: check for absence of package
-  shell: pkg info screen
+  command: pkg info screen
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
 
 - name: check for absence of package
-  shell: pkg info sudo
+  command: pkg info sudo
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
-  
+
+
 ####
 # tests portmake absent removing pkg and make.conf lines
 
-- name: remove an possibly existing make.conf file to test creation
-  shell: rm -f /etc/make.conf
-  args:
-    deletes: /etc/make.conf
-  ignore_errors: true
+- name: remove an possibly existing make.conf file to test creation thereof
+  file:
+    path: /etc/make.conf
+    state: absent
 
 - name: install a port with options - screen
   portmake:
@@ -237,13 +246,20 @@
     disable_vulnerabilities: true
     
 - name: check all options in make.conf are removed for screen
-  shell: "grep 'sysutils_screen_' /etc/make.conf"
+  command: "grep 'sysutils_screen_' /etc/make.conf"
   register: grep_makeconf_out
   failed_when: grep_makeconf_out.rc == 0
 
 - name: remove and write a test line to make.conf file to test it is not overwritten
-  shell: rm -f /etc/make.conf; echo "TEST_VARIABLE=nonsense" > /etc/make.conf
-  ignore_errors: true
+  file:
+    path: /etc/make.conf
+    state: absent
+
+- name: write a test line to make.conf file to test it is not overwritten
+  lineinfile:
+    path: /etc/make.conf
+    line: 'TEST_VARIABLE=nonsense'
+    create: yes
 
 - name: install a port with options - screen
   portmake:
@@ -254,11 +270,11 @@
     disable_vulnerabilities: true
 
 - name: check test line in make.conf still exists
-  shell: "grep 'TEST_VARIABLE=nonsense' /etc/make.conf"
+  command: "grep 'TEST_VARIABLE=nonsense' /etc/make.conf"
   register: grep_makeconf_out
   failed_when: grep_makeconf_out.rc != 0
 
 - name: check port options in make.conf are here as well
-  shell: "grep 'sysutils_screen_' /etc/make.conf"
+  command: "grep 'sysutils_screen_' /etc/make.conf"
   register: grep_makeconf_out
   failed_when: grep_makeconf_out.rc != 0
