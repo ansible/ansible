@@ -173,20 +173,6 @@
       - output.virtualnetworks[0]['description'] != None
       - output.virtualnetworks[0]['provisioning_state'] != None
 
-- name: Create instance of DevTest Labs artifacts source
-  azure_rm_devtestlabartifactsource:
-    resource_group: "{{ resource_group }}"
-    lab_name: "{{ lab_name }}"
-    name: "{{ artifacts_name }}"
-    uri: https://github.com/Azure/azure_preview_modules.git
-    source_type: github
-    folder_path: /tasks
-    security_token: "{{ github_token }}"
-  register: output 
-- name: Assert if the change was correctly reported
-  assert:
-    that:
-      - output.changed
 #- name: Create instance of DevTest Labs artifacts source
 #  azure_rm_devtestlabartifactsource:
 #    resource_group: "{{ resource_group }}"
