@@ -14,7 +14,7 @@ $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -d
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent"
 $ttl = Get-AnsibleParam -obj $params -name "ttl" -type "int" -default 3600
-$type = Get-AnsibleParam -obj $params -name "type" -type "str" -failifempty $true -validateset "A","AAAA","CNAME","MX","NS","TXT","PTR"
+$type = Get-AnsibleParam -obj $params -name "type" -type "str" -failifempty $true -validateset "A","AAAA","CNAME","PTR"
 $values = Get-AnsibleParam -obj $params -name "value" -type "list" -default @() -aliases @("values")
 $zone = Get-AnsibleParam -obj $params -name "zone" -type "str" -failifempty $true
 $dns_computer_name = Get-AnsibleParam -obj $params -Name "computer_name" -failifempty $false
@@ -67,10 +67,10 @@ $record_argument_name = @{
     A = "IPv4Address";
     AAAA = "IPv6Address";
     CNAME = "HostNameAlias";
-    MX = "MailExchange";
-    NS = "NameServer";
+    # MX = "MailExchange";
+    # NS = "NameServer";
     PTR = "PtrDomainName";
-    TXT = "DescriptiveText"
+    # TXT = "DescriptiveText"
 }[$type]
 
 
