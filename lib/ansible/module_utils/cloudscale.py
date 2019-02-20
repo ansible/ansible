@@ -28,6 +28,11 @@ class AnsibleCloudscaleBase(object):
     def __init__(self, module):
         self._module = module
         self._auth_header = {'Authorization': 'Bearer %s' % module.params['api_token']}
+        self._result = {
+            'changed': False,
+            'diff': dict(before=dict(), after=dict()),
+        }
+        self._transforms = {}
 
     def _get(self, api_call):
         resp, info = fetch_url(self._module, API_URL + api_call,
@@ -88,3 +93,13 @@ class AnsibleCloudscaleBase(object):
         else:
             self._module.fail_json(msg='Failure while calling the cloudscale.ch API with DELETE for '
                                        '"%s".' % api_call, fetch_url_info=info)
+
+    def get_returns(self, resource):
+        if resource:
+            for k, v in resource.items():
+                if k in self._transforms:
+                    new_key = self._transforms[k]['to_key']
+                    self._result[new_key] = v
+                else:
+                    self._result[k] = v
+        return self._result

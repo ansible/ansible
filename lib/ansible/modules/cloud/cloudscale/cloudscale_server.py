@@ -243,10 +243,6 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         # Initialize server dictionary
         self._info = {}
 
-        self._result = {
-            'changed': False,
-            'diff': dict(before=dict(), after=dict()),
-        }
         # Keys to transform in get_returns()
         self._transforms = {
             'status': dict(to_key='state'),
@@ -448,16 +444,6 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
                 self._delete('servers/%s' % server_info['uuid'])
                 server_info = self._wait_for_state(('absent', ))
         return server_info
-
-    def get_returns(self, resource):
-        if resource:
-            for k, v in resource.items():
-                if k in self._transforms:
-                    new_key = self._transforms[k]['to_key']
-                    self._result[new_key] = v
-                else:
-                    self._result[k] = v
-        return self._result
 
 
 def main():
