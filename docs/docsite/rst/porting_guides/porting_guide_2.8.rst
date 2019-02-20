@@ -201,7 +201,7 @@ Noteworthy module changes
   Please see module ``vmware_vm_facts`` documentation for example.
 
 * The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
-  <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
+  <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.   Contributions to the role can be made
   `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
 
 
