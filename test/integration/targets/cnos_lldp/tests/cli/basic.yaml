@@ -4,7 +4,6 @@
 - name: Enable LLDP service
   cnos_lldp:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -16,7 +15,6 @@
 - name: Enable LLDP service again (idempotent)
   cnos_lldp:
     state: present
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -26,7 +24,6 @@
 - name: Disable LLDP service
   cnos_lldp:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
@@ -38,7 +35,6 @@
 - name: Disable LLDP service (idempotent)
   cnos_lldp:
     state: absent
-    provider: "{{ cli }}"
   register: result
 
 - assert:
