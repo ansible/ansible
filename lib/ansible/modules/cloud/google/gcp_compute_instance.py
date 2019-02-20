@@ -54,6 +54,8 @@ options:
       routes.
     required: false
     type: bool
+    aliases:
+    - ip_forward
   disks:
     description:
     - An array of disks that are associated with the instances that are created from
@@ -137,6 +139,9 @@ options:
               create a disk with one of the public operating system images, specify
               the image by its family name.
             required: false
+            aliases:
+            - image
+            - image_family
           source_image_encryption_key:
             description:
             - The customer-supplied encryption key of the source image. Required if
@@ -889,7 +894,7 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            can_ip_forward=dict(type='bool'),
+            can_ip_forward=dict(type='bool', aliases=['ip_forward']),
             disks=dict(
                 type='list',
                 elements='dict',
@@ -905,7 +910,7 @@ def main():
                             disk_name=dict(type='str'),
                             disk_size_gb=dict(type='int'),
                             disk_type=dict(type='str'),
-                            source_image=dict(type='str'),
+                            source_image=dict(type='str', aliases=['image', 'image_family']),
                             source_image_encryption_key=dict(type='dict', options=dict(raw_key=dict(type='str'), sha256=dict(type='str'))),
                         ),
                     ),

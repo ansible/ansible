@@ -51,12 +51,30 @@ options:
   interconnect:
     description:
     - URL of the underlying Interconnect object that this attachment's traffic will
-      traverse through.
-    required: true
+      traverse through. Required if type is DEDICATED, must not be set if type is
+      PARTNER.
+    required: false
   description:
     description:
     - An optional description of this resource.
     required: false
+  edge_availability_domain:
+    description:
+    - Desired availability domain for the attachment. Only available for type PARTNER,
+      at creation time. For improved reliability, customers should configure a pair
+      of attachments with one per availability domain. The selected availability domain
+      will be provided to the Partner via the pairing key so that the provisioned
+      circuit will lie in the specified domain. If not specified, the value will default
+      to AVAILABILITY_DOMAIN_ANY.
+    required: false
+  type:
+    description:
+    - The type of InterconnectAttachment you wish to create. Defaults to DEDICATED.
+    required: false
+    choices:
+    - DEDICATED
+    - PARTNER
+    - PARTNER_PROVIDER
   router:
     description:
     - URL of the cloud router to be used for dynamic routing. This router must be
@@ -128,12 +146,36 @@ customerRouterIpAddress:
 interconnect:
   description:
   - URL of the underlying Interconnect object that this attachment's traffic will
-    traverse through.
+    traverse through. Required if type is DEDICATED, must not be set if type is PARTNER.
   returned: success
   type: str
 description:
   description:
   - An optional description of this resource.
+  returned: success
+  type: str
+edgeAvailabilityDomain:
+  description:
+  - Desired availability domain for the attachment. Only available for type PARTNER,
+    at creation time. For improved reliability, customers should configure a pair
+    of attachments with one per availability domain. The selected availability domain
+    will be provided to the Partner via the pairing key so that the provisioned circuit
+    will lie in the specified domain. If not specified, the value will default to
+    AVAILABILITY_DOMAIN_ANY.
+  returned: success
+  type: str
+pairingKey:
+  description:
+  - '[Output only for type PARTNER. Not present for DEDICATED]. The opaque identifier
+    of an PARTNER attachment used to initiate provisioning with a selected partner.
+    Of the form "XXXXX/region/domain" .'
+  returned: success
+  type: str
+partnerAsn:
+  description:
+  - "[Output only for type PARTNER. Not present for DEDICATED]. Optional BGP ASN for
+    the router that should be supplied by a layer 3 Partner if they configured BGP
+    on behalf of the customer."
   returned: success
   type: str
 privateInterconnectInfo:
@@ -149,6 +191,16 @@ privateInterconnectInfo:
         going to and from this network and region.
       returned: success
       type: int
+type:
+  description:
+  - The type of InterconnectAttachment you wish to create. Defaults to DEDICATED.
+  returned: success
+  type: str
+state:
+  description:
+  - "[Output Only] The current state of this attachment's functionality."
+  returned: success
+  type: str
 googleReferenceId:
   description:
   - Google reference ID, to be used when raising support tickets with Google or otherwise
@@ -226,8 +278,10 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            interconnect=dict(required=True, type='str'),
+            interconnect=dict(type='str'),
             description=dict(type='str'),
+            edge_availability_domain=dict(type='str'),
+            type=dict(type='str', choices=['DEDICATED', 'PARTNER', 'PARTNER_PROVIDER']),
             router=dict(required=True),
             name=dict(required=True, type='str'),
             candidate_subnets=dict(type='list', elements='str'),
@@ -286,6 +340,8 @@ def resource_to_request(module):
         u'kind': 'compute#interconnectAttachment',
         u'interconnect': module.params.get('interconnect'),
         u'description': module.params.get('description'),
+        u'edgeAvailabilityDomain': module.params.get('edge_availability_domain'),
+        u'type': module.params.get('type'),
         u'router': replace_resource_dict(module.params.get(u'router', {}), 'selfLink'),
         u'name': module.params.get('name'),
         u'candidateSubnets': module.params.get('candidate_subnets'),
@@ -359,7 +415,12 @@ def response_to_hash(module, response):
         u'customerRouterIpAddress': response.get(u'customerRouterIpAddress'),
         u'interconnect': response.get(u'interconnect'),
         u'description': response.get(u'description'),
+        u'edgeAvailabilityDomain': response.get(u'edgeAvailabilityDomain'),
+        u'pairingKey': response.get(u'pairingKey'),
+        u'partnerAsn': response.get(u'partnerAsn'),
         u'privateInterconnectInfo': InterconnectAttachmentPrivateinterconnectinfo(response.get(u'privateInterconnectInfo', {}), module).from_response(),
+        u'type': response.get(u'type'),
+        u'state': response.get(u'state'),
         u'googleReferenceId': response.get(u'googleReferenceId'),
         u'router': response.get(u'router'),
         u'creationTimestamp': response.get(u'creationTimestamp'),
