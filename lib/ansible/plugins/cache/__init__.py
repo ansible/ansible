@@ -102,7 +102,7 @@ class BaseFileCacheModule(BaseCacheModule):
             super(BaseFileCacheModule, self).__init__(*args, **kwargs)
             self._cache_dir = self._get_cache_connection(self.get_option('_uri'))
             self._timeout = float(self.get_option('_timeout'))
-        except AnsibleError:
+        except KeyError:
             self._cache_dir = self._get_cache_connection(C.CACHE_PLUGIN_CONNECTION)
             self._timeout = float(C.CACHE_PLUGIN_TIMEOUT)
         self.plugin_name = self.__module__.split('.')[-1]

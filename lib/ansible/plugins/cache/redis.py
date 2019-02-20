@@ -76,7 +76,7 @@ class CacheModule(BaseCacheModule):
                 connection = self.get_option('_uri').split(':')
             self._timeout = float(self.get_option('_timeout'))
             self._prefix = self.get_option('_prefix')
-        except AnsibleError:
+        except KeyError:
             display.deprecated('Rather than importing CacheModules directly, '
                                'use ansible.plugins.loader.cache_loader', version='2.12')
             if C.CACHE_PLUGIN_CONNECTION:
