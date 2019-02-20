@@ -435,6 +435,7 @@ sourceType:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, remove_nones_from_dict, replace_resource_dict
 import json
+import re
 import time
 
 ################################################################################
@@ -626,6 +627,15 @@ def response_to_hash(module, response):
         u'sourceDiskId': response.get(u'sourceDiskId'),
         u'sourceType': response.get(u'sourceType'),
     }
+
+
+def license_selflink(name, params):
+    if name is None:
+        return
+    url = r"https://www.googleapis.com/compute/v1//projects/.*/global/licenses/[a-z1-9\-]*"
+    if not re.match(url, name):
+        name = "https://www.googleapis.com/compute/v1//projects/{project}/global/licenses/%s".format(**params) % name
+    return name
 
 
 def async_op_url(module, extra_data=None):
