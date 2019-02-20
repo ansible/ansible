@@ -74,9 +74,10 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+      - C(remount) specified that the device will be remounted.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, unmounted, remount ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -592,7 +593,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remount']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -725,6 +726,14 @@ def main():
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'present':
         name, changed = set_mount(module, args)
+    elif state == 'remount':
+        res = 0
+
+        res, msg = remount(module, args)
+        changed = True
+
+        if res:
+            module.fail_json(msg="Error remounting %s: %s" % (name, msg))
     else:
         module.fail_json(msg='Unexpected position reached')
 
