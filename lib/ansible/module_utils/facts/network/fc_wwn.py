@@ -43,4 +43,20 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             for fcfile in glob.glob('/sys/class/fc_host/*/port_name'):
                 for line in get_file_lines(fcfile):
                     fc_facts['fibre_channel_wwn'].append(line.rstrip()[2:])
+        elif sys.platform.startswith('sunos'):
+            """
+            on solaris 10 or solaris 11 should use `fcinfo hba-port`
+            on solaris 9, `prtconf -pv`
+            """
+            cmd = module.get_bin_path('fcinfo')
+            cmd = cmd + " hba-port | grep 'Port WWN'"
+            rc, fcinfo_out, err = module.run_command(cmd, use_unsafe_shell=True)
+            """
+            # fcinfo hba-port  | grep "Port WWN"
+            HBA Port WWN: 10000090fa1658de
+            """
+            if fcinfo_out:
+                for line in fcinfo_out.splitlines():
+                    data = line.split(' ')
+                    fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
         return fc_facts
