@@ -1437,7 +1437,7 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
                     config['properties']['publicIPAddress']['properties'] = pip_dict['properties']
 
         self.log(result, pretty_print=True)
-        if self.state != C(absent) and not result['powerstate']:
+        if self.state != 'absent' and not result['powerstate']:
             self.fail("Failed to determine PowerState of virtual machine {0}".format(self.name))
         return result
 

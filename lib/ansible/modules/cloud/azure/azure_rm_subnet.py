@@ -235,7 +235,7 @@ class AzureRMSubnet(AzureRMModuleBase):
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
-        if self.state == C(present) and not CIDR_PATTERN.match(self.address_prefix_cidr):
+        if self.state == 'present' and not CIDR_PATTERN.match(self.address_prefix_cidr):
             self.fail("Invalid address_prefix_cidr value {0}".format(self.address_prefix_cidr))
 
         if self.security_group:
@@ -307,7 +307,7 @@ class AzureRMSubnet(AzureRMModuleBase):
 
         if not self.check_mode:
 
-            if self.state == C(present) and changed:
+            if self.state == 'present' and changed:
                 if not subnet:
                     # create new subnet
                     self.log('Creating subnet {0}'.format(self.name))
@@ -333,7 +333,7 @@ class AzureRMSubnet(AzureRMModuleBase):
                         subnet.service_endpoints = self.service_endpoints
 
                 self.results['state'] = self.create_or_update_subnet(subnet)
-            elif self.state == C(absent) and changed:
+            elif self.state == 'absent' and changed:
                 # delete subnet
                 self.delete_subnet()
                 # the delete does not actually return anything. if no exception, then we'll assume

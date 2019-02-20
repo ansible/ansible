@@ -310,7 +310,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
 
         self.account_dict = self.get_account()
 
-        if self.state == C(present) and self.account_dict and \
+        if self.state == 'present' and self.account_dict and \
            self.account_dict['provisioning_state'] != AZURE_SUCCESS_STATE:
             self.fail("Error: storage account {0} has not completed provisioning. State is {1}. Expecting state "
                       "to be {2}.".format(self.name, self.account_dict['provisioning_state'], AZURE_SUCCESS_STATE))
@@ -325,7 +325,7 @@ class AzureRMStorageAccount(AzureRMModuleBase):
                 self.results['state'] = self.create_account()
             else:
                 self.update_account()
-        elif self.state == C(absent) and self.account_dict:
+        elif self.state == 'absent' and self.account_dict:
             self.delete_account()
             self.results['state'] = dict(Status='Deleted')
 

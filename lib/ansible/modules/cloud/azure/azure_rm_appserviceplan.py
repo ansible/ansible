@@ -293,7 +293,7 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             response = self.create_or_update_plan()
             self.results['id'] = response['id']
 
-        if self.state == C(absent) and old_response:
+        if self.state == 'absent' and old_response:
             self.log("Delete app service plan")
             self.results['changed'] = True
 
