@@ -36,9 +36,9 @@ options:
     scope:
         description:
             - The scope of the role assignment to create.
-            - "For example, use /subscriptions/{subscription-id}/ for a subscription,
+            - For example, use /subscriptions/{subscription-id}/ for a subscription,
               /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for a resource group,
-              and /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource."
+              and /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource.
     state:
       description:
         - Assert the state of the role assignment.
@@ -71,9 +71,8 @@ id:
     description: Id of current role assignment.
     returned: always
     type: str
-    sample: {
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-    }
+    sample:
+      "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 '''
 
 import time
@@ -96,7 +95,7 @@ def roleassignment_to_dict(assignment):
         id=assignment.id,
         name=assignment.name,
         type=assignment.type,
-        principal_id=assignment.principal_id
+        principal_id=assignment.principal_id,
         role_definition_id=assignment.role_definition_id,
         scope=assignment.scope
     )
@@ -236,7 +235,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
         :return: True
         '''
         self.log("Deleting the role assignment {0}".format(self.name))
-        scope = 
+        scope = self.build_scope()
         try:
             response = self._client.role_assignments.delete(name=self.name,
                                                             scope=self.scope)
