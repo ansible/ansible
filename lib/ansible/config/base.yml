@@ -606,6 +606,14 @@ DEFAULT_PROCESS_MODEL:
   ini:
   - {key: process_model, section: defaults}
   yaml: {key: defaults.process_model}
+DEFAULT_PROCESS_PLUGIN_PATH:
+  name: Process model plugins path
+  default: ~/.ansible/plugins/process:/usr/share/ansible/process
+  description: Colon separated paths in which Ansible will search for process plugins.
+  env: [{name: ANSIBLE_PROCESS_PLUGINS}]
+  ini:
+  - {key: process_plugins, section: defaults}
+  type: pathspec
 DEFAULT_GATHERING:
   name: Gathering behaviour
   default: 'implicit'
