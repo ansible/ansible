@@ -43,7 +43,6 @@ options:
   managed_zone:
     description:
     - Identifies the managed zone addressed by this request.
-    - Can be the managed zone name or id.
     - 'This field represents a link to a ManagedZone resource in GCP. It can be specified
       in two ways. First, you can place in the name of the resource here as a string
       Alternatively, you can add `register: name-of-resource` to a gcp_dns_managed_zone
@@ -90,7 +89,6 @@ items:
     managed_zone:
       description:
       - Identifies the managed zone addressed by this request.
-      - Can be the managed zone name or id.
       returned: success
       type: str
 '''
