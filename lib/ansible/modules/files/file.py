@@ -32,9 +32,9 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-    - If C(absent), directories will be recursively deleted, and files or symlinks will
-      be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does
-      not exist as the state did not change.
+    - If C(absent), directories will be recursively deleted when C(recurse=True), and files 
+      or symlinks wil be unlinked. Note that C(absent) will not cause C(file) to fail if 
+      the C(path) does not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
     - If C(file), without any other options this works mostly as a 'stat' and will return the current state of C(path).
@@ -58,8 +58,8 @@ options:
     type: path
   recurse:
     description:
-    - Recursively set the specified file attributes on directory contents.
-    - This applies only to C(state=directory).
+    - Recursively act on directory contents.
+    - This applies only to C(state=directory) or C(state=absent).
     type: bool
     default: no
     version_added: '1.1'
@@ -267,8 +267,8 @@ def additional_parameter_handling(params):
             params['state'] = 'file'
 
     # make sure the target path is a directory when we're doing a recursive operation
-    if params['recurse'] and params['state'] != 'directory':
-        raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
+    if params['recurse'] and params['state'] not in [  'directory', 'absent' ]:
+        raise ParameterError(results={"msg": "recurse option requires state to be 'directory' or 'absent'",
                                       "path": params["path"]})
 
     # Make sure that src makes sense with the state
