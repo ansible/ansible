@@ -60,7 +60,7 @@ EXAMPLES = '''
       resource_group: myResourceGroup
       server_name: myServer
       name: event_scheduler
-      value: ON
+      value: "ON"
 '''
 
 RETURN = '''
@@ -91,7 +91,6 @@ class Actions:
 
 
 class AzureRMConfigurations(AzureRMModuleBase):
-    """Configuration class for an Azure RM Configuration resource"""
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -131,7 +130,6 @@ class AzureRMConfigurations(AzureRMModuleBase):
                                                     supports_tags=False)
 
     def exec_module(self, **kwargs):
-        """Main module execution method"""
 
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):
@@ -187,11 +185,6 @@ class AzureRMConfigurations(AzureRMModuleBase):
         return self.results
 
     def create_update_configuration(self):
-        '''
-        Creates or updates Configuration with the specified configuration.
-
-        :return: deserialized Configuration instance state dictionary
-        '''
         self.log("Creating / Updating the Configuration instance {0}".format(self.name))
 
         try:
@@ -209,17 +202,12 @@ class AzureRMConfigurations(AzureRMModuleBase):
         return response.as_dict()
 
     def delete_configuration(self):
-        '''
-        Deletes specified Configuration instance in the specified subscription and resource group.
-
-        :return: True
-        '''
         self.log("Deleting the Configuration instance {0}".format(self.name))
         try:
             response = self.mysql_client.configurations.create_or_update(resource_group_name=self.resource_group,
                                                                          server_name=self.server_name,
                                                                          configuration_name=self.name,
-                                                                         source='system-defined')
+                                                                         source='system-default')
         except CloudError as e:
             self.log('Error attempting to delete the Configuration instance.')
             self.fail("Error deleting the Configuration instance: {0}".format(str(e)))
@@ -227,11 +215,6 @@ class AzureRMConfigurations(AzureRMModuleBase):
         return True
 
     def get_configuration(self):
-        '''
-        Gets the properties of the specified Configuration.
-
-        :return: deserialized Configuration instance state dictionary
-        '''
         self.log("Checking if the Configuration instance {0} is present".format(self.name))
         found = False
         try:
