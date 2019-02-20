@@ -75,36 +75,35 @@ options:
     version_added: '2.4'
   checksum:
     description:
-      - 'If a checksum is passed to this parameter, the digest of the
+      - If a I(checksum) is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <checksum>, e.g. checksum="D98291AC[...]B6DC7B97"'
-      - Additionally, if a checksum is passed to this parameter, and the file exist under
+      - Additionally, if a I(checksum) is passed to this parameter, and the file exist under
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is C(true)).
+        (unless C(force) is C(yes)).
     type: str
-    aliases: [ hash ]
     version_added: "2.8"
   checksum_algorithm:
     description:
-      - 'If a checksum_algorithm is passed to this parameter, the digest of the
+      - If a I(checksum_algorithm) is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>, e.g. checksum_algorithm="sha256"'
+      - A list of available options include C(md5), C(sha1), C(sha256)...
+        For a full list of algorithms please look in
+        [the documentation for your version of PowerShell](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-filehash).
     type: str
     default: sha1
     version_added: "2.8"
   checksum_url:
     description:
-      - 'If a checksum_url is passed to this parameter, the digest of the
+      - If a I(checksum_url) is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <url>, e.g. checksum_url="http://example.com/path/sha256sum.txt"'
-      - Additionally, if a checksum_url is passed to this parameter, and the file exist under
+      - Additionally, if a I(checksum_url) is passed to this parameter, and the file exist under
         the C(dest) location, the I(destination_checksum) would be calculated, and if
         checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is C(true)).
+        (unless C(force) is C(yes)).
     type: str
     version_added: "2.8"
   proxy_url:
@@ -174,6 +173,22 @@ EXAMPLES = r'''
     dest: '%TEMP%\ftp-file.txt'
     url_username: ftp-user
     url_password: ftp-password
+
+- name: Download src with sha256 checksum url
+  win_get_url:
+    url: http://www.example.com/earthrise.jpg
+    dest: C:\temp\earthrise.jpg
+    checksum_url: http://www.example.com/sha256sum.txt
+    checksum_algorithm: sha256
+    force: True
+
+- name: Download src with sha256 checksum url
+  win_get_url:
+    url: http://www.example.com/earthrise.jpg
+    dest: C:\temp\earthrise.jpg
+    checksum: a97e6837f60cec6da4491bab387296bbcd72bdba
+    checksum_algorithm: sha1
+    force: True
 '''
 
 RETURN = r'''

@@ -26,7 +26,7 @@ $spec = @{
         proxy_username = @{ type='str' }
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
-        checksum = @{ type='str'; aliases=@( 'hash' ) }
+        checksum = @{ type='str' }
         checksum_algorithm = @{ type='str'; default='sha1'}
         checksum_url = @{ type='str' }
     }
@@ -340,8 +340,6 @@ Function Invoke-DownloadFile {
 
         $tmpDestHash = Get-FileChecksum -path $tmpDest -algorithm $checksum_algorithm
 
-        #$module.Warn("tmpDest='$tmpDest' tmpDestHash='$tmpDestHash' checksum='$checksum'")
-
         # Checksum verification for downloaded file
         if ($checksum) {
             # Check both hashes are the same
@@ -354,7 +352,6 @@ Function Invoke-DownloadFile {
                         $module.Result.status_code = 200
                         $module.Result.msg = 'file already exists'
                         $module.Result.checksum_src = $tmpDestHash
-                        # $module.Result.checksum_dest = $destHash
                         $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
                         return
                     }
@@ -396,7 +393,6 @@ Function Invoke-DownloadFile {
     $module.Result.msg = 'OK'
     $module.Result.dest = $dest
     $module.Result.checksum_src = $tmpDestHash
-    # $module.Result.checksum_dest = $destHash
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 }
 
