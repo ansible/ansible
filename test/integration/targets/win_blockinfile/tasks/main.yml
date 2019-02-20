@@ -15,35 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- name: "Validation success: Test validation success"
-  win_blockinfile: 
-    path: "{{ win_output_dir }}/validation_success.ps1"
-    create: yes
-    block: |-
-      Write-Host "Hello, World!"
-    validate: powershell -File %s
-  register: result
-
-- name: "Validation success: Assert that the file was changed"
-  assert:
-    that:
-    - "result.changed"
-
-- name: "Validation failure: Test validation failure"
-  win_blockinfile: 
-    path: "{{ win_output_dir }}/validation_failure.ps1"
-    create: yes
-    block: |-
-      Write-Error "Oh my, I seem to have failed!" -ErrorAction Stop
-    validate: powershell -File %s
-  register: result
-  ignore_errors: yes
-
-- name: "Validation failure: Ensure that we failed"
-  assert:
-    that:
-    - "result.failed"
-
 - name: Test utf16 source file
   include_tasks: run_test.yml
   vars:

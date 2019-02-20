@@ -69,10 +69,6 @@ options:
       - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
-  validate:
-    description:
-      - Validation to run before copying into place. Use %s in the command to indicate the current file to validate.
-    type: str
   encoding:
     description:
       - Specifies the encoding of the source text file to operate on (and thus what the output encoding will be). The default of C(auto) will cause

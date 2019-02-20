@@ -14,6 +14,8 @@ def main():
         'test/integration/targets/template/files/encoding_1252_windows-1252.expected',
         'test/integration/targets/template/templates/encoding_1252.j2',
         'test/integration/targets/unicode/unicode.yml',
+        'test/integration/targets/win_blockinfile/files/utf_16_after.txt',
+        'test/integration/targets/win_blockinfile/files/utf_16_orig.txt',
         'test/sanity/code-smell/%s' % os.path.basename(__file__),
     ])
 

@@ -17,7 +17,6 @@ $spec = @{
         insertbefore = @{ type='str' }
         create = @{ type='bool'; default=$false }
         backup = @{ type='bool'; default=$false }
-        validate = @{ type='str' }
         encoding = @{ type='str'; default="auto" }
         newline = @{ type='str'; default="windows"; choices=@( "windows", "unix" ) }
         marker = @{ type='str'; default="# {mark} ANSIBLE MANAGED BLOCK" }
@@ -36,7 +35,6 @@ $insertafter = $module.Params.insertafter
 $insertbefore = $module.Params.insertbefore
 $create = $module.Params.create
 $backup = $module.Params.backup
-$validate = $module.Params.validate
 $encoding = $module.Params.encoding
 $newline = $module.Params.newline
 $marker = $module.Params.marker
@@ -46,64 +44,12 @@ $marker_end = $module.Params.marker_end
 $check_mode = $module.CheckMode
 $diff_support = $module.Diff
 
-function ValidateFile {
-    param(
-        [String]$path,
-        [String]$validate
-    );
-
-    If (-not ($validate -like "*%s*")) {
-        throw "validate must contain %s: $validate";
-    }
-
-    $validate = $validate.Replace("%s", $path);
-
-    $parts = [System.Collections.ArrayList] $validate.Split(" ");
-    $cmdname = $parts[0];
-
-    $cmdargs = $validate.Substring($cmdname.Length + 1);
-
-    $process = new-object System.Diagnostics.Process
-    $process.StartInfo.FileName = $cmdname
-    $process.StartInfo.Arguments = $cmdargs
-    $process.StartInfo.RedirectStandardError = $true
-    $process.StartInfo.RedirectStandardOutput = $true
-    $process.StartInfo.UseShellExecute = $false
-    $process.start()
-    $process.WaitForExit();
-
-    If ($process.ExitCode -ne 0) {
-        [string] $output = $process.StandardOutput.ReadToEnd();
-        [string] $error = $process.StandardError.ReadToEnd();
-        throw "failed to validate $cmdname $cmdargs with error: $output $error";
-    }
-}
-
-function TempFile {
-    param([String]$forpath);
-
-    $temppath = [System.IO.Path]::GetTempFileName();
-    $extension = [System.IO.Path]::GetExtension($forpath);
-    If ($null -ne $extension -and $extension -ne "") {
-        Try {
-            Rename-Item -Path $temppath -NewName "$temppath$extension";
-            $temppath = "$temppath$extension"
-        }
-        Catch {
-            Remove-Item -Path $temppath -Force
-            throw $_
-        }
-    }
-    return $temppath;
-}
-
 function WriteLines {
     param(
         [System.Collections.ArrayList]$outlines,
         [String]$path,
         [String]$linesep,
         [Object]$encodingobj,
-        [String]$validate,
         [bool]$check_mode
     );
 
@@ -121,7 +67,7 @@ function WriteLines {
     $cleanpath = $path.Replace("/", "\");
    
     Try {
-        $temppath = TempFile $cleanpath
+        $temppath = [System.IO.Path]::GetTempFileName();
     }
     Catch {
         $module.FailJson("Cannot create temporary file! ($($_.Exception.Message))", $_);
@@ -130,16 +76,6 @@ function WriteLines {
     Try {
         $joined = $outlines -join $linesep;
         [System.IO.File]::WriteAllText($temppath, $joined, $encodingobj);
-
-        If ($validate) {
-            Try {
-                ValidateFile $temppath $validate;
-            }
-            Catch {
-                Remove-Item -Path $temppath -Force
-                $module.FailJson("Validation error: ($($_.Exception.Message))", $_);
-            }
-        }
 
         Try {
             Move-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
@@ -379,7 +315,7 @@ If ($origContent -ne $after) {
     If ($backup) {
         $module.Result.backup = BackupFile $path $check_mode
     }
-    WriteLines $lines $path $linesep $encodingobj $validate $check_mode
+    WriteLines $lines $path $linesep $encodingobj $check_mode
     If ($blocklines.Count -gt 0) {
         $module.Result.msg = "Block inserted"
     }
