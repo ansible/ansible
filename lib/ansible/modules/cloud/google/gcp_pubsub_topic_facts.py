@@ -62,6 +62,11 @@ items:
       - Name of the topic.
       returned: success
       type: str
+    labels:
+      description:
+      - A set of key/value label pairs to assign to this Topic.
+      returned: success
+      type: dict
 '''
 
 ################################################################################
