@@ -289,11 +289,14 @@ class MerakiModule(object):
                                timeout=self.params['timeout'],
                                use_proxy=self.params['use_proxy'],
                                )
-        if description is not None:
-            self.metrics['request'] = dict()
-            self.metrics['request'][description] = str(datetime.datetime.utcnow() - start)
-        else:
-            self.metrics['request'] = str(datetime.datetime.utcnow() - start)
+        try:
+            if description is not None:
+                self.metrics['request'] = {description: str(datetime.datetime.utcnow() - start)}
+            else:
+                self.metrics['requests'].append(str(datetime.datetime.utcnow() - start))
+        except KeyError:
+            self.metrics['requests'] = []
+            self.metrics['requests'].append(str(datetime.datetime.utcnow() - start))
         self.response = info['msg']
         self.status = info['status']
 
@@ -312,7 +315,7 @@ class MerakiModule(object):
         self.result['response'] = self.response
         self.result['status'] = self.status
         # Return the gory details when we need it
-        self.metrics['complete'] = datetime.datetime.utcnow() - self.start
+        self.metrics['complete'] = str(datetime.datetime.utcnow() - self.start)
         if self.params['output_level'] == 'debug':
             self.result['method'] = self.method
             self.result['url'] = self.url
