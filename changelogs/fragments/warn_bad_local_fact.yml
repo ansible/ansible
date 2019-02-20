@@ -1,0 +1,2 @@
+bugfixes:
+    - issue a warning when local fact is not correctly loaded, old behaviour just updated fact value with the error.
