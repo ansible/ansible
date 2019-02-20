@@ -239,6 +239,10 @@ class SwarmNodeManager(DockerBaseClass):
                                 "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
                                 "Keeping the assigned label value."
                                 % to_native(key))
+                    else:
+                        if node_spec['Labels'].get(key):
+                            node_spec['Labels'].pop(key)
+                            changed = True
 
         if changed is True:
             if not self.check_mode:
