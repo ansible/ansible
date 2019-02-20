@@ -144,11 +144,11 @@ class AzureRMSubnetFacts(AzureRMModuleBase):
 
     def format_response(self, item):
         d = item.as_dict()
-        d = {
-            'resource_group': self.resource_group,
-            'id': d.get('id', None),
-            'name': d.get('name', None)
-        }
+        # d = {
+        #    'resource_group': self.resource_group,
+        #    'id': d.get('id', None),
+        #    'name': d.get('name', None)
+        # }
         return d
 
 

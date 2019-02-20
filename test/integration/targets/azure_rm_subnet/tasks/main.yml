@@ -133,6 +133,16 @@
 - assert:
     that: not output.changed
 
+- name: Get subnet facts
+  azure_rm_subnet:
+    name: foobar
+    virtual_network_name: My_Virtual_Network
+    resource_group: "{{ resource_group }}"
+  register: output
+
+- debug:
+    var: output
+
 - name: Remove subnet
   azure_rm_subnet:
     state: absent
