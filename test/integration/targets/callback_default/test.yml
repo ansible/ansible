@@ -33,6 +33,14 @@
         - 3
       loop_control:
         label: foo-{{ item }}
+
+    - block:
+        - name: EXPECTED FAILURE Failed task to be rescued
+          fail:
+      rescue:
+        - name: Rescue task
+          command: echo rescued
+
   handlers:
     - name: Test handler 1
       command: echo foo
