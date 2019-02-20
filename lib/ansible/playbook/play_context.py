@@ -157,14 +157,7 @@ class PlayContext(Base):
             self.set_attributes_from_cli()
 
         if play:
-            self.set_play(play)
-
-    def set_play(self, play):
-        '''
-        Adds play information that is not inherited by tasks that also override CLI options
-        '''
-        if play.force_handlers is not None:
-            self.force_handlers = play.force_handlers
+            self.set_attributes_from_play(play)
 
     def set_options_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
@@ -176,6 +169,9 @@ class PlayContext(Base):
                 flag = options[option].get('name')
                 if flag:
                     setattr(self, flag, self.connection.get_option(flag))
+
+    def set_attributes_from_play(self, play):
+        self.force_handlers = play.force_handlers
 
     def set_attributes_from_cli(self):
         '''
