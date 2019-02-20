@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -24,7 +24,7 @@ description:
 options:
     resource_group:
         description:
-            - The name of the resource group that contains the resource. You can obtain this I(value) from the Azure Resource Manager API or the portal.
+            - The name of the resource group that contains the resource.
         required: True
     server_name:
         description:
@@ -37,13 +37,10 @@ options:
     value:
         description:
             - Value of the configuration.
-    source:
-        description:
-            - Source of the configuration.
     state:
         description:
-            - Assert the state of the MySQL configuration. Use C(present) to create/update a configuration, or
-              C(absent) to delete one.
+            - Assert the state of the MySQL configuration. Use C(present) to update setting, or
+              C(absent) to reset to default value.
         default: present
         choices:
             - absent
@@ -58,11 +55,12 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Configuration
+  - name: Update SQL Server setting
     azure_rm_mysqlconfiguration:
-      resource_group: TestGroup
-      server_name: testserver
+      resource_group: myResourceGroup
+      server_name: myServer
       name: event_scheduler
+      value: ON
 '''
 
 RETURN = '''
@@ -71,8 +69,8 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: "/subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/configurations/ev
-            ent_scheduler"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/myServer/confi
+             gurations/event_scheduler"
 '''
 
 import time
@@ -112,9 +110,6 @@ class AzureRMConfigurations(AzureRMModuleBase):
             value=dict(
                 type='str'
             ),
-            source=dict(
-                type='str'
-            ),
             state=dict(
                 type='str',
                 default='present',
@@ -126,7 +121,6 @@ class AzureRMConfigurations(AzureRMModuleBase):
         self.server_name = None
         self.name = None
         self.value = None
-        self.source = None
 
         self.results = dict(changed=False)
         self.state = None
@@ -156,11 +150,12 @@ class AzureRMConfigurations(AzureRMModuleBase):
                 self.to_do = Actions.Create
         else:
             self.log("Configuration instance already exists")
-            if self.state == 'absent':
+            if self.state == 'absent' and old_response['source'] == 'user-override':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
                 self.log("Need to check if Configuration instance has to be deleted or may be updated")
-                self.to_do = Actions.Update
+                if self.value != old_response.get('value'):
+                    self.to_do = Actions.Update
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Configuration instance")
@@ -171,10 +166,7 @@ class AzureRMConfigurations(AzureRMModuleBase):
 
             response = self.create_update_configuration()
 
-            if not old_response:
-                self.results['changed'] = True
-            else:
-                self.results['changed'] = old_response.__ne__(response)
+            self.results['changed'] = True
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("Configuration instance deleted")
@@ -184,10 +176,6 @@ class AzureRMConfigurations(AzureRMModuleBase):
                 return self.results
 
             self.delete_configuration()
-            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
-            # for some time after deletion -- this should be really fixed in Azure
-            while self.get_configuration():
-                time.sleep(20)
         else:
             self.log("Configuration instance unchanged")
             self.results['changed'] = False
@@ -211,7 +199,7 @@ class AzureRMConfigurations(AzureRMModuleBase):
                                                                          server_name=self.server_name,
                                                                          configuration_name=self.name,
                                                                          value=self.value,
-                                                                         source=self.source)
+                                                                         source='user-override')
             if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
@@ -228,7 +216,10 @@ class AzureRMConfigurations(AzureRMModuleBase):
         '''
         self.log("Deleting the Configuration instance {0}".format(self.name))
         try:
-            response = self.mysql_client.configurations.delete()
+            response = self.mysql_client.configurations.create_or_update(resource_group_name=self.resource_group,
+                                                                         server_name=self.server_name,
+                                                                         configuration_name=self.name,
+                                                                         source='system-defined')
         except CloudError as e:
             self.log('Error attempting to delete the Configuration instance.')
             self.fail("Error deleting the Configuration instance: {0}".format(str(e)))

@@ -479,27 +479,72 @@
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
     value: "ON"
-    source: user-override
   check_mode: yes
   register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
 
-- name: Create instance of Configuration
+- name: Try to delete default configuraion
   azure_rm_mysqlconfiguration:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
-    value: "ON"
-    source: user-override
+    state: absent
   register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
 
-- name: Create again instance of Configuration
+- name: Try to change default configuraion
   azure_rm_mysqlconfiguration:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: event_scheduler
-    value: "ON"
-    source: user-override
+    value: ON
   register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to change default configuration -- idempotent
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    value: ON
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to reset configuration
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to delete default configuration -- idempotent
+  azure_rm_mysqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
 
 - name: Gather facts MySQL Configuration
   azure_rm_mysqlconfiguration_facts:
