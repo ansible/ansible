@@ -136,9 +136,9 @@ EXAMPLES = '''
       configurations:
         gateway:
           restAuthCredential.username: http-user
-          restAuthCredential.password: MuABCPassword!!@123 
+          restAuthCredential.password: MuABCPassword!!@123
     storage_accounts:
-      - name: myStorageAccount.blob.core.windows.net 
+      - name: myStorageAccount.blob.core.windows.net
         is_default: yes
         container: myContainer
         key: GExmaxH4lDNdHA9nwAsCt8t4AOQas2y9vXQP1kKALTram7Q3/5xLVIab3+nYG1x63Xyak9/VXxQyNBHA9pDWw==
@@ -222,9 +222,6 @@ class AzureRMClusters(AzureRMModuleBase):
             ),
             storage_accounts=dict(
                 type='list'
-            ),
-            identity=dict(
-                type='dict'
             ),
             state=dict(
                 type='str',
