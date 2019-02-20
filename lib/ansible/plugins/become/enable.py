@@ -12,6 +12,9 @@ DOCUMENTATION = """
     author: ansible (@core)
     version_added: "2.8"
     options:
+        become_user:
+            description: Unused.
+            default: ''
         become_pass:
             description: password
             ini:
