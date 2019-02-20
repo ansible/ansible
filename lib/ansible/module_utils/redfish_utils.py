@@ -866,41 +866,39 @@ class RedfishUtils(object):
         result = {}
         psu_list = []
         psu_results = []
-        key = "PoweredBy"
+        key = "PowerSupplies"
         # Get these entries, but does not fail if not found
         properties = ['Name', 'Model', 'SerialNumber', 'PartNumber', 'Manufacturer',
                       'FirmwareVersion', 'PowerCapacityWatts', 'PowerSupplyType',
                       'Status']
 
-        # Get a list of all PSUs and build respective URIs
-        response = self.get_request(self.root_uri + self.systems_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        if 'Links' not in data:
-            return {'ret': False, 'msg': "Property not found"}
-        if key not in data[u'Links']:
-            return {'ret': False, 'msg': "Key %s not found" % key}
-
-        for psu in data[u'Links'][u'PoweredBy']:
-            psu_list.append(psu[u'@odata.id'])
-
-        for p in psu_list:
-            psu = {}
-            uri = self.root_uri + p
-            response = self.get_request(uri)
+        # Get a list of all Chassis and build URIs, then get all PowerSupplies 
+        # from each Power entry in the Chassis
+        chassis_uri_list = self.chassis_uri_list
+        for chassis_uri in chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
 
             result['ret'] = True
             data = response['data']
 
-            for property in properties:
-                if property in data:
-                    psu[property] = data[property]
-            psu_results.append(psu)
+            power_uri = data[u'Power'][u'@odata.id']
+
+            response = self.get_request(self.root_uri + power_uri)
+            data = response['data']
+
+            if key not in data:
+                return {'ret': False, 'msg': "Key %s not found" % key}
+
+            psu_list = data[key]
+            for psu in psu_list:
+                psu_data = {}
+                for property in properties:
+                    if property in psu:
+                        psu_data[property] = psu[property]
+                psu_results.append(psu_data)
+
         result["entries"] = psu_results
         return result
 
