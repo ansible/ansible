@@ -204,7 +204,7 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import FileLock
+from ansible.module_utils.common.file import open_locked
 from ansible.module_utils.six import b
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -254,7 +254,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     attr_diff = {}
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backupdest = ''
-    flock = FileLock()
 
     if not os.path.exists(b_dest):
         if not create:
@@ -285,9 +284,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
         msg, changed = check_file_attrs(module, changed, msg, attr_diff)
     else:
-        with flock.lock_file(dest):
-            with open(b_dest, 'rb') as f:
-                b_lines = f.readlines()
+        with open_locked(b_dest) as f:
+            b_lines = f.readlines()
 
             msg, changed, b_modified_lines = _present_data_manipulator(b_lines, regexp, line, insertafter,
                                                                        insertbefore, backrefs, firstmatch)
@@ -438,7 +436,6 @@ def absent(module, dest, regexp, line, backup):
             'before_header': '{0} (content)'.format(dest),
             'after_header': '{0} (content)'.format(dest)}
     attr_diff = {}
-    flock = FileLock()
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backupdest = ''
 
@@ -457,9 +454,8 @@ def absent(module, dest, regexp, line, backup):
         return msg, changed, found, backupdest, diff
 
     else:
-        with flock.lock_file(dest):
-            with open(b_dest, 'rb') as f:
-                b_lines = f.readlines()
+        with open_locked(b_dest) as f:
+            b_lines = f.readlines()
 
             msg, changed, b_modified_lines = _absent_data_manipulator(b_lines, regexp, line)
             if changed:

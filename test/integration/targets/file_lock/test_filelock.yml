@@ -1,36 +1,45 @@
 ---
 - hosts: lockhosts
-  gather_facts: false
-  become: true
+  gather_facts: no
   vars:
-    testfile: ~/ansible_testing/lock.test
+    lockfile: ~/ansible_testing/lock.test
   tasks:
-  - name: write inventory_hostname to testfile
+  - name: Remove lockfile
+    file:
+      path: '{{ lockfile }}'
+      state: absent
+    run_once: yes
+
+  - name: Write inventory_hostname to lockfile concurrently
     lineinfile:
-      path: "{{ testfile }}"
-      line: "{{ inventory_hostname }}"
-      create: true
+      path: '{{ lockfile }}'
+      line: '{{ inventory_hostname }}'
+      create: yes
       state: present
-    async: 60
-    poll: 0
-    register: write_waiter
 
-  - name: wait for write jobs to finish
-    async_status:
-      jid: "{{ write_waiter.ansible_job_id }}"
-    register: write_job_result
-    until: write_job_result.finished
-    retries: 60
+  - debug:
+      msg: File {{ lockfile }} has {{ lines|length }} lines for {{ ansible_play_batch|length }} instances
+    vars:
+      lines: "{{ lookup('file', lockfile).split('\n') }}"
+    run_once: yes
 
-  - name: check testfile for inventory_hostname entries
+  - name: Assert we get the expected number of lines
+    assert:
+      that:
+      - lines|length == ansible_play_batch|length
+    vars:
+      lines: "{{ lookup('file', lockfile).split('\n') }}"
+    run_once: yes
+
+  - name: Check lockfile for inventory_hostname entries
     lineinfile:
-      path: "{{ testfile }}"
-      line: "{{ inventory_hostname }}"
+      path: '{{ lockfile }}'
+      line: '{{ inventory_hostname }}'
       state: present
     register: check_lockfile
 
-  - name: assert locking results
+  - name: Assert locking results
     assert:
       that:
-        - check_lockfile is not changed
-        - check_lockfile is not failed
+      - check_lockfile is not changed
+      - check_lockfile is not failed

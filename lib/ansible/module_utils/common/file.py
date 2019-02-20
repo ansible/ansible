@@ -1,24 +1,21 @@
-# Copyright (c) 2018, Ansible Project
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import errno
-import os
-import stat
-import re
-import pwd
-import grp
-import time
-import shutil
-import traceback
 import fcntl
+import os
+import re
+import stat
 import sys
+import time
 
 from contextlib import contextmanager
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import b, binary_type
+from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six import PY3
 
 try:
     import selinux
@@ -61,6 +58,10 @@ _PERM_BITS = 0o7777          # file mode permission bits
 _EXEC_PERM_BITS = 0o0111     # execute permission bits
 _DEFAULT_PERM = 0o0666       # default file permission bits
 
+if sys.platform.startswith('linux'):
+    filelock = fcntl.lockf
+else:
+    filelock = fcntl.flock
 
 def is_executable(path):
     # This function's signature needs to be repeated
@@ -114,88 +115,85 @@ class LockTimeout(Exception):
     pass
 
 
-class FileLock:
+# NOTE: Using the open_locked() context manager it is absolutely mandatory
+#       to not open or close the same file within the existing context.
+#       It is essential to reuse the returned file descriptor only.
+@contextmanager
+def open_locked(path, check_mode=False, lock_timeout=15):
     '''
-    Currently FileLock is implemented via fcntl.flock however this behaviour
-    may change in the future. Avoid mixing lock types fcntl.flock, fcntl.lockf
-    and module_utils.common.file.FileLock as it will certainly cause unwanted
-    and/or unexpected behaviour
+    Context managed for opening files with lock acquisition
+
+    :kw path: Path (file) to lock
+    :kw lock_timeout:
+        Wait n seconds for lock acquisition, fail if timeout is reached.
+        0 = Do not wait, fail if lock cannot be acquired immediately,
+        Less than 0 or None = wait indefinitely until lock is released
+        Default is wait 15s.
+    :returns: file descriptor
     '''
-    def __init__(self):
-        self.lockfd = None
+    if check_mode:
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        fd = open(b_path, 'rb+')
+    else:
+        fd = lock(path, check_mode, lock_timeout)
+    yield fd
+    fd.close()
 
-    @contextmanager
-    def lock_file(self, path, lock_timeout=15):
-        '''
-        Context for lock acquisition
-        '''
-        try:
-            self.set_lock(path, lock_timeout)
-            yield
-        finally:
-            self.unlock()
 
-    def set_lock(self, path, lock_timeout=15):
-        '''
-        Set lock on given path via fcntl.flock(), note that using
-        locks does not guarantee exclusiveness unless all accessing
-        processes honor locks.
+def lock(path, check_mode=False, lock_timeout=15):
+    '''
+    Set lock on given path via fcntl.flock(), note that using
+    locks does not guarantee exclusiveness unless all accessing
+    processes honor locks.
 
-        :kw path: Path (file) to lock
-        :kw lock_timeout:
-            Wait n seconds for lock acquisition, fail if timeout is reached.
-            0 = Do not wait, fail if lock cannot be acquired immediately,
-            Less than 0 or None = wait indefinitely until lock is released
-            Default is wait 15s.
-        :returns: True
-        '''
-        b_lock_path = to_bytes(path, errors='surrogate_or_strict')
-        l_wait = 0.1
-        r_exception = IOError
-        if not os.path.exists(b_lock_path):
-            raise IOError('{0} does not exist'.format(path))
+    :kw path: Path (file) to lock
+    :kw lock_timeout:
+        Wait n seconds for lock acquisition, fail if timeout is reached.
+        0 = Do not wait, fail if lock cannot be acquired immediately,
+        Less than 0 or None = wait indefinitely until lock is released
+        Default is wait 15s.
+    :returns: file descriptor
+    '''
+    b_path = to_bytes(path, errors='surrogate_or_strict')
+    wait = 0.1
 
-        if sys.version_info[0] == 3:
-            r_exception = BlockingIOError
+    lock_exception = IOError
+    if PY3:
+        lock_exception = OSError
 
-        self.lockfd = open(b_lock_path, 'ab')
+    if not os.path.exists(b_path):
+        raise IOError('{0} does not exist'.format(path))
 
-        if lock_timeout is None or lock_timeout < 0:
-            fcntl.flock(self.lockfd, fcntl.LOCK_EX)
-            return True
+    if lock_timeout is None or lock_timeout < 0:
+        fd = open(b_path, 'rb+')
+        filelock(fd, fcntl.LOCK_EX)
+        return fd
 
-        if lock_timeout == 0:
-            fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            return True
+    if lock_timeout >= 0:
+        total_wait = 0
+        while total_wait <= lock_timeout:
+            fd = open(b_path, 'rb+')
+            try:
+                filelock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return fd
+            except lock_exception:
+                fd.close()
+                time.sleep(wait)
+                total_wait += wait
+                continue
 
-        if lock_timeout > 0:
-            e_secs = 0
-            while e_secs < lock_timeout:
-                try:
-                    fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    return True
-                except r_exception:
-                    time.sleep(l_wait)
-                    e_secs += l_wait
-                    continue
+        fd.close()
+        raise LockTimeout('Waited {0} seconds for lock on {1}'.format(total_wait, path))
 
-            self.lockfd.close()
-            raise LockTimeout('{0} sec'.format(lock_timeout))
 
-    def unlock(self):
-        '''
-        Make sure lock file is available for everyone and Unlock the file descriptor
-        locked by set_lock
+def unlock(fd):
+    '''
+    Make sure lock file is available for everyone and Unlock the file descriptor
+    locked by set_lock
 
-        :returns: True
-        '''
-        if not self.lockfd:
-            return True
-
-        try:
-            fcntl.flock(self.lockfd, fcntl.LOCK_UN)
-            self.lockfd.close()
-        except ValueError:  # file wasn't opened, let context manager fail gracefully
-            pass
-
-        return True
+    :kw fd: File descriptor of file to unlock
+    '''
+    try:
+        filelock(fd, fcntl.LOCK_UN)
+    except ValueError:  # File was not opened, let context manager fail gracefully
+        pass

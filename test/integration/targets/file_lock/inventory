@@ -1,2 +1,2 @@
 [lockhosts]
-lockhost[0:20] ansible_connection=local
+lockhost[00:99] ansible_connection=local
