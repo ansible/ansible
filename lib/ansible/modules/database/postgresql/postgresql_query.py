@@ -181,7 +181,7 @@ except ImportError:
     HAS_PSYCOPG2 = False
 
 import ansible.module_utils.postgres as pgutils
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
