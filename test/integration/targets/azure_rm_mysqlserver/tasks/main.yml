@@ -491,6 +491,16 @@
       - output.changed
 
 - name: Try to delete default configuraion
+  azure_rm_mysqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: event_scheduler
+  register: output
+- name: Get facts of event_scheduler
+  debug:
+    var: output
+
+- name: Try to delete default configuraion
   azure_rm_mysqlconfiguration:
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
