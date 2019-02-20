@@ -344,6 +344,43 @@
   assert:
     that: results.changed
 
+- name: Upgrade instance to the latest image
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    latest_model: yes
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+- name: Stop virtual machine
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    power_state: stopped
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+- name: Delete instance
+  azure_rm_virtualmachinescalesetinstance:
+    resource_group: "{{ resource_group }}"
+    vmss_name: testVMSS{{ rpfx }}
+    instance_id: "{{ instances.instances[0].instance_id }}"
+    state: absent
+  register: results
+
+- name: Assert that something has changed
+  assert:
+    that: results.changed
+
+
 - name: Delete VMSS
   azure_rm_virtualmachine_scaleset:
     resource_group: "{{ resource_group }}"
