@@ -1543,14 +1543,15 @@ class DockerServiceManager(object):
                 resolve=module.params['resolve_image']
             )
         except DockerException as e:
-            return self.client.fail(
+            self.client.fail(
                 'Error looking for an image named %s: %s'
                 % (image, e)
             )
+
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
-            return self.client.fail(
+            self.client.fail(
                 'Error looking for service named %s: %s'
                 % (module.params['name'], e)
             )
