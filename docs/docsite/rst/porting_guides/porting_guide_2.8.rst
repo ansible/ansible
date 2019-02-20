@@ -72,28 +72,73 @@ Command line facts
 Python Interpreter Discovery
 ============================
 
-Ansible 2.8 now discovers the default Python interpreter to use for many platforms the first time a Python module is
-run on a target.
+In Ansible 2.7 and earlier, Ansible defaulted to ``usr/bin/python`` as the
+setting for ``ansible_python_interpreter``. If you ran Ansible against a system
+that installed Python with a different name or a different path, your playbooks
+would fail with ``/usr/bin/python: bad interpreter: No such file or directory``
+unless you either set ``ansible_python_interpreter`` to the correct value for
+that system or added a Python interpreter and any necessary dependencies at
+``usr/bin/python``.
 
-``ansible_python_interpreter`` now defaults to ``auto_legacy``, which consults a lookup table and selects the default
-Python if the target platform/version is listed in the table. It will also favor using ``/usr/bin/python`` if present,
-and show a deprecation warning that the default behavior will change in 4 releases to use the discovered interpreter
-instead. This interim behavior ensures that Ansible can continue to target platforms that added ``/usr/bin/python``
-instead of explicitly setting ``ansible_python_interpreter`` to the correct platform-included Python interpreter
-(eg, Ubuntu 16.04+, RHEL8, Fedora 23+).
+Starting in Ansible 2.8, Ansible searches for the correct path and executable
+name for Python on each target system, first in a lookup table of default
+Python interpreters for common distros, then in an ordered fallback list of
+possible Python interpreter names/paths.
 
-Setting ``ansible_python_interpreter`` to ``auto`` will behave the same way, except the discovered interpreter will
-always be used, regardless of the presence of ``/usr/bin/python``. This behavior will become the default after 4 releases.
+It's risky to rely on a Python interpreter set from the fallback list, because
+the interpreter may change on future runs. If an interpreter from
+higher in the fallback list gets installed (for example, as a side-effect of
+installing other packages), your original interpreter and its dependencies will
+no longer be used. For this reason, Ansible warns you when it uses a Python
+interpreter discovered from the fallback list. If you see this warning, the
+best solution is to explicitly set ``ansible_python_interpreter`` to the path
+of the correct interpreter for those target systems.
 
-If the target platform is not listed with a known Python interpreter, a fallback list of Python interpreter names is
-used to discover an interpreter on the path that might work. If one is found, a warning is displayed that while a Python
-interpreter was found, future installation of a different Python on the target could lead to changed behavior. E.g., if
-an interpreter name from higher in the fallback list is installed later, any installed dependencies with the original
-interpreter will no longer be used. The best solution in this case is to explicitly set ``ansible_python_interpreter``
-to the path of the correct interpreter.
+You can still set ``ansible_python_interpreter`` to a specific path at any
+variable level (as a host variable, in vars files, in playbooks, etc.).
+If you prefer to use the Python interpreter discovery behavior, use
+one of the four new values for ``ansible_python_interpreter`` introduced in
+Ansible 2.8:
 
-To use ``auto`` or ``auto_legacy`` behavior while disabling all interpreter discovery warnings, add ``_silent`` to the
-end of the value when setting ``ansible_python_interpreter`` (e.g., ``auto_legacy_silent``).
++---------------------------+-----------------------------------------------+
+| New value                 | Behavior                                      |
++===========================+===============================================+
+| | auto                    | | If a Python interpreter is discovered,      |
+| | (future default)        | | Ansible uses the discovered Python, even if |
+| |                         | | ``/usr/bin/python`` is also present. Warns  |
+| |                         | | when using the fallback list.               |
++---------------------------+-----------------------------------------------+
+| | **auto_legacy**         | | If a Python interpreter is discovered, and  |
+| | (Ansible 2.8 default)   | | ``/usr/bin/python`` is absent, Ansible      |
+| |                         | | uses the discovered Python. Warns when      |
+| |                         | | using the fallback list.                    |
+| |                         | |                                             |
+| |                         | | If a Python interpreter is discovered, and  |
+| |                         | | ``/usr/bin/python`` is present, Ansible     |
+| |                         | | uses ``/usr/bin/python`` and prints a       |
+| |                         | | deprecation warning about future default    |
+| |                         | | behavior. Warns when using the fallback     |
+| |                         | | list.                                       |
++---------------------------+-----------------------------------------------+
+| | auto_legacy_silent      | | Behaves like ``auto_legacy`` but suppresses |
+| |                         | | the deprecation and fallback-list warnings. |
++---------------------------+-----------------------------------------------+
+| | auto_silent             | | Behaves like ``auto`` but suppresses the    |
+| |                         | | fallback-list warning.                      |
++---------------------------+-----------------------------------------------+
+
+Starting with Ansible 2.12, Ansible will use the discovered Python interpreter
+by default, whether or not ``/usr/bin/python`` is also present. Until then,
+the default ``auto_legacy`` setting provides compatibility with
+previous versions of Ansible that always defaulted to ``/usr/bin/python``.
+
+If you installed Python and dependencies (``boto``, etc.) to
+``/usr/bin/python`` as a workaround on distros with a different default Python
+interpreter (for example, Ubuntu 16.04+, RHEL8, Fedora 23+), you have two
+options:
+
+  #. Move existing dependencies over to the default Python for each platform/distribution/version.
+  #. Use ``auto_legacy``. This setting lets Ansible find and use the workaround Python on hosts that have it, while also finding the correct default Python on newer hosts. But remember, the default will change in 4 releases.
 
 
 Command Line
