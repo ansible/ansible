@@ -37,7 +37,7 @@ options:
         type: bool
     purge:
         description:
-            - Use with I(state) C(present) to purge the endpoint. Set to true to have the endpoint be purged.
+            - Use with I(state) C(present) to purge the endpoint. Set to C(true) to have the endpoint be purged.
         type: bool
         default: false
     purge_content_paths:
