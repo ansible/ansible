@@ -347,6 +347,8 @@
     name: firewallrule{{ rpfx }}
     start_ip_address: 172.28.10.136
     end_ip_address: 172.28.10.138
+  check_mode: yes
+  register: output
 - name: Assert the resource instance is well created
   assert:
     that:
@@ -359,6 +361,7 @@
     name: firewallrule{{ rpfx }}
     start_ip_address: 172.28.10.136
     end_ip_address: 172.28.10.138
+  register: output
 - name: Assert the state has not changed
   assert:
     that:
