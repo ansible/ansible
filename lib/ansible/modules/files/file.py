@@ -455,14 +455,14 @@ def execute_diff_peek(path):
     return appears_binary
 
 
-def ensure_absent(path):
+def ensure_absent(path, recurse):
     b_path = to_bytes(path, errors='surrogate_or_strict')
     prev_state = get_state(b_path)
     result = {}
 
     if prev_state != 'absent':
         if not module.check_mode:
-            if prev_state == 'directory':
+            if prev_state == 'directory' and recurse:
                 try:
                     shutil.rmtree(b_path, ignore_errors=False)
                 except Exception as e:
@@ -900,7 +900,7 @@ def main():
     elif state == 'touch':
         result = execute_touch(path, follow, timestamps)
     elif state == 'absent':
-        result = ensure_absent(path)
+        result = ensure_absent(path, recurse)
 
     module.exit_json(**result)
 
