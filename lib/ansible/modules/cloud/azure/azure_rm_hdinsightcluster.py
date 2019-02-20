@@ -64,41 +64,6 @@ options:
             configurations:
                 description:
                     - The cluster configurations.
-    security_profile:
-        description:
-            - The security profile.
-        suboptions:
-            directory_type:
-                description:
-                    - The directory type.
-                choices:
-                    - 'active_directory'
-            domain:
-                description:
-                    - "The organization's active directory domain."
-            organizational_unit_dn:
-                description:
-                    - The organizational unit within the Active Directory to place the cluster and service accounts.
-            ldaps_urls:
-                description:
-                    - The LDAPS protocol URLs to communicate with the Active Directory.
-                type: list
-            domain_username:
-                description:
-                    - The I(domain) user account that will have admin privileges on the cluster.
-            domain_user_password:
-                description:
-                    - The I(domain) admin password.
-            cluster_users_group_dns:
-                description:
-                    - Optional. The Distinguished Names for cluster user groups
-                type: list
-            aadds_resource_id:
-                description:
-                    - "The resource ID of the user's Azure Active Directory I(domain) Service."
-            msi_resource_id:
-                description:
-                    - "User assigned identity that has permissions to read and create cluster-related artifacts in the user's AADDS."
     compute_profile_roles:
         description:
             - The list of roles in the cluster.
@@ -119,41 +84,6 @@ options:
             linux_profile:
                 description:
                     - The Linux OS profile.
-            virtual_network_profile:
-                description:
-                    - The virtual network profile.
-                suboptions:
-                    id:
-                        description:
-                            - The ID of the virtual network.
-                    subnet:
-                        description:
-                            - The name of the subnet.
-            data_disks_groups:
-                description:
-                    - The data disks groups for the role.
-                type: list
-                suboptions:
-                    disks_per_node:
-                        description:
-                            - The number of disks per node.
-            script_actions:
-                description:
-                    - The list of script actions on the role.
-                type: list
-                suboptions:
-                    name:
-                        description:
-                            - The name of the script action.
-                            - Required when C(state) is I(present).
-                    uri:
-                        description:
-                            - The URI to the script.
-                            - Required when C(state) is I(present).
-                    parameters:
-                        description:
-                            - The parameters for the script provided.
-                            - Required when C(state) is I(present).
     storage_accounts:
         description:
             - The list of storage accounts in the cluster.
@@ -174,25 +104,6 @@ options:
             key:
                 description:
                     - The storage account access key.
-    identity:
-        description:
-            - The identity of the cluster, if configured.
-        suboptions:
-            type:
-                description:
-                    - "The type of identity used for the cluster. The type 'C(system_assigned), C(user_assigned)' includes both an implicitly created
-                       identity and a set of user assigned identities."
-                choices:
-                    - 'system_assigned'
-                    - 'user_assigned'
-                    - 'system_assigned, _user_assigned'
-                    - 'none'
-            user_assigned_identities:
-                description:
-                    - "The list of user identities associated with the cluster. The user identity dictionary key references will be ARM resource ids in the
-                       form:
-                       '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ManagedIdentity/userAssignedIdentities/{ident
-                      ityName}'."
     state:
       description:
         - Assert the state of the cluster.
@@ -306,9 +217,6 @@ class AzureRMClusters(AzureRMModuleBase):
             cluster_definition=dict(
                 type='dict'
             ),
-            security_profile=dict(
-                type='dict'
-            ),
             compute_profile_roles=dict(
                 type='list'
             ),
@@ -351,15 +259,12 @@ class AzureRMClusters(AzureRMModuleBase):
         expand(self.parameters, ['os_type'], expand='properties', camelize=True)
         expand(self.parameters, ['tier'], expand='properties', camelize=True)
         expand(self.parameters, ['cluster_definition'], expand='properties')
-        expand(self.parameters, ['security_profile', 'directory_type'], camelize=True)
-        expand(self.parameters, ['security_profile'], expand='properties')
         expand(self.parameters, ['compute_profile_roles', 'vm_size'], expand='hardware_profile')
         expand(self.parameters, ['compute_profile_roles', 'linux_profile'], rename='linux_operating_system_profile', expand='os_profile')
         expand(self.parameters, ['compute_profile_roles'], rename='roles', expand='compute_profile')
         expand(self.parameters, ['compute_profile'], expand='properties')
         expand(self.parameters, ['storage_accounts'], rename='storageaccounts', expand='storage_profile')
         expand(self.parameters, ['storage_profile'], expand='properties')
-        expand(self.parameters, ['identity', 'type'], camelize={'system_assigned, _user_assigned': 'SystemAssigned, UserAssigned'})
 
         response = None
 
