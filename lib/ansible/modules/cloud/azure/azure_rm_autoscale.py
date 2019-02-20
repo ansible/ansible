@@ -179,7 +179,7 @@ options:
                 description: A value indicating whether to send email to subscription co-administrators.
     state:
         default: present
-        description: Assert the state of the virtual network. Use 'present' to create or update and 'absent' to delete.
+        description: Assert the state of the virtual network. Use C(present) to create or update and C(absent) to delete.
         choices:
         - present
         - absent

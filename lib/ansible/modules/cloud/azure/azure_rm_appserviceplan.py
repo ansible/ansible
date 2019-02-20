@@ -55,7 +55,7 @@ options:
     state:
       description:
         - Assert the state of the app service plan.
-        - Use 'present' to create or update an app service plan and 'absent' to delete it.
+        - Use C(present) to create or update an app service plan and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -293,7 +293,7 @@ class AzureRMAppServicePlans(AzureRMModuleBase):
             response = self.create_or_update_plan()
             self.results['id'] = response['id']
 
-        if self.state == 'absent' and old_response:
+        if self.state == C(absent) and old_response:
             self.log("Delete app service plan")
             self.results['changed'] = True
 
