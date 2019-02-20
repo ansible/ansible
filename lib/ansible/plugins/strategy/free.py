@@ -115,8 +115,22 @@ class StrategyModule(StrategyBase):
 
                     display.debug("this host has work to do", host=host_name)
 
+                    max_tasks_reached = False
+                    if len(task.forks) > 0:
+                        forks = min(task.forks)
+                        if forks > 0:
+                            same_tasks = 0
+                            for worker in self._workers:
+                                if worker and worker.is_alive() and worker._task._uuid == task._uuid:
+                                    same_tasks += 1
+
+                            display.debug("task: %s, same_tasks: %d" % (task.get_name(), same_tasks))
+                            if same_tasks >= forks:
+                                max_tasks_reached = True
+
                     # check to see if this host is blocked (still executing a previous task)
-                    if host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]:
+                    if (host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]) and not max_tasks_reached:
+
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
@@ -148,8 +162,8 @@ class StrategyModule(StrategyBase):
                                 raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy "
                                                    "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
                             else:
-                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be "
-                                                "executed for every host in the inventory list.")
+                                display.debug("Using run_once with the free strategy is not currently supported. This task will still be "
+                                              "executed for every host in the inventory list.")
 
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
