@@ -99,7 +99,6 @@
       - output.labs[0]['provisioning_state'] != None
       - output.labs[0]['vault_name'] != None
 
-- name: Create instance of DebTest Labs virtual network
 - name: Create instance of DevTest Labs virtual network
   azure_rm_devtestlabvirtualnetwork:
     resource_group: "{{ resource_group }}"
