@@ -28,11 +28,11 @@ options:
         required: True
     lab_name:
         description:
-            - The name of the lab.
+            - The name of DevTest Lab.
         required: True
     name:
         description:
-            - The name of the virtual network.
+            - The name of DevTest Lab Virtual Network.
 
 extends_documentation_fragment:
     - azure
@@ -49,7 +49,7 @@ EXAMPLES = '''
       lab_name: myLab
       name: myVirtualNetwork
 
-  - name: List all virtual networks in the Lab
+  - name: List all Virtual Networks in DevTest Lab
     azure_rm_devtestlabvirtualnetwork_facts:
       resource_group: myResourceGroup
       lab_name: myLab
