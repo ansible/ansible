@@ -159,7 +159,7 @@ class PlayContext(Base):
         if play:
             self.set_attributes_from_play(play)
 
-    def set_options_from_plugin(self, plugin):
+    def set_attributes_from_plugin(self, plugin):
         # generic derived from connection plugin, temporary for backwards compat, in the end we should not set play_context properties
 
         # get options for plugins
