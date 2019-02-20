@@ -111,7 +111,7 @@ class InventoryModule(BaseInventoryPlugin):
             # We test the API Token against the location API, because this is the API with the smallest result
             # and not controllable from the customer.
             self.client.locations.get_all()
-        except hcloud.HcloudAPIException:
+        except hcloud.APIException:
             raise AnsibleError(
                 'Invalid Hetzner Cloud API Token.')
 
