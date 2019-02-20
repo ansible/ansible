@@ -186,6 +186,7 @@
   file:
     dest: '{{output_dir}}/sub1'
     state: 'absent'
+    recuse: true
 
 - name: Re-create the test sub-directory
   file:
