@@ -161,7 +161,7 @@ author:
 EXAMPLES = '''
   - name: Create instance of Key Vault
     azure_rm_keyvault:
-      resource_group: myresourcegroup
+      resource_group: myResourceGroup
       vault_name: samplekeyvault
       enabled_for_deployment: yes
       vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111

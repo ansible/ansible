@@ -136,7 +136,7 @@ EXAMPLES = '''
 
 # Create a security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       purge_rules: yes
       rules:
@@ -168,7 +168,7 @@ EXAMPLES = '''
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       rules:
           - name: DenySSH
@@ -190,7 +190,7 @@ EXAMPLES = '''
 
 # Delete security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       state: absent
 '''

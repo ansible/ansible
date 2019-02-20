@@ -47,12 +47,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for one Public IP
       azure_rm_publicipaddress_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: publicip001
 
     - name: Get facts for all Public IPs within a resource groups
       azure_rm_publicipaddress_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 '''
 
 RETURN = '''

@@ -69,10 +69,10 @@ author:
 EXAMPLES = '''
   - name: Get scaleset info
     azure_rm_resource_facts:
-      resource_group: "{{ resource_group }}"
+      resource_group: myResourceGroup
       provider: compute
       resource_type: virtualmachinescalesets
-      resource_name: "{{ scaleset_name }}"
+      resource_name: myVmss
       api_version: "2017-12-01"
 '''
 
