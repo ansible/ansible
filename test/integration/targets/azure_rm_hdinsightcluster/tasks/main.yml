@@ -94,18 +94,15 @@
         target_instance_count: 2
         hardware_profile:
           vm_size: Standard_D3
-        os_profile:
-          linux_operating_system_profile:
-            username: sshuser
-            password: MuABCPassword!!@123
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 2
-        hardware_profile:
-          vm_size: Standard_D3
-        os_profile:
-          linux_operating_system_profile:
-            username: sshuser
-            password: MuABCPassword!!@123
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
   register: output
 
 - name: Assert the resource instance is well created
@@ -138,18 +135,15 @@
         target_instance_count: 2
         hardware_profile:
           vm_size: Standard_D3
-        os_profile:
-          linux_operating_system_profile:
-            username: sshuser
-            password: MuABCPassword!!@123
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 2
-        hardware_profile:
-          vm_size: Standard_D3
-        os_profile:
-          linux_operating_system_profile:
-            username: sshuser
-            password: MuABCPassword!!@123
+        vm_size: Standard_D3
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
   register: output
 - name: Assert the state has not changed
   assert:
