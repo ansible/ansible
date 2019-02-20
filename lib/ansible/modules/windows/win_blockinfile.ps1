@@ -57,15 +57,13 @@ function WriteLines {
 
     Try {
         If (Test-Path -LiteralPath $path) {
-            $acl = Get-Acl -Path $path
+            $acl = Get-Acl -LiteralPath $path
         }
     }
     Catch {
         $module.FailJson("Cannot get ACL from original file! ($($_.Exception.Message))", $_);
     }
 
-    $cleanpath = $path.Replace("/", "\");
-   
     Try {
         $temppath = [System.IO.Path]::GetTempFileName();
     }
@@ -78,28 +76,28 @@ function WriteLines {
         [System.IO.File]::WriteAllText($temppath, $joined, $encodingobj);
 
         Try {
-            Move-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
+            Move-Item -LiteralPath $temppath -Destination $path -force -ErrorAction Stop -WhatIf:$check_mode;
         }
         Catch {
-            $module.FailJson("Cannot write to: $cleanpath ($($_.Exception.Message))", $_);
+            $module.FailJson("Cannot write to: $path ($($_.Exception.Message))", $_);
         }
 
         If ($acl) {
             Try {
-                Set-Acl -Path $cleanpath -AclObject $acl -WhatIf:$check_mode 
+                Set-Acl -LiteralPath $path -AclObject $acl -WhatIf:$check_mode 
             }
             Catch {
                 $module.FailJson("Cannot set ACL on new file! ($($_.Exception.Message))", $_);
             }
         }
+        return $joined;
     }
     Finally {
-        If (Test-Path $temppath) {
-            Remove-Item -Path $temppath -Force
+        If (Test-Path -LiteralPath $temppath) {
+            Remove-Item -LiteralPath $temppath -Force
         }
     }
 
-    return $joined;
 }
 
 function GuessFileEncoding {
@@ -158,14 +156,14 @@ function BackupFile {
 
     $backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
     Try {
-        Copy-Item $path $backuppath -WhatIf:$check_mode;
+        Copy-Item -LiteralPath $path -Destination $backuppath -WhatIf:$check_mode;
     }
     Catch {
         $module.FailJson("Cannot copy backup file! ($($_.Exception.Message))", $_);
     }
     If (-not $check_mode) {
         Try {
-            Get-Acl -Path $path | Set-Acl -Path $backuppath
+            Get-Acl -LiteralPath $path | Set-Acl -LiteralPath $backuppath
         }
         Catch {
             $module.FailJson("Cannot copy ACL to backup file! ($($_.Exception.Message))", $_);
@@ -253,7 +251,7 @@ $marker1 = $marker.Replace("{mark}", $marker_end);
 
 If (($state -eq "present") -and ($null -ne $block)) {
     $block = $block.Replace("`r", "");
-    $blocklines = @($marker0) + $block.Split("`n") + @($marker1);
+    $blocklines = @($marker0) + ($block -split "\r\n|\r(?!\n)|\n") + @($marker1);
 }
 else {
     $blocklines = @();
@@ -270,10 +268,8 @@ For ($i = 0; $i -lt $lines.Count; $i++) {
     If ($lines[$i] -eq $marker1) {
         $marker1Line = $i;
     }
-    If ($null -ne $insre) {
-        If ($insre.Match($lines[$i]).Success) {
-            $insertLine = $i;
-        }
+    If ($null -ne $insre -and ($lines[$i] -match $insre)) {
+        $insertLine = $i;
     }
 }
 
