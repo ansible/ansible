@@ -17,7 +17,7 @@ module: satellite_subscription
 short_description: Manage host subscriptions (licenses) on Red Hat Satellite
 description:
   - This module allows to assign or remove subscriptions to hosts in Red Hat Satellite.
-  - It works on the Satellite side, so not from the client side like redhat_subscription.
+  - It operates using the Red Hat Satellite REST API, rather than make changes directly to target systems like M(redhat_subscription).
     Your hosts or hypervisors should be in the Satellite already. The module will run subscription
     related tasks (assign, remove, autoattach or replace with hypervisor subscriptions) for the
     hosts through the Satellite API.
@@ -29,7 +29,7 @@ author:
 options:
   satellite_hostname:
     description:
-      - Red Hat Satelite server (6.x) hostname
+      - The name or IP address of the Red Hat Satellite server.
     required: true
   username:
     description:
@@ -69,9 +69,10 @@ options:
          as used in the satellite, eg: 'product_id=RH00005S'"
   unique:
     description:
-     - Set to true to remove all other subscriptions attached to the host
+     - Whether to remove all subscriptions to this host.
+     - When set to C(yes) remove all other subscriptions attached to this host.
     type: bool
-    default: False
+    default: no
   verify_ssl:
     description:
       - Check ssl certificates?
@@ -91,7 +92,7 @@ EXAMPLES = """
       - product_id=RH000XX
       - name=EPEL
       - name=Extra
-    unique: true
+    unique: yes
     organization: 1
   delegate_to: localhost
 
@@ -263,15 +264,15 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            satellite_hostname=dict(required=True),
+            satellite_hostname=dict(type='str', required=True),
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             organization=dict(required=True, type=int),
             state=dict(
                 default="autoattach",
-                choices=["present", "absent", "autoattach", "disable_autoattach", "vdcguests", "optimize"],
+                choices=['absent', 'autoattach', 'disable_autoattach', 'optimize', 'present', 'vdcguests'],
             ),
-            content_host=dict(type=list, required=True),
+            content_host=dict(type='list', required=True),
             subscription=dict(type=list),
             unique=dict(type='bool', default=False),
             verify_ssl=dict(type='bool', default=True),
