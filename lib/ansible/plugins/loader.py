@@ -700,8 +700,8 @@ class PluginLoader:
                         continue
                     self._module_cache[path] = module
                     found_in_cache = False
-                finally:
-                    self._lock.release()
+            finally:
+                self._lock.release()
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
