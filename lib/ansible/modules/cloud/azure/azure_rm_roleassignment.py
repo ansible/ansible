@@ -161,7 +161,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
                                                 api_version="2018-01-01-preview")
 
         # build cope
-        self.scope = build_scope()
+        self.scope = self.build_scope()
 
         # get existing role assignment
         old_response = self.get_roleassignment()
