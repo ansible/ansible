@@ -310,7 +310,7 @@ def main():
             elif str.lower(paramgram["fmgr_ha_mode"]) != "standalone" and\
                     paramgram["fmgr_ha_mode"] is not None and\
                     paramgram["fmgr_ha_cluster_pw"] is None:
-                    module.exit_json(msg="If setting HA Mode of MASTER or SLAVE, you must specify a cluster password")
+                module.exit_json(msg="If setting HA Mode of MASTER or SLAVE, you must specify a cluster password")
 
     except Exception as err:
         raise FMGBaseException(err)
