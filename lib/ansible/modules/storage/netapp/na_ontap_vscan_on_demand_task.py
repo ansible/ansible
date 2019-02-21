@@ -167,7 +167,7 @@ class NetAppOntapVscanOnDemandTask(object):
             report_directory=dict(required=False, type='str'),
             report_log_level=dict(required=False, choices=['verbose', 'info', 'error'], default='error'),
             request_timeout=dict(required=False, type='str'),
-            scan_files_with_no_ext=dict(required=False, type=bool, default=True),
+            scan_files_with_no_ext=dict(required=False, type='bool', default=True),
             scan_paths=dict(required=False, type="list"),
             scan_priority=dict(required=False, choices=['low', 'normal'], default='low'),
             schedule=dict(required=False, type="str"),
