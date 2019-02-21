@@ -338,6 +338,14 @@ options:
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
+  stop_grace_period:
+    description:
+        - Time to wait before force killing a container.
+        - "Accepts a duration as a string in a format that look like:
+          C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+        - Corresponds to the C(--stop-grace-period) option of C(docker service create).
+    type: str
+    version_added: "2.8"
   stop_signal:
     description:
       - Override default signal used to stop the container.
@@ -771,6 +779,7 @@ class DockerService(DockerBaseClass):
         self.secrets = None
         self.constraints = None
         self.networks = None
+        self.stop_grace_period = None
         self.stop_signal = None
         self.publish = None
         self.placement_preferences = None
@@ -819,6 +828,7 @@ class DockerService(DockerBaseClass):
             'replicas': self.replicas,
             'endpoint_mode': self.endpoint_mode,
             'restart_policy': self.restart_policy,
+            'stop_grace_period': self.stop_grace_period,
             'stop_signal': self.stop_signal,
             'limit_cpu': self.limit_cpu,
             'limit_memory': self.limit_memory,
@@ -908,6 +918,8 @@ class DockerService(DockerBaseClass):
             'restart_policy_window',
             ap['restart_policy_window']
         )
+        if ap['stop_grace_period'] is not None:
+            s.stop_grace_period = convert_duration_to_nanosecond(ap['stop_grace_period'])
         s.update_delay = get_nanoseconds_from_raw_option(
             'update_delay',
             ap['update_delay']
@@ -1036,6 +1048,8 @@ class DockerService(DockerBaseClass):
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
         if self.stop_signal is not None and self.stop_signal != os.stop_signal:
             differences.add('stop_signal', parameter=self.stop_signal, active=os.stop_signal)
+        if self.stop_grace_period is not None and self.stop_grace_period != os.stop_grace_period:
+            differences.add('stop_grace_period', parameter=self.stop_grace_period, active=os.stop_grace_period)
         if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
         if self.restart_policy is not None and self.restart_policy != os.restart_policy:
@@ -1197,6 +1211,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['healthcheck'] = types.Healthcheck(**self.healthcheck)
         if self.hostname is not None:
             container_spec_args['hostname'] = self.hostname
+        if self.stop_grace_period is not None:
+            container_spec_args['stop_grace_period'] = self.stop_grace_period
         if self.stop_signal is not None:
             container_spec_args['stop_signal'] = self.stop_signal
         if self.tty is not None:
@@ -1384,6 +1400,7 @@ class DockerServiceManager(object):
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args')
         ds.groups = task_template_data['ContainerSpec'].get('Groups')
+        ds.stop_grace_period = task_template_data['ContainerSpec'].get('StopGracePeriod')
         ds.stop_signal = task_template_data['ContainerSpec'].get('StopSignal')
         ds.working_dir = task_template_data['ContainerSpec'].get('Dir')
 
@@ -1757,6 +1774,7 @@ def main():
         mode=dict(type='str', default='replicated'),
         replicas=dict(type='int', default=-1),
         endpoint_mode=dict(type='str', choices=['vip', 'dnsrr']),
+        stop_grace_period=dict(type='str'),
         stop_signal=dict(type='str'),
         limit_cpu=dict(type='float'),
         limit_memory=dict(type='str'),
