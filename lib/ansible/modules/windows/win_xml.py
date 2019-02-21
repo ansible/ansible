@@ -89,7 +89,7 @@ EXAMPLES = r'''
 #     xpath: '//Server/Service[@name="Catalina"]/Connector[@port="9443"]'
 #     attribute: 'sslEnabledProtocols'
 #     fragment: 'TLSv1,TLSv1.1,TLSv1.2'
-  
+
 #   - type: attribute
 #     path: C:\Tomcat\conf\server.xml
 #     xpath: '//Server/Service[@name="Catalina"]/Connector[@port="9444"]'
