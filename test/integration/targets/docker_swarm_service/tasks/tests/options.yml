@@ -1551,13 +1551,51 @@
       - "{{ network_name_1 }}"
   register: networks_2
 
+- name: networks (change more)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_3
+
+- name: networks (change more idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_4
+
+- name: networks (change less)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+  register: networks_5
+
+- name: networks (change less idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+  register: networks_6
+
 - name: networks (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     networks: []
-  register: networks_3
+  register: networks_7
 
 - name: networks (empty idempotency)
   docker_swarm_service:
@@ -1565,7 +1603,7 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     networks: []
-  register: networks_4
+  register: networks_8
 
 - name: cleanup
   docker_swarm_service:
@@ -1579,6 +1617,22 @@
       - networks_2 is not changed
       - networks_3 is changed
       - networks_4 is not changed
+      - networks_5 is changed
+      - networks_6 is not changed
+      - networks_7 is changed
+      - networks_8 is not changed
+
+- assert:
+    that:
+    - networks_3.rebuilt == false
+    - networks_5.rebuilt == false
+  when: docker_api_version is version('1.29', '>=')
+
+- assert:
+    that:
+    - networks_3.rebuilt == true
+    - networks_5.rebuilt == true
+  when: docker_api_version is version('1.29', '<')
 
 ####################################################################
 ## stop_signal #####################################################
