@@ -102,7 +102,7 @@ notes:
 '''
 
 EXAMPLES = r'''
-- name: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+- name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
   replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
@@ -122,13 +122,8 @@ EXAMPLES = r'''
     regexp: '^(.+)$'
     replace: '# \1'
 
-<<<<<<< HEAD
-# Previous to 2.x, using before and after in combination switches their logic (see ansible/ansible #31354)
+# Previous to Ansible 2.x, using before and after in combination switches their logic (see ansible/ansible #31354)
 - name: Replace between the expressions (requires Ansible >= 2.4)
-=======
-# Previous to 2.6, using before and after in combination switches their logic (see ansible/ansible #31354)
-- name: Replace between the expressions (requires >=2.4)
->>>>>>> Updated for 2.6
   replace:
     path: /etc/hosts
     after: '<VirtualHost [*]>'
