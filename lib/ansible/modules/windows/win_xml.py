@@ -62,8 +62,9 @@ options:
     xml_list:
         description:
         - The list of XML you are working with.
-        type: list
         - Required if C(batch=yes).
+        type: list
+
 author:
     - Richard Levenberg (@richardcs)
 '''
