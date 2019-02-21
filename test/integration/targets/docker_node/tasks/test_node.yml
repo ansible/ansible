@@ -1,0 +1,309 @@
+---
+- block:
+  - name: Make sure we're not already using Docker swarm
+    docker_swarm:
+      state: absent
+      force: true
+
+  - name: Try to get docker_node_facts when docker is not running in swarm mode
+    docker_node_facts:
+    ignore_errors: yes
+    register: output
+
+  - name: assert failure when called when swarm is not in use or not run on manager node
+    assert:
+      that:
+         - 'output is failed'
+         - 'output.msg == "Error running docker swarm module: must run on swarm manager node"'
+
+  - name: Create a Swarm cluster
+    docker_swarm:
+      state: present
+    register: output
+
+  - name: assert changed when create a new swarm cluster
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.actions[0] | regex_search("New Swarm cluster created: ")'
+         - 'output.swarm_facts.JoinTokens.Manager'
+         - 'output.swarm_facts.JoinTokens.Worker'
+
+  - name: Try to get docker_node_facts when docker is running in swarm mode and as manager
+    docker_node_facts:
+    register: output
+
+  - name: assert reading docker swarm node facts
+    assert:
+      that:
+         - 'output.nodes_facts | length > 0'
+         - 'output.nodes_facts[0].ID is string'
+
+  - name: Register node ID
+    set_fact:
+      nodeid: "{{ output.nodes_facts[0].ID }}"
+
+  - name: Try to set node as manager
+    docker_node:
+      hostname: "{{ nodeid }}"
+      role: manager
+    register: output
+
+  - name: assert that node role does has not changed
+    assert:
+      that:
+         - 'output is not changed'
+         - 'output.node_facts.Spec.Role == "manager"'
+
+  - name: Try to set node as worker
+    docker_node:
+      hostname: "{{ nodeid }}"
+      role: worker
+    ignore_errors: yes
+    register: output
+
+  - name: assert that node cannot change role to worker
+    assert:
+      that:
+         - 'output is failed'
+         - 'output.msg | regex_search("attempting to demote the last manager of the swarm")'
+
+  - name: Try to set node availability as paused
+    docker_node:
+      hostname: "{{ nodeid }}"
+      availability: pause
+    register: output
+
+  - name: assert node changed availability to paused
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Availability == "pause"'
+
+  - name: Try to set node availability as drained
+    docker_node:
+      hostname: "{{ nodeid }}"
+      availability: drain
+    register: output
+
+  - name: assert node changed availability to drained
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Availability == "drain"'
+
+  - name: Try to set node availability as active
+    docker_node:
+      hostname: "{{ nodeid }}"
+      availability: active
+    register: output
+
+  - name: assert node changed availability to active
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Availability == "active"'
+
+  - name: Try to add single label to swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label1: value1
+    register: output
+
+  - name: assert adding single label to swarm node
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Labels | length == 1'
+         - 'output.node_facts.Spec.Labels.label1 == "value1"'
+
+  - name: Try to add five labels to swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label2: value2
+        label3: value3
+        label4: value4
+        label5: value5
+        label6: value6
+    register: output
+
+  - name: assert adding multiple labels to swarm node
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Labels | length == 6'
+         - 'output.node_facts.Spec.Labels.label1 == "value1"'
+         - 'output.node_facts.Spec.Labels.label6 == "value6"'
+
+  - name: Update value of existing label
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label1: value1111
+    register: output
+
+  - name: assert updating single label assigned to swarm node
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Labels | length == 6'
+         - 'output.node_facts.Spec.Labels.label1 == "value1111"'
+         - 'output.node_facts.Spec.Labels.label5 == "value5"'
+
+  - name: Update value of multiple existing label
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label2: value2222
+        label3: value3333
+    register: output
+
+  - name: assert updating multiple labels assigned to swarm node
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Labels | length == 6'
+         - 'output.node_facts.Spec.Labels.label1 == "value1111"'
+         - 'output.node_facts.Spec.Labels.label3 == "value3333"'
+         - 'output.node_facts.Spec.Labels.label5 == "value5"'
+
+  - name: Try to remove single existing label from swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels_to_remove:
+        - label1
+    register: output
+
+  - name: assert removing single label from swarm node
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Labels | length == 5'
+         - '"label1" not in output.node_facts.Spec.Labels'
+         - 'output.node_facts.Spec.Labels.label3 == "value3333"'
+         - 'output.node_facts.Spec.Labels.label5 == "value5"'
+
+  - name: Try to remove single non-existing label from swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels_to_remove:
+        - labelnotexist
+    register: output
+
+  - name: assert removing single non-existing label from swarm node
+    assert:
+      that:
+         - 'output is not changed'
+         - 'output.node_facts.Spec.Labels | length == 5'
+         - '"label1" not in output.node_facts.Spec.Labels'
+         - 'output.node_facts.Spec.Labels.label3 == "value3333"'
+         - 'output.node_facts.Spec.Labels.label5 == "value5"'
+
+  - name: Try to remove two existing labels from swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels_to_remove:
+        - label2
+        - label3
+    register: output
+
+  - name: assert removing multiple labels from swarm node
+    assert:
+      that:
+         - 'output is changed'
+         - 'output.node_facts.Spec.Labels | length == 3'
+         - '"label1" not in output.node_facts.Spec.Labels'
+         - '"label2" not in output.node_facts.Spec.Labels'
+         - 'output.node_facts.Spec.Labels.label5 == "value5"'
+
+  - name: Try to remove mix of existing amd non-existing labels from swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels_to_remove:
+        - label4
+        - labelisnotthere
+    register: output
+
+  - name: assert removing mix of existing and non-existing labels from swarm node
+    assert:
+      that:
+        - 'output is changed'
+        - 'output.node_facts.Spec.Labels | length == 2'
+        - '"label1" not in output.node_facts.Spec.Labels'
+        - '"label4" not in output.node_facts.Spec.Labels'
+        - 'output.node_facts.Spec.Labels.label5 == "value5"'
+
+  - name: Try to add and remove nonoverlapping labels at the same time
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label7: value7
+        label8: value8
+      labels_to_remove:
+        - label5
+    register: output
+
+  - name: assert adding and removing nonoverlapping labels from swarm node
+    assert:
+      that:
+        - 'output is changed'
+        - 'output.node_facts.Spec.Labels | length == 3'
+        - '"label5" not in output.node_facts.Spec.Labels'
+        - 'output.node_facts.Spec.Labels.label8 == "value8"'
+
+  - name: Try to add or update and remove overlapping labels at the same time
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label22: value22
+        label6: value6666
+      labels_to_remove:
+        - label6
+        - label7
+    register: output
+
+  - name: assert adding or updating and removing overlapping labels from swarm node
+    assert:
+      that:
+        - 'output is changed'
+        - 'output.node_facts.Spec.Labels | length == 3'
+        - '"label7" not in output.node_facts.Spec.Labels'
+        - 'output.node_facts.Spec.Labels.label6 == "value6666"'
+        - 'output.node_facts.Spec.Labels.label22 == "value22"'
+
+  - name: Replace labels on swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels:
+        label11: value11
+        label12: value12
+      labels_state: replace
+    register: output
+
+  - name: assert replacing labels from swarm node
+    assert:
+      that:
+        - 'output is changed'
+        - 'output.node_facts.Spec.Labels | length == 2'
+        - '"label6" not in output.node_facts.Spec.Labels'
+        - 'output.node_facts.Spec.Labels.label12 == "value12"'
+
+  - name: Remove all labels from swarm node
+    docker_node:
+      hostname: "{{ nodeid }}"
+      labels_state: replace
+    register: output
+
+  - name: assert removing all lables from swarm node
+    assert:
+      that:
+        - 'output is changed'
+        - 'output.node_facts.Spec.Labels | length == 0'
+
+  always:
+  - name: Cleanup
+    docker_swarm:
+      state: absent
+      force: true
