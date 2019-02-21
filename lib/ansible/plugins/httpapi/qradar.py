@@ -32,9 +32,6 @@ BASE_HEADERS = {
 
 
 class HttpApi(HttpApiBase):
-    def get_session_uid(self):
-        return self.connection._session_uid
-
     def logout(self):
         response, dummy = self.send_request('POST', '/api/auth/logout')
 
