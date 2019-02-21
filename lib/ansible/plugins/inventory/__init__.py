@@ -21,10 +21,10 @@ __metaclass__ = type
 
 import hashlib
 import os
-import re
 import string
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.inventory.group import to_safe_group_name as original_safe
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import InventoryFileCacheModule
@@ -37,13 +37,11 @@ from ansible.utils.display import Display
 
 display = Display()
 
-_SAFE_GROUP = re.compile("[^A-Za-z0-9_]")
-
 
 # Helper methods
 def to_safe_group_name(name):
-    ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
-    return _SAFE_GROUP.sub("_", name)
+    # placeholder for backwards compat
+    return original_safe(name)
 
 
 def detect_range(line=None):

@@ -17,9 +17,20 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
+import re
 
 from itertools import chain
+
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native
+
+_UNSAFE_GROUP = re.compile(C.INVALID_GROUP_CHARS)
+
+
+def to_safe_group_name(name, replacer="_"):
+    ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
+    return _UNSAFE_GROUP.sub(replacer, name)
 
 
 class Group:
@@ -28,6 +39,11 @@ class Group:
     # __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
     def __init__(self, name=None):
+
+        # check for valid names
+        invalid_chars = _UNSAFE_GROUP.findall(name)
+        if invalid_chars:
+            raise AnsibleError("Invalid characters supplied in group name (%s): %s" % (to_native(name), to_native(invalid_chars)))
 
         self.depth = 0
         self.name = name
