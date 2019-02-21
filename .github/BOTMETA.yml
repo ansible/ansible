@@ -651,10 +651,10 @@ files:
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
   $module_utils/network/aci: &aci
+    keywords: [ ACI, Cisco MSC, Cisco MSO, MultiSite, Multi-Site ]
+    labels: [ aci, networking ]
     maintainers: $team_aci
-    labels:
-    - aci
-    - networking
+    notified: koladiya
   $module_utils/network/aireos:
     maintainers: jmighion
   $module_utils/network/aos:
@@ -1331,7 +1331,7 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers jmcgill298 schunduri
+  team_aci: brunocalogero dagwieers jmcgill298 mtorelli rsmeyers schunduri smnmtzgr
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
