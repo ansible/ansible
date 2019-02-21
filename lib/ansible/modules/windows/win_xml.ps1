@@ -85,155 +85,181 @@ function BackupFile($path) {
 	return $backuppath;
 }
 
+function Implement($dest, $fragment, $xpath, $backup, $type, $attribute, $state) {
+    $result = @{}
+
+    If (-Not (Test-Path -Path $dest -PathType Leaf)){
+        Fail-Json $result "Specified path $dest does not exist or is not a file."
+    }
+
+    $xmlorig = New-Object -TypeName System.Xml.XmlDocument
+    $xmlorig.XmlResolver = $null
+    Try {
+        $xmlorig.Load($dest)
+    }
+    Catch {
+        Fail-Json $result "Failed to parse file at '$dest' as an XML document: $($_.Exception.Message)"
+    }
+
+    $namespaceMgr = New-Object System.Xml.XmlNamespaceManager $xmlorig.NameTable
+    $namespace = $xmlorig.DocumentElement.NamespaceURI
+    $localname = $xmlorig.DocumentElement.LocalName
+
+    $namespaceMgr.AddNamespace($xmlorig.$localname.SchemaInfo.Prefix, $namespace)
+    
+    if ($type -eq "element") {
+        $xmlchild = $null
+        Try {
+            $xmlchild = [xml]$fragment
+        } Catch {
+            Fail-Json $result "Failed to parse fragment as XML: $($_.Exception.Message)"
+        }
+
+        $child = $xmlorig.CreateElement($xmlchild.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
+        Copy-Xml $child $xmlchild.DocumentElement $xmlorig
+
+        $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
+        if ($node.get_NodeType() -eq "Document") {
+            $node = $node.get_DocumentElement()
+        }
+        $elements = $node.get_ChildNodes()
+        [bool]$present = $false
+        [bool]$changed = $false
+        if ($elements.get_Count()) {
+            if ($debug) {
+                $err = @()
+                $result.err = {$err}.Invoke()
+            }
+            foreach ($element in $elements) {
+                try {
+                    Compare-XmlDocs $child $element
+                    $present = $true
+                    break
+                } catch {
+                    if ($debug) {
+                        $result.err.Add($_.Exception.ToString())
+                    }
+                }
+            }
+            if (!$present -and ($state -eq "present")) {
+                [void]$node.AppendChild($child)
+                $result.msg = "xml added"
+                $changed = $true
+            } elseif ($present -and ($state -eq "absent")) {
+                [void]$node.RemoveChild($element)
+                $result.msg = "xml removed"
+                $changed = $true
+            }
+        } else {
+            if ($state -eq "present") {
+                [void]$node.AppendChild($child)
+                $result.msg = "xml added"
+                $changed = $true
+            }
+        }
+
+        if ($changed) {
+            $result.changed = $true
+            if (!$check_mode) {
+                if ($backup) {
+                    $result.backup = BackupFile($dest)
+                }
+                $xmlorig.Save($dest)
+            } else {
+                $result.msg += " check mode"
+            }
+        } else {
+            $result.msg = "not changed"
+        }
+    } elseif ($type -eq "text") {
+        $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
+        [bool]$add = ($node.get_InnerText() -ne $fragment)
+        if ($add) {
+            $result.changed = $true
+            if (-Not $check_mode) {
+                if ($backup) {
+                    $result.backup = BackupFile($dest)
+                }
+                $node.set_InnerText($fragment)
+                $xmlorig.Save($dest)
+                $result.msg = "text changed"
+            } else {
+                $result.msg = "text changed check mode"
+            }
+        } else {
+            $result.msg = "not changed"
+        }
+    } elseif ($type -eq "attribute") {
+        $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
+        [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
+        if ($add -And ($state -eq "present")) {
+            $result.changed = $true
+            if (-Not $check_mode) {
+                if ($backup) {
+                    $result.backup = BackupFile($dest)
+                }
+                if (!$node.HasAttribute($attribute)) {
+                    $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+                }
+                $node.SetAttribute($attribute, $fragment)
+                $xmlorig.Save($dest)
+                $result.msg = "text changed"
+            } else {
+                $result.msg = "text changed check mode"
+            }
+        } elseif (!$add -And ($state -eq "absent")) {
+            $result.changed = $true
+            if (-Not $check_mode) {
+                if ($backup) {
+                    $result.backup = BackupFile($dest)
+                }
+                $node.RemoveAttribute($attribute)
+                $xmlorig.Save($dest)
+                $result.msg = "text changed"
+            }
+        } else {
+            $result.msg = "not changed"
+        }
+    }
+    return $result;
+}
+
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
 $debug_level = Get-AnsibleParam -obj $params -name "_ansible_verbosity" -type "int"
 $debug = $debug_level -gt 2
 
-$dest = Get-AnsibleParam $params "path" -type "path" -FailIfEmpty $true -aliases "dest", "file"
-$fragment = Get-AnsibleParam $params "fragment" -type "str" -FailIfEmpty $true -aliases "xmlstring"
-$xpath = Get-AnsibleParam $params "xpath" -type "str" -FailIfEmpty $true
-$backup = Get-AnsibleParam $params "backup" -type "bool" -Default $false
-$type = Get-AnsibleParam $params "type" -type "str" -Default "element" -ValidateSet "element", "attribute", "text"
-$attribute = Get-AnsibleParam $params "attribute" -type "str" -FailIfEmpty ($type -eq "attribute")
-$state = Get-AnsibleParam $params "state" -type "str" -Default "present"
+$batch = Get-AnsibleParam $params "batch" -type "bool" -Default $false
 
-$result = @{
-    changed = $false
-}
-
-If (-Not (Test-Path -Path $dest -PathType Leaf)){
-    Fail-Json $result "Specified path $dest does not exist or is not a file."
-}
-
-$xmlorig = New-Object -TypeName System.Xml.XmlDocument
-$xmlorig.XmlResolver = $null
-Try {
-    $xmlorig.Load($dest)
-}
-Catch {
-    Fail-Json $result "Failed to parse file at '$dest' as an XML document: $($_.Exception.Message)"
-}
-
-$namespaceMgr = New-Object System.Xml.XmlNamespaceManager $xmlorig.NameTable
-$namespace = $xmlorig.DocumentElement.NamespaceURI
-$localname = $xmlorig.DocumentElement.LocalName
-
-$namespaceMgr.AddNamespace($xmlorig.$localname.SchemaInfo.Prefix, $namespace)
-
-if ($type -eq "element") {
-    $xmlchild = $null
-    Try {
-        $xmlchild = [xml]$fragment
-    } Catch {
-        Fail-Json $result "Failed to parse fragment as XML: $($_.Exception.Message)"
-    }
-
-    $child = $xmlorig.CreateElement($xmlchild.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
-    Copy-Xml $child $xmlchild.DocumentElement $xmlorig
-
-    $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
-    if ($node.get_NodeType() -eq "Document") {
-        $node = $node.get_DocumentElement()
-    }
-    $elements = $node.get_ChildNodes()
-    [bool]$present = $false
-    [bool]$changed = $false
-    if ($elements.get_Count()) {
-        if ($debug) {
-            $err = @()
-            $result.err = {$err}.Invoke()
+if (!$batch) {
+    $dest = Get-AnsibleParam $params "path" -type "path" -FailIfEmpty $true -aliases "dest", "file"
+    $fragment = Get-AnsibleParam $params "fragment" -type "str" -FailIfEmpty $true -aliases "xmlstring"
+    $xpath = Get-AnsibleParam $params "xpath" -type "str" -FailIfEmpty $true
+    $backup = Get-AnsibleParam $params "backup" -type "bool" -Default $false
+    $type = Get-AnsibleParam $params "type" -type "str" -Default "element" -ValidateSet "element", "attribute", "text"
+    $attribute = Get-AnsibleParam $params "attribute" -type "str" -FailIfEmpty ($type -eq "attribute")
+    $state = Get-AnsibleParam $params "state" -type "str" -Default "present"
+    
+    $result = Implement $dest $fragment $xpath $backup $type $attribute $state
+} else {
+    $xml_list = Get-AnsibleParam $params "xml_list" -type "list" -FailIfEmpty $true
+    foreach ($xml in $xml_list)
+    {
+        $hashtable = @{}
+        foreach( $property in $xml.psobject.properties.name )
+        {
+            $hashtable[$property] = $xml.$property
         }
-        foreach ($element in $elements) {
-            try {
-                Compare-XmlDocs $child $element
-                $present = $true
-                break
-            } catch {
-                if ($debug) {
-                    $result.err.Add($_.Exception.ToString())
-                }
-            }
-        }
-        if (!$present -and ($state -eq "present")) {
-            [void]$node.AppendChild($child)
-            $result.msg = "xml added"
-            $changed = $true
-        } elseif ($present -and ($state -eq "absent")) {
-            [void]$node.RemoveChild($element)
-            $result.msg = "xml removed"
-            $changed = $true
-        }
-    } else {
-        if ($state -eq "present") {
-            [void]$node.AppendChild($child)
-            $result.msg = "xml added"
-            $changed = $true
-        }
-    }
+        $dest = Get-AnsibleParam $hashtable "path" -type "path" -FailIfEmpty $true -aliases "dest", "file"
+        $fragment = Get-AnsibleParam $hashtable "fragment" -type "str" -FailIfEmpty $true -aliases "xmlstring"
+        $xpath = Get-AnsibleParam $hashtable "xpath" -type "str" -FailIfEmpty $true
+        $backup = Get-AnsibleParam $hashtable "backup" -type "bool" -Default $false
+        $type = Get-AnsibleParam $hashtable "type" -type "str" -Default "element" -ValidateSet "element", "attribute", "text"
+        $attribute = Get-AnsibleParam $hashtable "attribute" -type "str" -FailIfEmpty ($type -eq "attribute")
+        $state = Get-AnsibleParam $hashtable "state" -type "str" -Default "present"
 
-    if ($changed) {
-        $result.changed = $true
-        if (!$check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            $xmlorig.Save($dest)
-        } else {
-            $result.msg += " check mode"
-        }
-    } else {
-        $result.msg = "not changed"
-    }
-} elseif ($type -eq "text") {
-    $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
-    [bool]$add = ($node.get_InnerText() -ne $fragment)
-    if ($add) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            $node.set_InnerText($fragment)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        } else {
-            $result.msg = "text changed check mode"
-        }
-    } else {
-        $result.msg = "not changed"
-    }
-} elseif ($type -eq "attribute") {
-    $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
-    [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
-    if ($add -And ($state -eq "present")) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            if (!$node.HasAttribute($attribute)) {
-	            $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
-            }
-            $node.SetAttribute($attribute, $fragment)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        } else {
-            $result.msg = "text changed check mode"
-        }
-    } elseif (!$add -And ($state -eq "absent")) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            $node.RemoveAttribute($attribute)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        }
-    } else {
-        $result.msg = "not changed"
+        $result = Implement $dest $fragment $xpath $backup $type $attribute $state
     }
 }
 

@@ -54,6 +54,16 @@ options:
         - The attribute name if the type is 'attribute'.
         - Required if C(type=attribute).
         type: str
+    batch:
+        description:
+        - Whether to use the batch mode.
+        type: bool
+        default: no
+    xml_list:
+        description:
+        - The list of XML you are working with.
+        type: list
+        - Required if C(batch=yes).
 author:
     - Richard Levenberg (@richardcs)
 '''
@@ -72,6 +82,25 @@ EXAMPLES = r'''
    attribute: 'sslEnabledProtocols'
    fragment: 'TLSv1,TLSv1.1,TLSv1.2'
    type: attribute
+
+# xml_list:
+#   - type: attribute
+#     path: C:\Tomcat\conf\server.xml
+#     xpath: '//Server/Service[@name="Catalina"]/Connector[@port="9443"]'
+#     attribute: 'sslEnabledProtocols'
+#     fragment: 'TLSv1,TLSv1.1,TLSv1.2'
+  
+#   - type: attribute
+#     path: C:\Tomcat\conf\server.xml
+#     xpath: '//Server/Service[@name="Catalina"]/Connector[@port="9444"]'
+#     attribute: 'sslEnabledProtocols'
+#     fragment: 'TLSv1,TLSv1.1,TLSv1.2'
+
+- name: Apply sslEnabledProtocols to Tomcat's server.xml
+  win_xml:
+   batch: yes
+   xml_list: "{{ xml_list }}"
+
 '''
 
 RETURN = r'''
