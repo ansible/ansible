@@ -47,7 +47,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_secprof_dns.Connection')
     return connection_class_mock
 
 
@@ -61,7 +61,7 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_dnsfilter_profile_modify(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
     #  Fixture sets used:###########################
 
