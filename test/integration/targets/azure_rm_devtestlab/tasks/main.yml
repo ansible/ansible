@@ -315,6 +315,16 @@
     that:
       - output.changed
 
+- name: Get Facts of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+  register: output
+
+- debug:
+    var: output
+
 #- name: Delete instance of DevTest Labs artifacts source
 #  azure_rm_devtestlabartifactsource:
 #    resource_group: "{{ resource_group }}"
