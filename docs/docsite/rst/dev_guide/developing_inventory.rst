@@ -330,7 +330,7 @@ A skeleton example of this JSON object is::
 			]
 		},
 		"ungrouped": {
-      "children":[
+      "children": [
       ]
     }
 	}
