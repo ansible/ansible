@@ -45,6 +45,8 @@ class ActionModule(ActionBase):
             pause = self._task.args.get('pause', 1)
 
             send_newline = self._task.args.get('send_newline', False)
+            newline_char = self._task.args.get('newline_char', b"\n")
+            exit_cmd = self._task.args.get('exit_cmd', b'exit')
 
             login_prompt = self._task.args.get('login_prompt', "login: ")
             password_prompt = self._task.args.get('password_prompt', "Password: ")
@@ -61,26 +63,26 @@ class ActionModule(ActionBase):
                 output = []
                 try:
                     if send_newline:
-                        tn.write(b'\n')
+                        tn.write(newline_char)
 
                     tn.read_until(to_bytes(login_prompt))
-                    tn.write(to_bytes(user + "\n"))
+                    tn.write(to_bytes(user + newline_char))
 
                     if password:
                         tn.read_until(to_bytes(password_prompt))
-                        tn.write(to_bytes(password + "\n"))
+                        tn.write(to_bytes(password + newline_char))
 
                     tn.expect(list(map(to_bytes, prompts)))
 
                     for cmd in commands:
                         display.vvvvv('>>> %s' % cmd)
-                        tn.write(to_bytes(cmd + "\n"))
+                        tn.write(to_bytes(cmd + newline_char))
                         index, match, out = tn.expect(list(map(to_bytes, prompts)))
                         display.vvvvv('<<< %s' % cmd)
                         output.append(out)
                         sleep(pause)
 
-                    tn.write(b"exit\n")
+                    tn.write(exit_cmd + newline_char)
 
                 except EOFError as e:
                     result['failed'] = True
