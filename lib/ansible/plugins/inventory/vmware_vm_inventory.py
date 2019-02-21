@@ -11,7 +11,7 @@ DOCUMENTATION = '''
     name: vmware_vm_inventory
     plugin_type: inventory
     short_description: VMware Guest inventory source
-    version_added: 2.7
+    version_added: "2.7"
     author:
       - Abhijeet Kasurde (@Akasurde)
     description:
@@ -112,32 +112,25 @@ except ImportError:
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 
 
-class BaseVMwareInventory(BaseInventoryPlugin, Cacheable):
-    def _set_credentials(self):
+class BaseVMwareInventory:
+    def __init__(self, hostname, username, password, port, validate_certs, with_tags):
+        self.hostname = hostname
+        self.username = username
+        self.password = password
+        self.port = port
+        self.with_tags = with_tags
+        self.validate_certs = validate_certs
+        self.content = None
+        self.rest_content = None
+
+    def do_login(self):
         """
-        Set credentials
+        Check requirements and do login
         """
-        self.hostname = self.get_option('hostname')
-        self.username = self.get_option('username')
-        self.password = self.get_option('password')
-        self.port = self.get_option('port')
-        self.with_tags = self.get_option('with_tags')
-
-        self.validate_certs = self.get_option('validate_certs')
-
-        if not HAS_VSPHERE and self.with_tags:
-            raise AnsibleError("Unable to find 'vSphere Automation SDK' Python library which is required."
-                               " Please refer this URL for installation steps"
-                               " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
-
-        if not HAS_VCLOUD and self.with_tags:
-            raise AnsibleError("Unable to find 'vCloud Suite SDK' Python library which is required."
-                               " Please refer this URL for installation steps"
-                               " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
-
-        if not all([self.hostname, self.username, self.password]):
-            raise AnsibleError("Missing one of the following : hostname, username, password. Please read "
-                               "the documentation for more information.")
+        self.check_requirements()
+        self.content = self._login()
+        if self.with_tags:
+            self.rest_content = self._login_vapi()
 
     def _login_vapi(self):
         """
@@ -214,8 +207,8 @@ class BaseVMwareInventory(BaseInventoryPlugin, Cacheable):
         atexit.register(connect.Disconnect, service_instance)
         return service_instance.RetrieveContent()
 
-    @staticmethod
-    def check_requirements():
+    def check_requirements(self):
+        """ Check all requirements for this inventory are satisified"""
         if not HAS_REQUESTS:
             raise AnsibleParserError('Please install "requests" Python module as this is required'
                                      ' for VMware Guest dynamic inventory plugin.')
@@ -236,6 +229,20 @@ class BaseVMwareInventory(BaseInventoryPlugin, Cacheable):
                 raise AnsibleParserError("'requests' library version should"
                                          " be >= %s, found: %s." % (".".join([str(w) for w in required_version]),
                                                                     requests.__version__))
+
+        if not HAS_VSPHERE and self.with_tags:
+            raise AnsibleError("Unable to find 'vSphere Automation SDK' Python library which is required."
+                               " Please refer this URL for installation steps"
+                               " - https://code.vmware.com/web/sdk/65/vsphere-automation-python")
+
+        if not HAS_VCLOUD and self.with_tags:
+            raise AnsibleError("Unable to find 'vCloud Suite SDK' Python library which is required."
+                               " Please refer this URL for installation steps"
+                               " - https://code.vmware.com/web/sdk/60/vcloudsuite-python")
+
+        if not all([self.hostname, self.username, self.password]):
+            raise AnsibleError("Missing one of the following : hostname, username, password. Please read "
+                               "the documentation for more information.")
 
     def _get_managed_objects_properties(self, vim_type, properties=None):
         """
@@ -296,7 +303,7 @@ class BaseVMwareInventory(BaseInventoryPlugin, Cacheable):
         return result
 
 
-class InventoryModule(BaseVMwareInventory):
+class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     NAME = 'vmware_vm_inventory'
 
@@ -320,13 +327,27 @@ class InventoryModule(BaseVMwareInventory):
         """
         Parses the inventory file
         """
-        self.check_requirements()
-
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
 
         cache_key = self.get_cache_key(path)
 
         config_data = self._read_config_data(path)
+
+        # set _options from config data
+        self._consume_options(config_data)
+
+        self.pyv = BaseVMwareInventory(
+            hostname=self.get_option('hostname'),
+            username=self.get_option('username'),
+            password=self.get_option('password'),
+            port=self.get_option('port'),
+            with_tags=self.get_option('with_tags'),
+            validate_certs=self.get_option('validate_certs')
+        )
+
+        self.pyv.do_login()
+
+        self.pyv.check_requirements()
 
         source_data = None
         if cache:
@@ -339,14 +360,6 @@ class InventoryModule(BaseVMwareInventory):
             except KeyError:
                 update_cache = True
 
-        # set _options from config data
-        self._consume_options(config_data)
-
-        self._set_credentials()
-        self.content = self._login()
-        if self.with_tags:
-            self.rest_content = self._login_vapi()
-
         using_current_cache = cache and not update_cache
         cacheable_results = self._populate_from_source(source_data, using_current_cache)
 
@@ -354,6 +367,7 @@ class InventoryModule(BaseVMwareInventory):
             self.cache.set(cache_key, cacheable_results)
 
     def _populate_from_cache(self, source_data):
+        """ Populate cache using source data """
         hostvars = source_data.pop('_meta', {}).get('hostvars', {})
         for group in source_data:
             if group == 'all':
@@ -364,10 +378,6 @@ class InventoryModule(BaseVMwareInventory):
                 for host in hosts:
                     self._populate_host_vars([host], hostvars.get(host, {}), group)
                 self.inventory.add_child('all', group)
-        if not source_data:
-            for host in hostvars:
-                self.inventory.add_host(host)
-                self._populate_host_vars([host], hostvars.get(host, {}))
 
     def _populate_from_source(self, source_data, using_current_cache):
         """
@@ -380,11 +390,12 @@ class InventoryModule(BaseVMwareInventory):
 
         cacheable_results = {'_meta': {'hostvars': {}}}
         hostvars = {}
-        objects = self._get_managed_objects_properties(vim_type=vim.VirtualMachine, properties=['name'])
+        objects = self.pyv._get_managed_objects_properties(vim_type=vim.VirtualMachine,
+                                                           properties=['name'])
 
-        if self.with_tags:
-            tag_svc = Tag(self.rest_content)
-            tag_association = TagAssociation(self.rest_content)
+        if self.pyv.with_tags:
+            tag_svc = Tag(self.pyv.rest_content)
+            tag_association = TagAssociation(self.pyv.rest_content)
 
             tags_info = dict()
             tags = tag_svc.list()
@@ -413,7 +424,7 @@ class InventoryModule(BaseVMwareInventory):
                     self._populate_host_properties(vm_obj, current_host)
 
                     # Only gather facts related to tag if vCloud and vSphere is installed.
-                    if HAS_VCLOUD and HAS_VSPHERE and self.with_tags:
+                    if HAS_VCLOUD and HAS_VSPHERE and self.pyv.with_tags:
                         # Add virtual machine to appropriate tag group
                         vm_mo_id = vm_obj.obj._GetMoId()
                         vm_dynamic_id = DynamicID(type='VirtualMachine', id=vm_mo_id)
@@ -462,7 +473,7 @@ class InventoryModule(BaseVMwareInventory):
             'runtime.maxMemoryUsage',
             'customValue',
         ]
-        field_mgr = self.content.customFieldsManager.field
+        field_mgr = self.pyv.content.customFieldsManager.field
 
         for vm_prop in vm_properties:
             if vm_prop == 'customValue':
@@ -471,5 +482,5 @@ class InventoryModule(BaseVMwareInventory):
                                                 [y.name for y in field_mgr if y.key == cust_value.key][0],
                                                 cust_value.value)
             else:
-                vm_value = self._get_object_prop(vm_obj.obj, vm_prop.split("."))
+                vm_value = self.pyv._get_object_prop(vm_obj.obj, vm_prop.split("."))
                 self.inventory.set_variable(current_host, vm_prop, vm_value)
