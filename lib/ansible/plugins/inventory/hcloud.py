@@ -144,7 +144,7 @@ class InventoryModule(BaseInventoryPlugin):
         if self.get_option("images"):
             tmp = []
             for server in self.servers:
-                if server.image is not None and server.image.name in self.get_option("images"):
+                if server.image is not None and server.image.os_flavor in self.get_option("images"):
                     tmp.append(server)
             self.servers = tmp
 
@@ -177,12 +177,11 @@ class InventoryModule(BaseInventoryPlugin):
         self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
 
     def verify_file(self, path):
-        """ return true/false if this is possibly a valid file for this plugin to consume """
-        valid = False
-        if super(InventoryModule, self).verify_file(path):
-            if path.endswith((self.NAME + ".yaml", self.NAME + ".yml")):
-                valid = True
-        return valid
+        """Return the possibly of a file being consumable by this plugin."""
+        return (
+                super(InventoryModule, self).verify_file(path) and
+                path.endswith((self.NAME + ".yaml", self.NAME + ".yml"))
+        )
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
@@ -192,6 +191,7 @@ class InventoryModule(BaseInventoryPlugin):
         self._add_groups()
         self._get_servers()
         self._filter_servers()
+        print(self.servers)
         for server in self.servers:
             self.inventory.add_host(server.name)
             self.inventory.add_host(server.name, group="location_" + server.datacenter.location.name)
