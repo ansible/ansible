@@ -74,10 +74,10 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
-      - C(remount) specified that the device will be remounted.
+      - C(remounted) specifies that the device will be remounted.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted, remount ]
+    choices: [ absent, mounted, present, unmounted, remounted ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
@@ -593,7 +593,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remount']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -726,14 +726,15 @@ def main():
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'present':
         name, changed = set_mount(module, args)
-    elif state == 'remount':
-        res = 0
+    elif state == 'remounted':
 
-        res, msg = remount(module, args)
+        if not module.check_mode:
+    	    res, msg = remount(module, args)
+
+            if res:
+                module.fail_json(msg="Error remounting %s: %s" % (name, msg))
+
         changed = True
-
-        if res:
-            module.fail_json(msg="Error remounting %s: %s" % (name, msg))
     else:
         module.fail_json(msg='Unexpected position reached')
 
