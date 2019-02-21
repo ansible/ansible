@@ -43,8 +43,6 @@
             "ecs:RunTask",
             "ecs:UpdateService",
             "elasticloadbalancing:Describe*",
-            "iam:AttachRolePolicy",
-            "iam:CreateRole",
             "iam:GetPolicy",
             "iam:GetPolicyVersion",
             "iam:GetRole",
