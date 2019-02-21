@@ -1,0 +1,5 @@
+minor_changes:
+  - "docker_swarm_service - Added support for passing period as string to ``restart_policy_delay``."
+  - "docker_swarm_service - Added support for passing period as string to ``restart_policy_window``."
+  - "docker_swarm_service - Added support for passing period as string to ``update_delay``."
+  - "docker_swarm_service - Added support for passing period as string to ``update_monitor``."

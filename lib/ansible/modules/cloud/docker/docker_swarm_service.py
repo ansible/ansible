@@ -403,19 +403,25 @@ options:
   restart_policy_delay:
     description:
       - Delay between restarts.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--restart-delay) option of C(docker service create).
-    type: int
+    type: raw
   restart_policy_window:
     description:
       - Restart policy evaluation window.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--restart-window) option of C(docker service create).
-    type: int
+    type: raw
   update_delay:
     description:
-      - Rolling update delay in nanoseconds.
+      - Rolling update delay.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-delay) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(10).
-    type: int
+    type: raw
   update_parallelism:
     description:
       - Rolling update parallelism.
@@ -432,10 +438,12 @@ options:
       - pause
   update_monitor:
     description:
-      - Time to monitor updated tasks for failures, in nanoseconds.
+      - Time to monitor updated tasks for failures.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-monitor) option of C(docker service create).
       - Requires API version >= 1.25.
-    type: int
+    type: raw
   update_max_failure_ratio:
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
@@ -714,6 +722,23 @@ def get_docker_environment(env, env_files):
     return sorted(env_list)
 
 
+def get_nanoseconds_from_raw_option(name, value):
+    if value is None:
+        return None
+    elif isinstance(value, int):
+        return value
+    elif isinstance(value, string_types):
+        try:
+            return int(value)
+        except ValueError:
+            return convert_duration_to_nanosecond(value)
+    else:
+        raise ValueError(
+            'Invalid type for %s %s (%s). Only string or int allowed.'
+            % (name, value, type(value))
+        )
+
+
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
@@ -837,12 +862,8 @@ class DockerService(DockerBaseClass):
         s.stop_signal = ap['stop_signal']
         s.restart_policy = ap['restart_policy']
         s.restart_policy_attempts = ap['restart_policy_attempts']
-        s.restart_policy_delay = ap['restart_policy_delay']
-        s.restart_policy_window = ap['restart_policy_window']
-        s.update_delay = ap['update_delay']
         s.update_parallelism = ap['update_parallelism']
         s.update_failure_action = ap['update_failure_action']
-        s.update_monitor = ap['update_monitor']
         s.update_max_failure_ratio = ap['update_max_failure_ratio']
         s.update_order = ap['update_order']
         s.user = ap['user']
@@ -878,6 +899,23 @@ class DockerService(DockerBaseClass):
             )
 
         s.env = get_docker_environment(ap['env'], ap['env_files'])
+
+        s.restart_policy_delay = get_nanoseconds_from_raw_option(
+            'restart_policy_delay',
+            ap['restart_policy_delay']
+        )
+        s.restart_policy_window = get_nanoseconds_from_raw_option(
+            'restart_policy_window',
+            ap['restart_policy_window']
+        )
+        s.update_delay = get_nanoseconds_from_raw_option(
+            'update_delay',
+            ap['update_delay']
+        )
+        s.update_monitor = get_nanoseconds_from_raw_option(
+            'update_monitor',
+            ap['update_monitor']
+        )
 
         if ap['force_update']:
             s.force_update = int(str(time.time()).replace('.', ''))
@@ -945,6 +983,7 @@ class DockerService(DockerBaseClass):
                 service_s['gid'] = param_m['gid']
                 service_s['mode'] = param_m['mode']
                 s.secrets.append(service_s)
+
         return s
 
     def compare(self, os):
@@ -1725,13 +1764,13 @@ def main():
         reserve_memory=dict(type='str'),
         resolve_image=dict(type='bool', default=True),
         restart_policy=dict(type='str', choices=['none', 'on-failure', 'any']),
-        restart_policy_delay=dict(type='int'),
+        restart_policy_delay=dict(type='raw'),
         restart_policy_attempts=dict(type='int'),
-        restart_policy_window=dict(type='int'),
-        update_delay=dict(type='int'),
+        restart_policy_window=dict(type='raw'),
+        update_delay=dict(type='raw'),
         update_parallelism=dict(type='int'),
         update_failure_action=dict(type='str', choices=['continue', 'pause']),
-        update_monitor=dict(type='int'),
+        update_monitor=dict(type='raw'),
         update_max_failure_ratio=dict(type='float'),
         update_order=dict(type='str'),
         user=dict(type='str'),
