@@ -5,6 +5,52 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.8
+======
+
+Release Summary
+---------------
+
+| Release Date: 2019-02-21
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Raise AnsibleConnectionError on winrm connnection errors
+
+Bugfixes
+--------
+
+- Backport of https://github.com/ansible/ansible/pull/46478 , fixes name collision in haproxy module
+- Fix aws_ec2 inventory plugin code to automatically populate regions when missing as documentation states, also leverage config system vs self default/type validation
+- Fix unexpected error when using Jinja2 native types with non-strict constructed keyed_groups (https://github.com/ansible/ansible/issues/52158).
+- If an ios module uses a section filter on a device which does not support it, retry the command without the filter.
+- acme_challenge_cert_helper - the module no longer crashes when the required ``cryptography`` library cannot be found.
+- azure_rm_managed_disk_facts - added missing implementation of listing managed disks by resource group
+- azure_rm_mysqlserver - fixed issues with passing parameters while updating existing server instance
+- azure_rm_postgresqldatabase - fix force_update bug (https://github.com/ansible/ansible/issues/50978).
+- azure_rm_postgresqldatabase - fix force_update bug.
+- azure_rm_postgresqlserver - fixed issues with passing parameters while updating existing server instance
+- azure_rm_sqlserver - fix for tags support
+- azure_rm_virtualmachine - fixed several crashes in module
+- azure_rm_virtualmachine_facts - fix crash when vm created from custom image
+- azure_rm_virtualmachine_facts - fixed crash related to VM with managed disk attached
+- ec2 - Correctly sets the end date of the Spot Instance request. Sets `ValidUntil` value in proper way so it will be auto-canceled through `spot_wait_timeout` interval.
+- openssl_csr - fixes idempotence problem with PyOpenSSL backend when no Subject Alternative Names were specified.
+- openstack inventory plugin - send logs from sdk to stderr so they do not combine with output
+- psrp - do not display bootstrap wrapper for each module exec run
+- redfish_utils - get standard properties for firmware entries (https://github.com/ansible/ansible/issues/49832)
+- remote home directory - Disallow use of remote home directories that include relative pathing by means of `..` (CVE-2019-3828) (https://github.com/ansible/ansible/pull/52133)
+- ufw - when using ``state: reset`` in check mode, ``ufw --dry-run reset`` was executed, which causes a loss of firewall rules. The ``ufw`` module was adjusted to no longer run ``ufw --dry-run reset`` to prevent this from happening.
+- ufw: make sure that only valid values for ``direction`` are passed on.
+- update GetBiosBootOrder to use standard Redfish resources (https://github.com/ansible/ansible/issues/47571)
+- win become - Fix some scenarios where become failed to create an elevated process
+- win_psmodule - the NuGet package provider will be updated, if needed, to avoid issue under adding a repository
+- yum - Remove incorrect disable_includes error message when using disable_excludes (https://github.com/ansible/ansible/issues/51697)
+- yum - properly handle a proxy config in yum.conf for an unauthenticated proxy
+
 v2.7.7
 ======
 

@@ -786,3 +786,36 @@ releases:
     - win_power_plan-windows10.yaml
     - xdg_systemd_fix.yml
     release_date: '2019-02-07'
+  2.7.8:
+    codename: In the Light
+    fragments:
+    - 45269-fix-vm-crashing.yaml
+    - 45378-fix-sql-tags.yml
+    - 46478-haproxy-fix-drain-mode.yaml
+    - 49485-ios-retry-section.yaml
+    - 49704-fix-vm-facts-crash.yaml
+    - 50120-fix-vm-facts-managed-disk.yaml
+    - 50402-ufw-check-direction.yml
+    - 51028-get-standard-redfish-properties-for-firmware-entries.yaml
+    - 51473-openssl_csr-idempotence.yaml
+    - 51535-ec2-fix-spot-request-end-date.yaml
+    - 51653-fixing-azure-postgresql-parameters.yaml
+    - 51661-fixing-azure-mysql-parameters.yaml
+    - 51697-disable_excludes-errors-with-disable-includes-message.yaml
+    - 51764-update-getbiosbootorder-to-standard-redfish-resources.yaml
+    - 51781-fixing-managed-disk-facts.yaml
+    - 51795-acme_challenge_cert_helper-module-fail.yaml
+    - 51827-openstack_logs_to_stderr.yml
+    - 52130-win_psmodule-update_nuget.yaml
+    - 52158-jinja2-native-types-contructed-keyed-groups.yaml
+    - 52388-postgresqldatabase-fix-force-update.yml
+    - 52389-mysqldatabase-fix-force-update.yaml
+    - allow_regions_aws_invp.yml
+    - disallow-relative-homedir.yaml
+    - psrp-display-exec-output.yaml
+    - ufw-reset-check-mode.yaml
+    - v2.7.8_summary.yaml
+    - win-become-elevation.yaml
+    - winrm-ansible-conn-error.yaml
+    - yum-unauthenticated-proxy.yaml
+    release_date: '2019-02-21'
