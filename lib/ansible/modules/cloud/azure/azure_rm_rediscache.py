@@ -113,7 +113,7 @@ options:
     state:
       description:
         - Assert the state of the redis cache.
-        - Use 'present' to create or update a redis cache and 'absent' to delete it.
+        - Use C(present) to create or update a redis cache and C(absent) to delete it.
       default: present
       choices:
         - absent

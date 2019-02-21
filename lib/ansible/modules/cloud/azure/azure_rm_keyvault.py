@@ -143,7 +143,7 @@ options:
         type: bool
     state:
         description:
-            - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+            - Assert the state of the KeyVault. Use C(present) to create or update an KeyVault and C(absent) to delete it.
         default: present
         choices:
             - absent

@@ -129,7 +129,7 @@ options:
     state:
       description:
         - Assert the state of the Database Account.
-        - Use 'present' to create or update an Database Account and 'absent' to delete it.
+        - Use C(present) to create or update an Database Account and C(absent) to delete it.
       default: present
       choices:
         - absent

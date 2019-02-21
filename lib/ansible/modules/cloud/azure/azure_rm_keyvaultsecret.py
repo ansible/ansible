@@ -33,8 +33,8 @@ options:
             - Secret to be secured by keyvault.
     state:
         description:
-            - Assert the state of the subnet. Use 'present' to create or update a secret and
-              'absent' to delete a secret .
+            - Assert the state of the subnet. Use C(present) to create or update a secret and
+              C(absent) to delete a secret .
         default: present
         choices:
             - absent

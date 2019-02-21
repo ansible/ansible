@@ -35,8 +35,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the availability set. Use 'present' to create or update a availability set and
-              'absent' to delete a availability set.
+            - Assert the state of the availability set. Use C(present) to create or update a availability set and
+              C(absent) to delete a availability set.
         default: present
         choices:
             - absent

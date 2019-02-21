@@ -39,8 +39,8 @@ options:
             - PEM password.
     state:
         description:
-            - Assert the state of the key. Use 'present' to create a key and
-              'absent' to delete a key.
+            - Assert the state of the key. Use C(present) to create a key and
+              C(absent) to delete a key.
         default: present
         choices:
             - absent

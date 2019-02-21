@@ -46,8 +46,8 @@ options:
             - Dictionary containing application settings
     state:
         description:
-            - Assert the state of the Function App. Use 'present' to create or update a Function App and
-              'absent' to delete.
+            - Assert the state of the Function App. Use C(present) to create or update a Function App and
+              C(absent) to delete.
         default: present
         choices:
             - absent

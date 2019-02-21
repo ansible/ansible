@@ -49,8 +49,8 @@ options:
             - security_group_name
     state:
         description:
-            - Assert the state of the subnet. Use 'present' to create or update a subnet and
-              'absent' to delete a subnet.
+            - Assert the state of the subnet. Use C(present) to create or update a subnet and
+              C(absent) to delete a subnet.
         default: present
         choices:
             - absent

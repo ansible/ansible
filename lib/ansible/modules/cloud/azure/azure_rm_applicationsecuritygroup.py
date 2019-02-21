@@ -36,7 +36,7 @@ options:
     state:
       description:
         - Assert the state of the Application Security Group.
-        - Use 'present' to create or update an Application Security Group and 'absent' to delete it.
+        - Use C(present) to create or update an Application Security Group and C(absent) to delete it.
       default: present
       choices:
         - absent
