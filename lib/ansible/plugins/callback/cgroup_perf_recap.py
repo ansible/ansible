@@ -256,10 +256,10 @@ class CallbackModule(CallbackBase):
 
         for feature in self._features:
             data = {
-                'counter': to_bytes(self._counter),
-                'task_uuid': to_bytes(task_uuid),
-                'feature': to_bytes(feature),
-                'ext': to_bytes(output_format)
+                b'counter': to_bytes(self._counter),
+                b'task_uuid': to_bytes(task_uuid),
+                b'feature': to_bytes(feature),
+                b'ext': to_bytes(output_format)
             }
 
             if self._files.get(feature):
