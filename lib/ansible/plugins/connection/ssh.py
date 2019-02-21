@@ -487,16 +487,24 @@ class Connection(ConnectionBase):
 
         if not self._play_context.private_key_file:
             return
+        from ansible.module_utils.six import BytesIO
         from ansible.parsing.dataloader import DataLoader
-        # from ansible.module_utils.six import BytesIO
+        from ansible.parsing.vault import VaultSecret
         key_path = os.path.expanduser(self._play_context.private_key_file)
         dl = DataLoader()
-        # TODO: replace this with BytesIO in-memory file
-        decrypted_key_path = dl.get_real_file(key_path, decrypt=True)
-        # pk = BytesIO(decrypted_contents)
-        with open(decrypted_key_path) as pk:
-            subprocess.Popen(['ssh-add', '-'], stdin=pk, env=self._get_subprocess_env())
-        dl.cleanup_tmp_file(decrypted_key_path)
+        dl.set_vault_secrets(
+            (
+                ('', VaultSecret(b'secret')),
+            ),
+        )
+        decrypted_contents = dl._get_file_contents(key_path)[0]
+        ssh_add_proc = subprocess.Popen(
+            ('ssh-add', '-'), stdin=subprocess.PIPE,
+            env=self._get_subprocess_env(),
+        )
+        with BytesIO(decrypted_contents) as pk:
+            ssh_add_proc.communicate(input=pk.getvalue())
+        ssh_add_proc.terminate()
 
     def _destroy_ssh_agent(self):
         self._ssh_agent.terminate()
