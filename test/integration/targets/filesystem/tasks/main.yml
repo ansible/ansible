@@ -26,4 +26,7 @@
     # https://www.kernel.org/pub/linux/utils/util-linux/v2.21/v2.21-ChangeLog
     # https://anonscm.debian.org/cgit/collab-maint/pkg-util-linux.git/commit/?id=04f7020eadf31efc731558df92daa0a1c336c46c
     - 'not (item.key == "btrfs" and (ansible_distribution == "Ubuntu" and ansible_distribution_release == "trusty"))'
+    # The xfsprogs package on newer versions of OpenSUSE (15+) require Python 3, we skip this on our Python 2 container
+    # OpenSUSE 42.3 Python2 and the other py3 containers are not affected so we will continue to run that
+    - 'not (item.key == "xfs" and ansible_os_family == "Suse" and ansible_python.version.major == 2 and ansible_distribution_major_version|int != 42)'
   loop: "{{ lookup('dict', tested_filesystems) }}"
