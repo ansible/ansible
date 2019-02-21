@@ -727,9 +727,8 @@ def main():
     elif state == 'present':
         name, changed = set_mount(module, args)
     elif state == 'remounted':
-
         if not module.check_mode:
-    	    res, msg = remount(module, args)
+            res, msg = remount(module, args)
 
             if res:
                 module.fail_json(msg="Error remounting %s: %s" % (name, msg))
