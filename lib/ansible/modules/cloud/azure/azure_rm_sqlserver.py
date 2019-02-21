@@ -48,8 +48,8 @@ options:
                ce. Possible values include: 'SystemAssigned'"
     state:
         description:
-            - Assert the state of the SQL server. Use 'present' to create or update a server and
-              'absent' to delete a server.
+            - Assert the state of the SQL server. Use C(present) to create or update a server and
+              C(absent) to delete a server.
         default: present
         choices:
             - absent

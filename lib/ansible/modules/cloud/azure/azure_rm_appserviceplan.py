@@ -55,7 +55,7 @@ options:
     state:
       description:
         - Assert the state of the app service plan.
-        - Use 'present' to create or update an app service plan and 'absent' to delete it.
+        - Use C(present) to create or update an app service plan and C(absent) to delete it.
       default: present
       choices:
         - absent
