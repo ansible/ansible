@@ -173,7 +173,7 @@ files:
     labels: [ cloud, vultr ]
     maintainers: $team_vultr
   $modules/cloud/webfaction/: quentinsf
-  $modules/cloud/xenserver/xenserver_guest.py: bvitnik
+  $modules/cloud/xenserver/: bvitnik
   $modules/clustering/k8s/:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
@@ -1312,6 +1312,7 @@ files:
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
   test/units/module_utils/test_acme.py: *crypto
+  test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
     <<: *docker
     support: community
@@ -1322,6 +1323,7 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
+  test/units/modules/cloud/xenserver/: bvitnik
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
