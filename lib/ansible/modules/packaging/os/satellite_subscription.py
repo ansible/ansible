@@ -30,19 +30,22 @@ options:
   hostname:
     description:
       - The name or IP address of the Red Hat Satellite server.
-      type: str
+    type: str
     required: yes
   user:
     description:
       - Satellite server user.
+    type: str
     required: yes
   password:
     description:
       - Satellite server password.
+    type: str
     required: yes
   org_id:
     description:
       - Satellite organization ID to work on
+    type: int
     required: yes
   state:
     description:
@@ -55,13 +58,14 @@ options:
          remove all other subscriptions assigned to the guests. Useful if you configured a VDC
          subscription on a hypervisor that didn't have it before."
       - "optimize: use to replace subscriptions on physical servers with a higher multiplier with subscriptions with a lower multiplier."
+    type: str
     choices: [absent, autoattach, disable_autoattach, optimize, present, vdcguests]
     default: autoattach
   content_hosts:
     description:
       - A list of content hosts to use.
       - This can also be a hostname search pattern accepted by the satellite.
-      type: list
+    type: list
   subscription:
     description:
       - List of subscriptions to assign or remove
@@ -69,6 +73,7 @@ options:
       - "This field is used for the search for subscriptions, it can contain (part of) the subscription
          name, eg 'Red Hat Enterprise Linux Server Entry Level, Self-support' or another search query
          as used in the satellite, eg: 'product_id=RH00005S'"
+    type: list
   unique:
     description:
      - Whether to remove all subscriptions to this host.
@@ -163,16 +168,11 @@ EXAMPLES = """
 """
 
 RETURN = """
-stdout:
+msg:
   description: The result of the requested action
   returned: success
   type: str
   sample: Subscription assigned
-stderr:
-  description: Errors when trying to execute action
-  returned: success
-  type: str
-  sample: Authentication failed
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -437,7 +437,7 @@ def main():
                         # skip to next host
                         break
 
-    module.exit_json(changed=changed, data=result, stderr=errors)
+    module.exit_json(changed=changed, msg=result)
 
 
 if __name__ == "__main__":
