@@ -21,6 +21,9 @@ run_test() {
    { ansible-playbook -i 'localhost,' -c local "${testname}.yml" \
       > >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
       2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2) 0</dev/null
+   # clean up Python 2 vs 3 differences
+   sed -i 's/[[:blank:]]*$//' "${OUTFILE}.${testname}.stdout"
+   sed -i 's/[[:blank:]]*$//' "${OUTFILE}.${testname}.stderr"
    diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
    diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
 }
