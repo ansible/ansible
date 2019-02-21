@@ -89,14 +89,10 @@ class InventoryModule(BaseInventoryPlugin):
     def _configure_hcloud_client(self):
         self.api_token = self.get_option("token")
         if self.api_token is None:
-            self.api_token = os.getenv("HCLOUD_TOKEN")
-            if self.api_token is None:
-                raise AnsibleError(
-                    "Please specify a token, via the option token or via environment variable HCLOUD_TOKEN")
+            raise AnsibleError(
+                "Please specify a token, via the option token or via environment variable HCLOUD_TOKEN")
 
-        self.endpoint = os.getenv("HCLOUD_ENDPOINT")
-        if self.endpoint is None:
-            self.endpoint = "https://api.hetzner.cloud/v1"
+        self.endpoint = os.getenv("HCLOUD_ENDPOINT") or "https://api.hetzner.cloud/v1"
 
         self.client = hcloud.Client(token=self.api_token,
                                     api_endpoint=self.endpoint,
