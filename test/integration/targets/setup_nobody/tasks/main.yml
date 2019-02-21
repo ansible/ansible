@@ -1,0 +1,16 @@
+---
+- name: create nobody group
+  group:
+    name: nobody
+    gid: 65534
+    state: present
+  notify: remove nobody group
+
+- name: create nobody user
+  user:
+    name: nobody
+    comment: nobody
+    group: nobody
+    uid: 65534
+    state: present
+  notify: remove nobody user
