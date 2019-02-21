@@ -1,0 +1,204 @@
+# Test code for the osx_defaults module.
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Check if name is required for present
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    state: present
+  register: missing_value
+  ignore_errors: yes
+
+- name: Test if state and value are required together
+  assert:
+    that:
+    - "'following are missing: value' in '{{ missing_value['msg'] }}'"
+
+- name: Change value of AppleMeasurementUnits to centimeter in check_mode
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    value: Centimeter
+    state: present
+  register: measure_task_check_mode
+  check_mode: yes
+
+- name: Test if AppleMeasurementUnits value is changed to Centimeters in check_mode
+  assert:
+    that:
+    - measure_task_check_mode.changed
+
+- name: Find the current value of AppleMeasurementUnits
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    state: list
+  register: apple_measure_value
+
+- debug:
+    msg: "{{ apple_measure_value['value'] }}"
+
+- set_fact:
+    new_value: "Centimeters"
+  when: apple_measure_value['value'] == 'Inches' or apple_measure_value['value'] == None
+
+- set_fact:
+    new_value: "Inches"
+  when: apple_measure_value['value'] == 'Centimeters'
+
+- name: Change value of AppleMeasurementUnits to {{ new_value }}
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    value: "{{ new_value }}"
+    state: present
+  register: change_value
+
+- name: Test if AppleMeasurementUnits value is changed to {{ new_value }}
+  assert:
+    that:
+    - change_value.changed
+
+- name: Again change value of AppleMeasurementUnits to {{ new_value }}
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    value: "{{ new_value }}"
+    state: present
+  register: change_value
+
+- name: Again test if AppleMeasurementUnits value is not changed to {{ new_value }}
+  assert:
+    that:
+    - not change_value.changed
+
+- name: Check a fake setting for delete operation
+  osx_defaults:
+    domain: com.ansible.fake_value
+    key: ExampleKeyToRemove
+    state: list
+  register: list_fake_value
+
+- debug:
+    msg: "{{ list_fake_value }}"
+
+- name: Check if fake value is listed
+  assert:
+    that:
+      - not list_fake_value.changed
+
+- name: Create a fake setting for delete operation
+  osx_defaults:
+    domain: com.ansible.fake_value
+    key: ExampleKeyToRemove
+    state: present
+    value: sample
+  register: present_fake_value
+
+- debug:
+    msg: "{{ present_fake_value }}"
+
+- name: Check if fake is created
+  assert:
+    that:
+      - present_fake_value.changed
+  when: present_fake_value.changed
+
+- name: List a fake setting
+  osx_defaults:
+    domain: com.ansible.fake_value
+    key: ExampleKeyToRemove
+    state: list
+  register: list_fake
+
+- debug:
+    msg: "{{ list_fake }}"
+
+- name: Delete a fake setting
+  osx_defaults:
+    domain: com.ansible.fake_value
+    key: ExampleKeyToRemove
+    state: absent
+  register: absent_task
+
+- debug:
+    msg: "{{ absent_task }}"
+
+- name: Check if fake setting is deleted
+  assert:
+    that:
+      - absent_task.changed
+  when: present_fake_value.changed
+
+- name: Try deleting a fake setting again
+  osx_defaults:
+    domain: com.ansible.fake_value
+    key: ExampleKeyToRemove
+    state: absent
+  register: absent_task
+
+- debug:
+    msg: "{{ absent_task }}"
+
+- name: Check if fake setting is not deleted
+  assert:
+    that:
+      - not absent_task.changed
+
+- name: Delete operation in check_mode
+  osx_defaults:
+    domain: com.ansible.fake_value
+    key: ExampleKeyToRemove
+    state: absent
+  register: absent_check_mode_task
+  check_mode: yes
+
+- debug:
+    msg: "{{ absent_check_mode_task }}"
+
+- name: Check delete operation with check mode
+  assert:
+    that:
+      - not absent_check_mode_task.changed
+
+
+- name: Use different data types and check if it works with them
+  osx_defaults:
+    domain: com.ansible.fake_values
+    key: "{{ item.key }}"
+    type: "{{ item.type }}"
+    value: "{{ item.value }}"
+    state: present
+  with_items: &data_type
+    - { type: 'int', value: 1, key: 'sample_int'}
+    - { type: 'integer', value: 1, key: 'sample_int_2'}
+    - { type: 'bool', value: True, key: 'sample_bool'}
+    - { type: 'boolean', value: True, key: 'sample_bool_2'}
+    - { type: 'date', value: "2019-02-19 10:10:10", key: 'sample_date'}
+    - { type: 'float', value: 1.2, key: 'sample_float'}
+    - { type: 'string', value: 'sample', key: 'sample_string'}
+    - { type: 'array', value: ['1', '2'], key: 'sample_array'}
+  register: test_data_types
+
+- assert:
+    that: "{{ item.changed }}"
+  with_items: "{{ test_data_types.results }}"
+
+- name: Use different data types and delete them
+  osx_defaults:
+    domain: com.ansible.fake_values
+    key: "{{ item.key }}"
+    value: "{{ item.value }}"
+    type: "{{ item.type }}"
+    state: absent
+  with_items: *data_type
+  register: test_data_types
+
+- assert:
+    that: "{{ item.changed }}"
+  with_items: "{{ test_data_types.results }}"
