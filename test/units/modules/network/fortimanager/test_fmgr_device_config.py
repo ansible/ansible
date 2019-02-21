@@ -59,6 +59,7 @@ def fixture_data(request):
 
 fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
+
 def test_update_device_hostname(fixture_data, mocker):
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
