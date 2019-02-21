@@ -1,14 +1,11 @@
 ---
-- name: Create random container name prefix
+- name: Create random container/volume name
   set_fact:
-    cname_prefix: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+    cname: "{{ 'ansible-ctest-%0x' % ((2**32) | random) }}"
+    vname: "{{ 'ansible-vtest-%0x' % ((2**32) | random) }}"
 
 - debug:
-    msg: "Using container name prefix {{ cname_prefix }}"
-
-- name: Registering container name
-  set_fact:
-    cname: "{{ cname_prefix ~ '-hi' }}"
+    msg: "Using container name '{{ cname }}' and volume name '{{ vname }}'"
 
 - block:
   - name: Get info on Docker host
@@ -43,7 +40,7 @@
 
   - name: Create a volume
     docker_volume:
-      name: "{{ cname }}"
+      name: "{{ vname }}"
     register: volume_output
 
   - assert:
@@ -267,12 +264,11 @@
   always:
   - name: Delete container
     docker_container:
-      image: alpine:3.8
-      command: '/bin/sh -c "sleep 10m"'
       name: "{{ cname }}"
       state: absent
+      force_kill: yes
 
   - name: Delete volume
     docker_volume:
-      name: "{{ cname }}"
+      name: "{{ vname }}"
       state: absent
