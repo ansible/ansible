@@ -23,20 +23,20 @@ options:
     path:
         description:
         - The path of remote servers XML.
+        - Required if C(batch=no).
         type: str
-        required: true
         aliases: [ dest, file ]
     fragment:
         description:
         - The string representation of the XML fragment to be added.
+        - Required if C(batch=no).
         type: str
-        required: true
         aliases: [ xmlstring ]
     xpath:
         description:
         - The node of the remote server XML where the fragment will go.
+        - Required if C(batch=no).
         type: str
-        required: true
     backup:
         description:
         - Whether to backup the remote server's XML before applying the change.
@@ -45,8 +45,8 @@ options:
     type:
         description:
         - The type of XML you are working with.
+        - Required if C(batch=no).
         type: str
-        required: yes
         default: element
         choices: [ attribute, element, text ]
     attribute:
@@ -59,11 +59,13 @@ options:
         - Whether to use the batch mode.
         type: bool
         default: no
+        version_added: "2.8"
     xml_list:
         description:
         - The list of XML you are working with.
         - Required if C(batch=yes).
         type: list
+        version_added: "2.8"
 
 author:
     - Richard Levenberg (@richardcs)
