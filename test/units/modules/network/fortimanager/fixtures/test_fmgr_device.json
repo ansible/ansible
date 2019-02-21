@@ -1,5 +1,8 @@
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Auto Commit for: fmgr_device
     "add_device": [
         {
             "url": "/dvm/cmd/add/device/",
@@ -932,6 +935,7 @@
             "post_method": "exec"
         }
     ]
+<<<<<<< HEAD
 =======
    "add_device": [
       {
@@ -1865,5 +1869,7 @@
          "post_method": "exec"
       }
    ]
+>>>>>>> Auto Commit for: fmgr_device
+=======
 >>>>>>> Auto Commit for: fmgr_device
 }
