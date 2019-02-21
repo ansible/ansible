@@ -29,7 +29,7 @@ version_added: "0.9"
 options:
   key_name:
     description:
-      - key pair to use on the instance
+      - key pair to use on the instance. The SSH key must exist on AWS in order to use this argument. If you want to generate keys from Ansible, take a look at `ec2_key` module.
     aliases: ['keypair']
   id:
     version_added: "1.1"
