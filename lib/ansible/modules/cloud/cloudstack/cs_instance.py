@@ -413,7 +413,7 @@ instance_name:
   type: str
   sample: i-44-3992-VM
 user-data:
-  description: Optionnal data sent to the instance.
+  description: Optional data sent to the instance.
   returned: success
   type: str
   sample: VXNlciBkYXRhIGV4YW1wbGUK

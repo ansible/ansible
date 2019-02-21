@@ -82,10 +82,10 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 - name: Ensure a host is present but disabled
   cs_host:
-    name: ix-pod01-esx01.example.com
-    cluster: vcenter.example.com/ch-zrh-ix/pod01-cluster01
+    name: pod01.zone01.example.com
+    cluster: vcenter.example.com/zone01/cluster01
     pod: pod01
-    zone: ch-zrh-ix-01
+    zone: zone01
     hypervisor: VMware
     allocation_state: disabled
     host_tags:
@@ -95,22 +95,22 @@ EXAMPLES = '''
 
 - name: Ensure an existing host is disabled
   cs_host:
-    name: ix-pod01-esx01.example.com
-    zone: ch-zrh-ix-01
+    name: pod01.zone01.example.com
+    zone: zone01
     allocation_state: disabled
   delegate_to: localhost
 
 - name: Ensure an existing host is enabled
   cs_host:
-    name: ix-pod01-esx01.example.com
-    zone: ch-zrh-ix-01
+    name: pod01.zone01.example.com
+    zone: zone01
     allocation_state: enabled
   delegate_to: localhost
 
 - name: Ensure a host is absent
   cs_host:
-    name: ix-pod01-esx01.example.com
-    zone: ch-zrh-ix-01
+    name: pod01.zone01.example.com
+    zone: zone01
     state: absent
   delegate_to: localhost
 '''
