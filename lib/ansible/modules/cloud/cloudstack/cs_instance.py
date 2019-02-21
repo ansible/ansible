@@ -20,128 +20,157 @@ short_description: Manages instances and virtual machines on Apache CloudStack b
 description:
     - Deploy, start, update, scale, restart, restore, stop and destroy instances.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Host name of the instance. C(name) can only contain ASCII letters.
       - Name will be generated (UUID) by CloudStack if not specified and can not be changed afterwards.
       - Either C(name) or C(display_name) is required.
+    type: str
   display_name:
     description:
       - Custom display name of the instances.
-      - Display name will be set to C(name) if not specified.
-      - Either C(name) or C(display_name) is required.
+      - Display name will be set to I(name) if not specified.
+      - Either I(name) or I(display_name) is required.
+    type: str
   group:
     description:
       - Group in where the new instance should be in.
+    type: str
   state:
     description:
       - State of the instance.
+    type: str
     default: present
     choices: [ deployed, started, stopped, restarted, restored, destroyed, expunged, present, absent ]
   service_offering:
     description:
       - Name or id of the service offering of the new instance.
       - If not set, first found service offering is used.
+    type: str
   cpu:
     description:
       - The number of CPUs to allocate to the instance, used with custom service offerings
+    type: int
   cpu_speed:
     description:
       - The clock speed/shares allocated to the instance, used with custom service offerings
+    type: int
   memory:
     description:
       - The memory allocated to the instance, used with custom service offerings
+    type: int
   template:
     description:
       - Name, display text or id of the template to be used for creating the new instance.
       - Required when using I(state=present).
-      - Mutually exclusive with C(ISO) option.
+      - Mutually exclusive with I(iso) option.
+    type: str
   iso:
     description:
       - Name or id of the ISO to be used for creating the new instance.
       - Required when using I(state=present).
-      - Mutually exclusive with C(template) option.
+      - Mutually exclusive with I(template) option.
+    type: str
   template_filter:
     description:
       - Name of the filter used to search for the template or iso.
-      - Used for params C(iso) or C(template) on I(state=present).
+      - Used for params I(iso) or I(template) on I(state=present).
       - The filter C(all) was added in 2.6.
+    type: str
     default: executable
     choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
     aliases: [ iso_filter ]
-    version_added: '2.1'
+    version_added: 2.1
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new instance.
       - Relevant when using I(state=present), but only considered if not set on ISO/template.
       - If not set or found on ISO/template, first found hypervisor will be used.
+    type: str
     choices: [ KVM, kvm, VMware, vmware, BareMetal, baremetal, XenServer, xenserver, LXC, lxc, HyperV, hyperv, UCS, ucs, OVM, ovm, Simulator, simulator ]
   keyboard:
     description:
       - Keyboard device type for the instance.
+    type: str
     choices: [ 'de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us' ]
   networks:
     description:
       - List of networks to use for the new instance.
+    type: list
     aliases: [ network ]
   ip_address:
     description:
       - IPv4 address for default instance's network during creation.
+    type: str
   ip6_address:
     description:
       - IPv6 address for default instance's network.
+    type: str
   ip_to_networks:
     description:
       - "List of mappings in the form I({'network': NetworkName, 'ip': 1.2.3.4})"
       - Mutually exclusive with C(networks) option.
+    type: list
     aliases: [ ip_to_network ]
   disk_offering:
     description:
       - Name of the disk offering to be used.
+    type: str
   disk_size:
     description:
       - Disk size in GByte required if deploying instance from ISO.
+    type: int
   root_disk_size:
     description:
       - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup
         (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
+    type: int
   security_groups:
     description:
       - List of security groups the instance to be applied to.
+    type: list
     aliases: [ security_group ]
   host:
     description:
       - Host on which an instance should be deployed or started on.
       - Only considered when I(state=started) or instance is running.
       - Requires root admin privileges.
+    type: str
     version_added: 2.6
   domain:
     description:
       - Domain the instance is related to.
+    type: str
   account:
     description:
       - Account the instance is related to.
+    type: str
   project:
     description:
       - Name of the project the instance to be deployed in.
+    type: str
   zone:
     description:
       - Name of the zone in which the instance should be deployed.
       - If not set, default zone is used.
+    type: str
   ssh_key:
     description:
       - Name of the SSH key to be deployed on the new instance.
+    type: str
   affinity_groups:
     description:
       - Affinity groups names to be applied to the new instance.
+    type: list
     aliases: [ affinity_group ]
   user_data:
     description:
       - Optional data (ASCII) that can be sent to the instance upon a successful deployment.
       - The data will be automatically base64 encoded.
       - Consider switching to HTTP_POST by using I(CLOUDSTACK_METHOD=post) to increase the HTTP_GET size limit of 2KB to 32 KB.
+    type: str
   force:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
@@ -152,11 +181,12 @@ options:
       - Enables a volume shrinkage when the new size is smaller than the old one.
     type: bool
     default: no
-    version_added: '2.7'
+    version_added: 2.7
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "If you want to delete all tags, set a empty list e.g. I(tags: [])."
+    type: list
     aliases: [ tag ]
   poll_async:
     description:
@@ -166,7 +196,8 @@ options:
   details:
     description:
       - Map to specify custom parameters.
-    version_added: '2.6'
+    type: dict
+    version_added: 2.6
 extends_documentation_fragment: cloudstack
 '''
 
@@ -280,12 +311,12 @@ password_enabled:
   sample: true
 password:
   description: The password of the instance if exists.
-  returned: success
+  returned: if available
   type: str
   sample: Ge2oe7Do
 ssh_key:
   description: Name of SSH key deployed to instance.
-  returned: success
+  returned: if available
   type: str
   sample: key@work
 domain:
@@ -310,18 +341,18 @@ default_ip:
   sample: 10.23.37.42
 default_ip6:
   description: Default IPv6 address of the instance.
-  returned: success
+  returned: if available
   type: str
   sample: 2a04:c43:c00:a07:4b4:beff:fe00:74
-  version_added: '2.6'
+  version_added: 2.6
 public_ip:
   description: Public IP address with instance via static NAT rule.
-  returned: success
+  returned: if available
   type: str
   sample: 1.2.3.4
 iso:
   description: Name of ISO the instance was deployed with.
-  returned: success
+  returned: if available
   type: str
   sample: Debian-8-64bit
 template:
@@ -363,7 +394,7 @@ affinity_groups:
 tags:
   description: List of resource tags associated with the instance.
   returned: success
-  type: dict
+  type: list
   sample: '[ { "key": "foo", "value": "bar" } ]'
 hypervisor:
   description: Hypervisor related to this instance.
@@ -381,6 +412,11 @@ instance_name:
   returned: success
   type: str
   sample: i-44-3992-VM
+user-data:
+  description: Optionnal data sent to the instance.
+  returned: success
+  type: str
+  sample: VXNlciBkYXRhIGV4YW1wbGUK
 '''
 
 import base64
