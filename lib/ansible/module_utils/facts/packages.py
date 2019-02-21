@@ -13,28 +13,29 @@ from ansible.module_utils.common.process import get_bin_path
 
 def get_all_pkg_managers():
 
-    return dict([(obj.__name__.lower(), obj) for obj in get_all_subclasses(PkgMgr) if obj not in(CLIMgr, LibMgr)])
+    return dict([(obj.__name__.lower(), obj) for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr)])
 
 
 class PkgMgr(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def is_available(self):
-        ''' This method is supposed to return True/False if the package manager is currently installed/usable'''
+        # This method is supposed to return True/False if the package manager is currently installed/usable
+        # It can also 'prep' the required systems in the process of detecting availability
         pass
 
     @abstractmethod
     def list_installed(self):
-        ''' This method should return a list of installed packages, each list item will be passed to get_package_details '''
+        # This method should return a list of installed packages, each list item will be passed to get_package_details
         pass
 
     @abstractmethod
     def get_package_details(self, package):
-        ''' This takes a 'package' item and returns a dictionary with the package information, name and version are minimal requirements '''
+        # This takes a 'package' item and returns a dictionary with the package information, name and version are minimal requirements
         pass
 
     def get_packages(self):
-        ''' Take all of the above and return a dictionary of lists of dictionaries (package = list of installed versions) '''
+        # Take all of the above and return a dictionary of lists of dictionaries (package = list of installed versions)
 
         installed_packages = {}
         for package in self.list_installed():
