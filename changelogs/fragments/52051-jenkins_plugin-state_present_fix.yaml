@@ -1,0 +1,2 @@
+bugfixes:
+   - jenkins_plugin - Prevent plugin to be reinstalled when state=present (https://github.com/ansible/ansible/issues/43728)
