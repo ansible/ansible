@@ -1,36 +1,30 @@
-####
-# setup portstree
-
-- name: silent install of subversion and ca root certs with pkgng
-  pkgng:
-    name: subversion,ca_root_nss
-    state: present
-
-- name: checkout a tested revision of the ports tree to make the tests less dependent on externals
-  subversion:
-    repo: https://svn.FreeBSD.org/ports/head
-    dest: /usr/ports
-    revision: 493256
-
 ###
 # check ports setup
 - name: check for existence of screen directory
   stat:
     path: /usr/ports/sysutils/screen
   register: dir_sysutils_screen
-  
-- fail:
-    msg: "could not find directory /usr/ports/sysutils/screen"
-  when: dir_sysutils_screen.stat.exists == False
 
 - name: check for existence of sudo directory
   stat:
     path: /usr/ports/sysutils/screen
   register: dir_security_sudo
+
+
+# setup portstree if needed
+- name: silent install of subversion and ca root certs with pkgng
+  pkgng:
+    name: subversion,ca_root_nss
+    state: present
+  when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
   
-- fail:
-    msg: "could not find directory /usr/ports/security/sudo"
-  when: dir_security_sudo.stat.exists == False
+- name: checkout a tested revision of the ports tree to make the tests less dependent on externals
+  subversion:
+    repo: https://svn.FreeBSD.org/ports/head
+    dest: /usr/ports
+    revision: 493256
+    force: yes
+  when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
 
 
 ####
