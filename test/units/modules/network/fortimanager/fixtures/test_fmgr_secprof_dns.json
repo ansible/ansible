@@ -1,41 +1,5 @@
 {
-   "fmgr_dnsfilter_profile_addsetdelete": [
-      {
-         "paramgram_used": {
-            "comment": "Created by Ansible Module TEST", 
-            "ftgd-dns": {
-               "options": null, 
-               "filters": {
-                  "action": null, 
-                  "category": null, 
-                  "log": null
-               }
-            }, 
-            "name": "Ansible_DNS_Profile", 
-            "adom": "root", 
-            "redirect-portal": null, 
-            "sdns-ftgd-err-log": null, 
-            "youtube-restrict": null, 
-            "sdns-domain-log": null, 
-            "domain-filter": {
-               "domain-filter-table": null
-            }, 
-            "log-all-domain": null, 
-            "mode": "delete", 
-            "block-botnet": null, 
-            "safe-search": null, 
-            "external-ip-blocklist": null, 
-            "block-action": null
-         }, 
-         "raw_response": {
-            "status": {
-               "message": "OK", 
-               "code": 0
-            }, 
-            "url": "/pm/config/adom/root/obj/dnsfilter/profile/Ansible_DNS_Profile"
-         }, 
-         "post_method": "delete"
-      }, 
+   "fmgr_dnsfilter_profile_modify": [
       {
          "raw_response": {
             "status": {
@@ -43,6 +7,11 @@
                "code": 0
             }, 
             "url": "/pm/config/adom/root/obj/dnsfilter/profile"
+         }, 
+         "datagram_sent": {
+            "comment": "Created by Ansible Module TEST", 
+            "name": "Ansible_DNS_Profile", 
+            "block-action": "block"
          }, 
          "paramgram_used": {
             "comment": "Created by Ansible Module TEST", 
