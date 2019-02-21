@@ -2,6 +2,9 @@
   set_fact:
     lab_name: "lab{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     vn_name: "vn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    vm_name: "vn{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    artifacts_name: myartifacts
+    github_token: "{{ lookup('env','GITHUB_ACCESS_TOKEN') }}"
   run_once: yes
 
 - name: Create instance of Lab -- check mode
@@ -96,7 +99,7 @@
       - output.labs[0]['provisioning_state'] != None
       - output.labs[0]['vault_name'] != None
 
-- name: Create instance of DebTest Labs virtual network
+- name: Create instance of DevTest Labs virtual network
   azure_rm_devtestlabvirtualnetwork:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
@@ -109,7 +112,7 @@
     that:
       - output.changed
 
-- name: Update instance of DebTest Labs virtual network with same parameters
+- name: Update instance of DevTest Labs virtual network with same parameters
   azure_rm_devtestlabvirtualnetwork:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
@@ -122,7 +125,7 @@
     that:
       - output.changed == false
 
-- name: Update instance of DebTest Labs virtual network with changed description
+- name: Update instance of DevTest Labs virtual network with changed description
   azure_rm_devtestlabvirtualnetwork:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
@@ -169,6 +172,160 @@
       - output.virtualnetworks[0]['external_provider_resource_id'] != None
       - output.virtualnetworks[0]['description'] != None
       - output.virtualnetworks[0]['provisioning_state'] != None
+
+#- name: Create instance of DevTest Labs artifacts source
+#  azure_rm_devtestlabartifactsource:
+#    resource_group: "{{ resource_group }}"
+#    lab_name: "{{ lab_name }}"
+#    name: "{{ artifacts_name }}"
+#    uri: https://github.com/Azure/azure_preview_modules.git
+#    source_type: github
+#    folder_path: /tasks
+#    security_token: "{{ github_token }}"
+#  register: output 
+#- name: Assert if the change was correctly reported
+#  assert:
+#    that:
+#      - output.changed
+
+#- name: Update instance of DevTest Labs artifacts source with same parameters
+#  azure_rm_devtestlabartifactsource:
+#    resource_group: "{{ resource_group }}"
+#    lab_name: "{{ lab_name }}"
+#    name: "{{ artifacts_name }}"
+#    uri: https://github.com/Azure/azure_preview_modules.git
+#    source_type: github
+#    folder_path: /tasks
+#    security_token: "{{ github_token }}"
+#  register: output 
+#- name: Assert that nothing was changed
+#  assert:
+#    that:
+#      - output.changed == false
+
+#- name: Update instance of DevTest Labs artifacts source, add display name, change folder
+#  azure_rm_devtestlabartifactsource:
+#    resource_group: "{{ resource_group }}"
+#    lab_name: "{{ lab_name }}"
+#    name: "{{ artifacts_name }}"
+#    uri: https://github.com/Azure/azure_preview_modules.git
+#    source_type: github
+#    folder_path: /library
+#    security_token: "{{ github_token }}"
+#    display_name: My Artifacts Source
+#  register: output 
+#- name: Assert that nothing was changed
+#  assert:
+#    that:
+#      - output.changed
+
+- name: Create instance of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+    notes: Virtual machine notes, just something....
+    os_type: linux
+    vm_size: Standard_A2_v2
+    user_name: dtladmin
+    password: ZSasfovobocu$$21!
+    lab_subnet:
+      virtual_network_name: "{{ vn_name }}"
+      name: "{{ vn_name }}Subnet"
+    disallow_public_ip_address: no
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      os_type: Linux
+      version: latest
+#    artifacts:
+#      - source_name: "{{ artifacts_name }}"
+#        source_path: "/Artifacts/linux-install-mongodb"
+    allow_claim: no
+    expiration_date: "2029-02-22T01:49:12.117974Z"
+  register: output
+
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Update instance of DTL Virtual Machine with same parameters
+  azure_rm_devtestlabvirtualmachine:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+    notes: Virtual machine notes, just something....
+    os_type: linux
+    vm_size: Standard_A2_v2
+    user_name: dtladmin
+    password: ZSasfovobocu$$21!
+    lab_subnet:
+      virtual_network_name: "{{ vn_name }}"
+      name: "{{ vn_name }}Subnet"
+    disallow_public_ip_address: no
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      os_type: Linux
+      version: latest
+#    artifacts:
+#      - source_name: "{{ artifacts_name }}"
+#        source_path: "/Artifacts/linux-install-mongodb"
+    allow_claim: no
+    expiration_date: "2029-02-22T01:49:12.117974Z"
+  register: output
+
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - output.changed == false
+
+- name: Update instance of DTL Virtual Machine - change notes
+  azure_rm_devtestlabvirtualmachine:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+    notes: Virtual machine notes, just something.... more text
+    os_type: linux
+    vm_size: Standard_A2_v2
+    user_name: dtladmin
+    password: ZSasfovobocu$$21!
+    lab_subnet:
+      virtual_network_name: "{{ vn_name }}"
+      name: "{{ vn_name }}Subnet"
+    disallow_public_ip_address: no
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      os_type: Linux
+      version: latest
+#    artifacts:
+#      - source_name: "{{ artifacts_name }}"
+#        source_path: "/Artifacts/linux-install-mongodb"
+    allow_claim: no
+    expiration_date: "2029-02-22T01:49:12.117974Z"
+  register: output
+
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+#- name: Delete instance of DevTest Labs artifacts source
+#  azure_rm_devtestlabartifactsource:
+#    resource_group: "{{ resource_group }}"
+#    lab_name: "{{ lab_name }}"
+#    name: "{{ artifacts_name }}"
+#    state: absent
+#  register: output 
+#- name: Assert that change was correctly registered
+#  assert:
+#    that:
+#      - output.changed
 
 - name: Delete instance of Lab -- check mode
   azure_rm_devtestlab:
