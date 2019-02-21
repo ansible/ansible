@@ -44,6 +44,18 @@
   # Test that path is checked: alternatives must fail when path is nonexistent
   - import_tasks: path_is_checked.yml
 
+  ##########
+  # Slaves
+  - block:
+    - include_tasks: remove_links.yml
+    - include_tasks: setup_test.yml
+    # at least two iterations again
+    - include_tasks: tests_slaves.yml
+      with_sequence: start=2 end=3
+    vars:
+      with_alternatives: False
+      mode: auto
+
   always:
     - include_tasks: remove_links.yml
 

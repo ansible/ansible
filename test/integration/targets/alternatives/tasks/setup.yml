@@ -13,3 +13,11 @@
     group: root
     mode: 0755
   with_sequence: start=1 end=4
+
+- template:
+    src: dummy_command
+    dest: '/usr/bin/dummy{{ item }}'
+    owner: root
+    group: root
+    mode: 0755
+  with_sequence: start=1 end=4 format=slave%d

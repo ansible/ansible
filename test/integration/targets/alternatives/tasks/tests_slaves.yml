@@ -1,0 +1,21 @@
+- name: update dummy alternative w/ slave
+  alternatives:
+    name: dummy
+    path: '/usr/bin/dummy{{ item }}'
+    link: /usr/bin/dummy
+    priority: '10'
+    slaves:
+      - name: dummyslave
+        path: '/usr/bin/dummyslave{{ item }}'
+        link: /usr/bin/dummyslave
+  register: alternative
+
+- name: execute dummyslave command
+  shell: dummyslave
+  register: cmd
+
+- name: check expected command was executed
+  assert:
+    that:
+      - 'alternative is changed'
+      - 'cmd.stdout == "dummyslave{{ item }}"'
