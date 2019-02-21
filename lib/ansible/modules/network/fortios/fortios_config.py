@@ -31,8 +31,8 @@ options:
     description:
       - Only for partial backup, you can restrict by giving expected configuration path (ex. firewall address).
     default: ""
-notes:
-  - This module requires pyFG python library
+requirements:
+  - pyFG
 """
 
 EXAMPLES = """
