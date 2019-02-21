@@ -163,6 +163,7 @@ class NetAppOntapInterface(object):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.argument_spec.update(dict(
             state=dict(required=False, choices=[
                        'present', 'absent'], default='present'),
@@ -179,7 +180,7 @@ class NetAppOntapInterface(object):
             subnet_name=dict(required=False, type='str'),
             is_auto_revert=dict(required=False, type='bool', default=None),
             protocols=dict(required=False, type='list'),
-            force_subnet_association=dict(required=False, type=bool, default=None)
+            force_subnet_association=dict(required=False, type='bool', default=None)
         ))
 
         self.module = AnsibleModule(
