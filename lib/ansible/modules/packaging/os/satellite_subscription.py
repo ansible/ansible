@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {"metadata_version": "1.1", "status": ["preview"], "supported
 DOCUMENTATION = """
 ---
 module: satellite_subscription
-short_description: Red Hat Satellite subcription (license) mangement module
+short_description: Manage host subscriptions (licenses) on Red Hat Satellite
 description:
   - This module allows to assign or remove subscriptions to hosts in the satellite
   - It works on the Satellite side, so not from the client side like redhat_subscription.
