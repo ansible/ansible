@@ -61,7 +61,7 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
     #  Fixture sets used:###########################
 
@@ -72,7 +72,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     # name: Ansible_pool4_overload
     # adom: ansible
     # startip: 10.10.10.10
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # comments: Created by ansible
     # permit-any-host: None
     # arp-reply: enable
@@ -86,7 +85,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     ##################################################
     ##################################################
     # permit-any-host: None
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # num-blocks-per-user: None
     # name: Ansible_pool4_121
     # adom: ansible
@@ -110,7 +108,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     # name: Ansible_pool4_fixed_port
     # adom: ansible
     # startip: 10.10.40.10
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # comments: Created by ansible
     # permit-any-host: None
     # arp-reply: enable
@@ -124,7 +121,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     ##################################################
     ##################################################
     # permit-any-host: None
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # num-blocks-per-user: 1
     # name: Ansible_pool4_port_block_allocation
     # adom: ansible
@@ -148,7 +144,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     # name: Ansible_pool4_overload
     # adom: ansible
     # startip: None
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # comments: Created by ansible
     # permit-any-host: None
     # arp-reply: None
@@ -162,7 +157,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     ##################################################
     ##################################################
     # permit-any-host: None
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # num-blocks-per-user: None
     # name: Ansible_pool4_121
     # adom: ansible
@@ -186,7 +180,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     # name: Ansible_pool4_fixed_port
     # adom: ansible
     # startip: None
-    # dynamic_mapping: {'endip': None, 'num-blocks-per-user': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'associated-interface': None, 'source-startip': None, 'permit-any-host': None, 'type': None}
     # comments: Created by ansible
     # permit-any-host: None
     # arp-reply: None
@@ -200,7 +193,6 @@ def test_fmgr_fwobj_ippool_modify(fixture_data, mocker):
     ##################################################
     ##################################################
     # permit-any-host: None
-    # dynamic_mapping: {'num-blocks-per-user': None, 'source-endip': None, 'arp-reply': None, 'pba-timeout': None, 'endip': None, 'block-size': None, 'startip': None, 'arp-intf': None, 'comments': None, 'permit-any-host': None, 'associated-interface': None, 'source-startip': None, 'type': None}
     # num-blocks-per-user: None
     # name: Ansible_pool4_port_block_allocation
     # adom: ansible
