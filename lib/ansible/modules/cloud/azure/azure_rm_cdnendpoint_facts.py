@@ -24,6 +24,14 @@ description:
     - Get facts for a specific Azure CDN endpoint or all Azure CDN endpoints.
 
 options:
+    resource_group:
+        description:
+            - Name of resource group where this CDN profile belongs to.
+        required: true
+    profile_name:
+        description:
+            - Name of CDN profile.
+        required: true
     name:
         description:
             - Limit results to a specific Azure CDN endpoint.
@@ -43,41 +51,16 @@ author:
 '''
 
 EXAMPLES = '''
-cdnendpoints: [
-        {
-            "content_types_to_compress": [
-                "text/plain",
-                "text/html",
-                "text/css",
-                "text/javascript",
-                "application/x-javascript",
-                "application/javascript",
-                "application/json",
-                "application/xml"
-            ]
-            "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myCDN/providers/Microsoft.Cdn/profiles/myProfile/endpoints/myEndpoint1"
-            "is_compression_enabled": true
-            "is_http_allowed": true
-            "is_https_allowed": true
-            "location": "EastUs"
-            "name": "myEndpoint1"
-            "origin": {
-                "host_name": "xxxxxxxx.blob.core.windows.net",
-                "http_port": null,
-                "https_port": null,
-                "name": "xxxxxxxx-blob-core-windows-net"
-            }
-            "origin_host_header": "xxxxxxxx.blob.core.windows.net"
-            "origin_path": null
-            "profile_name": "myProfile"
-            "provisioning_state": "Succeeded"
-            "query_string_caching_behavior": "IgnoreQueryString"
-            "resource_group": "myResourceGroup"
-            "resource_state": "Running"
-            "state": "present"
-            "tags": {}
-        }
-    ]
+  - name: Get facts for all endpoints in CDN profile
+    azure_rm_cdnendpoint_facts:
+      resource_group: myResourceGroup
+      profile_name: myCDNProfile
+
+  - name: Get facts of specific CDN endpoint
+    azure_rm_cdnendpoint_facts:
+      resource_group: myResourceGroup
+      profile_name: myCDNProfile
+      name: myEndpoint1
 '''
 
 RETURN = '''
@@ -118,7 +101,7 @@ cdnendpoints:
             description
                 - ID of the Azure CDN endpoint.
             type: str
-            sample: 
+            sample:
                 "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myCDN/providers/Microsoft.Cdn/profiles/myProfile/endpoints/myEndpoint1"
         provisioning_state:
             description:
@@ -187,9 +170,7 @@ cdnendpoints:
             description:
                 - The tags of the Azure CDN endpoint.
             type: list
-            sample: [
-                {"foo": "bar"}
-            ]
+            sample: foo
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
