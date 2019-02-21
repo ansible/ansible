@@ -15,7 +15,7 @@ except ImportError:
     requests_available = False
 
 
-def host_list(sat_url, user, password, org, verify, content_host=None):
+def host_list(sat_url, user, password, org, validate_certs, content_host=None):
     """Get a list of hosts from the satellite"""
 
     apicall = "{0}/api/hosts".format(sat_url)
@@ -32,12 +32,12 @@ def host_list(sat_url, user, password, org, verify, content_host=None):
             # treat other patterns as hostnames
             params["search"] = "name={0}".format(content_host)
 
-    hosts = request(apicall, user, password, verify, True, params)
+    hosts = request(apicall, user, password, validate_certs, True, params)
 
     return hosts
 
 
-def request(url, user, password, verify=True, pagination=False, params=None):
+def request(url, user, password, validate_certs=True, pagination=False, params=None):
     """"Execute a Satellite GET API request"""
 
     per_page = 200
@@ -50,7 +50,7 @@ def request(url, user, password, verify=True, pagination=False, params=None):
 
     items = []
     done = 0
-    req = requests.get(url, timeout=60, verify=verify, params=params,
+    req = requests.get(url, timeout=60, verify=validate_certs, params=params,
                        auth=HTTPBasicAuth(user, password))
     req.raise_for_status()
     response = req.json()
@@ -63,7 +63,7 @@ def request(url, user, password, verify=True, pagination=False, params=None):
             while done < response["subtotal"]:
                 response = None
                 params["page"] += 1
-                req = requests.get(url, timeout=60, verify=verify, params=params,
+                req = requests.get(url, timeout=60, verify=validate_certs, params=params,
                                    auth=HTTPBasicAuth(user, password))
                 req.raise_for_status()
                 response = req.json()
@@ -76,10 +76,10 @@ def request(url, user, password, verify=True, pagination=False, params=None):
     return items
 
 
-def put(url, user, password, data, verify=True):
+def put(url, user, password, data, validate_certs=True):
     """"Execute a Satellite PUT API request"""
 
-    req = requests.put(url, timeout=60, verify=verify, json=data,
+    req = requests.put(url, timeout=60, verify=validate_certs, json=data,
                        auth=HTTPBasicAuth(user, password))
     req.raise_for_status()
 
