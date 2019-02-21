@@ -127,21 +127,21 @@ class InventoryModule(BaseInventoryPlugin):
             self.servers = self.client.servers.get_all()
 
     def _filter_servers(self):
-        if len(self.get_option("locations")) > 0:
+        if self.get_option("locations"):
             tmp = []
             for server in self.servers:
                 if server.datacenter.location.name in self.get_option("locations"):
                     tmp.append(server)
             self.servers = tmp
 
-        if len(self.get_option("types")) > 0:
+        if self.get_option("types"):
             tmp = []
             for server in self.servers:
                 if server.server_type.name in self.get_option("types"):
                     tmp.append(server)
             self.servers = tmp
 
-        if len(self.get_option("images")) > 0:
+        if self.get_option("images"):
             tmp = []
             for server in self.servers:
                 if server.image is not None and server.image.name in self.get_option("images"):
