@@ -248,12 +248,14 @@ def main():
         docker_volume_size=module.params['docker_volume_size'],
         flavor_id=module.params['flavor_id'],
         keypair=module.params['keypair'],
-        labels=_parse_labels(params['labels']),
         master_count=module.params['master_count'],
         master_flavor_id=module.params['master_flavor_id'],
         node_count=module.params['node_count'],
         create_timeout=module.params['timeout'],
     )
+
+    if _parse_labels(module.params['labels']):
+        kwargs['labels'] = _parse_labels(module.params['labels'])
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
