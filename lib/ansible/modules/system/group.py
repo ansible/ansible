@@ -70,6 +70,7 @@ EXAMPLES = '''
 import grp
 
 from ansible.module_utils.basic import AnsibleModule, load_platform_subclass
+from ansible.module_utils._text import to_native
 
 
 class Group(object):
@@ -120,7 +121,7 @@ class Group(object):
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
-                cmd.append(kwargs[key])
+                cmd.append(to_native(kwargs[key]))
             elif key == 'system' and kwargs[key] is True:
                 cmd.append('-r')
         cmd.append(self.name)
@@ -137,7 +138,7 @@ class Group(object):
             if key == 'gid':
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
                     cmd.append('-g')
-                    cmd.append(kwargs[key])
+                    cmd.append(to_native(kwargs[key]))
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -182,7 +183,7 @@ class SunOS(Group):
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
                 cmd.append('-g')
-                cmd.append(kwargs[key])
+                cmd.append(to_native(kwargs[key]))
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -211,7 +212,7 @@ class AIX(Group):
         cmd = [self.module.get_bin_path('mkgroup', True)]
         for key in kwargs:
             if key == 'gid' and kwargs[key] is not None:
-                cmd.append('id=' + kwargs[key])
+                cmd.append('id=' + to_native(kwargs[key]))
             elif key == 'system' and kwargs[key] is True:
                 cmd.append('-a')
         cmd.append(self.name)
@@ -223,7 +224,7 @@ class AIX(Group):
         for key in kwargs:
             if key == 'gid':
                 if kwargs[key] is not None and info[2] != int(kwargs[key]):
-                    cmd.append('id=' + kwargs[key])
+                    cmd.append('id=' + to_native(kwargs[key]))
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -256,7 +257,7 @@ class FreeBsdGroup(Group):
         cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
         if self.gid is not None:
             cmd.append('-g')
-            cmd.append('%d' % int(self.gid))
+            cmd.append(to_native(self.gid))
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
@@ -265,7 +266,7 @@ class FreeBsdGroup(Group):
         cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
-            cmd.append('%d' % int(self.gid))
+            cmd.append(to_native(self.gid))
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
@@ -304,12 +305,12 @@ class DarwinGroup(Group):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
         cmd += ['-o', 'create']
         if self.gid is not None:
-            cmd += ['-i', self.gid]
+            cmd += ['-i', to_native(self.gid)]
         elif 'system' in kwargs and kwargs['system'] is True:
             gid = self.get_lowest_available_system_gid()
             if gid is not False:
-                self.gid = str(gid)
-                cmd += ['-i', self.gid]
+                self.gid = to_native(gid)
+                cmd += ['-i', to_native(self.gid)]
         cmd += ['-L', self.name]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
@@ -327,7 +328,7 @@ class DarwinGroup(Group):
             cmd = [self.module.get_bin_path('dseditgroup', True)]
             cmd += ['-o', 'edit']
             if gid is not None:
-                cmd += ['-i', gid]
+                cmd += ['-i', to_native(gid)]
             cmd += ['-L', self.name]
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
@@ -376,7 +377,7 @@ class OpenBsdGroup(Group):
         cmd = [self.module.get_bin_path('groupadd', True)]
         if self.gid is not None:
             cmd.append('-g')
-            cmd.append('%d' % int(self.gid))
+            cmd.append(to_native(self.gid))
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -385,7 +386,7 @@ class OpenBsdGroup(Group):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
-            cmd.append('%d' % int(self.gid))
+            cmd.append(to_native(self.gid))
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
@@ -418,7 +419,7 @@ class NetBsdGroup(Group):
         cmd = [self.module.get_bin_path('groupadd', True)]
         if self.gid is not None:
             cmd.append('-g')
-            cmd.append('%d' % int(self.gid))
+            cmd.append(to_native(self.gid))
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -427,7 +428,7 @@ class NetBsdGroup(Group):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd.append('-g')
-            cmd.append('%d' % int(self.gid))
+            cmd.append(to_native(self.gid))
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
