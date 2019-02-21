@@ -1,8 +1,8 @@
 ---
 - name: Create random container/volume name
   set_fact:
-    cname: "{{ 'ansible-ctest-%0x' % ((2**32) | random) }}"
-    vname: "{{ 'ansible-vtest-%0x' % ((2**32) | random) }}"
+    cname: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
+    vname: "{{ 'ansible-test-%0x' % ((2**32) | random) }}"
 
 - debug:
     msg: "Using container name '{{ cname }}' and volume name '{{ vname }}'"
