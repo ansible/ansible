@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
@@ -51,6 +51,10 @@ options:
     description:
       - Specify the name of the current schedule, which is used to update the SnapMirror relationship.
       - Optional for create, modifiable.
+  policy:
+    description:
+      - Specify the name of the SnapMirror policy that applies to this relationship.
+    version_added: "2.8"
   source_hostname:
     description:
      - Source hostname or IP address.
@@ -76,6 +80,8 @@ EXAMPLES = """
         destination_volume: test_dest
         source_vserver: ansible_src
         destination_vserver: ansible_dest
+        schedule: hourly
+        policy: MirrorAllSnapshots
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -136,6 +142,7 @@ class NetAppONTAPSnapmirror(object):
             source_path=dict(required=False, type='str'),
             destination_path=dict(required=False, type='str'),
             schedule=dict(required=False, type='str'),
+            policy=dict(required=False, type='str'),
             relationship_type=dict(required=False, type='str',
                                    choices=['data_protection', 'load_sharing',
                                             'vault', 'restore',
@@ -196,15 +203,46 @@ class NetAppONTAPSnapmirror(object):
             snap_info['mirror_state'] = snapmirror_info.get_child_content('mirror-state')
             snap_info['status'] = snapmirror_info.get_child_content('relationship-status')
             snap_info['schedule'] = snapmirror_info.get_child_content('schedule')
+            snap_info['policy'] = snapmirror_info.get_child_content('policy')
             if snap_info['schedule'] is None:
                 snap_info['schedule'] = ""
             return snap_info
         return None
 
+    def check_if_remote_volume_exists(self):
+        """
+        Validate existence of source volume
+        :return: True if volume exists, False otherwise
+        """
+        self.set_source_cluster_connection()
+        # do a get volume to check if volume exists or not
+        volume_info = netapp_utils.zapi.NaElement('volume-get-iter')
+        volume_attributes = netapp_utils.zapi.NaElement('volume-attributes')
+        volume_id_attributes = netapp_utils.zapi.NaElement('volume-id-attributes')
+        volume_id_attributes.add_new_child('name', self.parameters['source_volume'])
+        # if source_volume is present, then source_vserver is also guaranteed to be present
+        volume_id_attributes.add_new_child('vserver-name', self.parameters['source_vserver'])
+        volume_attributes.add_child_elem(volume_id_attributes)
+        query = netapp_utils.zapi.NaElement('query')
+        query.add_child_elem(volume_attributes)
+        volume_info.add_child_elem(query)
+        try:
+            result = self.source_server.invoke_successfully(volume_info, True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error fetching source volume details %s : %s'
+                                      % (self.parameters['source_volume'], to_native(error)),
+                                  exception=traceback.format_exc())
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) > 0:
+            return True
+        return False
+
     def snapmirror_create(self):
         """
         Create a SnapMirror relationship
         """
+        if self.parameters.get('source_hostname') and self.parameters.get('source_volume'):
+            if not self.check_if_remote_volume_exists():
+                self.module.fail_json(msg='Source volume does not exist. Please specify a volume that exists')
         options = {'source-location': self.parameters['source_path'],
                    'destination-location': self.parameters['destination_path']}
         snapmirror_create = netapp_utils.zapi.NaElement.create_node_with_children('snapmirror-create', **options)
@@ -212,6 +250,8 @@ class NetAppONTAPSnapmirror(object):
             snapmirror_create.add_new_child('relationship-type', self.parameters['relationship_type'])
         if self.parameters.get('schedule'):
             snapmirror_create.add_new_child('schedule', self.parameters['schedule'])
+        if self.parameters.get('policy'):
+            snapmirror_create.add_new_child('policy', self.parameters['policy'])
         try:
             self.server.invoke_successfully(snapmirror_create, enable_tunneling=True)
             self.snapmirror_initialize()
@@ -219,23 +259,30 @@ class NetAppONTAPSnapmirror(object):
             self.module.fail_json(msg='Error creating SnapMirror %s' % to_native(error),
                                   exception=traceback.format_exc())
 
-    def delete_snapmirror(self):
+    def set_source_cluster_connection(self):
         """
-        Delete a SnapMirror relationship
-        #1. Quiesce the SnapMirror relationship at destination
-        #2. Break the SnapMirror relationship at the source
-        #3. Release the SnapMirror at source
-        #4. Delete SnapMirror at destination
+        Setup ontap ZAPI server connection for source hostname
+        :return: None
         """
-        if not self.parameters.get('source_hostname'):
-            self.module.fail_json(msg='Missing parameters for delete: Please specify the '
-                                      'source cluster hostname to release the SnapMirror relation')
         if self.parameters.get('source_username'):
             self.module.params['username'] = self.parameters['source_username']
         if self.parameters.get('source_password'):
             self.module.params['password'] = self.parameters['source_password']
         self.module.params['hostname'] = self.parameters['source_hostname']
         self.source_server = netapp_utils.setup_ontap_zapi(module=self.module)
+
+    def delete_snapmirror(self):
+        """
+        Delete a SnapMirror relationship
+        #1. Quiesce the SnapMirror relationship at destination
+        #2. Break the SnapMirror relationship at the destination
+        #3. Release the SnapMirror at source
+        #4. Delete SnapMirror at destination
+        """
+        if not self.parameters.get('source_hostname'):
+            self.module.fail_json(msg='Missing parameters for delete: Please specify the '
+                                      'source cluster hostname to release the SnapMirror relation')
+        self.set_source_cluster_connection()
         self.snapmirror_quiesce()
         if self.parameters.get('relationship_type') and \
                 self.parameters.get('relationship_type') not in ['load_sharing', 'vault']:
@@ -345,17 +392,20 @@ class NetAppONTAPSnapmirror(object):
 
     def snapmirror_modify(self, modify):
         """
-        Modify SnapMirror schedule
+        Modify SnapMirror schedule or policy
         """
-        options = {'destination-location': self.parameters['destination_path'],
-                   'schedule': modify.get('schedule')}
+        options = {'destination-location': self.parameters['destination_path']}
         snapmirror_modify = netapp_utils.zapi.NaElement.create_node_with_children(
             'snapmirror-modify', **options)
+        if modify.get('schedule') is not None:
+            snapmirror_modify.add_new_child('schedule', modify.get('schedule'))
+        if modify.get('policy'):
+            snapmirror_modify.add_new_child('policy', modify.get('policy'))
         try:
             self.server.invoke_successfully(snapmirror_modify,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error modifying SnapMirror schedule : %s'
+            self.module.fail_json(msg='Error modifying SnapMirror schedule or policy : %s'
                                       % (to_native(error)),
                                   exception=traceback.format_exc())
 
@@ -394,6 +444,7 @@ class NetAppONTAPSnapmirror(object):
             self.parameters['destination_path'] = self.parameters['destination_vserver'] + ":"
 
     def get_destination(self):
+        result = None
         release_get = netapp_utils.zapi.NaElement('snapmirror-get-destination-iter')
         query = netapp_utils.zapi.NaElement('query')
         snapmirror_dest_info = netapp_utils.zapi.NaElement('snapmirror-destination-info')
@@ -414,11 +465,13 @@ class NetAppONTAPSnapmirror(object):
         """
         Apply action to SnapMirror
         """
+        results = netapp_utils.get_cserver(self.server)
+        cserver = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=results)
+        netapp_utils.ems_log_event("na_ontap_snapmirror", cserver)
         self.check_parameters()
         current = self.snapmirror_get()
         cd_action = self.na_helper.get_cd_action(current, self.parameters)
         modify = self.na_helper.get_modified_attributes(current, self.parameters)
-
         if cd_action == 'create':
             self.snapmirror_create()
         elif cd_action == 'delete':
