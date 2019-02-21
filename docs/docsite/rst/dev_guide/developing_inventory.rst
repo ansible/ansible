@@ -329,7 +329,10 @@ A skeleton example of this JSON object is::
 				"ungrouped"
 			]
 		},
-		"ungrouped": []
+		"ungrouped": {
+      "children":[
+      ]
+    }
 	}
 
 An easy way to see how this should look is using :ref:`ansible-inventory`, which also supports ``--list`` and ``--host`` parameters like an inventory script would.
