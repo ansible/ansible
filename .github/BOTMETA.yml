@@ -136,11 +136,12 @@ files:
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
   $modules/cloud/misc/ovirt.py: &ovirt
+    ignored: vincentvdk
     keywords: [ ovirt, RHEV, RHV ]
     labels: [ cloud, ovirt ]
     maintainers: $team_ovirt
   $modules/cloud/misc/proxmox.py: &virt
-    ignored: skvidal vincentvdk
+    ignored: skvidal
     keywords: [ kvm, libvirt, proxmox, qemu ]
     labels: [ cloud, virt ]
     maintainers: $team_virt
