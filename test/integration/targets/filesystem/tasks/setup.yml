@@ -2,7 +2,10 @@
   package:
     name: '{{ item }}'
     state: present
-  when: ansible_system == 'Linux' or item != 'dosfstools'
+  # xfsprogs on OpenSUSE requires Python 3, skip this for our newer Py2 OpenSUSE builds
+  when:
+  - ansible_system == 'Linux' or item != 'dosfstools'
+  - not (item == 'xfsprogs' and ansible_os_family == 'Suse' and ansible_python.version.major == 2 and ansible_distribution_major_version|int != 42)
   with_items:
     - e2fsprogs
     - xfsprogs
@@ -27,7 +30,7 @@
       state: present
     when: ansible_os_family == 'Suse'
     with_items:
-      - python-xml
+      - python{{ ansible_python.version.major }}-xml
       - btrfsprogs
 
   - name: install ocfs2 (Debian)
