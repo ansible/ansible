@@ -179,8 +179,8 @@ class InventoryModule(BaseInventoryPlugin):
     def verify_file(self, path):
         """Return the possibly of a file being consumable by this plugin."""
         return (
-                super(InventoryModule, self).verify_file(path) and
-                path.endswith((self.NAME + ".yaml", self.NAME + ".yml"))
+            super(InventoryModule, self).verify_file(path) and
+            path.endswith((self.NAME + ".yaml", self.NAME + ".yml"))
         )
 
     def parse(self, inventory, loader, path, cache=True):
@@ -191,7 +191,6 @@ class InventoryModule(BaseInventoryPlugin):
         self._add_groups()
         self._get_servers()
         self._filter_servers()
-        print(self.servers)
         for server in self.servers:
             self.inventory.add_host(server.name)
             self.inventory.add_host(server.name, group="location_" + server.datacenter.location.name)
