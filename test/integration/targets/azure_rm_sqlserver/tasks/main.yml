@@ -117,6 +117,8 @@
     server_name: sqlsrv{{ random_postfix }}
     name: database{{ random_postfix }}
     location: eastus
+    tags:
+      aaa: bbb
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -130,6 +132,8 @@
     server_name: sqlsrv{{ random_postfix }}
     name: database{{ random_postfix }}
     location: eastus
+    tags:
+      aaa: bbb
   register: output
 - name: Assert the state has not changed
   assert:

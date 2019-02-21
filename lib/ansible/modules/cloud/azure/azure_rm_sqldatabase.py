@@ -135,6 +135,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -301,6 +302,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.server_name = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
         self.state = None
@@ -308,12 +310,12 @@ class AzureRMDatabases(AzureRMModuleBase):
 
         super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                supports_check_mode=True,
-                                               supports_tags=False)
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -380,6 +382,9 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if (('edition' in self.parameters) and
                         (self.parameters['edition'] != old_response['edition'])):
                     self.to_do = Actions.Update
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Database instance")
@@ -388,6 +393,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.results['changed'] = True
                 return self.results
 
+            self.parameters['tags'] = self.tags
             response = self.create_update_sqldatabase()
 
             if not old_response:
