@@ -350,7 +350,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             server_info = self._wait_for_state(('running', ))
         return server_info
 
-    def _has_changed(self, server_info, data):
+    def _get_keys_changed(self, server_info, data):
         # Look if and what changed
         keys_changed = []
         for k, v in data.items():
@@ -378,11 +378,11 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             'name': self._module.params.get('name'),
             'flavor': self._module.params.get('flavor'),
         }
-        keys_changed = self._has_changed(server_info, data)
+        keys_changed = self._get_keys_changed(server_info, data)
         if not keys_changed:
             return server_info
 
-        # We have changed keys but we ignore them on unless forced if server is running
+        # We have changed keys but we ignore them unless forced if server is running
         if server_info.get('status') == "running":
             if not self._module.params.get('force'):
                 self._module.warn("Changes won't be applied to running servers. "
