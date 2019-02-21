@@ -603,7 +603,7 @@ class FilterModule(object):
             # hash filters
             # md5 hex digest of string
             'md5': md5s,
-            # sha1 hex digeset of string
+            # sha1 hex digest of string
             'sha1': checksum_s,
             # checksum of string as used by ansible for checksumming files
             'checksum': checksum_s,
