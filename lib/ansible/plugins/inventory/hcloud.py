@@ -84,10 +84,9 @@ except ImportError:
 
 
 class InventoryModule(BaseInventoryPlugin):
-    NAME = 'hcloud'  # used internally by Ansible, it should match the file name but not required
+    NAME = 'hcloud'
 
     def _configure_hcloud_client(self):
-        """Configure the hcloud client correctly"""
         self.api_token = self.get_option("token")
         if self.api_token is None:
             self.api_token = os.getenv("HCLOUD_TOKEN")
@@ -99,21 +98,18 @@ class InventoryModule(BaseInventoryPlugin):
         if self.endpoint is None:
             self.endpoint = "https://api.hetzner.cloud/v1"
 
-        self.client = hcloud.HcloudClient(token=self.api_token,
-                                          api_endpoint=self.endpoint,
-                                          application_name="ansible-inventory",
-                                          application_version=__version__
-                                          )
+        self.client = hcloud.Client(token=self.api_token,
+                                    api_endpoint=self.endpoint,
+                                    application_name="ansible-inventory",
+                                    application_version=__version__)
 
     def _test_hcloud_token(self):
-        """Test the given API Token against the API"""
         try:
             # We test the API Token against the location API, because this is the API with the smallest result
             # and not controllable from the customer.
             self.client.locations.get_all()
         except hcloud.APIException:
-            raise AnsibleError(
-                'Invalid Hetzner Cloud API Token.')
+            raise AnsibleError('Invalid Hetzner Cloud API Token.')
 
     def _add_groups(self):
         """Add all available groups, this could be locations, images or server types"""
@@ -130,15 +126,12 @@ class InventoryModule(BaseInventoryPlugin):
             self.inventory.add_group(to_native("server_type_" + server_type.name))
 
     def _get_servers(self):
-        """Get all servers from the api. Use the label selector when a label selector is given"""
         if len(self.get_option("label_selector")) > 0:
             self.servers = self.client.servers.get_all(label_selector=self.get_option("label_selector"))
         else:
             self.servers = self.client.servers.get_all()
 
     def _filter_servers(self):
-        """Filter through all servers with the given options. First through locations, then through types,
-        then through the image name. """
         if len(self.get_option("locations")) > 0:
             tmp = []
             for server in self.servers:
@@ -161,7 +154,6 @@ class InventoryModule(BaseInventoryPlugin):
             self.servers = tmp
 
     def _set_server_attributes(self, server):
-        """Set all attributes for a specific server"""
         self.inventory.set_variable(server.name, 'id', to_native(server.id))
         self.inventory.set_variable(server.name, 'name', to_native(server.name))
         self.inventory.set_variable(server.name, 'status', to_native(server.status))
@@ -193,18 +185,13 @@ class InventoryModule(BaseInventoryPlugin):
         """ return true/false if this is possibly a valid file for this plugin to consume """
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            # base class verifies that file exists and is readable by current user
             if path.endswith((self.NAME + '.yaml', self.NAME + '.yml')):
                 valid = True
         return valid
 
     def parse(self, inventory, loader, path, cache=True):
-
-        # call base method to ensure properties are available for use with other helper methods
         super(InventoryModule, self).parse(inventory, loader, path, cache)
 
-        # this method will parse 'common format' inventory sources and
-        # update any options declared in DOCUMENTATION as needed
         self._read_config_data(path)
 
         self._configure_hcloud_client()
