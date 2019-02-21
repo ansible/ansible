@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
     name: hcloud
     plugin_type: inventory
     authors:
@@ -20,9 +20,9 @@ DOCUMENTATION = r'''
         - Uses a YAML configuration file that ends with hcloud.(yml|yaml).
     options:
         plugin:
-            description: marks this as an instance of the 'hcloud' plugin
+            description: marks this as an instance of the "hcloud" plugin
             required: true
-            choices: ['hcloud']
+            choices: ["hcloud"]
         token:
             description: The Hetzner Cloud API Token.
             required: true
@@ -56,9 +56,9 @@ DOCUMENTATION = r'''
           default: ""
           type: str
           required: false
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 # Minimal example. `HCLOUD_TOKEN` is exposed in environment.
 plugin: hcloud
 
@@ -69,7 +69,7 @@ locations:
   - nbg1
 types:
   - cx11
-'''
+"""
 
 import os
 from ansible.errors import AnsibleError, AnsibleParserError
@@ -80,11 +80,11 @@ from ansible.release import __version__
 try:
     from hcloud import hcloud
 except ImportError:
-    raise AnsibleError('The Hetzner Cloud dynamic inventory plugin requires hcloud-python.')
+    raise AnsibleError("The Hetzner Cloud dynamic inventory plugin requires hcloud-python.")
 
 
 class InventoryModule(BaseInventoryPlugin):
-    NAME = 'hcloud'
+    NAME = "hcloud"
 
     def _configure_hcloud_client(self):
         self.api_token = self.get_option("token")
@@ -92,7 +92,7 @@ class InventoryModule(BaseInventoryPlugin):
             self.api_token = os.getenv("HCLOUD_TOKEN")
             if self.api_token is None:
                 raise AnsibleError(
-                    'Please specify a token, via the option token or via environment variable HCLOUD_TOKEN')
+                    "Please specify a token, via the option token or via environment variable HCLOUD_TOKEN")
 
         self.endpoint = os.getenv("HCLOUD_ENDPOINT")
         if self.endpoint is None:
@@ -109,7 +109,7 @@ class InventoryModule(BaseInventoryPlugin):
             # and not controllable from the customer.
             self.client.locations.get_all()
         except hcloud.APIException:
-            raise AnsibleError('Invalid Hetzner Cloud API Token.')
+            raise AnsibleError("Invalid Hetzner Cloud API Token.")
 
     def _add_groups(self):
         locations = self.client.locations.get_all()
@@ -153,46 +153,44 @@ class InventoryModule(BaseInventoryPlugin):
             self.servers = tmp
 
     def _set_server_attributes(self, server):
-        self.inventory.set_variable(server.name, 'id', to_native(server.id))
-        self.inventory.set_variable(server.name, 'name', to_native(server.name))
-        self.inventory.set_variable(server.name, 'status', to_native(server.status))
+        self.inventory.set_variable(server.name, "id", to_native(server.id))
+        self.inventory.set_variable(server.name, "name", to_native(server.name))
+        self.inventory.set_variable(server.name, "status", to_native(server.status))
 
         # Network
-        self.inventory.set_variable(server.name, 'ipv4', to_native(server.public_net.ipv4.ip))
-        self.inventory.set_variable(server.name, 'ipv6_network', to_native(server.public_net.ipv6.network))
-        self.inventory.set_variable(server.name, 'ipv6_network_mask', to_native(server.public_net.ipv6.network_mask))
+        self.inventory.set_variable(server.name, "ipv4", to_native(server.public_net.ipv4.ip))
+        self.inventory.set_variable(server.name, "ipv6_network", to_native(server.public_net.ipv6.network))
+        self.inventory.set_variable(server.name, "ipv6_network_mask", to_native(server.public_net.ipv6.network_mask))
 
         if self.get_option("connect_with") == "public_ipv4":
-            self.inventory.set_variable(server.name, 'ansible_host', to_native(server.public_net.ipv4.ip))
+            self.inventory.set_variable(server.name, "ansible_host", to_native(server.public_net.ipv4.ip))
         elif self.get_option("connect_with") == "hostname":
-            self.inventory.set_variable(server.name, 'ansible_host', to_native(server.name))
+            self.inventory.set_variable(server.name, "ansible_host", to_native(server.name))
         elif self.get_option("connect_with") == "ipv4_dns_ptr":
-            self.inventory.set_variable(server.name, 'ansible_host', to_native(server.public_net.ipv4.dns_ptr))
+            self.inventory.set_variable(server.name, "ansible_host", to_native(server.public_net.ipv4.dns_ptr))
 
         # Server Type
-        self.inventory.set_variable(server.name, 'server_type', to_native(server.image.name))
+        self.inventory.set_variable(server.name, "server_type", to_native(server.image.name))
 
         # Datacenter
-        self.inventory.set_variable(server.name, 'datacenter', to_native(server.datacenter.name))
-        self.inventory.set_variable(server.name, 'location', to_native(server.datacenter.location.name))
+        self.inventory.set_variable(server.name, "datacenter", to_native(server.datacenter.name))
+        self.inventory.set_variable(server.name, "location", to_native(server.datacenter.location.name))
 
         # Image
-        self.inventory.set_variable(server.name, 'image_id', to_native(server.image.id))
-        self.inventory.set_variable(server.name, 'image_name', to_native(server.image.name))
+        self.inventory.set_variable(server.name, "image_id", to_native(server.image.id))
+        self.inventory.set_variable(server.name, "image_name", to_native(server.image.name))
 
     def verify_file(self, path):
         """ return true/false if this is possibly a valid file for this plugin to consume """
         valid = False
         if super(InventoryModule, self).verify_file(path):
-            if path.endswith((self.NAME + '.yaml', self.NAME + '.yml')):
+            if path.endswith((self.NAME + ".yaml", self.NAME + ".yml")):
                 valid = True
         return valid
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
-
         self._read_config_data(path)
-
         self._configure_hcloud_client()
         self._test_hcloud_token()
         self._add_groups()
