@@ -46,6 +46,7 @@ class ActionModule(ActionBase):
 
             send_newline = self._task.args.get('send_newline', False)
             newline_char = self._task.args.get('newline_char', b"\n")
+            exit_cmd = self._task.args.get('exit_cmd', b'exit')
 
             login_prompt = self._task.args.get('login_prompt', "login: ")
             password_prompt = self._task.args.get('password_prompt', "Password: ")
@@ -81,7 +82,7 @@ class ActionModule(ActionBase):
                         output.append(out)
                         sleep(pause)
 
-                    tn.write(b"exit\n")
+                    tn.write(exit_cmd + newline_char)
 
                 except EOFError as e:
                     result['failed'] = True
