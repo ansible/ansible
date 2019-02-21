@@ -112,7 +112,6 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleError('Invalid Hetzner Cloud API Token.')
 
     def _add_groups(self):
-        """Add all available groups, this could be locations, images or server types"""
         locations = self.client.locations.get_all()
         for location in locations:
             self.inventory.add_group(to_native("location_" + location.name))
@@ -149,7 +148,7 @@ class InventoryModule(BaseInventoryPlugin):
         if len(self.get_option("images")) > 0:
             tmp = []
             for server in self.servers:
-                if server.image.name in self.get_option("images"):
+                if server.image is not None and server.image.name in self.get_option("images"):
                     tmp.append(server)
             self.servers = tmp
 
