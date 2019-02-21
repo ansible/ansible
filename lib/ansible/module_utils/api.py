@@ -43,30 +43,38 @@ The 'api' module provides the following common argument specs:
 """
 import time
 
+from ansible.module_utils.common.dict_transformations import dict_merge
 
-def rate_limit_argument_spec(spec=None):
+
+def rate_limit_argument_spec(spec=None, merge=False):
     """Creates an argument spec for working with rate limiting"""
     arg_spec = (dict(
         rate=dict(type='int'),
         rate_limit=dict(type='int'),
     ))
     if spec:
-        arg_spec.update(spec)
+        if not merge:
+            arg_spec.update(spec)
+        else:
+            arg_spec = dict_merge(arg_spec, spec)
     return arg_spec
 
 
-def retry_argument_spec(spec=None):
+def retry_argument_spec(spec=None, merge=False):
     """Creates an argument spec for working with retrying"""
     arg_spec = (dict(
         retries=dict(type='int'),
         retry_pause=dict(type='float', default=1),
     ))
     if spec:
-        arg_spec.update(spec)
+        if not merge:
+            arg_spec.update(spec)
+        else:
+            arg_spec = dict_merge(arg_spec, spec)
     return arg_spec
 
 
-def basic_auth_argument_spec(spec=None):
+def basic_auth_argument_spec(spec=None, merge=False):
     arg_spec = (dict(
         api_username=dict(type='str'),
         api_password=dict(type='str', no_log=True),
@@ -74,7 +82,10 @@ def basic_auth_argument_spec(spec=None):
         validate_certs=dict(type='bool', default=True)
     ))
     if spec:
-        arg_spec.update(spec)
+        if not merge:
+            arg_spec.update(spec)
+        else:
+            arg_spec = dict_merge(arg_spec, spec)
     return arg_spec
 
 
