@@ -14,7 +14,7 @@ docker images quay.io/ansible/*
 docker ps
 
 for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
-    docker rm -f "${container}"
+    docker rm -f "${container}" || true  # ignore errors
 done
 
 docker ps
