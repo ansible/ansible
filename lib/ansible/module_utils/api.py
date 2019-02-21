@@ -53,10 +53,10 @@ def rate_limit_argument_spec(spec=None, merge=False):
         rate_limit=dict(type='int'),
     ))
     if spec:
-        if not merge:
-            arg_spec.update(spec)
-        else:
+        if merge:
             arg_spec = dict_merge(arg_spec, spec)
+        else:
+            arg_spec.update(spec)
     return arg_spec
 
 
@@ -67,10 +67,10 @@ def retry_argument_spec(spec=None, merge=False):
         retry_pause=dict(type='float', default=1),
     ))
     if spec:
-        if not merge:
-            arg_spec.update(spec)
-        else:
+        if merge:
             arg_spec = dict_merge(arg_spec, spec)
+        else:
+            arg_spec.update(spec)
     return arg_spec
 
 
@@ -82,10 +82,10 @@ def basic_auth_argument_spec(spec=None, merge=False):
         validate_certs=dict(type='bool', default=True)
     ))
     if spec:
-        if not merge:
-            arg_spec.update(spec)
-        else:
+        if merge:
             arg_spec = dict_merge(arg_spec, spec)
+        else:
+            arg_spec.update(spec)
     return arg_spec
 
 
