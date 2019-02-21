@@ -14,6 +14,7 @@ import sys
 import warnings
 
 from collections import defaultdict
+from threading import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -140,6 +141,9 @@ class PluginLoader:
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
         self._searched_paths = set()
+
+        # lock used for thread-safety
+        self._lock = Lock()
 
     def _clear_caches(self):
 
@@ -565,10 +569,14 @@ class PluginLoader:
         if path is None:
             return None
 
-        if path not in self._module_cache:
-            self._module_cache[path] = self._load_module_source(name, path)
-            self._load_config_defs(name, self._module_cache[path], path)
-            found_in_cache = False
+        try:
+            self._lock.acquire()
+            if path not in self._module_cache:
+                self._module_cache[path] = self._load_module_source(name, path)
+                self._load_config_defs(name, self._module_cache[path], path)
+                found_in_cache = False
+        finally:
+            self._lock.release()
 
         obj = getattr(self._module_cache[path], self.class_name)
         if self.base_class:
@@ -595,7 +603,12 @@ class PluginLoader:
                     return None
                 raise
 
-        self._update_object(obj, name, path)
+        try:
+            self._lock.acquire()
+            self._update_object(obj, name, path)
+        finally:
+            self._lock.release()
+
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
@@ -676,15 +689,19 @@ class PluginLoader:
                 yield path
                 continue
 
-            if path not in self._module_cache:
-                try:
-                    module = self._load_module_source(name, path)
-                    self._load_config_defs(basename, module, path)
-                except Exception as e:
-                    display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
-                    continue
-                self._module_cache[path] = module
-                found_in_cache = False
+            try:
+                self._lock.acquire()
+                if path not in self._module_cache:
+                    try:
+                        module = self._load_module_source(name, path)
+                        self._load_config_defs(basename, module, path)
+                    except Exception as e:
+                        display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
+                        continue
+                    self._module_cache[path] = module
+                    found_in_cache = False
+                finally:
+                    self._lock.release()
 
             try:
                 obj = getattr(self._module_cache[path], self.class_name)
@@ -712,7 +729,12 @@ class PluginLoader:
                 except TypeError as e:
                     display.warning("Skipping plugin (%s) as it seems to be incomplete: %s" % (path, to_text(e)))
 
-            self._update_object(obj, basename, path)
+            try:
+                self._lock.acquire()
+                self._update_object(obj, basename, path)
+            finally:
+                self._lock.release()
+
             yield obj
 
 
