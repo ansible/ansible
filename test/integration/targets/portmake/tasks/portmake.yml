@@ -27,49 +27,12 @@
   when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
 
 
-####
-# test manual compilation and installation of packages
-
-- name: remove screen package. do not fail if it was not installed
-  pkgng:
-    name: screen
-    state: absent
-  ignore_errors: true
-  
-- name: remove sudo package. do not fail if it was not installed
-  pkgng:
-    name: sudo
-    state: absent
-  ignore_errors: true
-
-- name: test make install screen to see wether port builds with vanilla method
-  shell: make install clean BATCH=YES >/dev/null
-  args:
-    chdir: /usr/ports/sysutils/screen
-    creates: /usr/local/bin/screen  
-
-- name: test make install sudo to see wether port builds with vanilla method
-  shell: make install clean BATCH=YES >/dev/null
-  args:
-    chdir: /usr/ports/security/sudo
-    creates: /usr/local/bin/sudo
-   
-- name: remove screen package
-  pkgng:
-    name: screen
-    state: absent   
-
-- name: remove sudo package
-  pkgng:
-    name: sudo
-    state: absent
-
 
 ####
 # test portmake absent
 
 #
-# using disable_vulnerabilities: true ffto allow build with possible existent vulnerabilities
+# using disable_vulnerabilities: true to allow build with possible existent vulnerabilities
 # testing disable_vulnerabilities function seperately below
 # 
 
@@ -88,21 +51,6 @@
     name: "sysutils/screen"
     state: "absent"
     options_set: "XTERM_256"
-
-####
-# test portmake present without disable_vulnerabilities not continuosly testable
-
-- name: test installation of package screen without disable_vulnerabilities - may fail
-  portmake:
-    name: "sysutils/screen"
-    state: "present"
-  ignore_errors: true
-
-- name: delete possibly installed pkg
-  pkgng:
-    name: screen
-    state: absent
-  ignore_errors: true
 
 
 # test portmake present
