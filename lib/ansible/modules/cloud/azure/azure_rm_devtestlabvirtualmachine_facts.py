@@ -115,7 +115,7 @@ virtualmachines:
                         - Offer.
                     returned: when created from gallery image
                     type: str
-                    sample: UbuntuServer                    
+                    sample: UbuntuServer
                 os_type:
                     description:
                         - Operating system type.
@@ -274,8 +274,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             for item in response:
                 if self.has_tags(item.tags, self.tags):
                     results.append(self.format_response(item))
-
-
         return results
 
     def format_response(self, item):
