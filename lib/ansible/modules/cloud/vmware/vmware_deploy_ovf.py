@@ -311,6 +311,17 @@ class VMwareDeployOvf:
             cluster = find_cluster_by_name(self.si, self.params['cluster'])
             if cluster is None:
                 self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
+            if self.params['resource_pool'] != 'Resources':
+                resource_pools = cluster.resourcePool.resourcePool
+                rp_exist = False
+                if len(resource_pools) != 0:
+                    for rp in resource_pools:
+                        if rp.name == self.params['resource_pool']:
+                            self.resource_pool = rp
+                            rp_exist = True
+                            break
+                if not rp_exist:
+                    self.module.fail_json(msg="Unable to find resource pool %(resource_pool)s in cluster '%(cluster)s'" % self.params)
             else:
                 self.resource_pool = cluster.resourcePool
         else:
