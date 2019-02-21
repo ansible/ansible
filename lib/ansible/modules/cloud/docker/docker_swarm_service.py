@@ -457,8 +457,8 @@ options:
       - Requires API version >= 1.29.
     type: str
     choices:
-        - "stop-first"
-        - "start-first"
+        - stop-first
+        - start-first
   user:
     description:
       - Sets the username or UID used for the specified command.
