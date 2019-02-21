@@ -456,6 +456,9 @@ options:
       - Corresponds to the C(--update-order) option of C(docker service create).
       - Requires API version >= 1.29.
     type: str
+    choices:
+        - "stop-first"
+        - "start-first"
   user:
     description:
       - Sets the username or UID used for the specified command.
@@ -1772,7 +1775,7 @@ def main():
         update_failure_action=dict(type='str', choices=['continue', 'pause']),
         update_monitor=dict(type='raw'),
         update_max_failure_ratio=dict(type='float'),
-        update_order=dict(type='str'),
+        update_order=dict(type='str', choices=['stop-first', 'start-first']),
         user=dict(type='str'),
         working_dir=dict(type='str'),
     )
