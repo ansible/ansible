@@ -1,5 +1,5 @@
 {
-   "fmgr_firewall_profile_group_addsetdelete": [
+   "fmgr_firewall_profile_group_modify": [
       {
          "paramgram_used": {
             "ssl-ssh-profile": null, 
@@ -20,10 +20,11 @@
             "mms-profile": null, 
             "name": "Ansible_TEST_Profile_Group"
          }, 
+         "datagram_sent": {}, 
          "raw_response": {
             "status": {
-               "message": "OK", 
-               "code": 0
+               "message": "Object does not exist", 
+               "code": -3
             }, 
             "url": "/pm/config/adom/root/obj/firewall/profile-group/Ansible_TEST_Profile_Group"
          }, 
@@ -32,10 +33,15 @@
       {
          "raw_response": {
             "status": {
-               "message": "OK", 
-               "code": 0
+               "message": "datasrc invalid. object: firewall profile-group av-profile Ansible_TEST_Profile_Group. detail: Ansible_AV_Profile. solution: data not exist", 
+               "code": -10131
             }, 
             "url": "/pm/config/adom/root/obj/firewall/profile-group"
+         }, 
+         "datagram_sent": {
+            "av-profile": "Ansible_AV_Profile", 
+            "profile-protocol-options": "default", 
+            "name": "Ansible_TEST_Profile_Group"
          }, 
          "paramgram_used": {
             "ssl-ssh-profile": null, 
