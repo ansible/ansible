@@ -11,6 +11,8 @@ version_added: "2.8"
 short_description: Retrieves the LAPS password for a server.
 description:
 - This lookup returns the LAPS password set for a server from the Active Directory database.
+- See U(https://github.com/jborean93/ansible-lookup-laps_password) for more information around installing
+  pre-requisites and testing.
 options:
   _terms:
     description:
@@ -31,9 +33,8 @@ options:
     - When using C(simple), the I(username) and I(password) options must be set. If not using C(scheme=ldaps) or
       C(start_tls=True) then these credentials are exposed in plaintext in the network traffic.
     - It is recommended ot use C(gssapi) as it will encrypt the traffic automatically.
-    - When using C(gssapi), run C(kinit) before running Ansible to get a valid Kerberos ticket, otherwise set
-      I(username) and I(password) for this lookup to do this for you. This requires the Python C(gssapi) library to be
-      installed.
+    - When using C(gssapi), run C(kinit) before running Ansible to get a valid Kerberos ticket.
+    - You cannot use C(gssapi) when either C(scheme=ldaps) or C(start_tls=True) is set.
     choices:
     - simple
     - gssapi
@@ -46,10 +47,12 @@ options:
     - This may fail on hosts with an older OpenLDAP install like MacOS, this will have to be updated before
       reinstalling python-ldap to get working again.
     type: str
-  kdc:
+  domain:
     description:
-    - The active directory host to query.
-    - This could be the hostname or an explicit LDAP URI.
+    - The domain to search in to retrieve the LAPS password.
+    - This could either be a Windows domain name visible to the Ansible controller from DNS or a specific domain
+      controller FQDN.
+    - Supports either just the domain/host name or an explicit LDAP URI with the domain/host already filled in.
     - If the URI is set, I(port) and I(scheme) are ignored.
     required: True
     type: str
@@ -94,10 +97,8 @@ options:
     - Required when using C(auth=simple).
     - The username to authenticate with.
     - Recommended to use the username in the UPN format, e.g. C(username@DOMAIN.COM).
-    - When using C(auth=gssapi), this is optional as an already checked out Kerberos ticket retrieved with C(kinit) is
-      used when no username is specified.
-    - If set when C(auth=gssapi), then the Python C(gssapi) library needs to be installed which will then retrieve the
-      Kerberos ticket like C(kinit) would.
+    - This is required when C(auth=simple) and is not supported when C(auth=gssapi).
+    - Call C(kinit) outside of Ansible if C(auth=gssapi) is required.
     type: str
   validate_certs:
     description:
@@ -115,7 +116,6 @@ options:
     type: str
 requirements:
 - python-ldap
-- gssapi (for explicit Kerberos credentials)
 notes:
 - If a host was found but had no LAPS password attribute C(ms-Mcs-AdmPwd), the lookup will fail.
 - Due to the sensitive nature of the data travelling across the network, it is highly recommended to run with either
@@ -128,31 +128,35 @@ notes:
 """
 
 EXAMPLES = """
+# This isn't mandatory but it is a way to call kinit from within Ansible before calling the lookup
+- name: call kinit to retrieve Kerberos token
+  expect:
+    command: kinit username@ANSIBLE.COM
+    responses:
+      (?i)password: SecretPass1
+  no_log: True
+
 - name: Get the LAPS password using Kerberos auth, relies on kinit already being called
   set_fact:
-    ansible_password: "{{ lookup('laps_password', 'SERVER', kdc='dc01.ansible.com') }}"
+    ansible_password: "{{ lookup('laps_password', 'SERVER', domain='dc01.ansible.com') }}"
 
-- name: Use Kerberos auth with explicit credentials
+- name: Specific the domain host using an explicit LDAP URI
   set_fact:
-    ansible_password: "{{ lookup('laps_password', 'WINDOWS-PC',
-                                 kdc='dc01.ansible.com',
-                                 username='username@ANSIBLE.COM',
-                                 password='SuperSecret123') }}"
+    ansible_password: "{{ lookup('laps_password', 'SERVER', domain='ldap://ansible.com:389') }}"
 
 - name: Use Simple auth over LDAPS
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'server',
-                                 kdc='dc01.ansible.com',
+                                 domain='dc01.ansible.com',
                                  auth='simple',
                                  scheme='ldaps',
                                  username='username@ANSIBLE.COM',
                                  password='SuperSecret123') }}"
 
-
 - name: Use Simple auth with LDAP and StartTLS
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'app01',
-                                 kdc='dc01.ansible.com',
+                                 domain='dc01.ansible.com',
                                  auth='simple',
                                  start_tls=True,
                                  username='username@ANSIBLE.COM',
@@ -161,13 +165,13 @@ EXAMPLES = """
 - name: Narrow down the search base to a an OU
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'sql10',
-                                 kdc='dc01.ansible.com',
+                                 domain='dc01.ansible.com',
                                  search_base='OU=Databases,DC=ansible,DC=com') }}"
 
 - name: Set certificate file to use when validating the TLS certificate
   set_fact:
     ansible_password: "{{ lookup('laps_password', 'windows-pc',
-                                 kdc='dc01.ansible.com',
+                                 domain='dc01.ansible.com',
                                  start_tls=True,
                                  cacert_file='/usr/local/share/certs/ad.pem') }}"
 """
@@ -179,9 +183,10 @@ _raw:
   type: str
 """
 
+import os
 import traceback
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleLookupError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import missing_required_lib
 from ansible.plugins.lookup import LookupBase
@@ -194,27 +199,6 @@ try:
 except ImportError:
     LDAP_IMP_ERR = traceback.format_exc()
     HAS_LDAP = False
-
-GSSAPI_IMP_ERR = None
-try:
-    import gssapi
-    from gssapi.raw import acquire_cred_with_password
-    HAS_GSSAPI = True
-except ImportError:
-    GSSAPI_IMP_ERR = traceback.format_exc()
-    HAS_GSSAPI = False
-
-
-def kinit(username, password):
-    if not HAS_GSSAPI:
-        msg = missing_required_lib("gssapi", reason="for explicit credentials with auth=gssapi",
-                                   url="https://pypi.org/project/gssapi/")
-        msg += ". Import Error: %s" % GSSAPI_IMP_ERR
-        raise AnsibleError(msg)
-
-    kerb_mech = gssapi.OID.from_int_seq('1.2.840.113554.1.2.2')  # Kerberos v5 OID
-    name = gssapi.Name(base=username, name_type=gssapi.NameType.kerberos_principal)
-    acquire_cred_with_password(name, to_bytes(password), usage='initiate', mechs=[kerb_mech])
 
 
 def get_laps_password(conn, cn, search_base):
@@ -229,17 +213,17 @@ def get_laps_password(conn, cn, search_base):
     valid_results = [attr for dn, attr in ldap_results if dn]
 
     if len(valid_results) == 0:
-        raise AnsibleError("Failed to find the server '%s' in the base '%s'" % (cn, search_base))
+        raise AnsibleLookupError("Failed to find the server '%s' in the base '%s'" % (cn, search_base))
     elif len(valid_results) > 1:
         found_servers = [to_native(attr['distinguishedName'][0]) for attr in valid_results]
-        raise AnsibleError("Found too many results for the server '%s' in the base '%s'. Specify a more explicit "
-                           "search base for the server required. Found servers '%s'"
-                           % (cn, search_base, "', '".join(found_servers)))
+        raise AnsibleLookupError("Found too many results for the server '%s' in the base '%s'. Specify a more "
+                                 "explicit search base for the server required. Found servers '%s'"
+                                 % (cn, search_base, "', '".join(found_servers)))
 
     password = valid_results[0].get('ms-Mcs-AdmPwd', None)
     if not password:
         distinguished_name = to_native(valid_results[0]['distinguishedName'][0])
-        raise AnsibleError("The server '%s' did not have the LAPS attribute 'ms-Mcs-AdmPwd'" % distinguished_name)
+        raise AnsibleLookupError("The server '%s' did not have the LAPS attribute 'ms-Mcs-AdmPwd'" % distinguished_name)
 
     return to_native(password[0])
 
@@ -250,11 +234,11 @@ class LookupModule(LookupBase):
         if not HAS_LDAP:
             msg = missing_required_lib("python-ldap", url="https://pypi.org/project/python-ldap/")
             msg += ". Import Error: %s" % LDAP_IMP_ERR
-            raise AnsibleError(msg)
+            raise AnsibleLookupError(msg)
 
         # Load the variables and direct args into the lookup options
         self.set_options(var_options=variables, direct=kwargs)
-        kdc = self.get_option('kdc')
+        domain = self.get_option('domain')
         port = self.get_option('port')
         scheme = self.get_option('scheme')
         start_tls = self.get_option('start_tls')
@@ -278,62 +262,85 @@ class LookupModule(LookupBase):
         if validate_certs_value is None:
             valid_keys = list(validate_certs_map.keys())
             valid_keys.sort()
-            raise AnsibleError("Invalid validate_certs value '%s': valid values are '%s'"
-                               % (validate_certs, "', '".join(valid_keys)))
+            raise AnsibleLookupError("Invalid validate_certs value '%s': valid values are '%s'"
+                                     % (validate_certs, "', '".join(valid_keys)))
 
         if auth not in ['gssapi', 'simple']:
-            raise AnsibleError("Invalid auth value '%s': expecting either 'gssapi', or 'simple'" % auth)
-        elif auth == 'gssapi' and not ldap.SASL_AVAIL:
-            raise AnsibleError("Cannot use auth=gssapi when SASL is not configured with the local LDAP install")
+            raise AnsibleLookupError("Invalid auth value '%s': expecting either 'gssapi', or 'simple'" % auth)
+        elif auth == 'gssapi':
+            if not ldap.SASL_AVAIL:
+                raise AnsibleLookupError("Cannot use auth=gssapi when SASL is not configured with the local LDAP "
+                                         "install")
+            if username or password:
+                raise AnsibleLookupError("Explicit credentials are not supported when auth='gssapi'. Call kinit "
+                                         "outside of Ansible")
         elif auth == 'simple' and not (username and password):
-            raise AnsibleError("The username and password values are required when auth=simple")
+            raise AnsibleLookupError("The username and password values are required when auth=simple")
 
-        if username and not password:
-            raise AnsibleError("The password must be set if username is also set")
-
-        if ldapurl.isLDAPUrl(kdc):
-            ldap_url = ldapurl.LDAPUrl(ldapUrl=kdc)
+        if ldapurl.isLDAPUrl(domain):
+            ldap_url = ldapurl.LDAPUrl(ldapUrl=domain)
         else:
             port = port if port else 389 if scheme == 'ldap' else 636
-            ldap_url = ldapurl.LDAPUrl(hostport="%s:%d" % (kdc, port), urlscheme=scheme)
+            ldap_url = ldapurl.LDAPUrl(hostport="%s:%d" % (domain, port), urlscheme=scheme)
 
         # We have encryption if using LDAPS, or StartTLS is used, or we auth with SASL/GSSAPI
         encrypted = ldap_url.urlscheme == 'ldaps' or start_tls or auth == 'gssapi'
         if not encrypted and not allow_plaintext:
-            raise AnsibleError("Current configuration will result in plaintext traffic exposing credentials. Set "
-                               "auth=gssapi, scheme=ldaps, start_tls=True, or allow_plaintext=True to continue")
+            raise AnsibleLookupError("Current configuration will result in plaintext traffic exposing credentials. "
+                                     "Set auth=gssapi, scheme=ldaps, start_tls=True, or allow_plaintext=True to "
+                                     "continue")
 
-        conn = ldap.initialize(ldap_url.initializeUrl(), bytes_mode=False)
+        if ldap_url.urlscheme == 'ldaps' or start_tls:
+            # We cannot use conn.set_option as OPT_X_TLS_NEWCTX (required to use the new context) is not supported on
+            # older distros like EL7. Setting it on the ldap object works instead
+            if not ldap.TLS_AVAIL:
+                raise AnsibleLookupError("Cannot use TLS as the local LDAP installed has not been configured to support it")
+
+            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, validate_certs_value)
+            if cacert_file:
+                cacert_path = os.path.expanduser(os.path.expandvars(cacert_file))
+                if not os.path.exists(to_bytes(cacert_path)):
+                    raise AnsibleLookupError("The cacert_file specified '%s' does not exist" % to_native(cacert_path))
+
+                try:
+                    # While this is a path, python-ldap expects a str/unicode and not bytes
+                    ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, to_text(cacert_path))
+                except ValueError:
+                    # https://keathmilligan.net/python-ldap-and-macos/
+                    raise AnsibleLookupError("Failed to set path to cacert file, this is a known issue with older "
+                                             "OpenLDAP libraries on the host. Update OpenLDAP and reinstall "
+                                             "python-ldap to continue")
+
+        conn_url = ldap_url.initializeUrl()
+        conn = ldap.initialize(conn_url, bytes_mode=False)
         conn.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
         conn.set_option(ldap.OPT_REFERRALS, 0)  # Allow us to search from the base
 
-        if ldap_url.urlscheme == 'ldaps' or start_tls:
-            if not ldap.TLS_AVAIL:
-                raise AnsibleError("Cannot use TLS as the local LDAP installed has not been configured to support it")
-
-            conn.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, validate_certs_value)
-            if cacert_file:
-                try:
-                    # While this is a path, python-ldap expects a str/unicode and not bytes
-                    conn.set_option(ldap.OPT_X_TLS_CACERTFILE, to_text(cacert_file))
-                except ValueError:
-                    # https://keathmilligan.net/python-ldap-and-macos/
-                    raise AnsibleError("Failed to set path to cacert file, this is a known issue with older OpenLDAP "
-                                       "libraries on the host. Update OpenLDAP and reinstall python-ldap to continue")
-
-            # Need to setup a new TLS Context for the above settings to take affect
-            conn.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
-
         # Make sure we run StartTLS before doing the bind to protect the credentials
         if start_tls:
-            conn.start_tls_s()
+            try:
+                conn.start_tls_s()
+            except ldap.LDAPError as err:
+                raise AnsibleLookupError("Failed to send StartTLS to LDAP host '%s': %s"
+                                         % (conn_url, to_native(err)))
 
         if auth == 'simple':
-            conn.bind_s(to_text(username), to_text(password))
+            try:
+                conn.bind_s(to_text(username), to_text(password))
+            except ldap.LDAPError as err:
+                raise AnsibleLookupError("Failed to simple bind against LDAP host '%s': %s"
+                                         % (conn_url, to_native(err)))
         else:
-            if username:
-                kinit(username, password)
-            conn.sasl_gssapi_bind_s()
+            try:
+                conn.sasl_gssapi_bind_s()
+            except ldap.AUTH_UNKNOWN as err:
+                # The SASL GSSAPI binding is not installed, e.g. cyrus-sasl-gssapi. Give a better error message than
+                # what python-ldap provides
+                raise AnsibleLookupError("Failed to do a sasl bind against LDAP host '%s', the GSSAPI mech is not "
+                                         "installed: %s" % (conn_url, to_native(err)))
+            except ldap.LDAPError as err:
+                raise AnsibleLookupError("Failed to do a sasl bind against LDAP host '%s': %s"
+                                         % (conn_url, to_native(err)))
 
         try:
             if not search_base:
