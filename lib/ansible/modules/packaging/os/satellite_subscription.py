@@ -30,6 +30,7 @@ options:
   hostname:
     description:
       - The name or IP address of the Red Hat Satellite server.
+      type: str
     required: yes
   user:
     description:
@@ -58,8 +59,9 @@ options:
     default: autoattach
   content_hosts:
     description:
-      - List of content hosts to work with
-      - Can also be a hostname search pattern accepted by the satellite.
+      - A list of content hosts to use.
+      - This can also be a hostname search pattern accepted by the satellite.
+      type: list
   subscription:
     description:
       - List of subscriptions to assign or remove
@@ -133,7 +135,7 @@ EXAMPLES = """
     content_hosts: server1
     org_id: 1
 
-- name: assign VDC guest subscriptions to Satellite content hosts
+- name: Assign VDC guest subscriptions to Satellite content hosts
   satellite_subscription:
     hostname: satellite.domain.local
     user: admin
