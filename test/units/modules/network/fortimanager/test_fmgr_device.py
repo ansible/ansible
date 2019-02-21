@@ -62,9 +62,13 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 def test_discover_device(fixture_data, mocker):
 <<<<<<< HEAD
+<<<<<<< HEAD
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 =======
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+>>>>>>> Auto Commit for: fmgr_device
+=======
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 >>>>>>> Auto Commit for: fmgr_device
                  side_effect=fixture_data)
     #  Fixture sets used:###########################
@@ -110,9 +114,13 @@ def test_discover_device(fixture_data, mocker):
 
 def test_add_device(fixture_data, mocker):
 <<<<<<< HEAD
+<<<<<<< HEAD
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 =======
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+>>>>>>> Auto Commit for: fmgr_device
+=======
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 >>>>>>> Auto Commit for: fmgr_device
                  side_effect=fixture_data)
     #  Fixture sets used:###########################
@@ -158,9 +166,13 @@ def test_add_device(fixture_data, mocker):
 
 def test_delete_device(fixture_data, mocker):
 <<<<<<< HEAD
+<<<<<<< HEAD
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 =======
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+>>>>>>> Auto Commit for: fmgr_device
+=======
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 >>>>>>> Auto Commit for: fmgr_device
                  side_effect=fixture_data)
     #  Fixture sets used:###########################
@@ -206,9 +218,13 @@ def test_delete_device(fixture_data, mocker):
 
 def test_get_device(fixture_data, mocker):
 <<<<<<< HEAD
+<<<<<<< HEAD
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 =======
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+>>>>>>> Auto Commit for: fmgr_device
+=======
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
 >>>>>>> Auto Commit for: fmgr_device
                  side_effect=fixture_data)
     #  Fixture sets used:###########################
