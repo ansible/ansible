@@ -1,1 +1,1 @@
-../../lib/ansible/plugins/callback/say.py
+lib/ansible/plugins/callback/say.py
