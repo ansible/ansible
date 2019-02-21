@@ -30,7 +30,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the container registry. Use 'present' to create or update an container registry and 'absent' to delete it.
+            - Assert the state of the container registry. Use C(present) to create or update an container registry and C(absent) to delete it.
         default: present
         choices:
             - absent

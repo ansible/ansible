@@ -39,7 +39,7 @@ options:
         default: linux
     state:
         description:
-            - Assert the state of the container instance. Use 'present' to create or update an container instance and 'absent' to delete it.
+            - Assert the state of the container instance. Use C(present) to create or update an container instance and C(absent) to delete it.
         default: present
         choices:
             - absent

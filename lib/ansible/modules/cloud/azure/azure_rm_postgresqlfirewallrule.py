@@ -42,7 +42,7 @@ options:
             - The end IP address of the PostgreSQL firewall rule. Must be IPv4 format.
     state:
         description:
-            - Assert the state of the PostgreSQL firewall rule. Use 'present' to create or update a PostgreSQL firewall rule and 'absent' to delete it.
+            - Assert the state of the PostgreSQL firewall rule. Use C(present) to create or update a PostgreSQL firewall rule and C(absent) to delete it.
         default: present
         choices:
             - absent

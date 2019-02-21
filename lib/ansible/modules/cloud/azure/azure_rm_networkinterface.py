@@ -40,8 +40,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the network interface. Use 'present' to create or update an interface and
-              'absent' to delete an interface.
+            - Assert the state of the network interface. Use C(present) to create or update an interface and
+              C(absent) to delete an interface.
         default: present
         choices:
             - absent

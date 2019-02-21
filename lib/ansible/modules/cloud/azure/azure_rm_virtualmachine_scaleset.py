@@ -36,10 +36,10 @@ options:
     state:
         description:
             - Assert the state of the virtual machine scale set.
-            - State 'present' will check that the machine exists with the requested configuration. If the configuration
+            - State C(present) will check that the machine exists with the requested configuration. If the configuration
               of the existing machine does not match, the machine will be updated.
               state.
-            - State 'absent' will remove the virtual machine scale set.
+            - State C(absent) will remove the virtual machine scale set.
         default: present
         choices:
             - absent
