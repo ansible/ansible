@@ -44,7 +44,7 @@ class TestNxosSystemModule(TestNxosModule):
         self.mock_load_config.stop()
 
     def load_fixtures(self, commands=None, device=''):
-        self.get_config.return_value = load_fixture('', 'nxos_system_config.cfg')
+        self.get_config.return_value = load_fixture('nxos_system', 'config.cfg', device=device)
         self.load_config.return_value = None
 
     def test_nxos_system_hostname_changed(self):
@@ -68,6 +68,11 @@ class TestNxosSystemModule(TestNxosModule):
                     'vrf context management', 'no ip domain-name eng.ansible.com', 'exit',
                     'ip domain-name example.net']
         self.execute_module(changed=True, commands=commands)
+
+    def test_nxos_system_domain_name_existing_only_vrf(self):
+        set_module_args(dict(domain_name=[{'name': 'abc.com', 'vrf': 'test'}, {'name': 'xyz.com', 'vrf': 'test2'}]))
+        commands = []
+        self.execute_module(changed=True, commands=commands, device='vrf_only')
 
     def test_nxos_system_domain_name_complex(self):
         domain_name = dict(name='example.net', vrf='management')
