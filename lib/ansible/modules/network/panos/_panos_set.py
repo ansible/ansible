@@ -43,7 +43,7 @@ author: "Jasper Mackenzie (@spmp)"
 version_added: "2.7"
 deprecated:
     alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
-    removed_in: "2.11"
+    removed_in: "2.12"
     why: Consolidating code base.
 requirements:
   - pan-python

@@ -28,7 +28,7 @@ requirements:
     - xmltodict can be obtained from PyPI U(https://pypi.org/project/xmltodict/)
 deprecated:
     alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
-    removed_in: "2.11"
+    removed_in: "2.12"
     why: Consolidating code base.
 notes:
     - Checkmode is not supported.

@@ -36,7 +36,7 @@ requirements:
     - pan-python
 deprecated:
     alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
-    removed_in: "2.11"
+    removed_in: "2.12"
     why: Consolidating code base.
 options:
     ip_address:
