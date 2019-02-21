@@ -1,0 +1,3 @@
+release_summary: |
+   | Release Date: 2019-02-21
+   | Security release for CVE-2019-3828 (https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2019-3828)

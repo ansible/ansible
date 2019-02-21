@@ -2,6 +2,30 @@
 Ansible 2.5 "Kashmir" Release Notes
 ===================================
 
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.15:
+
+v2.5.15
+=======
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.15_Release Summary:
+
+Release Summary
+---------------
+
+| Release Date: 2019-02-21
+| Security release for CVE-2019-3828 (https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2019-3828)
+
+
+.. _Ansible 2.5 "Kashmir" Release Notes_v2.5.15_Bugfixes:
+
+Bugfixes
+--------
+
+- remote home directory - Disallow use of remote home directories that include relative pathing by means of `..` (CVE-2019-3828) (https://github.com/ansible/ansible/pull/52133)
+
+- always correctly template no log for tasks https://github.com/ansible/ansible/issues/43294
+
+
 .. _Ansible 2.5 "Kashmir" Release Notes_v2.5.14:
 
 v2.5.14
