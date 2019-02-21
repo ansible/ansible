@@ -33,7 +33,6 @@ options:
     name:
         description:
             - The name of the virtual machine.
-        required: True
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -215,8 +214,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                 required=True
             ),
             name=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             tags=dict(
                 type='list'
