@@ -594,7 +594,7 @@ class FilterModule(object):
             'bool': to_bool,
             'to_datetime': to_datetime,
 
-            # date formating
+            # date formatting
             'strftime': strftime,
 
             # quote string for shell usage
