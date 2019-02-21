@@ -27,22 +27,22 @@ requirements:
 author:
   - Luc Stroobant (@stroobl)
 options:
-  satellite_hostname:
+  hostname:
     description:
       - The name or IP address of the Red Hat Satellite server.
-    required: true
-  username:
+    required: yes
+  user:
     description:
-      - Satellite server username
-    required: true
+      - Satellite server user.
+    required: yes
   password:
     description:
-      - Satellite server password
-    required: true
-  organization:
+      - Satellite server password.
+    required: yes
+  org_id:
     description:
       - Satellite organization ID to work on
-    required: true
+    required: yes
   state:
     description:
       - "present: assign a subscription of subscription_type to host"
@@ -54,7 +54,7 @@ options:
          remove all other subscriptions assigned to the guests. Useful if you configured a VDC
          subscription on a hypervisor that didn't have it before."
       - "optimize: use to replace subscriptions on physical servers with a higher multiplier with subscriptions with a lower multiplier."
-    choices: [present, absent, autoattach, disable_autoattach, vdcguests, optimize]
+    choices: [absent, autoattach, disable_autoattach, optimize, present, vdcguests]
     default: autoattach
   content_host:
     description:
@@ -73,19 +73,20 @@ options:
      - When set to C(yes) remove all other subscriptions attached to this host.
     type: bool
     default: no
-  verify_ssl:
+  validate_certs:
     description:
-      - Check ssl certificates?
+      - If C(no), SSL certificates will not be validated.
+      - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
-    default: True
+    default: yes
 """
 
 EXAMPLES = """
 - name: Assign subscriptions, remove all existing subscriptions (run against localhost)
   satellite_subscription:
-    satellite_hostname: "{{ satellite_fqdn }}"
-    username: "{{ satellite_admin_user }}"
-    password: "{{ satellite_admin_pass }}"
+    hostname: satellite.domain.local
+    user: admin
+    password: adminpass
     state: present
     content_host: "{{ groups.rhel_servers }}"
     subscription:
@@ -93,68 +94,69 @@ EXAMPLES = """
       - name=EPEL
       - name=Extra
     unique: yes
-    organization: 1
+    org_id: 1
   delegate_to: localhost
 
 - name: Assign subscriptions rhel servers, remove all existing subscriptions (run against inventory hosts/group)
   satellite_subscription:
-    satellite_hostname: "{{ satellite_fqdn }}"
-    username: "{{ satellite_admin_user }}"
-    password: "{{ satellite_admin_pass }}"
+    hostname: satellite.domain.local
+    user: admin
+    password: adminpass
     state: present
     content_host:
       - "{{ inventory_hostname }}"
-    subscription: "{{ redhat_subscriptions }}"
-    unique: true
-    organization: 1
+    subscription:
+      - "Red Hat Enterprise Linux Server Entry Level, Standard"
+    unique: yes
+    org_id: 1
   delegate_to: localhost
 
 - name: remove a subscription from hosts
   satellite_subscription:
-    satellite_hostname: "{{ satellite_fqdn }}"
-    username: "{{ satellite_admin_user }}"
-    password: "{{ satellite_admin_pass }}"
+    hostname: satellite.domain.local
+    user: admin
+    password: adminpass
     state: absent
     content_host:
       - server1
       - server2
     subscription:
       - "Red Hat Enterprise Linux Server Entry Level, Self-support"
-    organization: 1
+    org_id: 1
 
 - name: run auto-attach for a host
   satellite_subscription:
-    satellite_hostname: "{{ satellite_fqdn }}"
-    username: "{{ satellite_admin_user }}"
-    password: "{{ satellite_admin_pass }}"
+    hostname: satellite.domain.local
+    user: admin
+    password: adminpass
     state: autoattach
     content_host: server1
-    organization: 1
+    org_id: 1
 
 - name: assign VDC guest subscriptions to Satellite content hosts
   satellite_subscription:
-    satellite_hostname: "{{ satellite_fqdn }}"
-    username: "{{ satellite_admin_user }}"
-    password: "{{ satellite_admin_pass }}"
+    hostname: satellite.domain.local
+    user: admin
+    password: adminpass
     state: vdcguests
     content_host:
       - "{{ inventory_hostname }}"
-    organization: "{{ satellite_organization_id }}"
-    verify_ssl: "{{ satellite_verify_ssl }}"
+    org_id: 1
+    validate_certs: false
   delegate_to: localhost
 
 - name: Optimize by replacing multiple entitlements from subscription_id 242 with the new subscription (no changes on hosts consuming a single entitlement)
   satellite_subscription:
-    satellite_hostname: "{{ satellite_fqdn }}"
-    username: "{{ satellite_admin_user }}"
-    password: "{{ satellite_admin_pass }}"
+    hostname: satellite.domain.local
+    user: admin
+    password: adminpass
     state: optimize
     content_host:
       - "subscription_id=242"
     subscription:
       - "Red Hat Enterprise Linux Server Entry Level, Self-support"
-    organization: "{{ satellite_organization_id }}"
-    verify_ssl: "{{ satellite_verify_ssl }}"
+    org_id: 1
+    validate_certs: false
   delegate_to: localhost
 """
 
@@ -171,12 +173,11 @@ stderr:
   sample: Authentication failed
 """
 
-from ansible.module_utils import six
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.satellite import requests_available, request, host_list, put
 
 
-def subscription_assign(sat_url, user, password, matched_subscriptions, host, module, verify):
+def subscription_assign(sat_url, user, password, matched_subscriptions, host, module, validate_certs):
 
     result = []
     error = False
@@ -200,14 +201,14 @@ def subscription_assign(sat_url, user, password, matched_subscriptions, host, mo
 
         # attach the available subscription to this host
         apicall = "{0}/api/hosts/{1}/subscriptions/add_subscriptions".format(sat_url, host["id"])
-        put(apicall, user, password, data, verify)
+        put(apicall, user, password, data, validate_certs)
 
         result.append([host["name"], "Assigned: {0}".format(sub["name"])])
 
     return result, error
 
 
-def subscription_search(sat_url, user, password, org, subscription, module, verify):
+def subscription_search(sat_url, user, password, org, subscription, module, validate_certs):
     """Search for subscriptions and return them"""
 
     matched_subscriptions = {}
@@ -215,7 +216,7 @@ def subscription_search(sat_url, user, password, org, subscription, module, veri
         # only search for normal subscriptions to avoid returning assigned ones
         params = {"search": "type=NORMAL and ({0})".format(subsearch)}
         apicall = "{0}/katello/api/organizations/{1}/subscriptions".format(sat_url, org)
-        matched_subscriptions[subsearch] = request(apicall, user, password, verify, True, params)
+        matched_subscriptions[subsearch] = request(apicall, user, password, validate_certs, True, params)
         if matched_subscriptions[subsearch] == []:
             errors = "Sorry, no subscriptions matched. Please adjust your subscription search"
             module.fail_json(msg=errors)
@@ -223,17 +224,17 @@ def subscription_search(sat_url, user, password, org, subscription, module, veri
     return matched_subscriptions
 
 
-def subscription_remove(sat_url, user, password, host, sub, verify):
+def subscription_remove(sat_url, user, password, host, sub, validate_certs):
     """Remove a subscription from a host"""
 
     apicall = "{0}/api/hosts/{1}/subscriptions/remove_subscriptions".format(sat_url, host["id"])
     data = {"id": host["id"], "subscriptions": [{"id": sub["id"], "quantity": sub["quantity_consumed"]}]}
-    result = put(apicall, user, password, data, verify)
+    result = put(apicall, user, password, data, validate_certs)
 
     return result
 
 
-def subscription_configure_autoattach(sat_url, user, password, host, autoheal, verify):
+def subscription_configure_autoattach(sat_url, user, password, host, autoheal, validate_certs):
     """Configure autoattach for a host (autoheal = bool)"""
     data = {
         "id": host["id"],
@@ -245,17 +246,17 @@ def subscription_configure_autoattach(sat_url, user, password, host, autoheal, v
         },
     }
     apicall = "{0}/api/hosts/{1}".format(sat_url, host["id"])
-    req = put(apicall, user, password, data, verify)
+    req = put(apicall, user, password, data, validate_certs)
 
     return req
 
 
-def subscription_autoattach(sat_url, user, password, host, verify):
+def subscription_autoattach(sat_url, user, password, host, validate_certs):
     """Run subscription autoattach for host"""
 
     data = {"id": host["id"]}
     apicall = "{0}/api/hosts/{1}/subscriptions/auto_attach".format(sat_url, host["id"])
-    req = put(apicall, user, password, data, verify)
+    req = put(apicall, user, password, data, validate_certs)
 
     return req["results"]
 
@@ -264,18 +265,18 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            satellite_hostname=dict(type='str', required=True),
-            username=dict(required=True),
-            password=dict(required=True, no_log=True),
-            organization=dict(required=True, type=int),
+            hostname=dict(type='str', required=True),
+            user=dict(type='str', required=True),
+            password=dict(type='str', required=True, no_log=True),
+            org_id=dict(type='int', required=True),
             state=dict(
-                default="autoattach",
+                type='str', default="autoattach",
                 choices=['absent', 'autoattach', 'disable_autoattach', 'optimize', 'present', 'vdcguests'],
             ),
             content_host=dict(type='list', required=True),
-            subscription=dict(type=list),
+            subscription=dict(type='list'),
             unique=dict(type='bool', default=False),
-            verify_ssl=dict(type='bool', default=True),
+            validate_certs=dict(type='bool', default=True),
         ),
         supports_check_mode=False,
     )
@@ -283,41 +284,41 @@ def main():
     if not requests_available:
         module.fail_json(msg="Library 'requests' is required.")
 
-    sat = module.params["satellite_hostname"]
+    hostname = module.params["hostname"]
     state = module.params["state"]
-    user = module.params["username"]
+    user = module.params["user"]
     password = module.params["password"]
-    org = module.params["organization"]
+    org = module.params["org_id"]
     content_host = module.params["content_host"]
     subscription = module.params["subscription"]
     unique = module.params["unique"]
-    verify = module.params["verify_ssl"]
+    validate_certs = module.params["validate_certs"]
 
     errors = None
     changed = False
     result = []
 
-    sat_url = "https://{0}".format(sat)
+    sat_url = "https://{0}".format(hostname)
 
     # get the list of hosts to work on
     hosts = []
     for ch in content_host:
-        hl = host_list(sat_url, user, password, org, verify, ch)
+        hl = host_list(sat_url, user, password, org, validate_certs, ch)
         hosts.extend(hl)
 
     if state == "autoattach":
         for host in hosts:
             # run auto attach if enabled
             if host["subscription_facet_attributes"]["autoheal"]:
-                subs = subscription_autoattach(sat_url, user, password, host, verify)
+                subs = subscription_autoattach(sat_url, user, password, host, validate_certs)
                 result.append("Triggered auto-attach run, attached subscriptions:")
                 for sub in subs:
                     result.append(sub["product_name"])
                 changed = True
             # or enable and run auto attach if disabled
             else:
-                subscription_configure_autoattach(sat_url, user, password, host, True, verify)
-                subs = subscription_autoattach(sat_url, user, password, host, verify)
+                subscription_configure_autoattach(sat_url, user, password, host, True, validate_certs)
+                subs = subscription_autoattach(sat_url, user, password, host, validate_certs)
                 result.append("Enabled and triggered auto-attach run, attached subscriptions:")
                 for sub in subs:
                     result.append(sub["product_name"])
@@ -326,7 +327,7 @@ def main():
     if state == "disable_autoattach":
         for host in hosts:
             if host["subscription_facet_attributes"]["autoheal"]:
-                subscription_configure_autoattach(sat_url, user, password, host, False, verify)
+                subscription_configure_autoattach(sat_url, user, password, host, False, validate_certs)
                 result.append("Auto-attach disabled")
                 changed = True
             else:
@@ -340,42 +341,41 @@ def main():
             if unique:
                 # get existing subscriptions on host
                 apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, host["id"])
-                hostsubs = request(apicall, user, password, verify)
+                hostsubs = request(apicall, user, password, validate_certs)
                 # and remove them
                 for sub in hostsubs["results"]:
-                    subscription_remove(sat_url, user, password, host, sub, verify)
+                    subscription_remove(sat_url, user, password, host, sub, validate_certs)
                     result.append([host["name"], "Removed: {0}".format(sub["name"])])
 
             # search for our subscriptions
-            matched_subscriptions = subscription_search(sat_url, user, password, org, subscription, module, verify)
+            matched_subscriptions = subscription_search(sat_url, user, password, org, subscription, module, validate_certs)
 
             # assign the free subscription(s) to host
-            res, error = subscription_assign(sat_url, user, password, matched_subscriptions, host, module, verify)
+            res, error = subscription_assign(sat_url, user, password, matched_subscriptions, host, module, validate_certs)
             result.append(res)
-            if not error:
-                changed = True
-            else:
+            if error:
                 module.fail_json(msg=result)
+            changed = True
 
     elif state == "absent":
         # loop over hosts to remove
         for host in hosts:
             # get existing subscriptions on host
             apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, host["id"])
-            hostsubs = request(apicall, user, password, verify)
+            hostsubs = request(apicall, user, password, validate_certs)
             for sub in hostsubs["results"]:
                 for subsearch in subscription:
                     if "=" in subsearch:
                         # this is a search with a key, get the key and value
                         (key, value) = subsearch.split("=")
                         if value in sub[key]:
-                            subscription_remove(sat_url, user, password, host, sub, verify)
+                            subscription_remove(sat_url, user, password, host, sub, validate_certs)
                             result.append([host["name"], "Removed: {0}".format(sub["name"])])
                             changed = True
                     else:
                         # only match on name if no key is given
                         if subsearch in sub["name"]:
-                            subscription_remove(sat_url, user, password, host, sub, verify)
+                            subscription_remove(sat_url, user, password, host, sub, validate_certs)
                             result.append([host["name"], "Removed: {0}".format(sub["name"])])
                             changed = True
 
@@ -384,19 +384,19 @@ def main():
         for host in hosts:
             # request detailed info for host
             apicall = "{0}/api/hosts/{1}".format(sat_url, host["id"])
-            host_info = request(apicall, user, password, verify, False)
+            host_info = request(apicall, user, password, validate_certs, False)
             # loop over guests on hypervisor
             for guest in host_info["subscription_facet_attributes"]["virtual_guests"]:
                 # get existing guest subscriptions
                 apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, guest["id"])
-                guest_subs = request(apicall, user, password, verify)
+                guest_subs = request(apicall, user, password, validate_certs)
                 # remove existing Red Hat subscriptions, except the ones from the hypervisor
                 for sub in guest_subs["results"]:
                     if "hypervisor" not in sub and sub["account_number"]:
-                        subscription_remove(sat_url, user, password, guest, sub, verify)
+                        subscription_remove(sat_url, user, password, guest, sub, validate_certs)
                         result.append([guest["name"], "removed: {0}".format(sub["name"])])
                 # run autoattach
-                subscription_autoattach(sat_url, user, password, guest, verify)
+                subscription_autoattach(sat_url, user, password, guest, validate_certs)
 
     elif state == "optimize":
         # loop over hosts
@@ -407,7 +407,7 @@ def main():
             else:
                 # get existing subscriptions on host
                 apicall = "{0}/api/hosts/{1}/subscriptions".format(sat_url, host["id"])
-                hostsubs = request(apicall, user, password, verify)
+                hostsubs = request(apicall, user, password, validate_certs)
                 for sub in hostsubs["results"]:
                     # remove subscription if it's using an entitlment per socket
                     if (
@@ -417,11 +417,11 @@ def main():
                     ):
                         # search for our subscriptions
                         matched_subscriptions = subscription_search(
-                            sat_url, user, password, org, subscription, module, verify
+                            sat_url, user, password, org, subscription, module, validate_certs
                         )
                         # assign the free subscription(s) to host
                         res, error = subscription_assign(
-                            sat_url, user, password, matched_subscriptions, host, module, verify
+                            sat_url, user, password, matched_subscriptions, host, module, validate_certs
                         )
                         result.append(res)
                         if not error:
@@ -429,7 +429,7 @@ def main():
                         else:
                             module.fail_json(msg=result)
                         # remove the original subscription
-                        subscription_remove(sat_url, user, password, host, sub, verify)
+                        subscription_remove(sat_url, user, password, host, sub, validate_certs)
                         result.append([host["name"], "Removed: {0} {1}".format(sub["quantity_consumed"], sub["name"])])
                         changed = True
                         # skip to next host
