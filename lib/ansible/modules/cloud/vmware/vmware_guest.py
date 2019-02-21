@@ -177,10 +177,12 @@ options:
     - '     - C(thin) thin disk'
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
-    - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
+          then will select the less used datastore whose name contains this "disk.datastore" string.'
     - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
-    - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
+    - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
+          will not be used if C(datastore) is specified outside this C(disk) configuration.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
     - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
@@ -344,9 +346,9 @@ options:
   datastore:
     description:
     - Specify datastore or datastore cluster to provision virtual machine.
-    - 'This will take precedence over "disk.datastore" parameter.'
-    - This parameter is useful to override datastore or datastore cluster setting.
-    - For example, when user has different datastore or datastore cluster for templates and virtual machines.
+    - 'This parameter takes precedence over "disk.datastore" parameter.'
+    - 'This parameter can be used to override datastore or datastore cluster setting of the virtual machine when deployed
+      from the template.'
     - Please see example for more usage.
     version_added: '2.7'
   convert:
