@@ -1,11 +1,12 @@
 #!/usr/bin/python
 ''' this is igroup module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 '''
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -17,14 +18,14 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 
 module: na_ontap_igroup
-short_description: NetApp ONTAP iSCSI igroup configuration
+short_description: NetApp ONTAP iSCSI or FC igroup configuration
 extends_documentation_fragment:
     - netapp.na_ontap
 version_added: '2.6'
 author: NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
 
 description:
-    - create, destroy or rename Igroups and add or remove initiator in igroups.
+    - Create/Delete/Rename Igroups and Modify initiators belonging to an igroup
 
 options:
   state:
@@ -53,9 +54,14 @@ options:
     description:
     - OS type of the initiators within the group.
 
-  initiator:
+  initiators:
     description:
+    - List of initiators to be mapped to the igroup.
     - WWPN, WWPN Alias, or iSCSI name of Initiator to add or remove.
+    - For a modify operation, this list replaces the exisiting initiators
+    - This module does not add or remove specific initiator(s) in an igroup
+    aliases:
+    - initiator
 
   bind_portset:
     description:
@@ -74,13 +80,25 @@ options:
 '''
 
 EXAMPLES = '''
-    - name: Create Igroup
+    - name: Create iSCSI Igroup
       na_ontap_igroup:
         state: present
         name: ansibleIgroup3
         initiator_group_type: iscsi
         ostype: linux
-        initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
+        initiators: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com,abc.com:redhat.com
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
+
+    - name: Create FC Igroup
+      na_ontap_igroup:
+        state: present
+        name: ansibleIgroup4
+        initiator_group_type: fcp
+        ostype: linux
+        initiators: 20:00:00:50:56:9f:19:82
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
@@ -93,15 +111,15 @@ EXAMPLES = '''
         name: testexamplenewname
         initiator_group_type: iscsi
         ostype: linux
-        initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
+        initiators: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
-    - name: remove Igroup
+    - name: Modify Igroup Initiators (replaces exisiting initiators)
       na_ontap_igroup:
-        state: absent
+        state: present
         name: ansibleIgroup3
         initiator_group_type: iscsi
         ostype: linux
@@ -111,6 +129,14 @@ EXAMPLES = '''
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
+    - name: Delete Igroup
+      na_ontap_igroup:
+        state: absent
+        name: ansibleIgroup3
+        vserver: ansibleVServer
+        hostname: "{{ netapp_hostname }}"
+        username: "{{ netapp_username }}"
+        password: "{{ netapp_password }}"
 '''
 
 RETURN = '''
@@ -121,6 +147,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.netapp_module import NetAppModule
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -132,13 +159,13 @@ class NetAppOntapIgroup(object):
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
         self.argument_spec.update(dict(
             state=dict(required=False, choices=[
-                       'present', 'absent'], default='present'),
+                'present', 'absent'], default='present'),
             name=dict(required=True, type='str'),
             from_name=dict(required=False, type='str', default=None),
             ostype=dict(required=False, type='str'),
             initiator_group_type=dict(required=False, type='str',
                                       choices=['fcp', 'iscsi', 'mixed']),
-            initiator=dict(required=False, type='str'),
+            initiators=dict(required=False, type='list', aliases=['initiator']),
             vserver=dict(required=True, type='str'),
             force_remove_initiator=dict(required=False, type='bool', default=False),
             bind_portset=dict(required=False, type='str')
@@ -149,25 +176,14 @@ class NetAppOntapIgroup(object):
             supports_check_mode=True
         )
 
-        params = self.module.params
-
-        # set up state variables
-        self.state = params['state']
-        self.name = params['name']
-        self.ostype = params['ostype']
-        self.initiator_group_type = params['initiator_group_type']
-        self.initiator = params['initiator']
-        self.vserver = params['vserver']
-        self.from_name = params['from_name']
-        self.force_remove_initiator = params['force_remove_initiator']
-        self.bind_portset = params['bind_portset']
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(
                 msg="the python NetApp-Lib module is required")
         else:
-            self.server = netapp_utils.setup_na_ontap_zapi(
-                module=self.module, vserver=self.vserver)
+            self.server = netapp_utils.setup_na_ontap_zapi(module=self.module, vserver=self.parameters['vserver'])
 
     def get_igroup(self, name):
         """
@@ -179,84 +195,75 @@ class NetAppOntapIgroup(object):
         :rtype: dict
         """
         igroup_info = netapp_utils.zapi.NaElement('igroup-get-iter')
-        igroup_attributes = netapp_utils.zapi.NaElement('initiator-group-info')
-        igroup_attributes.add_new_child('initiator-group-name', name)
-        query = netapp_utils.zapi.NaElement('query')
-        query.add_child_elem(igroup_attributes)
-        igroup_info.add_child_elem(query)
-        result = self.server.invoke_successfully(igroup_info, True)
-        return_value = None
+        attributes = dict(query={'initiator-group-info': {'initiator-group-name': name}})
+        igroup_info.translate_struct(attributes)
+        result, current = None, None
 
-        if result.get_child_by_name('num-records') and \
-                int(result.get_child_content('num-records')) >= 1:
-
-            igroup_attributes = result.get_child_by_name(
-                'attributes-list').get_child_by_name(
-                    'igroup-attributes')
-            return_value = {
-                'name': name,
+        try:
+            result = self.server.invoke_successfully(igroup_info, True)
+        except netapp_utils.zapi.NaApiError as error:
+            self.module.fail_json(msg='Error fetching igroup info %s: %s' % (self.parameters['name'], to_native(error)),
+                                  exception=traceback.format_exc())
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
+            igroup = result.get_child_by_name('attributes-list').get_child_by_name('initiator-group-info')
+            initiators = []
+            if igroup.get_child_by_name('initiators'):
+                current_initiators = igroup['initiators'].get_children()
+                for initiator in current_initiators:
+                    initiators.append(initiator['initiator-name'])
+            current = {
+                'initiators': initiators
             }
 
-        return return_value
+        return current
 
-    def add_initiator(self):
+    def add_initiators(self):
         """
-        Add the initiator.
+        Add the list of initiators to igroup
+        :return: None
         """
-        options = {'initiator-group-name': self.name}
+        # don't add if initiators is empty string
+        if self.parameters.get('initiators') == [''] or self.parameters.get('initiators') is None:
+            return
+        for initiator in self.parameters['initiators']:
+            self.modify_initiator(initiator, 'igroup-add')
 
-        if self.initiator is not None:
-            options['initiator'] = self.initiator
+    def remove_initiators(self, initiators):
+        """
+        Removes all existing initiators from igroup
+        :return: None
+        """
+        for initiator in initiators:
+            self.modify_initiator(initiator, 'igroup-remove')
 
-        igroup_add = netapp_utils.zapi.NaElement.create_node_with_children(
-            'igroup-add', **options)
+    def modify_initiator(self, initiator, zapi):
+        """
+        Add or remove an initiator to/from an igroup
+        """
+        initiator.strip()  # remove leading spaces if any (eg: if user types a space after comma in initiators list)
+        options = {'initiator-group-name': self.parameters['name'],
+                   'initiator': initiator}
+
+        igroup_modify = netapp_utils.zapi.NaElement.create_node_with_children(zapi, **options)
 
         try:
-            self.server.invoke_successfully(igroup_add,
-                                            enable_tunneling=True)
-            return True
+            self.server.invoke_successfully(igroup_modify, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
-            if to_native(error.code) == "9008":
-                # Error 9008 denotes Initiator group already contains initiator
-                return False
-            else:
-                self.module.fail_json(msg='Error adding igroup initiator %s: %s' % (self.name, to_native(error)),
-                                      exception=traceback.format_exc())
-
-    def remove_initiator(self):
-        """
-        Remove the initiator.
-        """
-        options = {'initiator': self.initiator}
-
-        options['initiator-group-name'] = self.name
-
-        igroup_remove = netapp_utils.zapi.NaElement.create_node_with_children(
-            'igroup-remove', **options)
-
-        try:
-            self.server.invoke_successfully(igroup_remove,
-                                            enable_tunneling=True)
-            return True
-        except netapp_utils.zapi.NaApiError as error:
-            if to_native(error.code) == "9007":
-                # Error 9007 denotes Initiator group does not contain initiator
-                return False
-            else:
-                self.module.fail_json(msg='Error removing igroup initiator %s: %s' % (self.name, to_native(error)),
-                                      exception=traceback.format_exc())
+            self.module.fail_json(msg='Error modifying igroup initiator %s: %s' % (self.parameters['name'],
+                                                                                   to_native(error)),
+                                  exception=traceback.format_exc())
 
     def create_igroup(self):
         """
         Create the igroup.
         """
-        options = {'initiator-group-name': self.name}
-        if self.ostype is not None:
-            options['os-type'] = self.ostype
-        if self.initiator_group_type is not None:
-            options['initiator-group-type'] = self.initiator_group_type
-        if self.bind_portset is not None:
-            options['bind-portset'] = self.bind_portset
+        options = {'initiator-group-name': self.parameters['name']}
+        if self.parameters.get('ostype') is not None:
+            options['os-type'] = self.parameters['ostype']
+        if self.parameters.get('initiator_group_type') is not None:
+            options['initiator-group-type'] = self.parameters['initiator_group_type']
+        if self.parameters.get('bind_portset') is not None:
+            options['bind-portset'] = self.parameters['bind_portset']
 
         igroup_create = netapp_utils.zapi.NaElement.create_node_with_children(
             'igroup-create', **options)
@@ -264,23 +271,24 @@ class NetAppOntapIgroup(object):
         try:
             self.server.invoke_successfully(igroup_create,
                                             enable_tunneling=True)
-            self.add_initiator()
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error provisioning igroup %s: %s' % (self.name, to_native(error)),
+            self.module.fail_json(msg='Error provisioning igroup %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
+        self.add_initiators()
 
     def delete_igroup(self):
         """
         Delete the igroup.
         """
         igroup_delete = netapp_utils.zapi.NaElement.create_node_with_children(
-            'igroup-destroy', **{'initiator-group-name': self.name, 'force': 'true' if self.force_remove_initiator else 'false'})
+            'igroup-destroy', **{'initiator-group-name': self.parameters['name'],
+                                 'force': 'true' if self.parameters['force_remove_initiator'] else 'false'})
 
         try:
             self.server.invoke_successfully(igroup_delete,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error deleting igroup %s: %s' % (self.name, to_native(error)),
+            self.module.fail_json(msg='Error deleting igroup %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
     def rename_igroup(self):
@@ -288,65 +296,44 @@ class NetAppOntapIgroup(object):
         Rename the igroup.
         """
         igroup_rename = netapp_utils.zapi.NaElement.create_node_with_children(
-            'igroup-rename', **{'initiator-group-name': self.from_name, 'initiator-group-new-name': str(
-                self.name)})
+            'igroup-rename', **{'initiator-group-name': self.parameters['from_name'],
+                                'initiator-group-new-name': str(self.parameters['name'])})
         try:
             self.server.invoke_successfully(igroup_rename,
                                             enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error renaming igroup %s: %s' % (self.name, to_native(error)),
+            self.module.fail_json(msg='Error renaming igroup %s: %s' % (self.parameters['name'], to_native(error)),
                                   exception=traceback.format_exc())
 
-    def apply(self):
-        changed = False
-        igroup_exists = False
-        rename_igroup = False
-        initiator_changed = False
+    def autosupport_log(self):
         netapp_utils.ems_log_event("na_ontap_igroup", self.server)
-        igroup_details = self.get_igroup(self.name)
 
-        if igroup_details is not None:
-            igroup_exists = True
-            if self.state == 'absent':
-                changed = True
-            elif self.state == 'present':
-                if self.initiator:
-                    changed = True
+    def apply(self):
+        self.autosupport_log()
+        current = self.get_igroup(self.parameters['name'])
+        # rename and create are mutually exclusive
+        rename, cd_action, modify = None, None, None
+        if self.parameters.get('from_name'):
+            rename = self.na_helper.is_rename_action(self.get_igroup(self.parameters['from_name']), current)
         else:
-            if self.state == 'present':
-                # create by default, or rename if from_name exists
-                changed = True
-                if self.from_name:
-                    igroup_details = self.get_igroup(self.from_name)
-                    if igroup_details is not None:
-                        rename_igroup = True
-                        igroup_exists = True
-                    else:
-                        self.module.fail_json(msg='Error renaming igroup %s does not exist' % (self.from_name))
+            cd_action = self.na_helper.get_cd_action(current, self.parameters)
+        if cd_action is None and self.parameters['state'] == 'present':
+            modify = self.na_helper.get_modified_attributes(current, self.parameters)
 
-        if changed:
-            changed = False
+        if self.na_helper.changed:
             if self.module.check_mode:
                 pass
             else:
-                if self.state == 'present':
-                    if not igroup_exists:
-                        self.create_igroup()
-                        changed = True
-                    else:
-                        if self.initiator:
-                            changed = self.add_initiator()
-                        if rename_igroup:
-                            self.rename_igroup()
-                            changed = True
-
-                elif self.state == 'absent':
-                    if self.initiator:
-                        self.remove_initiator()
+                if rename:
+                    self.rename_igroup()
+                elif cd_action == 'create':
+                    self.create_igroup()
+                elif cd_action == 'delete':
                     self.delete_igroup()
-                    changed = True
-
-        self.module.exit_json(changed=changed)
+                if modify:
+                    self.remove_initiators(current['initiators'])
+                    self.add_initiators()
+        self.module.exit_json(changed=self.na_helper.changed)
 
 
 def main():
