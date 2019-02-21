@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp Inc.
+# (c) 2018-2019, NetApp Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -128,7 +128,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
             file_ext_to_include=dict(required=False, type="list"),
             filters=dict(required=False, type="list"),
             is_scan_mandatory=dict(required=False, type='bool', default=False),
-            max_file_size=dict(required=False, type="str"),
+            max_file_size=dict(required=False, type="int"),
             paths_to_exclude=dict(required=False, type="list"),
             scan_files_with_no_ext=dict(required=False, type=bool, default=True)
         ))
@@ -273,7 +273,7 @@ class NetAppOntapVscanOnAccessPolicy(object):
             if str(self.is_scan_mandatory).lower() != policy_obj.get_child_content('is-scan-mandatory'):
                 return True
         if self.max_file_size:
-            if self.max_file_size != policy_obj.get_child_content('max-file-size'):
+            if self.max_file_size != int(policy_obj.get_child_content('max-file-size')):
                 return True
         if self.scan_files_with_no_ext is not None:
             if str(self.scan_files_with_no_ext).lower() != policy_obj.get_child_content('scan-files-with-no-ext'):
