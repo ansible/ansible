@@ -45,7 +45,8 @@ class DataLoader:
     Usage:
 
         dl = DataLoader()
-        # optionally: dl.set_vault_password('foo')
+        # optionally: from ansible.parsing.vault import VaultSecret
+        # optionally: dl.set_vault_secrets([('', VaultSecret(b'foo'))])
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
     '''
@@ -58,7 +59,7 @@ class DataLoader:
         # initialize the vault stuff with an empty password
         # TODO: replace with a ref to something that can get the password
         #       a creds/auth provider
-        # self.set_vault_password(None)
+        # self.set_vault_secrets(None)
         self._vaults = {}
         self._vault = VaultLib()
         self.set_vault_secrets(None)
