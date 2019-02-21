@@ -25,7 +25,10 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
 
-_UNSAFE_GROUP = re.compile(C.INVALID_GROUP_CHARS)
+try:
+    _UNSAFE_GROUP = re.compile(C.INVALID_GROUP_CHARS)
+except Exception as e:
+    raise AnsibleError('Invalid regex suplied for "invalid group names" (%s): %s ' % (to_native(C.INVALID_GROUP_CHARS), to_native(e)))
 
 
 def to_safe_group_name(name, replacer="_"):
