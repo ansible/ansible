@@ -55,23 +55,140 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-virtual_machines:
-    description: A list of dictionaries containing facts for Virtual Machine.
+virtualmachines:
+    description: A list of dictionaries containing facts for DevTest Lab Virtual Machine.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the virtual machine.
             returned: always
             type: str
-            sample: id
-        tags:
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/virt
+                     ualmachines/myVm"
+        resource_group:
             description:
-                - The tags of the resource.
+                - Name of the resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - Name of the virtual machine.
+            returned: always
+            type: str
+            sample: myVm
+
+        notes:
+            description:
+                - Notes of the virtual machine.
+            returned: always
+            type: str
+            sample: My VM notes
+
+        disallow_public_ip_address:
+            description:
+                - Whether public IP should be not allowed.
+            returned: always
+            type: bool
+            sample: false
+        expiration_date:
+            description:
+                - Virtual machine expiration date.
+            returned: always
+            type: str
+            sample: 2029-02-22T01:49:12.117974Z
+        image:
+            description:
+                - Gallery image reference.
             returned: always
             type: complex
-            sample: tags
+            contains:
+                offer:
+                    description:
+                        - Offer.
+                    returned: when created from gallery image
+                    type: str
+                    sample: UbuntuServer                    
+                os_type:
+                    description:
+                        - Operating system type.
+                    returned: when created from gallery image
+                    type: str
+                    sample: Linux
+                sku:
+                    description:
+                        - SKU.
+                    returned: when created from gallery image
+                    type: str
+                    sample: 16.04-LTS
+                publisher:
+                    description:
+                        - Publisher.
+                    returned: when created from gallery image
+                    type: str
+                    sample: Canonical
+                version:
+                    description:
+                        - Version.
+                    returned: when created from gallery image
+                    type: str
+                    sample: latest
+        os_type:
+            description:
+                - Operating system type.
+            returned: always
+            type: str
+            sample: linux
+        vm_size:
+            description:
+                - Virtual machine size.
+            returned: always
+            type: str
+            sample: Standard_A2_v2
+        user_name:
+            description:
+                - Admin user name.
+            returned: always
+            type: str
+            sample: dtl_admin
+        storage_type:
+            description:
+                - Storage type.
+            returned: always
+            type: str
+            sample: standard
+        compute_id:
+            description:
+                - Resource id of compute virtual machine.
+            returned: always
+            type: str
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLab-myVm-097933/providers/Microsoft.Compute/virtualMachines/myVm
+        fqdn:
+            description:
+                - Fully qualified domain name.
+            returned: always
+            type: str
+            sample: myvm.eastus.cloudapp.azure.com
+        provisioning_state:
+            description:
+                - Provisioning state of the virtual network.
+            returned: always
+            type: str
+            sample: Succeeded
+        tags:
+            description:
+                - Tags
+            returned: always
+            type: complex
+            sample: { 'foo': 'bar' }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -122,7 +239,11 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
-        self.results['virtual_machines'] = self.get()
+        if self.name:
+            self.results['virtualmachines'] = self.get()
+        else:
+            self.results['virtualmachines'] = self.list()
+
         return self.results
 
     def get(self):
@@ -134,10 +255,28 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                                                              name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Virtual Machine.')
+            self.fail('Could not get facts for Virtual Machine.')
 
         if response and self.has_tags(response.tags, self.tags):
             results.append(self.format_response(response))
+
+        return results
+
+    def list(self):
+        response = None
+        results = []
+        try:
+            response = self.mgmt_client.virtual_machines.list(resource_group_name=self.resource_group,
+                                                              lab_name=self.lab_name)
+            self.log("Response : {0}".format(response))
+        except CloudError as e:
+            self.fail('Could not get facts for Virtual Machine.')
+
+        if response is not None:
+            for item in response:
+                if self.has_tags(item.tags, self.tags):
+                    results.append(self.format_response(item))
+
 
         return results
 
@@ -151,10 +290,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             'notes': d.get('notes'),
             'disallow_public_ip_address': d.get('disallow_public_ip_address'),
             'expiration_date': d.get('expiration_date'),
-            'image': d.get('gallery_image'),
+            'image': d.get('gallery_image_reference'),
             'os_type': d.get('os_type').lower(),
             'vm_size': d.get('size'),
-            'user_name': d.get('size'),
+            'user_name': d.get('user_name'),
             'storage_type': d.get('storage_type').lower(),
             'compute_id': d.get('compute_id'),
             'fqdn': d.get('fqdn'),
