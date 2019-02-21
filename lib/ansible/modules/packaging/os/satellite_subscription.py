@@ -56,7 +56,7 @@ options:
       - "optimize: use to replace subscriptions on physical servers with a higher multiplier with subscriptions with a lower multiplier."
     choices: [absent, autoattach, disable_autoattach, optimize, present, vdcguests]
     default: autoattach
-  content_host:
+  content_hosts:
     description:
       - List of content hosts to work with
       - Can also be a hostname search pattern accepted by the satellite.
@@ -88,7 +88,7 @@ EXAMPLES = """
     user: admin
     password: adminpass
     state: present
-    content_host: "{{ groups.rhel_servers }}"
+    content_hosts: "{{ groups.rhel_servers }}"
     subscription:
       - product_id=RH000XX
       - name=EPEL
@@ -103,7 +103,7 @@ EXAMPLES = """
     user: admin
     password: adminpass
     state: present
-    content_host:
+    content_hosts:
       - "{{ inventory_hostname }}"
     subscription:
       - "Red Hat Enterprise Linux Server Entry Level, Standard"
@@ -117,7 +117,7 @@ EXAMPLES = """
     user: admin
     password: adminpass
     state: absent
-    content_host:
+    content_hosts:
       - server1
       - server2
     subscription:
@@ -130,7 +130,7 @@ EXAMPLES = """
     user: admin
     password: adminpass
     state: autoattach
-    content_host: server1
+    content_hosts: server1
     org_id: 1
 
 - name: assign VDC guest subscriptions to Satellite content hosts
@@ -139,7 +139,7 @@ EXAMPLES = """
     user: admin
     password: adminpass
     state: vdcguests
-    content_host:
+    content_hosts:
       - "{{ inventory_hostname }}"
     org_id: 1
     validate_certs: false
@@ -151,7 +151,7 @@ EXAMPLES = """
     user: admin
     password: adminpass
     state: optimize
-    content_host:
+    content_hosts:
       - "subscription_id=242"
     subscription:
       - "Red Hat Enterprise Linux Server Entry Level, Self-support"
@@ -273,7 +273,7 @@ def main():
                 type='str', default="autoattach",
                 choices=['absent', 'autoattach', 'disable_autoattach', 'optimize', 'present', 'vdcguests'],
             ),
-            content_host=dict(type='list', required=True),
+            content_hosts=dict(type='list', required=True),
             subscription=dict(type='list'),
             unique=dict(type='bool', default=False),
             validate_certs=dict(type='bool', default=True),
@@ -289,7 +289,7 @@ def main():
     user = module.params["user"]
     password = module.params["password"]
     org = module.params["org_id"]
-    content_host = module.params["content_host"]
+    content_hosts = module.params["content_hosts"]
     subscription = module.params["subscription"]
     unique = module.params["unique"]
     validate_certs = module.params["validate_certs"]
@@ -302,7 +302,7 @@ def main():
 
     # get the list of hosts to work on
     hosts = []
-    for ch in content_host:
+    for ch in content_hosts:
         hl = host_list(sat_url, user, password, org, validate_certs, ch)
         hosts.extend(hl)
 
