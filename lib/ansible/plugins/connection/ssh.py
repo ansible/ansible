@@ -455,6 +455,9 @@ class Connection(ConnectionBase):
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
+        self._ssh_agent_pid = None
+        self._ssh_agent_socket = None
+
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
         # to work
@@ -468,7 +471,50 @@ class Connection(ConnectionBase):
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
 
+    def _spawn_ssh_agent(self):
+        self._ssh_agent = subprocess.Popen(
+            ('ssh-agent', '-sD'),
+            stdout=subprocess.PIPE,
+        )
+        self._ssh_agent_pid = self._ssh_agent.pid
+        self._ssh_agent_socket = (
+            self._ssh_agent.
+            stdout.readline().
+            partition(b'; ')[0].
+            partition(b'=')[-1].
+            decode()
+        )
+
+        if not self._play_context.private_key_file:
+            return
+        from ansible.parsing.dataloader import DataLoader
+        # from ansible.module_utils.six import BytesIO
+        key_path = os.path.expanduser(self._play_context.private_key_file)
+        dl = DataLoader()
+        # TODO: replace this with BytesIO in-memory file
+        decrypted_key_path = dl.get_real_file(key_path, decrypt=True)
+        # pk = BytesIO(decrypted_contents)
+        with open(decrypted_key_path) as pk:
+            subprocess.Popen(['ssh-add', '-'], stdin=pk, env=self._get_subprocess_env())
+        dl.cleanup_tmp_file(decrypted_key_path)
+
+    def _destroy_ssh_agent(self):
+        self._ssh_agent.terminate()
+        self._ssh_agent_pid = None
+        self._ssh_agent_socket = None
+
+    def _get_subprocess_env(self):
+        # TODO: kill ssh-agent here
+        env = os.environ.copy()
+        if self._ssh_agent_pid is not None:
+            env['SSH_AGENT_PID'] = str(self._ssh_agent_pid)
+        if self._ssh_agent_socket is not None:
+            env['SSH_AUTH_SOCK'] = str(self._ssh_agent_socket)
+
+        return env
+
     def _connect(self):
+        self._spawn_ssh_agent()
         return self
 
     @staticmethod
@@ -485,8 +531,7 @@ class Connection(ConnectionBase):
         cpath = '%(directory)s/' + digest[:10]
         return cpath
 
-    @staticmethod
-    def _sshpass_available():
+    def _sshpass_available(self):
         global SSHPASS_AVAILABLE
 
         # We test once if sshpass is available, and remember the result. It
@@ -495,7 +540,12 @@ class Connection(ConnectionBase):
 
         if SSHPASS_AVAILABLE is None:
             try:
-                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(
+                    ("sshpass", ),
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=self._get_subprocess_env(),
+                )
                 p.communicate()
                 SSHPASS_AVAILABLE = True
             except OSError:
@@ -783,9 +833,20 @@ class Connection(ConnectionBase):
                 master, slave = pty.openpty()
                 if PY3 and self._play_context.password:
                     # pylint: disable=unexpected-keyword-arg
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                    p = subprocess.Popen(
+                        cmd,
+                        stdin=slave, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        pass_fds=self.sshpass_pipe,
+                        env=self._get_subprocess_env(),
+                    )
                 else:
-                    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    p = subprocess.Popen(
+                        cmd,
+                        stdin=slave, stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        env=self._get_subprocess_env(),
+                    )
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
             except (OSError, IOError):
@@ -794,9 +855,20 @@ class Connection(ConnectionBase):
         if not p:
             if PY3 and self._play_context.password:
                 # pylint: disable=unexpected-keyword-arg
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
+                p = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    pass_fds=self.sshpass_pipe,
+                    env=self._get_subprocess_env(),
+                )
             else:
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=self._get_subprocess_env(),
+                )
             stdin = p.stdin
 
         # If we are using SSH password authentication, write the password into
@@ -1234,7 +1306,12 @@ class Connection(ConnectionBase):
 
         if run_reset:
             display.vvv(u'sending stop: %s' % cmd)
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=self._get_subprocess_env(),
+            )
             stdout, stderr = p.communicate()
             status_code = p.wait()
             if status_code != 0:
@@ -1243,4 +1320,5 @@ class Connection(ConnectionBase):
         self.close()
 
     def close(self):
+        self._destroy_ssh_agent()
         self._connected = False
