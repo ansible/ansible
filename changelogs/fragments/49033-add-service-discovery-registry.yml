@@ -1,3 +1,2 @@
-
 minor_changes:
   - service_discovery_registry - adds support for aws service_discovery_registry to be used with service_discovery_namespace
