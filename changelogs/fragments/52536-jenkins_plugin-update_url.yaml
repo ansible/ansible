@@ -1,0 +1,2 @@
+minor_changes:
+   - jenkins_plugin - Set new default value for the update_url parameter (https://github.com/ansible/ansible/issues/52086)
