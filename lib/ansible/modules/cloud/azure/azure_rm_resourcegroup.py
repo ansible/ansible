@@ -24,7 +24,7 @@ description:
 options:
     force_delete_nonempty:
         description:
-            - Remove a resource group and all associated resources. Use with state 'absent' to delete a resource
+            - Remove a resource group and all associated resources. Use with state C(absent) to delete a resource.
               group that contains resources.
         type: bool
         aliases:
@@ -40,8 +40,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the resource group. Use 'present' to create or update and
-              'absent' to delete. When 'absent' a resource group containing resources will not be removed unless the
+            - Assert the state of the resource group. Use C(present) to create or update and
+              C(absent) to delete. When C(absent) a resource group containing resources will not be removed unless the
               force option is used.
         default: present
         choices:

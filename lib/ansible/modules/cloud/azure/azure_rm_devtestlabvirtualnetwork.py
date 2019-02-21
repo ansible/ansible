@@ -43,7 +43,7 @@ options:
     state:
       description:
         - Assert the state of the Virtual Network.
-        - Use 'present' to create or update an Virtual Network and 'absent' to delete it.
+        - Use C(present) to create or update an Virtual Network and C(absent) to delete it.
       default: present
       choices:
         - absent

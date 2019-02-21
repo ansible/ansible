@@ -31,8 +31,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the route. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent

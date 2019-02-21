@@ -153,7 +153,7 @@ options:
     state:
       description:
         - Assert the state of the Web App deployment slot.
-        - Use 'present' to create or update a  slot and 'absent' to delete it.
+        - Use C(present) to create or update a  slot and C(absent) to delete it.
       default: present
       choices:
         - absent

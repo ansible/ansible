@@ -35,7 +35,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the managed disk. Use C(present) to create or update a managed disk and 'absent' to delete a managed disk.
+            - Assert the state of the managed disk. Use C(present) to create or update a managed disk and C(absent) to delete a managed disk.
         default: present
         choices:
             - absent

@@ -171,7 +171,7 @@ options:
     state:
       description:
         - Assert the state of the Web App.
-        - Use 'present' to create or update a Web App and 'absent' to delete it.
+        - Use C(present) to create or update a Web App and C(absent) to delete it.
       default: present
       choices:
         - absent

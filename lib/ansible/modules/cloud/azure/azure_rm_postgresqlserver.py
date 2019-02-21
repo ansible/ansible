@@ -74,7 +74,7 @@ options:
         default: Default
     state:
         description:
-            - Assert the state of the PostgreSQL server. Use 'present' to create or update a server and 'absent' to delete it.
+            - Assert the state of the PostgreSQL server. Use C(present) to create or update a server and C(absent) to delete it.
         default: present
         choices:
             - present

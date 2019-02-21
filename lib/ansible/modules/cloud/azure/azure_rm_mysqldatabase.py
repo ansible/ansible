@@ -54,7 +54,7 @@ options:
       default: 'no'
     state:
         description:
-            - Assert the state of the MySQL Database. Use 'present' to create or update a database and 'absent' to delete it.
+            - Assert the state of the MySQL Database. Use C(present) to create or update a database and C(absent) to delete it.
         default: present
         choices:
             - absent

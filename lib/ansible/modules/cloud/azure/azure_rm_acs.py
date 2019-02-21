@@ -31,7 +31,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the ACS. Use 'present' to create or update an ACS and 'absent' to delete it.
+            - Assert the state of the ACS. Use C(present) to create or update an ACS and C(absent) to delete it.
         default: present
         choices:
             - absent
