@@ -49,12 +49,12 @@ except ImportError:
 
 # BEGIN HANDLER CLASSES
 class FortiManagerHandler(object):
-    def __init__(self, conn, check_mode=False):
+    def __init__(self, conn, module):
         self._conn = conn
-        self._check_mode = check_mode
+        self._module = module
         self._tools = FMGRCommon
 
-    def process_request(self, url, datagram, paramgram, method):
+    def process_request(self, url, datagram, method):
         """
         Formats and Runs the API Request via Connection Plugin. Streamlined for use FROM Modules.
 
@@ -70,9 +70,10 @@ class FortiManagerHandler(object):
         """
         data = self._tools.format_request(method, url, **datagram)
         response = self._conn.send_request(method, data)
+
         if HAS_FMGR_DEBUG:
             try:
-                debug_dump(response, datagram, paramgram, url, method)
+                debug_dump(response, datagram, self._module.paramgram, url, method)
             except BaseException:
                 pass
 
