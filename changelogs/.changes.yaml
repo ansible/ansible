@@ -389,6 +389,19 @@ releases:
     - vmware_guest-documentation_fix.yaml
     - win_power_plan-windows10.yaml
     release_date: '2019-02-07'
+  2.6.14:
+    codename: Heartbreaker
+    fragments:
+    - 45378-fix-sql-tags.yml
+    - 51781-fixing-managed-disk-facts.yaml
+    - 52130-win_psmodule-update_nuget.yaml
+    - 52388-postgresqldatabase-fix-force-update.yml
+    - 52389-mysqldatabase-fix-force-update.yaml
+    - disallow-relative-homedir.yaml
+    - v2.6.14_summary.yaml
+    - win-become-elevation.yaml
+    - winrm-ansible-conn-error.yaml
+    release_date: '2019-02-21'
   2.6.2:
     codename: Heartbreaker
     fragments:

@@ -2,6 +2,32 @@
 Ansible 2.6 "Heartbreaker" Release Notes
 ========================================
 
+v2.6.14
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2019-02-21
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Raise AnsibleConnectionError on winrm connnection errors
+
+Bugfixes
+--------
+
+- azure_rm_managed_disk_facts - added missing implementation of listing managed disks by resource group
+- azure_rm_postgresqldatabase - fix force_update bug (https://github.com/ansible/ansible/issues/50978).
+- azure_rm_postgresqldatabase - fix force_update bug.
+- azure_rm_sqlserver - fix for tags support
+- remote home directory - Disallow use of remote home directories that include relative pathing by means of `..` (CVE-2019-3828) (https://github.com/ansible/ansible/pull/52133)
+- win become - Fix some scenarios where become failed to create an elevated process
+- win_psmodule - the NuGet package provider will be updated, if needed, to avoid issue under adding a repository
+
 v2.6.13
 =======
 
