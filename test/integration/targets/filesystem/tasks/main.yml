@@ -37,4 +37,8 @@
     # https://mirrors.edge.kernel.org/pub/linux/utils/util-linux/v2.23/v2.23-ReleaseNotes
     - 'not (item.0.key == "f2fs" and ansible_distribution == "Ubuntu" and ansible_distribution_version is version("14.04", "<="))'
     - 'not (item.1 == "overwrite_another_fs" and ansible_system == "FreeBSD")'
+
+    # The xfsprogs package on newer versions of OpenSUSE (15+) require Python 3, we skip this on our Python 2 container
+    # OpenSUSE 42.3 Python2 and the other py3 containers are not affected so we will continue to run that
+    - 'not (item.0.key == "xfs" and ansible_os_family == "Suse" and ansible_python.version.major == 2 and ansible_distribution_major_version|int != 42)'
   loop: "{{ query('dict', tested_filesystems)|product(['create_fs', 'overwrite_another_fs'])|list }}"
