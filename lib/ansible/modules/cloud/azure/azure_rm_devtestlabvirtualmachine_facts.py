@@ -52,7 +52,6 @@ EXAMPLES = '''
       resource_group: myResourceGroup
       lab_name: myLab
       name: myVm
-      expand: expand
 '''
 
 RETURN = '''
@@ -102,9 +101,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            expand=dict(
-                type='str'
-            ),
             tags=dict(
                 type='list'
             )
@@ -117,7 +113,6 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.resource_group = None
         self.lab_name = None
         self.name = None
-        self.expand = None
         self.tags = None
         super(AzureRMVirtualMachineFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
@@ -148,11 +143,24 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
     def format_response(self, item):
         d = item.as_dict()
-        #d = {
-        #    'resource_group': self.resource_group,
-        #    'id': d.get('id', None),
-        #    'tags': d.get('tags', None)
-        #}
+        d = {
+            'id': d.get('id', None),
+            'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
+            'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
+            'name': d.get('name'),
+            'notes': d.get('notes'),
+            'disallow_public_ip_address': d.get('disallow_public_ip_address'),
+            'expiration_date': d.get('expiration_date'),
+            'image': d.get('gallery_image'),
+            'os_type': d.get('os_type').lower(),
+            'vm_size': d.get('size'),
+            'user_name': d.get('size'),
+            'storage_type': d.get('storage_type').lower(),
+            'compute_id': d.get('compute_id'),
+            'fqdn': d.get('fqdn'),
+            'provisioning_state': d.get('provisioning_state'),
+            'tags': d.get('tags', None)
+        }
         return d
 
 
