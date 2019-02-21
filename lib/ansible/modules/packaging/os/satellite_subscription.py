@@ -16,7 +16,7 @@ DOCUMENTATION = """
 module: satellite_subscription
 short_description: Manage host subscriptions (licenses) on Red Hat Satellite
 description:
-  - This module allows to assign or remove subscriptions to hosts in the satellite
+  - This module allows to assign or remove subscriptions to hosts in Red Hat Satellite.
   - It works on the Satellite side, so not from the client side like redhat_subscription.
     Your hosts or hypervisors should be in the Satellite already. The module will run subscription
     related tasks (assign, remove, autoattach or replace with hypervisor subscriptions) for the
