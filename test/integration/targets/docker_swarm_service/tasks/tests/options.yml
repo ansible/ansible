@@ -1635,6 +1635,46 @@
   when: docker_api_version is version('1.29', '<')
 
 ####################################################################
+## stop_grace_period ###############################################
+####################################################################
+
+- name: stop_signal
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_grace_period: 60s
+  register: stop_signal_1
+
+- name: stop_signal (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_grace_period: 60s
+  register: stop_signal_2
+
+- name: stop_signal (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_grace_period: 1m30s
+  register: stop_signal_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - stop_signal_1 is changed
+    - stop_signal_2 is not changed
+    - stop_signal_3 is changed
+
+####################################################################
 ## stop_signal #####################################################
 ####################################################################
 

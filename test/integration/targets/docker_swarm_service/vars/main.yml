@@ -25,6 +25,7 @@ service_expected_output:
   mode: global
   mounts: null
   networks: null
+  stop_grace_period: null
   stop_signal: null
   placement_preferences: null
   publish:
