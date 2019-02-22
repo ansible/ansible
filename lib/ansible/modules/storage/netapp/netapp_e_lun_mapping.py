@@ -202,9 +202,10 @@ class LunMapping(object):
         # Verify that when a lun is specified that it does not match an existing lun value unless it is associated with
         # the specified volume (ie for an update)
         if self.lun and any((self.lun == lun_mapping["lun"] and
+                             self.target == self.mapping_info["target_by_reference"][lun_mapping["map_reference"]] and
                              self.volume != self.mapping_info["volume_by_reference"][lun_mapping["volume_reference"]]
                              ) for lun_mapping in self.mapping_info["lun_mapping"]):
-            self.module.fail_json(msg="Option lun value is already in use! Id [%s]." % self.ssid)
+            self.module.fail_json(msg="Option lun value is already in use for target! Array Id [%s]." % self.ssid)
 
         # Verify that when target_type is specified then it matches the target's actually type
         if self.target and self.target_type and self.target in self.mapping_info["target_type_by_name"].keys() and \
