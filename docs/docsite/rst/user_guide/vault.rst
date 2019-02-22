@@ -281,21 +281,6 @@ To get the 'dev' vault ID password from an executable script :file:`my-vault-pas
 
     ansible-playbook --vault-id dev@my-vault-password.py
 
-Since Ansible 2.5 a single executable script can be used to get different password for depending on the vault label.  Scripts with
-names ending in ``-client`` are called with a ``--vault-id`` option indicating which vault to get the
-password for. This is typically used when looking up passwords from a secret manager.
-For example the :file:`contrib/vault/vault-keyring-client.py` script loads keys from the system keyring:
-
-.. code-block:: bash
-
-    ansible-playbook --vault-id dev@contrib/vault/vault-keyring-client.py
-
-Will result in the :file:`vault-keyring-client.py` script being called as follows to get the dev key:
-
-.. code-block:: bash
-
-    contrib/vault/vault-keyring-client.py --vault-id dev
-
 
 The config option :ref:`DEFAULT_VAULT_IDENTITY_LIST` can be used to specify a default vault ID and password source
 so that the :option:`--vault-id <ansible-playbook --vault-id>` cli option does not have to be specified every time.
@@ -365,6 +350,33 @@ or it can be used in combination with them.
 
 When using :ref:`ansible-vault` commands that encrypt content (:ref:`ansible-vault encrypt <ansible_vault_encrypt>`, :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>`, etc)
 only one vault-id can be used.
+
+
+Client Scripts
+^^^^^^^^^^^^^^
+
+When implementing a script to obtain a vault password it may be convenient to know which vault ID label was
+requested. For example a script loading passwords from a secret manager may want to use the vault ID label to pick
+either the 'dev' or 'prod' password.
+
+Since Ansible 2.5 this is supported through the use of Client Scripts. A Client Script is an executable script
+with a name ending in ``-client``. Client Scripts are used to obtain vault passwords in the same way as any other
+executable script. For example:
+
+.. code-block:: bash
+
+    ansible-playbook --vault-id dev@contrib/vault/vault-keyring-client.py
+
+The difference is in the implementation of the script. Client Scripts are executed with a ``--vault-id`` option
+so they know which vault ID label was requested. So the above Ansible execution results in the below execution
+of the Client Script:
+
+.. code-block:: bash
+
+    contrib/vault/vault-keyring-client.py --vault-id dev
+
+:file:`contrib/vault/vault-keyring-client.py` is an example of Client Script that loads passwords from the
+system keyring.
 
 
 .. _speeding_up_vault:
