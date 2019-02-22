@@ -119,7 +119,7 @@ TESTCASE_BRIDGE = [
         'ifname': 'br0_non_existant',
         'ip4': '10.10.10.10',
         'gw4': '10.10.10.1',
-        'maxage': '100',
+        'maxage': 100,
         'stp': True,
         'state': 'present',
         '_ansible_check_mode': False,
@@ -154,7 +154,7 @@ TESTCASE_VXLAN = [
         'type': 'vxlan',
         'conn_name': 'non_existent_nw_device',
         'ifname': 'vxlan-existent_nw_device',
-        'vxlan_id': '11',
+        'vxlan_id': 11,
         'vxlan_local': '192.168.225.5',
         'vxlan_remote': '192.168.225.6',
         'state': 'present',
@@ -373,7 +373,7 @@ def test_create_bridge(mocked_generic_connection_create):
     assert args[0][5] == 'con-name'
     assert args[0][6] == 'non_existent_nw_device'
 
-    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', '100', 'bridge.stp', 'yes']:
+    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', 100, 'bridge.stp', 'yes']:
         assert param in args[0]
 
 
@@ -394,7 +394,7 @@ def test_mod_bridge(mocked_generic_connection_modify):
     assert args[0][1] == 'con'
     assert args[0][2] == 'mod'
     assert args[0][3] == 'non_existent_nw_device'
-    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', '100', 'bridge.stp', 'yes']:
+    for param in ['ip4', '10.10.10.10', 'gw4', '10.10.10.1', 'bridge.max-age', 100, 'bridge.stp', 'yes']:
         assert param in args[0]
 
 
@@ -419,7 +419,7 @@ def test_create_bridge_slave(mocked_generic_connection_create):
     assert args[0][5] == 'con-name'
     assert args[0][6] == 'non_existent_nw_device'
 
-    for param in ['bridge-port.path-cost', '100']:
+    for param in ['bridge-port.path-cost', 100]:
         assert param in args[0]
 
 
@@ -441,7 +441,7 @@ def test_mod_bridge_slave(mocked_generic_connection_modify):
     assert args[0][2] == 'mod'
     assert args[0][3] == 'non_existent_nw_device'
 
-    for param in ['bridge-port.path-cost', '100']:
+    for param in ['bridge-port.path-cost', 100]:
         assert param in args[0]
 
 
@@ -513,7 +513,7 @@ def test_create_vxlan(mocked_generic_connection_create):
     assert args[0][6] == 'non_existent_nw_device'
     assert args[0][7] == 'ifname'
 
-    for param in ['vxlan.local', '192.168.225.5', 'vxlan.remote', '192.168.225.6', 'vxlan.id', '11']:
+    for param in ['vxlan.local', '192.168.225.5', 'vxlan.remote', '192.168.225.6', 'vxlan.id', 11]:
         assert param in args[0]
 
 
@@ -534,7 +534,7 @@ def test_vxlan_mod(mocked_generic_connection_modify):
     assert args[0][2] == 'mod'
     assert args[0][3] == 'non_existent_nw_device'
 
-    for param in ['vxlan.local', '192.168.225.5', 'vxlan.remote', '192.168.225.6', 'vxlan.id', '11']:
+    for param in ['vxlan.local', '192.168.225.5', 'vxlan.remote', '192.168.225.6', 'vxlan.id', 11]:
         assert param in args[0]
 
 
