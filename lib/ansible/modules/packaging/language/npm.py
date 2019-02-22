@@ -281,7 +281,7 @@ def main():
 
     changed = False
     if ci is True:
-        npm.ci_install()	
+        npm.ci_install()
         changed = True
     elif state == 'present':
         installed, missing = npm.list()
