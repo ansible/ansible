@@ -49,7 +49,7 @@ options:
     version_added: "1.2"
     description:
       - The AWS region to use.  Must be specified if ec2_url is not used.
-        If not specified then the value of the EC2_REGION environment variable, if any, is used.
+        If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
         See U(https://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region).
     aliases: [ 'aws_region', 'ec2_region' ]
   zone:
