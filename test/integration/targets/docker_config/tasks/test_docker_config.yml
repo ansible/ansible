@@ -5,6 +5,8 @@
       state: absent
       force: true
 
+  - command: "docker info --format '{% raw %}{{json .}}{% endraw %}'"
+
   - name: Create a Swarm cluster
     docker_swarm:
       state: present
