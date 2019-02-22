@@ -199,7 +199,7 @@ inventory cache
 
 If you used the Cacheable base class and have extended the inventory plugin documentation with the inventory_cache documentation fragment you have caching at your disposal.
 
-Now you can load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. Accordingly, you can skip this first step. Otherwise, for plugins that don't use ``_read_config_data``, the cache will need to be loaded with ``load_cache_plugin``.
+Next, load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. If your inventory plugin does not use ``_read_config_data``, you must load the cache explicitly with ``load_cache_plugin``.
 
 .. code-block:: python
 
