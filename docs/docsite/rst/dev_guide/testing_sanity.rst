@@ -14,6 +14,24 @@ The primary purpose of these tests is to enforce Ansible coding standards and re
 Tests are run with ``ansible-test sanity``.
 All available tests are run unless the ``--test`` option is used.
 
+
+How to run
+==========
+
+.. code:: shell
+
+   source hacking/env-setup
+
+   # Run all sanity tests
+   ansible-test sanity
+
+   # Run all sanity tests against a 
+   ansible-test sanity
+
+   # Run all tests
+   ansible-test sanity
+
+
 Available Tests
 ===============
 
@@ -43,37 +61,3 @@ All files relevant to each test are tested unless specific files are specified.
 
 A full list of tests can be obtained by doing ``ansible-test sanity --list-tests``.
 
-ansible-doc
-~~~~~~~~~~~
-
-Verifies that ``ansible-doc`` can parse module documentation on all supported python versions.
-
-pep8
-~~~~
-
-Python static analysis for PEP 8 style guideline compliance. See :doc:`testing_pep8` for more information.
-
-pylint
-~~~~~~
-
-Python static analysis for common programming errors.
-
-rstcheck
-~~~~~~~~
-
-Check reStructuredText files for syntax and formatting issues.
-
-shellcheck
-~~~~~~~~~~
-
-Static code analysis for shell scripts using the excellent `shellcheck <https://www.shellcheck.net/>`_ tool.
-
-validate-modules
-~~~~~~~~~~~~~~~~
-
-Analyze modules for common issues in code and documentation. See :doc:`testing_validate-modules` for more information.
-
-yamllint
-~~~~~~~~
-
-Check YAML files for syntax and formatting issues.
