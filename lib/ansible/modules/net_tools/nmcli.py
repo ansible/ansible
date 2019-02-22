@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2015, Chris Long <alcamie@gmail.com> <chlong@redhat.com>
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -7,20 +8,22 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: nmcli
-author: "Chris Long (@alcamie101)"
+author:
+- Chris Long (@alcamie101)
 short_description: Manage Networking
-requirements: [ nmcli, dbus, NetworkManager-glib ]
+requirements:
+- dbus
+- NetworkManager-glib
+- nmcli
 version_added: "2.0"
 description:
     - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
@@ -32,177 +35,223 @@ options:
     state:
         description:
             - Whether the device should exist or not, taking action if the state is different from what is stated.
-        required: True
-        choices: [ present, absent ]
+        type: str
+        required: true
+        choices: [ absent, present ]
     autoconnect:
         description:
             - Whether the connection should start on boot.
             - Whether the connection profile can be automatically activated
         type: bool
-        default: True
+        default: yes
     conn_name:
         description:
             - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
-        required: True
+        type: str
+        required: true
     ifname:
         description:
-            - Where IFNAME will be the what we call the interface name.
-            - interface to bind the connection to. The connection will only be applicable to this interface name.
-            - A special value of "*" can be used for interface-independent connections.
+            - The interface to bind the connection to.
+            - The connection will only be applicable to this interface name.
+            - A special value of C('*') can be used for interface-independent connections.
             - The ifname argument is mandatory for all connection types except bond, team, bridge and vlan.
-        default: conn_name
+            - This parameter defaults to C(conn_name) when left unset.
+        type: str
     type:
         description:
             - This is the type of device or network connection that you wish to create or modify.
-            - "type C(generic) is added in version 2.5."
-        choices: [ ethernet, team, team-slave, bond, bond-slave, bridge, bridge-slave, vlan, vxlan, ipip, sit, generic ]
+            - Type C(generic) is added in Ansible 2.5.
+        type: str
+        choices: [ bond, bond-slave, bridge, bridge-slave, ethernet, generic, ipip, sit, team, team-slave, vlan, vxlan ]
     mode:
         description:
             - This is the type of device or network connection that you wish to create for a bond, team or bridge.
-        choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
+        type: str
+        choices: [ 802.3ad, active-backup, balance-alb, balance-rr, balance-tlb, balance-xor, broadcast ]
         default: balance-rr
     master:
         description:
-            - master <master (ifname, or connection UUID or conn_name) of bridge, team, bond master connection profile.
+            - Master <master (ifname, or connection UUID or conn_name) of bridge, team, bond master connection profile.
+        type: str
     ip4:
         description:
-            - 'The IPv4 address to this interface using this format ie: "192.0.2.24/24"'
+            - The IPv4 address to this interface.
+            - Use the format C(192.0.2.24/24).
+        type: str
     gw4:
         description:
-            - 'The IPv4 gateway for this interface using this format ie: "192.0.2.1"'
+            - The IPv4 gateway for this interface.
+            - Use the format C(192.0.2.1).
+        type: str
     dns4:
         description:
-            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: "192.0.2.53 198.51.100.53"'
+            - A list of up to 3 dns servers.
+            - IPv4 format e.g. to add two IPv4 DNS server addresses, use C(192.0.2.53 198.51.100.53).
+        type: list
     dns4_search:
         description:
-            - 'A list of DNS search domains.'
-        version_added: 2.5
+            - A list of DNS search domains.
+        type: list
+        version_added: '2.5'
     ip6:
         description:
-            - 'The IPv6 address to this interface using this format ie: "abbe::cafe"'
+            - The IPv6 address to this interface.
+            - Use the format C(abbe::cafe).
+        type: str
     gw6:
         description:
-            - 'The IPv6 gateway for this interface using this format ie: "2001:db8::1"'
+            - The IPv6 gateway for this interface.
+            - Use the format C(2001:db8::1).
+        type: str
     dns6:
         description:
-            - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: "2001:4860:4860::8888 2001:4860:4860::8844"'
+            - A list of up to 3 dns servers.
+            - IPv6 format e.g. to add two IPv6 DNS server addresses, use C(2001:4860:4860::8888 2001:4860:4860::8844).
+        type: list
     dns6_search:
         description:
-            - 'A list of DNS search domains.'
-        version_added: 2.5
+            - A list of DNS search domains.
+        type: list
+        version_added: '2.5'
     mtu:
         description:
             - The connection MTU, e.g. 9000. This can't be applied when creating the interface and is done once the interface has been created.
             - Can be used when modifying Team, VLAN, Ethernet (Future plans to implement wifi, pppoe, infiniband)
-        default: 1500
+            - This parameter defaults to C(1500) when unset.
+        type: int
     dhcp_client_id:
         description:
             - DHCP Client Identifier sent to the DHCP server.
+        type: str
         version_added: "2.5"
     primary:
         description:
-            - This is only used with bond and is the primary interface name (for "active-backup" mode), this is the usually the 'ifname'
+            - This is only used with bond and is the primary interface name (for "active-backup" mode), this is the usually the 'ifname'.
+        type: str
     miimon:
         description:
-            - This is only used with bond - miimon
-        default: 100
+            - This is only used with bond - miimon.
+            - This parameter defaults to C(100) when unset.
+        type: int
     downdelay:
         description:
-            - This is only used with bond - downdelay
+            - This is only used with bond - downdelay.
+        type: int
     updelay:
         description:
-            - This is only used with bond - updelay
+            - This is only used with bond - updelay.
+        type: int
     arp_interval:
         description:
-            - This is only used with bond - ARP interval
+            - This is only used with bond - ARP interval.
+        type: int
     arp_ip_target:
         description:
-            - This is only used with bond - ARP IP target
+            - This is only used with bond - ARP IP target.
+        type: str
     stp:
         description:
-            - This is only used with bridge and controls whether Spanning Tree Protocol (STP) is enabled for this bridge
+            - This is only used with bridge and controls whether Spanning Tree Protocol (STP) is enabled for this bridge.
         type: bool
+        default: yes
     priority:
         description:
-            - This is only used with 'bridge' - sets STP priority
+            - This is only used with 'bridge' - sets STP priority.
+        type: int
         default: 128
     forwarddelay:
         description:
-            - This is only used with bridge - [forward-delay <2-30>] STP forwarding delay, in seconds
+            - This is only used with bridge - [forward-delay <2-30>] STP forwarding delay, in seconds.
+        type: int
         default: 15
     hellotime:
         description:
-            - This is only used with bridge - [hello-time <1-10>] STP hello time, in seconds
+            - This is only used with bridge - [hello-time <1-10>] STP hello time, in seconds.
+        type: int
         default: 2
     maxage:
         description:
-            - This is only used with bridge - [max-age <6-42>] STP maximum message age, in seconds
+            - This is only used with bridge - [max-age <6-42>] STP maximum message age, in seconds.
+        type: int
         default: 20
     ageingtime:
         description:
-            - This is only used with bridge - [ageing-time <0-1000000>] the Ethernet MAC address aging time, in seconds
+            - This is only used with bridge - [ageing-time <0-1000000>] the Ethernet MAC address aging time, in seconds.
+        type: int
         default: 300
     mac:
         description:
-            - >
-              This is only used with bridge - MAC address of the bridge
-              (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)
+            - This is only used with bridge - MAC address of the bridge.
+            - Note this requires a recent kernel feature, originally introduced in 3.15 upstream kernel.
     slavepriority:
         description:
-            - This is only used with 'bridge-slave' - [<0-63>] - STP priority of this slave
+            - This is only used with 'bridge-slave' - [<0-63>] - STP priority of this slave.
+        type: int
         default: 32
     path_cost:
         description:
-            - This is only used with 'bridge-slave' - [<1-65535>] - STP port cost for destinations via this slave
+            - This is only used with 'bridge-slave' - [<1-65535>] - STP port cost for destinations via this slave.
+        type: int
         default: 100
     hairpin:
         description:
             - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the
               frame was received on.
         type: bool
-        default: 'yes'
+        default: yes
     vlanid:
         description:
-            - This is only used with VLAN - VLAN ID in range <0-4095>
+            - This is only used with VLAN - VLAN ID in range <0-4095>.
+        type: int
     vlandev:
         description:
-            - This is only used with VLAN - parent device this VLAN is on, can use ifname
+            - This is only used with VLAN - parent device this VLAN is on, can use ifname.
+        type: str
     flags:
         description:
-            - This is only used with VLAN - flags
+            - This is only used with VLAN - flags.
+        type: str
     ingress:
         description:
-            - This is only used with VLAN - VLAN ingress priority mapping
+            - This is only used with VLAN - VLAN ingress priority mapping.
+        type: str
     egress:
         description:
-            - This is only used with VLAN - VLAN egress priority mapping
+            - This is only used with VLAN - VLAN egress priority mapping.
+        type: str
     vxlan_id:
         description:
             - This is only used with VXLAN - VXLAN ID.
+        type: int
         version_added: "2.8"
     vxlan_remote:
        description:
             - This is only used with VXLAN - VXLAN destination IP address.
+       type: str
        version_added: "2.8"
     vxlan_local:
        description:
             - This is only used with VXLAN - VXLAN local IP address.
+       type: str
        version_added: "2.8"
     ip_tunnel_dev:
         description:
             - This is used with IPIP/SIT - parent device this IPIP/SIT tunnel, can use ifname.
+        type: str
         version_added: "2.8"
     ip_tunnel_remote:
        description:
             - This is used with IPIP/SIT - IPIP/SIT destination IP address.
+       type: str
        version_added: "2.8"
     ip_tunnel_local:
        description:
             - This is used with IPIP/SIT - IPIP/SIT local IP address.
+       type: str
        version_added: "2.8"
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # These examples are using the following inventory:
 #
 # ## Directory layout:
@@ -325,7 +374,7 @@ EXAMPLES = '''
       state: installed
 
 ##### Working with all cloud nodes - Teaming
-  - name: try nmcli add team - conn_name only & ip4 gw4
+  - name: Try nmcli add team - conn_name only & ip4 gw4
     nmcli:
       type: team
       conn_name: '{{ item.conn_name }}'
@@ -335,7 +384,7 @@ EXAMPLES = '''
     with_items:
       - '{{ nmcli_team }}'
 
-  - name: try nmcli add teams-slave
+  - name: Try nmcli add teams-slave
     nmcli:
       type: team-slave
       conn_name: '{{ item.conn_name }}'
@@ -346,7 +395,7 @@ EXAMPLES = '''
       - '{{ nmcli_team_slave }}'
 
 ###### Working with all cloud nodes - Bonding
-  - name: try nmcli add bond - conn_name only & ip4 gw4 mode
+  - name: Try nmcli add bond - conn_name only & ip4 gw4 mode
     nmcli:
       type: bond
       conn_name: '{{ item.conn_name }}'
@@ -357,7 +406,7 @@ EXAMPLES = '''
     with_items:
       - '{{ nmcli_bond }}'
 
-  - name: try nmcli add bond-slave
+  - name: Try nmcli add bond-slave
     nmcli:
       type: bond-slave
       conn_name: '{{ item.conn_name }}'
@@ -368,7 +417,7 @@ EXAMPLES = '''
       - '{{ nmcli_bond_slave }}'
 
 ##### Working with all cloud nodes - Ethernet
-  - name: nmcli add Ethernet - conn_name only & ip4 gw4
+  - name: Try nmcli add Ethernet - conn_name only & ip4 gw4
     nmcli:
       type: ethernet
       conn_name: '{{ item.conn_name }}'
@@ -383,7 +432,7 @@ EXAMPLES = '''
   remote_user: root
   tasks:
 
-  - name: try nmcli del team - multiple
+  - name: Try nmcli del team - multiple
     nmcli:
       conn_name: '{{ item.conn_name }}'
       state: absent
@@ -404,8 +453,8 @@ EXAMPLES = '''
       - conn_name: team-p2p1
       - conn_name: team-p2p2
 
-# To add an Ethernet connection with static IP configuration, issue a command as follows
-  - nmcli:
+  - name: Add an Ethernet connection with static IP configuration
+    nmcli:
     conn_name: my-eth1
     ifname: eth1
     type: ethernet
@@ -413,8 +462,8 @@ EXAMPLES = '''
     gw4: 192.0.2.1
     state: present
 
-# To add an Team connection with static IP configuration, issue a command as follows
-  - nmcli:
+  - name: Add an Team connection with static IP configuration
+    nmcli:
       conn_name: my-team1
       ifname: my-team1
       type: team
@@ -423,58 +472,58 @@ EXAMPLES = '''
       state: present
       autoconnect: yes
 
-# Optionally, at the same time specify IPv6 addresses for the device as follows:
-  - nmcli:
+  - name: Optionally, at the same time specify IPv6 addresses for the device
+    nmcli:
       conn_name: my-eth1
       ifname: eth1
       type: ethernet
       ip4: 192.0.2.100/24
       gw4: 192.0.2.1
-      ip6: '2001:db8::cafe'
-      gw6: '2001:db8::1'
+      ip6: 2001:db8::cafe
+      gw6: 2001:db8::1
       state: present
 
-# To add two IPv4 DNS server addresses:
-  - nmcli:
+  - name: Add two IPv4 DNS server addresses
+    nmcli:
       conn_name: my-eth1
       type: ethernet
       dns4:
-        - 192.0.2.53
-        - 198.51.100.53
+      - 192.0.2.53
+      - 198.51.100.53
       state: present
 
-# To make a profile usable for all compatible Ethernet interfaces, issue a command as follows
-  - nmcli:
+  - name: Make a profile usable for all compatible Ethernet interfaces
+    nmcli:
       ctype: ethernet
       name: my-eth1
       ifname: '*'
       state: present
 
-# To change the property of a setting e.g. MTU, issue a command as follows:
-  - nmcli:
+  - name: Change the property of a setting e.g. MTU
+    nmcli:
       conn_name: my-eth1
       mtu: 9000
       type: ethernet
       state: present
 
-# To add VxLan, issue a command as follows:
-  - nmcli:
+  - name: Add VxLan
+    nmcli:
       type: vxlan
       conn_name: vxlan_test1
       vxlan_id: 16
       vxlan_local: 192.168.1.2
       vxlan_remote: 192.168.1.5
 
-# To add ipip, issue a command as follows:
-  - nmcli:
+  - name: Add ipip
+    nmcli:
       type: ipip
       conn_name: ipip_test1
       ip_tunnel_dev: eth0
       ip_tunnel_local: 192.168.1.2
       ip_tunnel_remote: 192.168.1.5
 
-# To add sit, issue a command as follows:
-  - nmcli:
+  - name: Add sit
+    nmcli:
       type: sit
       conn_name: sit_test1
       ip_tunnel_dev: eth0
@@ -593,7 +642,7 @@ class Nmcli(object):
         self.dns4_search = ' '.join(module.params['dns4_search']) if module.params.get('dns4_search') else None
         self.ip6 = module.params['ip6']
         self.gw6 = module.params['gw6']
-        self.dns6 = module.params['dns6']
+        self.dns6 = ' '.join(module.params['dns6']) if module.params.get('dns6') else None
         self.dns6_search = ' '.join(module.params['dns6_search']) if module.params.get('dns6_search') else None
         self.mtu = module.params['mtu']
         self.stp = module.params['stp']
@@ -1381,63 +1430,60 @@ def main():
     # Parsing argument file
     module = AnsibleModule(
         argument_spec=dict(
-            autoconnect=dict(required=False, default=True, type='bool'),
-            state=dict(required=True, choices=['present', 'absent'], type='str'),
-            conn_name=dict(required=True, type='str'),
-            master=dict(required=False, default=None, type='str'),
-            ifname=dict(required=False, default=None, type='str'),
-            type=dict(required=False, default=None,
-                      choices=['ethernet', 'team', 'team-slave', 'bond',
-                               'bond-slave', 'bridge', 'bridge-slave',
-                               'vlan', 'vxlan', 'ipip', 'sit', 'generic'],
-                      type='str'),
-            ip4=dict(required=False, default=None, type='str'),
-            gw4=dict(required=False, default=None, type='str'),
-            dns4=dict(required=False, default=None, type='list'),
+            autoconnect=dict(type='bool', default=True),
+            state=dict(type='str', required=True, choices=['absent', 'present']),
+            conn_name=dict(type='str', required=True),
+            master=dict(type='str'),
+            ifname=dict(type='str'),
+            type=dict(type='str',
+                      choices=['bond', 'bond-slave', 'bridge', 'bridge-slave', 'ethernet', 'generic', 'ipip', 'sit', 'team', 'team-slave', 'vlan', 'vxlan']),
+            ip4=dict(type='str'),
+            gw4=dict(type='str'),
+            dns4=dict(type='list'),
             dns4_search=dict(type='list'),
-            dhcp_client_id=dict(required=False, default=None, type='str'),
-            ip6=dict(required=False, default=None, type='str'),
-            gw6=dict(required=False, default=None, type='str'),
-            dns6=dict(required=False, default=None, type='str'),
+            dhcp_client_id=dict(type='str'),
+            ip6=dict(type='str'),
+            gw6=dict(type='str'),
+            dns6=dict(type='list'),
             dns6_search=dict(type='list'),
             # Bond Specific vars
-            mode=dict(require=False, default="balance-rr", type='str', choices=["balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad",
-                                                                                "balance-tlb", "balance-alb"]),
-            miimon=dict(required=False, default=None, type='str'),
-            downdelay=dict(required=False, default=None, type='str'),
-            updelay=dict(required=False, default=None, type='str'),
-            arp_interval=dict(required=False, default=None, type='str'),
-            arp_ip_target=dict(required=False, default=None, type='str'),
-            primary=dict(required=False, default=None, type='str'),
+            mode=dict(type='str', default='balance-rr',
+                      choices=['802.3ad', 'active-backup', 'balance-alb', 'balance-rr', 'balance-tlb', 'balance-xor', 'broadcast']),
+            miimon=dict(type='int'),
+            downdelay=dict(type='int'),
+            updelay=dict(type='int'),
+            arp_interval=dict(type='int'),
+            arp_ip_target=dict(type='str'),
+            primary=dict(type='str'),
             # general usage
-            mtu=dict(required=False, default=None, type='str'),
-            mac=dict(required=False, default=None, type='str'),
+            mtu=dict(type='int'),
+            mac=dict(type='str'),
             # bridge specific vars
-            stp=dict(required=False, default=True, type='bool'),
-            priority=dict(required=False, default="128", type='str'),
-            slavepriority=dict(required=False, default="32", type='str'),
-            forwarddelay=dict(required=False, default="15", type='str'),
-            hellotime=dict(required=False, default="2", type='str'),
-            maxage=dict(required=False, default="20", type='str'),
-            ageingtime=dict(required=False, default="300", type='str'),
-            hairpin=dict(required=False, default=True, type='bool'),
-            path_cost=dict(required=False, default="100", type='str'),
+            stp=dict(type='bool', default=True),
+            priority=dict(type='int', default=128),
+            slavepriority=dict(type='int', default=32),
+            forwarddelay=dict(type='int', default=15),
+            hellotime=dict(type='int', default=2),
+            maxage=dict(type='int', default=20),
+            ageingtime=dict(type='int', default=300),
+            hairpin=dict(type='bool', default=True),
+            path_cost=dict(type='int', default=100),
             # vlan specific vars
-            vlanid=dict(required=False, default=None, type='str'),
-            vlandev=dict(required=False, default=None, type='str'),
-            flags=dict(required=False, default=None, type='str'),
-            ingress=dict(required=False, default=None, type='str'),
-            egress=dict(required=False, default=None, type='str'),
+            vlanid=dict(type='int'),
+            vlandev=dict(type='str'),
+            flags=dict(type='str'),
+            ingress=dict(type='str'),
+            egress=dict(type='str'),
             # vxlan specific vars
-            vxlan_id=dict(required=False, default=None, type='str'),
-            vxlan_local=dict(required=False, default=None, type='str'),
-            vxlan_remote=dict(required=False, default=None, type='str'),
+            vxlan_id=dict(type='int'),
+            vxlan_local=dict(type='str'),
+            vxlan_remote=dict(type='str'),
             # ip-tunnel specific vars
-            ip_tunnel_dev=dict(required=False, default=None, type='str'),
-            ip_tunnel_local=dict(required=False, default=None, type='str'),
-            ip_tunnel_remote=dict(required=False, default=None, type='str'),
+            ip_tunnel_dev=dict(type='str'),
+            ip_tunnel_local=dict(type='str'),
+            ip_tunnel_remote=dict(type='str'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     if not HAVE_DBUS:
