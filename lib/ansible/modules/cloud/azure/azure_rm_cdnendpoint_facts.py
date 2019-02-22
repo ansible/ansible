@@ -95,7 +95,7 @@ cdnendpoints:
             type: str
             sample: WestUS
         id:
-            description
+            description:
                 - ID of the Azure CDN endpoint.
             type: str
             sample:
@@ -147,12 +147,12 @@ cdnendpoints:
         origins:
             description:
                 - The source of the content being delivered via CDN.
-            sample: [
+            sample: {
                 "host_name": "xxxxxxxx.blob.core.windows.net",
                 "http_port": null,
                 "https_port": null,
                 "name": "xxxxxxxx-blob-core-windows-net"
-            ]
+            }
         origin_host_header:
             description:
                 - The host header value sent to the origin with each request.
