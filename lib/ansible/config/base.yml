@@ -892,6 +892,14 @@ DEFAULT_NETCONF_PLUGIN_PATH:
   ini:
   - {key: netconf_plugins, section: defaults}
   type: pathspec
+DEFAULT_GRPC_PLUGIN_PATH:
+  name: GRPC Plugins Path
+  default: ~/.ansible/plugins/grpc:/usr/share/ansible/plugins/grpc
+  description: Colon separated paths in which Ansible will search for GRPC Plugins.
+  env: [{name: ANSIBLE_GRPC_PLUGINS}]
+  ini:
+  - {key: grpc_plugins, section: defaults}
+  type: pathspec
 DEFAULT_NO_LOG:
   name: No log
   default: False
