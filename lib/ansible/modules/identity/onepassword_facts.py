@@ -28,7 +28,7 @@ notes:
     - This module stores potentially sensitive data from 1Password as Ansible facts.
       Facts are subject to caching if enabled, which means this data could be stored in clear text
       on disk or in a database.
-      - Tested with C(op) version 0.5.3
+      - Tested with C(op) version 0.5.5
 short_description: Gather items from 1Password and set them as facts
 description:
     - M(onepassword_facts) wraps the C(op) command line utility to fetch data about one or more 1Password items and return as Ansible facts.
@@ -174,6 +174,10 @@ class OnePasswordFacts(object):
         self.terms = self.parse_search_terms(terms)
 
     def _run(self, args, expected_rc=0, command_input=None, ignore_errors=False):
+        if self.token:
+            # Adds the session token to all commands if we're logged in.
+            args += [to_bytes('--session=') + self.token]
+
         command = [self.cli_path] + args
         p = Popen(command, stdout=PIPE, stderr=PIPE, stdin=PIPE)
         out, err = p.communicate(input=command_input)
@@ -188,7 +192,7 @@ class OnePasswordFacts(object):
         if ('documentAttributes' in data['details']):
             # This is actually a document, let's fetch the document data instead!
             document = self._run(["get", "document", data['overview']['title']])
-            return {'document': document[0].strip()}
+            return {'document': document[1].strip()}
 
         else:
             # This is not a document, let's try to find the requested field
@@ -242,8 +246,6 @@ class OnePasswordFacts(object):
             args = ["get", "item", item_id]
             if vault is not None:
                 args += ['--vault={0}'.format(vault)]
-            if not self.logged_in:
-                args += [to_bytes('--session=') + self.token]
             rc, output, dummy = self._run(args)
             return output
 
