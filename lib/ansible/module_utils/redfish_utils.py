@@ -893,11 +893,18 @@ class RedfishUtils(object):
 
             psu_list = data[key]
             for psu in psu_list:
+                psu_not_present = False
                 psu_data = {}
                 for property in properties:
                     if property in psu:
                         if psu[property] is not None:
+                            if property == 'Status':
+                                if 'State' in psu[property]:
+                                    if psu[property]['State'] == 'Absent':
+                                        psu_not_present = True
                             psu_data[property] = psu[property]
+                if psu_not_present:
+                    continue
                 psu_results.append(psu_data)
 
         result["entries"] = psu_results
