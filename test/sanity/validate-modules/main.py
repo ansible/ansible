@@ -1098,7 +1098,7 @@ class ModuleValidator(Validator):
                 )
                 return
 
-        if existing_doc and version_added_raw != existing_doc.get('version_added'):
+        if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
