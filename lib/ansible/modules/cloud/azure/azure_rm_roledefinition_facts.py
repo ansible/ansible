@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Yunge Zhu, (@yungezz)
+# Copyright (c) 2019 Yunge Zhu, (@yungezz)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -246,6 +246,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
         try:
             response = self._client.role_definitions.get(scope=self.scope, role_definition_id=self.id)
             if response:
+                response = roledefinition_to_dict(response)
                 if self.type:
                     if response.role_type == self.type:
                         return response
