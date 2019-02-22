@@ -140,18 +140,13 @@ class ActionModule(ActionBase):
             search_paths = [search_paths]
 
         # Error if we didn't get a list
-        if not isinstance(search_paths, list):
-            raise AnsibleError("'search_paths' must be a string or list, got {0}: {1}".format(type(search_paths), search_paths))
-
-        # If we did get a list, ensure it's a flat list and does not contain nested data structures
-        nested_list = any(isinstance(x, (dict, list)) for x in search_paths)
-        if nested_list:
-            raise AnsibleError("'search_paths' must be a flat list of paths, got {0}".format(search_paths))
-
-        # Ensure each search path is a string
-        for path in search_paths:
-            if not is_string(path):
-                raise AnsibleError("'search_paths' must contain strings, got {0} for {1}".format(type(path), path))
+        err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
+        try:
+            incorrect_type = any(not is_string(x) for x in search_paths)
+        except TypeError as te:
+            raise AnsibleError(err_msg.format(search_paths))
+        if not isinstance(search_paths, list) or incorrect_type:
+            raise AnsibleError(err_msg.format(search_paths))
 
         display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
             action=self._task.action,
