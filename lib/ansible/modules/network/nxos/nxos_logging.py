@@ -749,7 +749,6 @@ def main():
         state=dict(default='present', choices=['present', 'absent']),
         aggregate=dict(type='list'),
         purge=dict(default=False, type='bool'),
-        mgw=dict(required=False, type='str'),
     )
 
     argument_spec.update(nxos_argument_spec)
@@ -771,9 +770,6 @@ def main():
     want = map_params_to_obj(module)
     merged_wants = merge_wants(read_module_context(module), want)
     have = map_config_to_obj(module)
-
-    if module.params['mgw']:
-        import epdb; epdb.serve()
 
     commands = map_obj_to_commands(module, (want, have))
     result['commands'] = commands
