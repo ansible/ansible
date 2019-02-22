@@ -41,12 +41,6 @@ except ImportError:
     # Exceptions handled in common
     pass
 
-RESOURCE_LIST_ERR = None
-try:
-    from openshift.dynamic import ResourceList
-except ImportError:
-    RESOURCE_LIST_ERR = traceback.format_exc()
-
 try:
     import kubernetes_validate
     HAS_KUBERNETES_VALIDATE = True
@@ -136,21 +130,42 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 }
             }]
 
+    def flatten_list_kind(self, list_resource, definitions):
+        flattened = []
+        parent_api_version = list_resource.group_version if list_resource else None
+        parent_kind = list_resource.kind[:-4] if list_resource else None
+        for definition in definitions.get('items', []):
+            resource = self.find_resource(definition.get('kind', parent_kind), definition.get('apiVersion', parent_api_version), fail=True)
+            flattened.append((resource, self.set_defaults(resource, definition)))
+        return flattened
+
     def execute_module(self):
         changed = False
         results = []
         self.client = self.get_api_client()
+
+        flattened_definitions = []
         for definition in self.resource_definitions:
             kind = definition.get('kind', self.kind)
             api_version = definition.get('apiVersion', self.api_version)
-            if kind.endswith('List') and LooseVersion(self.openshift_version) < LooseVersion("0.8.1"):
-                self.fail(msg="Support for List kinds was added in version 0.8.1 of the OpenShift Python client, v{0} detected.".format(self.openshift_version))
-            resource = self.find_resource(kind, api_version, fail=True)
-            metadata, definition = self.set_defaults(resource, definition)
+            if kind.endswith('List'):
+                resource = self.find_resource(kind, api_version, fail=False)
+                flattened_definitions.extend(self.flatten_list_kind(resource, definition))
+            else:
+                resource = self.find_resource(kind, api_version, fail=True)
+                flattened_definitions.append((resource, definition))
+
+        for (resource, definition) in flattened_definitions:
+            kind = definition.get('kind', self.kind)
+            api_version = definition.get('apiVersion', self.api_version)
+            definition = self.set_defaults(resource, definition)
             self.warnings = []
             if self.params['validate'] is not None:
                 self.warnings = self.validate(definition)
-            result = self.perform_action(resource, definition, metadata)
+            try:
+                result = self.perform_action(resource, definition)
+            except Exception:
+                self.fail(msg='resource: {} definition: {}'.format(resource, definition))
             result['warnings'] = self.warnings
             changed = changed or result['changed']
             results.append(result)
@@ -187,16 +202,15 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             metadata['name'] = self.name
         if resource.namespaced and self.namespace and not metadata.get('namespace'):
             metadata['namespace'] = self.namespace
-        if not RESOURCE_LIST_ERR and not isinstance(resource, ResourceList):
-            definition['metadata'] = metadata
-        return metadata, definition
+        definition['metadata'] = metadata
+        return definition
 
-    def perform_action(self, resource, definition, metadata):
+    def perform_action(self, resource, definition):
         result = {'changed': False, 'result': {}}
         state = self.params.get('state', None)
         force = self.params.get('force', False)
-        name = metadata.get('name')
-        namespace = metadata.get('namespace')
+        name = definition['metadata'].get('name')
+        namespace = definition['metadata'].get('namespace')
         existing = None
         wait = self.params.get('wait')
         wait_timeout = self.params.get('wait_timeout')

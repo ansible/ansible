@@ -1,5 +1,11 @@
 ---
 
+- name: Ensure testing1 namespace exists
+  k8s:
+    api_version: v1
+    kind: Namespace
+    name: testing1
+
 - block:
   - name: Create configmaps
     k8s:
@@ -84,13 +90,9 @@
     register: list_resources
     with_items: '{{ resources }}'
 
-  # TODO remove this
-  - debug: var=list_resources
-
-  # TODO fix this
   - name: All resources should exist
     assert:
-      that: (list_resources | length) == (resources | length)
+      that: ((list_resources.results | sum(attribute="resources", start=[])) | length) == (resources | length)
 
   - name: Delete list of arbitrary resources
     k8s:
@@ -111,13 +113,9 @@
     register: list_resources
     with_items: '{{ resources }}'
 
-  # TODO remove this
-  - debug: var=list_resources
-
-  # TODO fixme
   - name: The resources should not exist
     assert:
-      that: not list_resources.results
+      that: not ((list_resources.results | sum(attribute="resources", start=[])) | length)
   vars:
     resources:
     - apiVersion: v1
@@ -135,3 +133,8 @@
       spec:
         selector:
           app: test
+        ports:
+        - protocol: TCP
+          targetPort: 8000
+          name: port-8000-tcp
+          port: 8000
