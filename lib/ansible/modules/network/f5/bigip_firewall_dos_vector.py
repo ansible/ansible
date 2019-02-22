@@ -20,7 +20,7 @@ description:
   - Manage attack vector configuration in an AFM DoS profile. In addition to the normal
     AFM DoS profile vectors, this module can manage the device-configuration vectors.
     See the module documentation for details about this method.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

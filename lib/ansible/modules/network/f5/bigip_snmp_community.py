@@ -21,7 +21,7 @@ description:
     by this module. Take note of the different parameters offered by this module, as different
     parameters work for different versions of SNMP. Typically this becomes an interest if you
     are mixing versions C(v2c) and C(3).
-version_added: 2.6
+version_added: '2.6'
 options:
   state:
     description:

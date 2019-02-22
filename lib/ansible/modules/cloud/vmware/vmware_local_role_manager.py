@@ -22,7 +22,7 @@ module: vmware_local_role_manager
 short_description: Manage local roles on an ESXi host
 description:
     - This module can be used to manage local roles on an ESXi host.
-version_added: 2.5
+version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
 - Christian Kotte (@ckotte)

@@ -30,7 +30,7 @@ description:
     (e.g. set ntp_servers to [] if you want to remove them from the VPC's options)
     Most of the options should be self-explanatory.
 author: "Joel Thompson (@joelthompson)"
-version_added: 2.1
+version_added: '2.1'
 options:
   domain_name:
     description:

@@ -22,7 +22,7 @@ description:
     when dealing with F5 support. It may be required that you upload this
     qkview to the supported channels during resolution of an SRs that you
     may have opened.
-version_added: 2.4
+version_added: '2.4'
 options:
   filename:
     description:

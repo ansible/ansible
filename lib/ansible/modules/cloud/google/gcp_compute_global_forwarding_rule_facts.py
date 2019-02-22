@@ -33,7 +33,7 @@ module: gcp_compute_global_forwarding_rule_facts
 description:
 - Gather facts for GCP GlobalForwardingRule
 short_description: Gather facts for GCP GlobalForwardingRule
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

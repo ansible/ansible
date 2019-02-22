@@ -18,7 +18,7 @@ module: influxdb_query
 short_description: Query data points from InfluxDB.
 description:
   - Query data points from InfluxDB.
-version_added: 2.5
+version_added: '2.5'
 author: "René Moser (@resmo)"
 requirements:
   - "python >= 2.6"

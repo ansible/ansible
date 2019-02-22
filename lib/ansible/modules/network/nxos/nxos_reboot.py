@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_reboot
 extends_documentation_fragment: nxos
-version_added: 2.2
+version_added: '2.2'
 short_description: Reboot a network device.
 description:
     - Reboot a network device.

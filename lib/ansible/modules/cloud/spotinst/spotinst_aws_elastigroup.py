@@ -9,7 +9,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: spotinst_aws_elastigroup
-version_added: 2.5
+version_added: '2.5'
 short_description: Create, update or delete Spotinst AWS Elastigroups
 author: Spotinst (@talzur)
 description:

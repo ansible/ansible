@@ -20,7 +20,7 @@ module: vmware_host_ssl_facts
 short_description: Gather facts of ESXi host system about SSL
 description:
 - This module can be used to gather facts of the SSL thumbprint information for a host.
-version_added: 2.7
+version_added: '2.7'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

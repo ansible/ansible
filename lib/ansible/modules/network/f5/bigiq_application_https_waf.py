@@ -19,7 +19,7 @@ short_description: Manages BIG-IQ HTTPS WAF applications
 description:
   - Manages BIG-IQ applications used for load balancing an HTTPS application on port 443
     with a Web Application Firewall (WAF) using an ASM Rapid Deployment policy.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

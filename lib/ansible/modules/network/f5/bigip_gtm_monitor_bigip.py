@@ -19,7 +19,7 @@ short_description: Manages F5 BIG-IP GTM BIG-IP monitors
 description:
   - Manages F5 BIG-IP GTM BIG-IP monitors. This monitor is used by GTM to monitor
     BIG-IPs themselves.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

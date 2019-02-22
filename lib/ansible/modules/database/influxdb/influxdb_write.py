@@ -18,7 +18,7 @@ module: influxdb_write
 short_description: Write data points into InfluxDB.
 description:
   - Write data points into InfluxDB.
-version_added: 2.5
+version_added: '2.5'
 author: "René Moser (@resmo)"
 requirements:
   - "python >= 2.6"

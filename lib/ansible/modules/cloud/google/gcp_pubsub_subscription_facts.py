@@ -33,7 +33,7 @@ module: gcp_pubsub_subscription_facts
 description:
 - Gather facts for GCP Subscription
 short_description: Gather facts for GCP Subscription
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

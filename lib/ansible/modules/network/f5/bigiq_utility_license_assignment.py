@@ -20,7 +20,7 @@ description:
   - Manages the assignment of utility licenses on a BIG-IQ. Assignment means that
     the license is assigned to a BIG-IP, or, it needs to be assigned to a BIG-IP.
     Additionally, this module supported revoking the assignments from BIG-IP devices.
-version_added: 2.7
+version_added: '2.7'
 options:
   unit_of_measure:
     description:

@@ -43,7 +43,7 @@ description:
 - Add a persistent disk to your instance when you need reliable and affordable storage
   with consistent performance characteristics.
 short_description: Creates a GCP RegionDisk
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

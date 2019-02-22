@@ -21,7 +21,7 @@ module: vmware_host_active_directory
 short_description: Joins an ESXi host system to an Active Directory domain or leaves it
 description:
 - This module can be used to join or leave an ESXi host to or from an Active Directory domain.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte)
 notes:

@@ -33,7 +33,7 @@ module: gcp_sourcerepo_repository
 description:
 - A repository (or repo) is a Git repository storing versioned source content.
 short_description: Creates a GCP Repository
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

@@ -19,7 +19,7 @@ module: vmware_host_ntp_facts
 short_description: Gathers facts about NTP configuration on an ESXi host
 description:
 - This module can be used to gather facts about NTP configurations on an ESXi host.
-version_added: 2.7
+version_added: '2.7'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_monitor_tcp_half_open
 short_description: Manages F5 BIG-IP LTM tcp half-open monitors
 description: Manages F5 BIG-IP LTM tcp half-open monitors.
-version_added: 2.4
+version_added: '2.4'
 options:
   name:
     description:

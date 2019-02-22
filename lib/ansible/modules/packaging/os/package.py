@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: package
-version_added: 2.0
+version_added: '2.0'
 author:
     - Ansible Core Team
 short_description: Generic OS package manager

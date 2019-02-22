@@ -34,7 +34,7 @@ description:
 - Represents a TargetHttpProxy resource, which is used by one or more global forwarding
   rule to route incoming HTTP requests to a URL map.
 short_description: Creates a GCP TargetHttpProxy
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

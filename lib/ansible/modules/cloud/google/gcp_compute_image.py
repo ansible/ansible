@@ -43,7 +43,7 @@ description:
   You can create a custom image from root persistent disks and other images. Then,
   use the custom image to create an instance.
 short_description: Creates a GCP Image
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

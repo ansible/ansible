@@ -20,7 +20,7 @@ description:
   - Manages CLI scripts on a BIG-IP. CLI scripts, otherwise known as tmshell scripts
     or TMSH scripts allow you to create custom scripts that can run to manage objects
     within a BIG-IP.
-version_added: 2.7
+version_added: '2.7'
 options:
   name:
     description:

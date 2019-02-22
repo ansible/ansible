@@ -33,7 +33,7 @@ module: gcp_bigquery_table
 description:
 - A Table that belongs to a Dataset .
 short_description: Creates a GCP Table
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

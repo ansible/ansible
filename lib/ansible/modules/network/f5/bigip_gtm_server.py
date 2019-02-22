@@ -19,7 +19,7 @@ short_description: Manages F5 BIG-IP GTM servers
 description:
   - Manage BIG-IP server configuration. This module is able to manipulate the server
     definitions in a BIG-IP.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

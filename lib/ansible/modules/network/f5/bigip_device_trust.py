@@ -20,7 +20,7 @@ description:
   - Manage the trust relationships between BIG-IPs. Devices, once peered, cannot
     be updated. If updating is needed, the peer must first be removed before it
     can be re-added to the trust.
-version_added: 2.5
+version_added: '2.5'
 options:
   peer_server:
     description:

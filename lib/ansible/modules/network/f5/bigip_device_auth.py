@@ -20,7 +20,7 @@ description:
   - Manage the system authentication configuration. This module can assist in configuring
     a number of different system authentication types. Note that this module can not be used
     to configure APM authentication types.
-version_added: 2.7
+version_added: '2.7'
 options:
   type:
     description:

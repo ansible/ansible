@@ -17,7 +17,7 @@ module: vmware_vmkernel_ip_config
 short_description: Configure the VMkernel IP Address
 description:
     - Configure the VMkernel IP Address
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)

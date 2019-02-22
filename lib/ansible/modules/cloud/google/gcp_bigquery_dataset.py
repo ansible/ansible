@@ -33,7 +33,7 @@ module: gcp_bigquery_dataset
 description:
 - Datasets allow you to organize and control access to your tables.
 short_description: Creates a GCP Dataset
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

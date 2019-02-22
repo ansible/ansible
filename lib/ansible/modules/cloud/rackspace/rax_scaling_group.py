@@ -17,7 +17,7 @@ module: rax_scaling_group
 short_description: Manipulate Rackspace Cloud Autoscale Groups
 description:
     - Manipulate Rackspace Cloud Autoscale Groups
-version_added: 1.7
+version_added: '1.7'
 options:
   config_drive:
     description:

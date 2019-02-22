@@ -14,7 +14,7 @@ DOCUMENTATION = """
 ---
 module: pn_cpu_mgmt_class
 author: "Pluribus Networks (@rajaspachipulusu17)"
-version_added: 2.8
+version_added: '2.8'
 short_description: CLI command to modify cpu-mgmt-class
 description:
   - This module can we used to update mgmt port ingress policers.

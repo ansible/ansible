@@ -33,7 +33,7 @@ module: gcp_compute_firewall_facts
 description:
 - Gather facts for GCP Firewall
 short_description: Gather facts for GCP Firewall
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

@@ -30,7 +30,7 @@ description:
     existing services are changed to consume that new template. As such,
     the ability to update templates in-place requires the C(force) option
     to be used.
-version_added: 2.4
+version_added: '2.4'
 options:
   force:
     description:

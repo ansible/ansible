@@ -33,7 +33,7 @@ module: gcp_spanner_database
 description:
 - A Cloud Spanner Database which is hosted on a Spanner instance.
 short_description: Creates a GCP Database
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

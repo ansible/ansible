@@ -33,7 +33,7 @@ module: gcp_compute_target_pool_facts
 description:
 - Gather facts for GCP TargetPool
 short_description: Gather facts for GCP TargetPool
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

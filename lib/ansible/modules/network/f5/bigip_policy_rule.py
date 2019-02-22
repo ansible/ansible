@@ -18,7 +18,7 @@ module: bigip_policy_rule
 short_description: Manage LTM policy rules on a BIG-IP
 description:
   - This module will manage LTM policy rules on a BIG-IP.
-version_added: 2.5
+version_added: '2.5'
 options:
   description:
     description:

@@ -33,7 +33,7 @@ module: gcp_compute_instance_facts
 description:
 - Gather facts for GCP Instance
 short_description: Gather facts for GCP Instance
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

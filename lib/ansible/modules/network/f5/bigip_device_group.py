@@ -21,7 +21,7 @@ description:
     of BIG-IP devices. Usage of this module should be done in conjunction
     with the C(bigip_configsync_actions) to sync configuration across
     the pair or cluster if auto-sync is disabled.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

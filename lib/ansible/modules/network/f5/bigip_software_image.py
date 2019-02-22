@@ -19,7 +19,7 @@ short_description: Manage software images on a BIG-IP
 description:
   - Manages software images on a BIG-IP. These images may include both base images
     and hotfix images.
-version_added: 2.7
+version_added: '2.7'
 options:
   force:
     description:

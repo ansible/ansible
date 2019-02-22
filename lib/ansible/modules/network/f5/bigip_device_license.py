@@ -18,7 +18,7 @@ module: bigip_device_license
 short_description: Manage license installation and activation on BIG-IP devices
 description:
   - Manage license installation and activation on a BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   license_key:
     description:

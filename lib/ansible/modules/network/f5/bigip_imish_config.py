@@ -19,7 +19,7 @@ short_description: Manage BIG-IP advanced routing configuration sections
 description:
   - This module provides an implementation for working with advanced routing
     configuration sections in a deterministic way.
-version_added: 2.8
+version_added: '2.8'
 options:
   route_domain:
     description:

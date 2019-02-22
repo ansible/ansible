@@ -34,7 +34,7 @@ description:
 - A zone is a subtree of the DNS namespace under one administrative responsibility.
   A ManagedZone is a resource that represents a DNS zone hosted by the Cloud DNS service.
 short_description: Creates a GCP ManagedZone
-version_added: 2.5
+version_added: '2.5'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

@@ -23,7 +23,7 @@ module: vmware_guest_custom_attributes
 short_description: Manage custom attributes from VMWare for the given virtual machine
 description:
     - This module can be used to add, remove and update custom attributes for the given virtual machine.
-version_added: 2.7
+version_added: '2.7'
 author:
     - Jimmy Conner (@cigamit)
     - Abhijeet Kasurde (@Akasurde)

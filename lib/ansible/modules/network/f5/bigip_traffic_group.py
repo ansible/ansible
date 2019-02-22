@@ -18,7 +18,7 @@ module: bigip_traffic_group
 short_description: Manages traffic groups on BIG-IP
 description:
   - Supports managing traffic groups and their attributes on a BIG-IP.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

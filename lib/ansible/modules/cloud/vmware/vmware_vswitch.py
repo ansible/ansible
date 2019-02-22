@@ -21,7 +21,7 @@ module: vmware_vswitch
 short_description: Manage a VMware Standard Switch to an ESXi host.
 description:
 - This module can be used to add, remove and update a VMware Standard Switch to an ESXi host.
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)

@@ -21,7 +21,7 @@ module: vmware_portgroup
 short_description: Create a VMware portgroup
 description:
     - Create a VMware portgroup on given host/s or hosts of given cluster
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)

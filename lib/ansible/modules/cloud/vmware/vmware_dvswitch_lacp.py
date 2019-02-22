@@ -20,7 +20,7 @@ module: vmware_dvswitch_lacp
 short_description: Manage LACP configuration on a Distributed Switch
 description:
     - This module can be used to configure Link Aggregation Control Protocol (LACP) support mode and Link Aggregation Groups (LAGs).
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte)
 notes:

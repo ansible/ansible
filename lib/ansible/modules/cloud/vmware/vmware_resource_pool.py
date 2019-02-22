@@ -17,7 +17,7 @@ module: vmware_resource_pool
 short_description: Add/remove resource pools to/from vCenter
 description:
     - This module can be used to add/remove a resource pool to/from vCenter
-version_added: 2.3
+version_added: '2.3'
 author:
 - Davis Phillips (@dav1x)
 notes:

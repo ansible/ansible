@@ -21,7 +21,7 @@ description:
     has synchronization and failover connectivity information (IP addresses) that
     you define as part of HA pairing or clustering. This module allows you to configure
     that information.
-version_added: 2.5
+version_added: '2.5'
 options:
   config_sync_ip:
     description:

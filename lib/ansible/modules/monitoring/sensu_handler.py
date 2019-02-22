@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: sensu_handler
 author: "David Moreau Simard (@dmsimard)"
 short_description: Manages Sensu handler configuration
-version_added: 2.4
+version_added: '2.4'
 description:
   - Manages Sensu handler configuration
   - 'For more information, refer to the Sensu documentation: U(https://sensuapp.org/docs/latest/reference/handlers.html)'

@@ -25,7 +25,7 @@ description:
     - If hostname or IP address of vCenter is provided as C(hostname) and C(esxi_hostname) is not specified, then the
       module will throw an error.
     - VSAN facts added in 2.7 version.
-version_added: 2.5
+version_added: '2.5'
 author:
     - Wei Gao (@woshihaoren)
 requirements:

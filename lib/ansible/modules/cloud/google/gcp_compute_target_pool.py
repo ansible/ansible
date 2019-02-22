@@ -33,7 +33,7 @@ module: gcp_compute_target_pool
 description:
 - Represents a TargetPool resource, used for Load Balancing.
 short_description: Creates a GCP TargetPool
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

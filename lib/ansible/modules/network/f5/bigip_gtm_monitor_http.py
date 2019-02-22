@@ -18,7 +18,7 @@ module: bigip_gtm_monitor_http
 short_description: Manages F5 BIG-IP GTM http monitors
 description:
   - Manages F5 BIG-IP GTM http monitors.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

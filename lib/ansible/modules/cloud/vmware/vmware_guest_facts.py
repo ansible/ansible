@@ -21,7 +21,7 @@ module: vmware_guest_facts
 short_description: Gather facts about a single VM
 description:
     - Gather facts about a single VM on a VMware ESX cluster.
-version_added: 2.3
+version_added: '2.3'
 author:
     - Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
 notes:

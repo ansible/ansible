@@ -15,7 +15,7 @@ DOCUMENTATION = """
 ---
 module: pn_port_config
 author: "Pluribus Networks (@rajaspachipulusu17)"
-version_added: 2.8
+version_added: '2.8'
 short_description: CLI command to modify port-config
 description:
   - This module can be used to modify a port configuration.

@@ -22,7 +22,7 @@ description:
      this module is written to transfer UCS files that might not be present,
      so a missing remote UCS won't be an error unless fail_on_missing is
      set to 'yes'.
-version_added: 2.5
+version_added: '2.5'
 options:
   backup:
     description:

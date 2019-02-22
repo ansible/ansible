@@ -36,7 +36,7 @@ description:
   template. Unlike managed instance groups, you must create and add instances to an
   instance group manually.
 short_description: Creates a GCP InstanceGroup
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

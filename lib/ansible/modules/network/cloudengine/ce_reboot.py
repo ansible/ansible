@@ -23,7 +23,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ce_reboot
-version_added: 2.4
+version_added: '2.4'
 short_description: Reboot a HUAWEI CloudEngine switches.
 description:
     - Reboot a HUAWEI CloudEngine switches.

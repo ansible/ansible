@@ -18,7 +18,7 @@ module: bigip_asm_policy_signature_set
 short_description: Manages Signature Sets on ASM policy
 description:
   - Manages Signature Sets on ASM policy.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

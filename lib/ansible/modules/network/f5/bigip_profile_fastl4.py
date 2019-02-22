@@ -18,7 +18,7 @@ module: bigip_profile_fastl4
 short_description: Manages Fast L4 profiles
 description:
   - Manages Fast L4 profiles.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

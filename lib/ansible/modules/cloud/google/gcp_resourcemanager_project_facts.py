@@ -33,7 +33,7 @@ module: gcp_resourcemanager_project_facts
 description:
 - Gather facts for GCP Project
 short_description: Gather facts for GCP Project
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

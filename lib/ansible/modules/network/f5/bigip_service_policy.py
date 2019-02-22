@@ -19,7 +19,7 @@ short_description: Manages service policies on a BIG-IP.
 description:
   - Service policies allow you to configure timers and port misuse rules,
     if enabled, on a per rule or per context basis.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

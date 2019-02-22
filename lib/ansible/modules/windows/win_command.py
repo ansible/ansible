@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 ---
 module: win_command
 short_description: Executes a command on a remote Windows node
-version_added: 2.2
+version_added: '2.2'
 description:
      - The C(win_command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be

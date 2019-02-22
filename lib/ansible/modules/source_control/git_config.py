@@ -21,7 +21,7 @@ module: git_config
 author:
   - Matthew Gamble (@djmattyg007)
   - Marius Gedminas (@mgedmin)
-version_added: 2.1
+version_added: '2.1'
 requirements: ['git']
 short_description: Read and write git configuration
 description:

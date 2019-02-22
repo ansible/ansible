@@ -18,7 +18,7 @@ module: bigip_log_publisher
 short_description: Manages log publishers on a BIG-IP
 description:
   - Manages log publishers on a BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

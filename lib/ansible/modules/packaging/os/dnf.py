@@ -19,7 +19,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: dnf
-version_added: 1.9
+version_added: '1.9'
 short_description: Manages packages with the I(dnf) package manager
 description:
      - Installs, upgrade, removes, and lists packages and groups with the I(dnf) package manager.

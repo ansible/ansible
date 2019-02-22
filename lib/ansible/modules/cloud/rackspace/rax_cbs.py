@@ -17,7 +17,7 @@ module: rax_cbs
 short_description: Manipulate Rackspace Cloud Block Storage Volumes
 description:
      - Manipulate Rackspace Cloud Block Storage Volumes
-version_added: 1.6
+version_added: '1.6'
 options:
   description:
     description:

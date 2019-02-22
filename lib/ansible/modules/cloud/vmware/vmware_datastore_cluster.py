@@ -22,7 +22,7 @@ short_description: Manage VMware vSphere datastore clusters
 description:
     - This module can be used to add and delete datastore cluster in given VMware environment.
     - All parameters and VMware object values are case sensitive.
-version_added: 2.6
+version_added: '2.6'
 author:
 -  Abhijeet Kasurde (@Akasurde)
 notes:

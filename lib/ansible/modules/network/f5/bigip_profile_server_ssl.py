@@ -18,7 +18,7 @@ module: bigip_profile_server_ssl
 short_description: Manages server SSL profiles on a BIG-IP
 description:
   - Manages server SSL profiles on a BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

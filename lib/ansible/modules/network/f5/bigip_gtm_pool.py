@@ -18,7 +18,7 @@ module: bigip_gtm_pool
 short_description: Manages F5 BIG-IP GTM pools
 description:
     - Manages F5 BIG-IP GTM pools.
-version_added: 2.4
+version_added: '2.4'
 options:
   state:
     description:

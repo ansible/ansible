@@ -19,7 +19,7 @@ short_description: Manages BIG-IQ FastL4 TCP applications
 description:
   - Manages BIG-IQ applications used for load balancing a TCP-based application
     with a FastL4 profile.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

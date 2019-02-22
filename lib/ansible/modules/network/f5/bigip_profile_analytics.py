@@ -18,7 +18,7 @@ module: bigip_profile_analytics
 short_description: Manage HTTP analytics profiles on a BIG-IP
 description:
   - Manage HTTP analytics profiles on a BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

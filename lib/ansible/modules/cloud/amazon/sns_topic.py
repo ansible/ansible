@@ -18,7 +18,7 @@ short_description: Manages AWS SNS topics and subscriptions
 description:
     - The C(sns_topic) module allows you to create, delete, and manage subscriptions for AWS SNS topics. As of 2.6,
       this module can be use to subscribe and unsubscribe to topics outside of your AWS account.
-version_added: 2.0
+version_added: '2.0'
 author:
   - "Joel Thompson (@joelthompson)"
   - "Fernando Jose Pando (@nand0p)"

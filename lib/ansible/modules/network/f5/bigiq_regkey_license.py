@@ -18,7 +18,7 @@ module: bigiq_regkey_license
 short_description: Manages licenses in a BIG-IQ registration key pool
 description:
   - Manages licenses in a BIG-IQ registration key pool.
-version_added: 2.5
+version_added: '2.5'
 options:
   regkey_pool:
     description:

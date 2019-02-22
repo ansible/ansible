@@ -21,7 +21,7 @@ description:
 - This module can be used to assign / remove VMware tags from the given VMware objects.
 - Tag feature is introduced in vSphere 6 version, so this module is not supported in the earlier versions of vSphere.
 - All variables and VMware object names are case sensitive.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

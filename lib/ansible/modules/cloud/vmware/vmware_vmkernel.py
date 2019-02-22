@@ -25,7 +25,7 @@ description:
     - The module assumes that the host is already configured with the Port Group in case of a vSphere Standard Switch (vSS).
     - The module assumes that the host is already configured with the Distributed Port Group in case of a vSphere Distributed Switch (vDS).
     - The module automatically migrates the VMKernel adapter from vSS to vDS or vice versa if present.
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)

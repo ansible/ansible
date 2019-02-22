@@ -17,7 +17,7 @@ module: rax_meta
 short_description: Manipulate metadata for Rackspace Cloud Servers
 description:
      - Manipulate metadata for Rackspace Cloud Servers
-version_added: 1.7
+version_added: '1.7'
 options:
   address:
     description:

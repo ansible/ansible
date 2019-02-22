@@ -18,7 +18,7 @@ module: bigip_monitor_gateway_icmp
 short_description: Manages F5 BIG-IP LTM gateway ICMP monitors
 description:
   - Manages gateway ICMP monitors on a BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

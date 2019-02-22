@@ -34,7 +34,7 @@ description:
 - Represents a Global Address resource. Global addresses are used for HTTP(S) load
   balancing.
 short_description: Creates a GCP GlobalAddress
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

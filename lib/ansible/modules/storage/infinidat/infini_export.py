@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: infini_export
-version_added: 2.3
+version_added: '2.3'
 short_description: Create, Delete or Modify NFS Exports on Infinibox
 description:
     - This module creates, deletes or modifies NFS exports on Infinibox.

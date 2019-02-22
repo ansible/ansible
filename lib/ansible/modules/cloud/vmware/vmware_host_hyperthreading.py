@@ -23,7 +23,7 @@ description:
 - This module can be used to enable or disable Hyperthreading optimization for ESXi host systems in given vCenter infrastructure.
 - It also checks if Hyperthreading is activated/deactivated and if the host needs to be restarted.
 - The module informs the user if Hyperthreading is enabled but inactive because the processor is vulnerable to L1 Terminal Fault (L1TF).
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte)
 notes:

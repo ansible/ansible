@@ -19,7 +19,7 @@ module: bigip_pool_member
 short_description: Manages F5 BIG-IP LTM pool members
 description:
   - Manages F5 BIG-IP LTM pool members via iControl SOAP API.
-version_added: 1.4
+version_added: '1.4'
 options:
   name:
     description:

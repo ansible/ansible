@@ -37,7 +37,7 @@ description:
 - For more information, see U(https://cloud.google.com/compute/docs/load-balancing/http/)
   .
 short_description: Creates a GCP GlobalForwardingRule
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

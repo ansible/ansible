@@ -38,7 +38,7 @@ description:
   manipulation of an existing bucket's access controls.
 - A bucket is always owned by the project team owners group.
 short_description: Creates a GCP Bucket
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

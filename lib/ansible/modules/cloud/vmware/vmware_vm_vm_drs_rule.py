@@ -19,7 +19,7 @@ module: vmware_vm_vm_drs_rule
 short_description: Configure VMware DRS Affinity rule for virtual machine in given cluster
 description:
 - This module can be used to configure VMware DRS Affinity rule for virtual machine in given cluster.
-version_added: 2.5
+version_added: '2.5'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

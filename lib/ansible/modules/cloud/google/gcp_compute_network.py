@@ -44,7 +44,7 @@ description:
   does not support IPv6. However, Google is a major advocate of IPv6 and it is an
   important future direction.
 short_description: Creates a GCP Network
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

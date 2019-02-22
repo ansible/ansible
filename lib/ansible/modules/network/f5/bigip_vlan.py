@@ -18,7 +18,7 @@ module: bigip_vlan
 short_description: Manage VLANs on a BIG-IP system
 description:
   - Manage VLANs on a BIG-IP system
-version_added: 2.2
+version_added: '2.2'
 options:
   description:
     description:

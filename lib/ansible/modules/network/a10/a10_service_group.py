@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: a10_service_group
-version_added: 1.8
+version_added: '1.8'
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices' service groups.
 description:
     - Manage SLB (Server Load Balancing) service-group objects on A10 Networks devices via aXAPIv2.

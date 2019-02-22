@@ -17,7 +17,7 @@ module: vmware_dns_config
 short_description: Manage VMware ESXi DNS Configuration
 description:
     - Manage VMware ESXi DNS Configuration
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 notes:

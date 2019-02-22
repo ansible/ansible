@@ -37,7 +37,7 @@ description:
   applied to them, which may be used to reference them during pod scheduling. They
   may also be resized up or down, to accommodate the workload.
 short_description: Creates a GCP NodePool
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

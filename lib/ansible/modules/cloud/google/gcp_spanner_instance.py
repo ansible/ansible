@@ -33,7 +33,7 @@ module: gcp_spanner_instance
 description:
 - An isolated set of Cloud Spanner resources on which databases can be hosted.
 short_description: Creates a GCP Instance
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

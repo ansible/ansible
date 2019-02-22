@@ -17,7 +17,7 @@ module: rax_keypair
 short_description: Create a keypair for use with Rackspace Cloud Servers
 description:
      - Create a keypair for use with Rackspace Cloud Servers
-version_added: 1.5
+version_added: '1.5'
 options:
   name:
     description:

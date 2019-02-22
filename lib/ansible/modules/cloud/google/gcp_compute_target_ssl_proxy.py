@@ -34,7 +34,7 @@ description:
 - Represents a TargetSslProxy resource, which is used by one or more global forwarding
   rule to route incoming SSL requests to a backend service.
 short_description: Creates a GCP TargetSslProxy
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

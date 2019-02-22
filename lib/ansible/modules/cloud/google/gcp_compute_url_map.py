@@ -34,7 +34,7 @@ description:
 - UrlMaps are used to route requests to a backend service based on rules that you
   define for the host and path of an incoming URL.
 short_description: Creates a GCP UrlMap
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

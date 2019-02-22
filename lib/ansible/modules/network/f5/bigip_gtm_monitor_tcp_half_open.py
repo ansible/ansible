@@ -18,7 +18,7 @@ module: bigip_gtm_monitor_tcp_half_open
 short_description: Manages F5 BIG-IP GTM tcp half-open monitors
 description:
   - Manages F5 BIG-IP GTM tcp half-open monitors.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

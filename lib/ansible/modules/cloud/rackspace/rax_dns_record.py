@@ -17,7 +17,7 @@ module: rax_dns_record
 short_description: Manage DNS records on Rackspace Cloud DNS
 description:
      - Manage DNS records on Rackspace Cloud DNS
-version_added: 1.5
+version_added: '1.5'
 options:
   comment:
     description:

@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: apache2_module
-version_added: 1.6
+version_added: '1.6'
 author:
     - Christian Berendt (@berendt)
     - Ralf Hertel (@n0trax)

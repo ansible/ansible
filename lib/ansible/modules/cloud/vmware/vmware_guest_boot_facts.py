@@ -21,7 +21,7 @@ module: vmware_guest_boot_facts
 short_description: Gather facts about boot options for the given virtual machine
 description:
     - This module can be used to gather facts aboyt boot options for the given virtual machine.
-version_added: 2.7
+version_added: '2.7'
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:

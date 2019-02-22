@@ -33,7 +33,7 @@ module: gcp_compute_instance
 description:
 - An instance is a virtual machine (VM) hosted on Google's infrastructure.
 short_description: Creates a GCP Instance
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

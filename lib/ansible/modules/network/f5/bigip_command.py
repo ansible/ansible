@@ -26,7 +26,7 @@ description:
     a real module has been developed to configure in the way you need.
   - If you are using this module, you should probably also be filing an issue
     to have a B(real) module created for your needs.
-version_added: 2.4
+version_added: '2.4'
 options:
   commands:
     description:

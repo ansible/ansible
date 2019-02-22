@@ -18,7 +18,7 @@ module: bigip_snmp_trap
 short_description: Manipulate SNMP trap information on a BIG-IP
 description:
   - Manipulate SNMP trap information on a BIG-IP.
-version_added: 2.4
+version_added: '2.4'
 options:
   name:
     description:

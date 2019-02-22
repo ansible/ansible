@@ -10,7 +10,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: pids
-version_added: 2.8
+version_added: '2.8'
 description: "Retrieves a list of PIDs of given process name in Ansible controller/controlled machines.Returns an empty list if no process in that name exists."
 short_description: "Retrieves process IDs list if the process is running otherwise return empty list"
 author:

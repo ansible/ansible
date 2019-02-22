@@ -23,7 +23,7 @@ notes:
   - To create a new volume at least the I(name) and I(size_gb) options
     are required.
   - A volume can be created and attached to a server in the same task.
-version_added: 2.8
+version_added: '2.8'
 author: "Gaudenz Steinlin (@gaudenz)"
 options:
   state:

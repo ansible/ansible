@@ -17,7 +17,7 @@ DOCUMENTATION = r'''
 module: bigip_monitor_udp
 short_description: Manages F5 BIG-IP LTM udp monitors
 description: Manages F5 BIG-IP LTM udp monitors.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

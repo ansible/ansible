@@ -19,7 +19,7 @@ short_description: Manages BIG-IQ HTTPS offload applications
 description:
   - Manages BIG-IQ applications used for load balancing an HTTPS application on
     port 443 with SSL offloading on BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

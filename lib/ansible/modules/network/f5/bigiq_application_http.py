@@ -19,7 +19,7 @@ short_description: Manages BIG-IQ HTTP applications
 description:
   - Manages BIG-IQ applications used for load balancing an HTTP application on
     port 80 on BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

@@ -14,7 +14,7 @@ module: aws_ses_rule_set
 short_description: Manages SES inbound receipt rule sets
 description:
     - The M(aws_ses_rule_set) module allows you to create, delete, and manage SES receipt rule sets
-version_added: 2.8
+version_added: '2.8'
 author:
   - "Ben Tomasik (@tomislacker)"
   - "Ed Costello (@orthanc)"

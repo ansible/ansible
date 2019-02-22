@@ -34,7 +34,7 @@ description:
 - A named resource representing the stream of messages from a single, specific topic,
   to be delivered to the subscribing application.
 short_description: Creates a GCP Subscription
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

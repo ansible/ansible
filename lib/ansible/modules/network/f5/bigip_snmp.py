@@ -18,7 +18,7 @@ module: bigip_snmp
 short_description: Manipulate general SNMP settings on a BIG-IP
 description:
   - Manipulate general SNMP settings on a BIG-IP.
-version_added: 2.4
+version_added: '2.4'
 options:
   allowed_addresses:
     description:

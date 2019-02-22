@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: openvswitch_port
-version_added: 1.4
+version_added: '1.4'
 author: "David Stygstra (@stygstra)"
 short_description: Manage Open vSwitch ports
 requirements: [ ovs-vsctl ]

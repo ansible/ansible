@@ -48,7 +48,7 @@ description:
 - A Route resource must have exactly one specification of either nextHopGateway, nextHopInstance,
   nextHopIp, or nextHopVpnTunnel.
 short_description: Creates a GCP Route
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

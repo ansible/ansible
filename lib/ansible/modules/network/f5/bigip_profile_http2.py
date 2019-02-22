@@ -18,7 +18,7 @@ module: bigip_profile_http2
 short_description: Manage HTTP2 profiles on a BIG-IP
 description:
   - Manage HTTP2 profiles on a BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

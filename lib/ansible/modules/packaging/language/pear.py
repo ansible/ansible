@@ -22,7 +22,7 @@ module: pear
 short_description: Manage pear/pecl packages
 description:
     - Manage PHP packages with the pear package manager.
-version_added: 2.0
+version_added: '2.0'
 author:
     - Jonathan Lestrelin (@jle64) <jonathan.lestrelin@gmail.com>
 options:
