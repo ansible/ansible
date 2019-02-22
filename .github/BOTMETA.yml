@@ -339,6 +339,7 @@ files:
     keywords: [ brew, cask, darwin, homebrew, macosx, macports, osx ]
     labels: macos
     maintainers: $team_macos
+    notified: chris-short
   $modules/packaging/os/homebrew_: *macos
   $modules/packaging/os/installp.py: &aix
     keywords: [ aix, efix, lpar, wpar ]
@@ -1358,7 +1359,7 @@ macros:
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
-  team_macos: dagwieers kyleabenson
+  team_macos: akasurde dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
   team_mysql: bmalynovytch michaelcoburn oneiroi tolland Xyon
