@@ -175,7 +175,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 try:
     from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
-except:
+except ImportError:
     # handled in azure_rm_common
     pass
 
