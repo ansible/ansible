@@ -157,9 +157,8 @@ def main():
         module.fail_json(msg='Error getting authorization token', **result)
 
     subnet_url = url + 'subnets/'
-    try:
-        section_id = session.get_section_id(section)
-    except:
+    section_id = session.get_section_id(section)
+    if section_id is None:
         module.fail_json(msg='section doesn\'t exist', **result)
     found_subnet = session.get_subnet(subnet, section)
     optional_args = {}
