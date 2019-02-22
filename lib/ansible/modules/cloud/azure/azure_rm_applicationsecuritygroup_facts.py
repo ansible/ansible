@@ -178,7 +178,7 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
                 results.append(applicationsecuritygroup_to_dict(response))
         except CloudError as e:
             self.log('Did not find the Application Security Group instance.')
-        return []
+        return results
 
     def list_by_resource_group(self):
         '''
