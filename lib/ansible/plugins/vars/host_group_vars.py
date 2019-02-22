@@ -86,11 +86,11 @@ class VarsModule(BaseVarsPlugin):
                         # no need to do much if path does not exist for basedir
                         if os.path.exists(b_opath):
                             if os.path.isdir(b_opath):
-                                self._display.debug("\tprocessing dir %s" % opath)
+                                self.display.debug("\tprocessing dir %s" % opath)
                                 found_files = loader.find_vars_files(opath, entity.name)
                                 FOUND[key] = found_files
                             else:
-                                self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
+                                self.display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
 
                     for found in found_files:
                         new_data = loader.load_from_file(found, cache=True, unsafe=True)

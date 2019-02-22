@@ -18,13 +18,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.plugins import AnsiblePlugin
 from ansible.utils.path import basedir
 from ansible.utils.display import Display
 
 display = Display()
 
 
-class BaseVarsPlugin(object):
+class BaseVarsPlugin(AnsiblePlugin):
 
     """
     Loads variables for groups and/or hosts
@@ -32,7 +33,13 @@ class BaseVarsPlugin(object):
 
     def __init__(self):
         """ constructor """
-        self._display = display
+        super(BaseVarsPlugin, self).__init__()
+        self.display = display
+
+    @property
+    def _display(self):
+        self.display.deprecated('Instead of self._display, use self.display', '2.9')
+        return self.display
 
     def get_vars(self, loader, path, entities):
         """ Gets variables. """
