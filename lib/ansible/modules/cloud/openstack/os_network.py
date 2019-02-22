@@ -164,7 +164,7 @@ def main():
         provider_segmentation_id=dict(required=False, type='int'),
         state=dict(default='present', choices=['absent', 'present']),
         project=dict(default=None),
-        port_security_enabled=dict(default=False, type='bool')
+        port_security_enabled=dict(type='bool')
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -179,7 +179,7 @@ def main():
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
-    port_security_enabled = module.params['port_security_enabled']
+    port_security_enabled = module.params.get('port_security_enabled')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
