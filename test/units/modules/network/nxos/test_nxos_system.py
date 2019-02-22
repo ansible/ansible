@@ -72,7 +72,7 @@ class TestNxosSystemModule(TestNxosModule):
     def test_nxos_system_domain_name_vrf_only(self):
         set_module_args(dict(domain_name=[{'name': 'abc.com', 'vrf': 'test'}, {'name': 'xyz.com', 'vrf': 'test2'}]))
         commands = []
-        self.execute_module(changed=True, commands=commands, device='vrf_only')
+        self.execute_module(changed=False, commands=commands, device='vrf_only')
 
     def test_nxos_system_domain_name_complex(self):
         domain_name = dict(name='example.net', vrf='management')
