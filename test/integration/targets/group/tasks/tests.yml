@@ -61,35 +61,29 @@
 
 - name: validate results for testcase 1
   assert:
-      that:
-          - 'group_test1.results is defined'
-          - 'group_test1.results|length == 5'
+    that:
+    - group_test1.results is defined
+    - group_test1.results|length == 5
 
-- name: validate change results for testcase 1 (jinja2 >= 2.6)
+- name: validate change results for testcase 1
   assert:
-      that:
-          - "group_test1.results|map(attribute='changed')|unique|list == [False]"
-          - "group_test1.results|map(attribute='state')|unique|list == ['present']"
-  when: "jinja2_version.stdout is version('2.6', '>=')"
-
-- name: validate change results for testcase 1 (jinja2 < 2.6)
-  assert:
-      that:
-          - "not group_test1.results[0]['changed']"
-          - "not group_test1.results[1]['changed']"
-          - "not group_test1.results[2]['changed']"
-          - "not group_test1.results[3]['changed']"
-          - "not group_test1.results[4]['changed']"
-  when: "jinja2_version.stdout is version('2.6', '<')"
+    that:
+    - not group_test1 is changed
 
 ##
 ## group add with gid
 ##
 
+- name: get the next available gid
+  script: gidget.py
+  args:
+    executable: '{{ ansible_python_interpreter }}'
+  register: gid
+
 - name: create a group with a gid (check mode)
   group:
     name: ansibullgroup2
-    gid: 666
+    gid: '{{ gid.stdout_lines[0] }}'
     state: present
   register: create_group_gid_check
   check_mode: True
@@ -107,7 +101,7 @@
 - name: create a group with a gid
   group:
     name: ansibullgroup2
-    gid: 666
+    gid: '{{ gid.stdout_lines[0] }}'
     state: present
   register: create_group_gid
 
@@ -119,13 +113,13 @@
   assert:
       that:
       - create_group_gid is changed
-      - create_group_gid.gid == 666
-      - create_group_gid_actual.stdout | trim | int == 666
+      - create_group_gid.gid | int == gid.stdout_lines[0] | int
+      - create_group_gid_actual.stdout | trim | int == gid.stdout_lines[0] | int
 
 - name: create a group with a gid (idempotent)
   group:
     name: ansibullgroup2
-    gid: 666
+    gid: '{{ gid.stdout_lines[0] }}'
     state: present
   register: create_group_gid_again
 
@@ -133,7 +127,7 @@
   assert:
       that:
       - not create_group_gid_again is changed
-      - create_group_gid_again.gid == 666
+      - create_group_gid_again.gid | int == gid.stdout_lines[0] | int
 
 ##
 ## group remove

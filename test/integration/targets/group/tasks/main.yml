@@ -24,11 +24,6 @@
   - ansibullgroup
   - ansibullgroup2
 
-- name: get the jinja2 version
-  shell: python -c 'import jinja2; print(jinja2.__version__)'
-  register: jinja2_version
-  delegate_to: localhost
-
 - block:
   - name: run tests
     include_tasks: tests.yml
