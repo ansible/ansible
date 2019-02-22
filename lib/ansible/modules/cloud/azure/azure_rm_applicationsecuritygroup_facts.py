@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Yunge Zhu, <yungez@microsoft.com>
+# Copyright (c) 2019 Yunge Zhu, <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -174,7 +174,7 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
                                                                            application_security_group_name=self.name)
             self.log("Response : {0}".format(response))
 
-            if response and self.has_tags(item.tags, self.tags):
+            if response and self.has_tags(response.tags, self.tags):
                 results.append(applicationsecuritygroup_to_dict(response))
         except CloudError as e:
             self.log('Did not find the Application Security Group instance.')
