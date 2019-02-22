@@ -51,6 +51,7 @@ PASS_VARS = {
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
+    'string_conversion_action': '_string_conversion_action',
     'tmpdir': '_tmpdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
@@ -790,6 +791,7 @@ class AnsibleModule(object):
         self._warnings = []
         self._deprecations = []
         self._clean = {}
+        self._string_conversion_action = ''
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
@@ -1859,9 +1861,18 @@ class AnsibleModule(object):
     def _check_type_str(self, value):
         if isinstance(value, string_types):
             return value
-        # Note: This could throw a unicode error if value's __str__() method
-        # returns non-ascii.  Have to port utils.to_bytes() if that happens
-        return str(value)
+
+        # Ignore, warn, or error when converting to a string.
+        # The current default is to warn. Change this in Anisble 2.12 to error.
+        common_msg = 'quote the entire value to ensure it does not change.'
+        if self._string_conversion_action == 'error':
+            msg = common_msg.capitalize()
+            raise TypeError(msg)
+        elif self._string_conversion_action == 'warn':
+            msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
+                   'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+            self.warn(msg)
+        return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):
         if isinstance(value, list):
