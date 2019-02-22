@@ -110,6 +110,7 @@ EXAMPLES = '''
   docker_prune:
     containers: yes
     images: yes
+    images_filters:
       dangling: false
     networks: yes
     volumes: yes
