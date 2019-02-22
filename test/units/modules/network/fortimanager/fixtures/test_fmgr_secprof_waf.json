@@ -1,5 +1,5 @@
 {
-    "fmgr_waf_profile_addsetdelete": [
+    "fmgr_waf_profile_modify": [
         {
             "paramgram_used": {
                 "comment": "Created by Ansible Module TEST",
@@ -169,6 +169,7 @@
                 },
                 "mode": "delete"
             },
+            "datagram_sent": {},
             "raw_response": {
                 "status": {
                     "message": "OK",
@@ -185,6 +186,10 @@
                     "code": 0
                 },
                 "url": "/pm/config/adom/root/obj/waf/profile"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "name": "Ansible_WAF_Profile"
             },
             "paramgram_used": {
                 "comment": "Created by Ansible Module TEST",

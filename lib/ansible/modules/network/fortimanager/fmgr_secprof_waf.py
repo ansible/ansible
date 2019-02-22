@@ -1282,14 +1282,6 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
-    fmgr = None
-    if module._socket_path:
-        connection = Connection(module._socket_path)
-        fmgr = FortiManagerHandler(connection, module.check_mode)
-        fmgr.tools = FMGRCommon()
-    else:
-        module.fail_json(**FAIL_SOCKET_MSG)
-
     # MODULE PARAMGRAM
     paramgram = {
         "mode": module.params["mode"],
@@ -1460,11 +1452,21 @@ def main():
         }
     }
 
+    module.paramgram = paramgram
+    fmgr = None
+    if module._socket_path:
+        connection = Connection(module._socket_path)
+        fmgr = FortiManagerHandler(connection, module)
+        fmgr.tools = FMGRCommon()
+    else:
+        module.fail_json(**FAIL_SOCKET_MSG)
+
     list_overrides = ['address-list', 'constraint', 'method', 'signature', 'url-access']
     paramgram = fmgr.tools.paramgram_child_list_override(list_overrides=list_overrides,
                                                          paramgram=paramgram, module=module)
 
     results = DEFAULT_RESULT_OBJ
+
     try:
         results = fmgr_waf_profile_modify(fmgr, paramgram)
         fmgr.govern_response(module=module, results=results,
