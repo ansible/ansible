@@ -144,7 +144,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
 * ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
 * ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
-* ``panos`` use <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks> instead.
+* ``panos`` use `Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
 Noteworthy module changes
