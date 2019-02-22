@@ -1,0 +1,74 @@
+---
+- debug: msg="START grpc_nw_get iosxr/basic.yaml on connection={{ ansible_connection }}"
+
+- name: get ip static configuration
+  grpc_nw_get:
+    section: '{"Cisco-IOS-XR-ip-static-cfg:router-static": [null]}'
+    data_type: config
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'output' in result"
+      - "'Cisco-IOS-XR-ip-static-cfg:router-static' in result['output'][0]"
+
+- name: run cli command with text output
+  grpc_nw_get:
+    command: 'show version'
+    display: text
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'stdout' in result"
+      - "'Cisco IOS XR Software' in result['stdout']"
+
+- name: run cli command with json output
+  grpc_nw_get:
+    command: 'show version'
+    display: json
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "'output' in result"
+      - "'Cisco-IOS-XR-spirit-install-instmgr-oper:software-install' in result['output'][0]"
+
+- name: "get state data without filter - failure"
+  grpc_nw_get:
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'operation without filter is not supported' in result['msg']"
+
+- name: "worng display type"
+  grpc_nw_get:
+    command: 'show version'
+    display: xml
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'display option \\'xml\\' is not supported on this target host' in result['msg']"
+
+- name: "worng data type"
+  grpc_nw_get:
+    section: '{"Cisco-IOS-XR-ip-static-cfg:router-static": [null]}'
+    data_type: state
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.failed == true"
+      - "'data_type option \\'state\\' is not supported on this target host' in result['msg']"
+
+- debug: msg="END grpc_nw_get iosxr/basic.yaml on connection={{ ansible_connection }}"

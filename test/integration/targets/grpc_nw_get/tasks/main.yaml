@@ -1,0 +1,2 @@
+---
+- { include: iosxr.yaml, when: ansible_network_os == 'iosxr', tags: ['grpc'] }
