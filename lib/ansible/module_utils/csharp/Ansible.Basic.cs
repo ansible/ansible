@@ -63,6 +63,7 @@ namespace Ansible.Basic
             { "selinux_special_fs", null },
             { "shell_executable", null },
             { "socket", null },
+            { "string_conversion_action", null },
             { "syslog_facility", null },
             { "tmpdir", "tmpdir" },
             { "verbosity", "Verbosity" },
