@@ -998,7 +998,7 @@ def fmgr_firewall_policy_modify(fmgr, paramgram):
         url = '/pm/config/adom/{adom}/pkg/{pkg}/firewall/policy'.format(adom=adom, pkg=paramgram["package_name"])
         datagram = scrub_dict((prepare_dict(paramgram)))
         del datagram["package_name"]
-        datagram = fmgr.tools.split_comma_strings_into_lists(datagram)
+        datagram = fmgr._tools.split_comma_strings_into_lists(datagram)
 
     # EVAL THE MODE PARAMETER FOR DELETE
     elif mode == "delete":
@@ -1335,7 +1335,7 @@ def main():
 
     try:
         results = fmgr_firewall_policy_modify(fmgr, paramgram)
-        fmgr.govern_response(module=module, results=results,
+        fmgr.govern_response(module=module, results=results, good_codes=[0, -9998],
                              ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
     except Exception as err:
         raise FMGBaseException(err)
