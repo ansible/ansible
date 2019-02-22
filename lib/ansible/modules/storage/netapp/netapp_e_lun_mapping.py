@@ -247,7 +247,7 @@ class LunMapping(object):
                     target = None if not self.target else self.mapping_info["target_by_name"][self.target]
                     if target:
                         body.update(dict(targetId=target))
-                    if self.lun:
+                    if self.lun is not None:
                         body.update(dict(lun=self.lun))
 
                     if lun_reference:
