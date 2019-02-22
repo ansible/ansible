@@ -75,6 +75,7 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
@@ -104,7 +105,7 @@ class LookupModule(LookupBase):
                 res = conn.get(term)
                 if res is None:
                     res = ""
-                ret.append(res)
+                ret.append(to_text(res))
             except Exception:
                 ret.append("")  # connection failed or key not found
         return ret
