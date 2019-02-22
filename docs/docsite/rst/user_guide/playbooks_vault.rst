@@ -41,7 +41,7 @@ If you are using a script instead of a flat file, ensure that it is marked as ex
 The :option:`--vault-password-file <ansible-pull --vault-password-file>` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode.
 
 
-Multiple vault passwords
+Multiple Vault Passwords
 ````````````````````````
 
 Ansible 2.4 and later support the concept of multiple vaults that are encrypted with different passwords
