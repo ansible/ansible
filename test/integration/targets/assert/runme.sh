@@ -19,8 +19,11 @@ run_test() {
    # The shenanigans with redirection and 'tee' are to capture STDOUT and
    # STDERR separately while still displaying both to the console
    { ansible-playbook -i 'localhost,' -c local "${testname}.yml" \
-      > >(set +x; sed 's/ *$//' | tee "${OUTFILE}.${testname}.stdout"); } \
-      2> >(set +x; sed 's/ *$//' | tee "${OUTFILE}.${testname}.stderr" >&2) 0</dev/null
+      > >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
+      2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2) 0</dev/null
+
+   perl -pi -e 's/ *$//s' "${OUTFILE}.${testname}.stdout"
+   perl -pi -e 's/ *$//s' "${OUTFILE}.${testname}.stderr"
 
    diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
    diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
