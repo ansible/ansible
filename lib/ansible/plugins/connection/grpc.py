@@ -31,8 +31,8 @@ options:
     type: int
     description:
       - Specifies the port on the remote device that listens for connections
-        when establishing the GRPC connection. If None only the C(host) part will
-        be used
+        when establishing the gRPC connection. If None only the C(host) part will
+        be used.
     ini:
       - section: defaults
         key: remote_port
@@ -49,7 +49,7 @@ options:
       - name: ansible_network_os
   remote_user:
     description:
-      - The username used to authenticate to the remote device when the grpc
+      - The username used to authenticate to the remote device when the gRPC
         connection is first established.  If the remote_user is not specified,
         the connection will use the username of the logged in user.
       - Can be configured from the CLI via the C(--user) or C(-u) options.
@@ -82,7 +82,7 @@ options:
     description:
       - The PEM encoded root certificate file used to create a SSL-enabled
         channel, if the value is None it reads the root certificates from
-        a default location chosen by gRPC runtime.
+        a default location chosen by gRPC at runtime.
     ini:
       - section: grpc_connection
         key: root_certificates_file
@@ -93,7 +93,7 @@ options:
   certificate_chain_file:
     description:
       - The PEM encoded certificate chain file used to create a SSL-enabled
-        channel, if the value is None in that case no certificate chain is used.
+        channel. If the value is None, no certificate chain is used.
     ini:
       - section: grpc_connection
         key: certificate_chain_file
@@ -106,7 +106,7 @@ options:
       - The option overrides SSL target name used for SSL host name checking.
         The name used for SSL host name checking will be the target parameter
         (assuming that the secure channel is an SSL channel). If this parameter is
-        specified and the underlying secure channel is not an SSL channel, it will just be ignored.
+        specified and the underlying is not an SSL channel, it will just be ignored.
     ini:
       - section: grpc_connection
         key: ssl_target_name_override
@@ -132,7 +132,7 @@ options:
   persistent_command_timeout:
     type: int
     description:
-      - Configures, in seconds,  the default timeout
+      - Configures, in seconds, the default timeout
         value when awaiting a response after issuing a call to a RPC. If the RPC
         does not return in timeout seconds, an error is generated and the connection is
         closed.
@@ -257,8 +257,9 @@ class Connection(NetworkConnectionBase):
             channel = secure_channel(self._target, creds, options=self._channel_options)
         else:
             channel = insecure_channel(self._target, options=self._channel_options)
+
         self.queue_message('vvv', "ESTABLISH GRPC CONNECTION FOR USER: %s on PORT %s TO %s" %
-                                 (self.get_option('remote_user'), port, host))
+                           (self.get_option('remote_user'), port, host))
         self._channel = implementations.Channel(channel)
         self.queue_message('vvvv', 'grpc connection has completed successfully')
         self._connected = True
