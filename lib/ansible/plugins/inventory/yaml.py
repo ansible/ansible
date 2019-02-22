@@ -124,7 +124,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         if isinstance(group_data, (MutableMapping, NoneType)):
 
             try:
-                self.inventory.add_group(group)
+                group = self.inventory.add_group(group)
             except AnsibleError as e:
                 raise AnsibleParserError("Unable to add group %s: %s" % (group, to_text(e)))
 

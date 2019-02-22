@@ -156,7 +156,7 @@ class InventoryData(object):
         return matching_host
 
     def add_group(self, group):
-        ''' adds a group to inventory if not there already '''
+        ''' adds a group to inventory if not there already, returns named actually used '''
 
         group = to_safe_group_name(group)
         if group:
@@ -171,6 +171,8 @@ class InventoryData(object):
                 display.debug("group %s already in inventory" % group)
         else:
             raise AnsibleError("Invalid empty/false group name provided: %s" % group)
+
+        return group
 
     def remove_group(self, group):
 
@@ -189,6 +191,8 @@ class InventoryData(object):
         if host:
             if not isinstance(host, string_types):
                 raise AnsibleError("Invalid host name supplied, expected a string but got %s for %s" % (type(host), host))
+
+            # TODO: add to_safe_host_name
             g = None
             if group:
                 if group in self.groups:
@@ -223,6 +227,8 @@ class InventoryData(object):
                 display.debug("Added host %s to group %s" % (host, group))
         else:
             raise AnsibleError("Invalid empty host name provided: %s" % host)
+
+        return host
 
     def remove_host(self, host):
 

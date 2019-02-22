@@ -188,7 +188,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         if group != '_meta' and isinstance(data, dict) and 'children' in data:
             for child_name in data['children']:
-                child_name = to_safe_group_names(group)
+                child_name = to_safe_group_name(group)
                 self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)
 

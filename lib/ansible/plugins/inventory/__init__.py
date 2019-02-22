@@ -316,6 +316,7 @@ class Constructable(object):
         if groups and isinstance(groups, dict):
             self.templar.set_available_variables(variables)
             for group_name in groups:
+                group_name = to_safe_group_name(group_name)
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
                 try:
                     result = boolean(self.templar.template(conditional))
@@ -325,8 +326,8 @@ class Constructable(object):
                     continue
 
                 if result:
-                    # ensure group exists
-                    self.inventory.add_group(group_name)
+                    # ensure group exists, use sanatized name
+                    group_name = self.inventory.add_group(group_name)
                     # add host to group
                     self.inventory.add_child(group_name, host)
 

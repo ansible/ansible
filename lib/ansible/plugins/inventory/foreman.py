@@ -60,8 +60,6 @@ password: secure
 validate_certs: False
 '''
 
-import re
-
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
@@ -185,14 +183,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise ValueError("More than one set of facts returned for '%s'" % host)
         return facts
 
-    def to_safe(self, word):
-        '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups
-        #> ForemanInventory.to_safe("foo-bar baz")
-        'foo_barbaz'
-        '''
-        regex = r"[^A-Za-z0-9\_]"
-        return re.sub(regex, "_", word.replace(" ", ""))
-
     def _populate(self):
 
         for host in self._get_hosts():
@@ -203,8 +193,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 # create directly mapped groups
                 group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
-                    group_name = self.to_safe('%s%s' % (self.get_option('group_prefix'), group_name.lower()))
-                    self.inventory.add_group(group_name)
+                    group_name = self.inventory.add_group('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ","")))
                     self.inventory.add_child(group_name, host['name'])
 
                 # set host vars from host info
