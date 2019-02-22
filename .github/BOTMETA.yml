@@ -440,7 +440,9 @@ files:
   $modules/utilities/logic/include_vars.py: $team_ansible
   $modules/utilities/logic/pause.py: samdoran
   $modules/utilities/logic/wait_for.py: gregswift
-  $modules/web_infrastructure/ansible_tower/: $team_tower
+  $modules/web_infrastructure/ansible_tower/: &tower
+    labels: [ tower ]
+    maintainers: $team_tower
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
@@ -543,9 +545,7 @@ files:
   $module_utils:
     support: community
   $module_utils/acme.py: *crypto
-  $module_utils/ansible_tower.py:
-    support: community
-    maintainers: $team_tower
+  $module_utils/ansible_tower.py: *tower
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
@@ -1127,14 +1127,18 @@ files:
 # plugins/lookup
   $plugins/lookup/__init__.py:
     support: core
+  $plugins/lookup/aws:
+    labels:
+      - aws
+      - cloud
   $plugins/lookup/conjur_variable.py:
     maintainers: $team_cyberark_conjur
     notified: cyberark-bizdev
   $plugins/lookup/dig:
     maintainers: jpmens
-    labels: community
   $plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
+  $plugins/lookup/hashi_vault: defionscode
   $plugins/lookup/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
@@ -1148,6 +1152,7 @@ files:
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
+
 ###############################
 # plugins/netconf
   $plugins/netconf/:
