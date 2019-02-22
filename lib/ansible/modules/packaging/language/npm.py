@@ -280,7 +280,7 @@ def main():
               unsafe_perm=unsafe_perm, state=state)
 
     changed = False
-    if ci is True:	
+    if ci is True:
         npm.ci_install()	
         changed = True
     elif state == 'present':
