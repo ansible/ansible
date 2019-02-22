@@ -162,10 +162,7 @@ class KubernetesRawModule(KubernetesAnsibleModule):
             self.warnings = []
             if self.params['validate'] is not None:
                 self.warnings = self.validate(definition)
-            try:
-                result = self.perform_action(resource, definition)
-            except Exception:
-                self.fail(msg='resource: {} definition: {}'.format(resource, definition))
+            result = self.perform_action(resource, definition)
             result['warnings'] = self.warnings
             changed = changed or result['changed']
             results.append(result)
