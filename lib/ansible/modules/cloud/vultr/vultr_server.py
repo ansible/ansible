@@ -663,6 +663,10 @@ class AnsibleVultrServer(Vultr):
         return server, warned
 
     def _update_server(self, server=None, start_server=True):
+        # Wait for server to unlock if restoring
+        if server.get('os').strip() == 'Snapshot':
+            server = self._wait_for_state(key='server_status', state='ok', timeout=3600)
+
         # Update auto backups settings, stops server
         server = self._update_auto_backups_setting(server=server, start_server=start_server)
 
