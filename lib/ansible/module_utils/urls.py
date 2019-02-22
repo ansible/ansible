@@ -698,8 +698,6 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         paths_checked.append('/etc/ansible')
 
         tmp_fd, tmp_path = tempfile.mkstemp()
-        to_add_fd, to_add_path = tempfile.mkstemp()
-        to_add = False
 
         # Write the dummy ca cert if we are running on macOS
         if system == u'Darwin':
@@ -717,26 +715,15 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                     full_path = os.path.join(path, f)
                     if os.path.isfile(full_path) and os.path.splitext(f)[1] in ('.crt', '.pem'):
                         try:
-                            cert_file = open(full_path, 'rb')
-                            cert = cert_file.read()
-                            cert_file.close()
-                            os.write(tmp_fd, cert)
-                            os.write(tmp_fd, b'\n')
                             if full_path not in LOADED_VERIFY_LOCATIONS:
-                                to_add = True
-                                os.write(to_add_fd, cert)
-                                os.write(to_add_fd, b'\n')
-                                LOADED_VERIFY_LOCATIONS.add(full_path)
+                                with open(full_path, 'rb') as cert_file:
+                                    cert = cert_file.read()
+                                os.write(tmp_fd, cert)
+                                os.write(tmp_fd, b'\n')
                         except (OSError, IOError):
                             pass
 
-        if not to_add:
-            try:
-                os.remove(to_add_path)
-            except OSError:
-                pass
-            to_add_path = None
-        return (tmp_path, to_add_path, paths_checked)
+        return (tmp_path, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=None):
         '''
@@ -780,34 +767,21 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         return context
 
     def http_request(self, req):
-        tmp_ca_cert_path, to_add_ca_cert_path, paths_checked = self.get_ca_certs()
+        tmp_ca_cert_path, paths_checked = self.get_ca_certs()
+
+        # Detect if 'no_proxy' environment variable is set and if our URL is included
+        use_proxy = self.detect_no_proxy(req.get_full_url())
         https_proxy = os.environ.get('https_proxy')
+
         context = None
         try:
-            context = self._make_context(to_add_ca_cert_path)
+            context = self._make_context(tmp_ca_cert_path)
         except Exception:
             # We'll make do with no context below
             pass
 
-        # Detect if 'no_proxy' environment variable is set and if our URL is included
-        use_proxy = self.detect_no_proxy(req.get_full_url())
-
-        if not use_proxy:
-            # ignore proxy settings for this host request
-            if tmp_ca_cert_path:
-                try:
-                    os.remove(tmp_ca_cert_path)
-                except OSError:
-                    pass
-            if to_add_ca_cert_path:
-                try:
-                    os.remove(to_add_ca_cert_path)
-                except OSError:
-                    pass
-            return req
-
         try:
-            if https_proxy:
+            if use_proxy and https_proxy:
                 proxy_parts = generic_urlparse(urlparse(https_proxy))
                 port = proxy_parts.get('port') or 443
                 proxy_hostname = proxy_parts.get('hostname', None)
@@ -854,21 +828,6 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             build_ssl_validation_error(self.hostname, self.port, paths_checked, e)
         except socket.error as e:
             raise ConnectionError('Failed to connect to %s at port %s: %s' % (self.hostname, self.port, to_native(e)))
-
-        try:
-            # cleanup the temp file created, don't worry
-            # if it fails for some reason
-            os.remove(tmp_ca_cert_path)
-        except Exception:
-            pass
-
-        try:
-            # cleanup the temp file created, don't worry
-            # if it fails for some reason
-            if to_add_ca_cert_path:
-                os.remove(to_add_ca_cert_path)
-        except Exception:
-            pass
 
         return req
 
