@@ -635,7 +635,7 @@ class DnfModule(YumDnf):
                     # _unload plugins function doesn't properly clean up after itself
                     del sys.modules['dnf.plugin.dynamic.versionlock']
             else:
-                #re-raise
+                # re-raise
                 raise e
 
         if self.bugfix:
