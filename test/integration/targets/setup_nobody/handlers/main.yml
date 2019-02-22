@@ -3,8 +3,3 @@
   user:
     name: nobody
     state: absent
-
-- name: remove nobody group
-  group:
-    name: nobody
-    state: absent

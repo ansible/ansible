@@ -1,14 +1,7 @@
 ---
-- name: create nobody group
-  group:
-    name: nobody
-    state: present
-  notify: remove nobody group
-
 - name: create nobody user
   user:
     name: nobody
-    comment: nobody
-    group: nobody
+    create_home: no
     state: present
   notify: remove nobody user
