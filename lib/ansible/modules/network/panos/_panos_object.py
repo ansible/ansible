@@ -21,7 +21,7 @@
 #  limitations under the License.
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
@@ -36,6 +36,10 @@ version_added: "2.4"
 requirements:
     - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
     - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -59,6 +63,11 @@ options:
         description:
             - The operation to be performed.  Supported values are I(add)/I(delete)/I(find).
         required: true
+        choices:
+            - add
+            - update
+            - delete
+            - find
     addressobject:
         description:
             - The name of the address object.
@@ -68,6 +77,11 @@ options:
     address_type:
         description:
             - The type of address object definition.  Valid types are I(ip-netmask) and I(ip-range).
+        default: 'ip-netmask'
+        choices:
+            - ip-netmask
+            - ip-range
+            - fqdn
     addressgroup:
         description:
             - A static group of address objects or dynamic address group.
@@ -89,6 +103,9 @@ options:
     protocol:
         description:
             - The IP protocol to be used in a service object definition.  Valid values are I(tcp) or I(udp).
+        choices:
+            - tcp
+            - udp
     servicegroup:
         description:
             - A group of service objects.
@@ -105,6 +122,23 @@ options:
         description: >
             - The color of the tag object.  Valid values are I(red, green, blue, yellow, copper, orange, purple, gray,
             light green, cyan, light gray, blue gray, lime, black, gold, and brown).
+        choices:
+            - red
+            - green
+            - blue
+            - yellow
+            - copper
+            - orange
+            - purple
+            - gray
+            - light green
+            - cyan
+            - light gray
+            - blue gray
+            - lime
+            - black
+            - gold
+            - brown
     devicegroup:
         description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined it
