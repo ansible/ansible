@@ -1,0 +1,2 @@
+bugfixes:
+- dnsimple - fixed a KeyError exception related to record types handling.
