@@ -47,7 +47,7 @@ class PhpIpamWrapper(urls.Request):
         try:
             section_response = json.load(self.get(url))
             return section_response['data']
-        except:
+        except KeyError:
             return None
 
     def get_vlan(self, vlan):
