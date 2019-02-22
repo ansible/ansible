@@ -127,7 +127,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # outlook-web-access: None
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: static-nat
+
     # ssl-http-match-host: None
 
     # ssl-server-max-version: None
@@ -205,7 +205,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # name: Basic DNS Translation
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: dns-translation
+
     # ssl-http-match-host: None
 
     # ssl-pfs: None
@@ -281,7 +281,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # outlook-web-access: None
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: fqdn
+
     # ssl-http-match-host: None
 
     # ssl-server-max-version: None
@@ -360,7 +360,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # name: Basic StaticNAT Map
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: static-nat
+
     # ssl-http-match-host: None
 
     # ssl-pfs: None
@@ -435,7 +435,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # outlook-web-access: None
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: static-nat
+
     # ssl-http-match-host: None
 
     # ssl-server-max-version: None
@@ -513,7 +513,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # name: Basic PNAT Map Port 10443
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: None
+
     # ssl-http-match-host: None
 
     # ssl-pfs: None
@@ -589,7 +589,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # outlook-web-access: None
     # ssl-server-session-state-type: None
     # ssl-client-session-state-type: None
-    # type: None
+
     # ssl-http-match-host: None
 
     # ssl-server-max-version: None
@@ -668,7 +668,6 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # name: Basic DNS Translation
     # ssl-server-session-state-type: None
 
-    # type: None
     # ssl-http-match-host: None
     # ssl-pfs: None
     # ssl-client-session-state-timeout: None
@@ -717,7 +716,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # portforward: None
     # http-cookie-generation: None
     # ssl-client-fallback: None
-    # type: None
+
     # http-ip-header: None
     # persistence: None
     # websphere-server: None
