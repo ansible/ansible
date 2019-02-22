@@ -253,7 +253,7 @@
 - name: Block to test remounted option
   block:
     - name: Create empty file
-      command: dd if=/dev/zero of=/tmp/myfs.img bs=1M count=20
+      command: dd if=/dev/zero of=/tmp/myfs.img bs=1048576 count=20
 
     - name: Format FS
       filesystem:
