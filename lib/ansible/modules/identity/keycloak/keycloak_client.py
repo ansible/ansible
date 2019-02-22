@@ -594,7 +594,7 @@ EXAMPLES = r'''
           user.attribute: lastName
           userinfo.token.claim: yes
         consentRequired: yes
-        consentText: '{{ familyName }}'
+        consentText: '${familyName}'
         name: family name
         protocol: openid-connect
         protocolMapper: oidc-usermodel-property-mapper
