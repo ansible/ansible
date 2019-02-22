@@ -257,7 +257,7 @@
 
     - name: Format FS
       filesystem:
-        fstype: ext2
+        fstype: ext3
         dev: /tmp/myfs.img
 
     - name: Mount the FS for the first time
