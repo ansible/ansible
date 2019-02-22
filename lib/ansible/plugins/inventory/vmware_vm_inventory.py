@@ -120,6 +120,7 @@ class BaseVMwareInventory:
         self.port = port
         self.with_tags = with_tags
         self.validate_certs = validate_certs
+        self.datacenter = None
         self.content = None
         self.rest_content = None
 
@@ -244,7 +245,7 @@ class BaseVMwareInventory:
             raise AnsibleError("Missing one of the following : hostname, username, password. Please read "
                                "the documentation for more information.")
 
-    def _get_managed_objects_properties(self, vim_type, properties=None):
+    def _get_managed_objects_properties(self, vim_type, properties=None, folder=None):
         """
         Look up a Managed Object Reference in vCenter / ESXi Environment
         :param vim_type: Type of vim object e.g, for datacenter - vim.Datacenter
@@ -252,7 +253,10 @@ class BaseVMwareInventory:
         :return: local content object
         """
         # Get Root Folder
-        root_folder = self.content.rootFolder
+        if folder:
+            root_folder = folder
+        else:
+            root_folder = self.content.rootFolder
 
         if properties is None:
             properties = ['name']
@@ -302,6 +306,21 @@ class BaseVMwareInventory:
                 return None
         return result
 
+    def get_datacenter_obj(self, datacenter_name=None):
+        dc_obj = None
+
+        if datacenter_name is None:
+            return dc_obj
+
+        dc_managed_objs = self._get_managed_objects_properties(vim_type=vim.Datacenter, properties=['name'])
+        if dc_managed_objs:
+            for t_dc_obj in dc_managed_objs:
+                for dc_obj_prop in t_dc_obj.propSet:
+                    if dc_obj_prop.val == datacenter_name:
+                        dc_obj = t_dc_obj.obj
+                        break
+        return dc_obj
+
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
 
@@ -346,8 +365,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         )
 
         self.pyv.do_login()
-
-        self.pyv.check_requirements()
 
         source_data = None
         if cache:
