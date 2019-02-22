@@ -944,7 +944,6 @@ files:
     support: core
   $plugins/callback/grafana_annotations.py:
     maintainers: rrey
-    support: community
   $plugins/callback/junit:
     support: core
   $plugins/callback/minimal:
@@ -956,15 +955,12 @@ files:
     support: core
   $plugins/callback/stderr.py:
     maintainers: ysn2233
-    support: community
   $plugins/callback/sumologic.py:
     maintainers: ryancurrah
-    support: community
   $plugins/callback/tree:
     support: core
   $plugins/callback/unixy.py:
     maintainers: akatch
-    support: community
 ###############################
 # plugins/cliconf
 
@@ -1152,7 +1148,6 @@ files:
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
-
 ###############################
 # plugins/netconf
   $plugins/netconf/:
