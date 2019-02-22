@@ -279,7 +279,7 @@ def main():
         module.fail_json(msg='psycopg2 must be at least 2.4.3 '
                              'in order to user the ssl_rootcert parameter')
 
-    db_connection = connect_to_db(module, kw, autocommit=True)
+    db_connection = connect_to_db(module, kw)
     cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Switch role, if specified:
