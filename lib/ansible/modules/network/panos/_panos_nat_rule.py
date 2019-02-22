@@ -19,6 +19,10 @@ version_added: "2.4"
 requirements:
     - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
     - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -41,10 +45,22 @@ options:
     operation:
         description:
             - The action to be taken.  Supported values are I(add)/I(update)/I(find)/I(delete).
+        required: true
+        choices:
+            - add
+            - update
+            - delete
+            - find
+    devicegroup:
+        description:
+            - If Panorama, the device group to put this rule in.
     rule_name:
         description:
             - name of the SNAT rule
         required: true
+    description:
+        description:
+            - The description
     source_zone:
         description:
             - list of source zones
@@ -68,10 +84,17 @@ options:
     snat_type:
         description:
             - type of source translation
+        choices:
+            - static-ip
+            - dynamic-ip-and-port
+            - dynamic-ip
     snat_address_type:
         description:
             - type of source translation. Supported values are I(translated-address)/I(translated-address).
-        default: 'translated-address'
+        default: 'interface-address'
+        choices:
+            - interface-address
+            - translated-address
     snat_static_address:
         description:
             - Source NAT translated address. Used with Static-IP translation.
@@ -95,6 +118,13 @@ options:
     dnat_port:
         description:
             - dnat translated port
+    tag_name:
+        description:
+            - Tag for the NAT rule.
+    to_interface:
+        description:
+            - Destination interface.
+        default: 'any'
     commit:
         description:
             - Commit configuration if changed.
@@ -126,7 +156,7 @@ RETURN = '''
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 # import pydevd
