@@ -1,0 +1,92 @@
+{
+    "delete_script": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/script/TestScript"
+            },
+            "datagram_sent": {
+                "name": "TestScript"
+            },
+            "paramgram_used": {
+                "vdom": "root",
+                "script_target": null,
+                "script_content": null,
+                "adom": "ansible",
+                "script_description": null,
+                "script_package": null,
+                "mode": "delete",
+                "script_scope": null,
+                "script_name": "TestScript",
+                "script_type": null
+            },
+            "post_method": "delete"
+        }
+    ],
+    "set_script": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/dvmdb/adom/ansible/script/"
+            },
+            "datagram_sent": {
+                "content": "get system status",
+                "type": "cli",
+                "target": "remote_device",
+                "name": "TestScript",
+                "desc": "Create by Ansible"
+            },
+            "paramgram_used": {
+                "script_content": "get system status",
+                "adom": "ansible",
+                "script_scope": null,
+                "script_name": "TestScript",
+                "script_target": "remote_device",
+                "mode": "add",
+                "script_description": "Create by Ansible",
+                "script_package": null,
+                "vdom": "root",
+                "script_type": "cli"
+            },
+            "post_method": "set"
+        }
+    ],
+    "execute_script": [
+        {
+            "url": "/dvmdb/adom/ansible/script/execute",
+            "paramgram_used": {
+                "script_content": null,
+                "adom": "ansible",
+                "script_scope": "FGT1",
+                "script_name": "TestScript",
+                "script_target": null,
+                "mode": "execute",
+                "script_description": null,
+                "script_package": null,
+                "vdom": "root",
+                "script_type": null
+            },
+            "datagram_sent": {
+                "scope": [
+                    {
+                        "name": "FGT1",
+                        "vdom": "root"
+                    }
+                ],
+                "adom": "ansible",
+                "script": "TestScript",
+                "package": null
+            },
+            "raw_response": {
+                "task": 277
+            },
+            "post_method": "exec"
+        }
+    ]
+}
