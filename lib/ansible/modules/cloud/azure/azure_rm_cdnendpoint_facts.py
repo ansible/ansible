@@ -208,7 +208,7 @@ class AzureRMCdnEndpointFacts(AzureRMModuleBase):
         self.profile_name = None
         self.tags = None
 
-        super(AzureRMCdnendpointFacts, self).__init__(
+        super(AzureRMCdnEndpointFacts, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
