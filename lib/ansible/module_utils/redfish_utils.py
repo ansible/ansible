@@ -690,12 +690,12 @@ class RedfishUtils(object):
     def get_multi_boot_order(self):
         return self.aggregate(self.get_boot_order)
 
-    def set_bios_default_settings(self, systems_uri):
+    def set_bios_default_settings(self):
         result = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -719,15 +719,12 @@ class RedfishUtils(object):
             return response
         return {'ret': True, 'changed': True, 'msg': "Set BIOS to default settings"}
 
-    def set_multi_bios_default_settings(self):
-        return self.aggregate(self.set_bios_default_settings)
-
-    def set_one_time_boot_device(self, bootdevice, systems_uri):
+    def set_one_time_boot_device(self, bootdevice):
         result = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -749,26 +746,17 @@ class RedfishUtils(object):
         else:
             payload = {"Boot": {"BootSourceOverrideTarget": bootdevice}}
 
-        response = self.patch_request(self.root_uri + systems_uri, payload, HEADERS)
+        response = self.patch_request(self.root_uri + self.systems_uris[0], payload, HEADERS)
         if response['ret'] is False:
             return response
         return {'ret': True}
 
-    def set_multi_time_boot_device(self, bootdevice):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            boot_device = self.set_one_time_boot_device(bootdevice, systems_uri)
-            ret = boot_device.pop('ret') and ret
-            entries.append(boot_device['entries'])
-        return dict(ret=ret, entries=entries)
-
-    def set_bios_attributes(self, attr, systems_uri):
+    def set_bios_attributes(self, attr):
         result = {}
         key = "Bios"
 
         # Search for 'key' entry and extract URI from it
-        response = self.get_request(self.root_uri + systems_uri)
+        response = self.get_request(self.root_uri + self.systems_uris[0])
         if response['ret'] is False:
             return response
         result['ret'] = True
@@ -803,15 +791,6 @@ class RedfishUtils(object):
         if response['ret'] is False:
             return response
         return {'ret': True, 'changed': True, 'msg': "Modified BIOS attribute"}
-
-    def set_multi_bios_attributes(self, attr):
-        ret = True
-        entries = []
-        for systems_uri in self.systems_uris:
-            bios_attributes = self.set_bios_attributes(attr, systems_uri)
-            ret = bios_attributes.pop('ret') and ret
-            entries.append(bios_attributes['entries'])
-        return dict(ret=ret, entries=entries)
 
     def get_fan_inventory(self):
         result = {}
