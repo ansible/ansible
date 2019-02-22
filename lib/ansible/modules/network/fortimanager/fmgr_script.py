@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fmgr_script
-version_added: "2.8"
+version_added: "2.5"
 notes:
     - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
 author: Andrew Welsh (@Ghilli3)
