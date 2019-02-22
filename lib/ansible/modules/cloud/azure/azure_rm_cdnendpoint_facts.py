@@ -173,6 +173,7 @@ cdnendpoints:
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
+    from azure.mgmt.cdn import CdnManagementClient
     from azure.mgmt.cdn.models import ErrorResponseException
     from azure.common import AzureHttpError
 except ImportError:
@@ -223,6 +224,10 @@ class AzureRMCdnendpointFacts(AzureRMModuleBase):
         for key in self.module_args:
             setattr(self, key, kwargs[key])
 
+        self.cdn_client = self.get_mgmt_svc_client(CdnManagementClient,
+                                                   base_url=self._cloud_environment.endpoints.resource_manager,
+                                                   api_version='2017-04-02')
+
         if self.name:
             self.results['cdnendpoints'] = self.get_item()
         else:
@@ -239,7 +244,7 @@ class AzureRMCdnendpointFacts(AzureRMModuleBase):
         result = []
 
         try:
-            item = self.cdn_management_client.endpoints.get(
+            item = self.cdn_client.endpoints.get(
                 self.resource_group, self.profile_name, self.name)
         except ErrorResponseException:
             pass
@@ -255,7 +260,7 @@ class AzureRMCdnendpointFacts(AzureRMModuleBase):
         self.log('List all Azure CDN endpoints within an Azure CDN profile')
 
         try:
-            response = self.cdn_management_client.endpoints.list_by_profile(
+            response = self.cdn_client.endpoints.list_by_profile(
                 self.resource_group, self.profile_name)
         except ErrorResponseException as exc:
             self.fail('Failed to list all items - {0}'.format(str(exc)))
