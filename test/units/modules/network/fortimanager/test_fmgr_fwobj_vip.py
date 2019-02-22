@@ -106,7 +106,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'src-filter': None, 'ldb-method': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-client-renegotiation': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'ssl-server-session-state-timeout': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'http-cookie-domain': None, 'ssl-hpkp-report-uri': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-hsts': None, 'arp-reply': None, 'extport': None, 'ssl-min-version': None, 'ssl-server-algorithm': None, 'ssl-certificate': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'ssl-http-match-host': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'outlook-web-access': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-server-max-version': None, 'ssl-client-session-state-timeout': None, 'http-cookie-domain-from-host': None, 'ssl-algorithm': None, 'ssl-hsts-include-subdomains': None, 'max-embryonic-connections': None, 'persistence': None, 'http-cookie-path': None, 'ssl-pfs': None, 'http-multiplex': None}
+
     # adom: ansible
     # ssl-client-session-state-max: None
     # http-ip-header: None
@@ -129,7 +129,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: static-nat
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-server-max-version: None
     # ssl-hpkp-report-uri: None
     # http-cookie-domain-from-host: None
@@ -189,7 +189,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # weblogic-server: None
     # ssl-client-session-state-max: None
     # http-ip-header: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'ssl-client-session-state-timeout': None, 'src-filter': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'extport': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'ssl-server-algorithm': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'max-embryonic-connections': None, 'http-cookie-domain': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-certificate': None, 'ssl-hsts': None, 'arp-reply': None, 'ssl-client-renegotiation': None, 'ssl-min-version': None, 'ldb-method': None, 'ssl-server-session-state-timeout': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'outlook-web-access': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'ssl-http-match-host': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-pfs': None, 'ssl-hpkp-report-uri': None, 'http-cookie-domain-from-host': None, 'ssl-hsts-include-subdomains': None, 'ssl-server-max-version': None, 'persistence': None, 'http-cookie-path': None, 'ssl-algorithm': None, 'http-multiplex': None}
+
     # ssl-hsts: None
     # arp-reply: None
     # extaddr: None
@@ -207,7 +207,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: dns-translation
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-pfs: None
     # ssl-server-max-version: None
     # ssl-client-session-state-timeout: None
@@ -260,7 +260,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'src-filter': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-client-renegotiation': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'ssl-server-session-state-timeout': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'http-cookie-domain': None, 'ssl-hpkp-report-uri': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-min-version': None, 'ssl-hsts': None, 'arp-reply': None, 'ssl-hsts-include-subdomains': None, 'http-multiplex': None, 'ldb-method': None, 'ssl-certificate': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'ssl-http-match-host': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'outlook-web-access': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-server-max-version': None, 'ssl-client-session-state-timeout': None, 'http-cookie-domain-from-host': None, 'ssl-algorithm': None, 'extport': None, 'max-embryonic-connections': None, 'persistence': None, 'http-cookie-path': None, 'ssl-pfs': None, 'ssl-server-algorithm': None}
+
     # adom: ansible
     # ssl-client-session-state-max: None
     # http-ip-header: None
@@ -283,7 +283,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: fqdn
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-server-max-version: None
     # ssl-hpkp-report-uri: None
     # http-cookie-domain-from-host: None
@@ -344,7 +344,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # weblogic-server: None
     # ssl-client-session-state-max: None
     # http-ip-header: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'ssl-hsts-include-subdomains': None, 'color': None, 'ssl-client-session-state-timeout': None, 'src-filter': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'max-embryonic-connections': None, 'http-cookie-domain': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-certificate': None, 'ssl-hsts': None, 'arp-reply': None, 'ssl-client-renegotiation': None, 'http-multiplex': None, 'ldb-method': None, 'ssl-server-session-state-timeout': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'outlook-web-access': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'ssl-http-match-host': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-pfs': None, 'ssl-server-max-version': None, 'ssl-hpkp-report-uri': None, 'http-cookie-domain-from-host': None, 'extport': None, 'ssl-server-algorithm': None, 'persistence': None, 'http-cookie-path': None, 'ssl-algorithm': None, 'ssl-min-version': None}
+
     # ssl-hsts: None
     # arp-reply: None
     # ssl-client-renegotiation: None
@@ -362,7 +362,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: static-nat
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-pfs: None
     # ssl-client-session-state-timeout: None
     # http-cookie-domain-from-host: None
@@ -413,7 +413,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'src-filter': None, 'ldb-method': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-client-renegotiation': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'ssl-server-session-state-timeout': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'http-cookie-domain': None, 'ssl-hpkp-report-uri': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-hsts': None, 'arp-reply': None, 'extport': None, 'http-multiplex': None, 'ssl-server-algorithm': None, 'ssl-certificate': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'ssl-http-match-host': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'outlook-web-access': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-server-max-version': None, 'ssl-client-session-state-timeout': None, 'http-cookie-domain-from-host': None, 'ssl-algorithm': None, 'ssl-hsts-include-subdomains': None, 'max-embryonic-connections': None, 'persistence': None, 'http-cookie-path': None, 'ssl-pfs': None, 'ssl-min-version': None}
+
     # adom: ansible
     # ssl-client-session-state-max: None
     # http-ip-header: None
@@ -437,7 +437,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: static-nat
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-server-max-version: None
     # ssl-hpkp-report-uri: None
     # http-cookie-domain-from-host: None
@@ -497,7 +497,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # weblogic-server: None
     # ssl-client-session-state-max: None
     # http-ip-header: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'ssl-client-session-state-timeout': None, 'src-filter': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'extport': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'ssl-server-algorithm': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'max-embryonic-connections': None, 'http-cookie-domain': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-certificate': None, 'ssl-hsts': None, 'arp-reply': None, 'ssl-client-renegotiation': None, 'http-multiplex': None, 'ldb-method': None, 'ssl-server-session-state-timeout': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'outlook-web-access': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'ssl-http-match-host': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-pfs': None, 'ssl-hpkp-report-uri': None, 'http-cookie-domain-from-host': None, 'ssl-hsts-include-subdomains': None, 'ssl-server-max-version': None, 'persistence': None, 'http-cookie-path': None, 'ssl-algorithm': None, 'ssl-min-version': None}
+
     # ssl-hsts: None
     # arp-reply: None
     # ssl-client-renegotiation: None
@@ -515,7 +515,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: None
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-pfs: None
     # ssl-server-max-version: None
     # ssl-client-session-state-timeout: None
@@ -568,7 +568,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'src-filter': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-client-renegotiation': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'ssl-server-session-state-timeout': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-multiplex': None, 'http-cookie-generation': None, 'http-cookie-domain': None, 'ssl-hpkp-report-uri': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-hsts': None, 'arp-reply': None, 'ssl-hsts-include-subdomains': None, 'ssl-min-version': None, 'ldb-method': None, 'ssl-certificate': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'ssl-http-match-host': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-hpkp-primary': None, 'outlook-web-access': None, 'ssl-server-session-state-type': None, 'ssl-client-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-server-max-version': None, 'ssl-client-session-state-timeout': None, 'http-cookie-domain-from-host': None, 'ssl-algorithm': None, 'extport': None, 'max-embryonic-connections': None, 'persistence': None, 'http-cookie-path': None, 'ssl-pfs': None, 'ssl-server-algorithm': None}
+
     # adom: ansible
     # ssl-client-session-state-max: None
     # http-ip-header: None
@@ -591,7 +591,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # type: None
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # ssl-server-max-version: None
     # ssl-hpkp-report-uri: None
     # http-cookie-domain-from-host: None
@@ -653,7 +653,6 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # weblogic-server: None
     # ssl-client-session-state-max: None
     # http-ip-header: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'ssl-hsts-include-subdomains': None, 'color': None, 'src-filter': None, 'ldb-method': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'http-cookie-generation': None, 'max-embryonic-connections': None, 'http-cookie-domain': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'websphere-server': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-min-version': None, 'ssl-certificate': None, 'ssl-hsts': None, 'arp-reply': None, 'ssl-client-renegotiation': None, 'ssl-hpkp-primary': None, 'ssl-server-algorithm': None, 'ssl-server-session-state-timeout': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'outlook-web-access': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-client-session-state-type': None, 'ssl-http-match-host': None, 'ssl-server-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}, 'ssl-client-session-state-timeout': None, 'ssl-pfs': None, 'ssl-hpkp-report-uri': None, 'http-cookie-domain-from-host': None, 'extport': None, 'ssl-server-max-version': None, 'persistence': None, 'http-cookie-path': None, 'ssl-algorithm': None, 'http-multiplex': None}
     # ssl-hsts: None
     # arp-reply: None
     # extaddr: None
@@ -668,7 +667,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-client-session-state-type: None
     # name: Basic DNS Translation
     # ssl-server-session-state-type: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'seq': None, 'weight': None, 'ip': None, 'holddown-interval': None, 'healthcheck': None, 'max-connections': None, 'port': None, 'monitor': None}
+
     # type: None
     # ssl-http-match-host: None
     # ssl-pfs: None
@@ -724,7 +723,6 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # websphere-server: None
     # nat-source-vip: None
     # portmapping-type: None
-    # dynamic_mapping: {'comment': None, 'ssl-send-empty-frags': None, 'srcintf-filter': None, 'ssl-max-version': None, 'protocol': None, 'ssl-hpkp': None, 'color': None, 'src-filter': None, 'server-type': None, 'ssl-hpkp-include-subdomains': None, 'ssl-client-renegotiation': None, 'ssl-http-location-conversion': None, 'https-cookie-secure': None, 'mappedip': None, 'websphere-server': None, 'ssl-server-session-state-max': None, 'ssl-hpkp-backup': None, 'extip': None, 'dns-mapping-ttl': None, 'ssl-hsts-age': None, 'ssl-server-algorithm': None, 'extaddr': None, 'monitor': None, 'service': None, 'ssl-hpkp-age': None, 'http-cookie-age': None, 'http-cookie-share': None, 'ssl-server-session-state-timeout': None, 'mapped-addr': None, 'ssl-mode': None, 'portforward': None, 'ssl-hpkp-primary': None, 'http-cookie-generation': None, 'http-cookie-domain': None, 'ssl-hpkp-report-uri': None, 'type': None, 'extintf': None, 'gratuitous-arp-interval': None, 'ssl-algorithm': None, 'nat-source-vip': None, 'portmapping-type': None, 'weblogic-server': None, 'ssl-client-session-state-max': None, 'http-ip-header': None, 'http-ip-header-name': None, 'ssl-hsts': None, 'arp-reply': None, 'extport': None, 'http-multiplex': None, 'ldb-method': None, 'ssl-certificate': None, 'ssl-server-min-version': None, 'ssl-client-fallback': None, 'mappedport': None, 'ssl-http-match-host': None, 'ssl-dh-bits': None, 'ssl-cipher-suites': {'cipher': None, 'versions': None}, 'ssl-client-session-state-type': None, 'outlook-web-access': None, 'ssl-server-session-state-type': None, 'realservers': {'status': None, 'http-host': None, 'client-ip': None, 'weight': None, 'ip': None, 'max-connections': None, 'port': None, 'seq': None, 'holddown-interval': None, 'monitor': None, 'healthcheck': None}, 'ssl-server-max-version': None, 'ssl-client-session-state-timeout': None, 'http-cookie-domain-from-host': None, 'ssl-hsts-include-subdomains': None, 'max-embryonic-connections': None, 'persistence': None, 'http-cookie-path': None, 'ssl-pfs': None, 'ssl-min-version': None}
     # adom: ansible
     # ssl-client-session-state-max: None
     # extintf: None
@@ -744,7 +742,7 @@ def test_fmgr_firewall_vip_modify(fixture_data, mocker):
     # ssl-cipher-suites: {'cipher': None, 'versions': None}
     # ssl-client-session-state-type: None
     # ssl-http-match-host: None
-    # realservers: {'status': None, 'http-host': None, 'client-ip': None, 'weight': None, 'ip': None, 'max-connections': None, 'port': None, 'seq': None, 'holddown-interval': None, 'monitor': None, 'healthcheck': None}
+
     # ssl-client-session-state-timeout: None
     # comment: None
     # ssl-hpkp-report-uri: None
