@@ -160,7 +160,7 @@ def get_repository_list(module, list_parameter):
                 "enabled": True if repo_enabled == '1' else False
             }
 
-        repo_result.append(repo)
+            repo_result.append(repo)
 
     return repo_result
 
