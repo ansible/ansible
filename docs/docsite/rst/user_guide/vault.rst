@@ -29,16 +29,16 @@ As of version 2.3, Ansible supports encrypting single values inside a YAML file,
 
 .. _vault_ids:
 
-Vault Ids and Multiple Vault Passwords
+Vault IDs and Multiple Vault Passwords
 ``````````````````````````````````````
 
 *Available since Ansible 2.4*
 
-A vault id is an identifier for one or more vault secrets. Since Ansible 2.4,
-Ansible supports multiple vault passwords. Vault ids is a way to provide
-a label for a particular vault password.
+A vault ID is an identifier for one or more vault secrets. Since Ansible 2.4,
+Ansible supports multiple vault passwords. Vault IDs provide
+labels for individual vault passwords.
 
-Vault encrypted content can specify which vault id it was encrypted with.
+Vault-encrypted content can specify which vault ID it was encrypted with.
 
 Prior to Ansible 2.4, only one vault password could be used at a time, So any
 vault files or vars that needed to be decrypted all had to use the same password.
@@ -47,7 +47,7 @@ Since Ansible 2.4, vault files or vars that are encrypted with different
 passwords can be used at the same time.
 
 For example, a playbook can now include a vars file encrypted with a 'dev' vault
-id and a 'prod' vault id.
+ID and a 'prod' vault ID.
 
 
 .. _creating_files:
@@ -255,11 +255,11 @@ specified every time.
 Labelling Vaults
 ^^^^^^^^^^^^^^^^
 
-Since Ansible 2.4 the :option:`--vault-id <ansible-playbook --vault-id>` can be used to indicate which vault id
+Since Ansible 2.4 the :option:`--vault-id <ansible-playbook --vault-id>` can be used to indicate which vault ID
 ('dev', 'prod', 'cloud', etc) a password is for as well as how to source the password (prompt, a file path, etc).
 
 By default the vault-id label is only a hint, any values encrypted with the password will be decrypted.
-The config option :ref:`DEFAULT_VAULT_ID_MATCH` can be set to require the vault id to match the vault id
+The config option :ref:`DEFAULT_VAULT_ID_MATCH` can be set to require the vault id to match the vault ID
 used when the value was encrypted.
 This can reduce errors when different values are encrypted with different passwords.
 
@@ -269,13 +269,13 @@ For example, to use a password file :file:`dev-password` for the vault-id 'dev':
 
     ansible-playbook --vault-id dev@dev-password site.yml
 
-To prompt for the password for the 'dev' vault id:
+To prompt for the password for the 'dev' vault ID:
 
 .. code-block:: bash
 
     ansible-playbook --vault-id dev@prompt site.yml
 
-To get the 'dev' vault id password from an executable script :file:`my-vault-password.py`:
+To get the 'dev' vault ID password from an executable script :file:`my-vault-password.py`:
 
 .. code-block:: bash
 
@@ -297,7 +297,7 @@ Will result in the :file:`vault-keyring-client.py` script being called as follow
     contrib/vault/vault-keyring-client.py --vault-id dev
 
 
-The config option :ref:`DEFAULT_VAULT_IDENTITY_LIST` can be used to specify a default vault id and password source
+The config option :ref:`DEFAULT_VAULT_IDENTITY_LIST` can be used to specify a default vault ID and password source
 so that the :option:`--vault-id <ansible-playbook --vault-id>` cli option does not have to be specified every time.
 
 
@@ -341,7 +341,7 @@ For example, to use a 'dev' password read from a file and to be prompted for the
 
     ansible-playbook --vault-id dev@dev-password --vault-id prod@prompt site.yml
 
-By default the vault id label (dev, prod etc.) are only hints, Ansible will attempt to decrypt vault content
+By default the vault ID labels (dev, prod etc.) are only hints, Ansible will attempt to decrypt vault content
 with each password. The password with the same label as the encrypted data will be tried first, after that
 each vault secret will be tried in the order they were provided on the command line.
 
@@ -349,9 +349,9 @@ Where the encrypted data doesn't have a label, or the label doesn't match any of
 passwords will be tried in the order they are specified.
 
 In the above case, the 'dev' password will be tried first, then the 'prod' password for cases
-where Ansible doesn't know which vault id is used to encrypt something.
+where Ansible doesn't know which vault ID is used to encrypt something.
 
-To add a vault id label to the encrypted data use the :option:`--vault-id <ansible-vault --vault-id>` option
+To add a vault ID label to the encrypted data use the :option:`--vault-id <ansible-vault --vault-id>` option
 with a label when encrypting the data.
 
 The :ref:`DEFAULT_VAULT_ID_MATCH` config option can be set so that Ansible will only use the password with

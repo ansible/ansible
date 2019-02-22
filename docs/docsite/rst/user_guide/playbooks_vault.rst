@@ -72,7 +72,7 @@ To get the 'dev' password from a file or script:
 If multiple vault passwords are required for a single run, :option:`--vault-id <ansible-playbook --vault-id>` must
 be used as it can be specified multiple times to provide the multiple passwords.  For example:
 
-To the 'dev' password from a file and prompt for the 'prod' password:
+To read the 'dev' password from a file and prompt for the 'prod' password:
 
 .. code-block:: bash
 
@@ -83,7 +83,7 @@ The :option:`--ask-vault-pass <ansible-playbook --ask-vault-pass>` or
 the passwords, but it's generally cleaner to avoid mixing these with :option:`--vault-id <ansible-playbook --vault-id>`.
 
 .. note::
-    By defaut the vault label (dev, prod etc.) is just a hint. Ansible will try to decrypt each
+    By default the vault label (dev, prod etc.) is just a hint. Ansible will try to decrypt each
     vault with every provided password.
 
     Setting the config option :ref:`DEFAULT_VAULT_ID_MATCH` will change this behavior so that each password
