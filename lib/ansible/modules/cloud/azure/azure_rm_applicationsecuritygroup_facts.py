@@ -67,7 +67,8 @@ applicationsecuritygroups:
             description: Id of the application security group.
             type: str
             returned: always
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationSecurityGroups/MyAsg"
+            sample:
+                "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/applicationSecurityGroups/MyAsg"
         location:
             description:
                 - Loation of the application security group.
@@ -105,6 +106,7 @@ except ImportError:
     # This is handled in azure_rm_common
     pass
 
+
 def applicationsecuritygroup_to_dict(asg):
     return dict(
         id=asg.id,
@@ -114,6 +116,7 @@ def applicationsecuritygroup_to_dict(asg):
         provisioning_state=asg.provisioning_state,
         resource_guid=asg.resource_guid
     )
+
 
 class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
 
@@ -170,7 +173,7 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
             response = self.network_client.application_security_groups.get(resource_group_name=self.resource_group,
                                                                            application_security_group_name=self.name)
             self.log("Response : {0}".format(response))
-            
+
             if response and self.has_tags(item.tags, self.tags):
                 results.append(applicationsecuritygroup_to_dict(response))
         except CloudError as e:
@@ -218,6 +221,7 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
         except CloudError as e:
             self.log('Did not find the Application Security Group instance.')
         return results
+
 
 def main():
     """Main execution"""
