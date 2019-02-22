@@ -50,6 +50,7 @@ options:
     required: false
     default: "add"
     choices: ["add", "delete", "execute", "set"]
+    version_added: "2.8"
 
   script_name:
     description:
