@@ -268,12 +268,8 @@
         state: mounted
 
     - name: Get the last mount time
-      shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ mount\ time: |cut -d: -f2-`" +%s'
-      register: last_mount_time
-
-    - name: print last mount time
-      debug:
-        msg: "{{ last_mount_time.stdout }}"
+      shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ write\ time: |cut -d: -f2-`" +%s'
+      register: last_write_time
 
     - name: Wait 2 second
       pause:
@@ -285,13 +281,13 @@
         state: remounted
 
     - name: Get again the last mount time
-      shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ mount\ time: |cut -d: -f2-`" +%s'
-      register: last_mount_time2
+      shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ write\ time: |cut -d: -f2-`" +%s'
+      register: last_write_time2
 
     - name: Fail if they are the same
       fail:
         msg: "Filesytem was not remounted, testing of module failed!"
-      when: last_mount_time.stdout == last_mount_time2.stdout
+      when: last_write_time.stdout == last_write_time2.stdout
   always:
     - name: Umount the test FS
       mount:
