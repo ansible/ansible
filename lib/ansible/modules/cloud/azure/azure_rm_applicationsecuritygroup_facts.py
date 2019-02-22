@@ -41,11 +41,11 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: List application security group in specific resource group
+  - name: List application security groups in specific resource group
     azure_rm_applicationsecuritygroup_facts:
       resource_group: myResourceGroup
 
-  - name: List application security group in specific subscription
+  - name: List application security groups in specific subscription
     azure_rm_applicationsecuritygroup_facts:
 
   - name: Get application security group by name
@@ -87,13 +87,6 @@ applicationsecuritygroups:
             type: str
             returned: always
             sample: Succeeded
-        resource_guid:
-            description:
-                - The resource GUID property of the application security group resource.
-                - It uniquely identifies a resource, even if the user changes its name or migrate the resource across subscriptions or resource groups.
-            type: str
-            returned: always
-            sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -113,8 +106,7 @@ def applicationsecuritygroup_to_dict(asg):
         location=asg.location,
         name=asg.name,
         tags=asg.tags,
-        provisioning_state=asg.provisioning_state,
-        resource_guid=asg.resource_guid
+        provisioning_state=asg.provisioning_state
     )
 
 
@@ -177,12 +169,12 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
             if response and self.has_tags(response.tags, self.tags):
                 results.append(applicationsecuritygroup_to_dict(response))
         except CloudError as e:
-            self.log('Did not find the Application Security Group instance.')
+            self.fail('Did not find the Application Security Group instance.')
         return results
 
     def list_by_resource_group(self):
         '''
-        Lists the properties of Application Security Group in specific resource group.
+        Lists the properties of Application Security Groups in specific resource group.
 
         :return: deserialized Application Security Group instance state dictionary
         '''
@@ -203,7 +195,7 @@ class AzureRMApplicationSecurityGroupFacts(AzureRMModuleBase):
 
     def list_all(self):
         '''
-        Lists the properties of Application Security Group in specific subscription.
+        Lists the properties of Application Security Groups in specific subscription.
 
         :return: deserialized Application Security Group instance state dictionary
         '''
