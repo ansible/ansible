@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix rabbitmq_plugin idempotence due to information message in new version of rabbitmq
+    (https://github.com/ansible/ansible/pull/52166)
