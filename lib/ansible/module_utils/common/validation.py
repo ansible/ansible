@@ -9,14 +9,10 @@ __metaclass__ = type
 def count_terms(check, params):
     """Count the number of occurrences of a key in a given dictionary
 
+    :arg check: Set of values to check
     :arg params: Dictionary of module parameters
-    :arg check: List of values to check
 
     :returns: An integer that is the number of occurrences of the check values
         in the provided dictionary.
     """
-    count = 0
-    for term in check:
-        if term in params:
-            count += 1
-    return count
+    return len(check.intersection(params))
