@@ -350,6 +350,20 @@
       - output.changed
       - output.id != ''
 
+- name: Get Application security group
+  azure_rm_applicationsecuritygroup_facts:
+    resource_group: "{{ resource_group }}"
+    name: "{{ applicationsecuritygroup_name1 }}"
+  register: facts
+
+- name: Assert facts
+  assert:
+    that:
+      - facts['applicationsecuritygroups'] | length == 1
+      - facts['applicationsecuritygroups'][0]['name'] != None
+      - facts['applicationsecuritygroups'][0]['location'] != None
+      - facts['applicationsecuritygroups'][0]['provisioning_state'] != None
+
 - name: Create application security group (idempotent)
   azure_rm_applicationsecuritygroup:
       resource_group: "{{ resource_group }}"
