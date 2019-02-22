@@ -279,6 +279,7 @@ EXAMPLES = '''
 
 import os
 import re
+import sys
 import tempfile
 
 try:
@@ -616,6 +617,26 @@ class DnfModule(YumDnf):
                 results=[],
                 rc=1
             )
+        except AttributeError as e:
+            if 'demands' in to_text(e):
+                version_lock_index = None
+                for plugin in base._plugins.plugins:
+                    if plugin.name == "versionlock":
+                        self.module.warn("Disabling dnf versionlock plugin due do known upstream bug: "
+                                         "https://github.com/rpm-software-management/dnf-plugins-core/pull/317")
+                        self.disable_plugin.append('versionlock')
+                        broken_plugin_found = True
+
+                        version_lock_index = base._plugins.plugins.index(plugin)
+                if version_lock_index:
+                    base._plugins.plugins.pop(version_lock_index)
+                    # Because DNF polutes the global sys.modules dict and the
+                    # _unload plugins function doesn't properly clean up after itself
+                    del sys.modules['dnf.plugin.dynamic.versionlock']
+            else:
+                #re-raise
+                raise e
+
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
             base._update_security_filters = [base.sack.query().filter(**key)]
