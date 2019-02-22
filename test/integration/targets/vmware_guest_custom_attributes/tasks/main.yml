@@ -1,5 +1,6 @@
 # Test code for the vmware_guest_custom_attributes module.
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright, (c) 2018, Fedor Vompe <f.vompe () comptek.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # TODO: Current pinned version of vcsim does not support custom fields
@@ -44,17 +45,26 @@
     url: http://{{ vcsim }}:5000/govc_find?filter=VM
   register: vms
 
-- set_fact: vm1="{{ vms['json'][0] }}"
+- set_fact:
+    vm1: "{{ vms['json'][0] }}"
+
+- set_fact:
+    vcenter_hostname: "{{ vcsim }}"
+    vcenter_username: "{{ vcsim_instance['json']['username'] }}"
+    vcenter_password: "{{ vcsim_instance['json']['password'] }}"
+    vcenter_datacenter: "{{ dc1 | basename }}"
+    vcenter_vm: "{{ vm1 | basename }}"
+    vcenter_folder: "{{ vm1 | dirname }}"
 
 - name: Add custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ vm1 | basename }}"
-    folder: "{{ vm1 | dirname }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ vcenter_datacenter }}"
+    name: "{{ vcenter_vm }}"
+    folder: "{{ vcenter_folder }}"
     state: present
     attributes:
       - name: 'sample_1'
@@ -70,16 +80,18 @@
 - assert:
     that:
       - "guest_facts_0001.changed"
+      - "'sample_1' in guest_facts_0001.custom_attributes"
+      - "guest_facts_0001.custom_attributes['sample_1'] == 'sample_1_value'"
 
 - name: Add custom attribute to the given virtual machine again
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ vm1 | basename }}"
-    folder: "{{ vm1 | dirname }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ vcenter_datacenter }}"
+    name: "{{ vcenter_vm }}"
+    folder: "{{ vcenter_folder }}"
     state: present
     attributes:
       - name: 'sample_1'
@@ -96,15 +108,33 @@
     that:
       - "not guest_facts_0002.changed"
 
+- name: Check that we can still retrieve custom attributes for VM
+  vmware_guest_custom_attributes:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ vcenter_datacenter }}"
+    name: "{{ vcenter_vm }}"
+    folder: "{{ vcenter_folder }}"
+    state: present
+  register: guest_facts_0003
+
+- assert:
+    that:
+      - "not guest_facts_0003.changed"
+      - "'sample_1' in guest_facts_0003.custom_attributes"
+      - "guest_facts_0003.custom_attributes['sample_1'] == 'sample_1_value'"
+
 - name: Remove custom attribute to the given virtual machine
   vmware_guest_custom_attributes:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    datacenter: "{{ dc1 | basename }}"
-    name: "{{ vm1 | basename }}"
-    folder: "{{ vm1 | dirname }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ vcenter_datacenter }}"
+    name: "{{ vcenter_vm }}"
+    folder: "{{ vcenter_folder }}"
     state: absent
     attributes:
       - name: 'sample_1'
@@ -117,6 +147,7 @@
 - assert:
     that:
       - "guest_facts_0004.changed"
+      - "'sample_1' not in guest_facts_0004.custom_attributes"
 
 # TODO: vcsim returns duplicate values so removing custom attributes
 # results in change. vCenter show correct behavior. Commenting this
@@ -124,12 +155,12 @@
 #- name: Remove custom attribute to the given virtual machine again
 #  vmware_guest_custom_attributes:
 #    validate_certs: False
-#    hostname: "{{ vcsim }}"
-#    username: "{{ vcsim_instance['json']['username'] }}"
-#    password: "{{ vcsim_instance['json']['password'] }}"
-#    datacenter: "{{ dc1 | basename }}"
-#    name: "{{ vm1 | basename }}"
-#    folder: "{{ vm1 | dirname }}"
+#    hostname: "{{ vcenter_hostname }}"
+#    username: "{{ vcenter_username }}"
+#    password: "{{ vcenter_password }}"
+#    datacenter: "{{ vcenter_datacenter }}"
+#    name: "{{ vcenter_vm }}"
+#    folder: "{{ vcenter_folder }}"
 #    state: absent
 #    attributes:
 #      - name: 'sample_1'

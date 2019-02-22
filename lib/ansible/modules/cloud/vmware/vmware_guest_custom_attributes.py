@@ -3,12 +3,12 @@
 
 # Copyright, (c) 2018, Ansible Project
 # Copyright, (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright, (c) 2018, Fedor Vompe <f.vompe () comptek.ru>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -16,17 +16,17 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-
 DOCUMENTATION = '''
 ---
 module: vmware_guest_custom_attributes
 short_description: Manage custom attributes from VMWare for the given virtual machine
 description:
-    - This module can be used to add, remove and update custom attributes for the given virtual machine.
+    - This module can be used to get, add, remove and update custom attributes for the given virtual machine.
 version_added: 2.7
 author:
     - Jimmy Conner (@cigamit)
     - Abhijeet Kasurde (@Akasurde)
+    - Fedor Vompe (@sumkincpp)
 notes:
     - Tested on vSphere 6.5
 requirements:
@@ -65,6 +65,15 @@ extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
+- name: Get current virtual machine attributes
+  vmware_guest_custom_attributes:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    uuid: 421e4592-c069-924d-ce20-7e7533fab926
+  delegate_to: localhost
+  register: attributes
+
 - name: Add virtual machine custom attributes
   vmware_guest_custom_attributes:
     hostname: "{{ vcenter_hostname }}"
@@ -93,7 +102,7 @@ EXAMPLES = '''
   delegate_to: localhost
   register: attributes
 
-- name: Remove virtual machine Attribute
+- name: Remove virtual machine attribute
   vmware_guest_custom_attributes:
     hostname: "{{ vcenter_hostname }}"
     username: "{{ vcenter_username }}"
@@ -109,7 +118,7 @@ EXAMPLES = '''
 
 RETURN = """
 custom_attributes:
-    description: metadata about the virtual machine attributes
+    description: metadata about the virtual machine attributes with non-empty values
     returned: always
     type: dict
     sample: {
@@ -131,46 +140,59 @@ from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec
 
 
 class VmAttributeManager(PyVmomi):
+
     def __init__(self, module):
         super(VmAttributeManager, self).__init__(module)
-        self.custom_field_mgr = self.content.customFieldsManager.field
 
-    def set_custom_field(self, vm, user_fields):
-        result_fields = dict()
-        change_list = list()
-        changed = False
+        self.vm_attributes = self.get_vm_attributes(self.get_vm())
+        self.result_vm_attributes = self.vm_attributes.copy()
 
+    def get_vm_attributes(self):
+        return dict((x.name, v.value) for x in self.content.customFieldsManager.field
+                    for v in self.get_vm().customValue if x.key == v.key)
+
+    def set_attributes(self, user_fields):
         for field in user_fields:
-            field_key = self.check_exists(field['name'])
-            found = False
-            field_value = field.get('value', '')
+            self.set_attr_value(self, field.get('name'), field.get('value'))
 
-            for k, v in [(x.name, v.value) for x in self.custom_field_mgr for v in vm.customValue if x.key == v.key]:
-                if k == field['name']:
-                    found = True
-                    if v != field_value:
-                        if not self.module.check_mode:
-                            self.content.customFieldsManager.SetField(entity=vm, key=field_key.key, value=field_value)
-                            result_fields[k] = field_value
-                        change_list.append(True)
-            if not found and field_value != "":
-                if not field_key and not self.module.check_mode:
-                    field_key = self.content.customFieldsManager.AddFieldDefinition(name=field['name'], moType=vim.VirtualMachine)
-                change_list.append(True)
-                if not self.module.check_mode:
-                    self.content.customFieldsManager.SetField(entity=vm, key=field_key.key, value=field_value)
-                result_fields[field['name']] = field_value
+        changed = self.vm_attributes == self.result_vm_attributes
 
-        if any(change_list):
-            changed = True
+        return {'changed': changed, 'failed': False, 'custom_attributes': self.result_vm_attributes}
 
-        return {'changed': changed, 'failed': False, 'custom_attributes': result_fields}
+    def set_attr_value(self, field_name, field_value):
+        if field_name is None or field_value is None:
+            return
 
-    def check_exists(self, field):
-        for x in self.custom_field_mgr:
-            if x.name == field:
+        if self.vm_attributes.get(field_name) == field_value:
+            return
+
+        if field_value:
+            self.result_vm_attributes[field_name] = field_value
+        else:
+            del self.result_vm_attributes[field_name]
+
+        if self.module.check_mode:
+            return
+
+        field_definition = self.get_or_add_field_definition(field_name)
+
+        self.content.customFieldsManager.SetField(
+            entity=self.vm, key=field_definition.key, value=field_value)
+
+    def get_or_add_field_definition(self, field_name):
+        field_definition = self.field_definition(field_name)
+
+        if not field_definition and not self.module.check_mode:
+            field_definition = self.content.customFieldsManager.AddFieldDefinition(
+                name=field_name, moType=vim.VirtualMachine)
+
+        return field_definition
+
+    def field_definition(self, field_name):
+        for x in self.content.customFieldsManager.field:
+            if x.name == field_name:
                 return x
-        return False
+        return None
 
 
 def main():
@@ -207,19 +229,22 @@ def main():
     results = {'changed': False, 'failed': False, 'instance': dict()}
 
     # Check if the virtual machine exists before continuing
-    vm = pyv.get_vm()
-
-    if vm:
-        # virtual machine already exists
+    if pyv.get_vm():
+        # TODO: Make absent/present state distinguishible
+        # Currently we rely on logic when for deleting custom field we need
+        # to pass empty field value
         if module.params['state'] == "present":
-            results = pyv.set_custom_field(vm, module.params['attributes'])
+            results = pyv.set_attributes(module.params['attributes'])
         elif module.params['state'] == "absent":
-            results = pyv.set_custom_field(vm, module.params['attributes'])
+            results = pyv.set_attributes(module.params['attributes'])
+
         module.exit_json(**results)
     else:
         # virtual machine does not exists
         module.fail_json(msg="Unable to manage custom attributes for non-existing"
-                             " virtual machine %s" % (module.params.get('name') or module.params.get('uuid')))
+                             " virtual machine %s" %
+                             (module.params.get('name') or
+                              module.params.get('uuid')))
 
 
 if __name__ == '__main__':
