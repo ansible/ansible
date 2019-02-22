@@ -1,0 +1,3 @@
+---
+minor_changes:
+  - "npm ci feature added which allows to install a project with a clean slate: https://docs.npmjs.com/cli/ci.html"
