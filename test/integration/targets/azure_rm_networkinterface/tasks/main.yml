@@ -359,10 +359,10 @@
 - name: Assert facts
   assert:
     that:
-      - output['applicationsecuritygroups'] | length == 1
-      - output['applicationsecuritygroups'][0]['name'] != None
-      - output['applicationsecuritygroups'][0]['location'] != None
-      - output['applicationsecuritygroups'][0]['provisioning_state'] != None
+      - facts['applicationsecuritygroups'] | length == 1
+      - facts['applicationsecuritygroups'][0]['name'] != None
+      - facts['applicationsecuritygroups'][0]['location'] != None
+      - facts['applicationsecuritygroups'][0]['provisioning_state'] != None
 
 - name: Create application security group (idempotent)
   azure_rm_applicationsecuritygroup:
