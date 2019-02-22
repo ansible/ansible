@@ -596,7 +596,6 @@ from ansible.module_utils.network.fortimanager.common import DEFAULT_RESULT_OBJ
 from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
-
 def get_devprof(fmgr, paramgram):
     """
     :param fmgr: The fmgr object instance from fortimanager.py
@@ -614,6 +613,7 @@ def get_devprof(fmgr, paramgram):
     response = fmgr.process_request(url, datagram, FMGRMethods.GET)
 
     return response
+
 
 def set_devprof(fmgr, paramgram):
     """
