@@ -35,9 +35,6 @@ options:
     name:
         description:
             - Limit results to a specific Azure CDN endpoint.
-    resource_group:
-        description:
-            - The resource group to search for the desired Azure CDN endpoint
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -150,12 +147,12 @@ cdnendpoints:
         origins:
             description:
                 - The source of the content being delivered via CDN.
-            sample: {
+            sample: [
                 "host_name": "xxxxxxxx.blob.core.windows.net",
                 "http_port": null,
                 "https_port": null,
                 "name": "xxxxxxxx-blob-core-windows-net"
-            }
+            ]
         origin_host_header:
             description:
                 - The host header value sent to the origin with each request.
