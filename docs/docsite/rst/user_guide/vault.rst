@@ -314,7 +314,7 @@ To get the password from an executable script :file:`my-vault-password.py`:
     :option:`--vault-password-file <ansible-playbook --vault-password-file>` must be used.
 
 
-Multiple vault passwords
+Multiple Vault Passwords
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Ansible 2.4 and later support using multiple vault passwords, :option:`--vault-id <ansible-playbook --vault-id>` can
