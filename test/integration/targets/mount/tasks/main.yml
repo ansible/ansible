@@ -248,3 +248,59 @@
       - "swap2_removed['changed']"
       - "not swap2_removed_again['changed']"
   when: ansible_system in ('Linux')
+
+
+- name: Block to test remounted option
+  block:
+    - name: Create empty file
+      command: dd if=/dev/zero of=/tmp/myfs.img bs=1M count=20
+
+    - name: Format FS
+      filesystem:
+        fstype: ext2
+        dev: /tmp/myfs.img
+
+    - name: Mount the FS for the first time
+      mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        fstype: ext2
+        state: mounted
+
+    - name: Get the last mount time
+      shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ mount\ time: |cut -d: -f2-`" +%s'
+      register: last_mount_time
+
+    - name: print last mount time
+      debug:
+        msg: "{{ last_mount_time.stdout }}"
+
+    - name: Test the remountinf of the FS works
+      mount:
+        path: /tmp/myfs
+        state: remounted
+
+    - name: Get again the last mount time
+      shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ mount\ time: |cut -d: -f2-`" +%s'
+      register: last_mount_time2
+
+    - name: Fail if they are the same
+      fail:
+        msg: "Filesytem was not remounted, testing of module failed!"
+      when: last_mount_time.stdout == last_mount_time2.stdout
+  always:
+    - name: Umount the test FS
+      mount:
+        path: /tmp/myfs
+        src: /tmp/myfs.img
+        opts: loop
+        state: absent
+
+    - name: Remove the test FS
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/myfs.img
+        - /tmp/myfs
+
