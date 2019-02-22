@@ -31,6 +31,10 @@ requirements:
     - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
     - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
     - xmltodict can be obtained from PyPI U(https://pypi.org/project/xmltodict/)
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 options:
     api_key:
         description:
@@ -39,10 +43,10 @@ options:
         description:
             - name of the dynamic address group
         required: true
-    static_match_filter:
+    sag_match_filter:
         description:
             - Static filter user by the address group
-        required: true
+        type: list
     devicegroup:
         description: >
             - The name of the Panorama device group. The group must exist on Panorama. If device group is not defined
@@ -62,6 +66,10 @@ options:
         description:
             - The operation to perform Supported values are I(add)/I(list)/I(delete).
         required: true
+        choices:
+            - add
+            - list
+            - delete
 extends_documentation_fragment: panos
 '''
 
@@ -81,7 +89,7 @@ RETURN = '''
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 from ansible.module_utils.basic import AnsibleModule

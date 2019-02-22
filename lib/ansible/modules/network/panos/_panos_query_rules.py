@@ -21,7 +21,7 @@
 #  limitations under the License.
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 DOCUMENTATION = '''
@@ -38,6 +38,10 @@ requirements:
     - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
     - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
     - xmltodict can be obtains from PyPI U(https://pypi.org/project/xmltodict/)
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -81,6 +85,9 @@ options:
     protocol:
         description:
             - The protocol used to be queried.  Must be either I(tcp) or I(udp).
+        choices:
+            - tcp
+            - udp
     tag_name:
         description:
             - Name of the rule tag to be queried.

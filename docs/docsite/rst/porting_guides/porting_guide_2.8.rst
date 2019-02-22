@@ -144,6 +144,7 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
 * ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
 * ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
+* ``panos`` use `Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
 Noteworthy module changes
@@ -198,6 +199,10 @@ Noteworthy module changes
 
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
+
+* The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
+  <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
+  `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
 
 
 Plugins
