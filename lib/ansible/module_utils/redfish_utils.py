@@ -883,8 +883,11 @@ class RedfishUtils(object):
             result['ret'] = True
             data = response['data']
 
-            power_uri = data[u'Power'][u'@odata.id']
-
+            if 'Power' in data:
+                power_uri = data[u'Power'][u'@odata.id']
+            else:
+                return {'ret': False, 'msg': "Key Power not found"}
+                
             response = self.get_request(self.root_uri + power_uri)
             data = response['data']
 
