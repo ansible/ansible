@@ -40,12 +40,15 @@ def test_handle_aliases_no_aliases():
         'path': 'bar'
     }
 
-    result = (
+    expected = (
         {},
         DEFAULT_LEGAL_INPUTS + ['name'],
     )
+    expected[1].sort()
 
-    assert result == handle_aliases(argument_spec, params)
+    result = handle_aliases(argument_spec, params)
+    result[1].sort()
+    assert expected == result
 
 
 def test_handle_aliases_basic():
@@ -60,12 +63,15 @@ def test_handle_aliases_basic():
         'nick': 'foo',
     }
 
-    result = (
+    expected = (
         {'surname': 'name', 'nick': 'name'},
         DEFAULT_LEGAL_INPUTS + ['name', 'surname', 'nick'],
     )
+    expected[1].sort()
 
-    assert result == handle_aliases(argument_spec, params)
+    result = handle_aliases(argument_spec, params)
+    result[1].sort()
+    assert expected == result
 
 
 def test_handle_aliases_value_error():

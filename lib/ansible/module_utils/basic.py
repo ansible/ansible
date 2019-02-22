@@ -1574,8 +1574,7 @@ class AnsibleModule(object):
             param = self.params
 
         # this uses exceptions as it happens before we can safely call fail_json
-        alias_results, legal_inputs = handle_aliases(spec, param)
-        self._legal_inputs = legal_inputs
+        alias_results, self._legal_inputs = handle_aliases(spec, param)
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
