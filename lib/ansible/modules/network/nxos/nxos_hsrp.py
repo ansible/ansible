@@ -248,7 +248,7 @@ def get_hsrp_group_unknown_enum(module, command, hsrp_table):
     'sh_preempt' is currently the only attr affected. Add checks for other attrs as needed.
     '''
     if 'unknown enum:' in hsrp_table['sh_preempt']:
-        cmd = {'output':'text', 'command': command.split('|')[0]}
+        cmd = {'output': 'text', 'command': command.split('|')[0]}
         out = run_commands(module, cmd)[0]
         hsrp_table['sh_preempt'] = 'enabled' if ('may preempt' in out) else 'disabled'
     return hsrp_table
