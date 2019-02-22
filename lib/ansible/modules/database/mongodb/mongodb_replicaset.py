@@ -73,7 +73,7 @@ options:
   arbiter_at_index:
     description:
     - Identifies the position of the member in the array that is an arbiter.
-    type: str
+    type: int
   chaining_allowed:
     description:
     - When I(settings.chaining_allowed=true), the replicaset allows secondary members to replicate from other
