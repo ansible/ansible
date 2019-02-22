@@ -399,7 +399,6 @@ Variable                    Description
 
       loop_control:
         extended: yes
-=======
 
 .. _migrating_to_loop:
 
