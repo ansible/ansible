@@ -427,14 +427,14 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("GRANT (.+) ON (.+) TO '.*'@'.*'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
+        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\\6)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
         privileges = [pick(x) for x in privileges]
-        if "WITH GRANT OPTION" in res.group(4):
+        if "WITH GRANT OPTION" in res.group(7):
             privileges.append('GRANT')
-        if "REQUIRE SSL" in res.group(4):
+        if "REQUIRE SSL" in res.group(7):
             privileges.append('REQUIRESSL')
         db = res.group(2)
         output[db] = privileges
