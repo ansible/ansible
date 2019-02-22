@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Hai Cao, <t-haicao@microsoft.com>
+# Copyright (c) 2019 Hai Cao, <t-haicao@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -84,11 +84,6 @@ cdnendpoints:
             returned: always
             type: str
             sample: myProfile
-        state:
-            description:
-                - The state of the Azure CDN endpoint.
-            type: str
-            sample: present
         location:
             description:
                 - Location of the Azure CDN endpoint.
@@ -185,7 +180,7 @@ import re
 AZURE_OBJECT_CLASS = 'endpoints'
 
 
-class AzureRMCdnendpointFacts(AzureRMModuleBase):
+class AzureRMCdnEndpointFacts(AzureRMModuleBase):
     """Utility class to get Azure Azure CDN endpoint facts"""
 
     def __init__(self):
@@ -287,7 +282,6 @@ class AzureRMCdnendpointFacts(AzureRMModuleBase):
         new_result['name'] = cdnendpoint.name
         new_result['type'] = cdnendpoint.type
         new_result['location'] = cdnendpoint.location
-        new_result['state'] = 'present'
         new_result['resource_state'] = cdnendpoint.resource_state
         new_result['provisioning_state'] = cdnendpoint.provisioning_state
         new_result['query_string_caching_behavior'] = cdnendpoint.query_string_caching_behavior
@@ -310,7 +304,7 @@ class AzureRMCdnendpointFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMCdnendpointFacts()
+    AzureRMCdnEndpointFacts()
 
 
 if __name__ == '__main__':

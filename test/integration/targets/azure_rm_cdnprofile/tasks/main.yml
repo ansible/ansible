@@ -158,6 +158,9 @@
       - facts['cdnendpoints'][0]['name']
       - facts['cdnendpoints'][0]['profile_name']
       - facts['cdnendpoints'][0]['origin']
+      - facts['cdnendpoints'][0]['location']
+      - facts['cdnendpoints'][0]['provisioning_state']
+      - facts['cdnendpoints'][0]['resource_state']
 
 - name: Create a Azure CDN endpoint(idempotent)
   azure_rm_cdnendpoint:
