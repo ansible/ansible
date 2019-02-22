@@ -34,6 +34,7 @@ options:
       - The operating system.
       - Required if the server does not yet exist and is not restoring from a snapshot.
   snapshot:
+    version_added: "2.8"
     description:
       - Name of snapshot to restore server from.
   firewall_group:
@@ -539,7 +540,7 @@ class AnsibleVultrServer(Vultr):
                 data=data
             )
             server = self._wait_for_state(key='status', state='active')
-            server = self._wait_for_state(state='running', timeout=60*60 if snapshot_restore else 60)
+            server = self._wait_for_state(state='running', timeout=3600 if snapshot_restore else 60)
         return server
 
     def _update_auto_backups_setting(self, server, start_server):
