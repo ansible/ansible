@@ -63,62 +63,7 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 def test_fmgr_firewall_ssl_ssh_profile_modify(fixture_data, mocker):
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # comment: None
-    # untrusted-caname: None
-    # mapi-over-https: None
-    # whitelist: None
-    # caname: None
-    # ftps: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'client-cert-request': None, 'ports': None, 'untrusted-cert': None}
-    # ssl-exemptions-log: None
-    # https: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'client-cert-request': None, 'ports': None, 'untrusted-cert': None}
-    # imaps: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'client-cert-request': None, 'ports': None, 'untrusted-cert': None}
-    # server-cert-mode: None
-    # adom: root
-    # ssl-exempt: {'regex': None, 'wildcard-fqdn': None, 'fortiguard-category': None, 'address6': None, 'address': None, 'type': None}
-    # ssl: {'inspect-all': None, 'allow-invalid-server-cert': None, 'client-cert-request': None, 'untrusted-cert': None, 'unsupported-ssl': None}
-    # ssh: {'status': None, 'inspect-all': None, 'ssh-tun-policy-check': None, 'ssh-policy-check': None, 'ssh-algorithm': None, 'unsupported-version': None, 'ports': None}
-    # use-ssl-server: None
-    # server-cert: None
-    # name: Ansible_SSL_SSH_Profile
-    # ssl-anomalies-log: None
-    # ssl-server: {'pop3s-client-cert-request': None, 'imaps-client-cert-request': None, 'smtps-client-cert-request': None, 'ip': None, 'ssl-other-client-cert-request': None, 'https-client-cert-request': None, 'ftps-client-cert-request': None}
-    # smtps: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'client-cert-request': None, 'ports': None, 'untrusted-cert': None}
-    # rpc-over-https: None
-    # mode: delete
-    # pop3s: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'client-cert-request': None, 'ports': None, 'untrusted-cert': None}
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # untrusted-caname: None
-    # mapi-over-https: enable
-    # whitelist: enable
-    # caname: None
-    # ftps: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'untrusted-cert': None, 'client-cert-request': None, 'ports': None}
-    # ssl-exemptions-log: enable
-    # https: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'untrusted-cert': None, 'client-cert-request': None, 'ports': None}
-    # pop3s: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'untrusted-cert': None, 'client-cert-request': None, 'ports': None}
-    # server-cert-mode: replace
-    # adom: root
-    # ssl-exempt: {'regex': None, 'wildcard-fqdn': None, 'fortiguard-category': None, 'address6': None, 'address': None, 'type': None}
-    # ssl: {'unsupported-ssl': None, 'inspect-all': None, 'allow-invalid-server-cert': None, 'untrusted-cert': None, 'client-cert-request': None}
-    # ssh: {'status': None, 'inspect-all': None, 'ssh-tun-policy-check': None, 'ssh-policy-check': None, 'ssh-algorithm': None, 'unsupported-version': None, 'ports': None}
-    # server-cert: None
-    # name: Ansible_SSL_SSH_Profile
-    # ssl-anomalies-log: enable
-    # ssl-server: {'pop3s-client-cert-request': None, 'imaps-client-cert-request': None, 'smtps-client-cert-request': None, 'ip': None, 'ssl-other-client-cert-request': None, 'https-client-cert-request': None, 'ftps-client-cert-request': None}
-    # smtps: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'untrusted-cert': None, 'client-cert-request': None, 'ports': None}
-    # imaps: {'status': None, 'allow-invalid-server-cert': None, 'unsupported-ssl': None, 'untrusted-cert': None, 'client-cert-request': None, 'ports': None}
-    # rpc-over-https: enable
-    # mode: set
-    # use-ssl-server: enable
-    ##################################################
-
-    # Test using fixture 1 #
     output = fmgr_secprof_ssl_ssh.fmgr_firewall_ssl_ssh_profile_modify(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
-    # Test using fixture 2 #
     output = fmgr_secprof_ssl_ssh.fmgr_firewall_ssl_ssh_profile_modify(fmg_instance, fixture_data[1]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
