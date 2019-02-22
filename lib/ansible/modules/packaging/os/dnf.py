@@ -618,6 +618,8 @@ class DnfModule(YumDnf):
                 rc=1
             )
         except AttributeError as e:
+            # Expected failure string:
+            #   AttributeError: 'NoneType' object has no attribute 'demands'\
             if 'demands' in to_text(e):
                 version_lock_index = None
                 for plugin in base._plugins.plugins:
@@ -625,7 +627,6 @@ class DnfModule(YumDnf):
                         self.module.warn("Disabling dnf versionlock plugin due do known upstream bug: "
                                          "https://github.com/rpm-software-management/dnf-plugins-core/pull/317")
                         self.disable_plugin.append('versionlock')
-                        broken_plugin_found = True
 
                         version_lock_index = base._plugins.plugins.index(plugin)
                 if version_lock_index:

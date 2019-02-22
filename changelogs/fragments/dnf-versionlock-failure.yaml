@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "dnf gracefully handle versionlock plugin init failures"
