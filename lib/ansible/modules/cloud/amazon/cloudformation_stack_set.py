@@ -584,38 +584,37 @@ def main():
             changed = True
             create_stack_set(module, stack_params, cfn)
         else:
+            new_stack_instances, existing_stack_instances, unspecified_stack_instances = compare_stack_instances(
+                cfn,
+                module.params['name'],
+                module.params['accounts'],
+                module.params['regions'],
+            )
+            if new_stack_instances:
+                operation_ids.append('Ansible-StackInstance-Create-{0}'.format(operation_uuid))
+                changed = True
+                cfn.create_stack_instances(
+                    StackSetName=module.params['name'],
+                    Accounts=list(set(acct for acct, region in new_stack_instances)),
+                    Regions=list(set(region for acct, region in new_stack_instances)),
+                    OperationPreferences=get_operation_preferences(module),
+                    OperationId=operation_ids[-1],
+                )
+            else:
+                operation_ids.append('Ansible-StackInstance-Update-{0}'.format(operation_uuid))
+                cfn.update_stack_instances(
+                    StackSetName=module.params['name'],
+                    Accounts=list(set(acct for acct, region in existing_stack_instances)),
+                    Regions=list(set(region for acct, region in existing_stack_instances)),
+                    OperationPreferences=get_operation_preferences(module),
+                    OperationId=operation_ids[-1],
+                )
             stack_params['OperationId'] = 'Ansible-StackSet-Update-{0}'.format(operation_uuid)
             operation_ids.append(stack_params['OperationId'])
             if module.params.get('regions'):
                 stack_params['OperationPreferences'] = get_operation_preferences(module)
             changed |= update_stack_set(module, stack_params, cfn)
 
-        # now create/update any appropriate stack instances
-        new_stack_instances, existing_stack_instances, unspecified_stack_instances = compare_stack_instances(
-            cfn,
-            module.params['name'],
-            module.params['accounts'],
-            module.params['regions'],
-        )
-        if new_stack_instances:
-            operation_ids.append('Ansible-StackInstance-Create-{0}'.format(operation_uuid))
-            changed = True
-            cfn.create_stack_instances(
-                StackSetName=module.params['name'],
-                Accounts=list(set(acct for acct, region in new_stack_instances)),
-                Regions=list(set(region for acct, region in new_stack_instances)),
-                OperationPreferences=get_operation_preferences(module),
-                OperationId=operation_ids[-1],
-            )
-        else:
-            operation_ids.append('Ansible-StackInstance-Update-{0}'.format(operation_uuid))
-            cfn.update_stack_instances(
-                StackSetName=module.params['name'],
-                Accounts=list(set(acct for acct, region in existing_stack_instances)),
-                Regions=list(set(region for acct, region in existing_stack_instances)),
-                OperationPreferences=get_operation_preferences(module),
-                OperationId=operation_ids[-1],
-            )
         for op in operation_ids:
             await_stack_set_operation(
                 module, cfn, operation_id=op,
