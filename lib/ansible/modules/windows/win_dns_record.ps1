@@ -155,10 +155,6 @@ if ($values -ne $null -and $values.Count -gt 0)
     $module.Result.changed = $true
 }
 
-
-# if ($diff_mode) {
-#     $result.diff = @{ prepared = ($changes -Join '') }
-# }
-
+$module.Diff.prepared = ($changes -Join '')
 
 $module.ExitJson()
