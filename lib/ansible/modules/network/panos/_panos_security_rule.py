@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
@@ -26,6 +26,10 @@ requirements:
     - pan-python can be obtained from PyPI U(https://pypi.org/project/pan-python/)
     - pandevice can be obtained from PyPI U(https://pypi.org/project/pandevice/)
     - xmltodict can be obtained from PyPI U(https://pypi.org/project/xmltodict/)
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 notes:
     - Checkmode is not supported.
     - Panorama is supported.
@@ -49,6 +53,16 @@ options:
         description:
             - The action to be taken.  Supported values are I(add)/I(update)/I(find)/I(delete).
         default: 'add'
+        choices:
+            - add
+            - update
+            - delete
+            - find
+    category:
+        description:
+            - The category.
+        type: list
+        default: ['any']
     rule_name:
         description:
             - Name of the security rule.

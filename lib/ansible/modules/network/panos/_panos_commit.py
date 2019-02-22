@@ -34,6 +34,10 @@ author:
 version_added: "2.3"
 requirements:
     - pan-python
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 options:
     ip_address:
         description:
@@ -119,7 +123,7 @@ panos_commit:
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 

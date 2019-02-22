@@ -21,38 +21,50 @@
 
 DOCUMENTATION = '''
 ---
-module: panos_dag
-short_description: create a dynamic address group
+module: panos_check
+short_description: check if PAN-OS device is ready for configuration
 description:
-    - Create a dynamic address group object in the firewall used for policy rules
+    - Check if PAN-OS device is ready for being configured (no pending jobs).
+    - The check could be done once or multiple times until the device is ready.
 author: "Luigi Mori (@jtschichold), Ivan Bojer (@ivanbojer)"
 version_added: "2.3"
 requirements:
     - pan-python
+deprecated:
+    alternative: Use U(https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks) instead.
+    removed_in: "2.12"
+    why: Consolidating code base.
 options:
-    dag_name:
+    timeout:
         description:
-            - name of the dynamic address group
-        required: true
-    dag_filter:
+            - timeout of API calls
+        required: false
+        default: 0
+    interval:
         description:
-            - dynamic filter user by the dynamic address group
-        required: true
-    commit:
-        description:
-            - commit if changed
-        type: bool
-        default: 'yes'
+            - time waited between checks
+        required: false
+        default: 0
 extends_documentation_fragment: panos
 '''
 
 EXAMPLES = '''
-- name: dag
-  panos_dag:
+# single check on 192.168.1.1 with credentials admin/admin
+- name: check if ready
+  panos_check:
     ip_address: "192.168.1.1"
     password: "admin"
-    dag_name: "dag-1"
-    dag_filter: "'aws-tag.aws:cloudformation:logical-id.ServerInstance' and 'instanceState.running'"
+
+# check for 10 times, every 30 seconds, if device 192.168.1.1
+# is ready, using credentials admin/admin
+- name: wait for reboot
+  panos_check:
+    ip_address: "192.168.1.1"
+    password: "admin"
+  register: result
+  until: result is not failed
+  retries: 10
+  delay: 30
 '''
 
 RETURN = '''
@@ -60,11 +72,12 @@ RETURN = '''
 '''
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
+                    'status': ['deprecated'],
                     'supported_by': 'community'}
 
 
 from ansible.module_utils.basic import AnsibleModule
+import time
 
 try:
     import pan.xapi
@@ -72,33 +85,17 @@ try:
 except ImportError:
     HAS_LIB = False
 
-_ADDRGROUP_XPATH = "/config/devices/entry[@name='localhost.localdomain']" +\
-                   "/vsys/entry[@name='vsys1']/address-group/entry[@name='%s']"
 
-
-def addressgroup_exists(xapi, group_name):
-    xapi.get(_ADDRGROUP_XPATH % group_name)
-    e = xapi.element_root.find('.//entry')
-    if e is None:
-        return False
-    return True
-
-
-def add_dag(xapi, dag_name, dag_filter):
-    if addressgroup_exists(xapi, dag_name):
-        return False
-
-    # setup the non encrypted part of the monitor
-    exml = []
-
-    exml.append('<dynamic>')
-    exml.append('<filter>%s</filter>' % dag_filter)
-    exml.append('</dynamic>')
-
-    exml = ''.join(exml)
-    xapi.set(xpath=_ADDRGROUP_XPATH % dag_name, element=exml)
-
-    return True
+def check_jobs(jobs, module):
+    job_check = False
+    for j in jobs:
+        status = j.find('.//status')
+        if status is None:
+            return False
+        if status.text != 'FIN':
+            return False
+        job_check = True
+    return job_check
 
 
 def main():
@@ -106,9 +103,8 @@ def main():
         ip_address=dict(required=True),
         password=dict(required=True, no_log=True),
         username=dict(default='admin'),
-        dag_name=dict(required=True),
-        dag_filter=dict(required=True),
-        commit=dict(type='bool', default=True)
+        timeout=dict(default=0, type='int'),
+        interval=dict(default=0, type='int')
     )
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
     if not HAS_LIB:
@@ -117,23 +113,33 @@ def main():
     ip_address = module.params["ip_address"]
     password = module.params["password"]
     username = module.params['username']
+    timeout = module.params['timeout']
+    interval = module.params['interval']
 
     xapi = pan.xapi.PanXapi(
         hostname=ip_address,
         api_username=username,
-        api_password=password
+        api_password=password,
+        timeout=60
     )
 
-    dag_name = module.params['dag_name']
-    dag_filter = module.params['dag_filter']
-    commit = module.params['commit']
+    checkpnt = time.time() + timeout
+    while True:
+        try:
+            xapi.op(cmd="show jobs all", cmd_xml=True)
+        except Exception:
+            pass
+        else:
+            jobs = xapi.element_root.findall('.//job')
+            if check_jobs(jobs, module):
+                module.exit_json(changed=True, msg="okey dokey")
 
-    changed = add_dag(xapi, dag_name, dag_filter)
+        if time.time() > checkpnt:
+            break
 
-    if changed and commit:
-        xapi.commit(cmd="<commit></commit>", sync=True, interval=1)
+        time.sleep(interval)
 
-    module.exit_json(changed=changed, msg="okey dokey")
+    module.fail_json(msg="Timeout")
 
 
 if __name__ == '__main__':
