@@ -49,18 +49,24 @@ options:
     type: bool
   route_target_import:
     description:
-      - Specify the route-targets which should be imported under the AF
+      - Specify the route-targets which should be imported under the AF.
+        This argument accepts a list of dicts that specify the route-target
+        and state of each route-target. See examples.
     type: list
     version_added: "2.8"
   route_target_export:
     description:
-      - Specify the route-targets which should be exported under the AF
+      - Specify the route-targets which should be exported under the AF.
+        This argument accepts a list of dicts that specify the route-target
+        and state of each route-target. See examples.
     type: list
     version_added: "2.8"
   route_target_both:
     description:
       - Specify the route-targets which should be imported & exported
-        under the AF
+        under the AF.
+        This argument accepts a list of dicts that specify the route-target
+        and state of each route-target. See examples.
     type: list
     version_added: "2.8"
   state:
