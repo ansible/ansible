@@ -15,8 +15,8 @@ DOCUMENTATION = r'''
 module: mongodb_replicaset
 short_description: Initialises a MongoDB replicaset.
 description:
-- Initialises a MongoDB replicaset before authentication has been turned on and then validates the configuration when it has been turned on.
-- Validation confirms the replicaset set name only.
+- Initialises a MongoDB replicaset in a new deployment.
+- Validates the replicaset name for existing deployments.
 author: Rhys Campbell (@rhysmeister)
 version_added: "2.8"
 options:
