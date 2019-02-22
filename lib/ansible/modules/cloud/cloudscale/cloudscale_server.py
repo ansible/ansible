@@ -25,7 +25,7 @@ notes:
   - Once a server is created all parameters except C(state) are read-only. You can't change the name, flavor or any other property. This is a limitation
     of the cloudscale.ch API. The module will silently ignore differences between the configured parameters and the running server if a server with the
     correct name or UUID exists. Only state changes will be applied.
-version_added: 2.3
+version_added: '2.3'
 author: "Gaudenz Steinlin (@gaudenz) <gaudenz.steinlin@cloudscale.ch>"
 options:
   state:

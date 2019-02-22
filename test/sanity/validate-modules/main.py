@@ -1102,7 +1102,7 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code=307,
-                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
+                msg='version_added should be %r (...). Currently %r' % (existing_doc.get('version_added'),
                                                                   version_added_raw)
             )
 
