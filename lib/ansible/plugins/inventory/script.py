@@ -46,7 +46,7 @@ from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
 
 
 class InventoryModule(BaseInventoryPlugin, Cacheable):
@@ -162,6 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _parse_group(self, group, data):
 
+        group = to_safe_group_names(group)
         self.inventory.add_group(group)
 
         if not isinstance(data, dict):
@@ -187,6 +188,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
         if group != '_meta' and isinstance(data, dict) and 'children' in data:
             for child_name in data['children']:
+                child_name = to_safe_group_names(group)
                 self.inventory.add_group(child_name)
                 self.inventory.add_child(group, child_name)
 
