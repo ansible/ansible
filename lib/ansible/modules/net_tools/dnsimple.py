@@ -239,7 +239,7 @@ def main():
 
         # need the not none check since record could be an empty string
         if domain and record is not None:
-            records = [r['record'] for r in client.records(str(domain))]
+            records = [r['record'] for r in client.records(str(domain), params={'name': record})]
 
             if not record_type:
                 module.fail_json(msg="Missing the record type")
