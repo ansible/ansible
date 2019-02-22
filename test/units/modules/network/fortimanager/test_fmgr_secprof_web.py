@@ -63,48 +63,5 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 def test_fmgr_webfilter_profile_modify(fixture_data, mocker):
     mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # web-filter-command-block-log: enable
-    # web-invalid-domain-log: enable
-    # web-extended-all-action-log: enable
-    # adom: root
-    # ftgd-wf: {'rate-javascript-urls': None, 'quota': {'category': None, 'value': None, 'override-replacemsg': None, 'duration': None, 'type': None, 'unit': None}, 'rate-image-urls': None, 'filters': {'category': None, 'auth-usr-grp': None, 'log': None, 'warning-prompt': None, 'override-replacemsg': None, 'action': None, 'warn-duration': None, 'warning-duration-type': None}, 'rate-css-urls': None, 'ovrd': None, 'exempt-quota': None, 'max-quota-timeout': None, 'rate-crl-urls': None, 'options': None}
-    # web-content-log: enable
-    # web-filter-referer-log: enable
-    # log-all-url: enable
-    # extended-log: enable
-    # inspection-mode: proxy
-    # web-filter-cookie-removal-log: enable
-    # post-action: block
-    # web-filter-activex-log: enable
-    # web-filter-cookie-log: enable
-    # web: {'blacklist': None, 'log-search': None, 'keyword-match': None, 'urlfilter-table': None, 'bword-table': None, 'safe-search': None, 'whitelist': None, 'content-header-list': None, 'youtube-restrict': None, 'bword-threshold': None}
-    # web-filter-applet-log: enable
-    # web-ftgd-err-log: enable
-    # replacemsg-group: None
-    # web-filter-jscript-log: enable
-    # web-ftgd-quota-usage: enable
-    # url-extraction: {'status': None, 'server-fqdn': None, 'redirect-url': None, 'redirect-header': None, 'redirect-no-content': None}
-    # web-filter-js-log: enable
-    # youtube-channel-filter: {'comment': None, 'channel-id': None}
-    # name: Ansible_Web_Proxy_Profile
-    # wisp: enable
-    # web-filter-vbs-log: enable
-    # web-filter-unknown-log: enable
-    # mode: set
-    # youtube-channel-status: blacklist
-    # override: {'profile': None, 'ovrd-user-group': None, 'ovrd-scope': None, 'ovrd-cookie': None, 'ovrd-dur-mode': None, 'profile-attribute': None, 'ovrd-dur': None, 'profile-type': None}
-    # web-url-log: enable
-    # ovrd-perm: ['bannedword-override']
-    # https-replacemsg: None
-    # options: ['js']
-    # wisp-servers: None
-    # wisp-algorithm: auto-learning
-    ##################################################
-
-    # Test using fixture 1 #
     output = fmgr_secprof_web.fmgr_webfilter_profile_modify(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
