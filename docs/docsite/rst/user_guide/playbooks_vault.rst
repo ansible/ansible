@@ -102,7 +102,7 @@ To get the dev password from the system keyring using the :file:`contrib/vault/v
 
     ansible-playbook --vault-id dev@contrib/vault/vault-keyring-client.py
 
-See :ref:`specifying_vault_ids` for a complete explanation of this topic.
+See :ref:`vault_password_client_scripts` for a complete explanation of this topic.
 
 
 .. _single_encrypted_variable:

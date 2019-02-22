@@ -352,8 +352,10 @@ When using :ref:`ansible-vault` commands that encrypt content (:ref:`ansible-vau
 only one vault-id can be used.
 
 
-Client Scripts
-^^^^^^^^^^^^^^
+.. _vault_password_client_scripts:
+
+Vault Password Client Scripts
+`````````````````````````````
 
 When implementing a script to obtain a vault password it may be convenient to know which vault ID label was
 requested. For example a script loading passwords from a secret manager may want to use the vault ID label to pick
