@@ -141,6 +141,8 @@ def main():
     if state == 'enabled':
         if not new_only:
             for plugin in enabled_plugins:
+                if " " in plugin:
+                    continue
                 if plugin not in names:
                     rabbitmq_plugins.disable(plugin)
                     disabled.append(plugin)
