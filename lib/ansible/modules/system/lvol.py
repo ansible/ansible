@@ -208,10 +208,11 @@ EXAMPLES = '''
 '''
 
 import re
+import locale
 
 from ansible.module_utils.basic import AnsibleModule
 
-decimal_point = re.compile(r"(\d+)")
+locale.setlocale(locale.LC_ALL, '')
 
 
 def mkversion(major, minor, patch):
@@ -224,7 +225,7 @@ def parse_lvs(data):
         parts = line.strip().split(';')
         lvs.append({
             'name': parts[0].replace('[', '').replace(']', ''),
-            'size': int(decimal_point.match(parts[1]).group(1)),
+            'size': locale.atof(parts[1]),
             'active': (parts[2][4] == 'a'),
             'thinpool': (parts[2][0] == 't'),
             'thinvol': (parts[2][0] == 'V'),
@@ -238,9 +239,9 @@ def parse_vgs(data):
         parts = line.strip().split(';')
         vgs.append({
             'name': parts[0],
-            'size': int(decimal_point.match(parts[1]).group(1)),
-            'free': int(decimal_point.match(parts[2]).group(1)),
-            'ext_size': int(decimal_point.match(parts[3]).group(1))
+            'size': locale.atof(parts[1]),
+            'free': locale.atof(parts[2]),
+            'ext_size': locale.atof(parts[3])
         })
     return vgs
 
@@ -339,7 +340,7 @@ def main():
                 size = size[0:-1]
 
             try:
-                float(size)
+                locale.atof(size)
                 if not size[0].isdigit():
                     raise ValueError()
             except ValueError:
@@ -354,7 +355,7 @@ def main():
     # Get information on volume group requested
     vgs_cmd = module.get_bin_path("vgs", required=True)
     rc, current_vgs, err = module.run_command(
-        "%s --noheadings -o vg_name,size,free,vg_extent_size --units %s --separator ';' %s" % (vgs_cmd, unit, vg))
+        "%s --noheadings --nosuffix -o vg_name,size,free,vg_extent_size --units %s --separator ';' %s" % (vgs_cmd, unit, vg))
 
     if rc != 0:
         if state == 'absent':
@@ -507,10 +508,10 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if int(size) > this_lv['size']:
+            if locale.atof(size) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and int(size) < this_lv['size']:
-                if int(size) == 0:
+            elif shrink and locale.atof(size) < this_lv['size']:
+                if locale.atof(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
