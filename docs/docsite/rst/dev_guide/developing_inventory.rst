@@ -197,7 +197,15 @@ For examples on how to implement an inventory plugin, see the source code here:
 inventory cache
 ^^^^^^^^^^^^^^^
 
-If you used the Cacheable base class and have extended the inventory plugin documentation with the inventory_cache documentation fragment you have caching at your disposal.
+Extend the inventory plugin documentation with the inventory_cache documentation fragment and use the Cacheable base class to have the caching system at your disposal.
+
+.. code-block:: yaml
+    extends_documentation_fragment:
+      - inventory_cache
+
+.. code-block:: python
+
+    class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
 Next, load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. If your inventory plugin does not use ``_read_config_data``, you must load the cache explicitly with ``load_cache_plugin``.
 
@@ -210,7 +218,7 @@ Next, load the cache plugin specified by the user to read from and update the ca
 
         self.load_cache_plugin()
 
-Before using the cache, retrieve a unique cache key using the ``get_cache_key`` method. This needs to be done by all inventory modules using the cache.
+Before using the cache, retrieve a unique cache key using the ``get_cache_key`` method. This needs to be done by all inventory modules using the cache, so you don't use/overwrite other parts of the cache.
 
 .. code-block:: python
 
@@ -220,7 +228,7 @@ Before using the cache, retrieve a unique cache key using the ``get_cache_key`` 
         self.load_cache_plugin()
         cache_key = self.get_cache_key(path)
 
-The last parameter of ``parse`` is ``cache``. This value comes from the inventory manager and indicates whether the inventory is being refreshed (such as via ``--flush-cache`` or the meta task ``refresh_inventory``). Although the cache shouldn't be used to populate the inventory when being refreshed, the cache should be updated with the new inventory if the user has enabled caching. You can use ``self._cache`` like a dictionary. The following pattern allows refreshing the inventory to work in conjunction with caching.
+Now that you've enabled caching and loaded the correct plugin, you can set up the flow of data between the cache and your inventory using the `cache` parameter of the `parse` method. This value comes from the inventory manager and indicates whether the inventory is being refreshed (such as via ``--flush-cache`` or the meta task ``refresh_inventory``). Although the cache shouldn't be used to populate the inventory when being refreshed, the cache should be updated with the new inventory if the user has enabled caching. You can use ``self._cache`` like a dictionary. The following pattern allows refreshing the inventory to work in conjunction with caching.
 
 .. code-block:: python
 
@@ -257,7 +265,10 @@ The last parameter of ``parse`` is ``cache``. This value comes from the inventor
 
 After the ``parse`` method is complete, the contents of ``self._cache`` is used to set the cache plugin if the contents of the cache have changed.
 
-You also have cache methods ``set_cache_plugin``, ``update_cache_if_changed``, and ``clear_cache`` available. If you need to set the cache plugin before ``parse`` completes for some reason, you can use ``self.set_cache_plugin()`` which will force the cache plugin to be set with the contents of ``self._cache``. Alternatively, ``self.update_cache_if_changed()`` can be used to only set the cache plugin if ``self._cache`` has been modified. If you need to remove the keys in ``self._cache`` from your cache plugin, ``self.clear_cache()`` will delete those keys from the cache plugin.
+You have three other cache methods available:
+  - ``set_cache_plugin`` forces the cache plugin to be set with the contents of ``self._cache`` before the ``parse`` method completes
+  - ``update_cache_if_changed`` sets the cache plugin only if ``self._cache`` has been modified before the ``parse`` method completes
+  - ``clear_cache`` deletes the keys in ``self._cache`` from your cache plugin
 
 .. _inventory_source_common_format:
 
