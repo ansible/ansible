@@ -1,2 +1,0 @@
-bugfixes:
-  - "docker_swarm_service - Specify ``update_order`` choices."
