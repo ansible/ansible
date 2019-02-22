@@ -18,7 +18,7 @@ module: grafana_datasource
 author:
   - Thierry Sallé (@seuf)
   - Martin Wang (@martinwangjian)
-version_added: "2.5"
+version_added: '2.5'
 short_description: Manage Grafana datasources
 description:
   - Create/update/delete Grafana datasources via API.
@@ -51,13 +51,13 @@ options:
       - The Grafana API user.
     default: admin
     aliases: [ grafana_user ]
-    version_added: 2.7
+    version_added: '2.7'
   url_password:
     description:
       - The Grafana API password.
     default: admin
     aliases: [ grafana_password ]
-    version_added: 2.7
+    version_added: '2.7'
   grafana_api_key:
     description:
       - The Grafana API key.
@@ -103,7 +103,7 @@ options:
       - Skip the TLS datasource certificate verification.
     type: bool
     default: False
-    version_added: 2.6
+    version_added: '2.6'
   is_default:
     description:
       - Make this datasource the default one.
@@ -162,17 +162,17 @@ options:
     description:
       - Use trends or not for zabbix datasource type
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   client_cert:
     required: false
     description:
       - TLS certificate path used by ansible to query grafana api
-    version_added: 2.8
+    version_added: '2.8'
   client_key:
     required: false
     description:
       - TLS private key path used by ansible to query grafana api
-    version_added: 2.8
+    version_added: '2.8'
   validate_certs:
     description:
       - Whether to validate the Grafana certificate.
@@ -183,13 +183,13 @@ options:
       - Boolean of whether or not to use proxy.
     default: 'yes'
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   aws_auth_type:
     description:
       - Type for AWS authentication for CloudWatch datasource type (authType of grafana api)
     default: 'keys'
     choices: [ keys, credentials, arn ]
-    version_added: 2.8
+    version_added: '2.8'
   aws_default_region:
     description:
       - AWS default region for CloudWatch datasource type
@@ -202,37 +202,37 @@ options:
       sa-east-1,
       us-east-1, us-east-2, us-gov-west-1, us-west-1, us-west-2
     ]
-    version_added: 2.8
+    version_added: '2.8'
   aws_credentials_profile:
     description:
       - Profile for AWS credentials for CloudWatch datasource type when C(aws_auth_type) is C(credentials)
     default: ''
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   aws_access_key:
     description:
       - AWS access key for CloudWatch datasource type when C(aws_auth_type) is C(keys)
     default: ''
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   aws_secret_key:
     description:
       - AWS secret key for CloudWatch datasource type when C(aws_auth_type) is C(keys)
     default: ''
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   aws_assume_role_arn:
     description:
       - AWS IAM role arn to assume for CloudWatch datasource type when C(aws_auth_type) is C(arn)
     default: ''
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   aws_custom_metrics_namespaces:
     description:
       - Namespaces of Custom Metrics for CloudWatch datasource type
     default: ''
     required: false
-    version_added: 2.8
+    version_added: '2.8'
 
 '''
 

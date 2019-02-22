@@ -19,7 +19,7 @@ module: bigip_facts
 short_description: Collect facts from F5 BIG-IP devices
 description:
   - Collect facts from F5 BIG-IP devices via iControl SOAP API
-version_added: 1.6
+version_added: '1.6'
 author:
   - Matt Hite (@mhite)
   - Tim Rupp (@caphrim007)

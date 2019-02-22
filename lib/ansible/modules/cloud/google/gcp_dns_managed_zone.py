@@ -72,7 +72,7 @@ options:
     description:
     - A set of key/value label pairs to assign to this ManagedZone.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/dns/api/v1/managedZones)'

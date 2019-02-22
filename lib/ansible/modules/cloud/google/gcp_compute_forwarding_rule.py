@@ -187,14 +187,14 @@ options:
       string Alternatively, you can add `register: name-of-resource` to a gcp_compute_target_pool
       task and then set this target field to "{{ name-of-resource }}"'
     required: false
-    version_added: 2.7
+    version_added: '2.7'
   network_tier:
     description:
     - 'The networking tier used for configuring this address. This field can take
       the following values: PREMIUM or STANDARD. If this field is not specified, it
       is assumed to be PREMIUM.'
     required: false
-    version_added: 2.8
+    version_added: '2.8'
     choices:
     - PREMIUM
     - STANDARD

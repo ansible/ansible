@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_dnszone
 
-version_added: "2.4"
+version_added: '2.4'
 
 short_description: Manage Azure DNS zones.
 
@@ -59,20 +59,20 @@ options:
         choices:
             - public
             - private
-        version_added: 2.8
+        version_added: '2.8'
     registration_virtual_networks:
         description:
             - A list of references to virtual networks that register hostnames in this DNS zone.
             - This is a only when I(type) is C(private).
             - Each element can be the name or resource id, or a dict contains C(name), C(resource_group) information of the virtual network.
-        version_added: 2.8
+        version_added: '2.8'
         type: list
     resolution_virtual_networks:
         description:
             - A list of references to virtual networks that resolve records in this DNS zone.
             - This is a only when I(type) is C(private).
             - Each element can be the name or resource id, or a dict contains C(name), C(resource_group) information of the virtual network.
-        version_added: 2.8
+        version_added: '2.8'
         type: list
 
 extends_documentation_fragment:

@@ -27,7 +27,7 @@ requirements:
 short_description: Install/uninstall homebrew casks.
 description:
     - Manages Homebrew casks.
-version_added: "1.6"
+version_added: '1.6'
 options:
     name:
         description:
@@ -47,7 +47,7 @@ options:
         description:
             - The sudo password to be passed to SUDO_ASKPASS.
         required: false
-        version_added: 2.8
+        version_added: '2.8'
     update_homebrew:
         description:
             - update homebrew itself first. Note that C(brew cask update) is
@@ -55,30 +55,30 @@ options:
         type: bool
         default: 'no'
         aliases: ['update-brew']
-        version_added: "2.2"
+        version_added: '2.2'
     install_options:
         description:
             - options flags to install a package
         aliases: ['options']
-        version_added: "2.2"
+        version_added: '2.2'
     accept_external_apps:
         description:
             - allow external apps
         type: bool
         default: 'no'
-        version_added: "2.5.0"
+        version_added: '2.5.0'
     upgrade_all:
         description:
             - upgrade all casks (mutually exclusive with `upgrade`)
         type: bool
         default: 'no'
-        version_added: "2.5.0"
+        version_added: '2.5.0'
     upgrade:
         description:
             - upgrade all casks (mutually exclusive with `upgrade_all`)
         type: bool
         default: 'no'
-        version_added: "2.5.0"
+        version_added: '2.5.0'
     greedy:
         description:
             - upgrade casks that auto update; passes --greedy to brew cask
@@ -86,7 +86,7 @@ options:
               available
         type: bool
         default: 'no'
-        version_added: "2.7.0"
+        version_added: '2.7.0'
 '''
 EXAMPLES = '''
 - homebrew_cask:

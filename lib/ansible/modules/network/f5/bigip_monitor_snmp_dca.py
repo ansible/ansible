@@ -119,7 +119,7 @@ options:
     choices:
       - present
       - absent
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - Requires BIG-IP software version >= 12
   - This module does not support the C(variables) option because this option

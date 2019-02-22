@@ -116,7 +116,7 @@ options:
       - Host on which an instance should be deployed or started on.
       - Only considered when I(state=started) or instance is running.
       - Requires root admin privileges.
-    version_added: 2.6
+    version_added: '2.6'
   domain:
     description:
       - Domain the instance is related to.
@@ -334,7 +334,7 @@ template_display_text:
   returned: success
   type: str
   sample: Linux Debian 9 64-bit 200G Disk (2017-10-08-622866)
-  version_added: 2.6
+  version_added: '2.6'
 service_offering:
   description: Name of the service offering the instance has.
   returned: success
@@ -375,7 +375,7 @@ host:
   returned: success and instance is running
   type: str
   sample: host-01.example.com
-  version_added: 2.6
+  version_added: '2.6'
 instance_name:
   description: Internal name of the instance (ROOT admin only).
   returned: success

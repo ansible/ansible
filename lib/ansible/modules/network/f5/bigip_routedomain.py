@@ -23,7 +23,7 @@ options:
   name:
     description:
       - The name of the route domain.
-    version_added: 2.5
+    version_added: '2.5'
   bwc_policy:
     description:
       - The bandwidth controller for the route domain.
@@ -56,7 +56,7 @@ options:
       - Partition to create the route domain on. Partitions cannot be updated
         once they are created.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   routing_protocol:
     description:
       - Dynamic routing protocols for the system to use in the route domain.
@@ -90,7 +90,7 @@ options:
   fw_enforced_policy:
     description:
       - Specifies AFM policy to be attached to route domain.
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

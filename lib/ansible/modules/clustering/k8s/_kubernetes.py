@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: kubernetes
-version_added: "2.1"
+version_added: '2.1'
 deprecated:
-  removed_in: "2.9"
+  removed_in: '2.9'
   why: This module used the oc command line tool, where as M(k8s_raw) goes over the REST API.
   alternative: Use M(k8s_raw) instead.
 short_description: Manage Kubernetes resources
@@ -50,7 +50,7 @@ options:
     default: Strategic Merge Patch
     choices: [ JSON Patch, Merge Patch, Strategic Merge Patch ]
     aliases: [ patch_strategy ]
-    version_added: 2.4
+    version_added: '2.4'
   certificate_authority_data:
     description:
       - Certificate Authority data for Kubernetes server. Should be in either

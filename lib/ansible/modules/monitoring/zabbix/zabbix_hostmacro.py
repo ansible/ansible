@@ -19,7 +19,7 @@ module: zabbix_hostmacro
 short_description: Create/update/delete Zabbix host macros
 description:
    - manages Zabbix host macros, it can create, update or delete them.
-version_added: "2.0"
+version_added: '2.0'
 author:
     - "Cove (@cove)"
     - Dean Hailin Song (!UNKNOWN)
@@ -52,7 +52,7 @@ options:
             - Only updates an existing macro if set to C(yes).
         default: 'yes'
         type: bool
-        version_added: 2.5
+        version_added: '2.5'
 
 extends_documentation_fragment:
     - zabbix

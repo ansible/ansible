@@ -32,7 +32,7 @@ extends_documentation_fragment:
   - url
 options:
   partition:
-    version_added: "2.3"
+    version_added: '2.3'
     description:
       - set active-partition
   server_name:
@@ -66,7 +66,7 @@ options:
     description:
       - If C(no), SSL certificates will not be validated. This should only be used
         on personally controlled devices using self-signed certificates.
-    version_added: 2.3
+    version_added: '2.3'
     type: bool
     default: 'yes'
 

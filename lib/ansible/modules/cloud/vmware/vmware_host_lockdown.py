@@ -50,7 +50,7 @@ options:
     - If host system is already out of lockdown mode and set to C(absent), no action will be taken.
     default: present
     choices: [ present, absent ]
-    version_added: 2.5
+    version_added: '2.5'
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -51,7 +51,7 @@ options:
       - If set to C(True), overrides C(drs_default_vm_behavior).
       type: bool
       default: True
-      version_added: 2.8
+      version_added: '2.8'
     drs_default_vm_behavior:
       description:
       - Specifies the cluster-wide default DRS behavior for virtual machines.
@@ -63,13 +63,13 @@ options:
         and their placement with a host at power on.
       default: fullyAutomated
       choices: [ fullyAutomated, manual, partiallyAutomated ]
-      version_added: 2.8
+      version_added: '2.8'
     drs_vmotion_rate:
       description:
       - Threshold for generated ClusterRecommendations.
       default: 3
       choices: [ 1, 2, 3, 4, 5 ]
-      version_added: 2.8
+      version_added: '2.8'
     enable_ha:
       description:
       - If set to C(yes) will enable HA when the cluster is created.
@@ -83,7 +83,7 @@ options:
       - If C(enable_ha) is set to C(no), then this value is ignored.
       choices: [ 'enabled', 'disabled' ]
       default: 'enabled'
-      version_added: 2.8
+      version_added: '2.8'
     ha_vm_monitoring:
       description:
       - Indicates the state of virtual machine health monitoring service.
@@ -93,21 +93,21 @@ options:
       - If C(enable_ha) is set to C(no), then this value is ignored.
       choices: ['vmAndAppMonitoring', 'vmMonitoringOnly', 'vmMonitoringDisabled']
       default: 'vmMonitoringDisabled'
-      version_added: 2.8
+      version_added: '2.8'
     ha_failover_level:
       description:
       - Number of host failures that should be tolerated, still guaranteeing sufficient resources to
         restart virtual machines on available hosts.
       - Accepts integer values only.
       default: 2
-      version_added: 2.8
+      version_added: '2.8'
     ha_admission_control_enabled:
       description:
       - Determines if strict admission control is enabled.
       - It is recommended to set this parameter to C(True), please refer documentation for more details.
       default: True
       type: bool
-      version_added: 2.8
+      version_added: '2.8'
     ha_vm_failure_interval:
       description:
       - The number of seconds after which virtual machine is declared as failed
@@ -115,7 +115,7 @@ options:
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
       default: 30
-      version_added: 2.8
+      version_added: '2.8'
     ha_vm_min_up_time:
       description:
       - The number of seconds for the virtual machine's heartbeats to stabilize after
@@ -123,14 +123,14 @@ options:
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
       default: 120
-      version_added: 2.8
+      version_added: '2.8'
     ha_vm_max_failures:
       description:
       - Maximum number of failures and automated resets allowed during the time
        that C(ha_vm_max_failure_window) specifies.
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       default: 3
-      version_added: 2.8
+      version_added: '2.8'
     ha_vm_max_failure_window:
       description:
       - The number of seconds for the window during which up to C(ha_vm_max_failures) resets
@@ -139,7 +139,7 @@ options:
       - Unit is seconds.
       - Default specifies no failure window.
       default: -1
-      version_added: 2.8
+      version_added: '2.8'
     ha_restart_priority:
       description:
       - Determines the preference that HA gives to a virtual machine if sufficient capacity is not available
@@ -153,7 +153,7 @@ options:
       - If set to C(low), then virtual machine with this priority have a lower chance of powering on after a failure,
         when there is insufficient capacity on hosts to meet all virtual machine needs.
       default: 'medium'
-      version_added: 2.8
+      version_added: '2.8'
       choices: [ 'disabled', 'high', 'low', 'medium' ]
     enable_vsan:
       description:
@@ -166,7 +166,7 @@ options:
         on VSAN-enabled hosts in the cluster.
       type: bool
       default: False
-      version_added: 2.8
+      version_added: '2.8'
     state:
       description:
       - Create C(present) or remove C(absent) a VMware vSphere cluster.

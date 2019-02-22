@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: iosxr_system
-version_added: "2.3"
+version_added: '2.3'
 author:
   - "Peter Sprygada (@privateip)"
   - "Kedar Kekan (@kedarX)"
@@ -36,7 +36,7 @@ options:
   vrf:
     description:
       - VRF name for domain services
-    version_added: 2.5
+    version_added: '2.5'
   domain_name:
     description:
       - Configure the IP domain name
@@ -130,7 +130,7 @@ xml:
   description: NetConf rpc xml sent to device with transport C(netconf)
   returned: always (empty list when no xml rpc to send)
   type: list
-  version_added: 2.5
+  version_added: '2.5'
   sample:
     - '<config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
     <ip-domain xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ip-domain-cfg">

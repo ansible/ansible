@@ -24,9 +24,9 @@ DOCUMENTATION = '''
 ---
 module: nxos_switchport
 extends_documentation_fragment: nxos
-version_added: "2.1"
+version_added: '2.1'
 deprecated:
-  removed_in: "2.9"
+  removed_in: '2.9'
   why: Replaced with generic version.
   alternative: Use M(nxos_l2_interface) instead.
 short_description: Manages Layer 2 switchport interfaces.
@@ -72,7 +72,7 @@ options:
     description:
       - if C(mode=trunk), these are the only VLANs that will be
         configured on the trunk, i.e. "2-10,15".
-    version_added: 2.2
+    version_added: '2.2'
 '''
 
 EXAMPLES = '''

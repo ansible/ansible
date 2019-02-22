@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_host_network
 short_description: Module to manage host networks in oVirt/RHV
-version_added: "2.3"
+version_added: '2.3'
 author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage host networks in oVirt/RHV."
@@ -81,7 +81,7 @@ options:
             - "If I(true) all networks will be synchronized before modification"
         type: bool
         default: false
-        version_added: 2.8
+        version_added: '2.8'
 extends_documentation_fragment: ovirt
 '''
 

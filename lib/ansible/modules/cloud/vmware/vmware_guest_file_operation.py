@@ -19,7 +19,7 @@ module: vmware_guest_file_operation
 short_description: Files operation in a VMware guest operating system without network
 description:
     - Module to copy a file to a VM, fetch a file from a VM and create or delete a directory in the guest OS.
-version_added: "2.5"
+version_added: '2.5'
 author:
   - Stéphane Travassac (@stravassac)
 notes:
@@ -104,7 +104,7 @@ options:
             - '  src: The file on the remote system to fetch. This I(must) be a file, not a directory'
             - '  dest: file destination on localhost, path must be exist'
         required: False
-        version_added: 2.5
+        version_added: '2.5'
 
 extends_documentation_fragment: vmware.documentation
 '''

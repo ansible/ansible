@@ -22,7 +22,7 @@ description:
   - Edit PAM service's type, control, module path and module arguments.
   - In order for a PAM rule to be modified, the type, control and
     module_path must match an existing rule.  See man(5) pam.d for details.
-version_added: "2.3"
+version_added: '2.3'
 options:
   name:
     description:
@@ -230,13 +230,13 @@ change_count:
     type: int
     sample: 1
     returned: success
-    version_added: 2.4
+    version_added: '2.4'
 new_rule:
     description: The changes to the rule.  This was available in Ansible 2.4 and Ansible 2.5.  It was removed in Ansible 2.6.
     type: str
     sample: None      None None sha512 shadow try_first_pass use_authtok
     returned: success
-    version_added: 2.4
+    version_added: '2.4'
 updated_rule_(n):
     description: The rule(s) that was/were changed.  This is only available in
       Ansible 2.4 and was removed in Ansible 2.5.
@@ -245,7 +245,7 @@ updated_rule_(n):
     - password      sufficient  pam_unix.so sha512 shadow try_first_pass
       use_authtok
     returned: success
-    version_added: 2.4
+    version_added: '2.4'
 action:
     description:
     - "That action that was taken and is one of: update_rule,
@@ -254,7 +254,7 @@ action:
     returned: always
     type: str
     sample: "update_rule"
-    version_added: 2.4
+    version_added: '2.4'
 dest:
     description:
     - "Path to pam.d service that was changed.  This is only available in
@@ -267,7 +267,7 @@ backupdest:
     - "The file name of the backup file, if created."
     returned: success
     type: str
-    version_added: 2.6
+    version_added: '2.6'
 ...
 '''
 

@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_acs
-version_added: "2.4"
+version_added: '2.4'
 short_description: Manage an Azure Container Service Instance (ACS).
 description:
     - Create, update and delete an Azure Container Service Instance.
@@ -64,7 +64,7 @@ options:
                 description:
                     - The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
                 required: true
-                version_added: 2.5
+                version_added: '2.5'
             dns_prefix:
                 description:
                   - The DNS Prefix to use for the Container Service master nodes.

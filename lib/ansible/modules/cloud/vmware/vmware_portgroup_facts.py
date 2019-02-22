@@ -37,7 +37,7 @@ options:
     - The property C(ts) stands for Traffic Shaping and C(lb) for Load Balancing.
     type: bool
     default: false
-    version_added: 2.8
+    version_added: '2.8'
   cluster_name:
     description:
     - Name of the cluster.

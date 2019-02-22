@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: mqtt
 short_description: Publish a message on an MQTT topic for the IoT
-version_added: "1.2"
+version_added: '1.2'
 description:
    - Publish a message on an MQTT topic.
 options:
@@ -71,19 +71,19 @@ options:
         but will not attempt any form of authentication. This provides basic
         network encryption but may not be sufficient depending on how the broker
         is configured.
-    version_added: 2.3
+    version_added: '2.3'
   certfile:
     description:
       - The path pointing to the PEM encoded client certificate. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
-    version_added: 2.3
+    version_added: '2.3'
   keyfile:
     description:
       - The path pointing to the PEM encoded client private key. If this is not
         None it will be used as client information for TLS based
         authentication. Support for this feature is broker dependent.
-    version_added: 2.3
+    version_added: '2.3'
 
 
 # informational: requirements for nodes

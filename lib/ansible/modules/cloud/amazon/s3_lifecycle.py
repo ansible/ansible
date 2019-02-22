@@ -17,7 +17,7 @@ module: s3_lifecycle
 short_description: Manage s3 bucket lifecycle rules in AWS
 description:
     - Manage s3 bucket lifecycle rules in AWS
-version_added: "2.0"
+version_added: '2.0'
 author: "Rob White (@wimnat)"
 notes:
   - If specifying expiration time as days then transition time must also be specified in days
@@ -48,24 +48,24 @@ options:
         replaced with the new transition(s)
     default: true
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   noncurrent_version_expiration_days:
     description:
       - 'Delete noncurrent versions this many days after they become noncurrent'
     required: false
-    version_added: 2.6
+    version_added: '2.6'
   noncurrent_version_storage_class:
     description:
       - 'Transition noncurrent versions to this storage class'
     default: glacier
     choices: ['glacier', 'onezone_ia', 'standard_ia']
     required: false
-    version_added: 2.6
+    version_added: '2.6'
   noncurrent_version_transition_days:
     description:
       - 'Transition noncurrent versions this many days after they become noncurrent'
     required: false
-    version_added: 2.6
+    version_added: '2.6'
   noncurrent_version_transitions:
     description:
       - >
@@ -73,7 +73,7 @@ options:
         behavior contains these elements
           I(transition_days)
           I(storage_class)
-    version_added: 2.6
+    version_added: '2.6'
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
@@ -109,7 +109,7 @@ options:
           I(transition_days)
           I(transition_date)
           I(storage_class)
-    version_added: 2.6
+    version_added: '2.6'
 extends_documentation_fragment:
     - aws
     - ec2

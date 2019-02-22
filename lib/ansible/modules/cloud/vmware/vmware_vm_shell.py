@@ -20,7 +20,7 @@ module: vmware_vm_shell
 short_description: Run commands in a VMware guest operating system
 description:
     - Module allows user to run common system administration commands in the guest operating system.
-version_added: "2.1"
+version_added: '2.1'
 author:
   - Ritesh Khadgaray (@ritzk)
   - Abhijeet Kasurde (@Akasurde)
@@ -53,7 +53,7 @@ options:
       - '   folder: /folder1/datacenter1/vm'
       - '   folder: folder1/datacenter1/vm'
       - '   folder: /folder1/datacenter1/vm/folder2'
-      version_added: "2.4"
+      version_added: '2.4'
     vm_id:
       description:
       - Name of the virtual machine to work with.
@@ -92,13 +92,13 @@ options:
       - If set to C(True), module will wait for process to complete in the given virtual machine.
       default: False
       type: bool
-      version_added: 2.7
+      version_added: '2.7'
     timeout:
       description:
       - Timeout in seconds.
       - If set to positive integers, then C(wait_for_process) will honor this parameter and will exit after this timeout.
       default: 3600
-      version_added: 2.7
+      version_added: '2.7'
 extends_documentation_fragment: vmware.documentation
 '''
 

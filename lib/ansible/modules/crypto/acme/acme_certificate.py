@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: acme_certificate
 author: "Michael Gruener (@mgruener)"
-version_added: "2.2"
+version_added: '2.2'
 short_description: Create SSL/TLS certificates with the ACME protocol
 description:
    - "Create and renew SSL/TLS certificates with a CA supporting the
@@ -98,7 +98,7 @@ options:
       - This option will only be used when C(acme_version) is not 1.
     type: bool
     default: no
-    version_added: "2.5"
+    version_added: '2.5'
   modify_account:
     description:
       - "Boolean indicating whether the module should create the account if
@@ -109,7 +109,7 @@ options:
       - "If set to C(no), C(terms_agreed) and C(account_email) are ignored."
     type: bool
     default: yes
-    version_added: "2.6"
+    version_added: '2.6'
   challenge:
     description: The challenge to be performed.
     type: str
@@ -157,13 +157,13 @@ options:
          by chain of intermediate certificates)."
       - "Required if C(dest) is not specified."
     type: path
-    version_added: 2.5
+    version_added: '2.5'
     aliases: ['fullchain']
   chain_dest:
     description:
       - If specified, the intermediate certificate will be written to this file.
     type: path
-    version_added: 2.5
+    version_added: '2.5'
     aliases: ['chain']
   remaining_days:
     description:
@@ -185,7 +185,7 @@ options:
          concern."
     type: bool
     default: no
-    version_added: 2.6
+    version_added: '2.6'
   force:
     description:
       - Enforces the execution of the challenge and validation, even if an
@@ -194,7 +194,7 @@ options:
         additional domains for which a new certificate is desired.
     type: bool
     default: no
-    version_added: 2.6
+    version_added: '2.6'
 '''
 
 EXAMPLES = r'''
@@ -329,12 +329,12 @@ challenge_data:
       returned: changed and challenge is C(dns-01)
       type: str
       sample: _acme-challenge.example.com
-      version_added: "2.5"
+      version_added: '2.5'
 challenge_data_dns:
   description: list of TXT values per DNS record, in case challenge is C(dns-01)
   returned: changed
   type: dict
-  version_added: "2.5"
+  version_added: '2.5'
 authorizations:
   description: ACME authorization data.
   returned: changed
@@ -348,17 +348,17 @@ order_uri:
   description: ACME order URI.
   returned: changed
   type: str
-  version_added: "2.5"
+  version_added: '2.5'
 finalization_uri:
   description: ACME finalization URI.
   returned: changed
   type: str
-  version_added: "2.5"
+  version_added: '2.5'
 account_uri:
   description: ACME account URI.
   returned: changed
   type: str
-  version_added: "2.5"
+  version_added: '2.5'
 '''
 
 from ansible.module_utils.acme import (

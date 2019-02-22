@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: tower_job_template
 author: "Wayne Witzel III (@wwitzel3)"
-version_added: "2.3"
+version_added: '2.3'
 short_description: create, update, or destroy Ansible Tower job template.
 description:
     - Create, update, or destroy Ansible Tower job templates. See
@@ -49,11 +49,11 @@ options:
     credential:
       description:
         - Name of the credential to use for the job template.
-      version_added: 2.7
+      version_added: '2.7'
     vault_credential:
       description:
         - Name of the vault credential to use for the job template.
-      version_added: 2.7
+      version_added: '2.7'
     forks:
       description:
         - The number of parallel or simultaneous processes to use while executing the playbook.
@@ -74,7 +74,7 @@ options:
     force_handlers_enabled:
       description:
         - Enable forcing playbook handlers to run even if a task fails.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     skip_tags:
@@ -83,17 +83,17 @@ options:
     start_at_task:
       description:
         - Start the playbook at the task matching this name.
-      version_added: 2.7
+      version_added: '2.7'
     diff_mode_enabled:
       description:
         - Enable diff mode for the job template.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     fact_caching_enabled:
       description:
         - Enable use of fact caching for the job template.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     host_config_key:
@@ -102,7 +102,7 @@ options:
     ask_diff_mode:
       description:
         - Prompt user to enable diff mode (show changes) to files when supported by modules.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     ask_extra_vars:
@@ -113,7 +113,7 @@ options:
     ask_limit:
       description:
         - Prompt user for a limit on launch.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     ask_tags:
@@ -124,7 +124,7 @@ options:
     ask_skip_tags:
       description:
         - Prompt user for job tags to skip on launch.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     ask_job_type:
@@ -135,7 +135,7 @@ options:
     ask_verbosity:
       description:
         - Prompt user to choose a verbosity level on launch.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     ask_inventory:
@@ -151,13 +151,13 @@ options:
     survey_enabled:
       description:
         - Enable a survey on the job template.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     survey_spec:
       description:
         - JSON/YAML dict formatted survey definition.
-      version_added: 2.8
+      version_added: '2.8'
       type: dict
       required: False
     become_enabled:
@@ -168,7 +168,7 @@ options:
     concurrent_jobs_enabled:
       description:
         - Allow simultaneous runs of the job template.
-      version_added: 2.7
+      version_added: '2.7'
       type: bool
       default: 'no'
     state:

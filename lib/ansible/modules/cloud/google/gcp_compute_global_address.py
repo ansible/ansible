@@ -52,7 +52,7 @@ options:
     description:
     - The static external IP address represented by this resource.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   description:
     description:
     - An optional description of this resource.
@@ -82,7 +82,7 @@ options:
     - "* INTERNAL indicates internal IP ranges belonging to some network."
     required: false
     default: EXTERNAL
-    version_added: 2.8
+    version_added: '2.8'
     choices:
     - EXTERNAL
     - INTERNAL

@@ -32,7 +32,7 @@ options:
   description:
     description:
       - The description of the monitor.
-    version_added: 2.7
+    version_added: '2.7'
   ip:
     description:
       - IP address part of the IP/port definition. If this parameter is not
@@ -64,7 +64,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   state:
     description:
       - When C(present), ensures that the monitor exists.
@@ -73,7 +73,7 @@ options:
     choices:
       - present
       - absent
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 module: docker_network
-version_added: "2.2"
+version_added: '2.2'
 short_description: Manage Docker networks
 description:
   - Create/remove Docker networks and connect containers to them.
@@ -70,7 +70,7 @@ options:
     description:
       - Enable IPv6 networking.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
 
   ipam_driver:
     description:
@@ -108,7 +108,7 @@ options:
         description:
           - Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
         type: dict
-    version_added: 2.8
+    version_added: '2.8'
 
   state:
     description:
@@ -131,13 +131,13 @@ options:
     description:
       - Restrict external access to the network.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
 
   labels:
     description:
       - Dictionary of labels.
     type: dict
-    version_added: 2.8
+    version_added: '2.8'
 
   scope:
     description:
@@ -147,13 +147,13 @@ options:
       - local
       - global
       - swarm
-    version_added: 2.8
+    version_added: '2.8'
 
   attachable:
     description:
       - If enabled, and the network is in the global scope, non-service containers on worker nodes will be able to connect to the network.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
 
 extends_documentation_fragment:
   - docker

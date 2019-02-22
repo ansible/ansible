@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_bgp_neighbor_af
 extends_documentation_fragment: nxos
-version_added: "2.2"
+version_added: '2.2'
 short_description: Manages BGP address-family's neighbors configuration.
 description:
   - Manages BGP address-family's neighbors configurations on NX-OS switches.
@@ -122,7 +122,7 @@ options:
     description:
       - Disable checking of peer AS-number while advertising
     type: bool
-    version_added: 2.5
+    version_added: '2.5'
   filter_list_in:
     description:
       - Valid values are a string defining a filter-list name,

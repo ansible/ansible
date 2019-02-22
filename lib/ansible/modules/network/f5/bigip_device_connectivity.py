@@ -76,7 +76,7 @@ options:
     choices:
       - between-clusters
       - within-cluster
-    version_added: 2.7
+    version_added: '2.7'
 notes:
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.

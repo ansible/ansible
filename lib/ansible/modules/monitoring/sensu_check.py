@@ -69,7 +69,7 @@ options:
   ttl:
     description:
       - Time to live in seconds until the check is considered stale
-    version_added: 2.4
+    version_added: '2.4'
   handle:
     description:
       - Whether the check should be handled or not
@@ -123,13 +123,13 @@ options:
     description:
       - The high threshold for flap detection
   custom:
-    version_added: "2.1"
+    version_added: '2.1'
     description:
       - A hash/dictionary of custom parameters for mixing to the configuration.
       - You can't rewrite others module parameters using this
     default: {}
   source:
-    version_added: "2.1"
+    version_added: '2.1'
     description:
       - The check source, used to create a JIT Sensu client for an external resource (e.g. a network switch).
 author: "Anders Ingemann (@andsens)"

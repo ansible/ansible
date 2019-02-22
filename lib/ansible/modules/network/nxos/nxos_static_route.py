@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_static_route
 extends_documentation_fragment: nxos
-version_added: "2.2"
+version_added: '2.2'
 short_description: Manages static route configuration
 description:
   - Manages static route configuration
@@ -63,11 +63,11 @@ options:
       - admin_distance
   aggregate:
     description: List of static route definitions
-    version_added: 2.5
+    version_added: '2.5'
   track:
     description:
       - Track value (range 1 - 512). Track must already be configured on the device before adding the route.
-    version_added: "2.8"
+    version_added: '2.8'
   state:
     description:
       - Manage the state of the resource.

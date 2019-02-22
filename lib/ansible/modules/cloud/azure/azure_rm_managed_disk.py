@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_managed_disk
 
-version_added: "2.4"
+version_added: '2.4'
 
 short_description: Manage Azure Manage Disks
 
@@ -81,7 +81,7 @@ options:
             - Name of an existing virtual machine with which the disk is or will be associated, this VM should be in the same resource group.
             - To detach a disk from a vm, explicitly set to ''.
             - If this option is unset, the value will not be changed.
-        version_added: 2.5
+        version_added: '2.5'
     tags:
         description:
             - Tags to assign to the managed disk.

@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: iosxr_interface
-version_added: "2.4"
+version_added: '2.4'
 author:
     - "Ganesh Nalawade (@ganeshrn)"
     - "Kedar Kekan (@kedarX)"
@@ -49,7 +49,7 @@ options:
         configured. Active cards are the ones already inserted.
     choices: ['active', 'preconfigure']
     default: active
-    version_added: 2.5
+    version_added: '2.5'
   speed:
     description:
       - Configure the speed for an interface. Default is auto-negotiation when not configured.
@@ -169,7 +169,7 @@ xml:
   description: NetConf rpc xml sent to device with transport C(netconf)
   returned: always (empty list when no xml rpc to send)
   type: list
-  version_added: 2.5
+  version_added: '2.5'
   sample:
   - '<config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
     <interface-configurations xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-ifmgr-cfg">

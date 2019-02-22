@@ -51,7 +51,7 @@ options:
       - When creating a new profile, if this parameter is not specified, the default
         is provided by the parent profile.
     type: bool
-    version_added: 2.7
+    version_added: '2.7'
   partition:
     description:
       - Device partition to manage resources on.

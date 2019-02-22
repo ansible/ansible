@@ -94,7 +94,7 @@ options:
       string Alternatively, you can add `register: name-of-resource` to a gcp_compute_ssl_policy
       task and then set this ssl_policy field to "{{ name-of-resource }}"'
     required: false
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/latest/targetSslProxies)'

@@ -18,7 +18,7 @@ description:
     - Manage an AWS Elastic Load Balancer target group. See
       U(https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html) or
       U(https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-target-groups.html) for details.
-version_added: "2.4"
+version_added: '2.4'
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
@@ -117,7 +117,7 @@ options:
     required: false
     default: instance
     choices: ['instance', 'ip']
-    version_added: 2.5
+    version_added: '2.5'
   targets:
     description:
       - A list of targets to assign to the target group. This parameter defaults to an empty list. Unless you set the 'modify_targets' parameter then
@@ -136,12 +136,12 @@ options:
       - Whether or not to wait for the target group.
     type: bool
     default: false
-    version_added: "2.4"
+    version_added: '2.4'
   wait_timeout:
     description:
       - The time to wait for the target group.
     default: 200
-    version_added: "2.4"
+    version_added: '2.4'
 extends_documentation_fragment:
     - aws
     - ec2

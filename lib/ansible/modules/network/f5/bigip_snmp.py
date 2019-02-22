@@ -29,7 +29,7 @@ options:
         to the system's default of C(127.0.0.0/8).
       - You can remove all allowed addresses by either providing the word C(none), or
         by providing the empty string C("").
-    version_added: 2.6
+    version_added: '2.6'
   contact:
     description:
       - Specifies the name of the person who administers the SNMP

@@ -19,7 +19,7 @@ module: cloudflare_dns
 author: "Michael Gruener (@mgruener)"
 requirements:
    - "python >= 2.6"
-version_added: "2.1"
+version_added: '2.1'
 short_description: manage Cloudflare DNS records
 description:
    - "Manages dns records via the Cloudflare API, see the docs: U(https://api.cloudflare.com/)"
@@ -37,24 +37,24 @@ options:
     description:
       - Algorithm number. Required for C(type=DS) and C(type=SSHFP) when C(state=present).
     type: int
-    version_added: 2.7
+    version_added: '2.7'
   cert_usage:
     description:
       - Certificate usage number. Required for C(type=TLSA) when C(state=present).
     choices: [ 0, 1, 2, 3 ]
     type: int
-    version_added: 2.7
+    version_added: '2.7'
   hash_type:
     description:
       - Hash type number. Required for C(type=DS), C(type=SSHFP) and C(type=TLSA) when C(state=present).
     choices: [ 1, 2 ]
     type: int
-    version_added: 2.7
+    version_added: '2.7'
   key_tag:
     description:
       - DNSSEC key tag. Needed for C(type=DS) when C(state=present).
     type: int
-    version_added: 2.7
+    version_added: '2.7'
   port:
     description: Service port. Required for C(type=SRV) and C(type=TLSA).
   priority:
@@ -69,7 +69,7 @@ options:
     description: Proxy through cloudflare network or just use DNS
     type: bool
     default: 'no'
-    version_added: "2.3"
+    version_added: '2.3'
   record:
     description:
       - Record to add. Required if C(state=present). Default is C(@) (e.g. the zone name)
@@ -80,7 +80,7 @@ options:
       - Selector number. Required for C(type=TLSA) when C(state=present).
     choices: [ 0, 1 ]
     type: int
-    version_added: 2.7
+    version_added: '2.7'
   service:
     description: Record service. Required for C(type=SRV)
   solo:

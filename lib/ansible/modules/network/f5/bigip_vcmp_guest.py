@@ -124,7 +124,7 @@ options:
         it is assigned to.
       - Possible values are dependent on the type of blades being used in this cluster.
       - The default value depends on the type of blades being used in this cluster.
-    version_added: 2.7
+    version_added: '2.7'
   min_number_of_slots:
     description:
       - Specifies the minimum number of slots that the guest must be assigned to in
@@ -133,7 +133,7 @@ options:
       - If at the end of any allocation attempt the guest is not assigned to at least
         this many slots, the attempt fails and the change that initiated it is reverted.
       - A guest's C(min_number_of_slots) value cannot be greater than its C(number_of_slots).
-    version_added: 2.7
+    version_added: '2.7'
   allowed_slots:
     description:
       - Contains those slots that the guest is allowed to be assigned to.
@@ -144,7 +144,7 @@ options:
         never assigned to the same slot.
       - By default this list includes every available slot in the cluster. This means,
         by default, the guest may be assigned to any slot.
-    version_added: 2.7
+    version_added: '2.7'
 notes:
   - This module can take a lot of time to deploy vCMP guests. This is an intrinsic
     limitation of the vCMP system because it is booting real VMs on the BIG-IP

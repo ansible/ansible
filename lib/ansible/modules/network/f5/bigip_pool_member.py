@@ -27,7 +27,7 @@ options:
       - This parameter is optional and, if not specified, a node name will be
         created automatically from either the specified C(address) or C(fqdn).
       - The C(enabled) state is an alias of C(present).
-    version_added: 2.6
+    version_added: '2.6'
   state:
     description:
       - Pool member state.
@@ -55,7 +55,7 @@ options:
     aliases:
       - ip
       - host
-    version_added: 2.2
+    version_added: '2.2'
   fqdn:
     description:
       - FQDN name of the pool member. This can be any name that is a valid RFC 1123 DNS
@@ -68,7 +68,7 @@ options:
         provided. This parameter cannot be updated after it is set.
     aliases:
       - hostname
-    version_added: 2.6
+    version_added: '2.6'
   port:
     description:
       - Pool member port.
@@ -97,7 +97,7 @@ options:
         members. If this happens, the module will not raise an error.
       - Setting this to C(yes) disables this behavior.
     type: bool
-    version_added: 2.1
+    version_added: '2.1'
   priority_group:
     description:
       - Specifies a number representing the priority group for the pool member.
@@ -108,7 +108,7 @@ options:
         assigned to the pool member.
       - The higher the number, the higher the priority, so a member with a priority
         of 3 has higher priority than a member with a priority of 1.
-    version_added: 2.5
+    version_added: '2.5'
   fqdn_auto_populate:
     description:
       - Specifies whether the system automatically creates ephemeral nodes using
@@ -124,18 +124,18 @@ options:
       - Once set this parameter cannot be changed afterwards.
       - This parameter is ignored when C(reuse_nodes) is C(yes).
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   reuse_nodes:
     description:
       - Reuses node definitions if requested.
     default: yes
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor
         this resource.
-    version_added: 2.8
+    version_added: '2.8'
   availability_requirements:
     description:
       - Specifies, if you activate more than one health monitor, the number of health
@@ -154,7 +154,7 @@ options:
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of C(all) is used.
-    version_added: 2.8
+    version_added: '2.8'
   ip_encapsulation:
     description:
       - Specifies the IP encapsulation using either IPIP (IP encapsulation within IP,
@@ -163,13 +163,13 @@ options:
       - When C(none), disables IP encapsulation.
       - When C(inherit), inherits IP encapsulation setting from the member's pool.
       - When any other value, Options are None, Inherit from Pool, and Member Specific.
-    version_added: 2.8
+    version_added: '2.8'
   aggregate:
     description:
       - List of pool member definitions to be created, modified or removed.
     aliases:
       - members
-    version_added: 2.8
+    version_added: '2.8'
   replace_all_with:
     description:
       - Remove members not defined in the C(aggregate) parameter.
@@ -179,7 +179,7 @@ options:
     type: bool
     aliases:
       - purge
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

@@ -24,7 +24,7 @@ requirements:
 - dbus
 - NetworkManager-glib
 - nmcli
-version_added: "2.0"
+version_added: '2.0'
 description:
     - Manage the network devices. Create, modify and manage various connection and device type e.g., ethernet, teams, bonds, vlans etc.
     - 'On CentOS and Fedora like systems, the requirements can be met by installing the following packages: NetworkManager-glib,
@@ -123,7 +123,7 @@ options:
         description:
             - DHCP Client Identifier sent to the DHCP server.
         type: str
-        version_added: "2.5"
+        version_added: '2.5'
     primary:
         description:
             - This is only used with bond and is the primary interface name (for "active-backup" mode), this is the usually the 'ifname'.
@@ -223,32 +223,32 @@ options:
         description:
             - This is only used with VXLAN - VXLAN ID.
         type: int
-        version_added: "2.8"
+        version_added: '2.8'
     vxlan_remote:
        description:
             - This is only used with VXLAN - VXLAN destination IP address.
        type: str
-       version_added: "2.8"
+       version_added: '2.8'
     vxlan_local:
        description:
             - This is only used with VXLAN - VXLAN local IP address.
        type: str
-       version_added: "2.8"
+       version_added: '2.8'
     ip_tunnel_dev:
         description:
             - This is used with IPIP/SIT - parent device this IPIP/SIT tunnel, can use ifname.
         type: str
-        version_added: "2.8"
+        version_added: '2.8'
     ip_tunnel_remote:
        description:
             - This is used with IPIP/SIT - IPIP/SIT destination IP address.
        type: str
-       version_added: "2.8"
+       version_added: '2.8'
     ip_tunnel_local:
        description:
             - This is used with IPIP/SIT - IPIP/SIT local IP address.
        type: str
-       version_added: "2.8"
+       version_added: '2.8'
 '''
 
 EXAMPLES = r'''

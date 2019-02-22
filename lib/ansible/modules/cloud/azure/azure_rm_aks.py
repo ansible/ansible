@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_aks
-version_added: "2.6"
+version_added: '2.6'
 short_description: Manage a managed Azure Container Service (AKS) Instance.
 description:
     - Create, update and delete a managed Azure Container Service (AKS) Instance.
@@ -95,7 +95,7 @@ options:
             - Existing non-RBAC enabled AKS clusters cannot currently be updated for RBAC use.
         type: bool
         default: no
-        version_added: 2.8
+        version_added: '2.8'
 
 extends_documentation_fragment:
     - azure

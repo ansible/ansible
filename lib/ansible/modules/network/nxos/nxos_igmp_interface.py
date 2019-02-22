@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_igmp_interface
 extends_documentation_fragment: nxos
-version_added: "2.2"
+version_added: '2.2'
 short_description: Manages IGMP interface configuration.
 description:
     - Manages IGMP interface configuration settings.
@@ -137,7 +137,7 @@ options:
               prefix if source is not needed. The specified values will be configured
               on the device and if any previous prefix/sources exist, they will be removed.
               Keyword 'default' is also accpted which removes all existing prefix/sources.
-        version_added: 2.6
+        version_added: '2.6'
     restart:
         description:
             - Restart IGMP. This is NOT idempotent as this is action only.

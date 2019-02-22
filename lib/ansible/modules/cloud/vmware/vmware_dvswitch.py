@@ -52,7 +52,7 @@ options:
             - The version must macht the version of the ESXi hosts you want to connect.
             - The version of the vCenter server is used if not specified.
             - Required only if C(state) is set to C(present).
-        version_added: 2.5
+        version_added: '2.5'
         choices: ['5.0.0', '5.1.0', '5.5.0', '6.0.0', '6.5.0', '6.6.0']
         aliases: ['version']
     mtu:
@@ -71,7 +71,7 @@ options:
         type: str
         choices: ['basic', 'snooping']
         default: 'basic'
-        version_added: 2.8
+        version_added: '2.8'
     uplink_quantity:
         description:
             - Quantity of uplink per ESXi host added to the Distributed Switch.
@@ -84,7 +84,7 @@ options:
             - Only valid if the Distributed Switch will be created. Not used if the Distributed Switch is already present.
             - Uplinks are created as Uplink 1, Uplink 2, etc. pp. by default.
         default: 'Uplink '
-        version_added: 2.8
+        version_added: '2.8'
     discovery_proto:
         description:
             - Link discovery protocol between Cisco and Link Layer discovery.
@@ -110,12 +110,12 @@ options:
             - '- C(name) (str): Administrator name.'
             - '- C(description) (str): Description or other details.'
         type: dict
-        version_added: 2.8
+        version_added: '2.8'
     description:
         description:
             - Description of the Distributed Switch.
         type: str
-        version_added: 2.8
+        version_added: '2.8'
     health_check:
         description:
             - Dictionary which configures Health Check for the Distributed Switch.
@@ -133,7 +133,7 @@ options:
             vlan_mtu_interval: 0,
             teaming_failover_interval: 0,
         }
-        version_added: 2.8
+        version_added: '2.8'
     state:
         description:
             - If set to C(present) and the Distributed Switch doesn't exists then the Distributed Switch will be created.

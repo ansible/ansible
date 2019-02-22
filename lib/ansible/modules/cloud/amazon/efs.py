@@ -17,7 +17,7 @@ module: efs
 short_description: create and maintain EFS file systems
 description:
     - Module allows create, search and destroy Amazon EFS file systems
-version_added: "2.2"
+version_added: '2.2'
 requirements: [ boto3 ]
 author:
     - "Ryan Sydnor (@ryansydnor)"
@@ -29,20 +29,20 @@ options:
               system is created.
         type: bool
         default: 'no'
-        version_added: 2.5
+        version_added: '2.5'
     kms_key_id:
         description:
             - The id of the AWS KMS CMK that will be used to protect the encrypted file system. This parameter is only
               required if you want to use a non-default CMK. If this parameter is not specified, the default CMK for
               Amazon EFS is used. The key id can be Key ID, Key ID ARN, Key Alias or Key Alias ARN.
-        version_added: 2.5
+        version_added: '2.5'
     purge_tags:
         description:
             - If yes, existing tags will be purged from the resource to match exactly what is defined by I(tags) parameter. If the I(tags) parameter
               is not set then tags will not be modified.
         type: bool
         default: 'yes'
-        version_added: 2.5
+        version_added: '2.5'
     state:
         description:
             - Allows to create, search and destroy Amazon EFS file system
@@ -75,13 +75,13 @@ options:
             - The throughput_mode for the file system to be created.
             - Requires botocore >= 1.10.57
         choices: ['bursting', 'provisioned']
-        version_added: 2.8
+        version_added: '2.8'
     provisioned_throughput_in_mibps:
         description:
             - If the throughput_mode is provisioned, select the amount of throughput to provisioned in Mibps.
             - Requires botocore >= 1.10.57
         type: float
-        version_added: 2.8
+        version_added: '2.8'
     wait:
         description:
             - "In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted')

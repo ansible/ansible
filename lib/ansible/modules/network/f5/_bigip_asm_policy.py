@@ -18,7 +18,7 @@ module: bigip_asm_policy
 short_description: Manage BIG-IP ASM policies
 description:
    - Manage BIG-IP ASM policies.
-version_added: 2.5
+version_added: '2.5'
 deprecated:
   removed_in: '2.12'
   alternative: bigip_asm_policy_manage

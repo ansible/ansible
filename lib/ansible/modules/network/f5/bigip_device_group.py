@@ -91,7 +91,7 @@ options:
       - Indicates whether failover occurs over the network or is hard-wired.
       - This parameter is only valid for C(type)'s that are C(sync-failover).
     type: bool
-    version_added: 2.7
+    version_added: '2.7'
 notes:
   - This module is primarily used as a component of configuring HA pairs of
     BIG-IP devices.

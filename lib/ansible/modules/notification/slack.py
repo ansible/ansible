@@ -22,7 +22,7 @@ module: slack
 short_description: Send Slack notifications
 description:
     - The C(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
-version_added: "1.6"
+version_added: '1.6'
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
   domain:
@@ -56,7 +56,7 @@ options:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
   thread_id:
-    version_added: 2.8
+    version_added: '2.8'
     description:
       - Optional. Timestamp of message to thread this message to as a float. https://api.slack.com/docs/message-threading
   username:
@@ -90,7 +90,7 @@ options:
     type: bool
     default: 'yes'
   color:
-    version_added: "2.0"
+    version_added: '2.0'
     description:
       - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message.
       - Allowed values for color can be one of 'normal', 'good', 'warning', 'danger', any valid 3 digit or 6 digit hex color value.

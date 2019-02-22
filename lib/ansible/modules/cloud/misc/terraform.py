@@ -20,7 +20,7 @@ short_description: Manages a Terraform deployment (and plans)
 description:
      - Provides support for deploying resources with Terraform and pulling
        resource information back into Ansible.
-version_added: "2.5"
+version_added: '2.5'
 options:
   state:
     choices: ['planned', 'present', 'absent']
@@ -43,7 +43,7 @@ options:
       - The terraform workspace to work with.
     required: false
     default: default
-    version_added: 2.7
+    version_added: '2.7'
   purge_workspace:
     description:
       - Only works with state = absent
@@ -52,7 +52,7 @@ options:
     required: false
     default: false
     type: bool
-    version_added: 2.7
+    version_added: '2.7'
   plan_file:
     description:
       - The path to an existing Terraform plan file to apply. If this is not
@@ -103,7 +103,7 @@ options:
     description:
       - A group of key-values to provide at init stage to the -backend-config parameter.
     required: false
-    version_added: 2.7
+    version_added: '2.7'
 notes:
    - To just run a `terraform plan`, use check mode.
 requirements: [ "terraform" ]

@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_network
 short_description: Module to manage logical networks in oVirt/RHV
-version_added: "2.3"
+version_added: '2.3'
 author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage logical networks in oVirt/RHV"
@@ -36,7 +36,7 @@ options:
     id:
         description:
             - "ID of the network to manage."
-        version_added: "2.8"
+        version_added: '2.8'
     name:
         description:
             - "Name of the network to manage."
@@ -61,7 +61,7 @@ options:
     external_provider:
         description:
             - "Name of external network provider."
-        version_added: 2.8
+        version_added: '2.8'
     vm_network:
         description:
             - "If I(True) network will be marked as network for VM."
@@ -82,7 +82,7 @@ options:
     label:
         description:
             - "Name of the label to assign to the network."
-        version_added: "2.5"
+        version_added: '2.5'
 extends_documentation_fragment: ovirt
 '''
 

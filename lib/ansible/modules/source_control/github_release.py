@@ -31,7 +31,7 @@ options:
     password:
         description:
             - The GitHub account password for the user. Mutually exclusive with C(token).
-        version_added: "2.4"
+        version_added: '2.4'
     repo:
         description:
             - Repository name
@@ -44,31 +44,31 @@ options:
     tag:
         description:
             - Tag name when creating a release. Required when using action is set to C(create_release).
-        version_added: 2.4
+        version_added: '2.4'
     target:
         description:
             - Target of release when creating a release
-        version_added: 2.4
+        version_added: '2.4'
     name:
         description:
             - Name of release when creating a release
-        version_added: 2.4
+        version_added: '2.4'
     body:
         description:
             - Description of the release when creating a release
-        version_added: 2.4
+        version_added: '2.4'
     draft:
         description:
             - Sets if the release is a draft or not. (boolean)
         type: 'bool'
         default: 'no'
-        version_added: 2.4
+        version_added: '2.4'
     prerelease:
         description:
             - Sets if the release is a prerelease or not. (boolean)
         type: bool
         default: 'no'
-        version_added: 2.4
+        version_added: '2.4'
 
 author:
     - "Adrian Moisey (@adrianmoisey)"

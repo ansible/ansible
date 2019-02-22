@@ -85,7 +85,7 @@ options:
       - internal
       - message-routing
     default: standard
-    version_added: 2.6
+    version_added: '2.6'
   name:
     description:
       - Virtual server name.
@@ -113,7 +113,7 @@ options:
       - Specify the IP address in Classless Inter-Domain Routing (CIDR) format; address/prefix,
         where the prefix length is in bits. For example, for IPv4, 10.0.0.1/32 or 10.0.0.0/24,
         and for IPv6, ffe1::0020/64 or 2001:ed8:77b5:2:10:10:100:42/64.
-    version_added: 2.5
+    version_added: '2.5'
   port:
     description:
       - Port of the virtual server. Required when C(state) is C(present)
@@ -177,7 +177,7 @@ options:
     aliases:
       - all_profiles
   irules:
-    version_added: 2.2
+    version_added: '2.2'
     description:
       - List of rules to be applied in priority order.
       - If you want to remove existing iRules, specify a single empty value; C("").
@@ -189,7 +189,7 @@ options:
     aliases:
       - all_rules
   enabled_vlans:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - List of VLANs to be enabled. When a VLAN named C(all) is used, all
         VLANs will be allowed. VLANs can be specified with or without the
@@ -197,7 +197,7 @@ options:
         then the C(partition) option of this module will be used.
       - This parameter is mutually exclusive with the C(disabled_vlans) parameter.
   disabled_vlans:
-    version_added: 2.5
+    version_added: '2.5'
     description:
       - List of VLANs to be disabled. If the partition is not specified in the VLAN,
         then the C(partition) option of this module will be used.
@@ -245,12 +245,12 @@ options:
       - If you want to remove the existing fallback persistence profile, specify an
         empty value; C(""). See the documentation for an example.
       - When C(type) is C(dhcp), this parameter will be ignored.
-    version_added: 2.3
+    version_added: '2.3'
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   metadata:
     description:
       - Arbitrary key/value pairs that you can attach to a virtual server. This is useful in
@@ -259,7 +259,7 @@ options:
       - Values for all of the keys will be stored as strings; this includes values
         that are numbers.
       - Data will be persisted, not ephemeral.
-    version_added: 2.5
+    version_added: '2.5'
   insert_metadata:
     description:
       - When set to C(no) it will not set metadata on the device.
@@ -268,7 +268,7 @@ options:
         such users to utilize this module to manage Virtual Server objects on the device.
     type: bool
     default: yes
-    version_added: 2.8
+    version_added: '2.8'
   address_translation:
     description:
       - Specifies, when C(enabled), that the system translates the address of the
@@ -278,7 +278,7 @@ options:
         same IP address.
       - When creating a new virtual server, the default is C(enabled).
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   port_translation:
     description:
       - Specifies, when C(enabled), that the system translates the port of the virtual
@@ -288,7 +288,7 @@ options:
         the virtual server to load balance connections to any service.
       - When creating a new virtual server, the default is C(enabled).
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   source_port:
     description:
       - Specifies whether the system preserves the source port of the connection.
@@ -297,13 +297,13 @@ options:
       - preserve
       - preserve-strict
       - change
-    version_added: 2.8
+    version_added: '2.8'
   mirror:
     description:
       - Specifies that the system mirrors connections on each member of a redundant pair.
       - When creating a new virtual server, if this parameter is not specified, the default is C(disabled).
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   mask:
    description:
       - Specifies the destination address network mask. This parameter will work with IPv4 and IPv6 type of addresses.
@@ -317,7 +317,7 @@ options:
         inferred from C(destination).
       - When C(destination) is provided as Virtual Address name, and C(mask) is not specified,
         the mask will be C(None) allowing device set it with its internal defaults.
-   version_added: 2.8
+   version_added: '2.8'
   ip_protocol:
     description:
       - Specifies a network protocol name you want the system to use to direct traffic
@@ -349,13 +349,13 @@ options:
       - tcp
       - udp
       - udplite
-    version_added: 2.6
+    version_added: '2.6'
   firewall_enforced_policy:
     description:
       - Applies the specify AFM policy to the virtual in an enforcing way.
       - When creating a new virtual, if this parameter is not specified, the enforced
         policy is disabled.
-    version_added: 2.6
+    version_added: '2.6'
   firewall_staged_policy:
     description:
       - Applies the specify AFM policy to the virtual in an enforcing way.
@@ -363,14 +363,14 @@ options:
         actually applying the rules to traffic.
       - When creating a new virtual, if this parameter is not specified, the staged
         policy is disabled.
-    version_added: 2.6
+    version_added: '2.6'
   security_log_profiles:
     description:
       - Specifies the log profile applied to the virtual server.
       - To make use of this feature, the AFM module must be licensed and provisioned.
       - The C(Log all requests) and C(Log illegal requests) are mutually exclusive and
         therefore, this module will raise an error if the two are specified together.
-    version_added: 2.6
+    version_added: '2.6'
   security_nat_policy:
     description:
       - Specify the Firewall NAT policies for the virtual server.
@@ -378,7 +378,7 @@ options:
       - The most specific policy is used. For example, if you specify that the
         virtual server use the device policy and the route domain policy, the route
         domain policy overrides the device policy.
-    version_added: 2.7
+    version_added: '2.7'
     suboptions:
       policy:
         description:
@@ -405,28 +405,28 @@ options:
       - Specifies the IP intelligence policy applied to the virtual server.
       - This parameter requires that a valid BIG-IP security module such as ASM or AFM
         be provisioned.
-    version_added: 2.8
+    version_added: '2.8'
   rate_limit:
     description:
       - Virtual server rate limit (connections-per-second). Setting this to 0
         disables the limit.
       - The valid value range is C(0) - C(4294967295).
     type: int
-    version_added: 2.8
+    version_added: '2.8'
   rate_limit_dst_mask:
     description:
       - Specifies a mask, in bits, to be applied to the destination address as part of the rate limiting.
       - The default value is C(0), which is equivalent to using the entire address - C(32) in IPv4, or C(128) in IPv6.
       - The valid value range is C(0) - C(4294967295).
     type: int
-    version_added: 2.8
+    version_added: '2.8'
   rate_limit_src_mask:
     description:
       - Specifies a mask, in bits, to be applied to the source address as part of the rate limiting.
       - The default value is C(0), which is equivalent to using the entire address - C(32) in IPv4, or C(128) in IPv6.
       - The valid value range is C(0) - C(4294967295).
     type: int
-    version_added: 2.8
+    version_added: '2.8'
   rate_limit_mode:
     description:
       - Indicates whether the rate limit is applied per virtual object, per source address, per destination address,
@@ -441,13 +441,13 @@ options:
       - source
       - source-destination
     default: object
-    version_added: 2.8
+    version_added: '2.8'
   clone_pools:
     description:
       - Specifies a pool or list of pools that the virtual server uses to replicate either client-side
         or server-side traffic.
       - Typically this option is used for intrusion detection.
-    version_added: 2.8
+    version_added: '2.8'
     suboptions:
       pool_name:
         description:

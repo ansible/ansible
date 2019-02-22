@@ -18,7 +18,7 @@ module: bigip_gtm_facts
 short_description: Collect facts from F5 BIG-IP GTM devices
 description:
   - Collect facts from F5 BIG-IP GTM devices.
-version_added: 2.3
+version_added: '2.3'
 options:
   include:
     description:

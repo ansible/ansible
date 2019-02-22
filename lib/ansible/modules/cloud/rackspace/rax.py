@@ -18,7 +18,7 @@ short_description: create / delete an instance in Rackspace Public Cloud
 description:
      - creates / deletes a Rackspace Public Cloud instance and optionally
        waits for it to be 'running'.
-version_added: "1.2"
+version_added: '1.2'
 options:
   auto_increment:
     description:
@@ -27,7 +27,7 @@ options:
         or meta key.
     type: bool
     default: 'yes'
-    version_added: 1.5
+    version_added: '1.5'
   boot_from_volume:
     description:
       - Whether or not to boot the instance from a Cloud Block Storage volume.
@@ -36,41 +36,41 @@ options:
         new volume at boot time.
     type: bool
     default: 'no'
-    version_added: 1.9
+    version_added: '1.9'
   boot_volume:
     description:
       - Cloud Block Storage ID or Name to use as the boot volume of the
         instance
-    version_added: 1.9
+    version_added: '1.9'
   boot_volume_size:
     description:
       - Size of the volume to create in Gigabytes. This is only required with
         I(image) and I(boot_from_volume).
     default: 100
-    version_added: 1.9
+    version_added: '1.9'
   boot_volume_terminate:
     description:
       - Whether the I(boot_volume) or newly created volume from I(image) will
         be terminated when the server is terminated
     type: bool
     default: 'no'
-    version_added: 1.9
+    version_added: '1.9'
   config_drive:
     description:
       - Attach read-only configuration drive to server as label config-2
     type: bool
     default: 'no'
-    version_added: 1.7
+    version_added: '1.7'
   count:
     description:
       - number of instances to launch
     default: 1
-    version_added: 1.4
+    version_added: '1.4'
   count_offset:
     description:
       - number count to start at
     default: 1
-    version_added: 1.4
+    version_added: '1.4'
   disk_config:
     description:
       - Disk partitioning strategy
@@ -88,18 +88,18 @@ options:
         additional servers will be added.
     type: bool
     default: 'no'
-    version_added: 1.4
+    version_added: '1.4'
   extra_client_args:
     description:
       - A hash of key/value pairs to be used when creating the cloudservers
         client. This is considered an advanced option, use it wisely and
         with caution.
-    version_added: 1.6
+    version_added: '1.6'
   extra_create_args:
     description:
       - A hash of key/value pairs to be used when creating a new server.
         This is considered an advanced option, use it wisely and with caution.
-    version_added: 1.6
+    version_added: '1.6'
   files:
     description:
       - Files to insert into the instance. remotefilename:localcontent
@@ -110,7 +110,7 @@ options:
     description:
       - host group to assign to server, is also used for idempotent operations
         to ensure a specific number of instances
-    version_added: 1.4
+    version_added: '1.4'
   image:
     description:
       - image to use for the instance. Can be an C(id), C(human_id) or C(name).
@@ -120,7 +120,7 @@ options:
     description:
       - list of instance ids, currently only used when state='absent' to
         remove instances
-    version_added: 1.4
+    version_added: '1.4'
   key_name:
     description:
       - key pair to use on the instance
@@ -140,7 +140,7 @@ options:
     default:
       - public
       - private
-    version_added: 1.4
+    version_added: '1.4'
   state:
     description:
       - Indicate desired state of the resource
@@ -152,7 +152,7 @@ options:
     description:
       - Data to be uploaded to the servers config drive. This option implies
         I(config_drive). Can be a file path or a string
-    version_added: 1.7
+    version_added: '1.7'
   wait:
     description:
       - wait for the instance to be in state 'running' before returning

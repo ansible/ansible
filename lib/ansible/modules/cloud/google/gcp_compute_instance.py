@@ -384,7 +384,7 @@ options:
     - As a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
       off .
     required: false
-    version_added: 2.8
+    version_added: '2.8'
     choices:
     - PROVISIONING
     - STAGING

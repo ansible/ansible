@@ -70,7 +70,7 @@ options:
     - This parameter is useful while forcing virtual machine state.
     default: False
     type: bool
-    version_added: 2.5
+    version_added: '2.5'
   state_change_timeout:
     description:
     - If the C(state) is set to C(shutdown-guest), by default the module will return immediately after sending the shutdown signal.

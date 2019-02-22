@@ -71,7 +71,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.6
+    version_added: '2.6'
   state:
     description:
       - When C(present), ensures that the static route exists.

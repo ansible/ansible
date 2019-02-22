@@ -46,7 +46,7 @@ options:
       - UUID of the virtual machine to perform a vMotion operation on.
       - This is a required parameter, if C(vm_name) is not set.
       aliases: ['uuid']
-      version_added: 2.7
+      version_added: '2.7'
     destination_host:
       description:
       - Name of the destination host the virtual machine should be running on.
@@ -56,7 +56,7 @@ options:
       description:
       - "Name of the destination datastore the virtual machine's vmdk should be moved on."
       aliases: ['datastore']
-      version_added: 2.7
+      version_added: '2.7'
 extends_documentation_fragment: vmware.documentation
 '''
 

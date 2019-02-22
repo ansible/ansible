@@ -16,12 +16,12 @@ DOCUMENTATION = '''
 module: vsphere_guest
 short_description: Create/delete/manage a guest VM through VMware vSphere.
 deprecated:
-    removed_in: "2.9"
+    removed_in: '2.9'
     why: "Replaced by M(vmware_guest) module. Also, 'Pysphere' is deprecated in favor of VMware's Official Python bindings - 'Pyvmomi'."
     alternative: Use M(vmware_guest) and other vmware guest related modules instead.
 description:
      - Create/delete/reconfigure a guest VM through VMware vSphere. This module has a dependency on pysphere >= 1.7
-version_added: "1.6"
+version_added: '1.6'
 options:
   vcenter_hostname:
     description:
@@ -36,7 +36,7 @@ options:
         never validate on python <= 2.7.8.
     type: bool
     default: 'yes'
-    version_added: 2.1
+    version_added: '2.1'
   guest:
     description:
       - The virtual server name you wish to manage.
@@ -66,20 +66,20 @@ options:
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured', 'reboot_guest', 'poweroff_guest']
   from_template:
-    version_added: "1.9"
+    version_added: '1.9'
     description:
       - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware
         such as CPU, RAM, NICs or Disks can be applied when launching from template.
     type: bool
     default: 'no'
   template_src:
-    version_added: "1.9"
+    version_added: '1.9'
     description:
       - Name of the source template to deploy from
   snapshot_to_clone:
     description:
         - A string that when specified, will create a linked clone copy of the VM. Snapshot must already be taken in vCenter.
-    version_added: "2.0"
+    version_added: '2.0'
   power_on_after_clone:
     description:
       - Specifies if the VM should be powered on after the clone.
@@ -102,7 +102,7 @@ options:
     description:
       - Desired hardware version identifier (for example, "vmx-08" for vms that needs to be managed with vSphere Client). Note that changing hardware
         version of existing vm is not supported.
-    version_added: "1.7"
+    version_added: '1.7'
   vmware_guest_facts:
     description:
       - Gather facts from vCenter on a particular VM

@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachine
 
-version_added: "2.1"
+version_added: '2.1'
 
 short_description: Manage Azure virtual machines.
 
@@ -46,7 +46,7 @@ options:
     custom_data:
         description:
             - Data which is made available to the virtual machine and used by e.g., cloud-init.
-        version_added: "2.5"
+        version_added: '2.5'
     state:
         description:
             - Assert the state of the virtual machine.
@@ -73,7 +73,7 @@ options:
             - Use with state C(present) to generalize the machine. Set to true to generalize the machine.
             - Please note that this operation is irreversible.
         type: bool
-        version_added: "2.8"
+        version_added: '2.8'
     restarted:
         description:
             - Use with state C(present) to restart a running VM.
@@ -127,7 +127,7 @@ options:
     availability_set:
         description:
             - Name or ID of an existing availability set to add the VM to. The availability_set should be in the same resource group as VM.
-        version_added: "2.5"
+        version_added: '2.5'
     storage_account_name:
         description:
             - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
@@ -154,11 +154,11 @@ options:
             - Standard_LRS
             - StandardSSD_LRS
             - Premium_LRS
-        version_added: "2.4"
+        version_added: '2.4'
     os_disk_name:
         description:
             - OS disk name
-        version_added: "2.8"
+        version_added: '2.8'
     os_disk_caching:
         description:
             - Type of OS disk caching.
@@ -171,7 +171,7 @@ options:
     os_disk_size_gb:
         description:
             - Type of OS disk size in GB.
-        version_added: "2.7"
+        version_added: '2.7'
     os_type:
         description:
             - Base type of operating system.
@@ -182,17 +182,17 @@ options:
     data_disks:
         description:
             - Describes list of data disks.
-        version_added: "2.4"
+        version_added: '2.4'
         suboptions:
             lun:
                 description:
                     - The logical unit number for data disk
                 default: 0
-                version_added: "2.4"
+                version_added: '2.4'
             disk_size_gb:
                 description:
                     - The initial disk size in GB for blank data disks
-                version_added: "2.4"
+                version_added: '2.4'
             managed_disk_type:
                 description:
                     - Managed data disk type
@@ -200,23 +200,23 @@ options:
                     - Standard_LRS
                     - StandardSSD_LRS
                     - Premium_LRS
-                version_added: "2.4"
+                version_added: '2.4'
             storage_account_name:
                 description:
                     - Name of an existing storage account that supports creation of VHD blobs. If not specified for a new VM,
                       a new storage account named <vm name>01 will be created using storage type 'Standard_LRS'.
-                version_added: "2.4"
+                version_added: '2.4'
             storage_container_name:
                 description:
                     - Name of the container to use within the storage account to store VHD blobs. If no name is specified a
                       default container will created.
                 default: vhds
-                version_added: "2.4"
+                version_added: '2.4'
             storage_blob_name:
                 description:
                     - Name fo the storage blob used to hold the VM's OS disk image. If no name is provided, defaults to
                       the VM name + '.vhd'. If you provide a name, it must end with '.vhd'
-                version_added: "2.4"
+                version_added: '2.4'
             caching:
                 description:
                     - Type of data disk caching.
@@ -224,7 +224,7 @@ options:
                     - ReadOnly
                     - ReadWrite
                 default: ReadOnly
-                version_added: "2.4"
+                version_added: '2.4'
     public_ip_allocation_method:
         description:
             - If a public IP address is created when creating the VM (because a Network Interface was not provided),
@@ -257,7 +257,7 @@ options:
         description:
             - When creating a virtual machine, if a specific virtual network from another resource group should be
               used, use this parameter to specify the resource group to use.
-        version_added: "2.4"
+        version_added: '2.4'
     virtual_network_name:
         description:
             - When creating a virtual machine, if a network interface name is not provided, one will be created.
@@ -285,7 +285,7 @@ options:
     plan:
         description:
             - A dictionary describing a third-party billing plan for an instance
-        version_added: 2.5
+        version_added: '2.5'
         suboptions:
             name:
                 description:
@@ -308,12 +308,12 @@ options:
             - Only Azure service admin/account admin users can purchase images from the marketplace
         type: bool
         default: false
-        version_added: "2.7"
+        version_added: '2.7'
     zones:
         description:
             - A list of Availability Zones for your virtual machine
         type: list
-        version_added: "2.8"
+        version_added: '2.8'
 
 extends_documentation_fragment:
     - azure

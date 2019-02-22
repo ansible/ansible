@@ -214,7 +214,7 @@ options:
     description:
     - Settings for enabling Cloud Identity Aware Proxy.
     required: false
-    version_added: 2.7
+    version_added: '2.7'
     suboptions:
       enabled:
         description:
@@ -239,7 +239,7 @@ options:
       load balancing. A backend service created for one type of load balancing cannot
       be used with the other.
     required: false
-    version_added: 2.7
+    version_added: '2.7'
     choices:
     - INTERNAL
     - EXTERNAL

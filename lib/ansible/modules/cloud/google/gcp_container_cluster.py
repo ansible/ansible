@@ -258,7 +258,7 @@ options:
     required: true
     aliases:
     - zone
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: gcp
 '''
 

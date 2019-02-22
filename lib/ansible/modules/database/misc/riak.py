@@ -20,7 +20,7 @@ short_description: This module handles some common Riak operations
 description:
      - This module can be used to join nodes to a cluster, check
        the status of the cluster.
-version_added: "1.2"
+version_added: '1.2'
 author:
     - "James Martin (@jsmartin)"
     - "Drew Kerrigan (@drewkerrigan)"
@@ -57,7 +57,7 @@ options:
         on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
-    version_added: 1.5.1
+    version_added: '1.5.1'
 '''
 
 EXAMPLES = '''

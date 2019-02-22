@@ -11,7 +11,7 @@ DOCUMENTATION = """
 ---
 module: nxos_interface
 extends_documentation_fragment: nxos
-version_added: "2.1"
+version_added: '2.1'
 short_description: Manages physical attributes of interfaces.
 description:
   - Manages physical attributes of interfaces of NX-OS switches.
@@ -37,11 +37,11 @@ options:
     description:
       - Interface type to be unconfigured from the device.
     choices: ['loopback', 'portchannel', 'svi', 'nve']
-    version_added: 2.2
+    version_added: '2.2'
   speed:
     description:
       - Interface link speed. Applicable for ethernet interface only.
-    version_added: 2.5
+    version_added: '2.5'
   admin_state:
     description:
       - Administrative state of the interface.
@@ -60,36 +60,36 @@ options:
     description:
       - MTU for a specific interface. Must be an even number between 576 and 9216.
         Applicable for ethernet interface only.
-    version_added: 2.5
+    version_added: '2.5'
   ip_forward:
     description:
       - Enable/Disable ip forward feature on SVIs.
     choices: ['enable','disable']
-    version_added: 2.2
+    version_added: '2.2'
   fabric_forwarding_anycast_gateway:
     description:
       - Associate SVI with anycast gateway under VLAN configuration mode.
         Applicable for SVI interface only.
     type: bool
-    version_added: 2.2
+    version_added: '2.2'
   duplex:
     description:
       - Interface link status. Applicable for ethernet interface only.
     default: auto
     choices: ['full', 'half', 'auto']
-    version_added: 2.5
+    version_added: '2.5'
   tx_rate:
     description:
       - Transmit rate in bits per second (bps).
       - This is state check parameter only.
       - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
-    version_added: 2.5
+    version_added: '2.5'
   rx_rate:
     description:
       - Receiver rate in bits per second (bps).
       - This is state check parameter only.
       - Supports conditionals, see L(Conditionals in Networking Modules,../network/user_guide/network_working_with_command_output.html)
-    version_added: 2.5
+    version_added: '2.5'
   neighbors:
     description:
       - Check the operational state of given interface C(name) for LLDP neighbor.
@@ -101,10 +101,10 @@ options:
         port:
           description:
             - "LLDP neighbor port to which given interface C(name) is connected."
-    version_added: 2.5
+    version_added: '2.5'
   aggregate:
     description: List of Interfaces definitions.
-    version_added: 2.5
+    version_added: '2.5'
   state:
     description:
       - Specify desired state of the resource.

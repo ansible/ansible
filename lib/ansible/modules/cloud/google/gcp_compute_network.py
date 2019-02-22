@@ -91,7 +91,7 @@ options:
     - The network-level routing configuration for this network. Used by Cloud Router
       to determine what type of network-wide routing behavior to enforce.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
     suboptions:
       routing_mode:
         description:

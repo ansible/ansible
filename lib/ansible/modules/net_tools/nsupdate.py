@@ -25,7 +25,7 @@ short_description: Manage DNS records.
 description:
     - Create, update and remove DNS records using DDNS updates
     - DDNS works well with both bind and Microsoft DNS (see https://technet.microsoft.com/en-us/library/cc961412.aspx)
-version_added: "2.3"
+version_added: '2.3'
 requirements:
   - dnspython
 author: "Loic Blot (@nerzhul)"
@@ -43,7 +43,7 @@ options:
         description:
             - Use this TCP port when connecting to C(server).
         default: 53
-        version_added: 2.5
+        version_added: '2.5'
     key_name:
         description:
             - Use TSIG key name to authenticate against DNS C(server)
@@ -81,7 +81,7 @@ options:
             - Sets the transport protocol (TCP or UDP). TCP is the recommended and a more robust option.
         default: 'tcp'
         choices: ['tcp', 'udp']
-        version_added: 2.8
+        version_added: '2.8'
 '''
 
 EXAMPLES = '''

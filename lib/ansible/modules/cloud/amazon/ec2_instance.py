@@ -16,7 +16,7 @@ module: ec2_instance
 short_description: Create & manage EC2 instances
 description:
     - Create and manage AWS EC2 instance
-version_added: "2.5"
+version_added: '2.5'
 author:
   - Ryan Scott Brown (@ryansb)
 requirements: [ "boto3", "botocore" ]
@@ -150,7 +150,7 @@ options:
       - Those parameters can only be set at instance launch. The two suboptions threads_per_core and core_count are mandatory.
       - See U(https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-optimize-cpu.html) for combinations available.
       - Requires botocore >= 1.10.16
-    version_added: 2.7
+    version_added: '2.7'
     suboptions:
       threads_per_core:
         description:
@@ -187,7 +187,7 @@ options:
   placement_group:
     description:
       - The placement group that needs to be assigned to the instance
-    version_added: 2.8
+    version_added: '2.8'
 
 extends_documentation_fragment:
     - aws

@@ -17,7 +17,7 @@ module: ecs_task
 short_description: run, start or stop a task in ecs
 description:
     - Creates or deletes instances of task definitions.
-version_added: "2.0"
+version_added: '2.0'
 author: Mark Chance (@Java1Guy)
 requirements: [ json, botocore, boto3 ]
 options:
@@ -59,7 +59,7 @@ options:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
           - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
             a list of group names or group IDs for the task
-        version_added: 2.6
+        version_added: '2.6'
 extends_documentation_fragment:
     - aws
     - ec2

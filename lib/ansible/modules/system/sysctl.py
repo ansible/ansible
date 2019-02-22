@@ -20,7 +20,7 @@ module: sysctl
 short_description: Manage entries in sysctl.conf.
 description:
     - This module manipulates sysctl entries and optionally performs a C(/sbin/sysctl -p) after changing them.
-version_added: "1.0"
+version_added: '1.0'
 options:
     name:
         description:
@@ -57,7 +57,7 @@ options:
             - Verify token value with the sysctl command and set with -w if necessary
         type: bool
         default: 'no'
-        version_added: 1.5
+        version_added: '1.5'
 author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 '''
 

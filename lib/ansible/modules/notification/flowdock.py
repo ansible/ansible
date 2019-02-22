@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: flowdock
-version_added: "1.2"
+version_added: '1.2'
 author: "Matt Coddington (@mcodd)"
 short_description: Send a message to a flowdock
 description:
@@ -78,7 +78,7 @@ options:
     required: false
     default: 'yes'
     type: bool
-    version_added: 1.5.1
+    version_added: '1.5.1'
 
 requirements: [ ]
 '''

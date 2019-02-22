@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_networkinterface
 
-version_added: "2.1"
+version_added: '2.1'
 
 short_description: Manage Azure network interfaces.
 
@@ -152,7 +152,7 @@ options:
                     - List of an existing load-balancer backend address pool id to associate with the network interface.
                     - It can be write as a resource id.
                     - Also can be a dict of I(name) and I(load_balancer).
-                version_added: 2.6
+                version_added: '2.6'
             primary:
                 description:
                     - Whether the ip configuration is the primary one in the list.
@@ -162,19 +162,19 @@ options:
                 description:
                     - List of application security groups in which the IP configuration is included.
                     - Element of the list could be a resource id of application security group, or dict of C(resource_group) and C(name).
-                version_added: 2.8
-        version_added: 2.5
+                version_added: '2.8'
+        version_added: '2.5'
     enable_accelerated_networking:
         description:
             - Specifies whether the network interface should be created with the accelerated networking feature or not
         type: bool
-        version_added: 2.7
+        version_added: '2.7'
         default: False
     create_with_security_group:
         description:
             - Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
         type: bool
-        version_added: 2.6
+        version_added: '2.6'
         default: True
     security_group:
         description:
@@ -198,13 +198,13 @@ options:
             - ip_forwarding
         type: bool
         default: False
-        version_added: 2.7
+        version_added: '2.7'
     dns_servers:
         description:
             - Which DNS servers should the NIC lookup
             - List of IP's
         type: list
-        version_added: 2.7
+        version_added: '2.7'
 extends_documentation_fragment:
     - azure
     - azure_tags

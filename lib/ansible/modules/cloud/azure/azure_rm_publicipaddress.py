@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_publicipaddress
 
-version_added: "2.1"
+version_added: '2.1'
 
 short_description: Manage Azure Public IP Addresses.
 
@@ -70,17 +70,17 @@ options:
             - standard
             - Basic
             - Standard
-        version_added: 2.6
+        version_added: '2.6'
     ip_tags:
         description:
             - List of IpTag associated with the public IP address.
             - Each element should contain type:value pair.
-        version_added: 2.8
+        version_added: '2.8'
     idle_timeout:
         description:
             - Idle timeout in minutes.
         type: int
-        version_added: 2.8
+        version_added: '2.8'
     version:
         description:
             - The public IP address version.
@@ -88,7 +88,7 @@ options:
             - ipv4
             - ipv6
         default: ipv4
-        version_added: 2.8
+        version_added: '2.8'
 
 extends_documentation_fragment:
     - azure

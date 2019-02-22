@@ -53,7 +53,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

@@ -122,7 +122,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   members:
     description:
       - Members to assign to the pool.
@@ -136,13 +136,13 @@ options:
         description:
           - Name of the virtual server, associated with the server, that the pool member is a part of.
         required: True
-    version_added: 2.6
+    version_added: '2.6'
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor this resource.
       - When C(availability_requirements.type) is C(require), you may only have a single monitor in the
         C(monitors) list.
-    version_added: 2.6
+    version_added: '2.6'
   availability_requirements:
     description:
       - Specifies, if you activate more than one health monitor, the number of health
@@ -176,16 +176,16 @@ options:
           - The value of this parameter should always be B(higher) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
-    version_added: 2.6
+    version_added: '2.6'
   max_answers_returned:
     description:
       - Specifies the maximum number of available virtual servers that the system lists in a response.
       - The maximum is 500.
-    version_added: 2.8
+    version_added: '2.8'
   ttl:
     description:
       - Specifies the number of seconds that the IP address, once found, is valid.
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

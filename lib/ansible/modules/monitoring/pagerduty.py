@@ -19,7 +19,7 @@ module: pagerduty
 short_description: Create PagerDuty maintenance windows
 description:
     - This module will let you create PagerDuty maintenance windows
-version_added: "1.2"
+version_added: '1.2'
 author:
     - "Andrew Newdigate (@suprememoocow)"
     - "Dylan Silva (@thaumos)"
@@ -55,7 +55,7 @@ options:
     window_id:
         description:
             - ID of maintenance window. Only needed when absent a maintenance_window.
-        version_added: "2.7"
+        version_added: '2.7'
     hours:
         description:
             - Length of maintenance window in hours.
@@ -75,7 +75,7 @@ options:
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
-        version_added: 1.5.1
+        version_added: '1.5.1'
 '''
 
 EXAMPLES = '''

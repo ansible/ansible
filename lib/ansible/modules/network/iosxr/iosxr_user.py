@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: iosxr_user
-version_added: "2.4"
+version_added: '2.4'
 author:
   - "Trishna Guha (@trishnaguha)"
   - "Sebastiaan van Doesselaar (@sebasdoes)"
@@ -68,7 +68,7 @@ options:
         has been configured on the device.
     aliases: ['role']
   groups:
-    version_added: "2.5"
+    version_added: '2.5'
     description:
       - Configures the groups for the username in the device running
         configuration. The argument accepts a list of group names.
@@ -90,7 +90,7 @@ options:
       - Applicable only when using network_cli transport
     type: bool
     default: false
-    version_added: "2.8"
+    version_added: '2.8'
   state:
     description:
       - Configures the state of the username definition
@@ -101,7 +101,7 @@ options:
     default: present
     choices: ['present', 'absent']
   public_key:
-    version_added: "2.5"
+    version_added: '2.5'
     description:
       - Configures the contents of the public keyfile to upload to the IOS-XR node.
         This enables users to login using the accompanying private key. IOS-XR
@@ -111,7 +111,7 @@ options:
         public_key_contents. If used with multiple users in aggregates, then the
         same key file is used for all users.
   public_key_contents:
-    version_added: "2.5"
+    version_added: '2.5'
     description:
       - Configures the contents of the public keyfile to upload to the IOS-XR node.
         This enables users to login using the accompanying private key. IOS-XR
@@ -181,7 +181,7 @@ xml:
   description: NetConf rpc xml sent to device with transport C(netconf)
   returned: always (empty list when no xml rpc to send)
   type: list
-  version_added: 2.5
+  version_added: '2.5'
   sample:
     - '<config xmlns:xc=\"urn:ietf:params:xml:ns:netconf:base:1.0\">
     <aaa xmlns=\"http://cisco.com/ns/yang/Cisco-IOS-XR-aaa-lib-cfg\">

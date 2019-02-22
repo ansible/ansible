@@ -65,7 +65,7 @@ options:
         When creating a new VLAN, if this parameter is not specified, the default
         value used will be C(1500).
       - This number must be between 576 to 9198.
-    version_added: 2.5
+    version_added: '2.5'
   cmp_hash:
     description:
       - Specifies how the traffic on the VLAN will be disaggregated. The value
@@ -86,7 +86,7 @@ options:
       - source
       - dst
       - src
-    version_added: 2.5
+    version_added: '2.5'
   dag_tunnel:
     description:
       - Specifies how the disaggregator (DAG) distributes received tunnel-encapsulated
@@ -96,7 +96,7 @@ options:
       - When creating a new VLAN, if this parameter is not specified, the default
         of C(outer) is used.
       - This parameter is not supported on Virtual Editions of BIG-IP.
-    version_added: 2.5
+    version_added: '2.5'
     choices:
       - inner
       - outer
@@ -108,31 +108,31 @@ options:
         and so on.
       - When creating a new VLAN, if this parameter is not specified, the default
         of (no) is used.
-    version_added: 2.5
+    version_added: '2.5'
     type: bool
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   source_check:
     description:
       - When C(yes), specifies that the system verifies that the return route to an initial
         packet is the same VLAN from which the packet originated.
       - The system performs this verification only if the C(auto_last_hop) option is C(no).
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   fail_safe:
     description:
       - When C(yes), specifies that the VLAN takes the specified C(fail_safe_action) if the
         system detects a loss of traffic on this VLAN's interfaces.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   fail_safe_timeout:
     description:
       - Specifies the number of seconds that a system can run without detecting network
         traffic on this VLAN before it takes the C(fail_safe_action).
-    version_added: 2.8
+    version_added: '2.8'
   fail_safe_action:
     description:
       - Specifies the action that the system takes when it does not detect any traffic on
@@ -141,15 +141,15 @@ options:
       - reboot
       - restart-all
       - failover
-    version_added: 2.8
+    version_added: '2.8'
   sflow_poll_interval:
     description:
       - Specifies the maximum interval in seconds between two pollings.
-    version_added: 2.8
+    version_added: '2.8'
   sflow_sampling_rate:
     description:
       - Specifies the ratio of packets observed to the samples generated.
-    version_added: 2.8
+    version_added: '2.8'
   interfaces:
     description:
       - Interfaces that you want added to the VLAN. This can include both tagged
@@ -166,7 +166,7 @@ options:
         choices:
           - tagged
           - untagged
-    version_added: 2.8
+    version_added: '2.8'
 notes:
   - Requires BIG-IP versions >= 12.0.0
 extends_documentation_fragment: f5

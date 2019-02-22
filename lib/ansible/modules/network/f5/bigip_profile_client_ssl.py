@@ -67,7 +67,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   options:
     description:
       - Options that the system uses for SSL processing in the form of a list. When
@@ -99,7 +99,7 @@ options:
       - netscape-ca-dn-bug
       - netscape-demo-cipher-change-bug
       - "none"
-    version_added: 2.7
+    version_added: '2.7'
   secure_renegotiation:
     description:
       - Specifies the method of secure renegotiations for SSL connections. When
@@ -115,19 +115,19 @@ options:
       - require
       - require-strict
       - request
-    version_added: 2.7
+    version_added: '2.7'
   allow_non_ssl:
     description:
       - Enables or disables acceptance of non-SSL connections.
       - When creating a new profile, the setting is provided by the parent profile.
     type: bool
-    version_added: 2.7
+    version_added: '2.7'
   server_name:
     description:
       - Specifies the fully qualified DNS hostname of the server used in Server Name Indication communications.
         When creating a new profile, the setting is provided by the parent profile.
       - The server name can also be a wildcard string containing the asterisk C(*) character.
-    version_added: 2.8
+    version_added: '2.8'
   sni_default:
     description:
       - Indicates that the system uses this profile as the default SSL profile when there is no match to the
@@ -135,13 +135,13 @@ options:
       - When creating a new profile, the setting is provided by the parent profile.
       - There can be only one SSL profile with this setting enabled.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   sni_require:
     description:
       - Requires that the network peers also provide SNI support. This setting only takes effect when C(sni_default) is
         set to C(true). When creating a new profile, the setting is provided by the parent profile.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   client_certificate:
     description:
       - Specifies the way the system handles client certificates.
@@ -155,7 +155,7 @@ options:
       - ignore
       - require
       - request
-    version_added: 2.8
+    version_added: '2.8'
   client_auth_frequency:
     description:
       - Specifies the frequency of client authentication for an SSL session.
@@ -166,35 +166,35 @@ options:
     choices:
       - once
       - always
-    version_added: 2.8
+    version_added: '2.8'
   retain_certificate:
     description:
       - When C(yes), client certificate is retained in SSL session.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   cert_auth_depth:
     description:
       - Specifies the maximum number of certificates to be traversed in a client
         certificate chain.
-    version_added: 2.8
+    version_added: '2.8'
   trusted_cert_authority:
     description:
       - Specifies a client CA that the system trusts.
-    version_added: 2.8
+    version_added: '2.8'
   advertised_cert_authority:
     description:
       - Specifies that the CAs that the system advertises to clients is being trusted
         by the profile.
-    version_added: 2.8
+    version_added: '2.8'
   client_auth_crl:
     description:
       - Specifies the name of a file containing a list of revoked client certificates.
-    version_added: 2.8
+    version_added: '2.8'
   allow_expired_crl:
     description:
       - Instructs the system to use the specified CRL file even if it has expired.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   state:
     description:
       - When C(present), ensures that the profile exists.
@@ -203,7 +203,7 @@ options:
     choices:
       - present
       - absent
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5

@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: junos_package
-version_added: "2.1"
+version_added: '2.1'
 author: "Peter Sprygada (@privateip)"
 short_description: Installs packages on remote devices running Junos
 description:
@@ -62,7 +62,7 @@ options:
         device to skip checking the current device configuration
         compatibility with the package being installed. When set to false
         validation is not performed.
-    version_added: 2.5
+    version_added: '2.5'
     type: bool
     default: 'yes'
   force:
@@ -80,7 +80,7 @@ options:
         will ignore any warnings while adding the host software package or bundle.
     type: bool
     default: False
-    version_added: 2.8
+    version_added: '2.8'
   issu:
     description:
       - The I(issu) argument is a boolean flag when set to C(True) allows
@@ -89,7 +89,7 @@ options:
         disruption on the control plane and with minimal disruption of traffic.
     type: bool
     default: False
-    version_added: 2.8
+    version_added: '2.8'
 requirements:
   - junos-eznc
   - ncclient (>=v0.5.2)

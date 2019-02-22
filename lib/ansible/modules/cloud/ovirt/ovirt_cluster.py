@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_cluster
 short_description: Module to manage clusters in oVirt/RHV
-version_added: "2.3"
+version_added: '2.3'
 author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage clusters in oVirt/RHV"
@@ -21,7 +21,7 @@ options:
     id:
         description:
             - "ID of the cluster to manage."
-        version_added: "2.8"
+        version_added: '2.8'
     name:
         description:
             - "Name of the cluster to manage."
@@ -198,7 +198,7 @@ options:
             - "Custom scheduling policy properties of the cluster."
             - "These optional properties override the properties of the
                scheduling policy specified by the C(scheduling_policy) parameter."
-        version_added: "2.6"
+        version_added: '2.6'
     cpu_arch:
         description:
             - "CPU architecture of cluster."
@@ -221,7 +221,7 @@ options:
             - "MAC pool to be used by this cluster."
             - "C(Note:)"
             - "This is supported since oVirt version 4.1."
-        version_added: 2.4
+        version_added: '2.4'
     external_network_providers:
         description:
             - "List of references to the external network providers available
@@ -234,7 +234,7 @@ options:
             - "C(id) - ID of the external network provider. Either C(name) or
                C(id) is required."
             - "This is supported since oVirt version 4.2."
-        version_added: 2.5
+        version_added: '2.5'
 extends_documentation_fragment: ovirt
 '''
 

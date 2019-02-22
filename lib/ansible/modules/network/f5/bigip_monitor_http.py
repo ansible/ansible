@@ -32,7 +32,7 @@ options:
   description:
     description:
       - The description of the monitor.
-    version_added: 2.7
+    version_added: '2.7'
   send:
     description:
       - The send string for the monitor call. When creating a new monitor, if
@@ -95,12 +95,12 @@ options:
         C(time_until_up) is specified, it must be C(0). Or, if it already exists, it
         must be C(0).
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   state:
     description:
       - When C(present), ensures that the monitor exists.
@@ -109,7 +109,7 @@ options:
     choices:
       - present
       - absent
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5

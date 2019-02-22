@@ -54,7 +54,7 @@ options:
       - Optional parameter from version 2.8 and onwards.
       type: str
       aliases: ['dvswitch']
-      version_added: 2.8
+      version_added: '2.8'
     portgroup_name:
       description:
       - The name of the port group for the VMKernel interface.
@@ -77,7 +77,7 @@ options:
           type: 'static',
           tcpip_stack: 'default',
       }
-      version_added: 2.5
+      version_added: '2.5'
     ip_address:
       description:
       - The IP Address for the VMKernel interface.
@@ -97,7 +97,7 @@ options:
       description:
       - Search VMkernel adapter by device name.
       - The parameter is required only in case of C(type) is set to C(dhcp).
-      version_added: 2.8
+      version_added: '2.8'
     enable_vsan:
       description:
       - Enable VSAN traffic on the VMKernel adapter.
@@ -124,19 +124,19 @@ options:
       - Enable Provisioning traffic on the VMKernel adapter.
       - This option is only allowed if the default TCP/IP stack is used.
       type: bool
-      version_added: 2.8
+      version_added: '2.8'
     enable_replication:
       description:
       - Enable vSphere Replication traffic on the VMKernel adapter.
       - This option is only allowed if the default TCP/IP stack is used.
       type: bool
-      version_added: 2.8
+      version_added: '2.8'
     enable_replication_nfc:
       description:
       - Enable vSphere Replication NFC traffic on the VMKernel adapter.
       - This option is only allowed if the default TCP/IP stack is used.
       type: bool
-      version_added: 2.8
+      version_added: '2.8'
     state:
       description:
       - If set to C(present), the VMKernel adapter will be created with the given specifications.
@@ -144,13 +144,13 @@ options:
       - If set to C(present) and VMKernel adapter exists, the configurations will be updated.
       choices: [ present, absent ]
       default: present
-      version_added: 2.5
+      version_added: '2.5'
     esxi_hostname:
       description:
       - Name of ESXi host to which VMKernel is to be managed.
       - "From version 2.5 onwards, this parameter is required."
       required: True
-      version_added: 2.5
+      version_added: '2.5'
 extends_documentation_fragment: vmware.documentation
 '''
 

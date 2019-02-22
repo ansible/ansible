@@ -23,7 +23,7 @@ description:
   - The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates).
     When using pauses with the C(serial) playbook parameter (as in rolling updates) you are only prompted once for the current group of hosts.
   - This module is also supported for Windows targets.
-version_added: "0.8"
+version_added: '0.8'
 options:
   minutes:
     description:
@@ -40,7 +40,7 @@ options:
       - Has no effect if 'seconds' or 'minutes' is set.
     type: bool
     default: 'yes'
-    version_added: 2.5
+    version_added: '2.5'
 author: "Tim Bielawa (@tbielawa)"
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.

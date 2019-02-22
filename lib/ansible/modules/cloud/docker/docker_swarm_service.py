@@ -19,7 +19,7 @@ author:
 short_description: docker swarm service
 description:
   - Manages docker services via a swarm manager node.
-version_added: "2.7"
+version_added: '2.7'
 options:
   name:
     description:
@@ -38,7 +38,7 @@ options:
       - If the current image digest should be resolved from registry and updated if changed.
     type: bool
     default: yes
-    version_added: 2.8
+    version_added: '2.8'
   state:
     description:
       - Service state.
@@ -59,7 +59,7 @@ options:
       - A command may be either a string or a list or a list of strings.
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
     type: raw
-    version_added: 2.8
+    version_added: '2.8'
   constraints:
     description:
       - List of the service constraints.
@@ -71,7 +71,7 @@ options:
       - Corresponds to the C(--placement-pref) option of C(docker service create).
       - Requires API version >= 1.27.
     type: list
-    version_added: 2.8
+    version_added: '2.8'
   healthcheck:
     description:
       - Configure a check that is run to determine whether or not containers for this service are "healthy".
@@ -103,7 +103,7 @@ options:
         description:
           - Start period for the container to initialize before starting health-retries countdown.
         type: str
-    version_added: "2.8"
+    version_added: '2.8'
   hostname:
     description:
       - Container hostname.
@@ -147,7 +147,7 @@ options:
       - Corresponds to the C(--group) option of C(docker service update).
       - Requires API version >= 1.25.
     type: list
-    version_added: "2.8"
+    version_added: '2.8'
   labels:
     description:
       - Dictionary of key value pairs.
@@ -183,7 +183,7 @@ options:
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
     type: list
-    version_added: "2.8"
+    version_added: '2.8'
   log_driver:
     description:
       - Configure the logging driver for a service.
@@ -345,13 +345,13 @@ options:
           C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
         - Corresponds to the C(--stop-grace-period) option of C(docker service create).
     type: str
-    version_added: "2.8"
+    version_added: '2.8'
   stop_signal:
     description:
       - Override default signal used to stop the container.
       - Corresponds to the C(--stop-signal) option of C(docker service create).
     type: str
-    version_added: "2.8"
+    version_added: '2.8'
   publish:
     description:
       - List of dictionaries describing the service published ports.
@@ -476,7 +476,7 @@ options:
       - Path to the working directory.
       - Corresponds to the C(--workdir) option of C(docker service create).
     type: str
-    version_added: "2.8"
+    version_added: '2.8'
 extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation

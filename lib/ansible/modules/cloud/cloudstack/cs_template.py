@@ -101,7 +101,7 @@ options:
       - Options to find a template uniquely.
       - More than one allowed.
     choices: [ display_text, checksum, cross_zones ]
-    version_added: 2.7
+    version_added: '2.7'
     aliases: [ template_find_option ]
     default: []
   hypervisor:
@@ -184,7 +184,7 @@ options:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
       - "To delete all tags, set a empty list e.g. C(tags: [])."
     aliases: [ tag ]
-    version_added: "2.4"
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 

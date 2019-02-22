@@ -17,7 +17,7 @@ module: redis
 short_description: Various redis commands, slave and flush
 description:
    - Unified utility to interact with redis instances.
-version_added: "1.3"
+version_added: '1.3'
 options:
     command:
         description:
@@ -61,11 +61,11 @@ options:
     name:
         description:
             - A redis config key.
-        version_added: 1.6
+        version_added: '1.6'
     value:
         description:
             - A redis config value.
-        version_added: 1.6
+        version_added: '1.6'
 
 
 notes:

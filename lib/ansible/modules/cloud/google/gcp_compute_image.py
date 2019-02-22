@@ -115,7 +115,7 @@ options:
     description:
     - Labels to apply to this Image.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   licenses:
     description:
     - Any applicable license URI.

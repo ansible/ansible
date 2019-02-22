@@ -54,17 +54,17 @@ options:
         considers all monitors as "a list". BIG=IP either has a list of many,
         or it has a list of one. Where they differ is in the extra guards that
         C(single) provides; namely that it only allows a single monitor.
-    version_added: "1.3"
+    version_added: '1.3'
     choices: ['and_list', 'm_of_n', 'single']
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
-    version_added: 2.2
+    version_added: '2.2'
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to
         monitor this node.
-    version_added: 2.2
+    version_added: '2.2'
   address:
     description:
       - IP address of the node. This can be either IPv4 or IPv6. When creating a
@@ -73,7 +73,7 @@ options:
     aliases:
       - ip
       - host
-    version_added: 2.2
+    version_added: '2.2'
   fqdn:
     description:
       - FQDN name of the node. This can be any name that is a valid RFC 1123 DNS
@@ -86,7 +86,7 @@ options:
         provided. This parameter cannot be updated after it is set.
     aliases:
       - hostname
-    version_added: 2.5
+    version_added: '2.5'
   fqdn_address_type:
     description:
       - Specifies whether the FQDN of the node resolves to an IPv4 or IPv6 address.
@@ -97,7 +97,7 @@ options:
       - ipv4
       - ipv6
       - all
-    version_added: 2.6
+    version_added: '2.6'
   fqdn_auto_populate:
     description:
       - Specifies whether the system automatically creates ephemeral nodes using
@@ -113,7 +113,7 @@ options:
         specified, this parameter will default to C(yes).
       - This parameter cannot be changed after it has been set.
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   fqdn_up_interval:
     description:
       - Specifies the interval in which a query occurs, when the DNS server is up.
@@ -124,14 +124,14 @@ options:
         the FQDN. The default TTL interval is akin to specifying C(3600).
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(3600).
-    version_added: 2.6
+    version_added: '2.6'
   fqdn_down_interval:
     description:
       - Specifies the interval in which a query occurs, when the DNS server is down.
         The associated monitor continues polling as long as the DNS server is down.
       - When creating a new node, if this parameter is not specified and C(fqdn) is
         specified, this parameter will default to C(5).
-    version_added: 2.6
+    version_added: '2.6'
   description:
     description:
       - Specifies descriptive text that identifies the node.
@@ -140,23 +140,23 @@ options:
   connection_limit:
     description:
       - Node connection limit. Setting this to 0 disables the limit.
-    version_added: 2.7
+    version_added: '2.7'
   rate_limit:
     description:
       - Node rate limit (connections-per-second). Setting this to 0 disables the limit.
-    version_added: 2.7
+    version_added: '2.7'
   ratio:
     description:
       - Node ratio weight. Valid values range from 1 through 100.
       - When creating a new node, if this parameter is not specified, the default of
         C(1) will be used.
-    version_added: 2.7
+    version_added: '2.7'
   dynamic_ratio:
     description:
       - The dynamic ratio number for the node. Used for dynamic ratio load balancing.
       - When creating a new node, if this parameter is not specified, the default of
         C(1) will be used.
-    version_added: 2.7
+    version_added: '2.7'
   availability_requirements:
     description:
       - Specifies, if you activate more than one health monitor, the number of health
@@ -175,12 +175,12 @@ options:
             before the link is considered up.
           - This parameter is only relevant when a C(type) of C(at_least) is used.
           - This parameter will be ignored if a type of C(all) is used.
-    version_added: 2.8
+    version_added: '2.8'
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

@@ -75,7 +75,7 @@ options:
         resource exists, the definition will be updated, again using an inline definition. If the state is absent, the resource will be deleted if it exists."
     required: true
 short_description: Manage OpenShift Resources
-version_added: 2.4
+version_added: '2.4'
 
 """
 

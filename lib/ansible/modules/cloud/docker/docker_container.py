@@ -22,7 +22,7 @@ description:
   - Manage the life cycle of docker containers.
   - Supports check mode. Run with --check and --diff to view config difference and list of actions to be taken.
 
-version_added: "2.1"
+version_added: '2.1'
 
 options:
   auto_remove:
@@ -30,7 +30,7 @@ options:
       - enable auto-removal of the container on daemon side when the container's process exits
     type: bool
     default: no
-    version_added: "2.4"
+    version_added: '2.4'
   blkio_weight:
     description:
       - Block IO (relative weight), between 10 and 1000.
@@ -43,13 +43,13 @@ options:
     description:
       - List of capabilities to drop from the container.
     type: list
-    version_added: "2.7"
+    version_added: '2.7'
   cleanup:
     description:
       - Use with I(detach=false) to remove the container after successful execution.
     type: bool
     default: no
-    version_added: "2.2"
+    version_added: '2.2'
   command:
     description:
       - Command to execute when the container starts.
@@ -76,7 +76,7 @@ options:
         or C(ignore) to I(all) comparisons.
       - See the examples for details.
     type: dict
-    version_added: "2.8"
+    version_added: '2.8'
   cpu_period:
     description:
       - Limit CPU CFS (Completely Fair Scheduler) period
@@ -126,7 +126,7 @@ options:
         - "Omitting the unit defaults to bytes."
         type: str
         required: yes
-    version_added: "2.8"
+    version_added: '2.8'
   device_write_bps:
     description:
       - "List of device and write rate (bytes per second) to device."
@@ -145,7 +145,7 @@ options:
         - "Omitting the unit defaults to bytes."
         type: str
         required: yes
-    version_added: "2.8"
+    version_added: '2.8'
   device_read_iops:
     description:
       - "List of device and read rate (IO per second) from device."
@@ -162,7 +162,7 @@ options:
         - "Must be a positive integer."
         type: int
         required: yes
-    version_added: "2.8"
+    version_added: '2.8'
   device_write_iops:
     description:
       - "List of device and write rate (IO per second) to device."
@@ -179,7 +179,7 @@ options:
         - "Must be a positive integer."
         type: int
         required: yes
-    version_added: "2.8"
+    version_added: '2.8'
   dns_opts:
     description:
       - list of DNS options
@@ -196,7 +196,7 @@ options:
     description:
       - Container domainname.
     type: str
-    version_added: "2.5"
+    version_added: '2.5'
   env:
     description:
       - Dictionary of key,value pairs.
@@ -207,7 +207,7 @@ options:
       - Path to a file, present on the target, containing environment variables I(FOO=BAR).
       - If variable also present in C(env), then C(env) value will override.
     type: path
-    version_added: "2.2"
+    version_added: '2.2'
   entrypoint:
     description:
       - Command that overwrites the default ENTRYPOINT of the image.
@@ -268,7 +268,7 @@ options:
         description:
           - 'Start period for the container to initialize before starting health-retries countdown. (default: 0s)'
         type: str
-    version_added: "2.8"
+    version_added: '2.8'
   hostname:
     description:
       - Container hostname.
@@ -282,7 +282,7 @@ options:
       - I(Warning:) This option is ignored if C(image) or C(*) is used for the C(comparisons) option.
     type: bool
     default: no
-    version_added: "2.2"
+    version_added: '2.2'
   image:
     description:
       - Repository path and tag used to create the container. If an image is not found or pull is true, the image
@@ -296,7 +296,7 @@ options:
         This option requires Docker API 1.25+.
     type: bool
     default: no
-    version_added: "2.6"
+    version_added: '2.6'
   interactive:
     description:
       - Keep stdin open after a container is launched, even if not attached.
@@ -389,7 +389,7 @@ options:
     description:
       - Set the user namespace mode for the container. Currently, the only valid value is C(host).
     type: str
-    version_added: "2.5"
+    version_added: '2.5'
   networks:
     description:
       - List of networks the container belongs to.
@@ -422,7 +422,7 @@ options:
           - List of aliases for this container in this network. These names
             can be used in the network to reach this container.
         type: list
-    version_added: "2.2"
+    version_added: '2.2'
   oom_killer:
     description:
       - Whether or not to disable OOM Killer for the container.
@@ -431,13 +431,13 @@ options:
     description:
       - An integer value containing the score given to the container in order to tune OOM killer preferences.
     type: int
-    version_added: "2.2"
+    version_added: '2.2'
   output_logs:
     description:
       - If set to true, output of the container command will be printed (only effective when log_driver is set to json-file or journald.
     type: bool
     default: no
-    version_added: "2.7"
+    version_added: '2.7'
   paused:
     description:
       - Use with the started state to pause running processes inside the container.
@@ -453,7 +453,7 @@ options:
       - Set PIDs limit for the container. It accepts an integer value.
       - Set -1 for unlimited PIDs.
     type: int
-    version_added: "2.8"
+    version_added: '2.8'
   privileged:
     description:
       - Give extended privileges to the container.
@@ -495,7 +495,7 @@ options:
        - Any default networks such as I(bridge), if not found in C(networks), will be removed as well.
     type: bool
     default: no
-    version_added: "2.2"
+    version_added: '2.2'
   read_only:
     description:
       - Mount the container's root file system as read-only.
@@ -528,7 +528,7 @@ options:
     description:
       - Runtime to use for the container.
     type: str
-    version_added: "2.8"
+    version_added: '2.8'
   shm_size:
     description:
       - "Size of C(/dev/shm) (format: C(<number>[<unit>])). Number is positive integer.
@@ -592,7 +592,7 @@ options:
     description:
       - Mount a tmpfs directory
     type: list
-    version_added: 2.4
+    version_added: '2.4'
   tty:
     description:
       - Allocate a pseudo-TTY.
@@ -606,7 +606,7 @@ options:
     description:
       - Dictionary of key,value pairs.
     type: dict
-    version_added: 2.4
+    version_added: '2.4'
   user:
     description:
       - Sets the username or UID used and optionally the groupname or GID for the specified command.
@@ -640,7 +640,7 @@ options:
     description:
       - Path to the working directory.
     type: str
-    version_added: "2.4"
+    version_added: '2.4'
 extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation

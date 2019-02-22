@@ -47,7 +47,7 @@ options:
     aliases:
     - region
     - zone
-    version_added: 2.8
+    version_added: '2.8'
   cluster:
     description:
     - The cluster this node pool belongs to.

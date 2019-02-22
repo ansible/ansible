@@ -22,7 +22,7 @@ module: mksysb
 short_description: Generates AIX mksysb rootvg backups.
 description:
   - This module manages a basic AIX mksysb (image) of rootvg.
-version_added: "2.5"
+version_added: '2.5'
 options:
   backup_crypt_files:
     description:
@@ -94,12 +94,12 @@ changed:
   description: Return changed for mksysb actions as true or false.
   returned: always
   type: bool
-  version_added: 2.5
+  version_added: '2.5'
 msg:
   description: Return message regarding the action.
   returned: always
   type: str
-  version_added: 2.5
+  version_added: '2.5'
 '''
 
 

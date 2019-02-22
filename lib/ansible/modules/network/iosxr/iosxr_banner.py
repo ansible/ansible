@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: iosxr_banner
-version_added: "2.4"
+version_added: '2.4'
 author:
     - Trishna Guha (@trishnaguha)
     - Kedar Kekan (@kedarX)
@@ -79,7 +79,7 @@ xml:
   description: NetConf rpc xml sent to device with transport C(netconf)
   returned: always (empty list when no xml rpc to send)
   type: list
-  version_added: 2.5
+  version_added: '2.5'
   sample:
     - '<config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
             <banners xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-infra-infra-cfg">

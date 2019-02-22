@@ -44,18 +44,18 @@ options:
   restore:
     description:
     - Restore a specific volume from a protection group snapshot.
-    version_added: 2.7
+    version_added: '2.7'
   overwrite:
     description:
     - Define whether to overwrite the target volume if it already exists.
     type: bool
     default: 'no'
-    version_added: 2.8
+    version_added: '2.8'
   target:
     description:
     - Volume to restore a specified volume to.
     - If not supplied this will default to the volume defined in I(restore)
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment:
 - purestorage.fa
 '''

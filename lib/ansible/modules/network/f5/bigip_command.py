@@ -83,7 +83,7 @@ options:
         - rest
         - cli
     default: rest
-    version_added: 2.5
+    version_added: '2.5'
   warn:
     description:
       - Whether the module should raise warnings related to command idempotency
@@ -93,11 +93,11 @@ options:
         Ansible modules. This module should always be used as a last resort.
     default: True
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   chdir:
     description:
       - Change into this directory before running the command.
-    version_added: 2.6
+    version_added: '2.6'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

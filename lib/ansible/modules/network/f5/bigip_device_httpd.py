@@ -77,7 +77,7 @@ options:
         ECDHE-ECDSA-AES128-SHA256,ECDHE-ECDSA-AES256-SHA384,AES128-GCM-SHA256,
         AES256-GCM-SHA384,AES128-SHA,AES256-SHA,AES128-SHA256,AES256-SHA256,
         ECDHE-RSA-DES-CBC3-SHA,ECDHE-ECDSA-DES-CBC3-SHA,DES-CBC3-SHA).
-    version_added: 2.6
+    version_added: '2.6'
   ssl_protocols:
     description:
       - The list of SSL protocols to accept on the management console.
@@ -87,7 +87,7 @@ options:
         recommended way to provide the cipher suite. See examples for usage.
       - Use the value C(default) to set the SSL protocols to the system default.
         This value is equivalent to specifying a list of C(all,-SSLv2,-SSLv3).
-    version_added: 2.6
+    version_added: '2.6'
 notes:
   - Requires the requests Python package on the host. This is as easy as
     C(pip install requests).

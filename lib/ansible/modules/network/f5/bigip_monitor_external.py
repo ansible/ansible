@@ -27,7 +27,7 @@ options:
   description:
     description:
       - The description of the monitor.
-    version_added: 2.7
+    version_added: '2.7'
   parent:
     description:
       - The parent template of this monitor template. Once this value has

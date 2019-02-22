@@ -25,7 +25,7 @@ module: ecs_taskdefinition
 short_description: register a task definition in ecs
 description:
     - Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
-version_added: "2.0"
+version_added: '2.0'
 author: Mark Chance (@Java1Guy)
 requirements: [ json, botocore, boto3 ]
 options:
@@ -50,7 +50,7 @@ options:
         description:
             - Always create new task definition
         required: False
-        version_added: 2.5
+        version_added: '2.5'
         type: bool
     containers:
         description:
@@ -63,18 +63,18 @@ options:
         required: false
         default: bridge
         choices: [ 'bridge', 'host', 'none', 'awsvpc' ]
-        version_added: 2.3
+        version_added: '2.3'
     task_role_arn:
         description:
             - The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted
               the permissions that are specified in this role.
         required: false
-        version_added: 2.3
+        version_added: '2.3'
     execution_role_arn:
         description:
             - The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
         required: false
-        version_added: 2.7
+        version_added: '2.7'
     volumes:
         description:
             - A list of names of volumes to be attached
@@ -83,20 +83,20 @@ options:
         description:
             - The launch type on which to run your task
         required: false
-        version_added: 2.7
+        version_added: '2.7'
         choices: ["EC2", "FARGATE"]
     cpu:
         description:
             - The number of cpu units used by the task. If using the EC2 launch type, this field is optional and any value can be used.
               If using the Fargate launch type, this field is required and you must use one of [256, 512, 1024, 2048, 4096]
         required: false
-        version_added: 2.7
+        version_added: '2.7'
     memory:
         description:
             - The amount (in MiB) of memory used by the task. If using the EC2 launch type, this field is optional and any value can be used.
               If using the Fargate launch type, this field is required and is limited by the cpu
         required: false
-        version_added: 2.7
+        version_added: '2.7'
 extends_documentation_fragment:
     - aws
     - ec2

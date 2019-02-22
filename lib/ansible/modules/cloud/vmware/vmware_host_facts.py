@@ -37,7 +37,7 @@ options:
     - ESXi hostname.
     - Host facts about the specified ESXi server will be returned.
     - By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 

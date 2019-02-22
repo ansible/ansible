@@ -53,14 +53,14 @@ options:
     - Disabled per default because this slows down the execution if you have a lot of datastores.
     type: bool
     default: false
-    version_added: 2.8
+    version_added: '2.8'
    gather_vmfs_mount_info:
     description:
     - Gather mount information of VMFS datastores.
     - Disabled per default because this slows down the execution if you have a lot of datastores.
     type: bool
     default: false
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 

@@ -36,7 +36,7 @@ options:
       - global-availability
       - global_availability
       - round_robin
-    version_added: 2.5
+    version_added: '2.5'
   name:
     description:
       - Wide IP name. This name must be formatted as a fully qualified
@@ -58,7 +58,7 @@ options:
       - mx
       - naptr
       - srv
-    version_added: 2.4
+    version_added: '2.4'
   state:
     description:
       - When C(present) or C(enabled), ensures that the Wide IP exists and
@@ -71,12 +71,12 @@ options:
       - absent
       - disabled
       - enabled
-    version_added: 2.4
+    version_added: '2.4'
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   pools:
     description:
       - The pools that you want associated with the Wide IP.
@@ -91,27 +91,27 @@ options:
         description:
           - Ratio for the pool.
           - The system uses this number with the Ratio load balancing method.
-    version_added: 2.5
+    version_added: '2.5'
   irules:
     description:
       - List of rules to be applied.
       - If you want to remove all existing iRules, specify a single empty value; C("").
         See the documentation for an example.
-    version_added: 2.6
+    version_added: '2.6'
   aliases:
     description:
       - Specifies alternate domain names for the web site content you are load
         balancing.
       - You can use the same wildcard characters for aliases as you can for actual
         wide IP names.
-    version_added: 2.7
+    version_added: '2.7'
   last_resort_pool:
     description:
       - Specifies which GTM pool, for the system to use as the last resort pool for
         the wide IP.
       - The valid pools for this parameter are those with the C(type) specified in this
         module.
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

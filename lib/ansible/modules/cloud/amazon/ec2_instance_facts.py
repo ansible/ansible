@@ -16,7 +16,7 @@ module: ec2_instance_facts
 short_description: Gather facts about ec2 instances in AWS
 description:
     - Gather facts about ec2 instances in AWS
-version_added: "2.4"
+version_added: '2.4'
 author:
   - Michael Schuett (@michaeljs1990)
   - Rob White (@wimnat)
@@ -26,7 +26,7 @@ options:
     description:
       - If you specify one or more instance IDs, only instances that have the specified IDs are returned.
     required: false
-    version_added: 2.4
+    version_added: '2.4'
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See

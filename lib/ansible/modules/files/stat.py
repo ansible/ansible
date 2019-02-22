@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: stat
-version_added: "1.3"
+version_added: '1.3'
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
@@ -45,7 +45,7 @@ options:
       - Whether to return a checksum of the file.
     type: bool
     default: yes
-    version_added: "1.8"
+    version_added: '1.8'
   checksum_algorithm:
     description:
       - Algorithm to determine checksum of file.
@@ -56,7 +56,7 @@ options:
     choices: [ md5, sha1, sha224, sha256, sha384, sha512 ]
     default: sha1
     aliases: [ checksum, checksum_algo ]
-    version_added: "2.0"
+    version_added: '2.0'
   get_mime:
     description:
       - Use file magic and return data about the nature of the file. this uses
@@ -66,14 +66,14 @@ options:
     type: bool
     default: yes
     aliases: [ mime, mime_type, mime-type ]
-    version_added: "2.1"
+    version_added: '2.1'
   get_attributes:
     description:
       - Get file attributes using lsattr tool if present.
     type: bool
     default: yes
     aliases: [ attr, attributes ]
-    version_added: "2.3"
+    version_added: '2.3'
 seealso:
 - module: file
 - module: win_stat
@@ -302,7 +302,7 @@ stat:
             returned: success, path exists and user can read stats and the path is a symbolic link
             type: str
             sample: ../foobar/21102015-1445431274-908472971
-            version_added: 2.4
+            version_added: '2.4'
         md5:
             description: md5 hash of the path; this will be removed in Ansible 2.9 in
                 favor of the checksum return value
@@ -345,25 +345,25 @@ stat:
             returned: success, path exists and user can read the path
             type: bool
             sample: False
-            version_added: 2.2
+            version_added: '2.2'
         writeable:
             description: Tells you if the invoking user has the right to write the path
             returned: success, path exists and user can write the path
             type: bool
             sample: False
-            version_added: 2.2
+            version_added: '2.2'
         executable:
             description: Tells you if the invoking user has the execute the path
             returned: success, path exists and user can execute the path
             type: bool
             sample: False
-            version_added: 2.2
+            version_added: '2.2'
         attributes:
             description: list of file attributes
             returned: success, path exists and user can execute the path
             type: list
             sample: [ immutable, extent ]
-            version_added: 2.3
+            version_added: '2.3'
 '''
 
 import errno

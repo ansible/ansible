@@ -49,7 +49,7 @@ options:
         on personally controlled sites using self-signed certificates.
     default: 'yes'
     type: bool
-    version_added: 1.5.1
+    version_added: '1.5.1'
 author: "Jonas Pfenniger (@zimbatm)"
 '''
 

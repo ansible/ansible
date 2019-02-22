@@ -24,7 +24,7 @@ module: elb_application_lb
 short_description: Manage an Application load balancer
 description:
     - Manage an AWS Application Elastic Load Balancer. See U(https://aws.amazon.com/blogs/aws/new-aws-application-load-balancer/) for details.
-version_added: "2.4"
+version_added: '2.4'
 requirements: [ boto3 ]
 author: "Rob White (@wimnat)"
 options:
@@ -54,7 +54,7 @@ options:
     required: false
     default: no
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   idle_timeout:
     description:
       - The number of seconds to wait before an idle connection is closed.
@@ -114,17 +114,17 @@ options:
         performed every 15 seconds until a successful state is reached. An error is returned after 40 failed checks.
     default: no
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
   wait_timeout:
     description:
       - The time in seconds to use in conjunction with I(wait).
-    version_added: 2.6
+    version_added: '2.6'
   purge_rules:
     description:
       - When set to no, keep the existing load balancer rules in place. Will modify and add, but will not delete.
     default: yes
     type: bool
-    version_added: 2.7
+    version_added: '2.7'
 extends_documentation_fragment:
     - aws
     - ec2

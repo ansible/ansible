@@ -29,7 +29,7 @@ notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
   - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
   - An IAM role must have been previously created
-version_added: "2.1"
+version_added: '2.1'
 author:
     - "Mark Chance (@Java1Guy)"
     - "Darek Kaczynski (@kaczynskid)"
@@ -86,23 +86,23 @@ options:
         description:
           - Force deployment of service even if there are no changes
         required: false
-        version_added: 2.8
+        version_added: '2.8'
         type: bool
     deployment_configuration:
         description:
           - Optional parameters that control the deployment_configuration; format is '{"maximum_percent":<integer>, "minimum_healthy_percent":<integer>}
         required: false
-        version_added: 2.3
+        version_added: '2.3'
     placement_constraints:
         description:
           - The placement constraints for the tasks in the service
         required: false
-        version_added: 2.4
+        version_added: '2.4'
     placement_strategy:
         description:
           - The placement strategy objects to use for tasks in your service. You can specify a maximum of 5 strategy rules per service
         required: false
-        version_added: 2.4
+        version_added: '2.4'
     network_configuration:
         description:
           - network configuration of the service. Only applicable for task definitions created with C(awsvpc) I(network_mode).
@@ -111,27 +111,27 @@ options:
           subnets:
             description:
               - A list of subnet IDs to associate with the task
-            version_added: 2.6
+            version_added: '2.6'
           security_groups:
             description:
               - A list of security group names or group IDs to associate with the task
-            version_added: 2.6
+            version_added: '2.6'
           assign_public_ip:
             description:
               - Whether the task's elastic network interface receives a public IP address. This option requires botocore >= 1.8.4.
             type: bool
-            version_added: 2.7
+            version_added: '2.7'
     launch_type:
         description:
           - The launch type on which to run your service
         required: false
-        version_added: 2.7
+        version_added: '2.7'
         choices: ["EC2", "FARGATE"]
     health_check_grace_period_seconds:
         description:
           - Seconds to wait before health checking the freshly added/updated services. This option requires botocore >= 1.8.20.
         required: false
-        version_added: 2.8
+        version_added: '2.8'
 extends_documentation_fragment:
     - aws
     - ec2

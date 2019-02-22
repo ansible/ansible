@@ -48,7 +48,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - This module does not behave like other modules that you might include in
     roles where referencing files or templates first looks in the role's

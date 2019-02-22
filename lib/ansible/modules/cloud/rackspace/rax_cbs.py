@@ -26,7 +26,7 @@ options:
     description:
       - image to use for bootable volumes. Can be an C(id), C(human_id) or
         C(name). This option requires C(pyrax>=1.9.3)
-    version_added: 1.9
+    version_added: '1.9'
   meta:
     description:
       - A hash of metadata to associate with the volume

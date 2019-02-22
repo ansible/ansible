@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: newrelic_deployment
-version_added: "1.2"
+version_added: '1.2'
 author: "Matt Coddington (@mcodd)"
 short_description: Notify newrelic about app deployments
 description:
@@ -65,7 +65,7 @@ options:
     required: false
     default: 'yes'
     type: bool
-    version_added: 1.5.1
+    version_added: '1.5.1'
 
 requirements: []
 '''

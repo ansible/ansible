@@ -98,14 +98,14 @@ options:
     - Whether to enable flow logging for this subnetwork.
     required: false
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
   secondary_ip_ranges:
     description:
     - An array of configurations for secondary IP ranges for VM instances contained
       in this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
       of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
     suboptions:
       range_name:
         description:

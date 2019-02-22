@@ -53,26 +53,26 @@ options:
   from_address:
     description:
     - specify the e-mail address from which the node sends AutoSupport messages
-    version_added: 2.8
+    version_added: '2.8'
   partner_addresses:
     description:
     - Specifies up to five partner vendor recipients of full AutoSupport e-mail messages.
-    version_added: 2.8
+    version_added: '2.8'
   to_addresses:
     description:
     - Specifies up to five recipients of full AutoSupport e-mail messages.
-    version_added: 2.8
+    version_added: '2.8'
   proxy_url:
     description:
     - specify an HTTP or HTTPS proxy if the 'transport' parameter is set to HTTP or HTTPS and your organization uses a proxy
-    version_added: 2.8
+    version_added: '2.8'
   hostname_in_subject:
     description:
     - Specify whether the hostname of the node is included in the subject line of the AutoSupport message.
     type: bool
-    version_added: 2.8
+    version_added: '2.8'
 short_description: NetApp ONTAP Autosupport
-version_added: "2.7"
+version_added: '2.7'
 
 """
 

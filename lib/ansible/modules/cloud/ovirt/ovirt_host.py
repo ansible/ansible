@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_host
 short_description: Module to manage hosts in oVirt/RHV
-version_added: "2.3"
+version_added: '2.3'
 author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage hosts in oVirt/RHV"
@@ -21,7 +21,7 @@ options:
     id:
         description:
             - "ID of the host to manage."
-        version_added: "2.8"
+        version_added: '2.8'
     name:
         description:
             - "Name of the host to manage."
@@ -108,7 +108,7 @@ options:
         description:
             - "Enable or disable power management of the host."
             - "For more comprehensive setup of PM use C(ovirt_host_pm) module."
-        version_added: 2.4
+        version_added: '2.4'
         type: bool
     activate:
         description:
@@ -117,27 +117,27 @@ options:
                the state of host when using I(present) C(state)."
         default: True
         type: bool
-        version_added: 2.4
+        version_added: '2.4'
     iscsi:
         description:
           - "If C(state) is I(iscsidiscover) it means that the iscsi attribute is being
              used to discover targets"
           - "If C(state) is I(iscsilogin) it means that the iscsi attribute is being
              used to login to the specified targets passed as part of the iscsi attribute"
-        version_added: "2.4"
+        version_added: '2.4'
     check_upgrade:
         description:
             - "If I(true) and C(state) is I(upgraded) run check for upgrade
                action before executing upgrade action."
         default: True
         type: bool
-        version_added: 2.4
+        version_added: '2.4'
     reboot_after_upgrade:
         description:
             - "If I(true) and C(state) is I(upgraded) reboot host after successful upgrade."
         default: True
         type: bool
-        version_added: 2.6
+        version_added: '2.6'
 extends_documentation_fragment: ovirt
 '''
 

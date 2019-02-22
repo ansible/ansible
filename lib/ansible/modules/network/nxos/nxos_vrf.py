@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_vrf
 extends_documentation_fragment: nxos
-version_added: "2.1"
+version_added: '2.1'
 short_description: Manages global VRF configuration.
 description:
   - This module provides declarative management of VRFs
@@ -59,33 +59,33 @@ options:
     description:
       - Specify virtual network identifier. Valid values are Integer
         or keyword 'default'.
-    version_added: "2.2"
+    version_added: '2.2'
   rd:
     description:
       - VPN Route Distinguisher (RD). Valid values are a string in
         one of the route-distinguisher formats (ASN2:NN, ASN4:NN, or
         IPV4:NN); the keyword 'auto', or the keyword 'default'.
-    version_added: "2.2"
+    version_added: '2.2'
   interfaces:
     description:
       - List of interfaces to check the VRF has been
         configured correctly or keyword 'default'.
-    version_added: 2.5
+    version_added: '2.5'
   associated_interfaces:
     description:
       - This is a intent option and checks the operational state of the for given vrf C(name)
         for associated interfaces. If the value in the C(associated_interfaces) does not match with
         the operational state of vrf interfaces on device it will result in failure.
-    version_added: "2.5"
+    version_added: '2.5'
   aggregate:
     description: List of VRFs definitions.
-    version_added: 2.5
+    version_added: '2.5'
   purge:
     description:
       - Purge VRFs not defined in the I(aggregate) parameter.
     type: bool
     default: 'no'
-    version_added: 2.5
+    version_added: '2.5'
   state:
     description:
       - Manages desired state of the resource.

@@ -84,7 +84,7 @@ options:
       - List of GTM pool member definitions to be created, modified or removed.
     aliases:
       - members
-    version_added: 2.8
+    version_added: '2.8'
   replace_all_with:
     description:
       - Remove members not defined in the C(aggregate) parameter.
@@ -94,7 +94,7 @@ options:
     type: bool
     aliases:
       - purge
-    version_added: 2.8
+    version_added: '2.8'
   limits:
     description:
       - Specifies resource thresholds or limit requirements at the pool member level.

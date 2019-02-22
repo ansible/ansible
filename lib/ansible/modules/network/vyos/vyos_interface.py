@@ -27,7 +27,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: vyos_interface
-version_added: "2.4"
+version_added: '2.4'
 author: "Ganesh Nalawade (@ganeshrn)"
 short_description: Manage Interface on VyOS network devices
 description:
@@ -75,7 +75,7 @@ options:
         port:
           description:
             - "LLDP neighbor port to which given interface C(name) is connected."
-    version_added: 2.5
+    version_added: '2.5'
   aggregate:
     description: List of Interfaces definitions.
   state:

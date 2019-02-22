@@ -61,7 +61,7 @@ options:
     - C(set) will replace the privileges of the existing privileges with user defined list of privileges.
     default: set
     choices: [ add, remove, set ]
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: vmware.documentation
 '''
 

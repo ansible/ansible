@@ -23,7 +23,7 @@ options:
   description:
     description:
       - Specifies descriptive text that identifies the pool.
-    version_added: 2.3
+    version_added: '2.3'
   name:
     description:
       - Pool name
@@ -34,7 +34,7 @@ options:
     description:
       - Load balancing method. When creating a new pool, if this value is not
         specified, the default of C(round-robin) will be used.
-    version_added: 1.3
+    version_added: '1.3'
     choices:
       - dynamic-ratio-member
       - dynamic-ratio-node
@@ -69,32 +69,32 @@ options:
         or already existing on the device.
       - Both C(single) and C(and_list) are functionally identical since BIG-IP
         considers all monitors as "a list".
-    version_added: 1.3
+    version_added: '1.3'
     choices: ['and_list', 'm_of_n', 'single']
   quorum:
     description:
       - Monitor quorum value when C(monitor_type) is C(m_of_n).
       - Quorum must be a value of 1 or greater when C(monitor_type) is C(m_of_n).
-    version_added: 1.3
+    version_added: '1.3'
   monitors:
     description:
       - Monitor template name list. If the partition is not provided as part of
         the monitor name, then the C(partition) option will be used instead.
-    version_added: 1.3
+    version_added: '1.3'
   slow_ramp_time:
     description:
       - Sets the ramp-up time (in seconds) to gradually ramp up the load on
         newly added or freshly detected up pool members.
-    version_added: 1.3
+    version_added: '1.3'
   reselect_tries:
     description:
       - Sets the number of times the system tries to contact a pool member
         after a passive failure.
-    version_added: 2.2
+    version_added: '2.2'
   service_down_action:
     description:
       - Sets the action to take when node goes down in pool.
-    version_added: 1.3
+    version_added: '1.3'
     choices:
       - none
       - reset
@@ -104,7 +104,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   state:
     description:
       - When C(present), guarantees that the pool exists with the provided
@@ -114,7 +114,7 @@ options:
     choices:
       - absent
       - present
-    version_added: 2.5
+    version_added: '2.5'
   metadata:
     description:
       - Arbitrary key/value pairs that you can attach to a pool. This is useful in
@@ -123,7 +123,7 @@ options:
       - Values for all of the keys will be stored as strings; this includes values
         that are numbers.
       - Data will be persisted, not ephemeral.
-    version_added: 2.5
+    version_added: '2.5'
   priority_group_activation:
     description:
       - Specifies whether the system load balances traffic according to the priority
@@ -142,13 +142,13 @@ options:
         group, the system again directs traffic to the higher priority group.
     aliases:
       - minimum_active_members
-    version_added: 2.6
+    version_added: '2.6'
   aggregate:
     description:
       - List of pool definitions to be created, modified or removed.
     aliases:
       - pools
-    version_added: 2.8
+    version_added: '2.8'
   replace_all_with:
     description:
       - Remove pools not defined in the C(aggregate) parameter.
@@ -158,7 +158,7 @@ options:
     type: bool
     aliases:
       - purge
-    version_added: 2.8
+    version_added: '2.8'
 notes:
   - To add members to a pool, use the C(bigip_pool_member) module. Previously, the
     C(bigip_pool) module allowed the management of members, but this has been removed

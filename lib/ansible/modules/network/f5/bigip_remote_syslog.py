@@ -31,7 +31,7 @@ options:
       - This option is required when multiple C(remote_host) with the same IP
         or hostname are present on the device.
       - If C(name) is not provided C(remote_host) is used by default.
-    version_added: 2.8
+    version_added: '2.8'
   remote_port:
     description:
       - Specifies the port that the system uses to send messages to the

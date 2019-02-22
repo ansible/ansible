@@ -36,7 +36,7 @@ options:
             - absent
             - present
         default: present
-        version_added: 2.7
+        version_added: '2.7'
     host_type_index:
         description:
             - The index that maps to host type you wish to create. It is recommended to use the M(netapp_e_facts) module to gather this information.
@@ -76,7 +76,7 @@ options:
             - Allow ports that are already assigned to be re-assigned to your current host
         required: false
         type: bool
-        version_added: 2.7
+        version_added: '2.7'
     group:
         description:
             - The unique identifier of the host-group you want the host to be a member of; this is used for clustering.
@@ -87,7 +87,7 @@ options:
         description:
             - A local path to a file to be used for debug logging
         required: False
-        version_added: 2.7
+        version_added: '2.7'
 
 """
 
@@ -136,7 +136,7 @@ id:
     returned: on success when state=present
     type: str
     sample: 00000000600A098000AAC0C3003004700AD86A52
-    version_added: "2.6"
+    version_added: '2.6'
 
 ssid:
     description:
@@ -144,7 +144,7 @@ ssid:
     returned: on success
     type: str
     sample: 1
-    version_added: "2.6"
+    version_added: '2.6'
 
 api_url:
     description:
@@ -152,7 +152,7 @@ api_url:
     returned: on success
     type: str
     sample: https://webservices.example.com:8443
-    version_added: "2.6"
+    version_added: '2.6'
 
 """
 import json

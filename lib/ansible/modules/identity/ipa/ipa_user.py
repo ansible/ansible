@@ -28,7 +28,7 @@ options:
     - Date at which the user password will expire
     - In the format YYYYMMddHHmmss
     - e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22
-    version_added: 2.5
+    version_added: '2.5'
   loginshell:
     description: Login shell
   mail:
@@ -64,13 +64,13 @@ options:
   uidnumber:
     description:
     - Account Settings UID/Posix User ID number
-    version_added: 2.5
+    version_added: '2.5'
   gidnumber:
     description:
     - Posix Group ID
-    version_added: 2.5
+    version_added: '2.5'
 extends_documentation_fragment: ipa.documentation
-version_added: "2.3"
+version_added: '2.3'
 requirements:
 - base64
 - hashlib

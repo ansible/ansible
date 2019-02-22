@@ -26,7 +26,7 @@ DOCUMENTATION = '''
 ---
 module: nxos_vrrp
 extends_documentation_fragment: nxos
-version_added: "2.1"
+version_added: '2.1'
 short_description: Manages VRRP configuration on NX-OS switches.
 description:
     - Manages VRRP configuration on NX-OS switches.
@@ -54,7 +54,7 @@ options:
             - Time interval between advertisement or 'default' keyword
         required: false
         default: 1
-        version_added: 2.6
+        version_added: '2.6'
     priority:
         description:
             - VRRP priority or 'default' keyword

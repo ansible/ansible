@@ -72,7 +72,7 @@ options:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
-    version_added: 2.7
+    version_added: '2.7'
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The

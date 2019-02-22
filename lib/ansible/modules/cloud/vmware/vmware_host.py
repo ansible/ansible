@@ -54,14 +54,14 @@ options:
     - "Other Examples: "
     - "  - '/Site2/dc2/Asia-Cluster/host'"
     - "  - '/dc3/Asia-Cluster/host'"
-    version_added: "2.6"
+    version_added: '2.6'
   add_connected:
     description:
     - If set to C(True), then the host should be connected as soon as it is added.
     - This parameter is ignored if state is set to a value other than C(present).
     default: True
     type: 'bool'
-    version_added: "2.6"
+    version_added: '2.6'
   esxi_hostname:
     description:
     - ESXi hostname to manage.
@@ -95,7 +95,7 @@ options:
     - "Specifying the hostsystem certificate's thumbprint."
     - "Use following command to get hostsystem certificate's thumbprint - "
     - "# openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha1 -noout"
-    version_added: 2.5
+    version_added: '2.5'
     default: ''
 extends_documentation_fragment: vmware.documentation
 '''

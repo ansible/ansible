@@ -18,7 +18,7 @@ short_description: management of instances in Proxmox VE cluster
 description:
   - allows you to create/delete/stop instances in Proxmox VE cluster
   - Starting in Ansible 2.1, it automatically detects containerization type (lxc for PVE 4, openvz for older)
-version_added: "2.0"
+version_added: '2.0'
 options:
   api_host:
     description:
@@ -50,7 +50,7 @@ options:
   pool:
     description:
       - Proxmox VE resource pool
-    version_added: "2.3"
+    version_added: '2.3'
   password:
     description:
       - the instance root password
@@ -72,7 +72,7 @@ options:
     description:
       - Specify number of cores per socket.
     default: 1
-    version_added: 2.4
+    version_added: '2.4'
   cpus:
     description:
       - numbers of allocated cpus for instance
@@ -91,7 +91,7 @@ options:
   mounts:
     description:
       - specifies additional mounts (separate disks) for the container. As a hash/dictionary defining mount points
-    version_added: "2.2"
+    version_added: '2.2'
   ip_address:
     description:
       - specifies the address the container will be assigned
@@ -134,9 +134,9 @@ options:
   pubkey:
     description:
       - Public key to add to /root/.ssh/authorized_keys. This was added on Proxmox 4.2, it is ignored for earlier versions
-    version_added: "2.3"
+    version_added: '2.3'
   unprivileged:
-    version_added: "2.3"
+    version_added: '2.3'
     description:
       - Indicate if the container should be unprivileged
     type: bool

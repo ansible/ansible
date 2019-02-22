@@ -23,44 +23,44 @@ description:
   - This module is also supported for Windows targets.
   - To assign included variables to a different host than C(inventory_hostname),
     use C(delegate_to) and set L(delegate_facts=True,../user_guide/playbooks_delegate.html#delegated-facts).
-version_added: "1.4"
+version_added: '1.4'
 options:
   file:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - The file name from which variables should be loaded.
       - If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
   dir:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - The directory name from which the variables should be loaded.
       - If the path is relative and the task is inside a role, it will look inside the role's vars/ subdirectory.
       - If the path is relative and not inside a role, it will be parsed relative to the playbook.
   name:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - The name of a variable into which assign the included vars. If omitted (null) they will be made top level vars.
   depth:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - When using C(dir), this module will, by default, recursively go through each sub directory and load up the
         variables. By explicitly setting the depth, this module will only go as deep as the depth.
     default: 0
   files_matching:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - Limit the files that are loaded within any directory to this regular expression.
   ignore_files:
-    version_added: "2.2"
+    version_added: '2.2'
     description:
       - List of file names to ignore.
   extensions:
-    version_added: "2.3"
+    version_added: '2.3'
     description:
       - List of file extensions to read when using C(dir).
     default: [yaml, yml, json]
   ignore_unknown_extensions:
-    version_added: "2.7"
+    version_added: '2.7'
     description:
       - Ignore unknown file extensions within the directory. This allows users to specify a directory containing vars files
         that are intermingled with non vars files extension types (For example, a directory with a README in it and vars files)
@@ -142,5 +142,5 @@ ansible_included_var_files:
   returned: success
   type: list
   sample: [ '/path/to/file.yaml', '/path/to/file.json' ]
-  version_added: 2.4
+  version_added: '2.4'
 '''

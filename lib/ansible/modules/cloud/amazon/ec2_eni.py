@@ -26,7 +26,7 @@ description:
     - Create and optionally attach an Elastic Network Interface (ENI) to an instance. If an ENI ID or private_ip is
       provided, the existing ENI (if any) will be modified. The 'attached' parameter controls the attachment status
       of the network interface.
-version_added: "2.0"
+version_added: '2.0'
 author: "Rob White (@wimnat)"
 options:
   eni_id:
@@ -62,7 +62,7 @@ options:
     description:
       - Specifies if network interface should be attached or detached from instance. If omitted, attachment status
         won't change
-    version_added: 2.2
+    version_added: '2.2'
     type: bool
   force_detach:
     description:
@@ -87,19 +87,19 @@ options:
       - A list of IP addresses to assign as secondary IP addresses to the network interface.
         This option is mutually exclusive of secondary_private_ip_address_count
     required: false
-    version_added: 2.2
+    version_added: '2.2'
   purge_secondary_private_ip_addresses:
     description:
       - To be used with I(secondary_private_ip_addresses) to determine whether or not to remove any secondary IP addresses other than those specified.
         Set secondary_private_ip_addresses to an empty list to purge all secondary addresses.
     default: no
     type: bool
-    version_added: 2.5
+    version_added: '2.5'
   secondary_private_ip_address_count:
     description:
       - The number of secondary IP addresses to assign to the network interface. This option is mutually exclusive of secondary_private_ip_addresses
     required: false
-    version_added: 2.2
+    version_added: '2.2'
   allow_reassignment:
     description:
       - Indicates whether to allow an IP address that is already assigned to another network interface or instance
@@ -107,7 +107,7 @@ options:
     required: false
     default: 'no'
     type: bool
-    version_added: 2.7
+    version_added: '2.7'
 extends_documentation_fragment:
     - aws
     - ec2

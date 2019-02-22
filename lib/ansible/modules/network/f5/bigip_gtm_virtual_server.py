@@ -25,16 +25,16 @@ options:
   name:
     description:
       - Specifies the name of the virtual server.
-    version_added: 2.6
+    version_added: '2.6'
   server_name:
     description:
       - Specifies the name of the server that the virtual server is associated with.
-    version_added: 2.6
+    version_added: '2.6'
   address:
     description:
       - Specifies the IP Address of the virtual server.
       - When creating a new GTM virtual server, this parameter is required.
-    version_added: 2.6
+    version_added: '2.6'
   port:
     description:
       - Specifies the service port number for the virtual server or pool member. For example,
@@ -48,14 +48,14 @@ options:
       - To unset this parameter, provide an empty string (C("")) as a value.
       - When creating a new GTM virtual server, if this parameter is not specified, a
         default of C(::) will be used.
-    version_added: 2.6
+    version_added: '2.6'
   translation_port:
     description:
       - Specifies the translation port number or service name for the virtual server.
       - To specify all ports, use an C(*).
       - When creating a new GTM virtual server, if this parameter is not specified, a
         default of C(*) will be used.
-    version_added: 2.6
+    version_added: '2.6'
   availability_requirements:
     description:
       - Specifies, if you activate more than one health monitor, the number of health
@@ -89,13 +89,13 @@ options:
           - The value of this parameter should always be B(higher) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
-    version_added: 2.6
+    version_added: '2.6'
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor this resource.
       - When C(availability_requirements.type) is C(require), you may only have a single monitor in the
         C(monitors) list.
-    version_added: 2.6
+    version_added: '2.6'
   virtual_server_dependencies:
     description:
       - Specifies the virtual servers on which the current virtual server depends.
@@ -109,11 +109,11 @@ options:
         description:
           - Virtual server to depend on.
         required: True
-    version_added: 2.6
+    version_added: '2.6'
   link:
     description:
       - Specifies a link to assign to the server or virtual server.
-    version_added: 2.6
+    version_added: '2.6'
   limits:
     description:
       - Specifies resource thresholds or limit requirements at the server level.
@@ -151,12 +151,12 @@ options:
         description:
           - Specifies the maximum number of concurrent connections, combined, for all of the virtual servers on the server.
           - If the connections exceed this limit, the system marks the server as unavailable.
-    version_added: 2.6
+    version_added: '2.6'
   partition:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.6
+    version_added: '2.6'
   state:
     description:
       - When C(present), ensures that the resource exists.

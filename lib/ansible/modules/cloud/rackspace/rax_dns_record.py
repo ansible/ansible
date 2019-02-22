@@ -34,7 +34,7 @@ options:
   loadbalancer:
     description:
       - Load Balancer ID to create a PTR record for. Only used with type=PTR
-    version_added: 1.7
+    version_added: '1.7'
   name:
     description:
       - FQDN record name to create
@@ -46,7 +46,7 @@ options:
         matching name and overwrite=true, this module will fail.
     default: true
     type: bool
-    version_added: 2.1
+    version_added: '2.1'
   priority:
     description:
       - Required for MX and SRV records, but forbidden for other record types.
@@ -54,7 +54,7 @@ options:
   server:
     description:
       - Server ID to create a PTR record for. Only used with type=PTR
-    version_added: 1.7
+    version_added: '1.7'
   state:
     description:
       - Indicate desired state of the resource

@@ -69,7 +69,7 @@ options:
       with no user overrides, which is equivalent to DISABLE. Not specifying this
       field is equivalent to specifying NONE.
     required: false
-    version_added: 2.7
+    version_added: '2.7'
     choices:
     - NONE
     - ENABLE
@@ -90,7 +90,7 @@ options:
       string Alternatively, you can add `register: name-of-resource` to a gcp_compute_ssl_policy
       task and then set this ssl_policy field to "{{ name-of-resource }}"'
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   url_map:
     description:
     - A reference to the UrlMap resource that defines the mapping from URL to the

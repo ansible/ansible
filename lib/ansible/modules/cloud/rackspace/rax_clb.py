@@ -17,7 +17,7 @@ module: rax_clb
 short_description: create / delete a load balancer in Rackspace Public Cloud
 description:
      - creates / deletes a Rackspace Public Cloud load balancer.
-version_added: "1.4"
+version_added: '1.4'
 options:
   algorithm:
     description:
@@ -84,7 +84,7 @@ options:
     description:
       - Virtual IP ID to use when creating the load balancer for purposes of
         sharing an IP with another load balancer of another protocol
-    version_added: 1.5
+    version_added: '1.5'
   wait:
     description:
       - wait for the balancer to be in state 'running' before returning

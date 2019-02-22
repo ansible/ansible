@@ -24,7 +24,7 @@ module: portage
 short_description: Package manager for Gentoo
 description:
   - Manages Gentoo packages
-version_added: "1.6"
+version_added: '1.6'
 
 options:
   package:
@@ -62,7 +62,7 @@ options:
       - (--changed-use)
     type: bool
     default: 'no'
-    version_added: 1.8
+    version_added: '1.8'
 
   oneshot:
     description:
@@ -132,14 +132,14 @@ options:
       - Continue as much as possible after an error.
     type: bool
     default: 'no'
-    version_added: 2.3
+    version_added: '2.3'
 
   jobs:
     description:
       - Specifies the number of packages to build simultaneously.
       - "Since version 2.6: Value of 0 or False resets any previously added"
       - --jobs setting values
-    version_added: 2.3
+    version_added: '2.3'
 
   loadavg:
     description:
@@ -147,7 +147,7 @@ options:
       - other builds running and the load average is at least LOAD
       - "Since version 2.6: Value of 0 or False resets any previously added"
       - --load-average setting values
-    version_added: 2.3
+    version_added: '2.3'
 
   quietbuild:
     description:
@@ -155,7 +155,7 @@ options:
       - on stdout (--quiet-build)
     type: bool
     default: 'no'
-    version_added: 2.6
+    version_added: '2.6'
 
   quietfail:
     description:
@@ -164,7 +164,7 @@ options:
       - displayed on stdout.
     type: bool
     default: 'no'
-    version_added: 2.6
+    version_added: '2.6'
 
 requirements: [ gentoolkit ]
 author:

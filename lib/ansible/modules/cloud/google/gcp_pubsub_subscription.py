@@ -64,7 +64,7 @@ options:
     description:
     - A set of key/value label pairs to assign to this Subscription.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
   push_config:
     description:
     - If push delivery is used with this subscription, this field is used to configure

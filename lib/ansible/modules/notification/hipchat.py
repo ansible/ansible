@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: hipchat
-version_added: "1.2"
+version_added: '1.2'
 short_description: Send a message to Hipchat.
 description:
    - Send a message to a Hipchat room, with options to control the formatting.
@@ -59,13 +59,13 @@ options:
         on personally controlled sites using self-signed certificates.
     type: bool
     default: 'yes'
-    version_added: 1.5.1
+    version_added: '1.5.1'
   api:
     description:
       - API url if using a self-hosted hipchat server. For Hipchat API version
         2 use the default URI with C(/v2) instead of C(/v1).
     default: 'https://api.hipchat.com/v1'
-    version_added: 1.6.0
+    version_added: '1.6.0'
 
 author:
 - Shirou Wakayama (@shirou)

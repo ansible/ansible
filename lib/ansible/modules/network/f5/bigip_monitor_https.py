@@ -26,7 +26,7 @@ options:
   description:
     description:
       - The description of the monitor.
-    version_added: 2.7
+    version_added: '2.7'
   parent:
     description:
       - The parent template of this monitor template. Once this value has
@@ -91,7 +91,7 @@ options:
       - Defining SSL profiles enables refined customization of the SSL attributes
         for an HTTPS monitor.
       - This parameter is only supported on BIG-IP versions 13.x and later.
-    version_added: 2.8
+    version_added: '2.8'
   up_interval:
     description:
       - Specifies the interval for the system to use to perform the health check
@@ -100,7 +100,7 @@ options:
         C(interval) to check the health of the resource.
       - When any other number, enables specification of a different interval to
         use when checking the health of a resource that is up.
-    version_added: 2.8
+    version_added: '2.8'
   partition:
     description:
       - Device partition to manage resources on.
@@ -113,7 +113,7 @@ options:
     choices:
       - present
       - absent
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - Requires BIG-IP software version >= 12
 extends_documentation_fragment: f5

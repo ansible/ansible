@@ -111,7 +111,7 @@ options:
       not be deleted.
     - Only the full identifier of the instance will be returned.
     required: false
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment: gcp
 '''
 

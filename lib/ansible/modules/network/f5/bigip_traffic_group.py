@@ -47,7 +47,7 @@ options:
       - Without a MAC masquerade address, the sending host must learn the MAC address for a newly-active device,
         either by sending an ARP request or by relying on the gratuitous ARP from the newly-active device.
       - To unset the MAC address, specify an empty value (C("")) to this parameter.
-    version_added: 2.6
+    version_added: '2.6'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

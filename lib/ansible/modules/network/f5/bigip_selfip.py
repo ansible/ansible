@@ -40,7 +40,7 @@ options:
   description:
     description:
       - Description of the traffic selector.
-    version_added: 2.8
+    version_added: '2.8'
   netmask:
     description:
       - The netmask for the self IP. When creating a new Self IP, this value
@@ -69,7 +69,7 @@ options:
       - The route domain id of the system. When creating a new Self IP, if
         this value is not specified, a default value of C(0) will be used.
       - This value cannot be changed after it is set.
-    version_added: 2.3
+    version_added: '2.3'
   partition:
     description:
       - Device partition to manage resources on. You can set different partitions
@@ -77,7 +77,7 @@ options:
         by a Self IP. In that sense, Self IPs are not isolated by partitions as
         other resources on a BIG-IP are.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

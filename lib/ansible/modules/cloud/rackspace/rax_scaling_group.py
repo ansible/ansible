@@ -24,7 +24,7 @@ options:
       - Attach read-only configuration drive to server as label config-2
     type: bool
     default: 'no'
-    version_added: 1.8
+    version_added: '1.8'
   cooldown:
     description:
       - The period of time, in seconds, that must pass before any scaling can
@@ -94,7 +94,7 @@ options:
     description:
       - Data to be uploaded to the servers config drive. This option implies
         I(config_drive). Can be a file path or a string
-    version_added: 1.8
+    version_added: '1.8'
   wait:
     description:
       - wait for the scaling group to finish provisioning the minimum amount of

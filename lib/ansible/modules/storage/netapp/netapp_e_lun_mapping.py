@@ -20,7 +20,7 @@ author:
 short_description: NetApp E-Series create, delete, or modify lun mappings
 description:
      - Create, delete, or modify mappings between a volume and a targeted host/host+ group.
-version_added: "2.2"
+version_added: '2.2'
 extends_documentation_fragment:
     - netapp.eseries
 options:
@@ -46,7 +46,7 @@ options:
       - The LUN value you wish to give the mapping.
       - If the supplied I(volume_name) is associated with a different LUN, it will be updated to what is supplied here.
       - LUN value will be determine by the storage-system when not specified.
-    version_added: 2.7
+    version_added: '2.7'
     required: no
   target_type:
     description:
@@ -55,7 +55,7 @@ options:
     choices:
       - host
       - group
-    version_added: 2.7
+    version_added: '2.7'
     required: no
 '''
 

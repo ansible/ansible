@@ -31,7 +31,7 @@ options:
   description:
     description:
       - Description of the trunk.
-    version_added: 2.7
+    version_added: '2.7'
   link_selection_policy:
     description:
       - Specifies, once the trunk is configured, the policy that the trunk uses to determine
@@ -105,7 +105,7 @@ options:
       - This parameter is not supported on Virtual Editions.
       - You should always wrap this value in quotes to prevent Ansible from interpreting
         the value as a literal hexadecimal number and converting it to an integer.
-    version_added: 2.7
+    version_added: '2.7'
   state:
     description:
       - When C(present), ensures that the resource exists.

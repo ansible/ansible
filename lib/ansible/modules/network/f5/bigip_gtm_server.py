@@ -105,7 +105,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   iquery_options:
     description:
       - Specifies whether the Global Traffic Manager uses this BIG-IP
@@ -126,13 +126,13 @@ options:
           - Specifies that the system checks the performance of a server running an SNMP
             agent.
         type: bool
-    version_added: 2.7
+    version_added: '2.7'
   monitors:
     description:
       - Specifies the health monitors that the system currently uses to monitor this resource.
       - When C(availability_requirements.type) is C(require), you may only have a single monitor in the
         C(monitors) list.
-    version_added: 2.8
+    version_added: '2.8'
   availability_requirements:
     description:
       - Specifies, if you activate more than one health monitor, the number of health
@@ -166,7 +166,7 @@ options:
           - The value of this parameter should always be B(higher) than, or B(equal to), the value of C(number_of_probers).
           - This parameter is only relevant when a C(type) of C(require) is used.
           - This parameter will be ignored if a type of either C(all) or C(at_least) is used.
-    version_added: 2.8
+    version_added: '2.8'
   prober_preference:
     description:
       - Specifies the type of prober to use to monitor this server's resources.
@@ -178,7 +178,7 @@ options:
       - outside-datacenter
       - inherit
       - pool
-    version_added: 2.8
+    version_added: '2.8'
   prober_fallback:
     description:
       - Specifies the type of prober to use to monitor this server's resources
@@ -195,7 +195,7 @@ options:
       - inherit
       - pool
       - none
-    version_added: 2.8
+    version_added: '2.8'
   prober_pool:
     description:
       - Specifies the name of the prober pool to use to monitor this server's resources.
@@ -203,7 +203,7 @@ options:
       - Format of the name can be either be prepended by partition (C(/Common/foo)), or specified
         just as an object name (C(foo)).
       - In C(TMOS) version C(12.x) prober_pool can be set to empty string to revert to default setting of inherit.
-    version_added: 2.8
+    version_added: '2.8'
   limits:
     description:
       - Specifies resource thresholds or limit requirements at the pool member level.
@@ -212,7 +212,7 @@ options:
       - You can define limits for any or all of the limit settings. However, when a
         member does not meet the resource threshold limit requirement, the system marks
         the member as unavailable and directs load-balancing traffic to another resource.
-    version_added: 2.8
+    version_added: '2.8'
     suboptions:
       bits_enabled:
         description:

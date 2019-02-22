@@ -33,7 +33,7 @@ options:
         description:
             - Name of port to manage on the bridge
     tag:
-        version_added: 2.2
+        version_added: '2.2'
         description:
             - VLAN tag for this port. Must be a value between
               0 and 4095.
@@ -47,12 +47,12 @@ options:
         description:
             - How long to wait for ovs-vswitchd to respond
     external_ids:
-        version_added: 2.0
+        version_added: '2.0'
         default: {}
         description:
             - Dictionary of external_ids applied to a port.
     set:
-        version_added: 2.0
+        version_added: '2.0'
         description:
             - Set a single property on a port.
 '''

@@ -24,7 +24,7 @@ short_description: Posts events to Datadog  service
 description:
 - "Allows to post events to Datadog (www.datadoghq.com) service."
 - "Uses http://docs.datadoghq.com/api/#events API."
-version_added: "1.3"
+version_added: '1.3'
 author:
 - "Artūras `arturaz` Šlajus (@arturaz)"
 - "Naoya Nakazawa (@n0ts)"
@@ -35,7 +35,7 @@ options:
     app_key:
         description: ["Your DataDog app key."]
         required: true
-        version_added: "2.2"
+        version_added: '2.2'
     title:
         description: ["The event title."]
         required: true
@@ -54,7 +54,7 @@ options:
     host:
         description: ["Host name to associate with the event."]
         default: "{{ ansible_hostname }}"
-        version_added: "2.4"
+        version_added: '2.4'
     tags:
         description: ["Comma separated list of tags to apply to the event."]
     alert_type:
@@ -69,7 +69,7 @@ options:
               on personally controlled sites using self-signed certificates.
         type: bool
         default: 'yes'
-        version_added: 1.5.1
+        version_added: '1.5.1'
 '''
 
 EXAMPLES = '''

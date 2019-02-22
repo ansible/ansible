@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: purefb_fs
-version_added: "2.6"
+version_added: '2.6'
 short_description:  Manage filesystemon Pure Storage FlashBlade`
 description:
     - This module manages filesystems on Pure Storage FlashBlade.
@@ -86,7 +86,7 @@ options:
     required: false
     type: bool
     default: false
-    version_added: 2.8
+    version_added: '2.8'
 extends_documentation_fragment:
     - purestorage.fb
 '''

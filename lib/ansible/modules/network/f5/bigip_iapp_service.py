@@ -61,7 +61,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
   strict_updates:
     description:
       - Indicates whether the application service is tied to the template,
@@ -76,7 +76,7 @@ options:
         the C(parameters) field.
     default: yes
     type: bool
-    version_added: 2.5
+    version_added: '2.5'
   traffic_group:
     description:
       - The traffic group for the iApp service. When creating a new service, if
@@ -85,28 +85,28 @@ options:
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
-    version_added: 2.5
+    version_added: '2.5'
   metadata:
     description:
       - Metadata associated with the iApp service.
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
-    version_added: 2.7
+    version_added: '2.7'
   description:
     description:
       - Description of the iApp service.
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
-    version_added: 2.7
+    version_added: '2.7'
   device_group:
     description:
       - The device group for the iApp service.
       - If this option is specified in the Ansible task, it will take precedence
         over any similar setting in the iApp Service payload that you provide in
         the C(parameters) field.
-    version_added: 2.7
+    version_added: '2.7'
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)

@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: service
-version_added: "0.1"
+version_added: '0.1'
 short_description:  Manage services
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
@@ -45,7 +45,7 @@ options:
           after signaling a process to stop.
         - Not all service managers support sleep, i.e when using systemd this setting will be ignored.
         type: int
-        version_added: "1.3"
+        version_added: '1.3'
     pattern:
         description:
         - If the service does not respond to the status command, name a
@@ -53,7 +53,7 @@ options:
           command as a stand-in for a status result.
         - If the string is found, the service will be assumed to be started.
         type: str
-        version_added: "0.7"
+        version_added: '0.7'
     enabled:
         description:
         - Whether the service should start on boot.
@@ -76,7 +76,7 @@ options:
         - Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
         type: str
         default: auto
-        version_added: 2.2
+        version_added: '2.2'
 notes:
     - For AIX, group subsystem names can be used.
 seealso:

@@ -31,7 +31,7 @@ author:
     - Luigi Mori (@jtschichold)
     - Ivan Bojer (@ivanbojer)
     - Tomi Raittinen (@traittinen)
-version_added: "2.3"
+version_added: '2.3'
 requirements:
     - pan-python
 options:
@@ -68,17 +68,17 @@ options:
         description:
             - Commit description/comment
         type: str
-        version_added: "2.8"
+        version_added: '2.8'
     commit_changes_by:
         description:
             - Commit changes made by specified admin
         type: list
-        version_added: "2.8"
+        version_added: '2.8'
     commit_vsys:
         description:
             - Commit changes for specified VSYS
         type: list
-        version_added: "2.8"
+        version_added: '2.8'
 '''
 
 EXAMPLES = '''
@@ -94,7 +94,7 @@ panos_commit:
     description: Information about commit job.
     returned: always
     type: complex
-    version_added: 2.8
+    version_added: '2.8'
     contains:
         job_id:
             description: Palo Alto job ID for the commit operation. Only returned if commit job is launched on device.

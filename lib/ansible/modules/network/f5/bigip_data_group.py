@@ -28,7 +28,7 @@ options:
   description:
     description:
       - The description of the monitor.
-    version_added: 2.8
+    version_added: '2.8'
   type:
     description:
       - The type of records in this data group.

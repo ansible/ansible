@@ -146,7 +146,7 @@ options:
     description:
     - Default access controls to apply to new objects when no ACL is provided.
     required: false
-    version_added: 2.7
+    version_added: '2.7'
     suboptions:
       bucket:
         description:

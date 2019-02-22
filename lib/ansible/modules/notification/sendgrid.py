@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-version_added: "2.0"
+version_added: '2.0'
 module: sendgrid
 short_description: Sends an email with the SendGrid API
 description:
@@ -56,33 +56,33 @@ options:
   api_key:
     description:
       - sendgrid API key to use instead of username/password
-    version_added: 2.2
+    version_added: '2.2'
   cc:
     description:
       - a list of email addresses to cc
-    version_added: 2.2
+    version_added: '2.2'
   bcc:
     description:
       - a list of email addresses to bcc
-    version_added: 2.2
+    version_added: '2.2'
   attachments:
     description:
       - a list of relative or explicit paths of files you want to attach (7MB limit as per SendGrid docs)
-    version_added: 2.2
+    version_added: '2.2'
   from_name:
     description:
       - the name you want to appear in the from field, i.e 'John Doe'
-    version_added: 2.2
+    version_added: '2.2'
   html_body:
     description:
       - whether the body is html content that should be rendered
-    version_added: 2.2
+    version_added: '2.2'
     type: bool
     default: 'no'
   headers:
     description:
       - a dict to pass on as headers
-    version_added: 2.2
+    version_added: '2.2'
 author: "Matt Makai (@makaimc)"
 '''
 

@@ -24,7 +24,7 @@ module: route53_zone
 short_description: add or delete Route53 zones
 description:
     - Creates and deletes Route53 private and public zones
-version_added: "2.0"
+version_added: '2.0'
 requirements: [ boto3 ]
 options:
     zone:
@@ -50,12 +50,12 @@ options:
         description:
             - The unique zone identifier you want to delete or "all" if there are many zones with the same domain name.
               Required if there are multiple zones identified with the above options
-        version_added: 2.4
+        version_added: '2.4'
     delegation_set_id:
         description:
             - The reusable delegation set ID to be associated with the zone.
               Note that you can't associate a reusable delegation set with a private hosted zone.
-        version_added: 2.6
+        version_added: '2.6'
 extends_documentation_fragment:
     - aws
     - ec2

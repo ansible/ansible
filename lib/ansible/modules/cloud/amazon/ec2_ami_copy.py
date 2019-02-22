@@ -26,7 +26,7 @@ module: ec2_ami_copy
 short_description: copies AMI between AWS regions, return new image id
 description:
     - Copies AMI from a source region to a destination region. B(Since version 2.3 this module depends on boto3.)
-version_added: "2.0"
+version_added: '2.0'
 options:
   source_region:
     description:
@@ -46,12 +46,12 @@ options:
   encrypted:
     description:
       - Whether or not the destination snapshots of the copied AMI should be encrypted.
-    version_added: "2.2"
+    version_added: '2.2'
     type: bool
   kms_key_id:
     description:
       - KMS key id used to encrypt image. If not specified, uses default EBS Customer Master Key (CMK) for your account.
-    version_added: "2.2"
+    version_added: '2.2'
   wait:
     description:
       - Wait for the copied AMI to be in state 'available' before returning.
@@ -72,7 +72,7 @@ options:
         in an existing AMI, the AMI will not be copied again.
     default: false
     type: bool
-    version_added: 2.6
+    version_added: '2.6'
 author:
 - Amir Moulavi (@amir343) <amir.moulavi@gmail.com>
 - Tim C (@defunctio) <defunct@defunct.io>

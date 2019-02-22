@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 ---
 module: ovirt_storage_domain
 short_description: Module to manage storage domains in oVirt/RHV
-version_added: "2.3"
+version_added: '2.3'
 author: "Ondra Machacek (@machacekondra)"
 description:
     - "Module to manage storage domains in oVirt/RHV"
@@ -36,7 +36,7 @@ options:
     id:
         description:
             - "Id of the storage domain to be imported."
-        version_added: "2.4"
+        version_added: '2.4'
     name:
         description:
             - "Name of the storage domain to manage. (Not required when state is I(imported))"
@@ -72,7 +72,7 @@ options:
             - "Dictionary with values for localfs storage type:"
             - "C(path) - Path of the mount point. E.g.: /path/to/my/data"
             - "Note that these parameters are not idempotent."
-        version_added: "2.4"
+        version_added: '2.4'
     nfs:
         description:
             - "Dictionary with values for NFS storage type:"
@@ -121,20 +121,20 @@ options:
         description:
             - "Boolean flag which indicates whether the storage domain should wipe the data after delete."
         type: bool
-        version_added: "2.5"
+        version_added: '2.5'
     backup:
         description:
             - "Boolean flag which indicates whether the storage domain is configured as backup or not."
         type: bool
-        version_added: "2.5"
+        version_added: '2.5'
     critical_space_action_blocker:
         description:
             - "Indicates the minimal free space the storage domain should contain in percentages."
-        version_added: "2.5"
+        version_added: '2.5'
     warning_low_space:
         description:
             - "Indicates the minimum percentage of a free space in a storage domain to present a warning."
-        version_added: "2.5"
+        version_added: '2.5'
     destroy:
         description:
             - "Logical remove of the storage domain. If I(true) retains the storage domain's data for import."
@@ -150,7 +150,7 @@ options:
             - "If I(True) storage domain blocks will be discarded upon deletion. Enabled by default."
             - "This parameter is relevant only for block based storage domains."
         type: bool
-        version_added: 2.5
+        version_added: '2.5'
 extends_documentation_fragment: ovirt
 '''
 

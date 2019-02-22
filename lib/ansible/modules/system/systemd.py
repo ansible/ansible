@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 module: systemd
 author:
     - Ansible Core Team
-version_added: "2.2"
+version_added: '2.2'
 short_description:  Manage services
 description:
     - Controls systemd services on remote hosts.
@@ -37,7 +37,7 @@ options:
         description:
             - Whether to override existing symlinks.
         type: bool
-        version_added: 2.6
+        version_added: '2.6'
     masked:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
@@ -55,7 +55,7 @@ options:
         type: bool
         default: no
         aliases: [ daemon-reexec ]
-        version_added: "2.8"
+        version_added: '2.8'
     user:
         description:
             - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
@@ -71,14 +71,14 @@ options:
               The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
         choices: [ system, user, global ]
-        version_added: "2.7"
+        version_added: '2.7'
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
               Enqueued job will continue without Ansible blocking on its completion.
         type: bool
         default: no
-        version_added: "2.3"
+        version_added: '2.3'
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.
     - Before 2.4 you always required 'name'.

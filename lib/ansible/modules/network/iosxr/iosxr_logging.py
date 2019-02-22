@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = """
 ---
 module: iosxr_logging
-version_added: "2.4"
+version_added: '2.4'
 author:
     - "Trishna Guha (@trishnaguha)"
     - "Kedar Kekan (@kedarX)"
@@ -38,7 +38,7 @@ options:
     description:
       - vrf name when syslog server is configured, C(dest) = C(host)
     default: default
-    version_added: 2.5
+    version_added: '2.5'
   size:
     description:
       - Size of buffer when C(dest) = C(buffered). The acceptable value is in the range I(307200 to 125000000 bytes). Default 307200
@@ -52,7 +52,7 @@ options:
     description:
       - To append a hostname prefix to system logging (syslog) messages logged to syslog servers.
         Optional config for C(dest) = C(host)
-    version_added: 2.5
+    version_added: '2.5'
   level:
     description:
       - Specifies the severity level for the logging.
@@ -147,7 +147,7 @@ xml:
   description: NetConf rpc xml sent to device with transport C(netconf)
   returned: always (empty list when no xml rpc to send)
   type: list
-  version_added: 2.5
+  version_added: '2.5'
   sample:
     - '<config xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
     <syslog xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-infra-syslog-cfg">

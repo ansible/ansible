@@ -64,7 +64,7 @@ options:
     description:
       - Device partition to manage resources on.
     default: Common
-    version_added: 2.5
+    version_added: '2.5'
 notes:
   - This module only supports version v1 and v2c of SNMP.
   - The C(network) option is not supported on versions of BIG-IP < 12.1.0 because
