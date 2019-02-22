@@ -317,8 +317,9 @@ options:
     - ' - C(dns_servers) (list): List of DNS servers to configure.'
     - ' - C(dns_suffix) (list): List of domain suffixes, also known as DNS search path (default: C(domain) parameter).'
     - ' - C(domain) (string): DNS domain name to use.'
-    - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
-          and minus, rest of the characters are dropped as per RFC 952.'
+    - ' - C(hostname) (string): Computer hostname (default: C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
+          and minus (no dots allowed, VMware guest customization for linux does not support receiving a FQDN name). Use "force=True" for old
+          pre 2.8 behavior of automatically fixing the hostname by removing the invalid chars and domain name.'
     - 'Parameters related to Windows customization:'
     - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
@@ -1653,10 +1654,21 @@ class PyVmomiHelper(PyVmomi):
                 ident.domain = str(self.params['customization']['domain'])
 
             ident.hostName = vim.vm.customization.FixedName()
-            hostname = str(self.params['customization'].get('hostname', self.params['name'].split('.')[0]))
-            # Remove all characters except alphanumeric and minus which is allowed by RFC 952
-            valid_hostname = re.sub(r"[^a-zA-Z0-9\-]", "", hostname)
-            ident.hostName.name = valid_hostname
+
+            hostname = str(self.params['customization'].get('hostname', self.params['name']))
+            if not re.match(r"[a-zA-Z0-9\-]*[a-zA-Z]+[a-zA-Z0-9\-]*$", hostname):
+                # VMWare guest customization for linux only supports (short) hostnames with alphanumeric and minus chars (RFC 952)
+                if self.params.get('force') and re.search(r"[a-zA-Z]", hostname):
+                    # Revert to pre ansible 2.8 solution: fix the hostname by ourselves, removing invalid chars and domain name
+                    # but name must have at least one letter
+                    hostname = re.sub(r"[^a-zA-Z0-9\-]", "", hostname.split('.')[0])
+                else:
+                    self.module.fail_json(msg="The hostname you have set is not valid for use with vmware guest customization for Linux."
+                                              " It can contain alphanumeric characters and the hyphen (-) character. It cannot contain"
+                                              " periods (.) or blank spaces and cannot be made up of digits only. Either set customization.hostname"
+                                              " or change VM name to a valid non-FQDN hostname. Use force=True for old pre 2.8 behavior of silently"
+                                              " removing the invalid chars and domain from the hostname you specified.")
+            ident.hostName.name = hostname
 
         self.customspec = vim.vm.customization.Specification()
         self.customspec.nicSettingMap = adaptermaps

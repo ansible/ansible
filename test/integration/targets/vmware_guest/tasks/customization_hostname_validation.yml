@@ -1,0 +1,121 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Diego Morales <dgmorales@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 5000
+    state: started
+
+- name: kill vcsim
+  uri:
+    url: http://{{ vcsim }}:5000/killall
+- name: start vcsim with no folders
+  uri:
+    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
+  register: vcsim_instance
+
+- name: Wait for Flask controller to come up online
+  wait_for:
+    host: "{{ vcsim }}"
+    port: 443
+    state: started
+
+- debug: var=vcsim_instance
+
+- name: Set a bunch of name styles and wheter they should be accepted or not
+  set_fact:
+    vm_items:
+      - { name: "DC0-H0-VMWARE1", should_fail: "never" }
+      - { name: "DC0_H0_VMWARE2", should_fail: "if_not_forced" }
+      - { name: "Vmware03", should_fail: "never" }
+      - { name: "vmware04.example.com", should_fail: "if_not_forced" }
+      - { name: "vmware 05", should_fail: "if_not_forced" }
+      - { name: "006", should_fail: "always" }
+      - { name: "-7", should_fail: "always" }
+      - { name: "v-8", should_fail: "never" }
+      - { name: "V", should_fail: "never" }
+
+- name: create new VMs from vm.items
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "VM {{ i }}"
+    guest_id: centos64Guest
+    datacenter: "DC0"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 1gb
+          type: thin
+          autoselect_datastore: True
+    networks:
+        - name: VM Network
+    state: poweredoff
+    folder: "DC0/vm"
+    customization:
+      hostname: "{{ item.name }}"
+  loop: "{{ vm_items }}"
+  loop_control:
+    index_var: i
+  register: register_new_vms
+  ignore_errors: yes
+
+- debug: var=register_new_vms
+
+- name: Assert that the test cases had the expected outcome (force==no)
+  assert:
+    msg: "Test case {{i}}({{item.name}}) failed? {{register_new_vms.results[i].failed}}. Expected was {{item.should_fail == 'always' or item.should_fail == 'if_not_forced'}}."
+    that:
+        - "register_new_vms.results[i].failed|bool == (item.should_fail == 'always' or item.should_fail == 'if_not_forced')|bool"
+        - "(not register_new_vms.results[i].failed) or ('The hostname you have set is not valid for use with vmware guest customization' in register_new_vms.results[i].msg)"
+  loop: "{{ vm_items }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: i
+
+- name: create new VMs from vm.items (forcing)
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcsim }}"
+    username: "{{ vcsim_instance['json']['username'] }}"
+    password: "{{ vcsim_instance['json']['password'] }}"
+    name: "VM {{ i }} forced"
+    guest_id: centos64Guest
+    datacenter: "DC0"
+    hardware:
+        num_cpus: 1
+        memory_mb: 512
+    disk:
+        - size: 1gb
+          type: thin
+          autoselect_datastore: True
+    networks:
+        - name: VM Network
+    state: poweredoff
+    folder: "DC0/vm"
+    force: True
+    customization:
+      hostname: "{{ item.name }}"
+  loop: "{{ vm_items }}"
+  loop_control:
+    index_var: i
+  register: register_new_vms_force
+  ignore_errors: yes
+
+- debug: var=register_new_vms_force
+
+- name: Assert that the test cases had the expected outcome (force==yes)
+  assert:
+    msg: "Test case {{i}}({{item.name}}) failed? {{register_new_vms_force.results[i].failed}}. Expected was {{item.should_fail == 'always'}}."
+    that:
+        - "register_new_vms_force.results[i].failed|bool == (item.should_fail == 'always')|bool"
+        - "(not register_new_vms_force.results[i].failed) or ('The hostname you have set is not valid for use with vmware guest customization' in register_new_vms_force.results[i].msg)"
+  loop: "{{ vm_items }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: i

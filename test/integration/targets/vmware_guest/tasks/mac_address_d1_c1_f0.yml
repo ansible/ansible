@@ -46,6 +46,8 @@
           netmask: 255.255.255.0
           gateway: 192.168.10.254
           mac: aa:bb:cc:dd:aa:42
+    customization:
+      hostname: DC0-H0-VM12
     state: poweredoff
     folder: "{{ item | dirname }}"
   with_items:
