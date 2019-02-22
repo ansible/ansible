@@ -15,7 +15,6 @@ $spec = @{
         zone = @{ type = "str"; required = $true }
         computer_name = @{ type = "str"; required = $false }
     }
-    # required_if = TODO
     supports_check_mode = $true
 }
 
@@ -35,7 +34,6 @@ if ($dns_computer_name -ne $null) {
     $extra_args.ComputerName = $dns_computer_name
 }
 
-# TODO: Convert to required_if
 if ($state -eq 'present')
 {
     if ($values.Count -eq 0)
@@ -85,9 +83,6 @@ $record_argument_name = @{
 }[$type]
 
 
-$changes = New-Object -Typename System.Collections.ArrayList
-
-
 $records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 if ($records -ne $null)
 {
@@ -114,8 +109,6 @@ if ($records -ne $null)
                 $new_record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $new_record -WhatIf:$module.CheckMode @extra_args
 
-                $changes += "-[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $record_value`n"
-                $changes += "+[$zone] $($record.HostName) $($ttl.TotalSeconds) $type $record_value`n"
                 $module.Result.changed = $true
             }
 
@@ -127,7 +120,6 @@ if ($records -ne $null)
             # This record doesn't match any of the values, and must be removed
             $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$module.CheckMode @extra_args
 
-            $changes += "-[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $record_value`n"
             $module.Result.changed = $true
         }
     }
@@ -149,12 +141,13 @@ if ($values -ne $null -and $values.Count -gt 0)
             $module.FailJson("Error adding DNS $type resource $name in zone $zone with value $value", $_)
         }
         $module.Result.debug_Add_DnsServerResourceRecord = "Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl -$type -$record_argument_name $value"
-        $changes += "+[$zone] $name $($ttl.TotalSeconds) $type $value`n"
     }
 
     $module.Result.changed = $true
 }
+$records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 
-$module.Diff.prepared = ($changes -Join '')
+$module.Diff.before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+$module.Diff.after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
 
 $module.ExitJson()
