@@ -79,6 +79,8 @@ class IPAClient(object):
             self.use_gssapi = True
         else:
             if not password:
+                if 'KRB5CCNAME' in os.environ or 'KRB5_CLIENT_KTNAME' in os.environ:
+                    self.module.warn("In order to use GSSAPI, you need to install 'urllib_gssapi'")
                 self._fail('login', 'Password is required if not using '
                            'GSSAPI. To use GSSAPI, please set the '
                            'KRB5_CLIENT_KTNAME or KRB5CCNAME (or both) '
@@ -218,7 +220,7 @@ def ipa_argument_spec():
         ipa_host=dict(type='str', default='ipa.example.com', fallback=(_env_then_dns_fallback, ['IPA_HOST'])),
         ipa_port=dict(type='int', default=443, fallback=(env_fallback, ['IPA_PORT'])),
         ipa_user=dict(type='str', default='admin', fallback=(env_fallback, ['IPA_USER'])),
-        ipa_pass=dict(type='str', required=not HAS_GSSAPI, no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
+        ipa_pass=dict(type='str', no_log=True, fallback=(env_fallback, ['IPA_PASS'])),
         ipa_timeout=dict(type='int', default=10, fallback=(env_fallback, ['IPA_TIMEOUT'])),
         validate_certs=dict(type='bool', default=True),
     )
