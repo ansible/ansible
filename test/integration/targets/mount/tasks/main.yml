@@ -280,6 +280,10 @@
         path: /tmp/myfs
         state: remounted
 
+    - name: Wait 2 second
+      pause:
+        seconds: 2
+
     - name: Get again the last mount time
       shell: 'date --date="`dumpe2fs /tmp/myfs.img 2>/dev/null | grep -i last\ mount\ time: |cut -d: -f2-`" +%s'
       register: last_mount_time2
