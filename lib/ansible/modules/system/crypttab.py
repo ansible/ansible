@@ -218,6 +218,7 @@ class Line(object):
         self.opts = Options(opts)
 
         if line is not None:
+            self.line = self.line.rstrip('\n')
             if self._line_valid(line):
                 self.name, backing_device, password, opts = self._split_line(line)
 
