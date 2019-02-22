@@ -318,19 +318,24 @@ If you intend to replace an existing static inventory file with an inventory scr
 it must return a JSON object which contains an 'all' group that includes every
 host in the inventory as a member and every group in the inventory as a child.
 It should also include an 'ungrouped' group which contains all hosts which are not members of any other group.
-A skeleton example of this JSON object is::
+A skeleton example of this JSON object is:
 
-	{
-		"_meta": {
-			"hostvars": {}
-		},
-		"all": {
-			"children": [
-				"ungrouped"
-			]
-		},
-		"ungrouped": {}
-	}
+.. code-block:: json
+
+   {
+       "_meta": {
+         "hostvars": {}
+       },
+       "all": {
+         "children": [
+           "ungrouped"
+         ]
+       },
+       "ungrouped": {
+         "children": [
+         ]
+       }
+   }
 
 An easy way to see how this should look is using :ref:`ansible-inventory`, which also supports ``--list`` and ``--host`` parameters like an inventory script would.
 
