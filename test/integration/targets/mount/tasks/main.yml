@@ -303,4 +303,3 @@
       loop:
         - /tmp/myfs.img
         - /tmp/myfs
-
