@@ -1704,4 +1704,19 @@ NETCONF_SSH_CONFIG:
   - {key: ssh_config, section: netconf_connection}
   yaml: {key: netconf_connection.ssh_config}
   default: null
+STRING_CONVERSION_ACTION:
+  version_added: '2.8'
+  description:
+    - Action to take when a module parameter value is converted to a string (this does not affect variables).
+      For string parameters, values such as '1.00', "['a', 'b',]", and 'yes', 'y', etc.
+      will be converted by the YAML parser unless fully quoted.
+    - Valid options are 'error', 'warn', and 'ignore'.
+    - Since 2.8, this option defaults to 'warn' but will change to 'error' in 2.12.
+  default: 'warn'
+  env:
+    - name: ANSIBLE_STRING_CONVERSION_ACTION
+  ini:
+    - section: defaults
+      key: string_conversion_action
+  type: string
 ...
