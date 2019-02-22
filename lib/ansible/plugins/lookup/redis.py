@@ -28,7 +28,7 @@ DOCUMENTATION = """
             key: host
       port:
         description: port on which Redis is listening on
-        default: 6379A
+        default: 6379
         type: int
         env:
           - name: ANSIBLE_REDIS_PORT
