@@ -837,14 +837,6 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
-    fmgr = None
-    if module._socket_path:
-        connection = Connection(module._socket_path)
-        fmgr = FortiManagerHandler(connection, module.check_mode)
-        fmgr.tools = FMGRCommon()
-    else:
-        module.fail_json(**FAIL_SOCKET_MSG)
-
     # MODULE PARAMGRAM
     paramgram = {
         "mode": module.params["mode"],
@@ -936,11 +928,21 @@ def main():
         }
     }
 
+    module.paramgram = paramgram
+    fmgr = None
+    if module._socket_path:
+        connection = Connection(module._socket_path)
+        fmgr = FortiManagerHandler(connection, module)
+        fmgr.tools = FMGRCommon()
+    else:
+        module.fail_json(**FAIL_SOCKET_MSG)
+
     list_overrides = ['ftps', 'https', 'imaps', 'pop3s', 'smtps', 'ssh', 'ssl', 'ssl-exempt', 'ssl-server']
     paramgram = fmgr.tools.paramgram_child_list_override(list_overrides=list_overrides,
                                                          paramgram=paramgram, module=module)
 
     results = DEFAULT_RESULT_OBJ
+
     try:
 
         results = fmgr_firewall_ssl_ssh_profile_modify(fmgr, paramgram)

@@ -1,5 +1,5 @@
 {
-    "fmgr_firewall_ssl_ssh_profile_addsetdelete": [
+    "fmgr_firewall_ssl_ssh_profile_modify": [
         {
             "paramgram_used": {
                 "comment": null,
@@ -90,6 +90,7 @@
                     "untrusted-cert": null
                 }
             },
+            "datagram_sent": {},
             "raw_response": {
                 "status": {
                     "message": "OK",
@@ -106,6 +107,17 @@
                     "code": 0
                 },
                 "url": "/pm/config/adom/root/obj/firewall/ssl-ssh-profile"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible Module TEST",
+                "server-cert-mode": "replace",
+                "name": "Ansible_SSL_SSH_Profile",
+                "ssl-anomalies-log": "enable",
+                "mapi-over-https": "enable",
+                "whitelist": "enable",
+                "ssl-exemptions-log": "enable",
+                "rpc-over-https": "enable",
+                "use-ssl-server": "enable"
             },
             "paramgram_used": {
                 "comment": "Created by Ansible Module TEST",
