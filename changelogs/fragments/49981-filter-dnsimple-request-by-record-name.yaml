@@ -1,0 +1,2 @@
+bugfixes:
+    - fix DNSimple to ensure check works even when the number of records is larger than 100
