@@ -1,32 +1,20 @@
-#
-#  Copyright 2018 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018, Red Hat | Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Options for providing an object configuration
 
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   resource_definition:
     description:
     - "Provide a valid YAML definition (either as a string, list, or dict) for an object when creating or updating. NOTE: I(kind), I(api_version), I(name),
       and I(namespace) will be overwritten by corresponding values found in the provided I(resource_definition)."
+    type: str
     aliases:
     - definition
     - inline
@@ -38,4 +26,5 @@ options:
     - Reads from the local file system. To read from the Ansible controller's file system, including vaulted files, use the file lookup
       plugin or template lookup plugin, combined with the from_yaml filter, and pass the result to
       I(resource_definition). See Examples below.
+    type: path
 '''
