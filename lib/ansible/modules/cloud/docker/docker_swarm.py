@@ -424,6 +424,8 @@ class SwarmManager(DockerBaseClass):
             self.swarm_info = json.loads(json_str)
             if self.swarm_info['Swarm']['NodeID']:
                 return True
+            if self.swarm_info['Swarm']['LocalNodeState'] in ('active', 'pending', 'locked'):
+                return True
         return False
 
     def join(self):
