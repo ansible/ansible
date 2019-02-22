@@ -86,7 +86,7 @@ class FortiManagerHandler(object):
         """
         This function will attempt to apply default values to canned responses from FortiManager we know of.
         This saves time, and turns the response in the module into a "one-liner", while still giving us...
-        the flexibility to directly use return_response in modules if we have too. This function saves repeated code.
+        the flexibility to directly use return_response in modules if we have too.
 
         :param module: The Ansible Module CLASS object, used to run fail/exit json
         :type module: object
