@@ -1,0 +1,2 @@
+bugfixes:
+- "remote_management foreman - Fixed issue where it was impossible to createdelete a product because product was missing in dict choices ( https://github.com/ansible/ansible/issues/48594 )"
