@@ -221,13 +221,10 @@ backup_path:
 
 """
 import re
-import time
 
 from ansible.module_utils.network.exos.exos import run_commands, get_config, load_config
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.common.parsing import Conditional
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 
 __metaclass__ = type

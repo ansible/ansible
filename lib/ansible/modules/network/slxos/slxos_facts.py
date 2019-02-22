@@ -279,7 +279,7 @@ class Interfaces(FactsBase):
             primary_address = addresses = []
             primary_address = re.findall(r'Primary Internet Address is (\S+)', value, re.M)
             addresses = re.findall(r'Secondary Internet Address is (\S+)', value, re.M)
-            if len(primary_address) == 0:
+            if not primary_address:
                 continue
             addresses.append(primary_address[0])
             for address in addresses:
@@ -309,7 +309,7 @@ class Interfaces(FactsBase):
     def parse_neighbors(self, neighbors):
         facts = dict()
         lines = neighbors.split('Local Interface: ')
-        if len(lines) == 0:
+        if not lines:
             return facts
         for line in lines:
             match = re.search(r'(\w+ \S+)\s+\(Local Int.+?\)[\s\S]+Remote Interface: (\S+.+?) \(Remote Int.+?\)[\s\S]+System Name: (\S+)', line, re.M)
@@ -450,7 +450,7 @@ def main():
 
     warnings = list()
 
-    module.exit_json(ansible_facts=ansible_facts)
+    module.exit_json(ansible_facts=ansible_facts, warnings=warnings)
 
 
 if __name__ == '__main__':

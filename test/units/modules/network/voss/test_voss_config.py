@@ -21,9 +21,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat.mock import patch, MagicMock
+from units.modules.utils import set_module_args
 from ansible.modules.network.voss import voss_config
 from ansible.plugins.cliconf.voss import Cliconf
-from units.modules.utils import set_module_args
 from .voss_module import TestVossModule, load_fixture
 
 
