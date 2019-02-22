@@ -21,7 +21,7 @@ short_description: Gather facts about disks of given virtual machine
 description:
     - This module can be used to gather facts about disks belonging to given virtual machine.
     - All parameters and VMware object names are case sensitive.
-version_added: 2.6
+version_added: '2.6'
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:

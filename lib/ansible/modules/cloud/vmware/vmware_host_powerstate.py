@@ -24,7 +24,7 @@ description:
 - This module can be used to manage power states of host systems in given vCenter infrastructure.
 - User can set power state to 'power-down-to-standby', 'power-up-from-standby', 'shutdown-host' and 'reboot-host'.
 - State 'reboot-host', 'shutdown-host' and 'power-down-to-standby' are not supported by all the host systems.
-version_added: 2.6
+version_added: '2.6'
 author:
 - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 requirements:

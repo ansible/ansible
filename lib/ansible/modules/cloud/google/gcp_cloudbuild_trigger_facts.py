@@ -33,7 +33,7 @@ module: gcp_cloudbuild_trigger_facts
 description:
 - Gather facts for GCP Trigger
 short_description: Gather facts for GCP Trigger
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

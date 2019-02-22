@@ -20,7 +20,7 @@ short_description: create an annotation in circonus
 description:
     - Create an annotation event with a given category, title and description. Optionally start, end or durations can be provided
 author: "Nick Harring (@NickatEpic)"
-version_added: 2.0
+version_added: '2.0'
 requirements:
     - requests (either >= 2.0.0 for Python 3, or >= 1.0.0 for Python 2)
 notes:

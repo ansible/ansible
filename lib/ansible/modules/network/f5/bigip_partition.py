@@ -18,7 +18,7 @@ module: bigip_partition
 short_description: Manage BIG-IP partitions
 description:
   - Manage BIG-IP partitions.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

@@ -18,7 +18,7 @@ module: sns
 short_description: Send Amazon Simple Notification Service messages
 description:
   - Sends a notification to a topic on your Amazon SNS account.
-version_added: 1.6
+version_added: '1.6'
 author:
   - Michael J. Schultz (@mjschultz)
   - Paul Arthur (@flowerysong)

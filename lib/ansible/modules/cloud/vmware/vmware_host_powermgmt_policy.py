@@ -21,7 +21,7 @@ module: vmware_host_powermgmt_policy
 short_description: Manages the Power Management Policy of an ESXI host system
 description:
 - This module can be used to manage the Power Management Policy of ESXi host systems in given vCenter infrastructure.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte) <christian.kotte@gmx.de>
 notes:

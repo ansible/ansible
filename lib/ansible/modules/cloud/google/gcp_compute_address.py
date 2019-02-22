@@ -42,7 +42,7 @@ description:
   a new internal IP address, either by Compute Engine or by you. External IP addresses
   can be either ephemeral or static.
 short_description: Creates a GCP Address
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

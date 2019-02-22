@@ -18,7 +18,7 @@ module: bigip_asm_policy_manage
 short_description: Manage BIG-IP ASM policies
 description:
    - Manage BIG-IP ASM policies, create from templates and manage global policy settings.
-version_added: 2.8
+version_added: '2.8'
 options:
   active:
     description:

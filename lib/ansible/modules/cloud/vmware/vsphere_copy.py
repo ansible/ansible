@@ -18,7 +18,7 @@ module: vsphere_copy
 short_description: Copy a file to a vCenter datastore
 description:
     - Upload files to a vCenter datastore
-version_added: 2.0
+version_added: '2.0'
 author:
 - Dag Wieers (@dagwieers)
 options:

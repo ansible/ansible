@@ -17,7 +17,7 @@ module: vmware_migrate_vmk
 short_description: Migrate a VMK interface from VSS to VDS
 description:
     - Migrate a VMK interface from VSS to VDS
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)

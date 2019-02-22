@@ -43,7 +43,7 @@ description:
 - Add a persistent disk to your instance when you need reliable and affordable storage
   with consistent performance characteristics.
 short_description: Creates a GCP Disk
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

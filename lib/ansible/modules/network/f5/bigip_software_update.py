@@ -18,7 +18,7 @@ module: bigip_software_update
 short_description: Manage the software update settings of a BIG-IP
 description:
   - Manage the software update settings of a BIG-IP.
-version_added: 2.5
+version_added: '2.5'
 options:
   auto_check:
     description:

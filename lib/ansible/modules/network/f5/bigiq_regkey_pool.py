@@ -20,7 +20,7 @@ description:
   - Manages registration key (regkey) pools on a BIG-IQ. These pools function as
     a container in-which you will add lists of registration keys. To add registration
     keys, use the C(bigiq_regkey_license) module.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

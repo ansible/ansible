@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: rollbar_deployment
-version_added: 1.6
+version_added: '1.6'
 author: "Max Riveiro (@kavu)"
 short_description: Notify Rollbar about app deployments
 description:

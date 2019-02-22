@@ -47,7 +47,7 @@ notes:
 author:
     - Jason Edelman (@jedelman8)
     - Gabriele Gerbibo (@GGabriele)
-version_added: 2.2
+version_added: '2.2'
 options:
     system_image_file:
         description:

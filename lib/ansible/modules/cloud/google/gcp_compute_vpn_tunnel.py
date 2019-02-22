@@ -33,7 +33,7 @@ module: gcp_compute_vpn_tunnel
 description:
 - VPN tunnel resource.
 short_description: Creates a GCP VpnTunnel
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

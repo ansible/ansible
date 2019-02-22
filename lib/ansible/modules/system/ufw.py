@@ -20,7 +20,7 @@ module: ufw
 short_description: Manage firewall with UFW
 description:
     - Manage firewall with UFW.
-version_added: 1.6
+version_added: '1.6'
 author:
     - Aleksey Ovcharenko (@ovcharenko)
     - Jarno Keskikangas (@pyykkis)

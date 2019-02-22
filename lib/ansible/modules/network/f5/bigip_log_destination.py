@@ -18,7 +18,7 @@ module: bigip_log_destination
 short_description: Manages log destinations on a BIG-IP.
 description:
   - Manages log destinations on a BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

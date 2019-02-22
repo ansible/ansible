@@ -28,7 +28,7 @@ description:
 notes:
   - To create a new runner at least the C(api_token), C(description) and C(url) options are required.
   - Runners need to have unique descriptions.
-version_added: 2.8
+version_added: '2.8'
 author:
   - Samy Coenen (@SamyCoenen)
   - Guillaume Martinez (@Lunik)

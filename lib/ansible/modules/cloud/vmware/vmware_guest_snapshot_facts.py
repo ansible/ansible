@@ -20,7 +20,7 @@ module: vmware_guest_snapshot_facts
 short_description: Gather facts about virtual machine's snapshots in vCenter
 description:
     - This module can be used to gather facts about virtual machine's snapshots.
-version_added: 2.6
+version_added: '2.6'
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:

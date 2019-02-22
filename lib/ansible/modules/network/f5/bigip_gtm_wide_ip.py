@@ -18,7 +18,7 @@ module: bigip_gtm_wide_ip
 short_description: Manages F5 BIG-IP GTM wide ip
 description:
   - Manages F5 BIG-IP GTM wide ip.
-version_added: 2.0
+version_added: '2.0'
 options:
   pool_lb_method:
     description:

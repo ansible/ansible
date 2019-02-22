@@ -21,7 +21,7 @@ description:
     known as DNS Express on a BIG-IP. This module does not configure GTM related
     functionality, nor does it configure system-level name servers that affect the
     base system's ability to resolve DNS names.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

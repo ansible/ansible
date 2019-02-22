@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: sensu_subscription
 short_description: Manage Sensu subscriptions
-version_added: 2.2
+version_added: '2.2'
 description:
   - Manage which I(sensu channels) a machine should subscribe to
 options:

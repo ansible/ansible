@@ -19,7 +19,7 @@ module: vmware_guest_vnc
 short_description: Manages VNC remote display on virtual machines in vCenter
 description:
   - This module can be used to enable and disable VNC remote display on virtual machine.
-version_added: 2.8
+version_added: '2.8'
 author:
   - Armin Ranjbar Daemi (@rmin)
 requirements:

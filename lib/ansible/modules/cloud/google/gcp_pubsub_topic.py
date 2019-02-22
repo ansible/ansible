@@ -33,7 +33,7 @@ module: gcp_pubsub_topic
 description:
 - A named resource to which messages are sent by publishers.
 short_description: Creates a GCP Topic
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

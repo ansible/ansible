@@ -20,7 +20,7 @@ module: vmware_about_facts
 short_description: Provides information about VMware server to which user is connecting to
 description:
 - This module can be used to gather information about VMware server to which user is trying to connect.
-version_added: 2.7
+version_added: '2.7'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

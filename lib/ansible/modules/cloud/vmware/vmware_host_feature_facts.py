@@ -18,7 +18,7 @@ module: vmware_host_feature_facts
 short_description: Gathers facts about an ESXi host's feature capability information
 description:
 - This module can be used to gather facts about an ESXi host's feature capability information when ESXi hostname or Cluster name is given.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

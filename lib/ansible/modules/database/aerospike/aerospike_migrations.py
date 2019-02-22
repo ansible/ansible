@@ -22,7 +22,7 @@ description:
       This makes it easy to do a rolling upgrade/update on Aerospike nodes.
     - If waiting for migrations is not desired, simply just poll until
       port 3000 if available or asinfo -v status returns ok
-version_added: 2.8
+version_added: '2.8'
 author: "Albert Autin (@Alb0t)"
 options:
     host:

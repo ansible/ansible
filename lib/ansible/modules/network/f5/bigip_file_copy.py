@@ -18,7 +18,7 @@ module: bigip_file_copy
 short_description: Manage files in datastores on a BIG-IP
 description:
   - Manages files on a variety of datastores on a BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

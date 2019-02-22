@@ -18,7 +18,7 @@ module: bigip_remote_syslog
 short_description: Manipulate remote syslog settings on a BIG-IP
 description:
   - Manipulate remote syslog settings on a BIG-IP.
-version_added: 2.5
+version_added: '2.5'
 options:
   remote_host:
     description:

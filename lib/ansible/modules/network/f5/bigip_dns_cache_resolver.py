@@ -19,7 +19,7 @@ module: bigip_dns_cache_resolver
 short_description: Manage DNS resolver cache configurations on BIG-IP
 description:
   - Manage DNS resolver cache configurations on BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

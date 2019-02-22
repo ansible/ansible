@@ -18,7 +18,7 @@ module: bigip_ike_peer
 short_description: Manage IPSec IKE Peer configuration on BIG-IP
 description:
   - Manage IPSec IKE Peer configuration on BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

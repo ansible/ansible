@@ -33,7 +33,7 @@ module: gcp_compute_https_health_check_facts
 description:
 - Gather facts for GCP HttpsHealthCheck
 short_description: Gather facts for GCP HttpsHealthCheck
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

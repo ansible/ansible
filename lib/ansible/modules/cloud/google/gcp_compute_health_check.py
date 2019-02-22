@@ -41,7 +41,7 @@ description:
   successfully to some number of consecutive probes, it is marked healthy again and
   can receive new connections.
 short_description: Creates a GCP HealthCheck
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

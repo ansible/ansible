@@ -17,7 +17,7 @@ DOCUMENTATION = """
 ---
 module: lxc_container
 short_description: Manage LXC Containers
-version_added: 1.8.0
+version_added: '1.8'
 description:
   - Management of LXC containers
 author: "Kevin Carter (@cloudnull)"

@@ -20,7 +20,7 @@ description:
   - Manages vCMP guests on a BIG-IP. This functionality only exists on
     actual hardware and must be enabled by provisioning C(vcmp) with the
     C(bigip_provision) module.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

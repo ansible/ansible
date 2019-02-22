@@ -34,7 +34,7 @@ description:
 - Represents an InterconnectAttachment (VLAN attachment) resource. For more information,
   see Creating VLAN Attachments.
 short_description: Creates a GCP InterconnectAttachment
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

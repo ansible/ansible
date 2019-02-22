@@ -19,7 +19,7 @@ short_description: Manage HTTPD related settings on BIG-IP
 description:
   - Manages HTTPD related settings on the BIG-IP. These settings are interesting
     to change when you want to set GUI timeouts and other TMUI related settings.
-version_added: 2.5
+version_added: '2.5'
 options:
   allow:
     description:

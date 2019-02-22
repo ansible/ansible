@@ -33,7 +33,7 @@ module: gcp_container_cluster_facts
 description:
 - Gather facts for GCP Cluster
 short_description: Gather facts for GCP Cluster
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

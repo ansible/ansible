@@ -21,7 +21,7 @@ module: vmware_local_role_facts
 short_description: Gather facts about local roles on an ESXi host
 description:
     - This module can be used to gather facts about local role facts on an ESXi host
-version_added: 2.7
+version_added: '2.7'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

@@ -19,7 +19,7 @@ module: mysql_variables
 short_description: Manage MySQL global variables
 description:
     - Query / Set MySQL variables.
-version_added: 1.3
+version_added: '1.3'
 author:
 - Balazs Pocze (@banyek)
 options:

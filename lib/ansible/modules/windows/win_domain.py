@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 module: win_domain
 short_description: Ensures the existence of a Windows domain
-version_added: 2.3
+version_added: '2.3'
 description:
 - Ensure that the domain named by C(dns_domain_name) exists and is reachable.
 - If the domain is not reachable, the domain is created in a new forest on the target Windows Server 2012R2+ host.

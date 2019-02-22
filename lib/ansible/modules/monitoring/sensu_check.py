@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: sensu_check
 short_description: Manage Sensu checks
-version_added: 2.0
+version_added: '2.0'
 description:
   - Manage the checks that should be run on a machine by I(Sensu).
   - Most options do not have a default and will not be added to the check definition unless specified.

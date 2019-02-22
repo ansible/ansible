@@ -20,7 +20,7 @@ description:
   - Manage DNS zones on BIG-IP. The zones managed here are primarily used
     for configuring DNS Express on BIG-IP. This module does not configure
     zones that are found in BIG-IP ZoneRunner.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

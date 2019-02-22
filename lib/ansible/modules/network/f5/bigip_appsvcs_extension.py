@@ -19,7 +19,7 @@ short_description: Manage application service deployments
 description:
   - Manages application service deployments via the App Services Extension functionality
     in BIG-IP.
-version_added: 2.7
+version_added: '2.7'
 options:
   content:
     description:

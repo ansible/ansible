@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: infini_export_client
-version_added: 2.3
+version_added: '2.3'
 short_description: Create, Delete or Modify NFS Client(s) for existing exports on Infinibox
 description:
     - This module creates, deletes or modifys NFS client(s) for existing exports on Infinibox.

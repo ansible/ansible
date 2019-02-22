@@ -19,7 +19,7 @@ module: vcenter_extension_facts
 short_description: Gather facts vCenter extensions
 description:
 - This module can be used to gather facts about vCenter extension.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Abhijeet Kasurde (@Akasurde)
 notes:

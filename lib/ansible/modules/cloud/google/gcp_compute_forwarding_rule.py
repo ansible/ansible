@@ -35,7 +35,7 @@ description:
   virtual machines to forward a packet to if it matches the given [IPAddress, IPProtocol,
   portRange] tuple.
 short_description: Creates a GCP ForwardingRule
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

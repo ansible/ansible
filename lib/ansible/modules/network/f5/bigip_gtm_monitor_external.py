@@ -18,7 +18,7 @@ module: bigip_gtm_monitor_external
 short_description: Manages external GTM monitors on a BIG-IP
 description:
   - Manages external GTM monitors on a BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

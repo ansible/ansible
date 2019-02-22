@@ -25,7 +25,7 @@ short_description: Avi API Module
 description:
     - This module can be used for calling any resources defined in Avi REST API. U(https://avinetworks.com/)
     - This module is useful for invoking HTTP Patch methods and accessing resources that do not have an REST object associated with them.
-version_added: 2.5
+version_added: '2.5'
 requirements: [ avisdk ]
 options:
     data:

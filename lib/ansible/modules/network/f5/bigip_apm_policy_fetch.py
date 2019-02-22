@@ -18,7 +18,7 @@ module: bigip_apm_policy_fetch
 short_description: Exports the APM policy or APM access profile from remote nodes.
 description:
   - Exports the apm policy or APM access profile from remote nodes.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

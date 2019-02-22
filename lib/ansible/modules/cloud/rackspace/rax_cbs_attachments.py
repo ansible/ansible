@@ -17,7 +17,7 @@ module: rax_cbs_attachments
 short_description: Manipulate Rackspace Cloud Block Storage Volume Attachments
 description:
      - Manipulate Rackspace Cloud Block Storage Volume Attachments
-version_added: 1.6
+version_added: '1.6'
 options:
   device:
     description:

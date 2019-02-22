@@ -21,7 +21,7 @@ module: vmware_host_snmp
 short_description: Configures SNMP on an ESXi host system
 description:
 - This module can be used to configure the embedded SNMP agent on an ESXi host.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte)
 notes:

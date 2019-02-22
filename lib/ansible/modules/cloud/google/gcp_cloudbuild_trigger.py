@@ -33,7 +33,7 @@ module: gcp_cloudbuild_trigger
 description:
 - Configuration for an automated build in response to source repository changes.
 short_description: Creates a GCP Trigger
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

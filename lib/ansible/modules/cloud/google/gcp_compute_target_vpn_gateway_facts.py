@@ -33,7 +33,7 @@ module: gcp_compute_target_vpn_gateway_facts
 description:
 - Gather facts for GCP TargetVpnGateway
 short_description: Gather facts for GCP TargetVpnGateway
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

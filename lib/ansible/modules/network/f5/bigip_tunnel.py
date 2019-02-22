@@ -25,7 +25,7 @@ description:
   - If a specific tunnel does not support the parameter you are considering, the documentation
     of the parameter will usually make mention of this. Otherwise, when configuring that
     parameter on the device, the device will notify you.
-version_added: 2.7
+version_added: '2.7'
 options:
   name:
     description:

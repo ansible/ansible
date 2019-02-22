@@ -33,7 +33,7 @@ module: gcp_compute_address_facts
 description:
 - Gather facts for GCP Address
 short_description: Gather facts for GCP Address
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

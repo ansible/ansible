@@ -21,7 +21,7 @@ description:
     applied to all packets except those going through the management
     interface. They are applied first, before any firewall rules for the
     packet's virtual server, route domain, and/or self IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   enforced_policy:
     description:

@@ -20,7 +20,7 @@ module: vmware_dvswitch_uplink_pg
 short_description: Manage uplink portproup configuration of a Distributed Switch
 description:
     - This module can be used to configure the uplink portgroup of a Distributed Switch.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte)
 notes:

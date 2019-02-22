@@ -34,7 +34,7 @@ description:
 - Represents a GCP Project. A project is a container for ACLs, APIs, App Engine Apps,
   VMs, and other Google Cloud Platform resources.
 short_description: Creates a GCP Project
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

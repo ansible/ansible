@@ -18,7 +18,7 @@ module: bigip_profile_oneconnect
 short_description: Manage OneConnect profiles on a BIG-IP
 description:
   - Manage OneConnect profiles on a BIG-IP.
-version_added: 2.7
+version_added: '2.7'
 options:
   name:
     description:

@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: vmware_guest_tools_upgrade
 short_description: Module to upgrade VMTools
-version_added: 2.8
+version_added: '2.8'
 description:
     - This module upgrades the VMWare Tools on Windows and Linux guests.
 requirements:

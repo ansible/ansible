@@ -17,7 +17,7 @@ module: rax_dns
 short_description: Manage domains on Rackspace Cloud DNS
 description:
      - Manage domains on Rackspace Cloud DNS
-version_added: 1.5
+version_added: '1.5'
 options:
   comment:
     description:

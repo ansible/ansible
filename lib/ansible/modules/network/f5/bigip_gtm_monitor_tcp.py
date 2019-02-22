@@ -18,7 +18,7 @@ module: bigip_gtm_monitor_tcp
 short_description: Manages F5 BIG-IP GTM tcp monitors
 description:
   - Manages F5 BIG-IP GTM tcp monitors.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

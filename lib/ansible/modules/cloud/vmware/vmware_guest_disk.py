@@ -24,7 +24,7 @@ description:
     - All parameters and VMware object names are case sensitive.
     - This module is destructive in nature, please read documentation carefully before proceeding.
     - Be careful while removing disk specified as this may lead to data loss.
-version_added: 2.8
+version_added: '2.8'
 author:
     - Abhijeet Kasurde (@akasurde) <akasurde@redhat.com>
 notes:

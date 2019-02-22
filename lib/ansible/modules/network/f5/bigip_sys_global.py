@@ -18,7 +18,7 @@ module: bigip_sys_global
 short_description: Manage BIG-IP global settings
 description:
   - Manage BIG-IP global settings.
-version_added: 2.3
+version_added: '2.3'
 options:
   banner_text:
     description:

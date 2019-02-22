@@ -18,7 +18,7 @@ module: bigip_device_auth_ldap
 short_description: Manage LDAP device authentication settings on BIG-IP
 description:
   - Manage LDAP device authentication settings on BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   servers:
     description:

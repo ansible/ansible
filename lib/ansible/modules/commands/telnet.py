@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: telnet
 short_description: Executes a low-down and dirty telnet command
-version_added: 2.4
+version_added: '2.4'
 description:
      - Executes a low-down and dirty telnet command, not going through the module subsystem.
      - This is mostly to be used for enabling ssh on devices that only have telnet enabled by default.

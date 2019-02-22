@@ -21,7 +21,7 @@ description:
     user authentication is handled off-box. Local access control to the BIG-IP
     is controlled by the defined remote role. Where-as authentication (and by
     extension, assignment to the role) is handled off-box.
-version_added: 2.7
+version_added: '2.7'
 options:
   name:
     description:

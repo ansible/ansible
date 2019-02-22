@@ -18,7 +18,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: catapult
-version_added: 2.4
+version_added: '2.4'
 short_description: Send a sms / mms using the catapult bandwidth api
 description:
      - Allows notifications to be sent using sms / mms via the catapult bandwidth api.

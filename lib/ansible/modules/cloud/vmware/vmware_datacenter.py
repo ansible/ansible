@@ -20,7 +20,7 @@ module: vmware_datacenter
 short_description: Manage VMware vSphere Datacenters
 description:
     - This module can be used to manage (create, delete) VMware vSphere Datacenters.
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Kamil Szczygiel (@kamsz)

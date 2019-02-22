@@ -15,7 +15,7 @@ DOCUMENTATION = '''
 ---
 module: modprobe
 short_description: Load or unload kernel modules
-version_added: 1.4
+version_added: '1.4'
 author:
     - David Stygstra (@stygstra)
     - Julien Dauphant (@jdauphant)

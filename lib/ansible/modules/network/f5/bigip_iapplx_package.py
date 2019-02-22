@@ -19,7 +19,7 @@ short_description: Manages Javascript iApp packages on a BIG-IP
 description:
   - Manages Javascript iApp packages on a BIG-IP. This module will allow
     you to deploy iAppLX packages to the BIG-IP and manage their lifecycle.
-version_added: 2.5
+version_added: '2.5'
 options:
   package:
     description:

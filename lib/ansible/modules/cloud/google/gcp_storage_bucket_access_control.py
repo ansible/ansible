@@ -42,7 +42,7 @@ description:
   see Access Control, with the caveat that this API uses READER, WRITER, and OWNER
   instead of READ, WRITE, and FULL_CONTROL.'
 short_description: Creates a GCP BucketAccessControl
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

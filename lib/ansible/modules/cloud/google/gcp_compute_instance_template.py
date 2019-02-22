@@ -39,7 +39,7 @@ description:
 - 'Tip: Disks should be set to autoDelete=true so that leftover disks are not left
   behind on machine deletion.'
 short_description: Creates a GCP InstanceTemplate
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

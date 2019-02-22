@@ -25,7 +25,7 @@ short_description: Move a virtual machine using vMotion, and/or its vmdks using 
 description:
     - Using VMware vCenter, move a virtual machine using vMotion to a different
       host, and/or its vmdks to another datastore using storage vMotion.
-version_added: 2.2
+version_added: '2.2'
 author:
 - Bede Carroll (@bedecarroll)
 - Olivier Boukili (@oboukili)

@@ -23,7 +23,7 @@ module: vmware_dvswitch
 short_description: Create or remove a Distributed Switch
 description:
     - This module can be used to create, remove a Distributed Switch.
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Abhijeet Kasurde (@Akasurde)

@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: infini_pool
-version_added: 2.3
+version_added: '2.3'
 short_description: Create, Delete and Modify Pools on Infinibox
 description:
     - This module to creates, deletes or modifies pools on Infinibox.

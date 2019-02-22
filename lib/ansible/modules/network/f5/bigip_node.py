@@ -18,7 +18,7 @@ module: bigip_node
 short_description: Manages F5 BIG-IP LTM nodes
 description:
   - Manages F5 BIG-IP LTM nodes.
-version_added: 1.4
+version_added: '1.4'
 options:
   state:
     description:

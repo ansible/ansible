@@ -18,7 +18,7 @@ module: bigiq_device_facts
 short_description: Collect facts from F5 BIG-IQ devices
 description:
   - Collect facts from F5 BIG-IQ devices.
-version_added: 2.8
+version_added: '2.8'
 options:
   gather_subset:
     description:

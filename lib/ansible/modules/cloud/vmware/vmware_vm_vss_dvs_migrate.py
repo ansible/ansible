@@ -17,7 +17,7 @@ module: vmware_vm_vss_dvs_migrate
 short_description: Migrates a virtual machine from a standard vswitch to distributed
 description:
     - Migrates a virtual machine from a standard vswitch to distributed
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 notes:

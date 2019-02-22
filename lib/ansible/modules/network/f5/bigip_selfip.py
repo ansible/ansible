@@ -18,7 +18,7 @@ module: bigip_selfip
 short_description: Manage Self-IPs on a BIG-IP system
 description:
   - Manage Self-IPs on a BIG-IP system.
-version_added: 2.2
+version_added: '2.2'
 options:
   address:
     description:

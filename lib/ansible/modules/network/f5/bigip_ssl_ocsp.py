@@ -18,7 +18,7 @@ module: bigip_ssl_ocsp
 short_description: Manage OCSP configurations on BIG-IP
 description:
   - Manage OCSP configurations on BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

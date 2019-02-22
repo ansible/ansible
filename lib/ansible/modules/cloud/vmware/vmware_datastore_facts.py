@@ -21,7 +21,7 @@ short_description: Gather facts about datastores available in given vCenter
 description:
     - This module can be used to gather facts about datastores in VMWare infrastructure.
     - All values and VMware object names are case sensitive.
-version_added: 2.5
+version_added: '2.5'
 author:
     - Tim Rightnour (@garbled1)
 notes:

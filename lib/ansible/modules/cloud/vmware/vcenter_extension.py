@@ -17,7 +17,7 @@ module: vcenter_extension
 short_description: Register/deregister vCenter Extensions
 description:
     - This module can be used to register/deregister vCenter Extensions.
-version_added: 2.8
+version_added: '2.8'
 author:
     - Michael Tipton (@castawayegr)
 notes:

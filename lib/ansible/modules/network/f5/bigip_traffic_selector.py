@@ -18,7 +18,7 @@ module: bigip_traffic_selector
 short_description: Manage IPSec Traffic Selectors on BIG-IP
 description:
   - Manage IPSec Traffic Selectors on BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

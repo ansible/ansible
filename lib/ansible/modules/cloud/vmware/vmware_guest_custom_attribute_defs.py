@@ -21,7 +21,7 @@ module: vmware_guest_custom_attribute_defs
 short_description: Manage custom attributes definitions for virtual machine from VMWare
 description:
     - This module can be used to add and remove custom attributes definitions for the given virtual machine from VMWare.
-version_added: 2.7
+version_added: '2.7'
 author:
     - Jimmy Conner (@cigamit)
     - Abhijeet Kasurde (@Akasurde)

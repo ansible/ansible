@@ -32,7 +32,7 @@ module: ig_config
 short_description: Manage the configuration database on an Ingate SBC.
 description:
   - Manage the configuration database on an Ingate SBC.
-version_added: 2.8
+version_added: '2.8'
 extends_documentation_fragment: ingate
 options:
   add:

@@ -23,7 +23,7 @@ description:
     the member order in the pool, not the various settings of the members. The
     C(bigip_gtm_pool_member) module should be used to adjust all of the other
     settings.
-version_added: 2.6
+version_added: '2.6'
 options:
   virtual_server:
     description:

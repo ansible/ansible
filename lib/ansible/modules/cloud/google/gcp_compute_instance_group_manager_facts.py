@@ -33,7 +33,7 @@ module: gcp_compute_instance_group_manager_facts
 description:
 - Gather facts for GCP InstanceGroupManager
 short_description: Gather facts for GCP InstanceGroupManager
-version_added: 2.7
+version_added: '2.7'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

@@ -33,7 +33,7 @@ module: gcp_redis_instance
 description:
 - A Google Cloud Redis instance.
 short_description: Creates a GCP Instance
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

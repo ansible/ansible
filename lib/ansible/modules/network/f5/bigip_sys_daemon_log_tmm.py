@@ -18,7 +18,7 @@ module: bigip_sys_daemon_log_tmm
 short_description: Manage BIG-IP tmm daemon log settings
 description:
   - Manage BIG-IP tmm log settings.
-version_added: 2.8
+version_added: '2.8'
 options:
   arp_log_level:
     description:

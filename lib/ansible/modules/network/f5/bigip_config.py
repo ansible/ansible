@@ -24,7 +24,7 @@ description:
     configuration to disk. Since the F5 module only manipulate running
     configuration, it is important that you utilize this module to save
     that running config.
-version_added: 2.4
+version_added: '2.4'
 options:
   save:
     description:

@@ -17,7 +17,7 @@ module: rax_scaling_policy
 short_description: Manipulate Rackspace Cloud Autoscale Scaling Policy
 description:
     - Manipulate Rackspace Cloud Autoscale Scaling Policy
-version_added: 1.7
+version_added: '1.7'
 options:
   at:
     description:

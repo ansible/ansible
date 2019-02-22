@@ -19,7 +19,7 @@ short_description: Manages global GTM settings
 description:
   - Manages global GTM settings. These settings include general, load balancing, and metrics
     related settings.
-version_added: 2.6
+version_added: '2.6'
 options:
   synchronization:
     description:

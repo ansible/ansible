@@ -25,7 +25,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ip_netns
-version_added: 2.5
+version_added: '2.5'
 author: "Arie Bregman (@bregman-arie)"
 short_description: Manage network namespaces
 requirements: [ ip ]

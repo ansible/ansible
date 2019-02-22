@@ -21,7 +21,7 @@ description:
     to accept configuration.
   - This module can take into account situations where the device is in the middle
     of rebooting due to a configuration change.
-version_added: 2.5
+version_added: '2.5'
 options:
   timeout:
     description:

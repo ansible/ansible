@@ -22,7 +22,7 @@ short_description: Enables/Disables IPv6 support for an ESXi host system
 description:
 - This module can be used to enable or disable IPv6 support for ESXi host systems in given vCenter infrastructure.
 - It also checks if the host needs to be restarted.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte) <christian.kotte@gmx.de>
 notes:

@@ -18,7 +18,7 @@ module: bigip_apm_policy_import
 short_description: Manage BIG-IP APM policy or APM access profile imports
 description:
    - Manage BIG-IP APM policy or APM access profile imports.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

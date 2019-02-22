@@ -19,7 +19,7 @@ short_description: Import/Delete SSL keys from BIG-IP
 description:
   - This module will import/delete SSL keys on a BIG-IP. Keys can be imported
     from key files on the local disk, in PEM format.
-version_added: 2.5
+version_added: '2.5'
 options:
   content:
     description:

@@ -18,7 +18,7 @@ module: bigip_snat_pool
 short_description: Manage SNAT pools on a BIG-IP
 description:
   - Manage SNAT pools on a BIG-IP.
-version_added: 2.3
+version_added: '2.3'
 options:
   members:
     description:

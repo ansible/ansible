@@ -18,7 +18,7 @@ module: bigip_profile_persistence_src_addr
 short_description: Manage source address persistence profiles
 description:
   - Manages source address persistence profiles.
-version_added: 2.7
+version_added: '2.7'
 options:
   name:
     description:

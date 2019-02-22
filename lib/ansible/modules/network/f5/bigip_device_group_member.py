@@ -21,7 +21,7 @@ description:
     be added or removed, never updated. This is because the members are
     identified by unique name values and changing that name would invalidate
     the uniqueness.
-version_added: 2.5
+version_added: '2.5'
 options:
   name:
     description:

@@ -33,7 +33,7 @@ module: gcp_iam_service_account_facts
 description:
 - Gather facts for GCP ServiceAccount
 short_description: Gather facts for GCP ServiceAccount
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

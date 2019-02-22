@@ -12,7 +12,7 @@ DOCUMENTATION = r'''
 ---
 module: win_shell
 short_description: Execute shell commands on target hosts
-version_added: 2.2
+version_added: '2.2'
 description:
      - The C(win_shell) module takes the command name followed by a list of space-delimited arguments.
        It is similar to the M(win_command) module, but runs

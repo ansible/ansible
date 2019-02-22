@@ -20,7 +20,7 @@ description:
   - Allows one to run different config-sync actions. These actions allow
     you to manually sync your configuration across multiple BIG-IPs when
     those devices are in an HA pair.
-version_added: 2.4
+version_added: '2.4'
 options:
   device_group:
     description:

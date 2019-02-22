@@ -20,7 +20,7 @@ module: vmware_dvswitch_pvlans
 short_description: Manage Private VLAN configuration of a Distributed Switch
 description:
     - This module can be used to configure Private VLANs (PVLANs) on a Distributed Switch.
-version_added: 2.8
+version_added: '2.8'
 author:
 - Christian Kotte (@ckotte)
 notes:

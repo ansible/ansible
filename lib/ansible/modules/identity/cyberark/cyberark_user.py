@@ -19,7 +19,7 @@ author:
   - Edward Nunez (@enunez-cyberark) CyberArk BizDev
   - Cyberark Bizdev (@cyberark-bizdev)
   - erasmix (@erasmix)
-version_added: 2.4
+version_added: '2.4'
 description:
     - CyberArk User Management using PAS Web Services SDK.
     - It currently supports the following actions Get User Details, Add User, Update User, Delete User.

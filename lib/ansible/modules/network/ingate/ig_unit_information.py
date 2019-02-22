@@ -20,7 +20,7 @@ module: ig_unit_information
 short_description: Get unit information from an Ingate SBC.
 description:
   - Get unit information from an Ingate SBC.
-version_added: 2.8
+version_added: '2.8'
 extends_documentation_fragment: ingate
 author:
   - Ingate Systems AB (@ingatesystems)

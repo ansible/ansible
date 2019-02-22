@@ -17,7 +17,7 @@ author:
   - Edward Nunez (@enunez-cyberark) CyberArk BizDev
   - Cyberark Bizdev (@cyberark-bizdev)
   - erasmix (@erasmix)
-version_added: 2.4
+version_added: '2.4'
 description:
     - Authenticates to CyberArk Vault using Privileged Account Security Web Services SDK and
       creates a session fact that can be used by other modules. It returns an Ansible fact

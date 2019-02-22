@@ -20,7 +20,7 @@ description:
   - Manages F5 BIG-IP GTM virtual servers. A GTM server can have many virtual servers
     associated with it. They are arranged in much the same way that pool members are
     to pools.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

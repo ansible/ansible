@@ -21,7 +21,7 @@ module: vmware_dvs_host
 short_description: Add or remove a host from distributed virtual switch
 description:
     - Manage a host system from distributed virtual switch.
-version_added: 2.0
+version_added: '2.0'
 author:
 - Joseph Callen (@jcpowermac)
 - Abhijeet Kasurde (@Akasurde)

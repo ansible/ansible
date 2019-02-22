@@ -33,7 +33,7 @@ module: gcp_storage_object
 description:
 - Upload or download a file from a GCS bucket.
 short_description: Creates a GCP Object
-version_added: 2.8
+version_added: '2.8'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

@@ -23,7 +23,7 @@ description:
     Your other parameters will be ignored in this case. Changing the C(root)
     password is not an idempotent operation. Therefore, it will change it
     every time this module attempts to change it.
-version_added: 2.4
+version_added: '2.4'
 options:
   full_name:
     description:

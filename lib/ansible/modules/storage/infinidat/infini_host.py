@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: infini_host
-version_added: 2.3
+version_added: '2.3'
 short_description: Create, Delete and Modify Hosts on Infinibox
 description:
     - This module creates, deletes or modifies hosts on Infinibox.

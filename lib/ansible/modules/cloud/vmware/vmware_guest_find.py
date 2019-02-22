@@ -19,7 +19,7 @@ module: vmware_guest_find
 short_description: Find the folder path(s) for a virtual machine by name or UUID
 description:
     - Find the folder path(s) for a virtual machine by name or UUID
-version_added: 2.4
+version_added: '2.4'
 author:
     - Abhijeet Kasurde (@Akasurde) <akasurde@redhat.com>
 notes:

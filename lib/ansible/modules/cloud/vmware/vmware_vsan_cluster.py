@@ -17,7 +17,7 @@ module: vmware_vsan_cluster
 short_description: Configure VSAN clustering on an ESXi host
 description:
     - This module can be used to configure VSAN clustering on an ESXi host
-version_added: 2.0
+version_added: '2.0'
 author:
 - Russell Teague (@mtnbikenc)
 notes:

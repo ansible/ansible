@@ -34,7 +34,7 @@ description:
 - An HttpsHealthCheck resource. This resource defines a template for how individual
   VMs should be checked for health, via HTTPS.
 short_description: Creates a GCP HttpsHealthCheck
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

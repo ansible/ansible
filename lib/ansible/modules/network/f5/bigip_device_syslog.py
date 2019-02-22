@@ -18,7 +18,7 @@ module: bigip_device_syslog
 short_description: Manage system-level syslog settings on BIG-IP
 description:
   - Manage system-level syslog settings on BIG-IP.
-version_added: 2.8
+version_added: '2.8'
 options:
   auth_priv_from:
     description:

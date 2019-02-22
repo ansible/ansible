@@ -21,7 +21,7 @@ description:
     own adjustments to the standard C(dns) profile. Users of this module should be aware
     that many of the adjustable knobs have no module default. Instead, the default is
     assigned by the BIG-IP system itself which, in most cases, is acceptable.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:

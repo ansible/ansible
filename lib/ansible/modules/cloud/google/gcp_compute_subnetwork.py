@@ -49,7 +49,7 @@ description:
   private IP addresses. You can isolate portions of the network, even entire subnets,
   using firewall rules.
 short_description: Creates a GCP Subnetwork
-version_added: 2.6
+version_added: '2.6'
 author: Google Inc. (@googlecloudplatform)
 requirements:
 - python >= 2.6

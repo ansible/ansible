@@ -18,7 +18,7 @@ module: bigip_virtual_server
 short_description: Manage LTM virtual servers on a BIG-IP
 description:
   - Manage LTM virtual servers on a BIG-IP.
-version_added: 2.1
+version_added: '2.1'
 options:
   state:
     description:

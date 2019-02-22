@@ -18,7 +18,7 @@ module: bigip_software_install
 short_description: Install software images on a BIG-IP
 description:
   - Install new images on a BIG-IP.
-version_added: 2.7
+version_added: '2.7'
 options:
   image:
     description:

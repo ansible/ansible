@@ -19,7 +19,7 @@ module: bigip_device_facts
 short_description: Collect facts from F5 BIG-IP devices
 description:
   - Collect facts from F5 BIG-IP devices.
-version_added: 2.7
+version_added: '2.7'
 options:
   gather_subset:
     description:

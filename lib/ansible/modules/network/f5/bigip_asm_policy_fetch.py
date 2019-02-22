@@ -18,7 +18,7 @@ module: bigip_asm_policy_fetch
 short_description: Exports the asm policy from remote nodes.
 description:
   - Exports the asm policy from remote nodes.
-version_added: 2.8
+version_added: '2.8'
 options:
   name:
     description:

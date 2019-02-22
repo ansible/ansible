@@ -16,7 +16,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: grove
-version_added: 1.4
+version_added: '1.4'
 short_description: Sends a notification to a grove.io channel
 description:
      - The C(grove) module sends a message for a service to a Grove.io

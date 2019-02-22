@@ -21,7 +21,7 @@ description:
     end of the policy. Rules can be re-ordered using the C(bigip_security_policy) module.
     Rules can also be pre-ordered using the C(bigip_security_policy) module and then later
     updated using the C(bigip_firewall_rule) module.
-version_added: 2.7
+version_added: '2.7'
 options:
   name:
     description:

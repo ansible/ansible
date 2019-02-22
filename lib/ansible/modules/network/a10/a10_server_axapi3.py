@@ -17,7 +17,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: a10_server_axapi3
-version_added: 2.3
+version_added: '2.3'
 short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
 description:
     - Manage SLB (Server Load Balancer) server objects on A10 Networks devices via aXAPIv3.

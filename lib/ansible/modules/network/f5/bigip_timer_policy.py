@@ -18,7 +18,7 @@ module: bigip_timer_policy
 short_description: Manage timer policies on a BIG-IP
 description:
   - Manage timer policies on a BIG-IP.
-version_added: 2.6
+version_added: '2.6'
 options:
   name:
     description:
