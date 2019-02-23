@@ -78,59 +78,62 @@
       net_name: '{{test_net_name}}'
       state: present
       one_to_one:
-        - name: Test map
-          public_ip: 1.1.1.1
+        - name: Service behind NAT
+          public_ip: 1.2.1.2
           lan_ip: 10.200.1.10
           uplink: both
-          allowed_inbound: something
-          protocol: tcp
-          destination_ports: 80
-          allowed_ips: 10.10.10.10
+          allowed_inbound:
+            - protocol: tcp
+              destination_ports: 80
+              allowed_ips: 10.10.10.10
     delegate_to: localhost
     register: create_one_one
 
-  - name: Create 1:many rule
-    meraki_nat:
-      auth_key: '{{auth_key}}'
-      org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
-      state: present
-      one_to_many:
-        - name: Test map
-          public_ip: 1.1.1.1
-          lan_ip: 10.200.1.10
-          uplink: both
-          protocol: tcp
-          allowed_ips:
-            - 1.1.1.1
-          port_rules:
-            - Hello
-          public_port: 10
-          local_ip: 1.1.1.1
-          local_port: 11
-    delegate_to: localhost
-    register: create_one_many
-
   - debug:
-      var: create_one_many
+      var: create_one_one
 
-  - name: Create port forwarding rule
-    meraki_nat:
-      auth_key: '{{auth_key}}'
-      org_name: '{{test_org_name}}'
-      net_name: '{{test_net_name}}'
-      state: present
-      port_forwarding:
-        - name: Test map
-          lan_ip: 10.200.1.10
-          uplink: both
-          protocol: tcp
-          allowed_ips:
-            - 1.1.1.1
-          public_port: 10
-          local_port: 11
-    delegate_to: localhost
-    register: create_pf
+  # - name: Create 1:many rule
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: present
+  #     one_to_many:
+  #       - name: Test map
+  #         public_ip: 1.1.1.1
+  #         lan_ip: 10.200.1.10
+  #         uplink: both
+  #         protocol: tcp
+  #         allowed_ips:
+  #           - 1.1.1.1
+  #         port_rules:
+  #           - Hello
+  #         public_port: 10
+  #         local_ip: 1.1.1.1
+  #         local_port: 11
+  #   delegate_to: localhost
+  #   register: create_one_many
 
-  - debug:
-      var: create_pf
+  # - debug:
+  #     var: create_one_many
+
+  # - name: Create port forwarding rule
+  #   meraki_nat:
+  #     auth_key: '{{auth_key}}'
+  #     org_name: '{{test_org_name}}'
+  #     net_name: '{{test_net_name}}'
+  #     state: present
+  #     port_forwarding:
+  #       - name: Test map
+  #         lan_ip: 10.200.1.10
+  #         uplink: both
+  #         protocol: tcp
+  #         allowed_ips:
+  #           - 1.1.1.1
+  #         public_port: 10
+  #         local_port: 11
+  #   delegate_to: localhost
+  #   register: create_pf
+
+  # - debug:
+  #     var: create_pf
