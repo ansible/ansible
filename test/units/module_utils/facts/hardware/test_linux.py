@@ -173,7 +173,3 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         udevadm_uuid = lh._udevadm_uuid('mock_device')
 
         self.assertEqual(udevadm_uuid, '57b1a3e7-9019-4747-9809-7ec52bba9179')
-
-
-def test_get_cpu_info():
-    pass
