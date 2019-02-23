@@ -401,6 +401,9 @@ class SwarmManager(DockerBaseClass):
             self.results['diff'] = diff
 
     def inspect_swarm(self):
+        self.client.module.deprecate(
+            "The 'inspect' state is deprecated, please use 'docker_swarm_facts' to inspect swarm cluster",
+            version='2.12')
         try:
             data = self.client.inspect_swarm()
             json_str = json.dumps(data, ensure_ascii=False)
@@ -491,7 +494,7 @@ class SwarmManager(DockerBaseClass):
             self.client.fail("This node is not a manager.")
 
         try:
-            status_down = self.client.check_if_swarm_node_is_down(repeat_check=5)
+                status_down = self.client.check_if_swarm_node_is_down(repeat_check=5)
         except APIError:
             return
 
