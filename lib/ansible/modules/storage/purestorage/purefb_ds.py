@@ -69,7 +69,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng management directory service
+- name: Delete existing management directory service
   purefb_ds:
     dstype: management
     state: absent
@@ -86,14 +86,14 @@ EXAMPLES = r'''
     fb_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Enable exisitng SMB directory service
+- name: Enable existing SMB directory service
   purefb_ds:
     dstypr: smb
     enable: true
     fb_url: 10.10.10.2
     api_token: e31060a7-21fc-e277-6240-25983c6c4592
 
-- name: Disable exisitng management directory service
+- name: Disable existing management directory service
   purefb_ds:
     dstype: management
     enable: false
