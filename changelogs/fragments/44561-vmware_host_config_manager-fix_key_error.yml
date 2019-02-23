@@ -1,2 +1,2 @@
 bugfixes:
-- Fixed issue when a supported option isn't already set (https://github.com/ansible/ansible/issues/44561).
+- Fixed KeyError issue in vmware_host_config_manager when a supported option isn't already set (https://github.com/ansible/ansible/issues/44561).
