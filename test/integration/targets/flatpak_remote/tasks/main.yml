@@ -53,4 +53,5 @@
       method: system
 
   when: |
-      ansible_distribution in ('Fedora', 'Ubuntu')
+      ansible_distribution == 'Fedora' or
+      ansible_distribution == 'Ubuntu' and not ansible_distribution_major_version | int < 16
