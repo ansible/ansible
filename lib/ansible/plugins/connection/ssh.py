@@ -525,7 +525,8 @@ class Connection(ConnectionBase):
         cpath = '%(directory)s/' + digest[:10]
         return cpath
 
-    def _sshpass_available(self):
+    @staticmethod
+    def _sshpass_available():
         global SSHPASS_AVAILABLE
 
         # We test once if sshpass is available, and remember the result. It
