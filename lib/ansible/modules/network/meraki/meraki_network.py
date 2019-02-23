@@ -47,18 +47,10 @@ options:
         description:
         - Type of network device network manages.
         - Required when creating a network.
-        - As of Ansible 2.8, combined type has moved to the types parameter.
+        - As of Ansible 2.8, C(combined) type is no longer accepted.
         choices: [ appliance, switch, wireless ]
         aliases: [net_type]
-    types:
-        description:
-        - Type of network device network manages.
-        - Identical to type, but used when multiple network types are needed in a single network.
-        aliases: ['net_types']
-        version_added: '2.8'
-    tags:
-        description:
-        - Comma delimited list of tags to assign to network.
+        type: list
     timezone:
         description:
         - Timezone associated to network.
@@ -105,7 +97,7 @@ EXAMPLES = r'''
     state: present
     org_name: YourOrg
     net_name: MyNet
-    types:
+    type:
       - switch
       - appliance
     timezone: America/Chicago
@@ -190,7 +182,7 @@ def list_to_string(data):
             new_string += i
         else:
             new_string = "{0}{1} ".format(new_string, item)
-    return new_string
+    return new_string.strip()
 
 
 def main():
@@ -201,8 +193,7 @@ def main():
     argument_spec = meraki_argument_spec()
     argument_spec.update(
         net_id=dict(type='str'),
-        type=dict(type='str', choices=['wireless', 'switch', 'appliance'], aliases=['net_type']),
-        types=dict(type='list', aliases=['net_types']),
+        type=dict(type='list', choices=['wireless', 'switch', 'appliance'], aliases=['net_type']),
         tags=dict(type='str'),
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
@@ -249,9 +240,7 @@ def main():
         if meraki.params['net_name']:
             payload['name'] = meraki.params['net_name']
         if meraki.params['type']:
-            payload['type'] = meraki.params['type']
-        elif meraki.params['types']:
-            payload['type'] = list_to_string(meraki.params['types'])
+            payload['type'] = list_to_string(meraki.params['type'])
         if meraki.params['tags']:
             payload['tags'] = construct_tags(meraki.params['tags'])
         if meraki.params['timezone']:

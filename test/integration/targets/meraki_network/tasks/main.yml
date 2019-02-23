@@ -85,7 +85,7 @@
       state: present
       org_name: '{{ test_org_name }}'
       net_name: IntTestNetworkCombined
-      types:
+      type:
         - appliance
         - switch
       timezone: America/Chicago
