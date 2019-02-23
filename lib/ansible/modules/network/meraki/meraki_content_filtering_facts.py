@@ -141,7 +141,7 @@ def main():
     nets = meraki.get_nets(org_id=org_id)
 
     # check if network is created
-    net_id = None
+    net_id = meraki.params['net_id']
     if net_id is None:
         nets = meraki.get_nets(org_id=org_id)
         net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)
