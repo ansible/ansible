@@ -116,8 +116,6 @@ class LocalFactCollector(BaseFactCollector):
                         for opt in cp.options(sect):
                             val = cp.get(sect, opt)
                             fact[sect][opt] = val
-
             local[fact_base] = fact
-
         local_facts['local'] = local
         return local_facts
