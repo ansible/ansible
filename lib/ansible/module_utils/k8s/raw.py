@@ -130,17 +130,34 @@ class KubernetesRawModule(KubernetesAnsibleModule):
                 }
             }]
 
+    def flatten_list_kind(self, list_resource, definitions):
+        flattened = []
+        parent_api_version = list_resource.group_version if list_resource else None
+        parent_kind = list_resource.kind[:-4] if list_resource else None
+        for definition in definitions.get('items', []):
+            resource = self.find_resource(definition.get('kind', parent_kind), definition.get('apiVersion', parent_api_version), fail=True)
+            flattened.append((resource, self.set_defaults(resource, definition)))
+        return flattened
+
     def execute_module(self):
         changed = False
         results = []
         self.client = self.get_api_client()
+
+        flattened_definitions = []
         for definition in self.resource_definitions:
             kind = definition.get('kind', self.kind)
-            search_kind = kind
-            if kind.lower().endswith('list'):
-                search_kind = kind[:-4]
             api_version = definition.get('apiVersion', self.api_version)
-            resource = self.find_resource(search_kind, api_version, fail=True)
+            if kind.endswith('List'):
+                resource = self.find_resource(kind, api_version, fail=False)
+                flattened_definitions.extend(self.flatten_list_kind(resource, definition))
+            else:
+                resource = self.find_resource(kind, api_version, fail=True)
+                flattened_definitions.append((resource, definition))
+
+        for (resource, definition) in flattened_definitions:
+            kind = definition.get('kind', self.kind)
+            api_version = definition.get('apiVersion', self.api_version)
             definition = self.set_defaults(resource, definition)
             self.warnings = []
             if self.params['validate'] is not None:
@@ -177,12 +194,12 @@ class KubernetesRawModule(KubernetesAnsibleModule):
     def set_defaults(self, resource, definition):
         definition['kind'] = resource.kind
         definition['apiVersion'] = resource.group_version
-        if not definition.get('metadata'):
-            definition['metadata'] = {}
-        if self.name and not definition['metadata'].get('name'):
-            definition['metadata']['name'] = self.name
-        if resource.namespaced and self.namespace and not definition['metadata'].get('namespace'):
-            definition['metadata']['namespace'] = self.namespace
+        metadata = definition.get('metadata', {})
+        if self.name and not metadata.get('name'):
+            metadata['name'] = self.name
+        if resource.namespaced and self.namespace and not metadata.get('namespace'):
+            metadata['namespace'] = self.namespace
+        definition['metadata'] = metadata
         return definition
 
     def perform_action(self, resource, definition):
@@ -196,12 +213,6 @@ class KubernetesRawModule(KubernetesAnsibleModule):
         wait_timeout = self.params.get('wait_timeout')
 
         self.remove_aliases()
-
-        if definition['kind'].endswith('List'):
-            result['result'] = resource.get(namespace=namespace).to_dict()
-            result['changed'] = False
-            result['method'] = 'get'
-            return result
 
         try:
             # ignore append_hash for resources other than ConfigMap and Secret
