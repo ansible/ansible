@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_swarm - improve Swarm detection."
+- "docker_swarm - properly implement check mode (it did apply changes)."

@@ -62,6 +62,8 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
                 swarm_info = json.loads(json_str)
                 if swarm_info['Swarm']['NodeID']:
                     return True
+                if swarm_info['Swarm']['LocalNodeState'] in ('active', 'pending', 'locked'):
+                    return True
             return False
         else:
             try:
