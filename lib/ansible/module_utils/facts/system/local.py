@@ -47,56 +47,54 @@ class LocalFactCollector(BaseFactCollector):
 
         local = {}
         for fn in sorted(glob.glob(fact_path + '/*.fact')):
-            # where it will sit under local facts
+            # Decide if it is runnable or readable
             fact_base = os.path.basename(fn).replace('.fact', '')
-            if os.getuid() == os.stat(fn)[stat.ST_UID]:
-                if stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
-                    # run it
-                    # try to read it as json first
-                    # if that fails read it with ConfigParser
-                    # if that fails, skip it
-                    try:
-                        rc, out, err = module.run_command(fn)
-                    except UnicodeError:
-                        fact = 'error loading fact - output of running %s was not utf-8' % fn
-                        local[fact_base] = fact
-                        local_facts['local'] = local
-                        return local_facts
-                elif stat.S_IRUSR & os.stat(fn)[stat.ST_MODE]:
-                    out = get_file_content(fn, default='')
-            elif os.stat(fn)[stat.ST_GID] in os.getgroups():
-                if stat.S_IXGRP & os.stat(fn)[stat.ST_MODE]:
-                    # run it
-                    # try to read it as json first
-                    # if that fails read it with ConfigParser
-                    # if that fails, skip it
-                    try:
-                        rc, out, err = module.run_command(fn)
-                    except UnicodeError:
-                        fact = 'error loading fact - output of running %s was not utf-8' % fn
-                        local[fact_base] = fact
-                        local_facts['local'] = local
-                        return local_facts
-                elif stat.S_IRGRP & os.stat(fn)[stat.ST_MODE]:
-                    out = get_file_content(fn, default='')
-            elif stat.S_IXOTH & os.stat(fn)[stat.ST_MODE]:
+            userown = None
+            userrun = None
+            userread = None
+            groupown = None
+            # Check only if anybody can run the fact file
+            if stat.S_IXOTH & os.stat(fn)[stat.ST_MODE]:
+                userrun = True
+            # If it is not run all, check if user|group has rights
+            else:
+                if os.getuid() == os.stat(fn)[stat.ST_UID]:
+                    userown = True
+                if os.stat(fn)[stat.ST_GID] in os.getgroups():
+                    groupown = True
+                if userown and stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]:
+                    userrun = True
+                elif groupown and stat.S_IXGRP & os.stat(fn)[stat.ST_MODE]:
+                    userrun = True
+                else:
+                    if stat.S_IROTH & os.stat(fn)[stat.ST_MODE]:
+                        userread = True
+                    elif userown and stat.S_IRUSR & os.stat(fn)[stat.ST_MODE]:
+                        userread = True
+                    elif groupown and stat.S_IRGRP & os.stat(fn)[stat.ST_MODE]:
+                        userread = True
+            # If user, group or other can run, run
+            if userrun:
                 # run it
                 # try to read it as json first
                 # if that fails read it with ConfigParser
                 # if that fails, skip it
                 try:
                     rc, out, err = module.run_command(fn)
+                # If there is error, call warn module
                 except UnicodeError:
                     fact = 'error loading fact - output of running %s was not utf-8' % fn
                     local[fact_base] = fact
                     local_facts['local'] = local
+                    module.warn(fact)
                     return local_facts
-            elif stat.S_IROTH & os.stat(fn)[stat.ST_MODE]:
+            # If it is eradable, get_file to parse
+            elif userread:
                 out = get_file_content(fn, default='')
-
+            # If not return run_error and warn
             else:
-                out = '{"run_error": "facts non readable by running user"}'
-
+                out = '{"run_error": "some local facts are not readable by running user"}'
+                module.warn(out)
             # load raw json
             fact = 'loading %s' % fact_base
             try:
@@ -108,6 +106,8 @@ class LocalFactCollector(BaseFactCollector):
                     cp.readfp(StringIO(out))
                 except configparser.Error:
                     fact = "error loading fact - please check content"
+                    # Warn parse error
+                    module.warn(fact)
                 else:
                     fact = {}
                     for sect in cp.sections():
