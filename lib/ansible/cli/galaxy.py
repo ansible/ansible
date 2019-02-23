@@ -433,7 +433,7 @@ class GalaxyCLI(CLI):
                                     display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
-                display.warning("- %s and %s version was NOT installed successfully." % (role.name , role.version))
+                display.warning("- %s and %s version was NOT installed successfully." % (role.name, role.version))
                 self.exit_without_ignore()
 
         return 0
