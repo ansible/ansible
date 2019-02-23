@@ -651,7 +651,7 @@ class Connection(ConnectionBase):
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
         if self._ssh_agent_socket:
-            b_args = (b"-o", b'IdentityAgent="' + to_bytes(self._ssh_agent_socket) + b'"')
+            b_args = (b"-o", b'IdentityAgent="' + to_bytes(self._ssh_agent_socket) + b'"', b"-o", b'IdentitiesOnly=yes')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set via ssh-agent")
 
         if not self._play_context.password:
