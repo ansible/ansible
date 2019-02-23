@@ -500,7 +500,6 @@ class Connection(ConnectionBase):
         decrypted_contents = dl._get_file_contents(key_path)[0]
         ssh_add_proc = subprocess.Popen(
             ('ssh-add', '-'), stdin=subprocess.PIPE,
-            env=self._get_subprocess_env(),
         )
         with BytesIO(decrypted_contents) as pk:
             ssh_add_proc.communicate(input=pk.getvalue())
@@ -510,16 +509,6 @@ class Connection(ConnectionBase):
         self._ssh_agent.terminate()
         self._ssh_agent_pid = None
         self._ssh_agent_socket = None
-
-    def _get_subprocess_env(self):
-        # TODO: kill ssh-agent here
-        env = os.environ.copy()
-        if self._ssh_agent_pid is not None:
-            env['SSH_AGENT_PID'] = str(self._ssh_agent_pid)
-        if self._ssh_agent_socket is not None:
-            env['SSH_AUTH_SOCK'] = str(self._ssh_agent_socket)
-
-        return env
 
     def _connect(self):
         self._spawn_ssh_agent()
@@ -552,7 +541,6 @@ class Connection(ConnectionBase):
                     ("sshpass", ),
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    env=self._get_subprocess_env(),
                 )
                 p.communicate()
                 SSHPASS_AVAILABLE = True
@@ -662,10 +650,9 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self._play_context.private_key_file
-        if key:
-            b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
-            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
+        if self._ssh_agent_socket:
+            b_args = (b"-o", b'IdentityAgent="' + to_bytes(self._ssh_agent_socket) + b'"')
+            self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set via ssh-agent")
 
         if not self._play_context.password:
             self._add_args(
@@ -846,14 +833,12 @@ class Connection(ConnectionBase):
                         stdin=slave, stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         pass_fds=self.sshpass_pipe,
-                        env=self._get_subprocess_env(),
                     )
                 else:
                     p = subprocess.Popen(
                         cmd,
                         stdin=slave, stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        env=self._get_subprocess_env(),
                     )
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
@@ -868,14 +853,12 @@ class Connection(ConnectionBase):
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     pass_fds=self.sshpass_pipe,
-                    env=self._get_subprocess_env(),
                 )
             else:
                 p = subprocess.Popen(
                     cmd,
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    env=self._get_subprocess_env(),
                 )
             stdin = p.stdin
 
@@ -1318,7 +1301,6 @@ class Connection(ConnectionBase):
                 cmd,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                env=self._get_subprocess_env(),
             )
             stdout, stderr = p.communicate()
             status_code = p.wait()
