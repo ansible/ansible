@@ -506,7 +506,7 @@ class Connection(ConnectionBase):
         ssh_add_proc.terminate()
 
     def _destroy_ssh_agent(self):
-        self._ssh_agent.terminate()
+        self._terminate_process(self._ssh_agent)
         self._ssh_agent_pid = None
         self._ssh_agent_socket = None
 
