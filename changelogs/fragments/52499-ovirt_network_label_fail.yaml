@@ -1,0 +1,2 @@
+bugfixes:
+  - ovirt_network - fix getting network labels (https://github.com/ansible/ansible/pull/52499).

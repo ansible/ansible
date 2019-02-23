@@ -63,7 +63,7 @@ options:
                 description:
                     - "The object ID of a user, service principal or security group in the Azure Active Directory tenant for the vault. The object ID must be
                        unique for the list of access policies."
-                    - Please note this is not application id. Object id can be obtained by running "az ad show sp --id <application id>".
+                    - Please note this is not application id. Object id can be obtained by running "az ad sp show --id <application id>".
                 required: True
             application_id:
                 description:
@@ -143,7 +143,7 @@ options:
         type: bool
     state:
         description:
-            - Assert the state of the KeyVault. Use 'present' to create or update an KeyVault and 'absent' to delete it.
+            - Assert the state of the KeyVault. Use C(present) to create or update an KeyVault and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -161,7 +161,7 @@ author:
 EXAMPLES = '''
   - name: Create instance of Key Vault
     azure_rm_keyvault:
-      resource_group: myresourcegroup
+      resource_group: myResourceGroup
       vault_name: samplekeyvault
       enabled_for_deployment: yes
       vault_tenant: 72f98888-8666-4144-9199-2d7cd0111111

@@ -122,8 +122,8 @@ options:
         required: true
   private_ip_google_access:
     description:
-    - Whether the VMs in this subnet can access Google services without assigned external
-      IP addresses.
+    - When enabled, VMs in this subnetwork without external IP addresses can access
+      Google APIs and services by using Private Google Access.
     required: false
     type: bool
   region:
@@ -243,8 +243,8 @@ secondaryIpRanges:
       type: str
 privateIpGoogleAccess:
   description:
-  - Whether the VMs in this subnet can access Google services without assigned external
-    IP addresses.
+  - When enabled, VMs in this subnetwork without external IP addresses can access
+    Google APIs and services by using Private Google Access.
   returned: success
   type: bool
 region:

@@ -19,7 +19,7 @@ azure-mgmt-redis==5.0.0
 azure-mgmt-resource==1.2.2
 azure-mgmt-rdbms==1.4.1
 azure-mgmt-sql==0.10.0
-azure-mgmt-storage==1.5.0
+azure-mgmt-storage==3.1.0
 azure-mgmt-trafficmanager==0.50.0
 azure-mgmt-web==0.32.0
 azure-nspkg==2.0.0
@@ -28,6 +28,6 @@ msrest==0.6.1
 msrestazure==0.5.0
 azure-keyvault==1.0.0a1
 azure-graphrbac==0.40.0
-azure-mgmt-cosmosdb==0.5.1
+azure-mgmt-cosmosdb==0.5.2
 azure-mgmt-hdinsight==0.1.0
 azure-mgmt-devtestlabs==2.2.0

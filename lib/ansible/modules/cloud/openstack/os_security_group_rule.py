@@ -239,16 +239,16 @@ def _find_matching_rule(module, secgroup, remotegroup):
     remote_group_id = remotegroup['id']
 
     for rule in secgroup['security_group_rules']:
-        if (protocol == rule['protocol']
-                and remote_ip_prefix == rule['remote_ip_prefix']
-                and ethertype == rule['ethertype']
-                and direction == rule['direction']
-                and remote_group_id == rule['remote_group_id']
-                and _ports_match(protocol,
-                                 module.params['port_range_min'],
-                                 module.params['port_range_max'],
-                                 rule['port_range_min'],
-                                 rule['port_range_max'])):
+        if (protocol == rule['protocol'] and
+                remote_ip_prefix == rule['remote_ip_prefix'] and
+                ethertype == rule['ethertype'] and
+                direction == rule['direction'] and
+                remote_group_id == rule['remote_group_id'] and
+                _ports_match(protocol,
+                             module.params['port_range_min'],
+                             module.params['port_range_max'],
+                             rule['port_range_min'],
+                             rule['port_range_max'])):
             return rule
     return None
 

@@ -184,8 +184,7 @@ EXAMPLES = r'''
     device: /dev/sdb
     number: '{{ item.num }}'
     state: absent
-  with_items:
-   - '{{ sdb_info.partitions }}'
+  loop: '{{ sdb_info.partitions }}'
 '''
 
 

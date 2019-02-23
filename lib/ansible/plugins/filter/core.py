@@ -76,10 +76,10 @@ def to_json(a, *args, **kw):
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
 
-def to_nice_json(a, indent=4, *args, **kw):
+def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     '''Make verbose, human readable JSON'''
     try:
-        return json.dumps(a, indent=indent, sort_keys=True, separators=(',', ': '), cls=AnsibleJSONEncoder, *args, **kw)
+        return json.dumps(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), cls=AnsibleJSONEncoder, *args, **kw)
     except Exception as e:
         # Fallback to the to_json filter
         display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
@@ -594,7 +594,7 @@ class FilterModule(object):
             'bool': to_bool,
             'to_datetime': to_datetime,
 
-            # date formating
+            # date formatting
             'strftime': strftime,
 
             # quote string for shell usage
@@ -603,7 +603,7 @@ class FilterModule(object):
             # hash filters
             # md5 hex digest of string
             'md5': md5s,
-            # sha1 hex digeset of string
+            # sha1 hex digest of string
             'sha1': checksum_s,
             # checksum of string as used by ansible for checksumming files
             'checksum': checksum_s,

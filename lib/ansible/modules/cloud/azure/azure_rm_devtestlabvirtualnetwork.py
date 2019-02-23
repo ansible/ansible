@@ -43,7 +43,7 @@ options:
     state:
       description:
         - Assert the state of the Virtual Network.
-        - Use 'present' to create or update an Virtual Network and 'absent' to delete it.
+        - Use C(present) to create or update an Virtual Network and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -61,7 +61,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) Virtual Network
     azure_rm_devtestlabvirtualnetwork:
-      resource_group: testrg
+      resource_group: myResourceGroup
       lab_name: mylab
       name: myvn
       description: My Lab Virtual Network
@@ -165,6 +165,19 @@ class AzureRMDevTestLabVirtualNetwork(AzureRMModuleBase):
         resource_group = self.get_resource_group(self.resource_group)
         if self.virtual_network.get('location') is None:
             self.virtual_network['location'] = resource_group.location
+
+        # subnet overrides for virtual network and subnet created by default
+        template = "/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.Network/virtualNetworks/{2}/subnets/{3}"
+        subnet_id = template.format(self.subscription_id,
+                                    self.resource_group,
+                                    self.name,
+                                    self.name + "Subnet")
+        self.virtual_network['subnet_overrides'] = [{
+            'resource_id': subnet_id,
+            'lab_subnet_name': self.name + "Subnet",
+            'use_in_vm_creation_permission': 'Allow',
+            'use_public_ip_address_permission': 'Allow'
+        }]
 
         old_response = self.get_virtualnetwork()
 

@@ -44,12 +44,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of MySQL Server
     azure_rm_mysqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       name: server_name
 
   - name: List instances of MySQL Server
     azure_rm_mysqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -63,13 +63,13 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/myabdud1223
         resource_group:
             description:
                 - Resource group name.
             returned: always
             type: str
-            sample: testresourcegroup
+            sample: myResourceGroup
         name:
             description:
                 - Resource name.

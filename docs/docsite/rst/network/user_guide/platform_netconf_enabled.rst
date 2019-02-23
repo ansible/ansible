@@ -4,7 +4,7 @@
 Netconf enabled Platform Options
 ***************************************
 
-This page offers details on how the netconf connection works in Ansible 2.7 and how to use it.
+This page offers details on how the netconf connection works in Ansible and how to use it.
 
 .. contents:: Topics
 
@@ -27,8 +27,8 @@ Connections Available
 
 For legacy playbooks, Ansible still supports ``ansible_connection=local`` for the netconf_config module only. We recommend modernizing to use ``ansible_connection=netconf`` as soon as possible.
 
-Using NETCONF in Ansible 2.6 onwards
-================================================================================
+Using NETCONF in Ansible
+========================
 
 Enabling NETCONF
 ----------------

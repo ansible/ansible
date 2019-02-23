@@ -47,9 +47,9 @@ options:
               does not exist it will be created.
               Requires I(device) and I(keyfile) options to be provided. If
               container does already exist I(device) or I(name) will suffice."
+        type: str
         default: present
         choices: [present, absent, opened, closed]
-        type: str
     name:
         description:
             - "Sets container name when I(state=opened). Can be used
@@ -362,13 +362,13 @@ class ConditionsHandler(Handler):
         if self._module.params['device'] is not None:
             name = self._crypthandler.get_container_name_by_device(
                 self._module.params['device'])
-            # sucessfully getting name based on device means that luks is open
+            # successfully getting name based on device means that luks is open
             luks_is_open = name is not None
 
         if self._module.params['name'] is not None:
             device = self._crypthandler.get_container_device_by_name(
                 self._module.params['name'])
-            # sucessfully getting device based on name means that luks is open
+            # successfully getting device based on name means that luks is open
             luks_is_open = device is not None
 
         return luks_is_open
@@ -407,15 +407,12 @@ class ConditionsHandler(Handler):
 def run_module():
     # available arguments/parameters that a user can pass
     module_args = dict(
-        state=dict(type='str',
-                   choices=['present', 'absent', 'opened', 'closed'],
-                   required=False,
-                   default='present'),
-        device=dict(type='str', required=False),
-        name=dict(type='str', required=False),
-        keyfile=dict(type='path', required=False),
-        new_keyfile=dict(type='path', required=False),
-        remove_keyfile=dict(type='path', required=False)
+        state=dict(type='str', default='present', choices=['present', 'absent', 'opened', 'closed']),
+        device=dict(type='str'),
+        name=dict(type='str'),
+        keyfile=dict(type='path'),
+        new_keyfile=dict(type='path'),
+        remove_keyfile=dict(type='path')
     )
 
     # seed the result dict in the object

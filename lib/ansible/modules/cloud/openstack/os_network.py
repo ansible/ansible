@@ -69,7 +69,15 @@ options:
    availability_zone:
      description:
        - Ignored. Present for backwards compatibility
-requirements: ["openstacksdk"]
+   port_security_enabled:
+     description:
+        -  Whether port security is enabled on the network or not.
+           Network will use OpenStack defaults if this option is
+           not utilised.
+     type: bool
+     version_added: "2.8"
+requirements:
+     - "openstacksdk"
 '''
 
 EXAMPLES = '''
@@ -153,9 +161,10 @@ def main():
         external=dict(default=False, type='bool'),
         provider_physical_network=dict(required=False),
         provider_network_type=dict(required=False),
-        provider_segmentation_id=dict(required=False),
+        provider_segmentation_id=dict(required=False, type='int'),
         state=dict(default='present', choices=['absent', 'present']),
-        project=dict(default=None)
+        project=dict(default=None),
+        port_security_enabled=dict(type='bool')
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -170,6 +179,7 @@ def main():
     provider_network_type = module.params['provider_network_type']
     provider_segmentation_id = module.params['provider_segmentation_id']
     project = module.params.get('project')
+    port_security_enabled = module.params.get('port_security_enabled')
 
     sdk, cloud = openstack_cloud_from_module(module)
     try:
@@ -196,10 +206,12 @@ def main():
 
                 if project_id is not None:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider, project_id)
+                                               external, provider, project_id,
+                                               port_security_enabled=port_security_enabled)
                 else:
                     net = cloud.create_network(name, shared, admin_state_up,
-                                               external, provider)
+                                               external, provider,
+                                               port_security_enabled=port_security_enabled)
                 changed = True
             else:
                 changed = False

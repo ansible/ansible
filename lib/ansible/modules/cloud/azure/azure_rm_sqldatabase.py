@@ -127,7 +127,7 @@ options:
       type: bool
     state:
       description:
-        - Assert the state of the SQL Database. Use 'present' to create or update an SQL Database and 'absent' to delete it.
+        - Assert the state of the SQL Database. Use C(present) to create or update an SQL Database and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -135,6 +135,7 @@ options:
 
 extends_documentation_fragment:
     - azure
+    - azure_tags
 
 author:
     - "Zim Kalinowski (@zikalino)"
@@ -144,14 +145,14 @@ author:
 EXAMPLES = '''
   - name: Create (or update) SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: testdb
       location: eastus
 
   - name: Restore SQL Database
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: restoreddb
       location: eastus
@@ -161,12 +162,12 @@ EXAMPLES = '''
 
   - name: Create SQL Database in Copy Mode
     azure_rm_sqldatabase:
-      resource_group: sqlcrudtest-4799
+      resource_group: myResourceGroup
       server_name: sqlcrudtest-5961
       name: copydb
       location: eastus
       create_mode: copy
-      source_database_id: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/Default-SQL-SouthEastAsia/providers/Microsoft.Sql/servers/tests
+      source_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/tests
                           vr/databases/testdb"
 
 '''
@@ -177,7 +178,7 @@ id:
         - Resource ID.
     returned: always
     type: str
-    sample: "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/sqlcrudtest-4799/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t
             estdb"
 database_id:
     description:
@@ -301,6 +302,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.server_name = None
         self.name = None
         self.parameters = dict()
+        self.tags = None
 
         self.results = dict(changed=False)
         self.state = None
@@ -308,12 +310,12 @@ class AzureRMDatabases(AzureRMModuleBase):
 
         super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                supports_check_mode=True,
-                                               supports_tags=False)
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
 
-        for key in list(self.module_arg_spec.keys()):
+        for key in list(self.module_arg_spec.keys()) + ['tags']:
             if hasattr(self, key):
                 setattr(self, key, kwargs[key])
             elif kwargs[key] is not None:
@@ -380,6 +382,9 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if (('edition' in self.parameters) and
                         (self.parameters['edition'] != old_response['edition'])):
                     self.to_do = Actions.Update
+                update_tags, newtags = self.update_tags(old_response.get('tags', dict()))
+                if update_tags:
+                    self.tags = newtags
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the SQL Database instance")
@@ -388,6 +393,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 self.results['changed'] = True
                 return self.results
 
+            self.parameters['tags'] = self.tags
             response = self.create_update_sqldatabase()
 
             if not old_response:

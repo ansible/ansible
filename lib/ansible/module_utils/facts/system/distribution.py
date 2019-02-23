@@ -345,6 +345,12 @@ class DistributionFiles:
             release = re.search(r'VERSION="(.*)"', data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
+        elif "Mint" in data:
+            debian_facts['distribution'] = 'Linux Mint'
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
         else:
             return False, debian_facts
 

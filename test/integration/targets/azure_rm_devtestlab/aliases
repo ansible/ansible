@@ -1,4 +1,5 @@
 cloud/azure
 destructive
-shippable/azure/group1
+shippable/azure/group2
 azure_rm_devtestlabvirtualnetwork
+azure_rm_devtestlab_facts

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -31,7 +31,6 @@ options:
     required: true
     description:
     - It specifies the node to assign all visible unowned disks.
-
 '''
 
 EXAMPLES = """
@@ -51,6 +50,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+from ansible.module_utils.netapp_module import NetAppModule
 
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
@@ -70,10 +70,8 @@ class NetAppOntapDisks(object):
             supports_check_mode=True
         )
 
-        parameters = self.module.params
-
-        # set up state variables
-        self.node = parameters['node']
+        self.na_helper = NetAppModule()
+        self.parameters = self.na_helper.set_parameters(self.module.params)
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -106,7 +104,7 @@ class NetAppOntapDisks(object):
         enable aggregate (online).
         """
         assign_disk = netapp_utils.zapi.NaElement.create_node_with_children(
-            'disk-sanown-assign', **{'node-name': self.node,
+            'disk-sanown-assign', **{'node-name': self.parameters['node'],
                                      'all': 'true'})
         try:
             self.server.invoke_successfully(assign_disk,

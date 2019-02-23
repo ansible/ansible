@@ -67,6 +67,12 @@ options:
           - The unix domain socket path or the https URL for the LXD server.
         required: false
         default: unix:/var/lib/lxd/unix.socket
+    snap_url:
+        description:
+          - The unix domain socket path when LXD is installed by snap package manager.
+        required: false
+        default: unix:/var/snap/lxd/common/lxd/unix.socket
+        version_added: '2.8'
     key_file:
         description:
           - The client certificate key file path.
@@ -199,10 +205,18 @@ class LXDProfileManagement(object):
         self.state = self.module.params['state']
         self.new_name = self.module.params.get('new_name', None)
 
-        self.url = self.module.params['url']
         self.key_file = self.module.params.get('key_file', None)
         self.cert_file = self.module.params.get('cert_file', None)
         self.debug = self.module._verbosity >= 4
+
+        try:
+            if os.path.exists(self.module.params['snap_url'].replace('unix:', '')):
+                self.url = self.module.params['snap_url']
+            else:
+                self.url = self.module.params['url']
+        except Exception as e:
+            self.module.fail_json(msg=e.msg)
+
         try:
             self.client = LXDClient(
                 self.url, key_file=self.key_file, cert_file=self.cert_file,
@@ -351,6 +365,10 @@ def main():
             url=dict(
                 type='str',
                 default='unix:/var/lib/lxd/unix.socket'
+            ),
+            snap_url=dict(
+                type='str',
+                default='unix:/var/snap/lxd/common/lxd/unix.socket'
             ),
             key_file=dict(
                 type='str',

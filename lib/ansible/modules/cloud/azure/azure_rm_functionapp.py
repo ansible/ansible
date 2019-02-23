@@ -46,8 +46,8 @@ options:
             - Dictionary containing application settings
     state:
         description:
-            - Assert the state of the Function App. Use 'present' to create or update a Function App and
-              'absent' to delete.
+            - Assert the state of the Function App. Use C(present) to create or update a Function App and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -64,13 +64,13 @@ author:
 EXAMPLES = '''
 - name: create function app
   azure_rm_functionapp:
-      resource_group: ansible-rg
+      resource_group: myResourceGroup
       name: myfunctionapp
       storage_account: mystorageaccount
 
 - name: create a function app with app settings
   azure_rm_functionapp:
-      resource_group: ansible-rg
+      resource_group: myResourceGroup
       name: myfunctionapp
       storage_account: mystorageaccount
       app_settings:
@@ -121,7 +121,7 @@ state:
         outbound_ip_addresses: ............
         container_size: 1536
         daily_memory_time_quota: 0
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
         default_host_name: myfunctionapp.azurewebsites.net
 '''  # NOQA
 

@@ -291,7 +291,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # we need to return become_unprivileged as True
         admin_users = self._get_admin_users()
         remote_user = self._get_remote_user()
-        return bool(self.get_become_option('become_user') not in admin_users + [remote_user])
+        become_user = self.get_become_option('become_user')
+        return bool(become_user and become_user not in admin_users + [remote_user])
 
     def _make_tmp_path(self, remote_user=None):
         '''
@@ -681,6 +682,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # let module know about filesystems that selinux treats specially
         module_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
+
+        # what to do when parameter values are converted to strings
+        module_args['_ansible_string_conversion_action'] = C.STRING_CONVERSION_ACTION
 
         # give the module the socket for persistent connections
         module_args['_ansible_socket'] = getattr(self._connection, 'socket_path')

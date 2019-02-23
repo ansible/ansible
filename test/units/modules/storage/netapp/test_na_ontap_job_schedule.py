@@ -17,7 +17,7 @@ from ansible.modules.storage.netapp.na_ontap_job_schedule \
     import NetAppONTAPJob as job_module  # module under test
 
 if not netapp_utils.has_netapp_lib():
-    pytestmark = pytest.skip('skipping as missing required netapp_lib')
+    pytestmark = pytest.mark.skip('skipping as missing required netapp_lib')
 
 
 def set_module_args(args):
@@ -64,6 +64,8 @@ class MockONTAPConnection(object):
         self.xml_in = xml
         if self.kind == 'job':
             xml = self.build_job_schedule_cron_info(self.params)
+        elif self.kind == 'job_multiple':
+            xml = self.build_job_schedule_multiple_cron_info(self.params)
         # TODO: mock invoke_elem for autosupport calls
         elif self.kind == 'vserver':
             xml = self.build_vserver_info()
@@ -92,6 +94,30 @@ class MockONTAPConnection(object):
         xml.translate_struct(attributes)
         return xml
 
+    @staticmethod
+    def build_job_schedule_multiple_cron_info(job_details):
+        ''' build xml data for vserser-info '''
+        print("CALLED MULTIPLE BUILD")
+        xml = netapp_utils.zapi.NaElement('xml')
+        attributes = {
+            'num-records': 1,
+            'attributes-list': {
+                'job-schedule-cron-info': {
+                    'job-schedule-name': job_details['name'],
+                    'job-schedule-cron-minute': [
+                        {'cron-minute': '25'},
+                        {'cron-minute': '35'}
+                    ],
+                    'job-schedule-cron-month': [
+                        {'cron-month': '5'},
+                        {'cron-month': '10'}
+                    ]
+                }
+            }
+        }
+        xml.translate_struct(attributes)
+        return xml
+
 
 class TestMyModule(unittest.TestCase):
     ''' Unit tests for na_ontap_job_schedule '''
@@ -104,13 +130,13 @@ class TestMyModule(unittest.TestCase):
         self.addCleanup(self.mock_module_helper.stop)
         self.mock_job = {
             'name': 'test_job',
-            'minutes': 25
+            'minutes': '25'
         }
 
     def mock_args(self):
         return {
             'name': self.mock_job['name'],
-            'job_minutes': self.mock_job['minutes'],
+            'job_minutes': [self.mock_job['minutes']],
             'hostname': 'test',
             'username': 'test_user',
             'password': 'test_pass!'
@@ -127,7 +153,7 @@ class TestMyModule(unittest.TestCase):
         if kind is None:
             job_obj.server = MockONTAPConnection()
         else:
-            job_obj.server = MockONTAPConnection(kind='job', data=self.mock_job)
+            job_obj.server = MockONTAPConnection(kind=kind, data=self.mock_job)
         return job_obj
 
     def test_module_fail_when_required_args_missing(self):
@@ -145,10 +171,20 @@ class TestMyModule(unittest.TestCase):
 
     def test_get_existing_job(self):
         ''' Test if get_job_schedule retuns job details for existing job '''
-        set_module_args(self.mock_args())
+        data = self.mock_args()
+        set_module_args(data)
         result = self.get_job_mock_object('job').get_job_schedule()
         assert result['name'] == self.mock_job['name']
-        assert result['job_minutes'] == self.mock_job['minutes']
+        assert result['job_minutes'] == data['job_minutes']
+
+    def test_get_existing_job_multiple_minutes(self):
+        ''' Test if get_job_schedule retuns job details for existing job '''
+        set_module_args(self.mock_args())
+        result = self.get_job_mock_object('job_multiple').get_job_schedule()
+        print(str(result))
+        assert result['name'] == self.mock_job['name']
+        assert result['job_minutes'] == ['25', '35']
+        assert result['job_months'] == ['5', '10']
 
     def test_create_error_missing_param(self):
         ''' Test if create throws an error if job_minutes is not specified'''
@@ -195,7 +231,7 @@ class TestMyModule(unittest.TestCase):
     def test_successful_modify(self):
         ''' Test successful modify job_minutes '''
         data = self.mock_args()
-        data['job_minutes'] = 20
+        data['job_minutes'] = ['20']
         set_module_args(data)
         with pytest.raises(AnsibleExitJson) as exc:
             self.get_job_mock_object('job').apply()

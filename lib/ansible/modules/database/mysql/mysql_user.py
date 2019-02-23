@@ -219,7 +219,16 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
-                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL'))
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL',
+                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
+                         'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
+                         'BINLOG ENCRYPTION ADMIN', 'CONNECTION ADMIN',
+                         'ENCRYPTION KEY ADMIN', 'FIREWALL ADMIN', 'FIREWALL USER',
+                         'GROUP REPLICATION ADMIN', 'PERSIST RO VARIABLES ADMIN',
+                         'REPLICATION SLAVE ADMIN', 'RESOURCE GROUP ADMIN',
+                         'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
+                         'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
+                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
 
 
 class InvalidPrivsError(Exception):
@@ -435,7 +444,7 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\5)? ?(.*)""", grant[0])
+        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\\6)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")

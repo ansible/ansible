@@ -11,7 +11,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: crypttab
 short_description: Encrypted Linux block devices
@@ -24,38 +24,44 @@ options:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
         optionally prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
+    type: str
     required: yes
   state:
     description:
-      - Use I(present) to add a line to C(/etc/crypttab) or update it's definition
-        if already present. Use I(absent) to remove a line with matching I(name).
-        Use I(opts_present) to add options to those already present; options with
-        different values will be updated. Use I(opts_absent) to remove options from
-        the existing set.
+      - Use I(present) to add a line to C(/etc/crypttab) or update its definition
+        if already present.
+      - Use I(absent) to remove a line with matching I(name).
+      - Use I(opts_present) to add options to those already present; options with
+        different values will be updated.
+      - Use I(opts_absent) to remove options from the existing set.
+    type: str
     required: yes
     choices: [ absent, opts_absent, opts_present, present ]
   backing_device:
     description:
       - Path to the underlying block device or file, or the UUID of a block-device
         prefixed with I(UUID=).
+    type: str
   password:
     description:
       - Encryption password, the path to a file containing the password, or
-        C(none) or C(-) if the password should be entered at boot.
-    default: 'none'
+        C(-) or unset if the password should be entered at boot.
+    type: path
   opts:
     description:
       - A comma-delimited list of options. See C(crypttab(5) ) for details.
+    type: str
   path:
     description:
-      - Path to file to use instead of C(/etc/crypttab). This might be useful
-        in a chroot environment.
+      - Path to file to use instead of C(/etc/crypttab).
+      - This might be useful in a chroot environment.
+    type: path
     default: /etc/crypttab
 author:
 - Steve (@groks)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Set the options explicitly a device which must already exist
   crypttab:
     name: luks-home
@@ -67,7 +73,7 @@ EXAMPLES = '''
     name: '{{ item.device }}'
     state: opts_present
     opts: discard
-  with_items: '{{ ansible_mounts }}'
+  loop: '{{ ansible_mounts }}'
   when: "'/dev/mapper/luks-' in {{ item.device }}"
 '''
 
@@ -212,6 +218,7 @@ class Line(object):
         self.opts = Options(opts)
 
         if line is not None:
+            self.line = self.line.rstrip('\n')
             if self._line_valid(line):
                 self.name, backing_device, password, opts = self._split_line(line)
 

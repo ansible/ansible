@@ -29,8 +29,10 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+_MIN_VERSION_ERROR = '{0} version ({1}) < minimum version ({2})'
 HAS_PANDEVICE = True
 try:
+    import pandevice
     from pandevice.base import PanDevice
     from pandevice.panorama import DeviceGroup, Template, TemplateStack
     from pandevice.policies import PreRulebase, PostRulebase, Rulebase
@@ -40,8 +42,13 @@ except ImportError:
     HAS_PANDEVICE = False
 
 
+def _vstr(val):
+    return '{0}.{1}.{2}'.format(*val)
+
+
 class ConnectionHelper(object):
-    def __init__(self, panorama_error, firewall_error):
+    def __init__(self, min_pandevice_version, min_panos_version,
+                 panorama_error, firewall_error):
         """Performs connection initialization and determines params."""
         # Params for AnsibleModule.
         self.argument_spec = {}
@@ -55,6 +62,8 @@ class ConnectionHelper(object):
         self.template = None
         self.template_stack = None
         self.vsys_importable = None
+        self.min_pandevice_version = min_pandevice_version
+        self.min_panos_version = min_panos_version
         self.panorama_error = panorama_error
         self.firewall_error = firewall_error
 
@@ -78,6 +87,14 @@ class ConnectionHelper(object):
         if not HAS_PANDEVICE:
             module.fail_json(msg='Missing required library "pandevice".')
 
+        # Verify pandevice minimum version.
+        if self.min_pandevice_version is not None:
+            pdv = tuple(int(x) for x in pandevice.__version__.split('.'))
+            if pdv < self.min_pandevice_version:
+                module.fail_json(msg=_MIN_VERSION_ERROR.format(
+                    'pandevice', pandevice.__version__,
+                    _vstr(self.min_pandevice_version)))
+
         d, host_arg = None, None
         if module.params['provider'] and module.params['provider']['host']:
             d = module.params['provider']
@@ -91,12 +108,22 @@ class ConnectionHelper(object):
         # Create the connection object.
         try:
             self.device = PanDevice.create_from_device(
-                d[host_arg], d['username'], d['password'], d['api_key'])
+                d[host_arg], d['username'], d['password'],
+                d['api_key'], d['port'])
         except PanDeviceError as e:
             module.fail_json(msg='Failed connection: {0}'.format(e))
 
+        # Verify PAN-OS minimum version.
+        if self.min_panos_version is not None:
+            if self.device._version_info < self.min_panos_version:
+                module.fail_json(msg=_MIN_VERSION_ERROR.format(
+                    'PAN-OS', _vstr(self.device._version_info),
+                    _vstr(self.min_panos_version)))
+
         parent = self.device
         not_found = '{0} "{1}" is not present.'
+        pano_mia_param = 'Param "{0}" is required for Panorama but not specified.'
+        ts_error = 'Specify either the template or the template stack{0}.'
         if hasattr(self.device, 'refresh_devices'):
             # Panorama connection.
             # Error if Panorama is not supported.
@@ -104,35 +131,51 @@ class ConnectionHelper(object):
                 module.fail_json(msg=self.panorama_error)
 
             # Spec: template stack.
+            tmpl_required = False
+            added_template = False
             if self.template_stack is not None:
                 name = module.params[self.template_stack]
-                stacks = TemplateStack.refreshall(parent)
-                for ts in stacks:
-                    if ts.name == name:
-                        parent = ts
-                        break
+                if name is not None:
+                    stacks = TemplateStack.refreshall(parent, name_only=True)
+                    for ts in stacks:
+                        if ts.name == name:
+                            parent = ts
+                            added_template = True
+                            break
+                    else:
+                        module.fail_json(msg=not_found.format(
+                            'Template stack', name,
+                        ))
+                elif self.template is not None:
+                    tmpl_required = True
                 else:
-                    module.fail_json(msg=not_found.format(
-                        'Template stack', name,
-                    ))
+                    module.fail_json(msg=pano_mia_param.format(self.template_stack))
 
             # Spec: template.
             if self.template is not None:
                 name = module.params[self.template]
-                templates = Template.refreshall(parent)
-                for t in templates:
-                    if t.name == name:
-                        parent = t
-                        break
+                if name is not None:
+                    if added_template:
+                        module.fail_json(msg=ts_error.format(', not both'))
+                    templates = Template.refreshall(parent, name_only=True)
+                    for t in templates:
+                        if t.name == name:
+                            parent = t
+                            break
+                    else:
+                        module.fail_json(msg=not_found.format(
+                            'Template', name,
+                        ))
+                elif tmpl_required:
+                    module.fail_json(msg=ts_error.format(''))
                 else:
-                    module.fail_json(msg=not_found.format(
-                        'Template', name,
-                    ))
+                    module.fail_json(msg=pano_mia_param.format(self.template))
 
             # Spec: vsys importable.
-            if self.vsys_importable is not None:
-                name = module.params[self.vsys_importable]
-                if name is not None:
+            vsys_name = self.vsys_importable or self.vsys
+            if vsys_name is not None:
+                name = module.params[vsys_name]
+                if name not in (None, 'shared'):
                     vo = Vsys(name)
                     parent.add(vo)
                     parent = vo
@@ -142,7 +185,7 @@ class ConnectionHelper(object):
             if dg_name is not None:
                 name = module.params[dg_name]
                 if name not in (None, 'shared'):
-                    groups = DeviceGroup.refreshall(parent)
+                    groups = DeviceGroup.refreshall(parent, name_only=True)
                     for dg in groups:
                         if dg.name == name:
                             parent = dg
@@ -156,6 +199,10 @@ class ConnectionHelper(object):
             if self.rulebase is not None:
                 if module.params[self.rulebase] in (None, 'pre-rulebase'):
                     rb = PreRulebase()
+                    parent.add(rb)
+                    parent = rb
+                elif module.params[self.rulebase] == 'rulebase':
+                    rb = Rulebase()
                     parent.add(rb)
                     parent = rb
                 elif module.params[self.rulebase] == 'post-rulebase':
@@ -174,7 +221,7 @@ class ConnectionHelper(object):
             # Spec: vsys or vsys_dg or vsys_importable.
             vsys_name = self.vsys_dg or self.vsys or self.vsys_importable
             if vsys_name is not None:
-                self.con.vsys = module.params[vsys_name]
+                self.device.vsys = module.params[vsys_name]
 
             # Spec: rulebase.
             if self.rulebase is not None:
@@ -189,20 +236,30 @@ class ConnectionHelper(object):
 def get_connection(vsys=None, device_group=None,
                    vsys_dg=None, vsys_importable=None,
                    rulebase=None, template=None, template_stack=None,
-                   classic_provider_spec=False,
+                   with_classic_provider_spec=False, with_state=True,
+                   argument_spec=None, required_one_of=None,
+                   min_pandevice_version=None, min_panos_version=None,
                    panorama_error=None, firewall_error=None):
     """Returns a helper object that handles pandevice object tree init.
 
-    All arguments to this function (except panorama_error, firewall_error,
-    and classic_provider_spec) can be any of the following types:
+    The `vsys`, `device_group`, `vsys_dg`, `vsys_importable`, `rulebase`,
+    `template`, and `template_stack` params can be any of the following types:
 
         * None - do not include this in the spec
         * True - use the default param name
         * string - use this string for the param name
 
+    The `min_pandevice_version` and `min_panos_version` args expect a 3 element
+    tuple of ints.  For example, `(0, 6, 0)` or `(8, 1, 0)`.
+
+    If you are including template support (by defining either `template` and/or
+    `template_stack`), and the thing the module is enabling the management of is
+    an "importable", you should define either `vsys_importable` (whose default
+    value is None) or `vsys` (whose default value is 'vsys1').
+
     Arguments:
-        vsys: Firewall only - The vsys.
-        device_group: Panorama only - The device group.
+        vsys: The vsys (default: 'vsys1').
+        device_group: Panorama only - The device group (default: 'shared').
         vsys_dg: The param name if vsys and device_group are a shared param.
         vsys_importable: Either this or `vsys` should be specified.  For:
             - Interfaces
@@ -212,16 +269,24 @@ def get_connection(vsys=None, device_group=None,
         rulebase: This is a policy of some sort.
         template: Panorama - The template name.
         template_stack: Panorama - The template stack name.
-        classic_provider_spec(bool): Include the ip_address, username,
-            password, api_key params in the base spec, and make the
+        with_classic_provider_spec(bool): Include the ip_address, username,
+            password, api_key, and port params in the base spec, and make the
             "provider" param optional.
+        with_state(bool): Include the standard 'state' param.
+        argument_spec(dict): The argument spec to mixin with the
+            generated spec based on the given parameters.
+        required_one_of(list): List of lists to extend into required_one_of.
+        min_pandevice_version(tuple): Minimum pandevice version allowed.
+        min_panos_version(tuple): Minimum PAN-OS version allowed.
         panorama_error(str): The error message if the device is Panorama.
         firewall_error(str): The error message if the device is a firewall.
 
     Returns:
         ConnectionHelper
     """
-    helper = ConnectionHelper(panorama_error, firewall_error)
+    helper = ConnectionHelper(
+        min_pandevice_version, min_panos_version,
+        panorama_error, firewall_error)
     req = []
     spec = {
         'provider': {
@@ -233,11 +298,12 @@ def get_connection(vsys=None, device_group=None,
                 'username': {'default': 'admin'},
                 'password': {'no_log': True},
                 'api_key': {'no_log': True},
+                'port': {'default': 443, 'type': 'int'},
             },
         },
     }
 
-    if classic_provider_spec:
+    if with_classic_provider_spec:
         spec['provider']['required'] = False
         spec['provider']['options']['host']['required'] = False
         del(spec['provider']['required_one_of'])
@@ -246,11 +312,18 @@ def get_connection(vsys=None, device_group=None,
             'username': {'default': 'admin'},
             'password': {'no_log': True},
             'api_key': {'no_log': True},
+            'port': {'default': 443, 'type': 'int'},
         })
         req.extend([
             ['provider', 'ip_address'],
             ['provider', 'password', 'api_key'],
         ])
+
+    if with_state:
+        spec['state'] = {
+            'default': 'present',
+            'choices': ['present', 'absent'],
+        }
 
     if vsys_dg is not None:
         if isinstance(vsys_dg, bool):
@@ -275,6 +348,8 @@ def get_connection(vsys=None, device_group=None,
             spec[param] = {'default': 'shared'}
             helper.device_group = param
         if vsys_importable is not None:
+            if vsys is not None:
+                raise KeyError('Define "vsys" or "vsys_importable", not both.')
             if isinstance(vsys_importable, bool):
                 param = 'vsys'
             else:
@@ -288,8 +363,8 @@ def get_connection(vsys=None, device_group=None,
         else:
             param = rulebase
         spec[param] = {
-            'default': 'pre-rulebase',
-            'choices': ['pre-rulebase', 'post-rulebase'],
+            'default': None,
+            'choices': ['pre-rulebase', 'rulebase', 'post-rulebase'],
         }
         helper.rulebase = param
 
@@ -308,6 +383,15 @@ def get_connection(vsys=None, device_group=None,
             param = template_stack
         spec[param] = {}
         helper.template_stack = param
+
+    if argument_spec is not None:
+        for k in argument_spec.keys():
+            if k in spec:
+                raise KeyError('{0}: key used by connection helper.'.format(k))
+            spec[k] = argument_spec[k]
+
+    if required_one_of is not None:
+        req.extend(required_one_of)
 
     # Done.
     helper.argument_spec = spec

@@ -18,7 +18,9 @@
 
 import os
 import re
+from datetime import timedelta
 from distutils.version import LooseVersion
+
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
 from ansible.module_utils.six.moves.urllib.parse import urlparse
@@ -76,9 +78,9 @@ MIN_DOCKER_VERSION = "1.8.0"
 DEFAULT_TIMEOUT_SECONDS = 60
 
 DOCKER_COMMON_ARGS = dict(
-    docker_host=dict(type='str', aliases=['docker_url'], default=DEFAULT_DOCKER_HOST, fallback=(env_fallback, ['DOCKER_HOST'])),
+    docker_host=dict(type='str', default=DEFAULT_DOCKER_HOST, fallback=(env_fallback, ['DOCKER_HOST']), aliases=['docker_url']),
     tls_hostname=dict(type='str', default=DEFAULT_TLS_HOSTNAME, fallback=(env_fallback, ['DOCKER_TLS_HOSTNAME'])),
-    api_version=dict(type='str', aliases=['docker_api_version'], default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION'])),
+    api_version=dict(type='str', default='auto', fallback=(env_fallback, ['DOCKER_API_VERSION']), aliases=['docker_api_version']),
     timeout=dict(type='int', default=DEFAULT_TIMEOUT_SECONDS, fallback=(env_fallback, ['DOCKER_TIMEOUT'])),
     cacert_path=dict(type='path', aliases=['tls_ca_cert']),
     cert_path=dict(type='path', aliases=['tls_client_cert']),
@@ -833,3 +835,91 @@ def clean_dict_booleans_for_docker_api(data):
                 v = str(v)
             result[str(k)] = v
     return result
+
+
+def convert_duration_to_nanosecond(time_str):
+    """
+    Return time duration in nanosecond.
+    """
+    if not isinstance(time_str, str):
+        raise ValueError('Missing unit in duration - %s' % time_str)
+
+    regex = re.compile(
+        r'^(((?P<hours>\d+)h)?'
+        r'((?P<minutes>\d+)m(?!s))?'
+        r'((?P<seconds>\d+)s)?'
+        r'((?P<milliseconds>\d+)ms)?'
+        r'((?P<microseconds>\d+)us)?)$'
+    )
+    parts = regex.match(time_str)
+
+    if not parts:
+        raise ValueError('Invalid time duration - %s' % time_str)
+
+    parts = parts.groupdict()
+    time_params = {}
+    for (name, value) in parts.items():
+        if value:
+            time_params[name] = int(value)
+
+    delta = timedelta(**time_params)
+    time_in_nanoseconds = (
+        delta.microseconds + (delta.seconds + delta.days * 24 * 3600) * 10 ** 6
+    ) * 10 ** 3
+
+    return time_in_nanoseconds
+
+
+def parse_healthcheck(healthcheck):
+    """
+    Return dictionary of healthcheck parameters and boolean if
+    healthcheck defined in image was requested to be disabled.
+    """
+    if (not healthcheck) or (not healthcheck.get('test')):
+        return None, None
+
+    result = dict()
+
+    # All supported healthcheck parameters
+    options = dict(
+        test='test',
+        interval='interval',
+        timeout='timeout',
+        start_period='start_period',
+        retries='retries'
+    )
+
+    duration_options = ['interval', 'timeout', 'start_period']
+
+    for (key, value) in options.items():
+        if value in healthcheck:
+            if healthcheck.get(value) is None:
+                # due to recursive argument_spec, all keys are always present
+                # (but have default value None if not specified)
+                continue
+            if value in duration_options:
+                time = convert_duration_to_nanosecond(healthcheck.get(value))
+                if time:
+                    result[key] = time
+            elif healthcheck.get(value):
+                result[key] = healthcheck.get(value)
+                if key == 'test':
+                    if isinstance(result[key], (tuple, list)):
+                        result[key] = [str(e) for e in result[key]]
+                    else:
+                        result[key] = ['CMD-SHELL', str(result[key])]
+                elif key == 'retries':
+                    try:
+                        result[key] = int(result[key])
+                    except ValueError:
+                        raise ValueError(
+                            'Cannot parse number of retries for healthcheck. '
+                            'Expected an integer, got "{0}".'.format(result[key])
+                        )
+
+    if result['test'] == ['NONE']:
+        # If the user explicitly disables the healthcheck, return None
+        # as the healthcheck object, and set disable_healthcheck to True
+        return None, True
+
+    return result, False

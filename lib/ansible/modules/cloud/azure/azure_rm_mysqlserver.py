@@ -74,7 +74,7 @@ options:
         default: Default
     state:
         description:
-            - Assert the state of the MySQL Server. Use 'present' to create or update a server and 'absent' to delete it.
+            - Assert the state of the MySQL Server. Use C(present) to create or update a server and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -92,7 +92,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) MySQL Server
     azure_rm_mysqlserver:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       name: testserver
       sku:
         name: B_Gen5_1
@@ -111,7 +111,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/12345678-1234-1234-1234-123412341234/testrg/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
 version:
     description:
         - 'Server version. Possible values include: C(5.6), C(5.7)'

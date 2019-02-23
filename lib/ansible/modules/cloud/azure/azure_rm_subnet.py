@@ -49,8 +49,8 @@ options:
             - security_group_name
     state:
         description:
-            - Assert the state of the subnet. Use 'present' to create or update a subnet and
-              'absent' to delete a subnet.
+            - Assert the state of the subnet. Use C(present) to create or update a subnet and
+              C(absent) to delete a subnet.
         default: present
         choices:
             - absent
@@ -98,25 +98,25 @@ EXAMPLES = '''
       azure_rm_subnet:
         name: foobar
         virtual_network_name: My_Virtual_Network
-        resource_group: Testing
+        resource_group: myResourceGroup
         address_prefix_cidr: "10.1.0.0/24"
 
     - name: Create a subnet refer nsg from other resource group
       azure_rm_subnet:
         name: foobar
         virtual_network_name: My_Virtual_Network
-        resource_group: Testing
+        resource_group: myResourceGroup
         address_prefix_cidr: "10.1.0.0/16"
         security_group:
           name: secgroupfoo
-          resource_group: Testing1
+          resource_group: mySecondResourceGroup
         route_table: route
 
     - name: Delete a subnet
       azure_rm_subnet:
         name: foobar
         virtual_network_name: My_Virtual_Network
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 
@@ -184,7 +184,7 @@ def subnet_to_dict(subnet):
         result['route_table']['name'] = id_keys['routeTables']
         result['route_table']['resource_group'] = id_keys['resourceGroups']
     if subnet.service_endpoints:
-        result['service_endpoints'] = [{'service': item.service, 'locations': item.locations} for item in subnet.service_endpoints]
+        result['service_endpoints'] = [{'service': item.service, 'locations': item.locations or []} for item in subnet.service_endpoints]
     return result
 
 
@@ -283,12 +283,14 @@ class AzureRMSubnet(AzureRMModuleBase):
                     oldd = {}
                     for item in self.service_endpoints:
                         name = item['service']
-                        oldd[name] = {'service': name, 'locations': item['locations'].sort()}
+                        locations = item.get('locations') or []
+                        oldd[name] = {'service': name, 'locations': locations.sort()}
                     newd = {}
                     if 'service_endpoints' in results:
                         for item in results['service_endpoints']:
                             name = item['service']
-                            newd[name] = {'service': name, 'locations': item['locations'].sort()}
+                            locations = item.get('locations') or []
+                            newd[name] = {'service': name, 'locations': locations.sort()}
                     if newd != oldd:
                         changed = True
                         results['service_endpoints'] = self.service_endpoints
