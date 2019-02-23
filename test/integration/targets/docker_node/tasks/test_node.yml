@@ -103,29 +103,12 @@
     ignore_errors: yes
     register: set_as_worker_2
 
-  - name: Try to set node as worker (idempotent)
-    docker_node:
-      hostname: "{{ nodeid }}"
-      role: worker
-    ignore_errors: yes
-    register: set_as_worker_3
-
-  - name: Try to set node as worker (idempotent check)
-    docker_node:
-      hostname: "{{ nodeid }}"
-      role: worker
-    check_mode: yes
-    register: set_as_worker_4
-
   - name: assert that node cannot change role to worker
     assert:
       that:
          - 'set_as_worker_1 is changed'
          - 'set_as_worker_2 is failed'
-         - 'set_as_worker_2 is failed'
-         - 'set_as_worker_2 is not changed'
          - 'set_as_worker_2.msg | regex_search("attempting to demote the last manager of the swarm")'
-         - 'set_as_worker_3.msg | regex_search("attempting to demote the last manager of the swarm")'
 
 ####################################################################
 ## Set node as pasued ##############################################
