@@ -154,30 +154,19 @@ def delete_template(meraki, org_id, name, data):
     return response
 
 
-def bind(meraki, org_name, net_id, nets, name, data):
-    template_id = get_template_id(meraki, name, data)
-    if is_network_bound(meraki, nets, net_id, template_id) is False:
-        path = meraki.construct_path('bind', function='config_template', net_id=net_id)
-        payload = dict()
-        payload['configTemplateId'] = template_id
-        if meraki.params['auto_bind']:
-            payload['autoBind'] = meraki.params['auto_bind']
-        meraki.result['changed'] = True
-        r = meraki.request(path, method='POST', payload=json.dumps(payload))
-        if meraki.status != 200:
-            meraki.fail_json(msg='Unable to bind configuration template to network')
-        return r
+def bind(meraki, net_id, template_id):
+    path = meraki.construct_path('bind', net_id=net_id)
+    payload = {'configTemplateId': template_id}
+    if meraki.params['auto_bind']:
+        payload['autoBind'] = meraki.params['auto_bind']
+    r = meraki.request(path, method='POST', payload=json.dumps(payload))
+    return r
 
 
-def unbind(meraki, org_name, net_id, nets, name, data):
-    template_id = get_template_id(meraki, name, data)
-    if is_network_bound(meraki, nets, net_id, template_id) is True:
-        path = meraki.construct_path('unbind', function='config_template', net_id=net_id)
-        meraki.result['changed'] = True
-        r = meraki.request(path, method='POST')
-        if meraki.status != 200:
-            meraki.fail_json(msg='Unable to unbind configuration template from network')
-        return r
+def unbind(meraki, net_id):
+    path = meraki.construct_path('unbind', net_id=net_id)
+    meraki.result['changed'] = True
+    return meraki.request(path, method='POST')
 
 
 def main():
@@ -213,19 +202,12 @@ def main():
     meraki = MerakiModule(module, function='config_template')
     meraki.params['follow_redirects'] = 'all'
 
-    query_urls = {'config_template': '/organizations/{org_id}/configTemplates',
-                  }
+    query_urls = {'config_template': '/organizations/{org_id}/configTemplates'}
+    delete_urls = {'config_template': '/organizations/{org_id}/configTemplates'}
+    bind_urls = {'config_template': '/networks/{net_id}/bind'}
+    unbind_urls = {'config_template': '/networks/{net_id}/unbind'}
 
-    delete_urls = {'config_template': '/organizations/{org_id}/configTemplates',
-                   }
-
-    bind_urls = {'config_template': '/networks/{net_id}/bind',
-                 }
-
-    unbind_urls = {'config_template': '/networks/{net_id}/unbind',
-                   }
-
-    meraki.url_catalog['get_all']['config_template'] = '/organizations/{org_id}/configTemplates'
+    meraki.url_catalog['get_all'].update(query_urls)
     meraki.url_catalog['delete'] = delete_urls
     meraki.url_catalog['bind'] = bind_urls
     meraki.url_catalog['unbind'] = unbind_urls
@@ -254,26 +236,36 @@ def main():
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_config_templates(meraki, org_id)
     elif meraki.params['state'] == 'present':
-        if meraki.params['net_name']:
+        template_id = get_template_id(meraki,
+                                      meraki.params['config_template'],
+                                      get_config_templates(meraki, org_id))
+        if is_network_bound(meraki, nets, net_id, template_id) is False:
             template_bind = bind(meraki,
-                                 meraki.params['org_name'],
                                  net_id,
-                                 nets,
-                                 meraki.params['config_template'],
-                                 get_config_templates(meraki, org_id))
+                                 template_id)
+            if meraki.status != 200:
+                meraki.fail_json(msg='Unable to bind configuration template to network')
+            meraki.result['changed'] = True
+            meraki.result['data'] = template_bind
     elif meraki.params['state'] == 'absent':
-        if not meraki.params['net_name']:
+        if not meraki.params['net_name'] and not meraki.params['net_id']:
             meraki.result['data'] = delete_template(meraki,
                                                     org_id,
                                                     meraki.params['config_template'],
                                                     get_config_templates(meraki, org_id))
+            if meraki.status == 200:
+                meraki.result['changed'] = True
         else:
-            config_unbind = unbind(meraki,
-                                   meraki.params['org_name'],
-                                   net_id,
-                                   nets,
-                                   meraki.params['config_template'],
-                                   get_config_templates(meraki, org_id))
+            template_id = get_template_id(meraki,
+                                          meraki.params['config_template'],
+                                          get_config_templates(meraki, org_id))
+            if is_network_bound(meraki, nets, net_id, template_id) is True:
+                config_unbind = unbind(meraki,
+                                       net_id)
+                if meraki.status != 200:
+                    meraki.fail_json(msg='Unable to unbind configuration template from network')
+                meraki.result['changed'] = True
+                meraki.result['data'] = config_unbind
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
