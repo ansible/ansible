@@ -455,7 +455,6 @@ class Connection(ConnectionBase):
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
-        self._ssh_agent_pid = None
         self._ssh_agent_socket = None
 
         # Windows operates differently from a POSIX connection/shell plugin,
@@ -476,7 +475,6 @@ class Connection(ConnectionBase):
             ('ssh-agent', '-sD'),
             stdout=subprocess.PIPE,
         )
-        self._ssh_agent_pid = self._ssh_agent.pid
         self._ssh_agent_socket = (
             self._ssh_agent.
             stdout.readline().
@@ -507,7 +505,6 @@ class Connection(ConnectionBase):
 
     def _destroy_ssh_agent(self):
         self._terminate_process(self._ssh_agent)
-        self._ssh_agent_pid = None
         self._ssh_agent_socket = None
 
     def _connect(self):
