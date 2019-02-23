@@ -184,7 +184,7 @@ def flatpak_exists(module, binary, name, method):
 
 
 def _match_installed_flat_name(module, binary, name, method):
-    # This is a difficult function, since if th euser supplies a flatpakref url,
+    # This is a difficult function, since if the user supplies a flatpakref url,
     # we have to rely on a naming convention:
     # The flatpakref file name needs to match the flatpak name
     global result
