@@ -27,7 +27,7 @@
       - "{{ base_network.name }}"
   register: instance
   until: instance is success
-  retries: 10
+  retries: 20
   delay: 5
 - name: verify instance setup
   assert:
