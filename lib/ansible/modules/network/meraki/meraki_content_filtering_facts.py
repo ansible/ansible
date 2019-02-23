@@ -24,7 +24,8 @@ description:
 options:
     auth_key:
         description:
-        - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        - Authentication key provided by the dashboard.
+        - Required if environment variable C(MERAKI_KEY) is not set.
         type: str
     net_name:
         description:
