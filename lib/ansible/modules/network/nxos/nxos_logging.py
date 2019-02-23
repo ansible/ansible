@@ -331,8 +331,8 @@ def match_facility_default(module, facility, want_level):
     # 3(errors)               4(warnings)     5(notifications)
     # 6(information)          7(debugging)
 
-    regexl = r'\S+\s+(\d+)\s+(\d+)'.format(facility)
-    cmd = {'command': 'show logging level {}'.format(facility), 'output': 'text'}
+    regexl = r'\S+\s+(\d+)\s+(\d+)'
+    cmd = {'command': 'show logging level {0}'.format(facility), 'output': 'text'}
     facility_data = run_commands(module, cmd)
     for line in facility_data[0].split('\n'):
         mo = re.search(regexl, line)
