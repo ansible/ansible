@@ -295,6 +295,7 @@ class SwarmManager(DockerBaseClass):
         self.client = client
         self.results = results
         self.check_mode = self.client.check_mode
+        self.swarm_info = {}
 
         self.parameters = TaskParameters(client)
 
@@ -333,17 +334,18 @@ class SwarmManager(DockerBaseClass):
             self.__update_swarm()
             return
 
-        try:
-            self.client.init_swarm(
-                advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
-                force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
-        except APIError as exc:
-            self.client.fail(msg="Can not create a new Swarm Cluster: %s" % to_native(exc))
+        if not self.check_mode:
+            try:
+                self.client.init_swarm(
+                    advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
+                    force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
+            except APIError as exc:
+                self.client.fail("Can not create a new Swarm Cluster: %s" % to_native(exc))
 
         self.__isSwarmManager()
-        self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info['ID']))
+        self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info.get('ID')))
         self.results['changed'] = True
-        self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
+        self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info.get('JoinTokens')}
 
     def __update_spec(self, spec):
         if (self.parameters.node_cert_expiry is None):
@@ -393,9 +395,10 @@ class SwarmManager(DockerBaseClass):
                 self.results['actions'].append("No modification")
                 self.results['changed'] = False
                 return
-            self.client.update_swarm(
-                version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
-                rotate_manager_token=self.parameters.rotate_manager_token)
+            if not self.check_mode:
+                self.client.update_swarm(
+                    version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
+                    rotate_manager_token=self.parameters.rotate_manager_token)
         except APIError as exc:
             self.client.fail(msg="Can not update a Swarm Cluster: %s" % to_native(exc))
             return
@@ -411,18 +414,21 @@ class SwarmManager(DockerBaseClass):
             self.swarm_info = json.loads(json_str)
             if self.swarm_info['Swarm']['NodeID']:
                 return True
+            if self.swarm_info['Swarm']['LocalNodeState'] in ('active', 'pending', 'locked'):
+                return True
         return False
 
     def join(self):
         if self.__isSwarmNode():
             self.results['actions'].append("This node is already part of a swarm.")
             return
-        try:
-            self.client.join_swarm(
-                remote_addrs=self.parameters.remote_addrs, join_token=self.parameters.join_token, listen_addr=self.parameters.listen_addr,
-                advertise_addr=self.parameters.advertise_addr)
-        except APIError as exc:
-            self.client.fail(msg="Can not join the Swarm Cluster: %s" % to_native(exc))
+        if not self.check_mode:
+            try:
+                self.client.join_swarm(
+                    remote_addrs=self.parameters.remote_addrs, join_token=self.parameters.join_token, listen_addr=self.parameters.listen_addr,
+                    advertise_addr=self.parameters.advertise_addr)
+            except APIError as exc:
+                self.client.fail("Can not join the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("New node is added to swarm cluster")
         self.results['changed'] = True
 
@@ -430,11 +436,12 @@ class SwarmManager(DockerBaseClass):
         if not(self.__isSwarmNode()):
             self.results['actions'].append("This node is not part of a swarm.")
             return
-        try:
-            self.client.leave_swarm(force=self.parameters.force)
-        except APIError as exc:
-            self.client.fail(msg="This node can not leave the Swarm Cluster: %s" % to_native(exc))
-        self.results['actions'].append("Node has leaved the swarm cluster")
+        if not self.check_mode:
+            try:
+                self.client.leave_swarm(force=self.parameters.force)
+            except APIError as exc:
+                self.client.fail("This node can not leave the Swarm Cluster: %s" % to_native(exc))
+        self.results['actions'].append("Node has left the swarm cluster")
         self.results['changed'] = True
 
     def __get_node_info(self):
@@ -466,10 +473,11 @@ class SwarmManager(DockerBaseClass):
         if not(status_down):
             self.client.fail(msg="Can not remove the node. The status node is ready and not down.")
 
-        try:
-            self.client.remove_node(node_id=self.parameters.node_id, force=self.parameters.force)
-        except APIError as exc:
-            self.client.fail(msg="Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
+        if not self.check_mode:
+            try:
+                self.client.remove_node(node_id=self.parameters.node_id, force=self.parameters.force)
+            except APIError as exc:
+                self.client.fail("Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node is removed from swarm cluster.")
         self.results['changed'] = True
 
