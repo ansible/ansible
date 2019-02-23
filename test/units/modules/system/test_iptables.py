@@ -636,3 +636,38 @@ class TestIptables(ModuleTestCase):
                 '-j',
                 'DROP'
             ])
+
+    def test_log_level(self):
+        """ Test various ways of log level flag """
+
+        log_levels = ['0', '1', '2', '3', '4', '5', '6', '7',
+                      'emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug']
+
+        for log_lvl in log_levels:
+            set_module_args({
+                'chain': 'INPUT',
+                'jump': 'LOG',
+                'log_level': log_lvl,
+                'source': '1.2.3.4/32',
+                'log_prefix': '** DROP-this_ip **'
+            })
+            commands_results = [
+                (0, '', ''),
+            ]
+
+            with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+                run_command.side_effect = commands_results
+                with self.assertRaises(AnsibleExitJson) as result:
+                    iptables.main()
+                    self.assertTrue(result.exception.args[0]['changed'])
+
+                self.assertEqual(run_command.call_count, 1)
+                self.assertEqual(run_command.call_args_list[0][0][0], [
+                    '/sbin/iptables',
+                    '-t', 'filter',
+                    '-C', 'INPUT',
+                    '-s', '1.2.3.4/32',
+                    '-j', 'LOG',
+                    '--log-prefix', '** DROP-this_ip **',
+                    '--log-level', log_lvl
+                ])
