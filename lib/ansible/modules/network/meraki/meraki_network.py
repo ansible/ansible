@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
+# Copyright: (c) 2018, 2019 Kevin Breit (@kbreit) <kevin.breit@kevinbreit.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -51,6 +51,10 @@ options:
         choices: [ appliance, switch, wireless ]
         aliases: [net_type]
         type: list
+    tags:
+        type: list
+        description:
+        - Comma delimited list of tags to assign to network.
     timezone:
         description:
         - Timezone associated to network.
