@@ -455,6 +455,7 @@ class Connection(ConnectionBase):
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
 
+        self._ssh_agent = None
         self._ssh_agent_socket = None
 
         # Windows operates differently from a POSIX connection/shell plugin,
