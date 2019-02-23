@@ -25,43 +25,155 @@ options:
     auth_key:
         description:
         - Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+        type: str
     state:
         description:
         - Create or modify an organization.
-        choices: [absent, present, query]
+        choices: [present, query]
         default: present
+        type: str
     net_name:
         description:
         - Name of a network.
         aliases: [name, network]
+        type: str
     net_id:
         description:
         - ID number of a network.
+        type: str
     org_name:
         description:
         - Name of organization associated to a network.
+        type: str
     org_id:
         description:
         - ID of organization associated to a network.
-    type:
+        type: str
+    subset:
         description:
-        - Type of network device network manages.
-        - Required when creating a network.
-        choices: [appliance, combined, switch, wireless]
-        aliases: [net_type]
-    tags:
+        - Specifies which NAT components to query.
+        choices: ['1:1', '1:many', all, port_forwarding]
+        default: all
+        type: list
+    one_to_one:
         description:
-        - Comma delimited list of tags to assign to network.
-    timezone:
+        - List of 1:1 NAT rules.
+        type: list
+        suboptions:
+            name:
+                description:
+                - A descriptive name for the rule.
+                type: str
+            public_ip:
+                description:
+                - The IP address that will be used to access the internal resource from the WAN.
+                type: str
+            lan_ip:
+                description:
+                - The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN.
+                type: str
+            uplink:
+                description:
+                - The physical WAN interface on which the traffic will arrive.
+                choices: [both, internet1, internet2]
+            allowed_inbound:
+                description:
+                - The ports this mapping will provide access on, and the remote IPs that will be allowed access to the resource.
+                type: list
+                suboptions:
+                    protocol:
+                        description:
+                        - Protocol to apply NAT rule to.
+                        choices: [any, icmp-ping, tcp, udp]
+                        type: str
+                        default: any
+                    destination_ports:
+                        description:
+                        - List of ports or port ranges that will be forwarded to the host on the LAN.
+                        type: list
+                    allowed_ips:
+                        description:
+                        - ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges, or 'any'.
+                        type: list
+    one_to_many:
         description:
-        - Timezone associated to network.
-        - See U(https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for a list of valid timezones.
-    disable_my_meraki:
-        description: >
-            - Disables the local device status pages (U[my.meraki.com](my.meraki.com), U[ap.meraki.com](ap.meraki.com), U[switch.meraki.com](switch.meraki.com),
-            U[wired.meraki.com](wired.meraki.com))
-        type: bool
-        version_added: '2.7'
+        - List of 1:many NAT rules.
+        type: list
+        suboptions:
+            public_ip:
+                description:
+                - The IP address that will be used to access the internal resource from the WAN.
+                type: str
+            uplink:
+                description:
+                - The physical WAN interface on which the traffic will arrive.
+                choices: [both, internet1, internet2]
+                type: str
+            port_rules:
+                description:
+                - List of associated port rules.
+                type: list
+                suboptions:
+                    name:
+                        description:
+                        - A description of the rule.
+                        type: str
+                    protocol:
+                        description:
+                        - Protocol to apply NAT rule to.
+                        choices: [tcp, udp]
+                        type: str
+                    public_port:
+                        description:
+                        - Destination port of the traffic that is arriving on the WAN.
+                        type: str
+                    local_ip:
+                        description:
+                        - Local IP address to which traffic will be forwarded.
+                        type: str
+                    local_port:
+                        description:
+                        - Destination port of the forwarded traffic that will be sent from the MX to the specified host on the LAN.
+                        - If you simply wish to forward the traffic without translating the port, this should be the same as the Public port.
+                        type: str
+                    allowed_ips:
+                        description:
+                        - Remote IP addresses or ranges that are permitted to access the internal resource via this port forwarding rule, or 'any'.
+                        type: list
+    port_forwarding:
+        description:
+        - List of port forwarding rules.
+        type: list
+        suboptions:
+            name:
+                description:
+                - A descriptive name for the rule.
+                type: str
+            lan_ip:
+                description:
+                - The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN.
+                type: str
+            uplink:
+                description:
+                - The physical WAN interface on which the traffic will arrive.
+                choices: [both, internet1, internet2]
+                type: str
+            public_port:
+                description:
+                - A port or port ranges that will be forwarded to the host on the LAN.
+                type: str
+            local_port:
+                description:
+                - A port or port ranges that will receive the forwarded traffic from the WAN.
+                type: str
+            allowed_ips:
+                description:
+                - List of ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges (or any).
+            protocol:
+                description:
+                - Protocol to forward traffic for.
+                choices: [tcp, udp]
+                type: str
 
 author:
     - Kevin Breit (@kbreit)
@@ -157,6 +269,7 @@ key_map = {'name': 'name',
            'local_port': 'localPort',
            }
 
+
 def construct_payload(params):
     if isinstance(params, list):
         items = []
@@ -209,7 +322,6 @@ def main():
                                 local_port=dict(type='int'),
                                 allowed_ips=dict(type='list'),
                                 )
-
 
     argument_spec = meraki_argument_spec()
     argument_spec.update(
@@ -271,7 +383,7 @@ def main():
     net_id = meraki.params['net_id']
     if net_id is None:
         nets = meraki.get_nets(org_id=org_id)
-        net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)        
+        net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)
 
     if meraki.params['state'] == 'query':
         if meraki.params['subset'][0] == 'all':
