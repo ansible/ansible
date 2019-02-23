@@ -23,7 +23,7 @@ class GrpcBase(AnsiblePlugin):
     def channel(self):
         return self._connection._channel
 
-    def get_config(self,  section=None):
+    def get_config(self, section=None):
         """
         Retrieve all or part of a specified configuration
         (by default entire configuration is retrieved).

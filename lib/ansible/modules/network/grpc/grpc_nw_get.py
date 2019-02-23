@@ -172,9 +172,9 @@ def main():
 
     try:
         if command:
-            response, _ = run_cli(module, command, display)
+            response, err = run_cli(module, command, display)
         else:
-            response, _ = get(module, section, data_type)
+            response, err = get(module, section, data_type)
 
         try:
             output = module.from_json(response)
