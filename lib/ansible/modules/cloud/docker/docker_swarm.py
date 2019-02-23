@@ -158,6 +158,7 @@ requirements:
   - "docker >= 2.6.0"
   - Docker API >= 1.25
 author:
+  - Piotr Wojciechowski (@WojciechowskiPiotr)
   - Thierry Bouvet (@tbouvet)
 '''
 
@@ -490,7 +491,7 @@ class SwarmManager(DockerBaseClass):
             self.client.fail("This node is not a manager.")
 
         try:
-            status_down = self.client.check_if_swarm_node_is_down()
+            status_down = self.client.check_if_swarm_node_is_down(repeat_check=5)
         except APIError:
             return
 
