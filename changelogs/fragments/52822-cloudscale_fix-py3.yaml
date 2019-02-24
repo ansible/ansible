@@ -1,0 +1,2 @@
+bugfixes:
+- cloudscale - Fix compatibilty with Python3 in version 3.5 and lower.
