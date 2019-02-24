@@ -428,7 +428,8 @@ class SwarmManager(DockerBaseClass):
                 self.client.fail("Can not create a new Swarm Cluster: %s" % to_native(exc))
 
         if not self.client.check_if_swarm_manager():
-            self.client.fail("Swarm not created or other error!")
+            if not self.check_mode:
+                self.client.fail("Swarm not created or other error!")
         self.inspect_swarm()
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info.get('ID')))
         self.differences.add('state', parameter='absent', active='present')
