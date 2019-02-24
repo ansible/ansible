@@ -1320,7 +1320,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
+        module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
 
     # set port to per db defaults if not specified
     if module.params['port'] is None and module.params['db_engine'] is not None and module.params['command'] == 'create':
