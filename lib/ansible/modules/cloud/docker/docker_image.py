@@ -21,10 +21,33 @@ short_description: Manage docker images.
 version_added: "1.5"
 
 description:
-     - Build, load or pull an image, making the image available for creating containers. Also supports tagging an
-       image into a repository and archiving an image to a .tar file.
+  - Build, load or pull an image, making the image available for creating containers. Also supports tagging an
+    image into a repository and archiving an image to a .tar file.
+  - Since Ansible 2.8, it is recommended to explicitly specify the image's source (C(source=build),
+    C(source=load), C(source=pull) or C(source=local)). This will be required from Ansible 2.12 on.
 
 options:
+  source:
+    description:
+      - "Determines where the module will try to retrieve the image from."
+      - "Use C(build) to build the image from a C(Dockerfile). I(path) must
+         be specified when this value is used."
+      - "Use C(load) to load the image from a C(.tar) file. I(load_path) must
+         be specified when this value is used."
+      - "Use C(pull) to pull the image from a registry."
+      - "Use C(local) to make sure that the image is already available on the local
+         docker daemon, i.e. do not try to build, pull or load the image."
+      - "Before Ansible 2.12, the value of this option will be auto-detected
+         to be backwards compatible, but a warning will be issued if it is not
+         explicitly specified. From Ansible 2.12 on, auto-detection will be disabled
+         and this option will be made mandatory."
+    type: str
+    choices:
+    - build
+    - load
+    - pull
+    - local
+    version_added: "2.8"
   archive_path:
     description:
       - Use with state C(present) to archive an image to a .tar file.
@@ -38,6 +61,10 @@ options:
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
+      - Set I(source) to C(load) if you want to load the image. The option will
+        be set automatically before Ansible 2.12 if this option is used (except
+        if I(path) is specified as well, in which case building will take precedence).
+        From Ansible 2.12 on, you have to set I(source) to C(load).
     type: path
     version_added: "2.2"
   dockerfile:
@@ -69,6 +96,9 @@ options:
     description:
       - Use with state 'present' to build an image. Will be the path to a directory containing the context and
         Dockerfile for building an image.
+      - Set I(source) to C(build) if you want to build the image. The option will
+        be set automatically before Ansible 2.12 if this option is used. From Ansible 2.12
+        on, you have to set I(source) to C(build).
     type: path
     aliases:
       - build_path
@@ -194,26 +224,30 @@ EXAMPLES = '''
 - name: pull an image
   docker_image:
     name: pacur/centos-7
+    source: pull
 
 - name: Tag and push to docker hub
   docker_image:
     name: pacur/centos-7:56
     repository: dcoppenhagan/myimage:7.56
     push: yes
+    source: local
 
 - name: Tag and push to local registry
   docker_image:
-     # Image will be centos:7
-     name: centos
-     # Will be pushed to localhost:5000/centos:7
-     repository: localhost:5000/centos
-     tag: 7
-     push: yes
+    # Image will be centos:7
+    name: centos
+    # Will be pushed to localhost:5000/centos:7
+    repository: localhost:5000/centos
+    tag: 7
+    push: yes
+    source: local
 
 - name: Add tag latest to image
   docker_image:
     name: myimage:7.1.2
     repository: myimage:latest
+    source: local
 
 - name: Remove image
   docker_image:
@@ -227,12 +261,14 @@ EXAMPLES = '''
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
     push: yes
+    source: build
 
 - name: Archive image
   docker_image:
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
     archive_path: my_sinatra.tar
+    source: local
 
 - name: Load image from archive and push to a private registry
   docker_image:
@@ -240,14 +276,16 @@ EXAMPLES = '''
     tag: v1
     push: yes
     load_path: my_sinatra.tar
+    source: load
 
 - name: Build image and with buildargs
   docker_image:
-     path: /path/to/build/dir
-     name: myimage
-     buildargs:
-       log_volume: /var/log/myapp
-       listen_port: 8080
+    path: /path/to/build/dir
+    name: myimage
+    buildargs:
+      log_volume: /var/log/myapp
+      listen_port: 8080
+    source: build
 
 - name: Build image using cache source
   docker_image:
@@ -257,6 +295,7 @@ EXAMPLES = '''
     cache_from:
       - nginx:latest
       - alpine:3.8
+    source: build
 '''
 
 RETURN = '''
@@ -296,6 +335,7 @@ class ImageManager(DockerBaseClass):
         parameters = self.client.module.params
         self.check_mode = self.client.check_mode
 
+        self.source = parameters['source']
         self.archive_path = parameters.get('archive_path')
         self.cache_from = parameters.get('cache_from')
         self.container_limits = parameters.get('container_limits')
@@ -322,7 +362,7 @@ class ImageManager(DockerBaseClass):
                 self.name = repo
                 self.tag = repo_tag
 
-        if self.state in ['present', 'build']:
+        if self.state == 'present':
             self.present()
         elif self.state == 'absent':
             self.absent()
@@ -340,7 +380,7 @@ class ImageManager(DockerBaseClass):
         image = self.client.find_image(name=self.name, tag=self.tag)
 
         if not image or self.force:
-            if self.path:
+            if self.source == 'build':
                 # Build the image
                 if not os.path.isdir(self.path):
                     self.fail("Requested build path %s could not be found or you do not have access." % self.path)
@@ -352,7 +392,7 @@ class ImageManager(DockerBaseClass):
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.build_image()
-            elif self.load_path:
+            elif self.source == 'load':
                 # Load the image from an archive
                 if not os.path.isfile(self.load_path):
                     self.fail("Error loading image %s. Specified path %s does not exist." % (self.name,
@@ -364,12 +404,18 @@ class ImageManager(DockerBaseClass):
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.load_image()
-            else:
+            elif self.source == 'pull':
                 # pull the image
                 self.results['actions'].append('Pulled image %s:%s' % (self.name, self.tag))
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'], dummy = self.client.pull_image(self.name, tag=self.tag)
+            elif self.source == 'local':
+                if image is None:
+                    name = self.name
+                    if self.tag:
+                        name = "%s:%s" % (self.name, self.tag)
+                    self.client.fail('Cannot find the image %s locally.' % name)
             if not self.check_mode and image and image['Id'] == self.results['image']['Id']:
                 self.results['changed'] = False
 
@@ -607,6 +653,7 @@ class ImageManager(DockerBaseClass):
 
 def main():
     argument_spec = dict(
+        source=dict(type='str', choices=['build', 'load', 'pull', 'local']),
         archive_path=dict(type='path'),
         cache_from=dict(type='list', elements='str'),
         container_limits=dict(type='dict', options=dict(
@@ -633,6 +680,12 @@ def main():
         buildargs=dict(type='dict'),
     )
 
+    required_if = [
+        # ('state', 'present', ['source']),   -- enable in Ansible 2.12.
+        ('source', 'build', ['path']),
+        ('source', 'load', ['load_path']),
+    ]
+
     option_minimal_versions = dict(
         cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         network=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
@@ -640,6 +693,7 @@ def main():
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
+        required_if=required_if,
         supports_check_mode=True,
         min_docker_version='1.8.0',
         min_docker_api_version='1.20',
@@ -650,10 +704,23 @@ def main():
         client.module.warn('The "build" state has been deprecated for a long time '
                            'and will be removed in Ansible 2.11. Please use '
                            '"present", which has the same meaning as "build".')
+        client.module.params['state'] = 'present'
     if client.module.params['use_tls']:
         client.module.warn('The "use_tls" option has been deprecated for a long time '
                            'and will be removed in Ansible 2.11. Please use the'
                            '"tls" and "tls_verify" options instead.')
+
+    if client.module.params['state'] == 'present' and client.module.params['source'] is None:
+        # Autodetection. To be removed in Ansible 2.12.
+        if client.module.params['path']:
+            client.module.params['source'] = 'build'
+        elif client.module.params['load_path']:
+            client.module.params['source'] = 'load'
+        else:
+            client.module.params['source'] = 'pull'
+        client.module.warn('The value of the "source" option was determined to be "%s". '
+                           'Please set the "source" option explicitly. Autodetection will '
+                           'be removed in Ansible 2.12.' % client.module.params['source'])
 
     results = dict(
         changed=False,
