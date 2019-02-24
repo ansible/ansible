@@ -1,0 +1,27 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: fixtures/ansible-json-menu.json
+      dest: /tmp/ansible-json-menu.json
+
+  - name: Set 'menu['id']' to empty string.
+    jsonpath:
+      path: /tmp/ansible-json-menu.json
+      jsonpath: menu['id']
+      value: ""
+    register: set_attribute_value_empty
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-set-attribute-value-empty.json
+      dest: /tmp/ansible-json-menu.json
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - set_attribute_value_empty.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-set-attribute-value-empty.json /tmp/ansible-json-menu.json

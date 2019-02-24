@@ -1,0 +1,35 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: fixtures/ansible-json-menu.json
+      dest: /tmp/ansible-json-menu.json
+
+  - name: Set 'menu['id']' to "пять"
+    xml:
+      path: /tmp/ansible-json-menu.json
+      xpath: menu['id']
+      value: "пять"
+    register: set_attribute_first_run
+
+  - name: Set 'menu['id']' to "пять"... again
+    xml:
+      path: /tmp/ansible-json-menu.json
+      xpath: menu['id']
+      value: "пять"
+    register: set_attribute_second_run
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-set-attribute-value-unicode.json
+      dest: /tmp/ansible-json-menu.json
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - set_attribute_first_run.changed == true
+      - set_attribute_second_run.changed == false
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-set-attribute-value-unicode.json /tmp/ansible-json-menu.json
