@@ -8,14 +8,14 @@
     jsonpath:
       path: /tmp/ansible-json-menu.json
       jsonpath: menu['id']
-      value: "пять"
+      value: u'пять'
     register: set_attribute_first_run
 
   - name: Set 'menu['id']' to "пять"... again
     jsonpath:
       path: /tmp/ansible-json-menu.json
       jsonpath: menu['id']
-      value: "пять"
+      value: u'пять'
     register: set_attribute_second_run
 
   - name: Compare to expected result
