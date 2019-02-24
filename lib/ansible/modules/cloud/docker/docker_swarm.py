@@ -280,7 +280,7 @@ class TaskParameters(DockerBaseClass):
         self.update_parameters(client)
 
     def update_parameters(self, client):
-        self.spec = client.create_swarm_spec(
+        params = dict(
             snapshot_interval=self.snapshot_interval,
             task_history_retention_limit=self.task_history_retention_limit,
             keep_old_snapshots=self.keep_old_snapshots,
@@ -290,13 +290,15 @@ class TaskParameters(DockerBaseClass):
             dispatcher_heartbeat_period=self.dispatcher_heartbeat_period,
             node_cert_expiry=self.node_cert_expiry,
             name=self.name,
-            labels=self.labels,
             signing_ca_cert=self.signing_ca_cert,
             signing_ca_key=self.signing_ca_key,
             ca_force_rotate=self.ca_force_rotate,
             autolock_managers=self.autolock_managers,
-            log_driver=self.log_driver
+            log_driver=self.log_driver,
         )
+        if self.labels:
+            params['labels'] = self.labels
+        self.spec = client.create_swarm_spec(**params)
 
 
 class SwarmManager(DockerBaseClass):
@@ -388,7 +390,8 @@ class SwarmManager(DockerBaseClass):
             self.parameters.name = spec['Name']
 
         if (self.parameters.labels is None):
-            self.parameters.labels = spec['Labels']
+            if spec.get('Labels'):
+                self.parameters.labels = spec['Labels']
 
         if 'LogDriver' in spec['TaskDefaults']:
             self.parameters.log_driver = spec['TaskDefaults']['LogDriver']
@@ -528,6 +531,7 @@ def main():
     ]
 
     option_minimal_versions = dict(
+        labels=dict(docker_api_version='1.32'),
         signing_ca_cert=dict(docker_api_version='1.30'),
         signing_ca_key=dict(docker_api_version='1.30'),
         ca_force_rotate=dict(docker_api_version='1.30'),
