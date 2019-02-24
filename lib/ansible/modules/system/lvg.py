@@ -46,7 +46,7 @@ options:
     version_added: "2.4"
   pvresize:
     description:
-    - If C(yes) resize the physical volume to the maximum available sizd
+    - If C(yes) resize the physical volume to the maximum available size
     type: bool
     default: no
     version_added: "2.8"
