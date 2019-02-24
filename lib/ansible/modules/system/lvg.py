@@ -44,6 +44,11 @@ options:
     - Additional options to pass to C(pvcreate) when creating the volume group.
     type: str
     version_added: "2.4"
+  pvresize:
+    description:
+    - If C(yes) resize the physical volume to the maximum available sizd
+    type: bool
+    default: no
   vg_options:
     description:
     - Additional options to pass to C(vgcreate) when creating the volume group.
@@ -145,6 +150,7 @@ def main():
             pvs=dict(type='list'),
             pesize=dict(type='str', default=4),
             pv_options=dict(type='str', default=''),
+            pvresize=dict(type='bool', default=False),
             vg_options=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             force=dict(type='bool', default=False),
@@ -155,6 +161,7 @@ def main():
     vg = module.params['vg']
     state = module.params['state']
     force = module.boolean(module.params['force'])
+    pvresize = module.boolean(module.params['pvresize'])
     pesize = module.params['pesize']
     pvoptions = module.params['pv_options'].split()
     vgoptions = module.params['vg_options'].split()
@@ -253,6 +260,30 @@ def main():
         current_devs = [os.path.realpath(pv['name']) for pv in pvs if pv['vg_name'] == vg]
         devs_to_remove = list(set(current_devs) - set(dev_list))
         devs_to_add = list(set(dev_list) - set(current_devs))
+
+        if current_devs:
+            if state == 'present' and pvresize:
+                for device in current_devs:
+                    lsblk_cmd = module.get_bin_path('lsblk', True)
+                    pvdisplay_cmd = module.get_bin_path('pvdisplay', True)
+                    rc, dev_size, err = module.run_command("%s %s ---units b --columns -o dev_size --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    dev_size = int(dev_size.replace(" ", ""))
+                    rc, pv_size, err = module.run_command("%s %s ---units b --columns -o pv_size --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    pv_size = int(pv_size.replace(" ", ""))
+                    rc, pe_start, err = module.run_command("%s %s ---units b --columns -o pe_start --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    pe_start = int(pe_start.replace(" ", ""))
+                    rc, vg_extent_size, err = module.run_command("%s %s ---units b --columns -o vg_extent_size --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    vg_extent_size = int(vg_extent_size.replace(" ", ""))
+                    if (dev_size - (pe_start + pv_size)) > vg_extent_size:
+                        if module.check_mode:
+                            changed = True
+                        else:
+                            pvresize_cmd = module.get_bin_path('pvresize', True)
+                            rc, _, err = module.run_command("%s %s" % (pvresize_cmd, device))
+                            if rc != 0:
+                                module.fail_json(msg="Failed executing pvresize command.", rc=rc, err=err)
+                            else:
+                                changed = True
 
         if devs_to_add or devs_to_remove:
             if module.check_mode:
