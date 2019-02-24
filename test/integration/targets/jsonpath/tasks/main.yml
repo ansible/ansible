@@ -8,12 +8,12 @@
     state: forcereinstall
   register: jsonpath_ng_version
 
-- name: Set jsonpath-ng capabilities as variables
-  shell: python -c "from distutils.version import LooseVersion; print(LooseVersion({{ jsonpath_ng_version.version | string }}) >= LooseVersion('1.4.3'))"
-  register: jsonpath_ng_version_result_attrname
+# - name: Set jsonpath-ng capabilities as variables
+#   shell: python -c "from distutils.version import LooseVersion; print(LooseVersion({{ jsonpath_ng_version.version | string }}) >= LooseVersion('1.4.3'))"
+#   register: jsonpath_ng_version_result_attrname
 
 - name: Only run the tests when jsonpath-ng v1.4.3+
-  when: jsonpath_ng_version_result_attrname.stdout == "True"
+  # when: jsonpath_ng_version_result_attrname.stdout == "True"
   block:
 
   - include_tasks: test-set-attribute-value.yml
