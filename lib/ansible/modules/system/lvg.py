@@ -48,7 +48,7 @@ options:
     description:
     - If C(yes) resize the physical volume to the maximum available size
     type: bool
-    default: no
+    default: yes
     version_added: "2.8"
   vg_options:
     description:
@@ -151,7 +151,7 @@ def main():
             pvs=dict(type='list'),
             pesize=dict(type='str', default=4),
             pv_options=dict(type='str', default=''),
-            pvresize=dict(type='bool', default=False),
+            pvresize=dict(type='bool', default=True),
             vg_options=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             force=dict(type='bool', default=False),
@@ -267,13 +267,14 @@ def main():
                 for device in current_devs:
                     pvdisplay_cmd = module.get_bin_path('pvdisplay', True)
                     pvdisplay_ops = "--units b --columns --noheadings --nosuffix"
-                    rc, dev_size, err = module.run_command("%s %s %s -o dev_size" % (pvdisplay_cmd, device, pvdisplay_ops))
+                    pvdiplay_cmd_device_options = pvdisplay_cmd+" "+device+" "+pvdisplay_ops
+                    rc, dev_size, err = module.run_command(pvdiplay_cmd_device_options + " -o dev_size")
                     dev_size = int(dev_size.replace(" ", ""))
-                    rc, pv_size, err = module.run_command("%s %s %s -o pv_size" % (pvdisplay_cmd, device, pvdisplay_ops))
+                    rc, pv_size, err = module.run_command(pvdiplay_cmd_device_options + " -o pv_size")
                     pv_size = int(pv_size.replace(" ", ""))
-                    rc, pe_start, err = module.run_command("%s %s %s -o pe_start " % (pvdisplay_cmd, device, pvdisplay_ops))
+                    rc, pe_start, err = module.run_command(pvdiplay_cmd_device_options + " -o pe_start")
                     pe_start = int(pe_start.replace(" ", ""))
-                    rc, vg_extent_size, err = module.run_command("%s %s %s -o vg_extent_size" % (pvdisplay_cmd, device, pvdisplay_ops))
+                    rc, vg_extent_size, err = module.run_command(pvdiplay_cmd_device_options + " -o vg_extent_size")
                     vg_extent_size = int(vg_extent_size.replace(" ", ""))
                     if (dev_size - (pe_start + pv_size)) > vg_extent_size:
                         if module.check_mode:
