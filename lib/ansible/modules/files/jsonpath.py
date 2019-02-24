@@ -143,7 +143,7 @@ def finish(module, data, changed=False, msg=''):
     if result['changed']:
         with open(module.params['path'], 'w') as f:
             try:
-                json.dump(data, f, indent=2, sort_keys=True)
+                json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
             except Exception as e:
                 module.fail_json(msg="Write error in json file: %s (%s)" % (module.params['path'], e))
 
