@@ -265,7 +265,6 @@ def main():
         if current_devs:
             if state == 'present' and pvresize:
                 for device in current_devs:
-                    lsblk_cmd = module.get_bin_path('lsblk', True)
                     pvdisplay_cmd = module.get_bin_path('pvdisplay', True)
                     pvdisplay_ops = "--units b --columns --noheadings --nosuffix"
                     rc, dev_size, err = module.run_command("%s %s %s -o dev_size" % (pvdisplay_cmd, device, pvdisplay_ops))
