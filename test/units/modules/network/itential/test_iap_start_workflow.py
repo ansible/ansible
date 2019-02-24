@@ -24,8 +24,8 @@ iap_token unit tests
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.compat.tests import mock
-from ansible.compat.tests import unittest
+import mock
+import unittest
 from ansible.modules.network.itential import iap_start_workflow
 
 
