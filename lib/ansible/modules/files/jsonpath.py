@@ -117,6 +117,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule, json_dict_bytes_to_unicode
 from ansible.module_utils._text import to_native
 
+
 def set_target(module, data, jsonpath_expr, orig_value):
     if orig_value == module.params['value']:
         changed = False
@@ -144,7 +145,7 @@ def finish(module, data, changed=False, msg=''):
             try:
                 json.dump(data, f, indent=2)
             except Exception as e:
-                module.fail_json(msg="Write error in json file: %s (%s)" % (json_file, e))
+                module.fail_json(msg="Write error in json file: %s (%s)" % (module.params['path'], e))
 
     module.exit_json(**result)
 
@@ -153,7 +154,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             path=dict(type='path', required=True),
-            jsonpath=dict(type='str', required=True),            
+            jsonpath=dict(type='str', required=True),
             value=dict(type='raw', required=True),
         ),
         supports_check_mode=False,
@@ -199,6 +200,7 @@ def main():
     set_target(module, data, jsonpath_expr, orig_value)
 
     module.fail_json(msg="Don't know what to do")
+
 
 if __name__ == '__main__':
     main()
