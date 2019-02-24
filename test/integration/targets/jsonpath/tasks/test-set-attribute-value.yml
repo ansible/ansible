@@ -7,14 +7,14 @@
   - name: Set 'menu['id']' to "0"
     jsonpath:
       path: /tmp/ansible-json-menu.json
-      xpath: menu['id']
+      jsonpath: menu['id']
       value: "0"
     register: set_attribute_first_run
 
   - name: Set 'menu['id']' to "0"... again
     jsonpath:
       path: /tmp/ansible-json-menu.json
-      xpath: /business/rating
+      jsonpath: /business/rating
       value: "0"
     register: set_attribute_second_run
 
