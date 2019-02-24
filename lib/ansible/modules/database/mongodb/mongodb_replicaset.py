@@ -376,7 +376,7 @@ def main():
     try:
         client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
     except Exception as excep:
-        if "not authorized on" not in str(excep):
+        if "not authorized on" not in str(excep) and "command listDatabases requires authentication" not in str(excep):
             raise excep
         if login_user is None or login_password is None:
             raise excep
