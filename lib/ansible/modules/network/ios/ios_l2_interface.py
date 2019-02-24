@@ -34,11 +34,15 @@ options:
     description:
       - Mode in which interface needs to be configured.
     default: access
-    choices: ['access', 'trunk']
+    choices: ['access', 'voice-access, 'trunk']
   access_vlan:
     description:
       - Configure given VLAN in access port.
         If C(mode=access), used as the access VLAN ID.
+  voice_vlan:
+    description:
+      - Configure given Voice VLAN in access port.
+        If C(mode=voice-access), used as the voice VLAN ID.
   trunk_vlans:
     description:
       - List of VLANs to be configured in trunk port.
@@ -75,6 +79,13 @@ EXAMPLES = """
     mode: access
     access_vlan: 20
 
+- name: Ensure GigabitEthernet0/5 is configured for access vlan 20 and voice vlan 30
+  ios_l2_interface:
+    name: GigabitEthernet0/5
+    mode: voice-access
+    access_vlan: "20"
+    voice_vlan: "30"
+
 - name: Ensure GigabitEthernet0/5 only has vlans 5-10 as trunk vlans
   ios_l2_interface:
     name: GigabitEthernet0/5
@@ -105,6 +116,7 @@ commands:
   sample:
     - interface GigabitEthernet0/5
     - switchport access vlan 20
+    - switchport voice vlan 30
 """
 
 import re
@@ -156,12 +168,15 @@ def get_switchport(name, module):
     config = run_commands(module, ['show interface {0} switchport'.format(name)])[0]
     mode = re.search(r'Administrative Mode: (?:.* )?(\w+)$', config, re.M)
     access = re.search(r'Access Mode VLAN: (\d+)', config)
+    voice = re.search(r'Voice VLAN: (\d+)', config)
     native = re.search(r'Trunking Native Mode VLAN: (\d+)', config)
     trunk = re.search(r'Trunking VLANs Enabled: (.+)$', config, re.M)
     if mode:
         mode = mode.group(1)
     if access:
         access = access.group(1)
+    if voice:
+        voice = voice.group(1)
     if native:
         native = native.group(1)
     if trunk:
@@ -173,6 +188,7 @@ def get_switchport(name, module):
         "interface": name,
         "mode": mode,
         "access_vlan": access,
+        "voice_vlan": voice,
         "native_vlan": native,
         "trunk_vlans": trunk,
     }
@@ -189,6 +205,16 @@ def remove_switchport_config_commands(name, existing, proposed, module):
         av_check = existing.get('access_vlan') == proposed.get('access_vlan')
         if av_check:
             command = 'no switchport access vlan {0}'.format(existing.get('access_vlan'))
+            commands.append(command)
+
+    elif mode == 'voice-access':
+        av_check = existing.get('access_vlan') == proposed.get('access_vlan')
+        if av_check:
+            command = 'no switchport access vlan {0}'.format(existing.get('access_vlan'))
+            commands.append(command)
+        vv_check = existing.get('voice_vlan') == proposed.get('voice_vlan')
+        if vv_check:
+            command = 'no switch voice vlan {0}'.format(existing.get('voice_vlan'))
             commands.append(command)
 
     elif mode == 'trunk':
@@ -230,7 +256,7 @@ def get_switchport_config_commands(name, existing, proposed, module):
     if proposed_mode != existing_mode:
         if proposed_mode == 'trunk':
             command = 'switchport mode trunk'
-        elif proposed_mode == 'access':
+        elif proposed_mode == 'access' or 'voice-access':
             command = 'switchport mode access'
 
     if command:
@@ -240,6 +266,16 @@ def get_switchport_config_commands(name, existing, proposed, module):
         av_check = str(existing.get('access_vlan')) == str(proposed.get('access_vlan'))
         if not av_check:
             command = 'switchport access vlan {0}'.format(proposed.get('access_vlan'))
+            commands.append(command)
+
+    elif proposed_mode == 'voice-access':
+        av_check = str(existing.get('access_vlan')) == str(proposed.get('access_vlan'))
+        if not av_check:
+            command = 'switchport access vlan {0}'.format(proposed.get('access_vlan'))
+            commands.append(command)
+        vv_check = str(existing.get('voice_vlan')) == str(proposed.get('voice_vlan'))
+        if not vv_check:
+            command = 'switchport voice vlan {0}'.format(proposed.get('voice_vlan'))
             commands.append(command)
 
     elif proposed_mode == 'trunk':
@@ -291,7 +327,8 @@ def default_switchport_config(name):
     commands = []
     commands.append('interface ' + name)
     commands.append('switchport mode access')
-    commands.append('switch access vlan 1')
+    commands.append('switchport access vlan 1')
+    commands.append('no switchport voice vlan')
     commands.append('switchport trunk native vlan 1')
     commands.append('switchport trunk allowed vlan all')
     return commands
@@ -355,6 +392,7 @@ def map_params_to_obj(module):
             'name': module.params['name'],
             'mode': module.params['mode'],
             'access_vlan': module.params['access_vlan'],
+            'voice_vlan': module.params['voice_vlan'],
             'native_vlan': module.params['native_vlan'],
             'trunk_vlans': module.params['trunk_vlans'],
             'trunk_allowed_vlans': module.params['trunk_allowed_vlans'],
@@ -369,8 +407,9 @@ def main():
     """
     element_spec = dict(
         name=dict(type='str', aliases=['interface']),
-        mode=dict(choices=['access', 'trunk']),
+        mode=dict(choices=['access', 'voice-access', 'trunk']),
         access_vlan=dict(type='str'),
+        voice_vlan=dict(type='str'),
         native_vlan=dict(type='str'),
         trunk_vlans=dict(type='str'),
         trunk_allowed_vlans=dict(type='str'),
@@ -391,8 +430,11 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            mutually_exclusive=[['access_vlan', 'trunk_vlans'],
+                                               ['voice_vlan', 'trunk_vlans'],
                                                ['access_vlan', 'native_vlan'],
-                                               ['access_vlan', 'trunk_allowed_vlans']],
+                                               ['voice_vlan', 'native_vlan'],
+                                               ['access_vlan', 'trunk_allowed_vlans'],
+                                               ['voice_vlan', 'trunk_allowed_vlans']],
                            supports_check_mode=True)
 
     warnings = list()
@@ -404,12 +446,14 @@ def main():
         name = w['name']
         mode = w['mode']
         access_vlan = w['access_vlan']
+        voice_vlan = w['voice_vlan']
         state = w['state']
         trunk_vlans = w['trunk_vlans']
         native_vlan = w['native_vlan']
         trunk_allowed_vlans = w['trunk_allowed_vlans']
 
         args = dict(name=name, mode=mode, access_vlan=access_vlan,
+                    voice_vlan=voice_vlan,
                     native_vlan=native_vlan, trunk_vlans=trunk_vlans,
                     trunk_allowed_vlans=trunk_allowed_vlans)
 
@@ -419,6 +463,9 @@ def main():
 
         if mode == 'access' and state == 'present' and not access_vlan:
             module.fail_json(msg='access_vlan param is required when mode=access && state=present')
+
+        if mode == 'voice-access' and state == 'present' and not (voice_vlan and access_vlan):
+            module.fail_json(msg='access_vlan and voice_vlan param is required when mode=voice-access && state=present')
 
         if mode == 'trunk' and access_vlan:
             module.fail_json(msg='access_vlan param not supported when using mode=trunk')
@@ -460,6 +507,10 @@ def main():
                 module.fail_json(msg='You are trying to configure a VLAN'
                                  ' on an interface that\ndoes not exist on the '
                                  ' switch yet!', vlan=access_vlan)
+            elif voice_vlan and voice_vlan not in current_vlans:
+                module.fail_json(msg='You are trying to configure a VLAN'
+                                 ' on an interface that\ndoes not exist on the '
+                                 ' switch yet!', vlan=voice_vlan)
             elif native_vlan and native_vlan not in current_vlans:
                 module.fail_json(msg='You are trying to configure a VLAN'
                                  ' on an interface that\ndoes not exist on the '
