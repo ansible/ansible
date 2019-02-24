@@ -239,20 +239,6 @@
 
 
     # ============================================================
-    - name: test with only name
-      ec2_elb_lb:
-        name="{{ tag_prefix }}"
-      register: result
-      ignore_errors: true
-
-    - name: assert failure when called with only name
-      assert:
-        that:
-           - 'result.failed'
-           - 'result.msg == "missing required arguments: state"'
-
-
-    # ============================================================
     - name: test invalid region parameter
       ec2_elb_lb:
         name: "{{ tag_prefix }}"

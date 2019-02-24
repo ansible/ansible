@@ -26,8 +26,8 @@ options:
     description:
       - Create or destroy the ELB
     type: str
-    choices: [ absent, present ]
-    required: true
+    default: 'present'
+    choices: [ "absent", "present" ]
   name:
     description:
       - The name of the ELB
@@ -1239,7 +1239,7 @@ class ElbManager(object):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state={'required': True, 'choices': ['present', 'absent']},
+        state={'default': 'present', 'choices': ['present', 'absent']},
         name={'required': True},
         listeners={'default': None, 'required': False, 'type': 'list'},
         purge_listeners={'default': True, 'required': False, 'type': 'bool'},
