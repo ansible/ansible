@@ -7,4 +7,3 @@ jinja2
 PyYAML
 paramiko
 cryptography
-jsonpath-ng >= 1.4.3
