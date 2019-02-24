@@ -6,10 +6,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import json
-
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils._text import to_text
 
 API_URL = 'https://api.cloudscale.ch/v1/'
 
@@ -35,7 +34,7 @@ class AnsibleCloudscaleBase(object):
                                timeout=self._module.params['api_timeout'])
 
         if info['status'] == 200:
-            return json.loads(resp.read())
+            return self._module.from_json(to_text(resp.read()))
         elif info['status'] == 404:
             return None
         else:
@@ -56,7 +55,7 @@ class AnsibleCloudscaleBase(object):
                                timeout=self._module.params['api_timeout'])
 
         if info['status'] in (200, 201):
-            return json.loads(resp.read())
+            return self._module.from_json(to_text(resp.read()))
         elif info['status'] == 204:
             return None
         else:
