@@ -264,14 +264,16 @@ def main():
         if current_devs:
             if state == 'present' and pvresize:
                 for device in current_devs:
+                    lsblk_cmd = module.get_bin_path('lsblk', True)
                     pvdisplay_cmd = module.get_bin_path('pvdisplay', True)
-                    rc, dev_size, err = module.run_command("%s %s ---units b --columns -o dev_size --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    pvdisplay_ops = "--units b --columns --noheadings --nosuffix"
+                    rc, dev_size, err = module.run_command("%s %s %s -o dev_size" % (pvdisplay_cmd, device, pvdisplay_ops))
                     dev_size = int(dev_size.replace(" ", ""))
-                    rc, pv_size, err = module.run_command("%s %s ---units b --columns -o pv_size --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    rc, pv_size, err = module.run_command("%s %s %s -o pv_size" % (pvdisplay_cmd, device, pvdisplay_ops))
                     pv_size = int(pv_size.replace(" ", ""))
-                    rc, pe_start, err = module.run_command("%s %s ---units b --columns -o pe_start --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    rc, pe_start, err = module.run_command("%s %s %s -o pe_start " % (pvdisplay_cmd, device, pvdisplay_ops))
                     pe_start = int(pe_start.replace(" ", ""))
-                    rc, vg_extent_size, err = module.run_command("%s %s ---units b --columns -o vg_extent_size --noheadings --nosuffix" % (pvdisplay_cmd, device))
+                    rc, vg_extent_size, err = module.run_command("%s %s %s -o vg_extent_size" % (pvdisplay_cmd, device, pvdisplay_ops))
                     vg_extent_size = int(vg_extent_size.replace(" ", ""))
                     if (dev_size - (pe_start + pv_size)) > vg_extent_size:
                         if module.check_mode:
