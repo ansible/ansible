@@ -74,7 +74,7 @@ options:
     type: str
   remote_addrs:
     description:
-      - Remote address of a manager to connect to.
+      - Remote address of one or more manager nodes of an existing Swarm to connect to.
       - Used with I(state=join).
     type: list
   task_history_retention_limit:
