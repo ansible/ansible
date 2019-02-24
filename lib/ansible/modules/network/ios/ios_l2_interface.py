@@ -34,7 +34,7 @@ options:
     description:
       - Mode in which interface needs to be configured.
     default: access
-    choices: ['access', 'voice-access, 'trunk']
+    choices: ['access', 'voice-access', 'trunk']
   access_vlan:
     description:
       - Configure given VLAN in access port.
