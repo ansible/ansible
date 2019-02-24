@@ -181,72 +181,231 @@ extends_documentation_fragment: meraki
 '''
 
 EXAMPLES = r'''
-- name: List all networks associated to the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
-    state: query
+- name: Query all NAT rules
+  meraki_nat:
+    auth_key: abc123
     org_name: YourOrg
-  delegate_to: localhost
-- name: Query network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
+    net_name: YourNet
     state: query
-    org_name: YourOrg
-    net_name: MyNet
+    subset: all
   delegate_to: localhost
-- name: Create network named MyNet in the YourOrg organization
-  meraki_network:
-    auth_key: abc12345
+
+- name: Query 1:1 NAT rules
+  meraki_nat:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    state: query
+    subset: '1:1'
+  delegate_to: localhost
+
+- name: Create 1:1 rule
+  meraki_nat:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
     state: present
+    one_to_one:
+      - name: Service behind NAT
+        public_ip: 1.2.1.2
+        lan_ip: 10.200.1.10
+        uplink: both
+        allowed_inbound:
+          - protocol: tcp
+            destination_ports: 80
+            allowed_ips: 10.10.10.10
+  delegate_to: localhost
+
+- name: Create 1:many rule
+  meraki_nat:
+    auth_key: abc123
     org_name: YourOrg
-    net_name: MyNet
-    type: switch
-    timezone: America/Chicago
-    tags: production, chicago
+    net_name: YourNet
+    state: present
+    one_to_many:
+      - name: Test map
+        public_ip: 1.1.1.1
+        lan_ip: 10.200.1.10
+        uplink: both
+        protocol: tcp
+        allowed_ips:
+          - 1.1.1.1
+        port_rules:
+          - Hello
+        public_port: 10
+        local_ip: 1.1.1.1
+        local_port: 11
+  delegate_to: localhost
+
+- name: Create port forwarding rule
+  meraki_nat:
+    auth_key: abc123
+    org_name: YourOrg
+    net_name: YourNet
+    state: present
+    port_forwarding:
+      - name: Test map
+        lan_ip: 10.200.1.10
+        uplink: both
+        protocol: tcp
+        allowed_ips:
+          - 1.1.1.1
+        public_port: 10
+        local_port: 11
   delegate_to: localhost
 '''
 
 RETURN = r'''
 data:
     description: Information about the created or manipulated object.
-    returned: info
+    returned: success
     type: complex
     contains:
-      id:
-        description: Identification string of network.
-        returned: success
-        type: str
-        sample: N_12345
-      name:
-        description: Written name of network.
-        returned: success
-        type: str
-        sample: YourNet
-      organizationId:
-        description: Organization ID which owns the network.
-        returned: success
-        type: str
-        sample: 0987654321
-      tags:
-        description: Space delimited tags assigned to network.
-        returned: success
-        type: str
-        sample: " production wireless "
-      timeZone:
-        description: Timezone where network resides.
-        returned: success
-        type: str
-        sample: America/Chicago
-      type:
-        description: Functional type of network.
-        returned: success
-        type: str
-        sample: switch
-      disableMyMerakiCom:
-        description: States whether U(my.meraki.com) and other device portals should be disabled.
-        returned: success
-        type: bool
-        sample: true
+        one_to_one:
+            description: Information about 1:1 NAT object.
+            returned: success, when 1:1 NAT object is in task
+            type: complex
+            contains:
+                rules:
+                    description: List of 1:1 NAT rules.
+                    returned: success, when 1:1 NAT object is in task
+                    type: complex
+                    contains:
+                        name:
+                            description: Name of NAT object.
+                            returned: success, when 1:1 NAT object is in task
+                            type: string
+                            example: Web server behind NAT
+                        lanIp:
+                            description: Local IP address to be mapped.
+                            returned: success, when 1:1 NAT object is in task
+                            type: string
+                            example: 192.168.128.22
+                        publicIp:
+                            description: Public IP address to be mapped.
+                            returned: success, when 1:1 NAT object is in task
+                            type: string
+                            example: 148.2.5.100
+                        uplink:
+                            description: Internet port where rule is applied.
+                            returned: success, when 1:1 NAT object is in task
+                            type: string
+                            example: internet1
+                        allowedInbound:
+                            description: List of inbound forwarding rules.
+                            returned: success, when 1:1 NAT object is in task
+                            type: complex
+                            contains:
+                                protocol:
+                                    description: Protocol to apply NAT rule to.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: string
+                                    example: tcp
+                                allowedIps:
+                                    description: List of IP addresses to be forwarded.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: list
+                                    example: 10.80.100.0/24
+        one_to_many:
+            description: Information about 1:many NAT object.
+            returned: success, when 1:many NAT object is in task
+            type: complex
+            contains:
+                rules:
+                    description: List of 1:many NAT rules.
+                    returned: success, when 1:many NAT object is in task
+                    type: complex
+                    contains:
+                        publicIp:
+                            description: Public IP address to be mapped.
+                            returned: success, when 1:many NAT object is in task
+                            type: string
+                            example: 148.2.5.100
+                        uplink:
+                            description: Internet port where rule is applied.
+                            returned: success, when 1:many NAT object is in task
+                            type: string
+                            example: internet1
+                        portRules:
+                            description: List of NAT port rules.
+                            returned: success, when 1:many NAT object is in task
+                            type: complex
+                            contains:
+                                name:
+                                    description: Name of NAT object.
+                                    returned: success, when 1:many NAT object is in task
+                                    type: string
+                                    example: Web server behind NAT
+                                protocol:
+                                    description: Protocol to apply NAT rule to.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: string
+                                    example: tcp
+                                publicPort:
+                                    description: Destination port of the traffic that is arriving on WAN.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: int
+                                    example: 9443
+                                localIp:
+                                    description: Local IP address traffic will be forwarded.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: string
+                                    example: 192.0.2.10
+                                localPort:
+                                    description: Destination port to be forwarded to.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: int
+                                    example: 443
+                                allowedIps:
+                                    description: List of IP addresses to be forwarded.
+                                    returned: success, when 1:1 NAT object is in task
+                                    type: list
+                                    example: 10.80.100.0/24
+        port_forwarding:
+            description: Information about port forwarding rules.
+            returned: success, when port forwarding is in task
+            type: complex
+            contains:
+                rules:
+                    description: List of port forwarding rules.
+                    returned: success, when port forwarding is in task
+                    type: complex
+                    contains:
+                        lanIp:
+                            description: Local IP address to be mapped.
+                            returned: success, when port forwarding is in task
+                            type: string
+                            example: 192.168.128.22
+                        allowedIps:
+                            description: List of IP addresses to be forwarded.
+                            returned: success, when port forwarding is in task
+                            type: list
+                            example: 10.80.100.0/24
+                        name:
+                            description: Name of NAT object.
+                            returned: success, when port forwarding is in task
+                            type: string
+                            example: Web server behind NAT
+                        protocol:
+                            description: Protocol to apply NAT rule to.
+                            returned: success, when port forwarding is in task
+                            type: string
+                            example: tcp
+                        publicPort:
+                            description: Destination port of the traffic that is arriving on WAN.
+                            returned: success, when port forwarding is in task
+                            type: int
+                            example: 9443
+                        localPort:
+                            description: Destination port to be forwarded to.
+                            returned: success, when port forwarding is in task
+                            type: int
+                            example: 443
+                        uplink:
+                            description: Internet port where rule is applied.
+                            returned: success, when port forwarding is in task
+                            type: string
+                            example: internet1
 '''
 
 import os
@@ -345,25 +504,18 @@ def main():
     meraki = MerakiModule(module, function='nat')
     module.params['follow_redirects'] = 'all'
 
+    one_to_one_payload = None
+    one_to_many_payload = None
+    port_forwarding_payload = None
     if meraki.params['state'] == 'present':
-        if meraki.params['one_to_one']:
+        if meraki.params['one_to_one'] is not None:
             one_to_one_payload = {'rules': construct_payload(meraki.params['one_to_one'])}
-        if meraki.params['one_to_many']:
-            one_to_many_payload = {'rules': []}
-            for rule in meraki.params['one_to_many']:
-                rule_set = {}
-                for k, v in rule.items():
-                    rule_set[key_map[k]] = v
-                one_to_many_payload.append(rule_set)
-        if meraki.params['port_forwarding']:
-            port_forwarding_payload = {'rules': []}
-            for rule in meraki.params['port_forwarding']:
-                rule_set = {}
-                for k, v in rule.items():
-                    rule_set[key_map[k]] = v
-                port_forwarding_payload.append(rule_set)
+        if meraki.params['one_to_many'] is not None:
+            one_to_many_payload = {'rules': construct_payload(meraki.params['one_to_many'])}
+        if meraki.params['port_forwarding'] is not None:
+            port_forwarding_payload = {'rules': construct_payload(meraki.params['port_forwarding'])}
 
-    meraki.fail_json(msg="Payload", one_to_one=one_to_one_payload)
+    # meraki.fail_json(msg="Payload", one_to_one=one_to_one_payload)
     # meraki.fail_json(msg="Payload", one_to_many=one_to_many_payload)
     # meraki.fail_json(msg="Payload", port_forwarding=port_forwarding_payload)
 
@@ -403,13 +555,29 @@ def main():
                 except KeyError:
                     meraki.result['data'] = {subset: data}
     elif meraki.params['state'] == 'present':
-        if one_to_one_payload:
+        if one_to_one_payload is not None:
             path = meraki.construct_path('1:1', net_id=net_id)
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, one_to_one_payload):
                 r = meraki.request(path, method='PUT')
                 if meraki.status == 200:
-                    meraki.result['data'] = r
+                    meraki.result['data'] = {'one_to_one': r}
+                    meraki.result['changed'] = True
+        if one_to_many_payload is not None:
+            path = meraki.construct_path('1:many', net_id=net_id)
+            current = meraki.request(path, method='GET')
+            if meraki.is_update_required(current, one_to_many_payload):
+                r = meraki.request(path, method='PUT')
+                if meraki.status == 200:
+                    meraki.result['data'] = {'one_to_many': r}
+                    meraki.result['changed'] = True
+        if port_forwarding_payload is not None:
+            path = meraki.construct_path('port_forwarding', net_id=net_id)
+            current = meraki.request(path, method='GET')
+            if meraki.is_update_required(current, port_forwarding_payload):
+                r = meraki.request(path, method='PUT')
+                if meraki.status == 200:
+                    meraki.result['data'] = {'port_forwarding': r}
                     meraki.result['changed'] = True
 
     # in the event of a successful module execution, you will want to
