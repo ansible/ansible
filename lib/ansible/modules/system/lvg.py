@@ -267,7 +267,7 @@ def main():
                 for device in current_devs:
                     pvdisplay_cmd = module.get_bin_path('pvdisplay', True)
                     pvdisplay_ops = "--units b --columns --noheadings --nosuffix"
-                    pvdiplay_cmd_device_options = pvdisplay_cmd+" "+device+" "+pvdisplay_ops
+                    pvdiplay_cmd_device_options = pvdisplay_cmd + " " + device + " " + pvdisplay_ops
                     rc, dev_size, err = module.run_command(pvdiplay_cmd_device_options + " -o dev_size")
                     dev_size = int(dev_size.replace(" ", ""))
                     rc, pv_size, err = module.run_command(pvdiplay_cmd_device_options + " -o pv_size")
