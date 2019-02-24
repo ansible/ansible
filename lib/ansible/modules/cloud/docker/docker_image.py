@@ -48,16 +48,82 @@ options:
     - pull
     - local
     version_added: "2.8"
+  build:
+    description:
+      - "Specifies options used for building images."
+    type: dict
+    suboptions:
+      cache_from:
+        description:
+          - List of image names to consider as cache source.
+        type: list
+      dockerfile:
+        description:
+          - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+        type: str
+      http_timeout:
+        description:
+          - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
+            seconds.
+        type: int
+      path:
+        description:
+          - Use with state 'present' to build an image. Will be the path to a directory containing the context and
+            Dockerfile for building an image.
+        type: path
+        required: yes
+      pull:
+        description:
+          - When building an image downloads any updates to the FROM image in Dockerfile.
+        type: bool
+        default: yes
+      rm:
+        description:
+          - Remove intermediate containers after build.
+        type: bool
+        default: yes
+      network:
+        description:
+          - The network to use for C(RUN) build instructions.
+        type: str
+      nocache:
+        description:
+          - Do not use cache when building an image.
+        type: bool
+        default: no
+      args:
+        description:
+          - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
+          - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
+          - Requires Docker API >= 1.21.
+        type: dict
+      container_limits:
+        description:
+          - A dictionary of limits applied to each container created by the build process.
+        type: dict
+        suboptions:
+          memory:
+            description:
+              - Set memory limit for build.
+            type: int
+          memswap:
+            description:
+              - Total memory (memory + swap), -1 to disable swap.
+            type: int
+          cpushares:
+            description:
+              - CPU shares (relative weight).
+            type: int
+          cpusetcpus:
+            description:
+              - CPUs in which to allow execution, e.g., "0-3", "0,1".
+            type: str
+    version_added: "2.8"
   archive_path:
     description:
       - Use with state C(present) to archive an image to a .tar file.
     type: path
     version_added: "2.1"
-  cache_from:
-    description:
-      - List of image names to consider as cache source.
-    type: list
-    version_added: "2.8"
   load_path:
     description:
       - Use with state C(present) to load an image from a .tar file.
@@ -70,6 +136,7 @@ options:
   dockerfile:
     description:
       - Use with state C(present) to provide an alternate name for the Dockerfile to use when building an image.
+      - Please use I(build.dockerfile) instead. This option will be removed in Ansible 2.12.
     type: str
     version_added: "2.0"
   force:
@@ -108,6 +175,7 @@ options:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
         seconds.
+      - Please use I(build.http_timeout) instead. This option will be removed in Ansible 2.12.
     type: int
     version_added: "2.1"
   name:
@@ -124,12 +192,14 @@ options:
       - Set I(source) to C(build) if you want to build the image. The option will
         be set automatically before Ansible 2.12 if this option is used. From Ansible 2.12
         on, you have to set I(source) to C(build).
+      - Please use I(build.path) instead. This option will be removed in Ansible 2.12.
     type: path
     aliases:
       - build_path
   pull:
     description:
       - When building an image downloads any updates to the FROM image in Dockerfile.
+      - Please use I(build.pull) instead. This option will be removed in Ansible 2.12.
     type: bool
     default: yes
     version_added: "2.1"
@@ -142,17 +212,14 @@ options:
   rm:
     description:
       - Remove intermediate containers after build.
+      - Please use I(build.rm) instead. This option will be removed in Ansible 2.12.
     type: bool
     default: yes
     version_added: "2.1"
-  network:
-    description:
-      - The network to use for C(RUN) build instructions.
-    type: str
-    version_added: "2.8"
   nocache:
     description:
       - Do not use cache when building an image.
+      - Please use I(build.nocache) instead. This option will be removed in Ansible 2.12.
     type: bool
     default: no
   repository:
@@ -191,11 +258,13 @@ options:
       - Provide a dictionary of C(key:value) build arguments that map to Dockerfile ARG directive.
       - Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
       - Requires Docker API >= 1.21.
+      - Please use I(build.args) instead. This option will be removed in Ansible 2.12.
     type: dict
     version_added: "2.2"
   container_limits:
     description:
       - A dictionary of limits applied to each container created by the build process.
+      - Please use I(build.container_limits) instead. This option will be removed in Ansible 2.12.
     type: dict
     suboptions:
       memory:
@@ -282,7 +351,8 @@ EXAMPLES = '''
 
 - name: Build an image and push it to a private repo
   docker_image:
-    path: ./sinatra
+    build:
+      path: ./sinatra
     name: registry.ansible.com/chouseknecht/sinatra
     tag: v1
     push: yes
@@ -303,23 +373,25 @@ EXAMPLES = '''
     load_path: my_sinatra.tar
     source: load
 
-- name: Build image and with buildargs
+- name: Build image and with build args
   docker_image:
-    path: /path/to/build/dir
     name: myimage
-    buildargs:
-      log_volume: /var/log/myapp
-      listen_port: 8080
+    build:
+      path: /path/to/build/dir
+      args:
+        log_volume: /var/log/myapp
+        listen_port: 8080
     source: build
 
 - name: Build image using cache source
   docker_image:
     name: myimage:latest
-    path: /path/to/build/dir
-    # Use as cache source for building myimage
-    cache_from:
-      - nginx:latest
-      - alpine:3.8
+    build:
+      path: /path/to/build/dir
+      # Use as cache source for building myimage
+      cache_from:
+        - nginx:latest
+        - alpine:3.8
     source: build
 '''
 
@@ -361,26 +433,27 @@ class ImageManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
 
         self.source = parameters['source']
+        build = parameters['build'] or dict()
         self.archive_path = parameters.get('archive_path')
-        self.cache_from = parameters.get('cache_from')
-        self.container_limits = parameters.get('container_limits')
-        self.dockerfile = parameters.get('dockerfile')
+        self.cache_from = build.get('cache_from')
+        self.container_limits = build.get('container_limits')
+        self.dockerfile = build.get('dockerfile')
         self.force_source = parameters.get('force_source')
         self.force_absent = parameters.get('force_absent')
         self.force_tag = parameters.get('force_tag')
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
-        self.network = parameters.get('network')
-        self.nocache = parameters.get('nocache')
-        self.path = parameters.get('path')
-        self.pull = parameters.get('pull')
+        self.network = build.get('network')
+        self.nocache = build.get('nocache')
+        self.build_path = build.get('path')
+        self.pull = build.get('pull')
         self.repository = parameters.get('repository')
-        self.rm = parameters.get('rm')
+        self.rm = build.get('rm')
         self.state = parameters.get('state')
         self.tag = parameters.get('tag')
-        self.http_timeout = parameters.get('http_timeout')
+        self.http_timeout = build.get('http_timeout')
         self.push = parameters.get('push')
-        self.buildargs = parameters.get('buildargs')
+        self.buildargs = build.get('args')
 
         # If name contains a tag, it takes precedence over tag parameter.
         if not is_image_name_id(self.name):
@@ -409,13 +482,13 @@ class ImageManager(DockerBaseClass):
         if not image or self.force_source:
             if self.source == 'build':
                 # Build the image
-                if not os.path.isdir(self.path):
-                    self.fail("Requested build path %s could not be found or you do not have access." % self.path)
+                if not os.path.isdir(self.build_path):
+                    self.fail("Requested build path %s could not be found or you do not have access." % self.build_path)
                 image_name = self.name
                 if self.tag:
                     image_name = "%s:%s" % (self.name, self.tag)
                 self.log("Building image %s" % image_name)
-                self.results['actions'].append("Built image %s from %s" % (image_name, self.path))
+                self.results['actions'].append("Built image %s from %s" % (image_name, self.build_path))
                 self.results['changed'] = True
                 if not self.check_mode:
                     self.results['image'] = self.build_image()
@@ -606,7 +679,7 @@ class ImageManager(DockerBaseClass):
         :return: image dict
         '''
         params = dict(
-            path=self.path,
+            path=self.build_path,
             tag=self.name,
             rm=self.rm,
             nocache=self.nocache,
@@ -680,45 +753,65 @@ class ImageManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         source=dict(type='str', choices=['build', 'load', 'pull', 'local']),
+        build=dict(type='dict', suboptions=dict(
+            cache_from=dict(type='list', elements='str'),
+            container_limits=dict(type='dict', options=dict(
+                memory=dict(type='int'),
+                memswap=dict(type='int'),
+                cpushares=dict(type='int'),
+                cpusetcpus=dict(type='str'),
+            )),
+            dockerfile=dict(type='str'),
+            http_timeout=dict(type='int'),
+            network=dict(type='str'),
+            nocache=dict(type='bool', default=False),
+            path=dict(type='path', required=True),
+            pull=dict(type='bool', default=True),
+            rm=dict(type='bool', default=True),
+            args=dict(type='dict'),
+        )),
         archive_path=dict(type='path'),
-        cache_from=dict(type='list', elements='str'),
         container_limits=dict(type='dict', options=dict(
             memory=dict(type='int'),
             memswap=dict(type='int'),
             cpushares=dict(type='int'),
             cpusetcpus=dict(type='str'),
-        )),
-        dockerfile=dict(type='str'),
+        ), removedin_version='2.12'),
+        dockerfile=dict(type='str', removedin_version='2.12'),
         force=dict(type='bool', removed_in_version='2.12'),
         force_source=dict(type='bool', default=False),
         force_absent=dict(type='bool', default=False),
         force_tag=dict(type='bool', default=False),
-        http_timeout=dict(type='int'),
+        http_timeout=dict(type='int', removedin_version='2.12'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
-        network=dict(type='str'),
-        nocache=dict(type='bool', default=False),
-        path=dict(type='path', aliases=['build_path']),
-        pull=dict(type='bool', default=True),
+        nocache=dict(type='bool', default=False, removedin_version='2.12'),
+        path=dict(type='path', aliases=['build_path'], removedin_version='2.12'),
+        pull=dict(type='bool', default=True, removedin_version='2.12'),
         push=dict(type='bool', default=False),
         repository=dict(type='str'),
-        rm=dict(type='bool', default=True),
+        rm=dict(type='bool', default=True, removedin_version='2.12'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'build']),
         tag=dict(type='str', default='latest'),
         use_tls=dict(type='str', choices=['no', 'encrypt', 'verify'], removed_in_version='2.11'),
-        buildargs=dict(type='dict'),
+        buildargs=dict(type='dict', removedin_version='2.12'),
     )
 
     required_if = [
         # ('state', 'present', ['source']),   -- enable in Ansible 2.12.
-        ('source', 'build', ['path']),
+        # ('source', 'build', ['build']),   -- enable in Ansible 2.12.
         ('source', 'load', ['load_path']),
     ]
 
-    option_minimal_versions = dict(
-        cache_from=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
-        network=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
-    )
+    def detect_build_cache_from(client):
+        return bool(client.params['build'] and client.params['build']['cache_from'] is not None)
+
+    def detect_build_network(client):
+        return bool(client.params['build'] and client.params['build']['network'] is not None)
+
+    option_minimal_versions = dict()
+    option_minimal_versions["build.cache_from"] = dict(docker_py_version='2.1.0', docker_api_version='1.25', detect_usage=detect_build_cache_from)
+    option_minimal_versions["build.network"] = dict(docker_py_version='2.4.0', docker_api_version='1.25', detect_usage=detect_build_network)
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
@@ -739,9 +832,37 @@ def main():
                            'and will be removed in Ansible 2.11. Please use the'
                            '"tls" and "tls_verify" options instead.')
 
+    build_options = dict(
+        container_limits='container_limits',
+        dockerfile='dockerfile',
+        http_timeout='http_timeout',
+        nocache='nocache',
+        path='path',
+        pull='pull',
+        rm='rm',
+        buildargs='args',
+    )
+    for option, build_option in build_options.items():
+        default_value = None
+        if option in ('pull', 'rm'):
+            default_value = True
+        elif option in ('nocache', ):
+            default_value = False
+        if client.module.params[option] != default_value:
+            if client.module.params['build'] is None:
+                client.module.params['build'] = dict()
+            if client.module.params['build'].get(build_option) != default_value:
+                client.fail('Cannot specify both %s and build.%s!' % (option, build_option))
+            client.module.params['build'][build_option] = client.module.params[option]
+            client.module.warn('Please specify build.%s instead of %s. The %s option '
+                               'has been renamed and will be removed in Ansible 2.12.' % (build_option, option, option))
+    if client.module.params['source'] == 'build' and \
+            (not client.module.params['build'] or not client.module.params['build'].get('path')):
+        client.module.fail('If "source" is set to "build", the "build.path" option must be specified.')
+
     if client.module.params['state'] == 'present' and client.module.params['source'] is None:
         # Autodetection. To be removed in Ansible 2.12.
-        if client.module.params['path']:
+        if (client.module.params['build'] or dict()).get('path'):
             client.module.params['source'] = 'build'
         elif client.module.params['load_path']:
             client.module.params['source'] = 'load'
