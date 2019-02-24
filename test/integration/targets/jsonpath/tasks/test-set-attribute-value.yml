@@ -14,7 +14,7 @@
   - name: Set 'menu['id']' to "0"... again
     jsonpath:
       path: /tmp/ansible-json-menu.json
-      jsonpath: /business/rating
+      jsonpath: menu['id']
       value: "0"
     register: set_attribute_second_run
 
