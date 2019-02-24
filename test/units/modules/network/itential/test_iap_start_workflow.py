@@ -33,36 +33,36 @@ class TestWorkflowModule(unittest.TestCase):
 
     @mock.patch('iap_start_workflow.start_workflow')
     def test_iap_workflow(self, iap_workflow):
-        params ={"description": "NewTestAnsible",
-                "https": "false",
-                "iap_fqdn": "localhost",
-                "iap_port": "3000",
-                "token_key": "NDM2OGJlMzg5MjRlMTQyNzc0YmZmNmQ5ZWRkYzcyYTE=",
-                "validate_certs": "false",
-                "variables": {
-                    "value": "3333"
-                },
-                "workflow_name": "DummyWF"}
+        params = {"description": "NewTestAnsible",
+                  "https": "false",
+                  "iap_fqdn": "localhost",
+                  "iap_port": "3000",
+                  "token_key": "NDM2OGJlMzg5MjRlMTQyNzc0YmZmNmQ5ZWRkYzcyYTE=",
+                  "validate_certs": "false",
+                  "variables": {
+                      "value": "3333"
+                  },
+                  "workflow_name": "DummyWF"}
 
-        module = {"params":params}
+        module = {"params": params}
         return_response = {
-                "_id": "e17646fc7a8f4a6a9e691fe4",
-                "created": "2018-09-15T21:57:50.388Z",
-                "created_by": "5b8fe4fcb3f8b800134ea5fd",
-                "description": "NewTestAnsible",
-                "font_size": 12,
-                "groups": [],
-                "last_updated": "2019-02-22T15:55:40.197Z",
-                "last_updated_by": "5b8fe4fcb3f8b800134ea5fd",
-                "locked": 'false',
-                "metrics": {
-                    "progress": 0,
-                    "start_time": 1551043499742,
-                    "user": "5b8fe4fcb3f8b800134ea5fd"
-                },
-                "name": "DummyWF",
-                "status": "running",
-                "tasks": {
+            "_id": "e17646fc7a8f4a6a9e691fe4",
+            "created": "2018-09-15T21:57:50.388Z",
+            "created_by": "5b8fe4fcb3f8b800134ea5fd",
+            "description": "NewTestAnsible",
+            "font_size": 12,
+            "groups": [],
+            "last_updated": "2019-02-22T15:55:40.197Z",
+            "last_updated_by": "5b8fe4fcb3f8b800134ea5fd",
+            "locked": 'false',
+            "metrics": {
+                "progress": 0,
+                "start_time": 1551043499742,
+                "user": "5b8fe4fcb3f8b800134ea5fd"
+            },
+            "name": "DummyWF",
+            "status": "running",
+            "tasks": {
                     "10d1": {
                         "_id": "1ca495e4-dc86-41df-b3ca-8c215920ec91",
                         "app": "WorkFlowEngine",
@@ -88,7 +88,8 @@ class TestWorkflowModule(unittest.TestCase):
                                 "key": "name"
                             },
                             {
-                                "highlightString": "Create a <span class='highlight-string'>new</span> Job variable by Job ID and assign it a value.",
+                                "highlightString": "Create a <span class='highlight-string'>new</span> "
+                                                   "Job variable by Job ID and assign it a value.",
                                 "key": "description"
                             }
                         ],
@@ -113,7 +114,7 @@ class TestWorkflowModule(unittest.TestCase):
                         "x": 0.24,
                         "y": 0.3904899135446686
                     },
-                    "5023": {
+                "5023": {
                         "_id": "56396de1-c7b5-495e-aff8-342fe168a2b1",
                         "app": "WorkFlowEngine",
                         "deprecated": 'false',
@@ -167,8 +168,8 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.2630769230769231,
                         "y": 0.2420749279538905
-                    },
-                    "50c1": {
+                },
+                "50c1": {
                         "_id": "33a32349-c151-4b67-b1cb-d5df2147772f",
                         "actor": "Pronghorn",
                         "app": "StringMethods",
@@ -224,8 +225,8 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.37,
                         "y": 0.17002881844380405
-                    },
-                    "7cd4": {
+                },
+                "7cd4": {
                         "_id": "dc132a1a-4ac8-4bfe-b75d-ea95eac84d09",
                         "actor": "job",
                         "app": "WorkFlowEngine",
@@ -284,8 +285,8 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.6146153846153846,
                         "y": 0.40634005763688763
-                    },
-                    "87f4": {
+                },
+                "87f4": {
                         "_id": "1f5da682-b377-4739-a60d-31d897c59863",
                         "app": "MOP",
                         "deprecated": 'false',
@@ -340,8 +341,8 @@ class TestWorkflowModule(unittest.TestCase):
                         "view": "/mop/task/confirmTask",
                         "x": 0.6961538461538461,
                         "y": 0.06772334293948126
-                    },
-                    "f97e": {
+                },
+                "f97e": {
                         "_id": "38017b10-5e26-4161-bccb-c2f983dcf1ca",
                         "app": "WorkFlowEngine",
                         "deprecated": 'false',
@@ -390,15 +391,15 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.45615384615384613,
                         "y": -0.04755043227665706
-                    },
-                    "workflow_end": {
+                },
+                "workflow_end": {
                         "groups": [],
                         "name": "workflow_end",
                         "status": "incomplete",
                         "x": 0.9,
                         "y": 0.5979827089337176
-                    },
-                    "workflow_start": {
+                },
+                "workflow_start": {
                         "groups": [],
                         "metrics": {
                             "finish_state": "success",
@@ -409,81 +410,81 @@ class TestWorkflowModule(unittest.TestCase):
                         "status": "complete",
                         "x": 0.04692307692307692,
                         "y": 0.6023054755043228
-                    }
-                },
-                "transitions": {
-                    "10d1": {
-                        "5023": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
+                }
+            },
+            "transitions": {
+                "10d1": {
                     "5023": {
-                        "50c1": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "50c1": {
-                        "f97e": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "7cd4": {
-                        "workflow_end": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "87f4": {
-                        "7cd4": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "f97e": {
-                        "87f4": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "workflow_end": {},
-                    "workflow_start": {
-                        "10d1": {
-                            "state": "success",
-                            "type": "standard"
-                        }
+                        "state": "success",
+                        "type": "standard"
                     }
                 },
-                "type": "automation",
-                "variables": {
+                "5023": {
+                    "50c1": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "50c1": {
+                    "f97e": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "7cd4": {
+                    "workflow_end": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "87f4": {
+                    "7cd4": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "f97e": {
+                    "87f4": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "workflow_end": {},
+                "workflow_start": {
+                    "10d1": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                }
+            },
+            "type": "automation",
+            "variables": {
                     "_id": "e17646fc7a8f4a6a9e691fe4",
                     "initiator": "admin@pronghorn",
                     "value": "3333"
-                },
-                "watchers": [
-                    "5b8fe4fcb3f8b800134ea5fd"
-                ]
-            }
+            },
+            "watchers": [
+                "5b8fe4fcb3f8b800134ea5fd"
+            ]
+        }
         iap_workflow.return_value = {
-                "_id": "e17646fc7a8f4a6a9e691fe4",
-                "created": "2018-09-15T21:57:50.388Z",
-                "created_by": "5b8fe4fcb3f8b800134ea5fd",
-                "description": "NewTestAnsible",
-                "font_size": 12,
-                "groups": [],
-                "last_updated": "2019-02-22T15:55:40.197Z",
-                "last_updated_by": "5b8fe4fcb3f8b800134ea5fd",
-                "locked": 'false',
-                "metrics": {
-                    "progress": 0,
-                    "start_time": 1551043499742,
-                    "user": "5b8fe4fcb3f8b800134ea5fd"
-                },
-                "name": "DummyWF",
-                "status": "running",
-                "tasks": {
+            "_id": "e17646fc7a8f4a6a9e691fe4",
+            "created": "2018-09-15T21:57:50.388Z",
+            "created_by": "5b8fe4fcb3f8b800134ea5fd",
+            "description": "NewTestAnsible",
+            "font_size": 12,
+            "groups": [],
+            "last_updated": "2019-02-22T15:55:40.197Z",
+            "last_updated_by": "5b8fe4fcb3f8b800134ea5fd",
+            "locked": 'false',
+            "metrics": {
+                "progress": 0,
+                "start_time": 1551043499742,
+                "user": "5b8fe4fcb3f8b800134ea5fd"
+            },
+            "name": "DummyWF",
+            "status": "running",
+            "tasks": {
                     "10d1": {
                         "_id": "1ca495e4-dc86-41df-b3ca-8c215920ec91",
                         "app": "WorkFlowEngine",
@@ -534,7 +535,7 @@ class TestWorkflowModule(unittest.TestCase):
                         "x": 0.24,
                         "y": 0.3904899135446686
                     },
-                    "5023": {
+                "5023": {
                         "_id": "56396de1-c7b5-495e-aff8-342fe168a2b1",
                         "app": "WorkFlowEngine",
                         "deprecated": 'false',
@@ -588,8 +589,8 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.2630769230769231,
                         "y": 0.2420749279538905
-                    },
-                    "50c1": {
+                },
+                "50c1": {
                         "_id": "33a32349-c151-4b67-b1cb-d5df2147772f",
                         "actor": "Pronghorn",
                         "app": "StringMethods",
@@ -645,8 +646,8 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.37,
                         "y": 0.17002881844380405
-                    },
-                    "7cd4": {
+                },
+                "7cd4": {
                         "_id": "dc132a1a-4ac8-4bfe-b75d-ea95eac84d09",
                         "actor": "job",
                         "app": "WorkFlowEngine",
@@ -705,8 +706,8 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.6146153846153846,
                         "y": 0.40634005763688763
-                    },
-                    "87f4": {
+                },
+                "87f4": {
                         "_id": "1f5da682-b377-4739-a60d-31d897c59863",
                         "app": "MOP",
                         "deprecated": 'false',
@@ -761,8 +762,8 @@ class TestWorkflowModule(unittest.TestCase):
                         "view": "/mop/task/confirmTask",
                         "x": 0.6961538461538461,
                         "y": 0.06772334293948126
-                    },
-                    "f97e": {
+                },
+                "f97e": {
                         "_id": "38017b10-5e26-4161-bccb-c2f983dcf1ca",
                         "app": "WorkFlowEngine",
                         "deprecated": 'false',
@@ -787,7 +788,8 @@ class TestWorkflowModule(unittest.TestCase):
                                 "key": "name"
                             },
                             {
-                                "highlightString": "Create a <span class='highlight-string'>new</span> Job variable by Job ID and assign it a value.",
+                                "highlightString": "Create a <span class='highlight-string'>new</span> "
+                                                   "Job variable by Job ID and assign it a value.",
                                 "key": "description"
                             }
                         ],
@@ -811,15 +813,15 @@ class TestWorkflowModule(unittest.TestCase):
                         },
                         "x": 0.45615384615384613,
                         "y": -0.04755043227665706
-                    },
-                    "workflow_end": {
+                },
+                "workflow_end": {
                         "groups": [],
                         "name": "workflow_end",
                         "status": "incomplete",
                         "x": 0.9,
                         "y": 0.5979827089337176
-                    },
-                    "workflow_start": {
+                },
+                "workflow_start": {
                         "groups": [],
                         "metrics": {
                             "finish_state": "success",
@@ -830,63 +832,63 @@ class TestWorkflowModule(unittest.TestCase):
                         "status": "complete",
                         "x": 0.04692307692307692,
                         "y": 0.6023054755043228
-                    }
-                },
-                "transitions": {
-                    "10d1": {
-                        "5023": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
+                }
+            },
+            "transitions": {
+                "10d1": {
                     "5023": {
-                        "50c1": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "50c1": {
-                        "f97e": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "7cd4": {
-                        "workflow_end": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "87f4": {
-                        "7cd4": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "f97e": {
-                        "87f4": {
-                            "state": "success",
-                            "type": "standard"
-                        }
-                    },
-                    "workflow_end": {},
-                    "workflow_start": {
-                        "10d1": {
-                            "state": "success",
-                            "type": "standard"
-                        }
+                        "state": "success",
+                        "type": "standard"
                     }
                 },
-                "type": "automation",
-                "variables": {
+                "5023": {
+                    "50c1": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "50c1": {
+                    "f97e": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "7cd4": {
+                    "workflow_end": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "87f4": {
+                    "7cd4": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "f97e": {
+                    "87f4": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                },
+                "workflow_end": {},
+                "workflow_start": {
+                    "10d1": {
+                        "state": "success",
+                        "type": "standard"
+                    }
+                }
+            },
+            "type": "automation",
+            "variables": {
                     "_id": "e17646fc7a8f4a6a9e691fe4",
                     "initiator": "admin@pronghorn",
                     "value": "3333"
-                },
-                "watchers": [
-                    "5b8fe4fcb3f8b800134ea5fd"
-                ]
-            }
+            },
+            "watchers": [
+                "5b8fe4fcb3f8b800134ea5fd"
+            ]
+        }
         result = iap_start_workflow.start_workflow(module)
         self.assertEquals(result, return_response)
 
