@@ -5,7 +5,7 @@
   pip:
     name: jsonpath-ng
     version: 1.4.3
-    state: forcereinstall
+    state: present
   register: jsonpath_ng_version
 
 # - name: Set jsonpath-ng capabilities as variables
