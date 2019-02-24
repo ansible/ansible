@@ -7,6 +7,7 @@
   docker_image:
     name: "hello-world:latest"
     state: absent
+    force_absent: yes
   register: absent_1
 
 - name: Make sure image is not there (idempotency)
@@ -46,6 +47,7 @@
   docker_image:
     name: "{{ registry_address }}/test/hello-world:latest"
     state: absent
+    force_absent: yes
 
 - name: Push image to test registry
   docker_image:
@@ -77,6 +79,7 @@
   docker_image:
     name: "{{ registry_address }}/test/hello-world:latest"
     state: absent
+    force_absent: yes
 
 - name: Get facts of local image (absent)
   docker_image_facts:

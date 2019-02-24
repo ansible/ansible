@@ -75,10 +75,35 @@ options:
   force:
     description:
       - Use with state I(absent) to un-tag and remove all images matching the specified name. Use with state
-        C(present) to build, load or pull an image when the image already exists.
+        C(present) to build, load or pull an image when the image already exists. Also use with state C(present)
+        to force tagging an image.
+      - Please stop using this option, and use the more specialized force options
+        I(force_source), I(force_absent) and I(force_tag) instead.
+      - This option will be removed in Ansible 2.12.
     type: bool
-    default: no
     version_added: "2.1"
+  force_source:
+    description:
+      - Use with state C(present) to build, load or pull an image (depending on the
+        value of the I(source) option) when the image already exists.
+    type: bool
+    default: false
+    version_added: "2.8"
+  force_absent:
+    description:
+      - Use with state I(absent) to un-tag and remove all images matching the specified name.
+    type: bool
+    default: false
+    version_added: "2.8"
+  force_tag:
+    description:
+      - Use with state C(present) to force tagging an image.
+      - Please stop using this option, and use the more specialized force options
+        I(force_source), I(force_absent) and I(force_tag) instead.
+      - This option will be removed in Ansible 2.12.
+    type: bool
+    default: false
+    version_added: "2.8"
   http_timeout:
     description:
       - Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of
@@ -340,7 +365,9 @@ class ImageManager(DockerBaseClass):
         self.cache_from = parameters.get('cache_from')
         self.container_limits = parameters.get('container_limits')
         self.dockerfile = parameters.get('dockerfile')
-        self.force = parameters.get('force')
+        self.force_source = parameters.get('force_source')
+        self.force_absent = parameters.get('force_absent')
+        self.force_tag = parameters.get('force_tag')
         self.load_path = parameters.get('load_path')
         self.name = parameters.get('name')
         self.network = parameters.get('network')
@@ -379,7 +406,7 @@ class ImageManager(DockerBaseClass):
         '''
         image = self.client.find_image(name=self.name, tag=self.tag)
 
-        if not image or self.force:
+        if not image or self.force_source:
             if self.source == 'build':
                 # Build the image
                 if not os.path.isdir(self.path):
@@ -425,7 +452,7 @@ class ImageManager(DockerBaseClass):
         if self.push and not self.repository:
             self.push_image(self.name, self.tag)
         elif self.repository:
-            self.tag_image(self.name, self.tag, self.repository, force=self.force, push=self.push)
+            self.tag_image(self.name, self.tag, self.repository, push=self.push)
 
     def absent(self):
         '''
@@ -443,7 +470,7 @@ class ImageManager(DockerBaseClass):
         if image:
             if not self.check_mode:
                 try:
-                    self.client.remove_image(name, force=self.force)
+                    self.client.remove_image(name, force=self.force_absent)
                 except Exception as exc:
                     self.fail("Error removing image %s - %s" % (name, str(exc)))
 
@@ -533,14 +560,13 @@ class ImageManager(DockerBaseClass):
                     self.results['image'] = dict()
                 self.results['image']['push_status'] = status
 
-    def tag_image(self, name, tag, repository, force=False, push=False):
+    def tag_image(self, name, tag, repository, push=False):
         '''
         Tag an image into a repository.
 
         :param name: name of the image. required.
         :param tag: image tag.
         :param repository: path to the repository. required.
-        :param force: bool. force tagging, even it image already exists with the repository path.
         :param push: bool. push the image once it's tagged.
         :return: None
         '''
@@ -553,7 +579,7 @@ class ImageManager(DockerBaseClass):
         found = 'found' if image else 'not found'
         self.log("image %s was %s" % (repo, found))
 
-        if not image or force:
+        if not image or self.force_tag:
             self.log("tagging %s:%s to %s:%s" % (name, tag, repo, repo_tag))
             self.results['changed'] = True
             self.results['actions'].append("Tagged image %s:%s to %s:%s" % (name, tag, repo, repo_tag))
@@ -663,7 +689,10 @@ def main():
             cpusetcpus=dict(type='str'),
         )),
         dockerfile=dict(type='str'),
-        force=dict(type='bool', default=False),
+        force=dict(type='bool', removed_in_version='2.12'),
+        force_source=dict(type='bool', default=False),
+        force_absent=dict(type='bool', default=False),
+        force_tag=dict(type='bool', default=False),
         http_timeout=dict(type='int'),
         load_path=dict(type='path'),
         name=dict(type='str', required=True),
@@ -721,6 +750,14 @@ def main():
         client.module.warn('The value of the "source" option was determined to be "%s". '
                            'Please set the "source" option explicitly. Autodetection will '
                            'be removed in Ansible 2.12.' % client.module.params['source'])
+
+    if client.module.params['force']:
+        client.module.params['force_source'] = True
+        client.module.params['force_absent'] = True
+        client.module.params['force_tag'] = True
+        client.module.warn('The "force" option will be removed in Ansible 2.12. Please '
+                           'use the "force_source", "force_absent" or "force_tag" option '
+                           'instead, depending on what you want to force.')
 
     results = dict(
         changed=False,
