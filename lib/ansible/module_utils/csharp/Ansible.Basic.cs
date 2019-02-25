@@ -1039,13 +1039,26 @@ namespace Ansible.Basic
 
         private void CheckSubOption(IDictionary param, string key, IDictionary spec)
         {
+            object value = param[key];
+
             string type;
             if (spec["type"].GetType() == typeof(string))
                 type = (string)spec["type"];
             else
                 type = "delegate";
-            string elements = (string)spec["elements"];
-            object value = param[key];
+
+            string elements = null;
+            Delegate typeConverter = null;
+            if (spec["elements"] != null && spec["elements"].GetType() == typeof(string))
+            {
+                elements = (string)spec["elements"];
+                typeConverter = optionTypes[elements];
+            }
+            else if (spec["elements"] != null)
+            {
+                elements = "delegate";
+                typeConverter = (Delegate)spec["elements"];
+            }
 
             if (!(type == "dict" || (type == "list" && elements != null)))
                 // either not a dict, or list with the elements set, so continue
@@ -1057,7 +1070,6 @@ namespace Ansible.Basic
                     return;
 
                 List<object> newValue = new List<object>();
-                Delegate typeConverter = optionTypes[elements];
                 foreach (object element in (List<object>)value)
                 {
                     if (elements == "dict")
