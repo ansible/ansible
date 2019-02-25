@@ -100,7 +100,7 @@ class CallbackModule(CallbackBase):
             self._display.display("%s (via handler)... " % self.task_display_name)
 
     def v2_playbook_on_play_start(self, play):
-        if play.get_tasks():
+        if play.get_tasks() and len(play.get_tasks()) > 1:
             name = play.get_name().strip()
             if name and play.hosts:
                 msg = u"\n- %s on hosts: %s -" % (name, ",".join(play.hosts))
