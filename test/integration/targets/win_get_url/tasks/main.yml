@@ -5,7 +5,8 @@
     state: directory
   loop:
     - '{{ test_win_get_url_path }}'
-    - '{{ remote_tmp_dir }}'
+    - '{{ remote_http_path }}'
+    - '{{ remote_tmp_path }}'
 
 - name: copy across testing files
   win_copy:
@@ -30,25 +31,6 @@
     dependencies:
     - tcpip
 
-- name: gathering facts
-  setup:
-
-- block:
-  # unable install python package on Win2008 due to bug in win_chocolatey module (it wants interactive input)
-  - name: install python
-    win_chocolatey:
-      name: python
-    register: installed_python
-    until: installed_python is succeeded
-
-  - name: start simple http.server
-    win_command: python -m http.server {{ http_port }}
-    args:
-      chdir: '{{ test_win_get_url_path }}'
-    async: 90
-    poll: 0
-  when: ansible_facts['distribution_version'] is version('6.1', '>=')
-
 - name: create env var for win_get_url tests
   win_environment:
     name: '{{test_win_get_url_env_var}}'
@@ -65,7 +47,6 @@
 
   - name: run checksum tests
     include_tasks: tests_checksum.yml
-    when: ansible_facts['distribution_version'] is version('6.1', '>=')
 
   always:
   - name: remove SlimFTPd service
@@ -79,20 +60,10 @@
       level: machine
       state: absent
 
-  - name: stop simple http.server
-    win_command: powershell.exe -
-    args:
-      stdin: >-
-        Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
-    register: stop_http_server
-    failed_when:
-      - stop_http_server.rc not in [0, 1]
-    ignore_errors: yes
-
   - name: remove testing folders
     win_file:
       path: '{{ item }}'
       state: absent
     loop:
       - '{{ test_win_get_url_path }}'
-      - '{{ remote_tmp_dir }}'
+      - '{{ remote_tmp_path }}'

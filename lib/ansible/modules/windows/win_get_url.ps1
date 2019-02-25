@@ -55,8 +55,7 @@ $checksum = $module.Params.checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
 $checksum_url = $module.Params.checksum_url
 
-$module.Diff.before = @{}
-$module.Diff.after = @{}
+$module.Diff = @{}
 
 Add-CSharpType -AnsibleModule $module -References @'
     using System.Net;
@@ -147,7 +146,6 @@ Function Get-ChecksumFromUrl {
         }
     }
     if ( [bool]([System.Uri]$url).isFile ) {
-        $module.Result.status_code = 200
         $module.Result.msg = 'OK'
     } else {
         $module.Result.status_code = [int] $webResponse.StatusCode
@@ -160,8 +158,9 @@ Function Compare-ModifiedFile {
     param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy, $check_length)
     if ($checksum) {
         Try {
-            $is_modified_checksum = Compare-ModifiedChecksumFile -dest $dest -checksum $checksum
-            return $is_modified_checksum
+            $normaliseHashDest = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
+
+            return [bool]($normaliseHashDest -ne $checksum)
         } Catch {
             $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
         }
@@ -179,12 +178,20 @@ Function Compare-ModifiedFile {
         $webLastMod = (Get-AnsibleItem -Path $srcUri.AbsolutePath).LastWriteTimeUtc
         $webFileLength = (Get-AnsibleItem -Path $srcUri.AbsolutePath).Length
 
-        $module.Result.status_code = 200
         $module.Result.msg = 'OK'
     } else {
 
-        $webRequest = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
-        $webRequestPaired = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        $common_args = @{
+            url = $url
+            headers = $headers
+            credentials = $credentials
+            timeout = $timeout
+            use_proxy = $use_proxy
+            proxy = $proxy
+        }
+
+        $webRequest = GetWebRequest @common_args
+        $webRequestPaired = GetWebRequest @common_args
 
         if ($webRequest -is [System.Net.FtpWebRequest]) {
             $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
@@ -288,12 +295,6 @@ Function Get-FileChecksum {
     return $hash
 }
 
-Function Compare-ModifiedChecksumFile {
-    param($dest, $checksum)
-    $normaliseHashDest = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
-    return [bool]($normaliseHashDest -ne $checksum)
-}
-
 Function Invoke-DownloadFile {
     param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
 
@@ -334,7 +335,7 @@ Function Invoke-DownloadFile {
 
     Try {
 
-        $tmpDest = [System.IO.Path]::GetTempFileName()
+        $tmpDest = Join-Path -Path $module.Tmpdir -ChildPath ([System.IO.Path]::GetRandomFileName())
         $diff += "+$tmpDest`n"
         $extWebClient.DownloadFile($url, $tmpDest)
 
@@ -361,8 +362,9 @@ Function Invoke-DownloadFile {
                 }
             }
         } else {
-            $is_modified = Compare-ModifiedFile -module $module -url $url -dest $tmpDest -credentials $credentials -headers $headers `
-                                                -timeout $timeout -use_proxy $use_proxy -proxy $proxy -check_length $true
+            $is_modified = Compare-ModifiedFile -module $module -url $url -dest $tmpDest -check_length $true `
+                                                -credentials $credentials -headers $headers -timeout $timeout `
+                                                -use_proxy $use_proxy -proxy $proxy 
             if ($is_modified) {
                 throw "Source and recieved files size mismatch."
             }
@@ -384,7 +386,7 @@ Function Invoke-DownloadFile {
             Remove-Item -Path $tmpDest | Out-Null
             $diff += "-$tmpDest`n"
 
-            $module.Diff.after.files = $diff
+            $module.Diff.prepared = $diff
         }
     }
 
@@ -403,11 +405,11 @@ if ($checksum) {
 if ($checksum_algorithm) {
     $checksum_algorithm = $checksum_algorithm.Trim().toLower()
 }
+
 if ($checksum_url) {
     $checksum_url = $checksum_url.Trim().toLower()
 }
 
-$module.Result.checksum_algorithm = $checksum_algorithm
 $module.Result.dest = $dest
 $module.Result.elapsed = 0
 $module.Result.url = $url
@@ -467,35 +469,42 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 }
 [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
+$common_args = @{
+    module = $module
+    credentials = $credentials
+    headers = $headers
+    timeout = $timeout
+    use_proxy = $use_proxy
+    proxy = $proxy
+}
+
 # Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
 if ($checksum_url) {
 
-    if ($checksum_url.startswith('http://', 1) -or $checksum_url.startswith('https://', 1) -or `
-        $checksum_url.startswith('ftp://', 1) -or [bool]([System.Uri]$checksum_url).isFile) {
+    if ($checksum_url.startswith('http://', 'InvariantCultureIgnoreCase') -or $checksum_url.startswith('https://', 'InvariantCultureIgnoreCase') -or `
+        $checksum_url.startswith('ftp://', 'InvariantCultureIgnoreCase') -or [bool]([System.Uri]$checksum_url).isFile) {
 
-        $checksum = Get-ChecksumFromUrl -module $module -url $checksum_url -credentials $credentials `
-                                                -headers $headers -timeout $timeout -use_proxy $use_proxy `
-                                                -proxy $proxy -src_file_url $url
+        $checksum = Get-ChecksumFromUrl @common_args -url $checksum_url -src_file_url $url
     } else {
         $module.FailJson("Unsupported `checksum_url` value for '$dest': '$checksum_url'")
     }
 }
 
-
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
 
-    Invoke-DownloadFile -module $module -url $url -dest $dest -credentials $credentials `
-                  -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    Invoke-DownloadFile @common_args `
+                        -url $url -dest $dest
 
 } else {
 
-    $is_modified = Compare-ModifiedFile -module $module -url $url -dest $dest -credentials $credentials -headers $headers `
-                                      -timeout $timeout -use_proxy $use_proxy -proxy $proxy -check_length $false
+    $is_modified = Compare-ModifiedFile @common_args `
+                                        -url $url -dest $dest -check_length $false
 
     if ($is_modified) {
 
-       Invoke-DownloadFile -module $module -url $url -dest $dest -credentials $credentials `
-                     -headers $headers -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+        Invoke-DownloadFile @common_args `
+                            -url $url -dest $dest
+
    } else {
        $module.Result.msg = 'file already exists'
    }
