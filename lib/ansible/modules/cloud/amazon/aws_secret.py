@@ -123,6 +123,7 @@ secret:
       sample: { "dc1ed59b-6d8e-4450-8b41-536dfe4600a9": [ "AWSCURRENT" ] }
 '''
 
+from ansible.module_utils._text import to_bytes
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, compare_aws_tags, ansible_dict_to_boto3_tag_list
@@ -290,7 +291,11 @@ class SecretsManagerInterface(object):
         if desired_secret.kms_key_id != current_secret.get("KmsKeyId"):
             return False
         current_secret_value = self.client.get_secret_value(SecretId=current_secret.get("Name"))
-        if desired_secret.secret != current_secret_value.get(desired_secret.secret_type):
+        if desired_secret.secret_type == 'SecretBinary':
+            desired_value = to_bytes(desired_secret.secret)
+        else:
+            desired_value = desired_secret.secret
+        if desired_value != current_secret_value.get(desired_secret.secret_type):
             return False
         return True
 
