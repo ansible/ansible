@@ -25,8 +25,16 @@ def test_count_terms(params):
     assert count_terms(check, params) == 2
 
 
-def test_count_terms_bad_input(params):
-    check = ('name', 'dest')
+def test_count_terms_str_input(params):
+    check = 'name'
+    assert count_terms(check, params) == 1
 
-    with pytest.raises(AttributeError):
-        assert count_terms(check, params) == 2
+
+def test_count_terms_tuple_input(params):
+    check = ('name', 'dest')
+    assert count_terms(check, params) == 2
+
+
+def test_count_terms_list_input(params):
+    check = ['name', 'dest']
+    assert count_terms(check, params) == 2

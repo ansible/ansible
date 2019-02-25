@@ -1624,7 +1624,7 @@ class AnsibleModule(object):
         if spec is None:
             return
         for check in spec:
-            counts = [self._count_terms(set(field), param) for field in check]
+            counts = [self._count_terms(field, param) for field in check]
             non_zero = [c for c in counts if c > 0]
             if len(non_zero) > 0:
                 if 0 in counts:
@@ -1693,7 +1693,7 @@ class AnsibleModule(object):
 
             if key in param and param[key] == val:
                 for check in requirements:
-                    count = self._count_terms(set(check), param)
+                    count = self._count_terms(check, param)
                     if count == 0:
                         missing.append(check)
             if len(missing) and len(missing) >= max_missing_count:
