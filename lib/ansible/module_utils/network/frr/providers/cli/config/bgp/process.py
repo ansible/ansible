@@ -19,6 +19,8 @@ REDISTRIBUTE_PROTOCOLS = frozenset(['ospf', 'ospf6', 'eigrp', 'isis', 'table',
 class Provider(CliProvider):
 
     def render(self, config=None):
+        self._validate_networks()
+
         commands = list()
 
         operation = self.params['operation']
@@ -110,3 +112,14 @@ class Provider(CliProvider):
         """ generate address-family configuration
         """
         return AddressFamily(self.params).render(config)
+
+    def _validate_networks(self):
+        address_family =  self.get_value('config.address_family')
+        root_networks = self.get_value('config.networks')
+        operation = self.params['operation']
+
+        if address_family and root_networks and operation == 'replace':
+            for item in address_family:
+                if item['networks']:
+                    raise ValueError('operation is replace but provided both root level networks and networks under %s %s address family'
+                                     % (item['afi'], item['safi']))
