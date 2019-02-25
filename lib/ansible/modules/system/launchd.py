@@ -128,6 +128,7 @@ from time import sleep
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 class ServiceState:
     UNKNOWN = 0
     LOADED = 1
