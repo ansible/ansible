@@ -578,50 +578,46 @@ def main():
 
     changed = False
     if state == 'present':
+
         if not existing_stack_set:
             # on create this parameter has a different name, and cannot be referenced later in the job log
             stack_params['ClientRequestToken'] = 'Ansible-StackSet-Create-{0}'.format(operation_uuid)
             changed = True
             create_stack_set(module, stack_params, cfn)
         else:
-            new_stack_instances, existing_stack_instances, unspecified_stack_instances = compare_stack_instances(
-                cfn,
-                module.params['name'],
-                module.params['accounts'],
-                module.params['regions'],
-            )
-            if new_stack_instances:
-                operation_ids.append('Ansible-StackInstance-Create-{0}'.format(operation_uuid))
-                changed = True
-                cfn.create_stack_instances(
-                    StackSetName=module.params['name'],
-                    Accounts=list(set(acct for acct, region in new_stack_instances)),
-                    Regions=list(set(region for acct, region in new_stack_instances)),
-                    OperationPreferences=get_operation_preferences(module),
-                    OperationId=operation_ids[-1],
-                )
-            else:
-                operation_ids.append('Ansible-StackInstance-Update-{0}'.format(operation_uuid))
-                cfn.update_stack_instances(
-                    StackSetName=module.params['name'],
-                    Accounts=list(set(acct for acct, region in existing_stack_instances)),
-                    Regions=list(set(region for acct, region in existing_stack_instances)),
-                    OperationPreferences=get_operation_preferences(module),
-                    OperationId=operation_ids[-1],
-                )
             stack_params['OperationId'] = 'Ansible-StackSet-Update-{0}'.format(operation_uuid)
             operation_ids.append(stack_params['OperationId'])
             if module.params.get('regions'):
                 stack_params['OperationPreferences'] = get_operation_preferences(module)
             changed |= update_stack_set(module, stack_params, cfn)
 
-        for op in operation_ids:
-            await_stack_set_operation(
-                module, cfn, operation_id=op,
-                stack_set_name=module.params['name'],
-                max_wait=module.params.get('wait_timeout'),
+        await_for_operations(cfn, module, operation_ids)
+        new_stack_instances, existing_stack_instances, unspecified_stack_instances = compare_stack_instances(
+            cfn,
+            module.params['name'],
+            module.params['accounts'],
+            module.params['regions'],
+        )
+        if new_stack_instances:
+            operation_ids.append('Ansible-StackInstance-Create-{0}'.format(operation_uuid))
+            changed = True
+            cfn.create_stack_instances(
+                StackSetName=module.params['name'],
+                Accounts=list(set(acct for acct, region in new_stack_instances)),
+                Regions=list(set(region for acct, region in new_stack_instances)),
+                OperationPreferences=get_operation_preferences(module),
+                OperationId=operation_ids[-1],
             )
-
+        else:
+            operation_ids.append('Ansible-StackInstance-Update-{0}'.format(operation_uuid))
+            cfn.update_stack_instances(
+                StackSetName=module.params['name'],
+                Accounts=list(set(acct for acct, region in existing_stack_instances)),
+                Regions=list(set(region for acct, region in existing_stack_instances)),
+                OperationPreferences=get_operation_preferences(module),
+                OperationId=operation_ids[-1],
+            )
+        await_for_operations(cfn, module, operation_ids)
     elif state == 'absent':
         if not existing_stack_set:
             module.exit_json(msg='Stack set {0} does not exist'.format(module.params['name']))
@@ -665,6 +661,15 @@ def main():
     if any(o['status'] == 'FAILED' for o in result['operations']):
         module.fail_json(msg="One or more operations failed to execute", **result)
     module.exit_json(changed=changed, **result)
+
+
+def await_for_operations(cfn, module, operation_ids):
+    for op in operation_ids:
+        await_stack_set_operation(
+            module, cfn, operation_id=op,
+            stack_set_name=module.params['name'],
+            max_wait=module.params.get('wait_timeout'),
+        )
 
 
 if __name__ == '__main__':
