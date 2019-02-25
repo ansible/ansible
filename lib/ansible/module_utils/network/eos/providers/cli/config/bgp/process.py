@@ -147,6 +147,5 @@ class Provider(CliProvider):
         if address_family and root_networks and operation == 'replace':
             for item in address_family:
                 if item['networks']:
-                    raise ValueError(
-                        'operation is replace but provided both root level networks and networks under %s %s address family'
-                        % (item['afi'], item['safi']))
+                    raise ValueError('operation is replace but provided both root level networks and networks under %s %s address family'
+                                     % (item['afi'], item['safi']))
