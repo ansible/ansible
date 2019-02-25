@@ -2073,39 +2073,43 @@ class PyVmomiHelper(PyVmomi):
             self.folder = '/%(folder)s' % self.params
         self.folder = self.folder.rstrip('/')
 
-        datacenter = self.cache.find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-        if datacenter is None:
+        # get all datacenters with the same name
+        datacenter_list = find_obj(self.content, [vim.Datacenter], self.params['datacenter'], first=False)
+        if len(datacenter_list) == 0:
             self.module.fail_json(msg='No datacenter named %(datacenter)s was found' % self.params)
-
-        dcpath = compile_folder_path_for_object(datacenter)
-
-        # Nested folder does not have trailing /
-        if not dcpath.endswith('/'):
-            dcpath += '/'
-
-        # Check for full path first in case it was already supplied
-        if (self.folder.startswith(dcpath + self.params['datacenter'] + '/vm') or
-                self.folder.startswith(dcpath + '/' + self.params['datacenter'] + '/vm')):
-            fullpath = self.folder
-        elif self.folder.startswith('/vm/') or self.folder == '/vm':
-            fullpath = "%s%s%s" % (dcpath, self.params['datacenter'], self.folder)
-        elif self.folder.startswith('/'):
-            fullpath = "%s%s/vm%s" % (dcpath, self.params['datacenter'], self.folder)
         else:
-            fullpath = "%s%s/vm/%s" % (dcpath, self.params['datacenter'], self.folder)
-
-        f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
-
+            dcpath = []
+            for dc in datacenter_list:
+                path = compile_folder_path_for_object(dc)
+                # Nested folder does not have trailing /
+                if not path.endswith('/'):
+                    path += '/'
+                dcpath.append(path)
+        fullpath_list = []
+        for path in dcpath:
+            # Check for full path first in case it was already supplied
+            if self.folder.startswith(path + self.params['datacenter'] + '/vm'):
+                fullpath = self.folder
+            elif self.folder.startswith('/vm/') or self.folder == '/vm':
+                fullpath = "%s%s%s" % (path, self.params['datacenter'], self.folder)
+            elif self.folder.startswith('/'):
+                fullpath = "%s%s/vm%s" % (path, self.params['datacenter'], self.folder)
+            else:
+                fullpath = "%s%s/vm/%s" % (path, self.params['datacenter'], self.folder)
+            fullpath_list.append(fullpath)
+            f_obj = self.content.searchIndex.FindByInventoryPath(fullpath)
+            if f_obj is not None:
+                break
         # abort if no strategy was successful
         if f_obj is None:
             # Add some debugging values in failure.
             details = {
-                'datacenter': datacenter.name,
+                'datacenter': self.params['datacenter'],
                 'datacenter_path': dcpath,
                 'folder': self.folder,
-                'full_search_path': fullpath,
+                'full_search_path': fullpath_list,
             }
-            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath),
+            self.module.fail_json(msg='No folder %s matched in the search path : %s' % (self.folder, fullpath_list),
                                   details=details)
 
         destfolder = f_obj
