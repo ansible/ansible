@@ -173,6 +173,7 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     count_terms,
+    check_mutually_exclusive,
 )
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -1599,11 +1600,21 @@ class AnsibleModule(object):
         return count_terms(check, param)
 
     def _check_mutually_exclusive(self, spec, param=None):
-        if spec is None:
-            return
-        for check in spec:
-            count = self._count_terms(check, param)
-            if count > 1:
+        # if spec is None:
+        #     return
+        # for check in spec:
+        #     count = self._count_terms(check, param)
+        #     if count > 1:
+        #         msg = "parameters are mutually exclusive: %s" % ', '.join(check)
+        #         if self._options_context:
+        #             msg += " found in %s" % " -> ".join(self._options_context)
+        #         self.fail_json(msg=msg)
+        if param is None:
+            param = self.params
+
+        mutually_exclusive_checks = check_mutually_exclusive(spec, param)
+        if mutually_exclusive_checks:
+            for check in mutually_exclusive_checks:
                 msg = "parameters are mutually exclusive: %s" % ', '.join(check)
                 if self._options_context:
                     msg += " found in %s" % " -> ".join(self._options_context)

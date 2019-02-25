@@ -22,3 +22,26 @@ def count_terms(check, params):
         check = [check]
 
     return len(set(check).intersection(params))
+
+
+def check_mutually_exclusive(terms, module_parameters):
+    """Check mutually exclusive terms against argument parameters. Accepts
+    a single list or list of lists that are groups of terms that should be
+    mutually exclusive with one another.
+
+    :arg terms: List of mutually exclusive module parameters
+    :arg params: Dictionary of module parameters
+
+    :returns: A list of terms that are mutually exclusive.
+    """
+
+    if terms is None:
+        return
+
+    result = []
+    for check in terms:
+        count = count_terms(check, params)
+        if count > 1:
+            result.append(check)
+
+    return result
