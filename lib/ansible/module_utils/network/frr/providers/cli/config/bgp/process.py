@@ -114,7 +114,7 @@ class Provider(CliProvider):
         return AddressFamily(self.params).render(config)
 
     def _validate_input(self):
-        address_family =  self.get_value('config.address_family')
+        address_family = self.get_value('config.address_family')
         root_networks = self.get_value('config.networks')
         operation = self.params['operation']
 
