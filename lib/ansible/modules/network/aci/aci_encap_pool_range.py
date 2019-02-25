@@ -100,7 +100,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 - name: Remove a VLAN pool range
-  aci_encap_pool_range;
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
