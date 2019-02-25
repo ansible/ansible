@@ -54,6 +54,25 @@ test_data = [
         ),
         "Unknown error while connecting to vCenter or ESXi API at esxi1:443"
     ),
+    (
+        dict(
+            username='Administrator@vsphere.local',
+            password='Esxi@123$%',
+            hostname='esxi1',
+            proxy_host='myproxyserver.com',
+            proxy_port=80,
+            validate_certs=False,
+        ),
+        " [proxy: myproxyserver.com:80]"
+    ),
+]
+
+test_ids = [
+    'hostname',
+    'username',
+    'password',
+    'validate_certs',
+    'valid_http_proxy',
 ]
 
 
@@ -115,7 +134,7 @@ def test_requests_lib_exists(mocker, fake_ansible_module):
 
 
 @pytest.mark.skipif(sys.version_info < (2, 7), reason="requires python2.7 and greater")
-@pytest.mark.parametrize("params, msg", test_data, ids=['hostname', 'username', 'password', 'validate_certs'])
+@pytest.mark.parametrize("params, msg", test_data, ids=test_ids)
 def test_required_params(request, params, msg, fake_ansible_module):
     """ Test if required params are correct or not"""
     fake_ansible_module.params = params
