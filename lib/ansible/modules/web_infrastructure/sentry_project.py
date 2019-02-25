@@ -67,6 +67,8 @@ EXAMPLES = '''
     state: started
 '''
 
+RETURN = ''' # '''
+
 import json
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -107,8 +109,7 @@ def main():
 
     if state == 'present':
         if is_project_exists(project_name, organization, team, api_token):
-            module.exit_json(changed=False, project_name=project_name,
-                             project_slug=project_slug)
+            module.exit_json(changed=False)
         else:
             response, info = fetch_url(
                 module, "{url}/api/0/teams/{organization}/{team}/projects/".format(
@@ -125,8 +126,7 @@ def main():
                 method="POST")
             if info["status"] != 201:
                 module.fail_json(msg=info["msg"])
-            module.exit_json(changed=True, project_name=project_name,
-                             project_slug=project_slug)
+            module.exit_json(changed=True)
 
     if state == 'absent':
         if is_project_exists(project_name, organization, team, api_token):
@@ -141,11 +141,9 @@ def main():
                 method="DELETE")
             if info["status"] != 204:
                 module.fail_json(msg=info["msg"])
-            module.exit_json(changed=True, project_name=project_name,
-                             project_slug=project_slug)
+            module.exit_json(changed=True)
         else:
-            module.exit_json(changed=False, project_name=project_name,
-                             project_slug=project_slug)
+            module.exit_json(changed=False)
 
 
 if __name__ == '__main__':
