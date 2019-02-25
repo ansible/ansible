@@ -7,8 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-# see examples/playbooks/get_url.yml
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -162,6 +160,11 @@ options:
       - If C(client_cert) contains both the certificate and key, this option is not required.
     type: path
     version_added: '2.4'
+  http_agent:
+    description:
+      - Header to identify as, generally appears in web server logs.
+    type: str
+    default: ansible-httpget
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
