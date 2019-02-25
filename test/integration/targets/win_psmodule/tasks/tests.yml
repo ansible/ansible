@@ -536,7 +536,6 @@
   assert:
     that:
       - fail_allow_prerelease is failed
-      - "'parameter must be specified when using the Prerelease string in MinimumVersion' in fail_allow_prerelease.msg"
 
 - name: "check installing prerelease module with allow_prerelease active - check mode: true"
   win_psmodule:

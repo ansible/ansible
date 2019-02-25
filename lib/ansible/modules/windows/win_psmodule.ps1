@@ -198,18 +198,7 @@ Function Install-PsModule {
             $result.output = "Module $($Name) installed"
         }
         catch {
-
-            if ( $ErrorDetails.Exception.Message ) {
-                $ErrorDetailsText = $($ErrorDetails.Exception.Message)
-            }
-            elseif ( $ErrorDetails.Message ) {
-                $ErrorDetailsText = $($ErrorDetails.Message)
-            }
-            else {
-                $ErrorDetailsText = "Unknown"
-            }
-
-            $ErrorMessage = "Problems installing $($Name) module: $ErrorDetailsText"
+            $ErrorMessage = "Problems installing $($Name) module: $($ErrorDetails.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
     }
