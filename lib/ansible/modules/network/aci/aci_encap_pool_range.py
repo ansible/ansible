@@ -74,56 +74,86 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-- name: Add a new VLAN range
-  aci_vlan_pool_encap_block:
+- name: Add a new VLAN pool range
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
     pool_type: vlan
-    encap_start: 20
-    encap_end: 50
+    pool_allocation_mode: static
+    range_name: anstest
+    range_start: 20
+    range_end: 40
+    allocation_mode: inherit
     state: present
   delegate_to: localhost
 
-- name: Remove a VLAN range
-  aci_vlan_pool_encap_block:
+- name: Remove a VLAN pool range
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
     pool_type: vlan
-    encap_start: 20
-    encap_end: 50
+    pool_allocation_mode: static
+    range_name: anstest
+    range_start: 20
+    range_end: 40
     state: absent
   delegate_to: localhost
 
 - name: Query a VLAN range
-  aci_vlan_pool_encap_block:
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
     pool: production
     pool_type: vlan
-    encap_start: 20
-    encap_end: 50
+    pool_allocation_mode: static
+    range_name: anstest
+    range_start: 20
+    range_end: 50
     state: query
   delegate_to: localhost
   register: query_result
 
-- name: Query a VLAN pool for ranges
-  aci_vlan_pool_encap_block:
+- name: Query a VLAN pool for ranges by range_name
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
-    pool: production
     pool_type: vlan
+    range_name: anstest
     state: query
   delegate_to: localhost
   register: query_result
 
-- name: Query all VLAN ranges
-  aci_vlan_pool_encap_block:
+- name: Query a VLAN pool for ranges by range_start
+  aci_encap_pool_range:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    pool_type: vlan
+    range_start: 20
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query a VLAN pool for ranges by range_start and range_end
+  aci_encap_pool_range:
+    host: apic
+    username: admin
+    password: SomeSecretPassword
+    pool_type: vlan
+    range_start: 20
+    range_end: 40
+    state: query
+  delegate_to: localhost
+  register: query_result
+
+- name: Query all VLAN pool ranges
+  aci_encap_pool_range:
     host: apic
     username: admin
     password: SomeSecretPassword
