@@ -125,4 +125,4 @@ class Provider(CliProvider):
             for item in address_family:
                 if item['networks']:
                     raise ValueError('operation is replace but provided both root level network(s) and network(s) under %s %s address family'
-                        % (item['afi'], item['safi']))
+                                     % (item['afi'], item['safi']))
