@@ -121,7 +121,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg=str("region not specified and unable to determine region from EC2_REGION."))
+        module.fail_json(msg=str("Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file"))
 
     # Connect to the Redshift endpoint.
     try:
