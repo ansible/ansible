@@ -290,7 +290,7 @@ from ansible.errors import (
 )
 from ansible.errors import AnsibleOptionsError
 from ansible.compat import selectors
-from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.six import PY3, BytesIO, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
@@ -486,17 +486,9 @@ class Connection(ConnectionBase):
 
         if not self._play_context.private_key_file:
             return
-        from ansible.module_utils.six import BytesIO
-        from ansible.parsing.dataloader import DataLoader
-        from ansible.parsing.vault import VaultSecret
+
         key_path = os.path.expanduser(self._play_context.private_key_file)
-        dl = DataLoader()
-        dl.set_vault_secrets(
-            (
-                ('', VaultSecret(b'secret')),
-            ),
-        )
-        decrypted_contents = dl._get_file_contents(key_path)[0]
+        decrypted_contents = self._loader._get_file_contents(key_path)[0]
         ssh_add_proc = subprocess.Popen(
             ('ssh-add', '-'), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             env={'SSH_AUTH_SOCK': self._ssh_agent_socket},
