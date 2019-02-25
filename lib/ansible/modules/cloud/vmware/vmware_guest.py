@@ -1818,8 +1818,8 @@ class PyVmomiHelper(PyVmomi):
             if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
                 self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
                 continue
-            elif vm_obj is None:
-                # We are creating new VM
+            elif vm_obj is None or self.params['template']:
+                # We are creating new VM or from Template
                 diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
