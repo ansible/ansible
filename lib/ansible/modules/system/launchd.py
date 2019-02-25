@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright(c) 2018, Martin Migasiewicz <martin.sm@web.de>
+# Copyright: (c) 2018, Martin Migasiewicz <martin.sm@web.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -14,25 +13,22 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-
 DOCUMENTATION = r'''
 module: launchd
 author:
-    - "Martin Migasiewicz"
+- Martin Migasiewicz (@martinm82)
 version_added: "2.8"
-short_description:  Manage macOS services.
+short_description:  Manage macOS services
 description:
-    - This module can be used to control launchd services on target
-      macOS hosts.
+- This module can be used to control launchd services on target macOS hosts.
 options:
     name:
-      required: true
       description:
       - Name of the service.
-      aliases: ['service']
+      type: str
+      required: true
+      aliases: [ service ]
     state:
-      default: null
-      choices: [ 'started', 'stopped', 'restarted', 'reloaded', 'unloaded' ]
       description:
       - C(started)/C(stopped) are idempotent actions that will not run
         commands unless necessary.
@@ -44,30 +40,29 @@ options:
       - C(reloaded) unloads and loads the service to ensure that the latest
         job definition (plist) is used. Whether a service is started or
         stopped depends on the content of the definition file.
+      type: str
+      choices: [ reloaded, restarted, started, stopped, unloaded ]
     enabled:
-      default: null
-      type: 'bool'
       description:
-      - Whether the service should start on boot. B(At least one of state and
-        enabled are required.)
+      - Whether the service should start on boot.
+      - B(At least one of state and enabled are required.)
+      type: bool
     force_stop:
-      required: false
-      default: false
-      type: 'bool'
       description:
-        - Services might have the 'KeepAlive' attribute set to true in a
-          launchd configuration. In case this is set to true, stopping a
-          service will cause that launchd starts the service again.
-          Set this option to true to let this module change the 'KeepAlive'
-          attribute to false.
+      - Whether the service should not be restarted automatically by launchd.
+      - Services might have the 'KeepAlive' attribute set to true in a launchd configuration.
+        In case this is set to true, stopping a service will cause that launchd starts the service again.
+      - Set this option to C(yes) to let this module change the 'KeepAlive' attribute to false.
+      type: bool
+      default: no
 notes:
-    - One option other than name is required.
+- One option other than name is required.
 requirements:
-    - A system managed by launchd
-    - The plistlib python library
+- A system managed by launchd
+- The plistlib python library
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Make sure spotify webhelper is started
   launchd:
     name: com.spotify.webhelper
@@ -77,7 +72,7 @@ EXAMPLES = '''
 - name: Deploy custom memcached job definition
   template:
     src: org.memcached.plist.j2
-    dest: "/Library/LaunchDaemons/org.memcached.plist"
+    dest: /Library/LaunchDaemons/org.memcached.plist
   become: yes
 
 - name: Run memcached
@@ -112,7 +107,7 @@ EXAMPLES = '''
   become: yes
 '''
 
-RETURN = '''
+RETURN = r'''
 status:
     description: metadata about service status
     returned: always
@@ -126,13 +121,12 @@ status:
         }
 '''
 
-
 import os
 import plistlib
 from abc import ABCMeta, abstractmethod
-from ansible.module_utils.basic import AnsibleModule
 from time import sleep
 
+from ansible.module_utils.basic import AnsibleModule
 
 class ServiceState:
     UNKNOWN = 0
