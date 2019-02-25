@@ -1,0 +1,612 @@
+---
+- name: remove test config if any
+  asa_config:
+    lines:
+      - no object-group network ansible_og–test_1
+      - no object-group network ansible_og–test_2
+    provider: "{{ cli }}"
+  tags:
+    - acl
+  ignore_errors: true
+
+- block:
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - host 9.9.9.9
+        - host 1.1.1.1
+        - 2.0.0.0 255.255.255.254
+    tags:
+      - acl
+
+  - name: add object-group ansible_og–test_2
+    asa_og: &config
+      name: ansible_og–test_2
+      group_type: network-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+    tags:
+      - acl
+
+  - name: show object-group ansible_og–test_2
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_2
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config
+    loop:
+      - "{{ config_list }}"
+    register: result
+    tags:
+      - acl
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+    tags:
+      - acl
+
+  - name: set facts
+    set_fact:
+      config_list:
+      - host 9.9.9.9
+      - host 1.1.1.1
+      - 2.0.0.0 255.255.255.254
+      - host 8.8.8.8
+      - 1.0.0.0 255.255.255.0
+    tags:
+      - acl
+
+  - name: add new entries to object-group ansible_og–test_2
+    asa_og: &config1
+      name: ansible_og–test_2
+      group_type: network-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_2
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_2
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config1
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+      - host 10.0.0.0
+      - host 192.168.0.1
+      - 2.0.0.0 255.0.0.0
+      - group-object ansible_og–test_2
+    tags:
+      - acl
+
+  - name: configure new object-group ansible_og–test_1
+    asa_og: &config2
+      name: ansible_og–test_1
+      group_type: network-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_1
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_1
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config2
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+      - host 69.69.69.69
+    tags:
+      - acl
+
+  - name: add one entry only in object-group ansible_og–test_1
+    asa_og: &config3
+      name: ansible_og–test_1
+      group_type: network-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_1
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_1
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config3
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  always:
+  - name: remove config
+    asa_config:
+      lines:
+        - no object-group network ansible_og–test_1
+        - no object-group network ansible_og–test_2
+      provider: "{{ cli }}"
+    tags:
+      - acl
+
+- name: remove existing object-group if any
+  asa_config:
+    lines:
+      - no object-group service ansible_og–test_1
+      - no object-group service ansible_og–test_2 udp
+      - no object-group service ansible_og–test_3 tcp
+      - no object-group service ansible_og–test_4 tcp-udp
+    provider: "{{ cli }}"
+  tags:
+    - acl
+  ignore_errors: true
+
+- block:
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - tcp destination eq ldap
+        - udp destination eq 389
+        - tcp destination eq 3268
+        - tcp destination eq 3269
+        - tcp destination eq 88
+        - udp destination eq 88
+        - tcp destination eq domain
+        - udp destination eq domain
+        - tcp destination eq 445
+        - udp destination eq 445
+        - tcp destination eq smtp
+        - tcp destination eq 135
+        - tcp destination eq 5722
+        - udp destination eq ntp
+        - tcp destination eq 464
+        - udp destination eq 464
+        - udp destination eq netbios-dgm
+        - udp destination eq netbios-ns
+        - tcp destination eq netbios-ssn
+    tags:
+      - acl
+
+  - name: add object-group service ansible_og–test_1
+    asa_og: &config
+      name: ansible_og–test_1
+      group_type: service-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: &true
+      that:
+        - "result.changed == true"
+    tags:
+      - acl
+
+  - name: show object-group ansible_og–test_1
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_1
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config
+    loop:
+      - "{{ config_list }}"
+    register: result
+    tags:
+      - acl
+
+  - assert: &false
+      that:
+        - "result.changed == false"
+    tags:
+      - acl
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - tcp destination eq ldap
+        - udp destination eq 389
+        - tcp destination eq 3268
+        - tcp destination eq 3269
+        - tcp destination eq 88
+        - udp destination eq 88
+        - tcp destination eq domain
+        - udp destination eq domain
+        - tcp destination eq 445
+        - udp destination eq 445
+        - tcp destination eq smtp
+        - tcp destination eq 135
+        - tcp destination eq 5722
+        - udp destination eq ntp
+        - tcp destination eq 464
+        - udp destination eq 464
+        - udp destination eq netbios-dgm
+        - udp destination eq netbios-ns
+        - tcp destination eq netbios-ssn
+        - tcp destination eq 8888
+        - udp destination eq 8888
+        - tcp destination eq ssh
+    tags:
+      - acl
+
+  - name: add new entries to object-group service ansible_og–test_1
+    asa_og: &config1
+      name: ansible_og–test_1
+      group_type: service-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_1
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_1
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config1
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - tcp destination eq ldap
+        - udp destination eq 389
+        - tcp destination eq 3268
+        - tcp destination eq 3269
+        - tcp destination eq 5555
+        - tcp destination eq 6666
+        - tcp destination eq 7777
+    tags:
+      - acl
+
+  - name: re-configure object-group service ansible_og–test_1 with few entries
+    asa_og: &config2
+      name: ansible_og–test_1
+      group_type: service-object
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_1
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_1
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config2
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - range 56832 56959
+        - range 61363 65185
+    tags:
+      - acl
+
+
+  - name: configure UDP service-object ansible_og–test_2
+    asa_og: &config3
+      name: ansible_og–test_2
+      group_type: port-object
+      protocol: udp
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_2
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_2
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config3
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - eq www
+        - eq 135
+        - eq https
+        - eq 445
+        - eq 8530
+    tags:
+      - acl
+
+  - name: configure TCP service-object ansible_og–test_3
+    asa_og: &config4
+      name: ansible_og–test_3
+      group_type: port-object
+      protocol: tcp
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_3
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_3
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config4
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - eq www
+        - eq 135
+        - eq https
+        - eq 445
+        - eq 8530
+        - range 56832 56959
+        - range 61363 65185
+    tags:
+      - acl
+
+  - name: add entries entries to TCP service-object ansible_og–test_3
+    asa_og: &config5
+      name: ansible_og–test_3
+      group_type: port-object
+      protocol: tcp
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_3
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_3
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config5
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  - name: set facts
+    set_fact:
+      config_list:
+        - eq 1111
+        - eq 2222
+        - eq 3333
+        - eq 4444
+    tags:
+      - acl
+
+  - name: configure TCP-UDP service-object ansible_og–test_4
+    asa_og: &config6
+      name: ansible_og–test_4
+      group_type: port-object
+      protocol: tcp-udp
+      lines: "{{ item }}"
+      provider: "{{ cli }}"
+    register: result
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *true
+
+  - name: show object-group ansible_og–test_4
+    asa_command:
+      commands:
+        - show object-group id ansible_og–test_4
+      provider: "{{ cli }}"
+    register: output
+    tags:
+      - acl
+
+  - debug: var=output.stdout_lines
+    tags:
+      - acl
+
+  - name: idempotence check
+    asa_og: *config6
+    loop:
+      - "{{ config_list }}"
+    tags:
+      - acl
+
+  - assert: *false
+
+  always:
+  - name: remove config
+    asa_config:
+      lines:
+      - no object-group service ansible_og–test_1
+      - no object-group service ansible_og–test_2 udp
+      - no object-group service ansible_og–test_3 tcp
+      - no object-group service ansible_og–test_4 tcp-udp
+      provider: "{{ cli }}"
+    tags:
+      - acl
