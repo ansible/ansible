@@ -134,7 +134,7 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, sort_json_policy_dict)
+                                      get_aws_connection_info, compare_policies)
 
 
 def build_kwargs(registry_id):
@@ -292,19 +292,15 @@ def run(ecr, params, verbosity):
 
             elif policy_text is not None:
                 try:
-                    policy = sort_json_policy_dict(policy)
                     if verbosity >= 2:
                         result['policy'] = policy
                     original_policy = ecr.get_repository_policy(
                         registry_id, name)
 
-                    if original_policy:
-                        original_policy = sort_json_policy_dict(original_policy)
-
                     if verbosity >= 3:
                         result['original_policy'] = original_policy
 
-                    if original_policy != policy:
+                    if compare_policies(original_policy, policy):
                         ecr.set_repository_policy(
                             registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
