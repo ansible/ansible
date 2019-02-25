@@ -110,9 +110,21 @@ options:
               - Maximum number of prefixes to accept from this peer.
               - The range is from 0 to 4294967294.
             type: int
+      redistribute:
+        description:
+          - Specifies the redistribute information from another routing protocol.
+        suboptions:
+          protocol:
+            description:
+              - Specifies the protocol for configuring redistribute information.
+            required: True
+          route_map:
+            description:
+              - Specifies the route map reference.
       networks:
         description:
           - Specify Networks to announce via BGP.
+          - For operation replace, this option is mutually exclusive with networks option under address_family.
         suboptions:
           prefix:
             description:
@@ -149,6 +161,7 @@ options:
           networks:
             description:
               - Specify Networks to announce via BGP.
+              - For operation replace, this option is mutually exclusive with root level networks option.
             suboptions:
               prefix:
                 description:
