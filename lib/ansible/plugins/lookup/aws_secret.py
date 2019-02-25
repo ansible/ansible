@@ -68,10 +68,7 @@ except ImportError:
 
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import string_types
-import os
 
 
 def _boto3_conn(region, credentials):
@@ -90,23 +87,30 @@ def _boto3_conn(region, credentials):
     return connection
 
 
-def _get_credentials(options):
-    credentials = {}
-    credentials['aws_profile'] = options['aws_profile']
-    credentials['aws_secret_access_key'] = options['aws_secret_key']
-    credentials['aws_access_key_id'] = options['aws_access_key']
-    credentials['aws_session_token'] = options['aws_security_token']
-
-    return credentials
-
-
 class LookupModule(LookupBase):
+    def _get_credentials(self):
+        credentials = {}
+        credentials['aws_profile'] = self.get_option('aws_profile')
+        credentials['aws_secret_access_key'] = self.get_option('aws_secret_key')
+        credentials['aws_access_key_id'] = self.get_option('aws_access_key')
+        credentials['aws_session_token'] = self.get_option('aws_security_token')
+
+        # fallback to IAM role credentials
+        if not credentials['aws_profile'] and not (credentials['aws_access_key_id'] and credentials['aws_secret_access_key']):
+            session = botocore.session.get_session()
+            if session.get_credentials() is not None:
+                credentials['aws_access_key_id'] = session.get_credentials().access_key
+                credentials['aws_secret_access_key'] = session.get_credentials().secret_key
+                credentials['aws_session_token'] = session.get_credentials().token
+
+        return credentials
+
     def run(self, terms, variables, **kwargs):
 
         self.set_options(var_options=variables, direct=kwargs)
-        boto_credentials = _get_credentials(self._options)
+        boto_credentials = self._get_credentials()
 
-        region = self._options['region']
+        region = self.get_option('region')
         client = _boto3_conn(region, boto_credentials)
 
         secrets = []
