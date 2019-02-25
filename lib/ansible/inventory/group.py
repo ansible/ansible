@@ -42,7 +42,7 @@ def to_safe_group_name(name, replacer="_"):
     if C.TRANSFORM_INVALID_GROUP_CHARS:
         name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
     else:
-        matched = _UNSAFE_GROUP.search()
+        matched = _UNSAFE_GROUP.search(name)
         for match in set(matched.groups):
             display.deprecated('Ignoring invalid character (%s) in group name, in the future this will be an error' % to_text(matched), version='2.12')
     return name
