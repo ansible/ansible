@@ -16,15 +16,6 @@ module: aci_encap_pool_range
 short_description: Manage encap ranges assigned to pools (fvns:EncapBlk, fvns:VsanEncapBlk)
 description:
 - Manage vlan, vxlan, and vsan ranges that are assigned to pools on Cisco ACI fabrics.
-notes:
-- The C(pool) must exist in order to add or delete a range.
-seealso:
-- module: aci_encap_pool
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.5'
 options:
   allocation_mode:
@@ -81,6 +72,15 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(pool) must exist in order to add or delete a range.
+seealso:
+- module: aci_encap_pool
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(fvns:EncapBlk) and B(fvns:VsanEncapBlk).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -248,8 +248,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 ACI_POOL_MAPPING = dict(
     vlan=dict(
@@ -270,11 +270,11 @@ ACI_POOL_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        pool_type=dict(type='str', required=True, aliases=['type'], choices=['vlan', 'vxlan', 'vsan']),
         allocation_mode=dict(type='str', aliases=['mode'], choices=['dynamic', 'inherit', 'static']),
         description=dict(type='str', aliases=['descr']),
         pool=dict(type='str', aliases=['pool_name']),  # Not required for querying all objects
         pool_allocation_mode=dict(type='str', aliases=['pool_mode'], choices=['dynamic', 'static']),
-        pool_type=dict(type='str', aliases=['type'], choices=['vlan', 'vxlan', 'vsan'], required=True),
         range_end=dict(type='int', aliases=['end']),  # Not required for querying all objects
         range_name=dict(type='str', aliases=["name", "range"]),  # Not required for querying all objects
         range_start=dict(type='int', aliases=["start"]),  # Not required for querying all objects

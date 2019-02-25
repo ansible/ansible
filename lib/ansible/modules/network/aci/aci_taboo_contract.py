@@ -17,16 +17,6 @@ module: aci_taboo_contract
 short_description: Manage taboo contracts (vz:BrCP)
 description:
 - Manage taboo contracts on Cisco ACI fabrics.
-notes:
-- The C(tenant) used must exist before using this module in your playbook.
-  The M(aci_tenant) module can be used for this.
-seealso:
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:BrCP).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
 options:
   taboo_contract:
@@ -60,6 +50,16 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) used must exist before using this module in your playbook.
+  The M(aci_tenant) module can be used for this.
+seealso:
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:BrCP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -209,15 +209,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        taboo_contract=dict(type='str', required=False, aliases=['name']),  # Not required for querying all contracts
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all contracts
+        taboo_contract=dict(type='str', aliases=['name']),  # Not required for querying all contracts
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all contracts
         scope=dict(type='str', choices=['application-profile', 'context', 'global', 'tenant']),
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
