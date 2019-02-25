@@ -105,6 +105,16 @@ EXAMPLES = '''
     networks: yes
     volumes: yes
     builder_cache: yes
+
+- name: Prune everything (including non-dangling images)
+  docker_prune:
+    containers: yes
+    images: yes
+    images_filters:
+      dangling: false
+    networks: yes
+    volumes: yes
+    builder_cache: yes
 '''
 
 RETURN = '''
