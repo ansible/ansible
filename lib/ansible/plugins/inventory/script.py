@@ -162,7 +162,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
 
     def _parse_group(self, group, data):
 
-        group = to_safe_group_names(group)
+        group = to_safe_group_name(group)
         self.inventory.add_group(group)
 
         if not isinstance(data, dict):

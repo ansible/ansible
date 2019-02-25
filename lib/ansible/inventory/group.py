@@ -42,10 +42,10 @@ def to_safe_group_name(name, replacer="_"):
     if C.TRANSFORM_INVALID_GROUP_CHARS:
         name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
     else:
-        matched = _UNSAFE_GROUP.search(name)
-        if matched is not None:
-            for match in set(matched.groups):
-                display.deprecated('Ignoring invalid character (%s) in group name, in the future this will be an error' % to_text(matched), version='2.12')
+        invalid_chars = _UNSAFE_GROUP.findall(name)
+        if invalid_chars:
+            display.deprecated('Ignoring invalid character(s) "%s" in group (%s), in the future this will be an error' % to_text(invalid_chars, to_text(name)),
+                               version='2.12')
     return name
 
 
@@ -56,13 +56,8 @@ class Group:
 
     def __init__(self, name=None):
 
-        # check for valid names
-        invalid_chars = _UNSAFE_GROUP.findall(name)
-        if invalid_chars:
-            raise AnsibleError("Invalid characters supplied in group name (%s): %s" % (to_native(name), to_native(invalid_chars)))
-
         self.depth = 0
-        self.name = name
+        self.name = to_safe_group_name(name)
         self.hosts = []
         self._hosts = None
         self.vars = {}
@@ -180,9 +175,7 @@ class Group:
             start_ancestors = group.get_ancestors()
             new_ancestors = self.get_ancestors()
             if group in new_ancestors:
-                raise AnsibleError(
-                    "Adding group '%s' as child to '%s' creates a recursive "
-                    "dependency loop." % (group.name, self.name))
+                raise AnsibleError("Adding group '%s' as child to '%s' creates a recursive dependency loop." % (to_native(group.name), to_native(self.name)))
             new_ancestors.add(self)
             new_ancestors.difference_update(start_ancestors)
 
@@ -220,7 +213,7 @@ class Group:
                     g.depth = depth
                     unprocessed.update(g.child_groups)
             if depth - start_depth > len(seen):
-                raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
+                raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
 
     def add_host(self, host):
         if host.name not in self.host_names:
