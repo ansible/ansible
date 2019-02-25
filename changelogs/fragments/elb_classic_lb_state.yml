@@ -1,0 +1,2 @@
+minor_changes:
+  - elb_classic_lb - assume state is 'present' when not specified
