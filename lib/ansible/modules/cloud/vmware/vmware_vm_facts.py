@@ -43,6 +43,13 @@ options:
       default: 'all'
       choices: [ all, vm, template ]
       version_added: 2.5
+      type: str
+    show_attribute:
+      description:
+      - Attributes related to VM guest shown in facts only when this is set C(true).
+      default: no
+      type: bool
+      version_added: 2.8
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -194,7 +201,9 @@ class VmwareVmFacts(PyVmomi):
             if esxi_parent and isinstance(esxi_parent, vim.ClusterComputeResource):
                 cluster_name = summary.runtime.host.parent.name
 
-            vm_attributes = self.get_vm_attributes(vm)
+            vm_attributes = dict()
+            if self.module.params.get('show_attribute'):
+                vm_attributes = self.get_vm_attributes(vm)
 
             virtual_machine = {
                 "guest_name": summary.config.name,
@@ -224,9 +233,13 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         vm_type=dict(type='str', choices=['vm', 'all', 'template'], default='all'),
+        show_attribute=dict(type='bool', default='no'),
     )
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
     vmware_vm_facts = VmwareVmFacts(module)
     _virtual_machines = vmware_vm_facts.get_all_virtual_machines()
