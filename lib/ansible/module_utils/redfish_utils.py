@@ -370,7 +370,8 @@ class RedfishUtils(object):
                         disk_result = {}
                         for property in properties:
                             if property in data:
-                                disk_result[property] = data[property]
+                                if data[property] is not None:
+                                    disk_result[property] = data[property]
                         disk_results.append(disk_result)
             result["entries"] = disk_results
         return result
