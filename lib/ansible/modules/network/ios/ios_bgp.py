@@ -106,6 +106,7 @@ options:
       networks:
         description:
           - Specify Networks to announce via BGP.
+          - For operation replace, this option is mutually exclusive with networks option under address_family.
         suboptions:
           prefix:
             description:
@@ -167,6 +168,7 @@ options:
           networks:
             description:
               - Specify Networks to announce via BGP.
+              - For operation replace, this option is mutually exclusive with root level networks option.
             suboptions:
               prefix:
                 description:
