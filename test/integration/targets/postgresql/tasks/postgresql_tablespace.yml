@@ -115,7 +115,6 @@
     name: acme
     set:
       seq_page_cost: 4
-      random_page_cost: 1
   register: result
   ignore_errors: yes
 
@@ -123,7 +122,7 @@
     that:
     - result.changed == true
     - result.owner == 'alice'
-    - result.queries == ["ALTER TABLESPACE acme SET (seq_page_cost = '4')", "ALTER TABLESPACE acme SET (random_page_cost = '1')"]
+    - result.queries == ["ALTER TABLESPACE acme SET (seq_page_cost = '4')"]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options.seq_page_const == '4'
