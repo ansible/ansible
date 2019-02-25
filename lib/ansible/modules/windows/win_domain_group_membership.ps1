@@ -52,7 +52,7 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
-$current_members = Get-AdGroupMember -Identity $name @extra_args
+$members_before = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = @()
 
 foreach ($member in $members) {
@@ -82,7 +82,7 @@ foreach ($member in $members) {
     }
 
     $user_in_group = $false
-    foreach ($current_member in $current_members) {
+    foreach ($current_member in $members_before) {
         if ($current_member.sid -eq $group_member.sid) {
             $user_in_group = $true
             break
@@ -124,20 +124,21 @@ if ($state -eq "pure") {
 $final_members = Get-AdGroupMember -Identity $name @extra_args
 
 if ($final_members) {
-    $result.members = [Array]$final_members.name
+    $result.members = [Array]$final_members.SamAccountName
 } else {
     $result.members = @()
 }
 
 if ($diff_mode -and $result.changed) {
-    $diff_text = "[$name]`n"
-    foreach ($added in $result.added) {
-        $diff_text += "+Member = $added`n"
+    $result.diff.before = $members_before.SamAccountName | Out-String
+    if (!$check_mode) {
+        $result.diff.after = [Array]$final_members.SamAccountName | Out-String
+    } else {
+        $after = [System.Collections.ArrayList][Array]$final_members.SamAccountName
+        $result.removed | ForEach-Object { $after.Remove($_) }
+        $result.added | ForEach-Object { $after.Add($_) }
+        $result.diff.after = [Array]$after | Out-String
     }
-    foreach ($removed in $result.removed) {
-        $diff_text += "+Member = $removed`n"
-    }
-    $result.diff.prepared = $diff_text
 }
 
 Exit-Json -obj $result
