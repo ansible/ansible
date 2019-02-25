@@ -39,6 +39,12 @@ options:
      description:
      - UUID of the instance to gather facts if known, this is VMware's unique identifier.
      - This is required parameter, if parameter C(name) is not supplied.
+   use_instance_uuid:
+     description:
+     - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+     default: no
+     type: bool
+     version_added: '2.8'
    folder:
      description:
      - Destination folder, absolute or relative path to find an existing guest.
@@ -166,6 +172,7 @@ def main():
     argument_spec.update(
         name=dict(type='str'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         datacenter=dict(type='str', required=True),
     )
