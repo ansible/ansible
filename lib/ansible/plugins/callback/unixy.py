@@ -100,11 +100,9 @@ class CallbackModule(CallbackBase):
             self._display.display("%s (via handler)... " % self.task_display_name)
 
     def v2_playbook_on_play_start(self, play):
-        # TODO display name of play and list of play hosts
-        # TODO don't display play name if no hosts in play
         name = play.get_name().strip()
-        if name:
-            msg = u"\n- %s -" % name
+        if name and play.hosts:
+            msg = u"\n- %s on hosts: %s -" % (name, ",".join(play.hosts))
         else:
             msg = u"---"
 
