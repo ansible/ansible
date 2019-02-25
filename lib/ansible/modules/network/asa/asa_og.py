@@ -3,13 +3,6 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-
-from __future__ import absolute_import, division, print_function
-import re
-import sys
-__metaclass__ = type
-
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -75,7 +68,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
 from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
-
+from __future__ import absolute_import, division, print_function
+import re
+import sys
+__metaclass__ = type
 
 class Parser():
     '''Regex class for outputs parsing'''
@@ -125,7 +121,7 @@ def map_config_to_obj(module):
     group_name = module.params['name']
     protocol = module.params['protocol']
 
-    sh_run_group_name = get_config(module, flags=['object-group | include {}'.format(group_name)])
+    sh_run_group_name = get_config(module, flags=['object-group | include {0}'.format(group_name)])
     run_group_name = Parser(sh_run_group_name, protocol).parse_obj_grp_name()
 
     obj_dict['have_name'] = run_group_name
@@ -139,13 +135,13 @@ def map_config_to_obj(module):
             obj_dict['have_group_type'] = "service-object"
 
     if group_type == 'network-object':
-        sh_run_group_type = get_config(module, flags=['object-group id {}'.format(group_name)])
+        sh_run_group_type = get_config(module, flags=['object-group id {0}'.format(group_name)])
         have_lines = Parser(sh_run_group_type, protocol).parse_obj_grp()
 
         obj_dict['have_lines'] = have_lines
 
     elif group_type == 'service-object' or group_type == 'port-object':
-        sh_run_group_type = run_commands(module, 'show object-group id {}'.format(group_name))
+        sh_run_group_type = run_commands(module, 'show object-group id {0}'.format(group_name))
         have_lines_raw = Parser(sh_run_group_type[0], protocol).parse_obj_grp()
 
         if have_lines_raw:
@@ -238,8 +234,8 @@ def map_obj_to_commands(want, have, module):
 
         elif have_lines is None and have_group_type is None:
 
-            if 'network-object' in group_type :
-                commands.append('object-group network {}'.format(name))
+            if 'network-object' in group_type:
+                commands.append('object-group network {0}'.format(name))
 
                 for i in lines:
                     if 'object' not in i:
@@ -251,7 +247,7 @@ def map_obj_to_commands(want, have, module):
                     commands.append(i)
 
             elif 'service-object' in group_type:
-                commands.append('object-group service {}'.format(name))
+                commands.append('object-group service {0}'.format(name))
 
                 for i in lines:
                     add_lines.append('service-object ' + i)
@@ -260,7 +256,7 @@ def map_obj_to_commands(want, have, module):
                     commands.append(i)
 
             elif 'port-object' in group_type:
-                commands.append('object-group service {} {}'.format(name, protocol))
+                commands.append('object-group service {0} {1}'.format(name, protocol))
                 for i in lines:
                     add_lines.append('port-object ' + i)
 
