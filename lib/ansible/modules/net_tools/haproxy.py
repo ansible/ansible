@@ -1,27 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Ravi Bhure <ravibhure@gmail.com>
+# Copyright: (c) 2014, Ravi Bhure <ravibhure@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: haproxy
 version_added: "1.9"
-short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands.
-author: "Ravi Bhure (@ravibhure)"
+short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands
+author:
+- Ravi Bhure (@ravibhure)
 description:
-    - Enable, disable, drain and set weights for HAProxy backend servers using socket
-      commands.
+    - Enable, disable, drain and set weights for HAProxy backend servers using socket commands.
 notes:
     - Enable, disable and drain commands are restricted and can only be issued on
       sockets configured for level 'admin'. For example, you can add the line
@@ -33,90 +31,99 @@ options:
   backend:
     description:
       - Name of the HAProxy backend pool.
-    default: auto-detected
+      - If this parameter is unset, it will be auto-detected.
+    type: str
   drain:
     description:
       - Wait until the server has no active connections or until the timeout
-        determined by wait_interval and wait_retries is reached.  Continue only
-        after the status changes to 'MAINT'.  This overrides the
-        shutdown_sessions option.
+        determined by wait_interval and wait_retries is reached.
+      - Continue only after the status changes to 'MAINT'.
+      - This overrides the shutdown_sessions option.
     type: bool
     version_added: "2.4"
   host:
     description:
       - Name of the backend host to change.
+    type: str
     required: true
   shutdown_sessions:
     description:
       - When disabling a server, immediately terminate all the sessions attached
-        to the specified server. This can be used to terminate long-running
-        sessions after a server is put into maintenance mode. Overridden by the
-        drain option.
+        to the specified server.
+      - This can be used to terminate long-running sessions after a server is put
+        into maintenance mode. Overridden by the drain option.
     type: bool
-    default: 'no'
+    default: no
   socket:
     description:
       - Path to the HAProxy socket file.
+    type: path
     default: /var/run/haproxy.sock
   state:
     description:
       - Desired state of the provided backend host.
-      - Note that C(drain) state was added in version 2.4. It is supported only by HAProxy version 1.5 or later,
-        if used on versions < 1.5, it will be ignored.
+      - Note that C(drain) state was added in version 2.4.
+      - It is supported only by HAProxy version 1.5 or later,
+      - When used on versions < 1.5, it will be ignored.
+    type: str
     required: true
-    choices: [ "enabled", "disabled", "drain" ]
+    choices: [ disabled, drain, enabled ]
   fail_on_not_found:
     description:
       - Fail whenever trying to enable/disable a backend host that does not exist
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.2"
   wait:
     description:
-      - Wait until the server reports a status of 'UP' when `state=enabled`,
-        status of 'MAINT' when `state=disabled` or status of 'DRAIN' when `state=drain`
+      - Wait until the server reports a status of 'UP' when C(state=enabled),
+        status of 'MAINT' when C(state=disabled) or status of 'DRAIN' when C(state=drain)
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   wait_interval:
     description:
       - Number of seconds to wait between retries.
+    type: int
     default: 5
     version_added: "2.0"
   wait_retries:
     description:
       - Number of times to check for status after changing the state.
+    type: int
     default: 25
     version_added: "2.0"
   weight:
     description:
-      - The value passed in argument. If the value ends with the `%` sign, then
-        the new weight will be relative to the initially configured weight.
-        Relative weights are only permitted between 0 and 100% and absolute
+      - The value passed in argument.
+      - If the value ends with the `%` sign, then the new weight will be
+        relative to the initially configured weight.
+      - Relative weights are only permitted between 0 and 100% and absolute
         weights are permitted between 0 and 256.
+    type: str
 '''
 
-EXAMPLES = '''
-# disable server in 'www' backend pool
-- haproxy:
+EXAMPLES = r'''
+- name: Disable server in 'www' backend pool
+  haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
     backend: www
 
-# disable server without backend pool name (apply to all available backend pool)
-- haproxy:
+- name: Disable server without backend pool name (apply to all available backend pool)
+  haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
 
-# disable server, provide socket file
-- haproxy:
+- name: Disable server, provide socket file
+  haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
     socket: /var/run/haproxy.sock
     backend: www
 
-# disable server, provide socket file, wait until status reports in maintenance
-- haproxy:
+- name: Disable server, provide socket file, wait until status reports in maintenance
+  haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
     socket: /var/run/haproxy.sock
@@ -136,35 +143,35 @@ EXAMPLES = '''
     wait_interval: 1
     wait_retries: 60
 
-# disable backend server in 'www' backend pool and drop open sessions to it
-- haproxy:
+- name: Disable backend server in 'www' backend pool and drop open sessions to it
+  haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
     backend: www
     socket: /var/run/haproxy.sock
-    shutdown_sessions: true
+    shutdown_sessions: yes
 
-# disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
-- haproxy:
+- name: Disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
+  haproxy:
     state: disabled
     host: '{{ inventory_hostname }}'
     fail_on_not_found: yes
 
-# enable server in 'www' backend pool
-- haproxy:
+- name: Enable server in 'www' backend pool
+  haproxy:
     state: enabled
     host: '{{ inventory_hostname }}'
     backend: www
 
-# enable server in 'www' backend pool wait until healthy
-- haproxy:
+- name: Enable server in 'www' backend pool wait until healthy
+  haproxy:
     state: enabled
     host: '{{ inventory_hostname }}'
     backend: www
     wait: yes
 
-# enable server in 'www' backend pool wait until healthy. Retry 10 times with intervals of 5 seconds to retrieve the health
-- haproxy:
+- name: Enable server in 'www' backend pool wait until healthy. Retry 10 times with intervals of 5 seconds to retrieve the health
+  haproxy:
     state: enabled
     host: '{{ inventory_hostname }}'
     backend: www
@@ -172,16 +179,16 @@ EXAMPLES = '''
     wait_retries: 10
     wait_interval: 5
 
-# enable server in 'www' backend pool with change server(s) weight
-- haproxy:
+- name: Enable server in 'www' backend pool with change server(s) weight
+  haproxy:
     state: enabled
     host: '{{ inventory_hostname }}'
     socket: /var/run/haproxy.sock
     weight: 10
     backend: www
 
-# set the server in 'www' backend pool to drain mode
-- haproxy:
+- name: Set the server in 'www' backend pool to drain mode
+  haproxy:
     state: drain
     host: '{{ inventory_hostname }}'
     socket: /var/run/haproxy.sock
@@ -395,8 +402,7 @@ class HAProxy(object):
         Figure out what you want to do from ansible, and then do it.
         """
         # Get the state before the run
-        state_before = self.get_state_for(self.backend, self.host)
-        self.command_results['state_before'] = state_before
+        self.command_results['state_before'] = self.get_state_for(self.backend, self.host)
 
         # toggle enable/disbale server
         if self.state == 'enabled':
@@ -411,16 +417,12 @@ class HAProxy(object):
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
         # Get the state after the run
-        state_after = self.get_state_for(self.backend, self.host)
-        self.command_results['state_after'] = state_after
+        self.command_results['state_after'] = self.get_state_for(self.backend, self.host)
 
         # Report change status
-        if state_before != state_after:
-            self.command_results['changed'] = True
-            self.module.exit_json(**self.command_results)
-        else:
-            self.command_results['changed'] = False
-            self.module.exit_json(**self.command_results)
+        self.command_results['changed'] = (self.command_results['state_before'] != self.command_results['state_after'])
+
+        self.module.exit_json(**self.command_results)
 
 
 def main():
@@ -428,17 +430,17 @@ def main():
     # load ansible module object
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(required=True, default=None, choices=ACTION_CHOICES),
-            host=dict(required=True, default=None),
-            backend=dict(required=False, default=None),
-            weight=dict(required=False, default=None),
-            socket=dict(required=False, default=DEFAULT_SOCKET_LOCATION),
-            shutdown_sessions=dict(required=False, default=False, type='bool'),
-            fail_on_not_found=dict(required=False, default=False, type='bool'),
-            wait=dict(required=False, default=False, type='bool'),
-            wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
-            wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
-            drain=dict(default=False, type='bool'),
+            state=dict(type='str', required=True, choices=ACTION_CHOICES),
+            host=dict(type='str', required=True),
+            backend=dict(type='str'),
+            weight=dict(type='str'),
+            socket=dict(type='path', default=DEFAULT_SOCKET_LOCATION),
+            shutdown_sessions=dict(type='bool', default=False),
+            fail_on_not_found=dict(type='bool', default=False),
+            wait=dict(type='bool', default=False),
+            wait_retries=dict(type='int', default=WAIT_RETRIES),
+            wait_interval=dict(type='int', default=WAIT_INTERVAL),
+            drain=dict(type='bool', default=False),
         ),
     )
 
