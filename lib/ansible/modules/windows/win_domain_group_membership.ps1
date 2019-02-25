@@ -52,13 +52,6 @@ if ($diff_mode) {
     $result.diff = @{}
 }
 
-try {
-    Get-ADGroup -Identity $name -Properties * @extra_args
-}
-catch {
-    Fail-Json -obj $result "Could not find domain group $name"
-}
-
 $current_members = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = @()
 
@@ -93,18 +86,14 @@ foreach ($member in $members) {
         }
     }
 
-    try {
-        if ($state -in @("present", "pure") -and !$user_in_group) {
-            Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
-            $result.added += $group_member.SamAccountName
-            $result.changed = $true
-        } elseif ($state -eq "absent" -and $user_in_group) {
-            Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
-            $result.removed += $group_member.SamAccountName
-            $result.changed = $true
-        }
-    } catch {
-        Fail-Json -obj $result -message $_.Exception.Message
+    if ($state -in @("present", "pure") -and !$user_in_group) {
+        Add-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
+        $result.added += $group_member.SamAccountName
+        $result.changed = $true
+    } elseif ($state -eq "absent" -and $user_in_group) {
+        Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args -Confirm:$False
+        $result.removed += $group_member.SamAccountName
+        $result.changed = $true
     }
 }
 
@@ -121,14 +110,10 @@ if ($state -eq "pure") {
             }
         }
 
-        try {
-            if ($user_to_remove) {
-                Remove-ADGroupMember -Identity $name -Members $group_member -WhatIf:$check_mode @extra_args
-                $result.removed += $current_member.SamAccountName
-                $result.changed = $true
-            }
-        } catch {
-            Fail-Json -obj $result -message $_.Exception.Message
+        if ($user_to_remove) {
+            Remove-ADGroupMember -Identity $name -Members $current_member -WhatIf:$check_mode @extra_args -Confirm:$False
+            $result.removed += $current_member.SamAccountName
+            $result.changed = $true
         }
     }
 }
