@@ -34,6 +34,7 @@ HAS_PANDEVICE = True
 try:
     import pandevice
     from pandevice.base import PanDevice
+    from pandevice.firewall import Firewall
     from pandevice.panorama import DeviceGroup, Template, TemplateStack
     from pandevice.policies import PreRulebase, PostRulebase, Rulebase
     from pandevice.device import Vsys
@@ -95,10 +96,11 @@ class ConnectionHelper(object):
                     'pandevice', pandevice.__version__,
                     _vstr(self.min_pandevice_version)))
 
-        d, host_arg = None, None
+        d, host_arg, serial_number = None, None, None
         if module.params['provider'] and module.params['provider']['host']:
             d = module.params['provider']
             host_arg = 'host'
+            serial_number = d['serial_number']
         elif module.params['ip_address'] is not None:
             d = module.params
             host_arg = 'ip_address'
@@ -119,6 +121,12 @@ class ConnectionHelper(object):
                 module.fail_json(msg=_MIN_VERSION_ERROR.format(
                     'PAN-OS', _vstr(self.device._version_info),
                     _vstr(self.min_panos_version)))
+
+        # Optional: Firewall via Panorama connectivity specified.
+        if hasattr(self.device, 'refresh_devices') and serial_number:
+            fw = Firewall(serial=serial_number)
+            self.device.add(fw)
+            self.device = fw
 
         parent = self.device
         not_found = '{0} "{1}" is not present.'
@@ -221,7 +229,7 @@ class ConnectionHelper(object):
             # Spec: vsys or vsys_dg or vsys_importable.
             vsys_name = self.vsys_dg or self.vsys or self.vsys_importable
             if vsys_name is not None:
-                self.device.vsys = module.params[vsys_name]
+                parent.vsys = module.params[vsys_name]
 
             # Spec: rulebase.
             if self.rulebase is not None:
@@ -299,6 +307,7 @@ def get_connection(vsys=None, device_group=None,
                 'password': {'no_log': True},
                 'api_key': {'no_log': True},
                 'port': {'default': 443, 'type': 'int'},
+                'serial_number': {'no_log': True},
             },
         },
     }
