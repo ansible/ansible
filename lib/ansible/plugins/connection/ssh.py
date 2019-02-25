@@ -511,6 +511,7 @@ class Connection(ConnectionBase):
 
     def _connect(self):
         self._spawn_ssh_agent()
+        self._connected = True
         return self
 
     @staticmethod
