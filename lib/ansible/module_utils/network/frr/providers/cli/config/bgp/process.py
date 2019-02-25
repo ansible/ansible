@@ -19,7 +19,7 @@ REDISTRIBUTE_PROTOCOLS = frozenset(['ospf', 'ospf6', 'eigrp', 'isis', 'table',
 class Provider(CliProvider):
 
     def render(self, config=None):
-        self._validate_networks()
+        self._validate_input()
 
         commands = list()
 
@@ -113,7 +113,7 @@ class Provider(CliProvider):
         """
         return AddressFamily(self.params).render(config)
 
-    def _validate_networks(self):
+    def _validate_input(self):
         address_family =  self.get_value('config.address_family')
         root_networks = self.get_value('config.networks')
         operation = self.params['operation']
