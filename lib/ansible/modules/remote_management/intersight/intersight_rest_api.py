@@ -150,7 +150,7 @@ def get_resource(intersight):
 def compare_values(expected, actual):
     try:
         for (key, value) in iteritems(expected):
-            if re.search(r'P(ass)?w(or)?d', key) or not actual.get(key):
+            if re.search(r'P(ass)?w(or)?d', key) or key not in actual:
                 # do not compare any password related attributes or attributes that are not in the actual resource
                 continue
             if not compare_values(value, actual[key]):
@@ -184,8 +184,10 @@ def configure_resource(intersight, moid):
                 'resource_path': intersight.module.params['resource_path'],
                 'body': intersight.module.params['api_body'],
             }
-            intersight.call_api(**options)
-            intersight.result['api_response'] = get_resource(intersight)
+            resp = intersight.call_api(**options)
+            if 'Moid' not in resp:
+                resp = get_resource(intersight)
+            intersight.result['api_response'] = resp
     intersight.result['changed'] = True
 
 
