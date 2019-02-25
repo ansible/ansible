@@ -42,6 +42,12 @@ options:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
     - This is required if name is not supplied.
+  use_instance_uuid:
+    description:
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+    version_added: '2.8'
   folder:
     description:
     - Destination folder, absolute or relative path to find an existing guest or create the new guest.
@@ -139,6 +145,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str', default='/vm'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
