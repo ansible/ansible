@@ -17,7 +17,7 @@ Function Backup-File {
 
     Process {
         $backup_path = $null
-        if (Test-Path -LiteralPath $path) {
+        if (Test-Path -LiteralPath $path -PathType Leaf) {
             $backup_path = "$path.$pid." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss") + ".bak";
             Try {
                 Copy-Item -LiteralPath $path -Destination $backup_path

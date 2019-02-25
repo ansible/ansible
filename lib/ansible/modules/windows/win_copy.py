@@ -50,6 +50,8 @@ options:
     - Determine whether a backup should be created.
     - When set to C(yes), create a backup file including the timestamp information
       so you can get the original file back if you somehow clobbered it incorrectly.
+    - No backup is taken when C(remote_src=False) and multiple files are being
+      copied.
     type: bool
     default: no
     version_added: '2.8'

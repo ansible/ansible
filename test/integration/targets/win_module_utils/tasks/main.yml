@@ -164,50 +164,12 @@
     - not add_type_test is failed
     - add_type_test.res == 'success'
 
-- name: Test Backup-File using none
-  backup_file:
-    path: none
-  register: nm_backup_file_none
+- name: call module with BackupFile tests
+  backup_file_test:
+  register: backup_file_test
 
-- name: Assert nm_backup_file_none
+- name: assert call module with BackupFile tests
   assert:
     that:
-    - nm_backup_file_none is not changed
-    - nm_backup_file_none.backup_file == none
-
-- name: Test Backup-File using etc/hosts
-  backup_file:
-    path: C:\Windows\System32\drivers\etc\hosts
-  register: nm_backup_file_hosts
-
-- name: Test backup_file existence
-  win_stat:
-    path: '{{ nm_backup_file_hosts.backup_file }}'
-  register: nm_backup_file_stat
-
-- name: Assert nm_backup_file_hosts
-  assert:
-    that:
-    - nm_backup_file_hosts is changed
-    - nm_backup_file_hosts.backup_file is not none
-    - nm_backup_file_hosts.backup_file.startswith('C:\Windows\System32\drivers\etc\hosts.')
-    - nm_backup_file_stat.stat.exists == true
-
-- name: Test Backup-File using etc/hosts in check-mode
-  backup_file:
-    path: C:\Windows\System32\drivers\etc\hosts
-  check_mode: yes
-  register: cm_backup_file_hosts
-
-- name: Test backup_file existence
-  win_stat:
-    path: '{{ cm_backup_file_hosts.backup_file }}'
-  register: cm_backup_file_stat
-
-- name: Assert cm_backup_file_hosts
-  assert:
-    that:
-    - cm_backup_file_hosts is changed
-    - cm_backup_file_hosts.backup_file is not none
-    - cm_backup_file_hosts.backup_file.startswith('C:\Windows\System32\drivers\etc\hosts.')
-    - cm_backup_file_stat.stat.exists == false
+    - not backup_file_test is failed
+    - backup_file_test.res == 'success'
