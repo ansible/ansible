@@ -34,8 +34,6 @@ lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_dsc.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_eventlog.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
-lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_get_url.ps1 PSUseApprovedVerbs

@@ -14,7 +14,6 @@ $paths = Get-AnsibleParam -obj $params -name 'paths' -failifempty $true
 
 $age = Get-AnsibleParam -obj $params -name 'age'
 $age_stamp = Get-AnsibleParam -obj $params -name 'age_stamp' -default 'mtime' -ValidateSet 'mtime','ctime','atime'
-$contains = Get-AnsibleParam -obj $params -name 'contains'
 $file_type = Get-AnsibleParam -obj $params -name 'file_type' -default 'file' -ValidateSet 'file','directory'
 $follow = Get-AnsibleParam -obj $params -name 'follow' -type "bool" -default $false
 $hidden = Get-AnsibleParam -obj $params -name 'hidden' -type "bool" -default $false
@@ -24,6 +23,8 @@ $size = Get-AnsibleParam -obj $params -name 'size'
 $use_regex = Get-AnsibleParam -obj $params -name 'use_regex' -type "bool" -default $false
 $get_checksum = Get-AnsibleParam -obj $params -name 'get_checksum' -type "bool" -default $true
 $checksum_algorithm = Get-AnsibleParam -obj $params -name 'checksum_algorithm' -default 'sha1' -ValidateSet 'md5', 'sha1', 'sha256', 'sha384', 'sha512'
+$contains_patterns = Get-AnsibleParam -obj $params -name 'contains_patterns' -aliases @('contains')
+$contains_use_regex = Get-AnsibleParam -obj $params -name 'contains_use_regex' -type "bool" -default $false
 
 $result = @{
     files = @()
@@ -49,11 +50,11 @@ namespace Ansible.Command {
         [DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode, SetLastError = true)]
         public static extern int GetFinalPathNameByHandle(IntPtr handle, [In, Out] StringBuilder path, int bufLen, int flags);
 
-        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)] 
-        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess, 
+        [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern SafeFileHandle CreateFile(string lpFileName, int dwDesiredAccess,
         int dwShareMode, IntPtr SecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, IntPtr hTemplateFile);
 
-        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) { 
+        public static string GetSymbolicLinkTarget(System.IO.DirectoryInfo symlink) {
             SafeFileHandle directoryHandle = CreateFile(symlink.FullName, 0, 2, System.IntPtr.Zero, CREATION_DISPOSITION_OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, System.IntPtr.Zero);
             if(directoryHandle.IsInvalid)
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -64,9 +65,9 @@ namespace Ansible.Command {
             if (size<0)
                 throw new Win32Exception(Marshal.GetLastWin32Error()); // The remarks section of GetFinalPathNameByHandle mentions the return being prefixed with "\\?\" // More information about "\\?\" here -> http://msdn.microsoft.com/en-us/library/aa365247(v=VS.85).aspx
             if (path[0] == '\\' && path[1] == '\\' && path[2] == '?' && path[3] == '\\')
-                return path.ToString().Substring(4); 
-            else 
-                return path.ToString(); 
+                return path.ToString().Substring(4);
+            else
+                return path.ToString();
         }
     }
 }
@@ -79,13 +80,13 @@ $env:TMP = $original_tmp
 Function Assert-Age($info) {
     $valid_match = $true
 
-    if ($age -ne $null) {
+    if ($null -ne $age) {
         $seconds_per_unit = @{'s'=1; 'm'=60; 'h'=3600; 'd'=86400; 'w'=604800}
         $seconds_pattern = '^(-?\d+)(s|m|h|d|w)?$'
         $match = $age -match $seconds_pattern
         if ($match) {
             [int]$specified_seconds = $matches[1]
-            if ($matches[2] -eq $null) {
+            if ($null -eq $matches[2]) {
                 $chosen_unit = 's'
             } else {
                 $chosen_unit = $matches[2]
@@ -149,7 +150,7 @@ Function Assert-Hidden($info) {
 Function Assert-Pattern($info) {
     $valid_match = $false
 
-    if ($patterns -ne $null) {
+    if ($null -ne $patterns) {
         foreach ($pattern in $patterns) {
             if ($use_regex -eq $true) {
                 # Use -match for regex matching
@@ -173,10 +174,10 @@ Function Assert-Pattern($info) {
 Function Assert-Contains($info) {
     $valid_match = $false
 
-    if ($contains -ne $null) {
+    if ($null -ne $contains_patterns) {
         $file_contents = [System.IO.File]::ReadAllText($info.path)
-        foreach ($pattern in $contains) {
-            if ($use_regex -eq $true) {
+        foreach ($pattern in $contains_patterns) {
+            if ($contains_use_regex) {
                 # Use -match for regex matching
                 if ($file_contents -match $pattern) {
                     $valid_match = $true
@@ -198,13 +199,13 @@ Function Assert-Contains($info) {
 Function Assert-Size($info) {
     $valid_match = $true
 
-    if ($size -ne $null) {
+    if ($null -ne $size) {
         $bytes_per_unit = @{'b'=1; 'k'=1024; 'm'=1024*1024; 'g'=1024*1024*1024; 't'=1024*1024*1024*1024}
         $size_pattern = '^(-?\d+)(b|k|m|g|t)?$'
         $match = $size -match $size_pattern
         if ($match) {
-            [int]$specified_size = $matches[1] 
-            if ($matches[2] -eq $null) {
+            [int]$specified_size = $matches[1]
+            if ($null -eq $matches[2]) {
                 $chosen_byte = 'b'
             } else {
                 $chosen_byte = $matches[2]
@@ -234,7 +235,7 @@ Function Assert-FileStat($info) {
     $hidden_match = Assert-Hidden -info $info
     $pattern_match = Assert-Pattern -info $info
     $size_match = Assert-Size -info $info
-    
+
 
     if ($age_match -and $file_type_match -and $hidden_match -and $pattern_match -and $size_match) {
         # Nest Assert-Contains inside other conditions because it reads the whole file, and there is no sense in reading files which have otherwise failed assert.
@@ -280,20 +281,22 @@ Function Get-FileStat($file) {
         try {
             $lnk_source = [Ansible.Command.SymLinkHelper]::GetSymbolicLinkTarget($file)
             $file_stat.lnk_source = $lnk_source
-        } catch {}
+        } catch {
+            Add-Warning -obj $result -message "win_find found that the link $file has broken destination, this broken destination was ignored and will not be part of the result output: $_"
+        }
     } elseif ($file.PSIsContainer) {
         $isdir = $true
 
-        $share_info = Get-WmiObject -Class Win32_Share -Filter "Path='$($file.Fullname -replace '\\', '\\')'"
-        if ($share_info -ne $null) {
+        $share_info = Get-CimInstance -ClassName Win32_Share -Filter "Path='$($file.Fullname -replace '\\', '\\')'"
+        if ($null -ne $share_info) {
             $isshared = $true
             $file_stat.sharename = $share_info.Name
         }
-        
+
         # only get the size of a directory if there are files (not directories) inside the folder
         $dir_files_sum = Get-ChildItem $file.FullName -Recurse | Where-Object { -not $_.PSIsContainer }
 
-        if ($dir_files_sum -eq $null -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
+        if ($null -eq $dir_files_sum -or ($dir_files_sum.PSObject.Properties.name -contains 'length' -eq $false)) {
             $file_stat.size = 0
         } else {
             $file_stat.size = ($dir_files_sum | Measure-Object -property length -sum).Sum
@@ -358,15 +361,14 @@ foreach ($path in $paths_to_check) {
         $file = Get-Item -Force -Path $path
         $info = Get-FileStat -file $file
     } catch {
-        Add-Warning -obj $result -message "win_find failed to check some files, these files were ignored and will not be part of the result output: $_"
-        break
+        Add-Warning -obj $result -message "win_find could not read a content of the file $file, this file was ignored and will not be part of the result output: $_"
     }
 
     $new_examined = $result.examined + 1
     $result.examined = $new_examined
 
     if ($info -ne $false) {
-        $files = $result.Files        
+        $files = $result.Files
         $files += $info
 
         $new_matched = $result.matched + 1

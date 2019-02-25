@@ -30,6 +30,7 @@ options:
             - You can choose seconds, minutes, hours, days or weeks
               by specifying the first letter of an of
               those words (e.g., "2s", "10d", 1w").
+            - If a number is provided that seconds are used.
         type: str
     age_stamp:
         description:
@@ -45,6 +46,17 @@ options:
         type: str
         choices: [ md5, sha1, sha256, sha384, sha512 ]
         default: sha1
+    contains_patterns:
+        description:
+            - One or more patterns which should be matched against the file content.
+            - Patterns can be regex-based or wildcard-based.
+        version_added: '2.9'
+    contains_use_regex:
+        description:
+            - If C(yes), the C(contains_patterns) are regex-based. If C(no) C(contains_patterns) are wildcard-based.
+        type: bool
+        default: no
+        version_added: '2.9'
     file_type:
         description: Type of file to search for.
         type: str
