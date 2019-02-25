@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2015, Joseph Callen <jcallen () csc.com>
 # Copyright: (c) 2018, Ansible Project
+# Copyright: (c) 2018, James E. King III (@jeking3) <jking@apache.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import atexit
+import ansible.module_utils.common._collections_compat as collections_compat
+import json
 import os
 import re
 import ssl
@@ -27,11 +30,13 @@ except ImportError:
 PYVMOMI_IMP_ERR = None
 try:
     from pyVim import connect
-    from pyVmomi import vim, vmodl
+    from pyVmomi import vim, vmodl, VmomiSupport
     HAS_PYVMOMI = True
+    HAS_PYVMOMIJSON = hasattr(VmomiSupport, 'VmomiJSONEncoder')
 except ImportError:
     PYVMOMI_IMP_ERR = traceback.format_exc()
     HAS_PYVMOMI = False
+    HAS_PYVMOMIJSON = False
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
@@ -1274,3 +1279,104 @@ class PyVmomi(object):
                     return f
 
         self.module.fail_json(msg="No vmdk file found for path specified [%s]" % vmdk_path)
+
+    #
+    # Conversion to JSON
+    #
+
+    def _deepmerge(self, d, u):
+        """
+        Deep merges u into d.
+
+        Credit:
+          https://bit.ly/2EDOs1B (stackoverflow question 3232943)
+        License:
+          cc-by-sa 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
+        Changes:
+          using collections_compat for compatibility
+
+        Args:
+          - d (dict): dict to merge into
+          - u (dict): dict to merge into d
+
+        Returns:
+          dict, with u merged into d
+        """
+        for k, v in iteritems(u):
+            if isinstance(v, collections_compat.Mapping):
+                d[k] = self._deepmerge(d.get(k, {}), v)
+            else:
+                d[k] = v
+        return d
+
+    def _extract(self, data, remainder):
+        """
+        This is used to break down dotted properties for extraction.
+
+        Args:
+          - data (dict): result of _jsonify on a property
+          - remainder: the remainder of the dotted property to select
+
+        Return:
+          dict
+        """
+        result = dict()
+        if '.' not in remainder:
+            result[remainder] = data[remainder]
+            return result
+        key, remainder = remainder.split('.', 1)
+        result[key] = self._extract(data[key], remainder)
+        return result
+
+    def _jsonify(self, obj):
+        """
+        Convert an object from pyVmomi into JSON.
+
+        Args:
+          - obj (object): vim object
+
+        Return:
+          dict
+        """
+        return json.loads(json.dumps(obj, cls=VmomiSupport.VmomiJSONEncoder,
+                                     sort_keys=True, strip_dynamic=True))
+
+    def to_json(self, obj, properties=None):
+        """
+        Convert a vSphere (pyVmomi) Object into JSON.  This is a deep
+        transformation.  The list of properties is optional - if not
+        provided then all properties are deeply converted.  The resulting
+        JSON is sorted to improve human readability.
+
+        Requires upstream support from pyVmomi > 6.7.1
+        (https://github.com/vmware/pyvmomi/pull/732)
+
+        Args:
+          - obj (object): vim object
+          - properties (list, optional): list of properties following
+                the property collector specification, for example:
+                ["config.hardware.memoryMB", "name", "overallStatus"]
+                default is a complete object dump, which can be large
+
+        Return:
+          dict
+        """
+        if not HAS_PYVMOMIJSON:
+            self.module.fail_json(msg='The installed version of pyvmomi lacks JSON output support; need pyvmomi>6.7.1')
+
+        result = dict()
+        if properties:
+            for prop in properties:
+                try:
+                    if '.' in prop:
+                        key, remainder = prop.split('.', 1)
+                        tmp = dict()
+                        tmp[key] = self._extract(self._jsonify(getattr(obj, key)), remainder)
+                        self._deepmerge(result, tmp)
+                    else:
+                        result[prop] = self._jsonify(getattr(obj, prop))
+                except (AttributeError, KeyError):
+                    self.module.fail_json(msg="Property '{0}' not found.".format(prop))
+        else:
+            result = self._jsonify(obj)
+        return result
