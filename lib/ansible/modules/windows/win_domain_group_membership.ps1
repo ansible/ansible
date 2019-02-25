@@ -56,6 +56,8 @@ $current_members = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = @()
 
 foreach ($member in $members) {
+    # Use try/catch as Get-ADUser does not support `-ErrorAction SilentlyContinue`
+    # We do not want to fail but query for group if no user is found
     try {
         $group_member = Get-ADUser -Identity $member @extra_args
     }
@@ -63,7 +65,8 @@ foreach ($member in $members) {
         $group_member = $null
     }
     if (!$group_member) {
-       try {
+        # Use try/catch as Get-ADGroup does not support `-ErrorAction SilentlyContinue`
+        try {
             $group_member = Get-ADGroup -Identity $member @extra_args
         }
         catch {
