@@ -13,6 +13,7 @@ import ssl
 import time
 import traceback
 from random import randint
+from distutils.version import StrictVersion
 
 REQUESTS_IMP_ERR = None
 try:
@@ -1118,17 +1119,10 @@ class PyVmomi(object):
             self.module.fail_json(msg='VM object or ESXi host name must be set one.')
         if host_system and version:
             host_version = host_system.summary.config.product.version
-            if int(host_version.split('.')[0]) < version[0]:
-                return False
-            elif int(host_version.split('.')[0]) == version[0]:
-                if int(host_version.split('.')[1]) < version[1]:
-                    return False
-                elif int(host_version.split('.')[1]) == version[1]:
-                    if int(host_version.split('.')[2]) < version[2]:
-                        return False
-            return True
+            return StrictVersion(host_version) >= StrictVersion('.'.join(map(str, version)))
         else:
-            self.module.fail_json(msg='Can not get the ESXi host, or the passed ESXi version is None.')
+            self.module.fail_json(msg='Unable to get the ESXi host from vm: %s, or hostname %s,'
+                                      'or the passed ESXi version: %s is None.' % (vm_obj, host_name, version))
 
     # Network related functions
     @staticmethod
