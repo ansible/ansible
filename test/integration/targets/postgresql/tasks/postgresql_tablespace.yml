@@ -20,7 +20,12 @@
 
 - name: postgresql_tablespace - change selinux context
   become: yes
-  shell: chcon root:object_r:postgresql_db_t /mnt/ssd
+  shell: semanage fcontext -a -t postgresql_db_t "/mnt/ssd(/.*)?"
+  ignore_errors: yes
+
+- name: postgresql_tablespace - change selinux context
+  become: yes
+  shell: restorecon -R -v /mnt/ssd
   ignore_errors: yes
 
 - name: postgresql_tablespace - create test role to test change ownership
