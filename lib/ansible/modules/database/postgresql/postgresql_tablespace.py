@@ -520,7 +520,7 @@ def main():
 
     if state == 'present':
         kw['state'] = 'present'
-        
+
         if tblspace.new_name:
             kw['newname'] = tblspace.new_name
 
