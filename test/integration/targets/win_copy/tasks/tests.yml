@@ -172,6 +172,24 @@
     that:
     - copy_file_again is not changed
 
+- name: copy single file (backup)
+  win_copy:
+    content: "{{ lookup('file', 'foo.txt') }}\nfoo bar"
+    dest: '{{test_win_copy_path}}\foo-target.txt'
+    backup: yes
+  register: copy_file_backup
+
+- name: check backup_file
+  win_stat:
+    path: '{{ copy_file_backup.backup_file }}'
+  register: backup_file
+
+- name: assert copy single file (backup)
+  assert:
+    that:
+    - copy_file_backup is changed
+    - backup_file.stat.exists == true
+
 - name: copy single file to folder (check mode)
   win_copy:
     src: foo.txt

@@ -24,6 +24,13 @@ options:
     type: path
     required: yes
     aliases: [ dest, destfile, name ]
+  backup:
+    description:
+      - Determine whether a backup should be created.
+      - When set to C(yes), create a backup file including the timestamp information
+        so you can get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: no
   regexp:
     description:
       - The regular expression to look for in every line of the file. For C(state=present), the pattern to replace if found; only the last line found
@@ -68,11 +75,6 @@ options:
   create:
     description:
       - Used with C(state=present). If specified, the file will be created if it does not already exist. By default it will fail if the file is missing.
-    type: bool
-    default: no
-  backup:
-    description:
-      - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
   validate:
@@ -159,4 +161,19 @@ EXAMPLES = r'''
     backrefs: yes
     regexp: '(^name=)'
     line: '$1JohnDoe'
+'''
+
+RETURN = r'''
+backup:
+  description:
+  - Name of the backup file that was created.
+  - This is now deprecated, use C(backup_file) instead.
+  returned: if backup=yes
+  type: str
+  sample: C:\Path\To\File.txt.11540.20150212-220915.bak
+backup_file:
+  description: Name of the backup file that was created.
+  returned: if backup=yes
+  type: str
+  sample: C:\Path\To\File.txt.11540.20150212-220915.bak
 '''
