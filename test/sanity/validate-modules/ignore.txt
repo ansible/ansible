@@ -393,7 +393,6 @@ lib/ansible/modules/files/file.py E322
 lib/ansible/modules/files/file.py E324
 lib/ansible/modules/files/ini_file.py E323
 lib/ansible/modules/files/iso_extract.py E324
-lib/ansible/modules/files/lineinfile.py E322
 lib/ansible/modules/files/lineinfile.py E323
 lib/ansible/modules/files/lineinfile.py E324
 lib/ansible/modules/files/lineinfile.py E326
@@ -401,7 +400,6 @@ lib/ansible/modules/files/replace.py E323
 lib/ansible/modules/files/synchronize.py E322
 lib/ansible/modules/files/synchronize.py E323
 lib/ansible/modules/files/synchronize.py E324
-lib/ansible/modules/files/synchronize.py E327
 lib/ansible/modules/files/unarchive.py E323
 lib/ansible/modules/identity/keycloak/keycloak_client.py E324
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py E324

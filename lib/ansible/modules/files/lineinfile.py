@@ -14,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'core'}
 
 
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: lineinfile
 short_description: Manage lines in text files
@@ -61,6 +61,7 @@ options:
       - If C(backrefs) is set, may contain backreferences that will get
         expanded with the C(regexp) capture groups if the regexp matches.
     type: str
+    aliases: [ value ]
   backrefs:
     description:
       - Used with C(state=present).
@@ -68,7 +69,7 @@ options:
         that will get populated if the C(regexp) matches.
       - This parameter changes the operation of the module slightly;
         C(insertbefore) and C(insertafter) will be ignored, and if the C(regexp)
-        doesn't match anywhere in the file, the file will be left unchanged.
+        does not match anywhere in the file, the file will be left unchanged.
       - If the C(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
     type: bool
@@ -137,22 +138,24 @@ seealso:
 author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)
-"""
+'''
 
-EXAMPLES = r"""
-# Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
-- lineinfile:
+EXAMPLES = r'''
+# NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+- name: Ensure SELinux is set to enforcing mode
+  lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
     line: SELINUX=enforcing
 
-- lineinfile:
+- name: Make sure group wheel is not in the sudoers configuration
+  lineinfile:
     path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
 
-# Searches for a line that begins with 127.0.0.1 and replaces it with the value of the 'line' parameter
-- lineinfile:
+- name: Replace a localhost entry with our own
+  lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
     line: 127.0.0.1 localhost
@@ -160,46 +163,43 @@ EXAMPLES = r"""
     group: root
     mode: '0644'
 
-- lineinfile:
+- name: Ensure the default Apache port is 8080
+  lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
     line: Listen 8080
 
-- lineinfile:
+- name: Ensure we have our own comment added to /etc/services
+  lineinfile:
     path: /etc/services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
-# Add a line to a file if the file does not exist, without passing regexp
-- lineinfile:
+- name: Add a line to a file if the file does not exist, without passing regexp
+  lineinfile:
     path: /tmp/testfile
     line: 192.168.1.99 foo.lab.net foo
     create: yes
 
-# Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-- lineinfile:
-    path: /etc/sudoers
-    state: present
-    regexp: '^%wheel\s'
-    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
-
-# Yaml requires escaping backslashes in double quotes but not in single quotes
-- lineinfile:
+# NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
+- name: Ensure the JBoss memory settings are exactly as needed
+  lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
     backrefs: yes
 
-# Validate the sudoers file before saving
-- lineinfile:
+# NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
+- name: Validate the sudoers file before saving
+  lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
     validate: /usr/sbin/visudo -cf %s
-"""
+'''
 
 import os
 import re
