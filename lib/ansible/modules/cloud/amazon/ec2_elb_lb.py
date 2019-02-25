@@ -17,7 +17,7 @@ module: ec2_elb_lb
 description:
   - Returns information about the load balancer.
   - Will be marked changed when called only if state is changed.
-short_description: Creates or Updates or Destroys an Amazon ELB.
+short_description: Creates, updates or destroys an Amazon ELB.
 version_added: "1.5"
 author:
   - "Jim Dalton (@jsdalton)"
