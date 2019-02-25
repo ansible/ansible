@@ -43,12 +43,17 @@
   win_lineinfile: dest={{win_output_dir}}/test.txt state=present line="New line at the beginning" insertbefore="BOF" backup=yes
   register: result
 
+- name: check backup_file
+  win_stat:
+    path: '{{ result.backup_file }}'
+  register: backup_file
+
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
-    - "result.changed == true"
-    - "result.msg == 'line added'"
-    - "result.backup != ''"
+    - result.changed == true
+    - result.msg == 'line added'
+    - backup_file.stat.exists == true
 
 - name: stat the backup file
   win_stat: path={{result.backup}}

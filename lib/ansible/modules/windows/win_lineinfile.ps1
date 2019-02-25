@@ -3,6 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
 function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_mode) {
 	Try {
@@ -42,14 +43,14 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 	# Commit changes to the path
 	$cleanpath = $path.Replace("/", "\");
 	Try {
-		Copy-Item $temppath $cleanpath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Copy-Item -Path $temppath -Destination $cleanpath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot write to: $cleanpath ($($_.Exception.Message))";
 	}
 
 	Try {
-		Remove-Item $temppath -force -ErrorAction Stop -WhatIf:$check_mode;
+		Remove-Item -Path $temppath -Force -WhatIf:$check_mode;
 	}
 	Catch {
 		Fail-Json @{} "Cannot remove temporary file: $temppath ($($_.Exception.Message))";
@@ -57,19 +58,6 @@ function WriteLines($outlines, $path, $linesep, $encodingobj, $validate, $check_
 
 	return $joined;
 
-}
-
-
-# Backup the file specified with a date/time filename
-function BackupFile($path, $check_mode) {
-	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-	Try {
-		Copy-Item $path $backuppath -WhatIf:$check_mode;
-	}
-	Catch {
-		Fail-Json @{} "Cannot copy backup file! ($($_.Exception.Message))";
-	}
-	return $backuppath;
 }
 
 
@@ -198,7 +186,9 @@ function Present($path, $regexp, $line, $insertafter, $insertbefore, $create, $b
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
 		$after = WriteLines $lines $path $linesep $encodingobj $validate $check_mode;
@@ -278,7 +268,9 @@ function Absent($path, $regexp, $line, $backup, $validate, $encodingobj, $linese
 
 		# Write backup file if backup == "yes"
 		If ($backup) {
-			$result.backup = BackupFile $path $check_mode;
+			$result.backup_file = Backup-File -path $path -WhatIf:$check_mode
+			# Ensure backward compatibility (deprecate in future)
+			$result.backup = $result.backup_file
 		}
 
 		$after = WriteLines $left $path $linesep $encodingobj $validate $check_mode;
