@@ -23,17 +23,17 @@ import os
 
 from collections import defaultdict
 
-from units.compat import unittest
-from units.compat.mock import MagicMock, patch
+from ansible.errors import AnsibleError
+from ansible.inventory.host import Host
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import iteritems
 from ansible.playbook.play import Play
+from ansible.vars.manager import VariableManager
 
-
+from units.compat import unittest
+from units.compat.mock import MagicMock, Mock, patch
 from units.mock.loader import DictDataLoader
 from units.mock.path import mock_unfrackpath_noop
-
-from ansible.vars.manager import VariableManager
 
 
 class TestVariableManager(unittest.TestCase):
@@ -315,3 +315,61 @@ class TestVariableManager(unittest.TestCase):
         task = blocks[2].block[0]
         res = v.get_vars(play=play1, task=task)
         self.assertEqual(res['role_var'], 'role_var_from_role2')
+
+    def _test_vars_plugin_manager(self, plugin):
+        '''
+        Mock objects to test the vars plugin manager.
+        '''
+        mock_all = MagicMock()
+        mock_all.get_vars.return_value = {}
+
+        mock_group = MagicMock()
+        mock_group.get_vars.return_value = {}
+
+        mock_host = MagicMock(spec=Host(name='mock01'))
+        mock_host.get_vars.return_value = {}
+        mock_host.get_groups.return_value = [mock_group]
+
+        mock_inventory = MagicMock()
+        mock_inventory.groups.get.return_value = mock_all
+
+        fake_loader = DictDataLoader({})
+        mock_vars_loader = MagicMock()
+        mock_vars_loader.all.return_value = [plugin]
+
+        with patch('ansible.vars.manager.vars_loader', mock_vars_loader):
+            v = VariableManager(loader=fake_loader, inventory=mock_inventory)
+            v.get_vars(host=mock_host, use_cache=False)
+
+    def test_vars_plugin_manager(self):
+        '''
+        Test the _get_plugin_vars of the vars plugin manager.
+        '''
+        # Make sure the manager does not replace plugin errors with perceived
+        # plugin interface errors.
+        mock_plugin = Mock(spec=['get_vars', '_load_name', '_original_path'])
+        mock_plugin.get_vars.side_effect = AttributeError("'VarsModule' object has no attribute 'test'")
+        with self.assertRaisesRegexp(AnsibleError, 'Invalid vars plugin') as cm:
+            self._test_vars_plugin_manager(mock_plugin)
+        self.assertEqual(cm.exception.orig_exc.args[0], "'VarsModule' object has no attribute 'test'")
+
+        # If the plugin doesn't spec any get_(host_|group_)vars, show the preferred get_vars error.
+        mock_plugin = Mock(spec=['_load_name', '_original_path'])
+        with self.assertRaisesRegexp(AnsibleError, 'Invalid vars plugin') as cm:
+            self._test_vars_plugin_manager(mock_plugin)
+        # Mock raises a slightly different AttributeError, not sure if it is stable.
+        self.assertTrue(cm.exception.orig_exc.args[0].endswith("object has no attribute 'get_vars'"))
+
+        # If the plugin uses get_host/group_vars and it throws an error make it visible.
+        mock_plugin = Mock(spec=['get_host_vars', 'get_group_vars', '_load_name', '_original_path'])
+        mock_plugin.get_host_vars.return_value = {}
+        mock_plugin.get_group_vars.side_effect = AttributeError("'VarsModule' object has no attribute 'my_attr'")
+        with self.assertRaisesRegexp(AnsibleError, 'Invalid vars plugin') as cm:
+            self._test_vars_plugin_manager(mock_plugin)
+        self.assertEqual(cm.exception.orig_exc.args[0], "'VarsModule' object has no attribute 'my_attr'")
+
+        # Run interface error doesn't include the AttributeError.
+        mock_plugin = Mock(spec=['run', '_load_name', '_original_path'])
+        with self.assertRaisesRegexp(AnsibleError, 'Cannot use v1 type vars plugin') as cm:
+            self._test_vars_plugin_manager(mock_plugin)
+        self.assertFalse(hasattr(cm.exception, 'orig_exc'))

@@ -208,18 +208,21 @@ class VariableManager:
                 data = {}
                 try:
                     data = plugin.get_vars(self._loader, path, entities)
-                except AttributeError:
+                except AttributeError as orig_exc:
                     try:
                         for entity in entities:
                             if isinstance(entity, Host):
                                 data.update(plugin.get_host_vars(entity.name))
                             else:
                                 data.update(plugin.get_group_vars(entity.name))
-                    except AttributeError:
+                    except AttributeError as exc:
                         if hasattr(plugin, 'run'):
                             raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
                         else:
-                            raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+                            # Keep the get_vars error if this is about a missing get_host/group_vars interface.
+                            if not any(bool(attr in exc.args[0]) for attr in ('get_host_vars', 'get_group_vars')):
+                                orig_exc = exc
+                            raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path), orig_exc=orig_exc)
                 return data
 
             # internal fuctions that actually do the work
