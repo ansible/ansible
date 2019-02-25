@@ -66,20 +66,22 @@ def module_response_deepcopy(v):
 
 def strip_internal_keys(dirty, exceptions=None):
     '''
-    All keys starting with _ansible_ are internal, so create a copy of the 'dirty' dict
-    and remove them from the clean one before returning it
+    All keys starting with _ansible_ are internal, so change the 'dirty' dict
+    and remove them.
     '''
 
     if exceptions is None:
-        exceptions = ()
-    clean = dirty.copy()
-    for k in dirty.keys():
-        if isinstance(k, six.string_types) and k.startswith('_ansible_'):
-            if k not in exceptions:
-                del clean[k]
+        exceptions = tuple()
+
+    # listify to avoid updating dict while iterating over it
+    for k in list(dirty.keys()):
+        if isinstance(k, six.string_types):
+            if k.startswith('_ansible_') and k not in exceptions:
+                del dirty[k]
         elif isinstance(dirty[k], dict):
-            clean[k] = strip_internal_keys(dirty[k])
-    return clean
+            strip_internal_keys(dirty[k], exceptions=exceptions)
+
+    return dirty
 
 
 def remove_internal_keys(data):
