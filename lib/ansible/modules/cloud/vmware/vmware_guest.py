@@ -2028,24 +2028,27 @@ class PyVmomiHelper(PyVmomi):
         resource_pool_name = resource_pool or self.params.get('resource_pool', None)
 
         # get the datacenter object
-        datacenter = find_obj(self.content, [vim.Datacenter], self.params['datacenter'])
-        if not datacenter:
+        datacenter = None
+        datacenter_list = find_obj(self.content, [vim.Datacenter], self.params['datacenter'], first=False)
+        if len(datacenter_list) == 0:
             self.module.fail_json(msg='Unable to find datacenter "%s"' % self.params['datacenter'])
 
-        # if cluster is given, get the cluster object
-        if cluster_name:
-            cluster = find_obj(self.content, [vim.ComputeResource], cluster_name, folder=datacenter)
-            if not cluster:
-                self.module.fail_json(msg='Unable to find cluster "%s"' % cluster_name)
-        # if host is given, get the cluster object using the host
-        elif host_name:
-            host = find_obj(self.content, [vim.HostSystem], host_name, folder=datacenter)
-            if not host:
-                self.module.fail_json(msg='Unable to find host "%s"' % host_name)
-            cluster = host.parent
-        else:
-            cluster = None
-
+        for dc in datacenter_list:
+            # if cluster is given, get the cluster object
+            if cluster_name:
+                cluster = find_obj(self.content, [vim.ComputeResource], cluster_name, folder=dc)
+                if cluster is not None:
+                    datacenter = dc
+                    break
+            # if host is given, get the cluster object using the host
+            elif host_name:
+                host = find_obj(self.content, [vim.HostSystem], host_name, folder=dc)
+                if host is not None:
+                    datacenter = dc
+                    cluster = host.parent
+                    break
+            else:
+                cluster = None
         # get resource pools limiting search to cluster or datacenter
         resource_pool = find_obj(self.content, [vim.ResourcePool], resource_pool_name, folder=cluster or datacenter)
         if not resource_pool:
