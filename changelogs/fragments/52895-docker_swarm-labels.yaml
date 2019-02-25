@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm - do not crash with older docker daemons (https://github.com/ansible/ansible/issues/51175)."

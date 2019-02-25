@@ -32,22 +32,26 @@
   - name: Create a Swarm cluster (check mode)
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
     check_mode: yes
     register: output_1
 
   - name: Create a Swarm cluster
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
     register: output_2
 
   - name: Create a Swarm cluster (idempotent)
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
     register: output_3
 
   - name: Create a Swarm cluster (idempotent, check mode)
     docker_swarm:
       state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
     check_mode: yes
     register: output_4
 
