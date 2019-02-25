@@ -886,7 +886,8 @@ class TaskExecutor:
             self._play_context,
             self._new_stdin,
             task_uuid=self._task._uuid,
-            ansible_playbook_pid=to_text(os.getppid())
+            ansible_playbook_pid=to_text(os.getppid()),
+            loader=self._loader,
         )
 
         if not connection:
