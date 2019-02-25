@@ -244,16 +244,14 @@ except ImportError:
 from ansible.module_utils.docker_common import (
     AnsibleDockerClient,
     DockerBaseClass,
-    docker_version,
 )
 from ansible.module_utils._text import to_native
 
 
 class TaskParameters(DockerBaseClass):
-    def __init__(self, client):
+    def __init__(self):
         super(TaskParameters, self).__init__()
 
-        self.state = None
         self.advertise_addr = None
         self.listen_addr = None
         self.force_new_cluster = None
@@ -280,13 +278,60 @@ class TaskParameters(DockerBaseClass):
         self.rotate_worker_token = None
         self.rotate_manager_token = None
 
+    @staticmethod
+    def from_ansible_params(client):
+        result = TaskParameters()
         for key, value in client.module.params.items():
-            setattr(self, key, value)
+            if key in result.__dict__:
+                setattr(result, key, value)
 
-        self.update_parameters(client)
+        result.labels = result.labels or {}
+
+        result.update_parameters(client)
+        return result
+
+    def update_from_swarm_info(self, swarm_info):
+        spec = swarm_info['Spec']
+
+        ca_config = spec.get('CAConfig') or dict()
+        if self.node_cert_expiry is None:
+            self.node_cert_expiry = ca_config.get('NodeCertExpiry')
+
+        dispatcher = spec.get('Dispatcher') or dict()
+        if self.dispatcher_heartbeat_period is None:
+            self.dispatcher_heartbeat_period = dispatcher.get('HeartbeatPeriod')
+
+        raft = spec.get('Raft') or dict()
+        if self.snapshot_interval is None:
+            self.snapshot_interval = raft.get('SnapshotInterval')
+        if self.keep_old_snapshots is None:
+            self.keep_old_snapshots = raft.get('KeepOldSnapshots')
+        if self.heartbeat_tick is None:
+            self.heartbeat_tick = raft.get('HeartbeatTick')
+        if self.log_entries_for_slow_followers is None:
+            self.log_entries_for_slow_followers = raft.get('LogEntriesForSlowFollowers')
+        if self.election_tick is None:
+            self.election_tick = raft.get('ElectionTick')
+
+        orchestration = spec.get('Orchestration') or dict()
+        if self.task_history_retention_limit is None:
+            self.task_history_retention_limit = orchestration.get('TaskHistoryRetentionLimit')
+
+        encryption_config = spec.get('EncryptionConfig') or dict()
+        if self.autolock_managers is None:
+            self.autolock_managers = encryption_config.get('AutoLockManagers')
+
+        if self.name is None:
+            self.name = spec['Name']
+
+        if self.labels is None:
+            self.labels = spec.get('Labels') or {}
+
+        if 'LogDriver' in spec['TaskDefaults']:
+            self.log_driver = spec['TaskDefaults']['LogDriver']
 
     def update_parameters(self, client):
-        self.spec = client.create_swarm_spec(
+        params = dict(
             snapshot_interval=self.snapshot_interval,
             task_history_retention_limit=self.task_history_retention_limit,
             keep_old_snapshots=self.keep_old_snapshots,
@@ -296,13 +341,25 @@ class TaskParameters(DockerBaseClass):
             dispatcher_heartbeat_period=self.dispatcher_heartbeat_period,
             node_cert_expiry=self.node_cert_expiry,
             name=self.name,
-            labels=self.labels,
             signing_ca_cert=self.signing_ca_cert,
             signing_ca_key=self.signing_ca_key,
             ca_force_rotate=self.ca_force_rotate,
             autolock_managers=self.autolock_managers,
-            log_driver=self.log_driver
+            log_driver=self.log_driver,
         )
+        if self.labels:
+            params['labels'] = self.labels
+        self.spec = client.create_swarm_spec(**params)
+
+    def compare_to_active(self, other):
+        for k in self.__dict__:
+            if k in ('advertise_addr', 'listen_addr', 'rotate_worker_token', 'rotate_manager_token', 'spec'):
+                continue
+            if self.__dict__[k] is None:
+                continue
+            if self.__dict__[k] != other.__dict__[k]:
+                return False
+        return True
 
 
 class SwarmManager(DockerBaseClass):
@@ -316,7 +373,10 @@ class SwarmManager(DockerBaseClass):
         self.check_mode = self.client.check_mode
         self.swarm_info = {}
 
-        self.parameters = TaskParameters(client)
+        self.state = client.module.params['state']
+        self.force = client.module.params['force']
+
+        self.parameters = TaskParameters.from_ansible_params(client)
 
     def __call__(self):
         choice_map = {
@@ -327,7 +387,7 @@ class SwarmManager(DockerBaseClass):
             "inspect": self.inspect_swarm
         }
 
-        choice_map.get(self.parameters.state)()
+        choice_map.get(self.state)()
 
     def __isSwarmManager(self):
         try:
@@ -366,57 +426,22 @@ class SwarmManager(DockerBaseClass):
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info.get('JoinTokens')}
 
-    def __update_spec(self, spec):
-        if (self.parameters.node_cert_expiry is None):
-            self.parameters.node_cert_expiry = spec['CAConfig']['NodeCertExpiry']
-
-        if (self.parameters.dispatcher_heartbeat_period is None):
-            self.parameters.dispatcher_heartbeat_period = spec['Dispatcher']['HeartbeatPeriod']
-
-        if (self.parameters.snapshot_interval is None):
-            self.parameters.snapshot_interval = spec['Raft']['SnapshotInterval']
-        if (self.parameters.keep_old_snapshots is None):
-            self.parameters.keep_old_snapshots = spec['Raft']['KeepOldSnapshots']
-        if (self.parameters.heartbeat_tick is None):
-            self.parameters.heartbeat_tick = spec['Raft']['HeartbeatTick']
-        if (self.parameters.log_entries_for_slow_followers is None):
-            self.parameters.log_entries_for_slow_followers = spec['Raft']['LogEntriesForSlowFollowers']
-        if (self.parameters.election_tick is None):
-            self.parameters.election_tick = spec['Raft']['ElectionTick']
-
-        if (self.parameters.task_history_retention_limit is None):
-            self.parameters.task_history_retention_limit = spec['Orchestration']['TaskHistoryRetentionLimit']
-
-        if (self.parameters.autolock_managers is None):
-            self.parameters.autolock_managers = spec['EncryptionConfig']['AutoLockManagers']
-
-        if (self.parameters.name is None):
-            self.parameters.name = spec['Name']
-
-        if (self.parameters.labels is None):
-            self.parameters.labels = spec['Labels']
-
-        if 'LogDriver' in spec['TaskDefaults']:
-            self.parameters.log_driver = spec['TaskDefaults']['LogDriver']
-
-        self.parameters.update_parameters(self.client)
-
-        return self.parameters.spec
-
     def __update_swarm(self):
         try:
             self.inspect_swarm()
             version = self.swarm_info['Version']['Index']
-            spec = self.swarm_info['Spec']
-            new_spec = self.__update_spec(spec)
-            del spec['TaskDefaults']
-            if spec == new_spec:
+            self.parameters.update_from_swarm_info(self.swarm_info)
+            old_parameters = TaskParameters()
+            old_parameters.update_from_swarm_info(self.swarm_info)
+            if self.parameters.compare_to_active(old_parameters):
                 self.results['actions'].append("No modification")
                 self.results['changed'] = False
                 return
+            self.parameters.update_parameters(self.client)
             if not self.check_mode:
                 self.client.update_swarm(
-                    version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
+                    version=version, swarm_spec=self.parameters.spec,
+                    rotate_worker_token=self.parameters.rotate_worker_token,
                     rotate_manager_token=self.parameters.rotate_manager_token)
         except APIError as exc:
             self.client.fail(msg="Can not update a Swarm Cluster: %s" % to_native(exc))
@@ -457,7 +482,7 @@ class SwarmManager(DockerBaseClass):
             return
         if not self.check_mode:
             try:
-                self.client.leave_swarm(force=self.parameters.force)
+                self.client.leave_swarm(force=self.force)
             except APIError as exc:
                 self.client.fail("This node can not leave the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node has left the swarm cluster")
@@ -494,7 +519,7 @@ class SwarmManager(DockerBaseClass):
 
         if not self.check_mode:
             try:
-                self.client.remove_node(node_id=self.parameters.node_id, force=self.parameters.force)
+                self.client.remove_node(node_id=self.parameters.node_id, force=self.force)
             except APIError as exc:
                 self.client.fail("Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node is removed from swarm cluster.")
@@ -534,6 +559,7 @@ def main():
     ]
 
     option_minimal_versions = dict(
+        labels=dict(docker_api_version='1.32'),
         signing_ca_cert=dict(docker_api_version='1.30'),
         signing_ca_key=dict(docker_api_version='1.30'),
         ca_force_rotate=dict(docker_api_version='1.30'),
