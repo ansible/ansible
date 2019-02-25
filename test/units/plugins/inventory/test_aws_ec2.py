@@ -133,7 +133,6 @@ def test_boto3_conn(inventory):
                           "aws_access_key_id": "test_access_key",
                           "aws_secret_access_key": "test_secret_key",
                           "aws_security_token": "test_security_token"}
-    inventory._set_credentials()
     with pytest.raises(AnsibleError) as error_message:
         for connection, region in inventory._boto3_conn(regions=['us-east-1']):
             assert error_message == "Insufficient credentials found."
@@ -150,17 +149,17 @@ def test_get_hostname(inventory):
     assert inventory._get_hostname(instance, hostnames) == "12.345.67.890"
 
 
-def test_set_credentials(inventory):
-    inventory._options = {'aws_access_key_id': 'test_access_key',
-                          'aws_secret_access_key': 'test_secret_key',
-                          'aws_security_token': 'test_security_token',
-                          'boto_profile': 'test_profile'}
-    inventory._set_credentials()
-
-    assert inventory.boto_profile == "test_profile"
-    assert inventory.aws_access_key_id == "test_access_key"
-    assert inventory.aws_secret_access_key == "test_secret_key"
-    assert inventory.aws_security_token == "test_security_token"
+def test_get_credentials(inventory):
+    access_keys = {
+        'aws_access_key_id': 'test_access_key',
+        'aws_secret_access_key': 'test_secret_key',
+        'aws_security_token': 'test_security_token'
+    }
+    inventory._options = dict(access_keys)
+    inventory._options.update({'boto_profile': 'test_profile'})
+    profile, credentials = inventory.get_credentials()
+    assert profile == 'test_profile'
+    assert credentials == access_keys
 
 
 def test_insufficient_credentials(inventory):
@@ -171,7 +170,7 @@ def test_insufficient_credentials(inventory):
         'boto_profile': None
     }
     with pytest.raises(AnsibleError) as error_message:
-        inventory._set_credentials()
+        client, region = inventory._boto3_conn(regions=['us-east-1'])
         assert "Insufficient boto credentials found" in error_message
 
 

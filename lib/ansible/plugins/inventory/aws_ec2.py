@@ -244,7 +244,64 @@ instance_data_filter_to_boto_attr = {
 }
 
 
-class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
+class AWSInventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
+    def get_client(self, service, aws_profile, credentials, region):
+        try:
+            connection = boto3.session.Session(profile_name=aws_profile).client(service, region, **credentials)
+        except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+            if aws_profile:
+                try:
+                    connection = boto3.session.Session(profile_name=aws_profile).client(service, region)
+                except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
+                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+            else:
+                raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+        return connection
+
+    def get_credentials(self):
+        credentials = {}
+        aws_profile = self.get_option('boto_profile')
+        credentials['aws_access_key_id'] = self.get_option('aws_access_key_id')
+        credentials['aws_secret_access_key'] = self.get_option('aws_secret_access_key')
+        credentials['aws_security_token'] = self.get_option('aws_security_token')
+
+        if not aws_profile and not (credentials['aws_access_key_id'] and credentials['aws_secret_access_key']):
+            session = botocore.session.get_session()
+            if session.get_credentials() is not None:
+                credentials['aws_access_key_id'] = session.get_credentials().access_key
+                credentials['aws_secret_access_key'] = session.get_credentials().secret_key
+                credentials['aws_security_token'] = session.get_credentials().token
+
+        for key in dict(credentials):
+            if not credentials[key]:
+                credentials.pop(key)
+
+        return aws_profile, credentials
+
+    def get_regions(self, aws_profile, credentials):
+        regions = []
+        try:
+            # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
+            client = self.get_client('ec2', aws_profile, credentials, 'us-east-1')
+            resp = client.describe_regions()
+            regions = [x['RegionName'] for x in resp.get('Regions', [])]
+        except botocore.exceptions.NoRegionError:
+            # above seems to fail depending on boto3 version, ignore and lets try something else
+            pass
+
+        # fallback to local list hardcoded in boto3 if still no regions
+        if not regions:
+            session = boto3.Session()
+            regions = session.get_available_regions('ec2')
+
+        # I give up, now you MUST give me regions
+        if not regions:
+            raise AnsibleError('Unable to get regions list from available methods, you must specify the "regions" option to continue.')
+
+        return regions
+
+
+class InventoryModule(AWSInventoryModule):
 
     NAME = 'aws_ec2'
 
@@ -255,9 +312,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # credentials
         self.boto_profile = None
-        self.aws_secret_access_key = None
-        self.aws_access_key_id = None
-        self.aws_security_token = None
 
     def _compile_values(self, obj, attr):
         '''
@@ -303,32 +357,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             instance_value = self._compile_values(instance_value, attribute)
         return instance_value
 
-    def _get_credentials(self):
-        '''
-            :return A dictionary of boto client credentials
-        '''
-        boto_params = {}
-        for credential in (('aws_access_key_id', self.aws_access_key_id),
-                           ('aws_secret_access_key', self.aws_secret_access_key),
-                           ('aws_session_token', self.aws_security_token)):
-            if credential[1]:
-                boto_params[credential[0]] = credential[1]
-
-        return boto_params
-
-    def _get_connection(self, credentials, region='us-east-1'):
-        try:
-            connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region, **credentials)
-        except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-            if self.boto_profile:
-                try:
-                    connection = boto3.session.Session(profile_name=self.boto_profile).client('ec2', region)
-                except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
-            else:
-                raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
-        return connection
-
     def _boto3_conn(self, regions):
         '''
             :param regions: A list of regions to create a boto3 client
@@ -336,29 +364,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             Generator that yields a boto3 client and the region
         '''
 
-        credentials = self._get_credentials()
+        self.boto_profile, credentials = self.get_credentials()
+        if not self.boto_profile and not (credentials.get('aws_access_key_id') and credentials.get('aws_secret_access_key')):
+            raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
+                               "inventory configuration file or set them as environment variables.")
 
         if not regions:
-            try:
-                # as per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/ec2-example-regions-avail-zones.html
-                client = self._get_connection(credentials)
-                resp = client.describe_regions()
-                regions = [x['RegionName'] for x in resp.get('Regions', [])]
-            except botocore.exceptions.NoRegionError:
-                # above seems to fail depending on boto3 version, ignore and lets try something else
-                pass
-
-        # fallback to local list hardcoded in boto3 if still no regions
-        if not regions:
-            session = boto3.Session()
-            regions = session.get_available_regions('ec2')
-
-        # I give up, now you MUST give me regions
-        if not regions:
-            raise AnsibleError('Unable to get regions list from available methods, you must specify the "regions" option to continue.')
+            regions = self.get_regions(self.boto_profile, credentials)
 
         for region in regions:
-            connection = self._get_connection(credentials, region)
+            connection = self.get_client('ec2', self.boto_profile, credentials, region)
             yield connection, region
 
     def _get_instances_by_region(self, regions, filters, strict_permissions):
@@ -484,27 +499,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # Create groups based on variable values and add the corresponding hosts to it
             self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
 
-    def _set_credentials(self):
-        '''
-            :param config_data: contents of the inventory config file
-        '''
-
-        self.boto_profile = self.get_option('boto_profile')
-        self.aws_access_key_id = self.get_option('aws_access_key_id')
-        self.aws_secret_access_key = self.get_option('aws_secret_access_key')
-        self.aws_security_token = self.get_option('aws_security_token')
-
-        if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
-            session = botocore.session.get_session()
-            if session.get_credentials() is not None:
-                self.aws_access_key_id = session.get_credentials().access_key
-                self.aws_secret_access_key = session.get_credentials().secret_key
-                self.aws_security_token = session.get_credentials().token
-
-        if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
-            raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
-                               "inventory configuration file or set them as environment variables.")
-
     def verify_file(self, path):
         '''
             :param loader: an ansible.parsing.dataloader.DataLoader object
@@ -521,7 +515,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = self._read_config_data(path)
-        self._set_credentials()
 
         # get user specifications
         regions = self.get_option('regions')

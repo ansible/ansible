@@ -39,8 +39,10 @@ DOCUMENTATION = '''
               - name: AWS_SESSION_TOKEN
               - name: EC2_SECURITY_TOKEN
         regions:
-          description: A list of regions in which to describe RDS instances and clusters. Available regions are listed here
+          description:
+            - A list of regions in which to describe RDS instances and clusters. Available regions are listed here
               U(https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html)
+            - If empty (the default) default this will include all regions, except possibly restricted ones like us-gov-west-1 and cn-north-1.
           default: []
         filters:
           description: A dictionary of filter value pairs. Available filters are listed here
@@ -90,7 +92,7 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.aws.core import is_boto3_error_code
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.plugins.inventory.aws_ec2 import AWSInventoryModule
 
 try:
     import boto3
@@ -99,7 +101,7 @@ except ImportError:
     raise AnsibleError('The RDS dynamic inventory plugin requires boto3 and botocore.')
 
 
-class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
+class InventoryModule(AWSInventoryModule):
 
     NAME = 'aws_rds'
 
@@ -114,17 +116,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             Generator that yields a boto3 client and the region
         '''
+        if not regions:
+            regions = self.get_regions(self.boto_profile, self.credentials)
+
         for region in regions:
-            try:
-                connection = boto3.session.Session(profile_name=self.boto_profile).client('rds', region, **self.credentials)
-            except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                if self.boto_profile:
-                    try:
-                        connection = boto3.session.Session(profile_name=self.boto_profile).client('rds', region)
-                    except (botocore.exceptions.ProfileNotFound, botocore.exceptions.PartialCredentialsError) as e:
-                        raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
-                else:
-                    raise AnsibleError("Insufficient credentials found: %s" % to_native(e))
+            connection = self.get_client('rds', self.boto_profile, self.credentials, region)
             yield connection, region
 
     def _get_hosts_by_region(self, connection, filters, strict):
@@ -271,28 +267,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
             :param config_data: contents of the inventory config file
         '''
-        self.boto_profile = self.get_option('boto_profile')
-        aws_access_key_id = self.get_option('aws_access_key_id')
-        aws_secret_access_key = self.get_option('aws_secret_access_key')
-        aws_security_token = self.get_option('aws_security_token')
+        self.boto_profile, self.credentials = self.get_credentials()
 
-        if not self.boto_profile and not (aws_access_key_id and aws_secret_access_key):
-            session = botocore.session.get_session()
-            if session.get_credentials() is not None:
-                aws_access_key_id = session.get_credentials().access_key
-                aws_secret_access_key = session.get_credentials().secret_key
-                aws_security_token = session.get_credentials().token
-
-        if not self.boto_profile and not (aws_access_key_id and aws_secret_access_key):
+        if not self.boto_profile and not (self.credentials['aws_access_key_id'] and self.credentials['aws_secret_access_key']):
             raise AnsibleError("Insufficient boto credentials found. Please provide them in your "
                                "inventory configuration file or set them as environment variables.")
-
-        if aws_access_key_id:
-            self.credentials['aws_access_key_id'] = aws_access_key_id
-        if aws_secret_access_key:
-            self.credentials['aws_secret_access_key'] = aws_secret_access_key
-        if aws_security_token:
-            self.credentials['aws_session_token'] = aws_security_token
 
     def verify_file(self, path):
         '''
