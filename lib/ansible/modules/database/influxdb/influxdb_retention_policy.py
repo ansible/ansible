@@ -170,7 +170,6 @@ def alter_retention_policy(module, client, retention_policy):
         influxdb_shard_duration_format = '%sh0m0s' % (int(shard_duration_lookup.group(1)) * 24 * 7)
     elif shard_group_duration == 'INF':
         influxdb_shard_duration_format = '0'
- 
     if (not retention_policy['duration'] == influxdb_duration_format or
             not retention_policy['replicaN'] == int(replication) or
             not retention_policy['shardGroupDuration'] == influxdb_shard_duration_format or
