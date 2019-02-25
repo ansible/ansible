@@ -40,7 +40,9 @@ except ImportError:
 
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.six import integer_types, iteritems, string_types, raise_from
+from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.basic import env_fallback, missing_required_lib
+from ansible.module_utils.urls import generic_urlparse
 
 
 class TaskError(Exception):
@@ -486,7 +488,16 @@ def vmware_argument_spec():
         validate_certs=dict(type='bool',
                             required=False,
                             default=True,
-                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])),
+                            fallback=(env_fallback, ['VMWARE_VALIDATE_CERTS'])
+                            ),
+        proxy_host=dict(type='str',
+                        required=False,
+                        default=None,
+                        fallback=(env_fallback, ['VMWARE_PROXY_HOST'])),
+        proxy_port=dict(type='int',
+                        required=False,
+                        default=None,
+                        fallback=(env_fallback, ['VMWARE_PROXY_PORT'])),
     )
 
 
@@ -523,18 +534,30 @@ def connect_to_api(module, disconnect_atexit=True, return_si=False):
         ssl_context.load_default_certs()
 
     service_instance = None
+    proxy_host = module.params.get('proxy_host')
+    proxy_port = module.params.get('proxy_port')
+
+    connect_args = dict(
+        host=hostname,
+        port=port,
+    )
+    if ssl_context:
+        connect_args.update(sslContext=ssl_context)
+
+    msg_suffix = ''
     try:
-        connect_args = dict(
-            host=hostname,
-            user=username,
-            pwd=password,
-            port=port,
-        )
-        if ssl_context:
-            connect_args.update(sslContext=ssl_context)
-        service_instance = connect.SmartConnect(**connect_args)
+        if proxy_host:
+            msg_suffix = " [proxy: %s:%d]" % (proxy_host, proxy_port)
+            connect_args.update(httpProxyHost=proxy_host, httpProxyPort=proxy_port)
+            smart_stub = connect.SmartStubAdapter(**connect_args)
+            session_stub = connect.VimSessionOrientedStub(smart_stub, connect.VimSessionOrientedStub.makeUserLoginMethod(username, password))
+            service_instance = vim.ServiceInstance('ServiceInstance', session_stub)
+        else:
+            connect_args.update(user=username, pwd=password)
+            service_instance = connect.SmartConnect(**connect_args)
     except vim.fault.InvalidLogin as invalid_login:
-        module.fail_json(msg="Unable to log on to vCenter or ESXi API at %s:%s as %s: %s" % (hostname, port, username, invalid_login.msg))
+        msg = "Unable to log on to vCenter or ESXi API at %s:%s " % (hostname, port)
+        module.fail_json(msg="%s as %s: %s" % (msg, username, invalid_login.msg) + msg_suffix)
     except vim.fault.NoPermission as no_permission:
         module.fail_json(msg="User %s does not have required permission"
                              " to log on to vCenter or ESXi API at %s:%s : %s" % (username, hostname, port, no_permission.msg))
@@ -542,13 +565,15 @@ def connect_to_api(module, disconnect_atexit=True, return_si=False):
         module.fail_json(msg="Unable to connect to vCenter or ESXi API at %s on TCP/%s: %s" % (hostname, port, generic_req_exc))
     except vmodl.fault.InvalidRequest as invalid_request:
         # Request is malformed
-        module.fail_json(msg="Failed to get a response from server %s:%s as "
-                             "request is malformed: %s" % (hostname, port, invalid_request.msg))
+        msg = "Failed to get a response from server %s:%s " % (hostname, port)
+        module.fail_json(msg="%s as request is malformed: %s" % (msg, invalid_request.msg) + msg_suffix)
     except Exception as generic_exc:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s : %s" % (hostname, port, generic_exc))
+        msg = "Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port) + msg_suffix
+        module.fail_json(msg="%s : %s" % (msg, generic_exc))
 
     if service_instance is None:
-        module.fail_json(msg="Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port))
+        msg = "Unknown error while connecting to vCenter or ESXi API at %s:%s" % (hostname, port)
+        module.fail_json(msg=msg + msg_suffix)
 
     # Disabling atexit should be used in special cases only.
     # Such as IP change of the ESXi host which removes the connection anyway.
