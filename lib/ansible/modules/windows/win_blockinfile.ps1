@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #AnsibleRequires -CSharpUtil Ansible.Basic
+#Requires -Module Ansible.ModuleUtils.Backup
 
 # Large portions borrowed from Brian Lloyd's (@brianlloyd) win_lineinfile 
 # and Yaegashi Takeshi's (@yaegashi) blockinfile
@@ -148,30 +149,6 @@ function GuessFileEncoding {
     return $encodingObject;
 }
 
-function BackupFile {
-    param(
-        [String]$path,
-        [bool]$check_mode
-    );
-
-    $backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-    Try {
-        Copy-Item -LiteralPath $path -Destination $backuppath -WhatIf:$check_mode;
-    }
-    Catch {
-        $module.FailJson("Cannot copy backup file! ($($_.Exception.Message))", $_);
-    }
-    If (-not $check_mode) {
-        Try {
-            Get-Acl -LiteralPath $path | Set-Acl -LiteralPath $backuppath
-        }
-        Catch {
-            $module.FailJson("Cannot copy ACL to backup file! ($($_.Exception.Message))", $_);
-        }
-    }
-    return $backuppath;
-}
-
 If (Test-Path -LiteralPath $path -PathType "container") {
     $module.FailJson("Path $path is a directory", $_);
 }
@@ -309,7 +286,7 @@ $module.Result.encoding = $encodingobj.WebName;
 If ($origContent -ne $after) {
     $module.Result.changed = $true;
     If ($backup) {
-        $module.Result.backup = BackupFile $path $check_mode
+        $module.Result.backup_file = Backup-File -path $path -WhatIf:$check_mode
     }
     WriteLines $lines $path $linesep $encodingobj $check_mode
     If ($blocklines.Count -gt 0) {

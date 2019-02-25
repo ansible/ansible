@@ -60,18 +60,18 @@
 - name: "{{ test_name }}: Ensure the backup file is present"
   assert:
     that:
-    - "result.backup is defined"
+    - "result.backup_file is defined"
   when: "'backup' in blockinfile_args and blockinfile_args.backup and should_change"
 
 - name: "{{ test_name }}: Ensure the backup file is not present"
   assert:
     that:
-    - "result.backup == ''"
+    - "'backup_file' not in result or result.backup_file == ''"
   when: "'backup' not in blockinfile_args or blockinfile_args.backup == false or not should_change"
 
 - name: "{{ test_name }}: Stat the backup file"
   win_stat:
-    path: "{{result.backup}}"
+    path: "{{result.backup_file}}"
   register: result
   when: "'backup' in blockinfile_args and blockinfile_args.backup and should_change"
 
