@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
 $ErrorActionPreference = 'Stop'
 
@@ -22,6 +23,7 @@ $copy_mode = Get-AnsibleParam -obj $params -name "_copy_mode" -type "str" -defau
 # used in explode, remote and single mode
 $src = Get-AnsibleParam -obj $params -name "src" -type "path" -failifempty ($copy_mode -in @("explode","process","single"))
 $dest = Get-AnsibleParam -obj $params -name "dest" -type "path" -failifempty $true
+$backup = Get-AnsibleParam -obj $params -name "backup" -type "bool" -default $false
 
 # used in single mode
 $original_basename = Get-AnsibleParam -obj $params -name "_original_basename" -type "str"
@@ -72,6 +74,10 @@ Function Copy-File($source, $dest) {
             # directory doesn't exist, need to create
             New-Item -Path $file_dir -ItemType Directory -WhatIf:$check_mode | Out-Null
             $diff += "+$file_dir\`n"
+        }
+
+        if ($backup) {
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
         }
 
         if (Test-Path -Path $dest -PathType Leaf) {
@@ -388,6 +394,10 @@ if ($copy_mode -eq "query") {
         } elseif (-not (Test-Path -Path $parent_dir -PathType Container)) {
             Fail-Json -obj $result -message "Destination directory '$parent_dir' does not exist"
         }
+    }
+
+    if ($backup) {
+        $result.backup_file = Backup-File -path $remote_dest -WhatIf:$check_mode
     }
 
     Copy-Item -Path $src -Destination $remote_dest -Force | Out-Null

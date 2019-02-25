@@ -70,7 +70,7 @@
 - name: check attribute change result
   assert:
     that:
-    - not attribute_changed_result is changed
+    - attribute_changed_result is not changed
 
 # This testing is for https://github.com/ansible/ansible/issues/48471
 # The issue was that an .xml with no encoding declaration, but a UTF8 BOM
@@ -104,6 +104,26 @@
   assert:
     that:
       - sha1_checksum.stat.checksum == 'e3e18c3066e1bfce9a5cf87c81353fa174440944'
+
+- name: change a text value in a file with UTF8 BOM and armenian characters in the description
+  win_xml:
+    path: "{{ win_output_dir }}\\plane-utf8-bom-armenian-characters.xml"
+    xpath: '/plane/year'
+    type: text
+    fragment: '1989'
+    backup: yes
+  register: test_backup
+
+- name: check backup_file
+  win_stat:
+    path: '{{ test_backup.backup_file }}'
+  register: backup_file
+
+- name: Check backup_file
+  assert:
+    that:
+    - test_backup is changed
+    - backup_file.stat.exists == true
 
 - name: change a text value in a file with UTF-16 BE BOM and Chinese characters in the description
   win_xml:
