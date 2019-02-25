@@ -1,0 +1,185 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Preparation for tests.
+- name: postgresql_tablespace - drop dir for test tablespace
+  become: yes
+  file:
+    path: /mnt/ssd
+    state: absent
+  ignore_errors: yes
+
+- name: postgresql_tablespace - create dir for test tablespace
+  become: yes
+  file:
+    path: /mnt/ssd
+    state: directory
+    owner: "{{ pg_user }}"
+    mode: 0755
+  ignore_errors: yes
+
+- name: postgresql_tablespace - create test role to test change ownership
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: bob
+    state: present
+
+- name: postgresql_tablespace - create test role to test change ownership
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: alice
+    state: present
+
+###############
+# Do main tests
+#
+
+# Create tablespace and set owner:
+- name: postgresql_tablespace - create a new tablespace called acme and set bob as an its owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    owner: bob
+    location: /mnt/ssd
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == true
+    - result.owner == 'bob'
+    - result.queries == ["CREATE TABLESPACE acme LOCATION '/mnt/ssd'", "ALTER TABLESPACE acme OWNER TO bob"]
+    - result.state == 'present'
+    - result.tablespace == 'acme'
+    - result.options == {}
+    - result.location == '/mnt/ssd'
+
+# Change tablespace owner
+- name: postgresql_tablespace - change tablespace owner to alice
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    owner: alice
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == true
+    - result.owner == 'alice'
+    - result.queries == ["ALTER TABLESPACE acme OWNER TO alice"]
+    - result.state == 'present'
+    - result.tablespace == 'acme'
+    - result.options == {}
+
+# Try to change tablespace owner to alice again:
+- name: postgresql_tablespace - try to change tablespace owner to alice again to be sure that nothing changes
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    owner: alice
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == false
+    - result.owner == 'alice'
+    - result.queries == []
+    - result.state == 'present'
+    - result.tablespace == 'acme'
+    - result.options == {}
+
+# Change tablespace options:
+- name: postgresql_tablespace - change tablespace options
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    set:
+      random_page_cost: 1
+      seq_page_cost: 4
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == true
+    - result.owner == 'alice'
+    - result.queries == ["ALTER TABLESPACE data_hdd SET (seq_page_cost = '4')", "ALTER TABLESPACE data_hdd SET (random_page_cost = '1')"]
+    - result.state == 'present'
+    - result.tablespace == 'acme'
+    - result.options.seq_page_const == '4'
+    - result.options.seq_page_const == '1'
+  when: postgres_version_resp.stdout is version('9.0', '>=')
+
+# Rename tablespace:
+- name: postgresql_tablespace - rename tablespace
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    rename_to: foo
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == true
+    - result.newname == 'foo'
+    - result.queries == ["ALTER TABLESPACE acme RENAME TO foo"]
+
+# Drop tablespace:
+- name: postgresql_tablespace - drop tablespace
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: foo
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == true
+    - result.state == 'absent'
+    - result.queries == ["DROP TABLESPACE foo"]
+
+# Try to drop nonexistent tablespace to be sure that nothing changes:
+- name: postgresql_tablespace - try to drop nonexistent tablespace
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: foo
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == false
+    - result.state == 'absent'
+    - result.queries == []
