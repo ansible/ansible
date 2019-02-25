@@ -31,28 +31,28 @@ DOCUMENTATION = '''
               - This plugin supports boto3-style credentials, so the profile may be sourced from ~/.aws/config for assuming an IAM role.
               - See U(https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html) for details.
           env:
-              - name: AWS_PROFILE
               - name: AWS_DEFAULT_PROFILE
+              - name: AWS_PROFILE
         aws_access_key_id:
           description: The AWS access key to use. If you have specified a profile, you don't need to provide
               an access key/secret key/session token.
           env:
-              - name: AWS_ACCESS_KEY_ID
-              - name: AWS_ACCESS_KEY
               - name: EC2_ACCESS_KEY
+              - name: AWS_ACCESS_KEY
+              - name: AWS_ACCESS_KEY_ID
         aws_secret_access_key:
           description: The AWS secret key that corresponds to the access key. If you have specified a profile,
               you don't need to provide an access key/secret key/session token.
           env:
-              - name: AWS_SECRET_ACCESS_KEY
-              - name: AWS_SECRET_KEY
               - name: EC2_SECRET_KEY
+              - name: AWS_SECRET_KEY
+              - name: AWS_SECRET_ACCESS_KEY
         aws_security_token:
           description: The AWS security token if using temporary access and secret keys.
           env:
-              - name: AWS_SECURITY_TOKEN
-              - name: AWS_SESSION_TOKEN
               - name: EC2_SECURITY_TOKEN
+              - name: AWS_SESSION_TOKEN
+              - name: AWS_SECURITY_TOKEN
         regions:
           description:
               - A list of regions in which to describe EC2 instances.
