@@ -3,12 +3,10 @@
 
 # Copyright: (c) 2016, Peter Sagerson <psagers@ignorare.net>
 # Copyright: (c) 2016, Jiri Tyr <jiri.tyr@gmail.com>
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -16,11 +14,10 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-
-DOCUMENTATION = """
+DOCUMENTATION = r'''
 ---
 module: ldap_attr
-short_description: Add or remove LDAP attribute values.
+short_description: Add or remove LDAP attribute values
 description:
   - Add or remove LDAP attribute values.
 notes:
@@ -47,28 +44,33 @@ options:
   name:
     description:
       - The name of the attribute to modify.
+    type: str
     required: true
   state:
     description:
-      - The state of the attribute values. If C(present), all given
-        values will be added if they're missing. If C(absent), all given
-        values will be removed if present. If C(exact), the set of values
-        will be forced to exactly those provided and no others. If
-        I(state=exact) and I(value) is an empty list, all values for this
-        attribute will be removed.
-    choices: [present, absent, exact]
+      - The state of the attribute values.
+      - If C(present), all given values will be added if they're missing.
+      - If C(absent), all given values will be removed if present.
+      - If C(exact), the set of values will be forced to exactly those provided and no others.
+      - If I(state=exact) and I(value) is an empty list, all values for this attribute will be removed.
+    choices: [ absent, exact, present ]
     default: present
   values:
     description:
       - The value(s) to add or remove. This can be a string or a list of
         strings. The complex argument format is required in order to pass
         a list of strings (see examples).
+    type: raw
     required: true
-extends_documentation_fragment: ldap.documentation
-"""
+  params:
+    description:
+    - Additional module parameters.
+    type: dict
+extends_documentation_fragment:
+- ldap.documentation
+'''
 
-
-EXAMPLES = """
+EXAMPLES = r'''
 - name: Configure directory number 1 for example.com
   ldap_attr:
     dn: olcDatabase={1}hdb,cn=config
@@ -138,16 +140,15 @@ EXAMPLES = """
     values: []
     state: exact
     params: "{{ ldap_auth }}"
-"""
+'''
 
-
-RETURN = """
+RETURN = r'''
 modlist:
   description: list of modified parameters
   returned: success
   type: list
   sample: '[[2, "olcRootDN", ["cn=root,dc=example,dc=com"]]]'
-"""
+'''
 
 import traceback
 
@@ -237,12 +238,10 @@ class LdapAttr(LdapGeneric):
 def main():
     module = AnsibleModule(
         argument_spec=gen_specs(
-            name=dict(required=True),
+            name=dict(type='str', required=True),
             params=dict(type='dict'),
-            state=dict(
-                default='present',
-                choices=['present', 'absent', 'exact']),
-            values=dict(required=True, type='raw'),
+            state=dict(type='str', default='present', choices=['absent', 'exact', 'present']),
+            values=dict(type='raw', required=True),
         ),
         supports_check_mode=True,
     )
@@ -279,8 +278,7 @@ def main():
             try:
                 ldap.connection.modify_s(ldap.dn, modlist)
             except Exception as e:
-                module.fail_json(msg="Attribute action failed.", details=to_native(e),
-                                 exception=traceback.format_exc())
+                module.fail_json(msg="Attribute action failed.", details=to_native(e))
 
     module.exit_json(changed=changed, modlist=modlist)
 

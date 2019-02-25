@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # This file is part of Networklore's snmp library for Ansible
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -6,18 +7,17 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: snmp_facts
 version_added: "1.9"
-author: "Patrick Ogenstad (@ogenstad)"
-short_description: Retrieve facts for a device using SNMP.
+author:
+- Patrick Ogenstad (@ogenstad)
+short_description: Retrieve facts for a device using SNMP
 description:
     - Retrieve facts for a device using SNMP, the facts will be
       inserted to the ansible_facts key.
@@ -26,56 +26,64 @@ requirements:
 options:
     host:
         description:
-            - Set to target snmp server (normally {{inventory_hostname}})
+            - Set to target snmp server (normally C({{ inventory_hostname }})).
+        type: str
         required: true
     version:
         description:
-            - SNMP Version to use, v2/v2c or v3
-        choices: [ 'v2', 'v2c', 'v3' ]
+            - SNMP Version to use, v2/v2c or v3.
+        type: str
         required: true
+        choices: [ v2, v2c, v3 ]
     community:
         description:
-            - The SNMP community string, required if version is v2/v2c
-        required: false
+            - The SNMP community string, required if version is v2/v2c.
+        type: str
     level:
         description:
-            - Authentication level, required if version is v3
-        choices: [ 'authPriv', 'authNoPriv' ]
-        required: false
+            - Authentication level.
+            - Required if version is v3.
+        type: str
+        choices: [ authNoPriv, authPriv ]
     username:
         description:
-            - Username for SNMPv3, required if version is v3
-        required: false
+            - Username for SNMPv3.
+            - Required if version is v3.
+        type: str
     integrity:
         description:
-            - Hashing algorithm, required if version is v3
-        choices: [ 'md5', 'sha' ]
-        required: false
+            - Hashing algorithm.
+            - Required if version is v3.
+        type: str
+        choices: [ md5, sha ]
     authkey:
         description:
-            - Authentication key, required if version is v3
-        required: false
+            - Authentication key.
+            - Required if version is v3.
+        type: str
     privacy:
         description:
-            - Encryption algorithm, required if level is authPriv
-        choices: [ 'des', 'aes' ]
-        required: false
+            - Encryption algorithm.
+            - Required if level is authPriv.
+        type: str
+        choices: [ aes, des ]
     privkey:
         description:
-            - Encryption key, required if version is authPriv
-        required: false
+            - Encryption key.
+            - Required if version is authPriv.
+        type: str
 '''
 
-EXAMPLES = '''
-# Gather facts with SNMP version 2
-- snmp_facts:
+EXAMPLES = r'''
+- name: Gather facts with SNMP version 2
+  snmp_facts:
     host: '{{ inventory_hostname }}'
     version: v2c
     community: public
   delegate_to: local
 
-# Gather facts using SNMP version 3
-- snmp_facts:
+- name: Gather facts using SNMP version 3
+  snmp_facts:
     host: '{{ inventory_hostname }}'
     version: v3
     level: authPriv
@@ -87,7 +95,7 @@ EXAMPLES = '''
   delegate_to: localhost
 '''
 
-RETURN = '''
+RETURN = r'''
 ansible_sysdescr:
   description: A textual description of the entity.
   returned: success
@@ -262,18 +270,22 @@ def lookup_operstatus(int_operstatus):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            host=dict(required=True),
-            version=dict(required=True, choices=['v2', 'v2c', 'v3']),
-            community=dict(required=False, default=False),
-            username=dict(required=False),
-            level=dict(required=False, choices=['authNoPriv', 'authPriv']),
-            integrity=dict(required=False, choices=['md5', 'sha']),
-            privacy=dict(required=False, choices=['des', 'aes']),
-            authkey=dict(required=False),
-            privkey=dict(required=False),
-            removeplaceholder=dict(required=False)),
-        required_together=(['username', 'level', 'integrity', 'authkey'], ['privacy', 'privkey'],),
-        supports_check_mode=False)
+            host=dict(type='str', required=True),
+            version=dict(type='str', required=True, choices=['v2', 'v2c', 'v3']),
+            community=dict(type='str'),
+            username=dict(type='str'),
+            level=dict(type='str', choices=['authNoPriv', 'authPriv']),
+            integrity=dict(type='str', choices=['md5', 'sha']),
+            privacy=dict(type='str', choices=['aes', 'des']),
+            authkey=dict(type='str'),
+            privkey=dict(type='str'),
+        ),
+        required_together=(
+            ['username', 'level', 'integrity', 'authkey'],
+            ['privacy', 'privkey'],
+        ),
+        supports_check_mode=False,
+    )
 
     m_args = module.params
 
@@ -284,7 +296,7 @@ def main():
 
     # Verify that we receive a community when using snmp v2
     if m_args['version'] == "v2" or m_args['version'] == "v2c":
-        if m_args['community'] is False:
+        if m_args['community'] is None:
             module.fail_json(msg='Community not set when using snmp version 2')
 
     if m_args['version'] == "v3":
