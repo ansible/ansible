@@ -122,6 +122,11 @@ def command_coverage_combine(args):
                 new_name = re.sub('^(/.*?)?/root/ansible/', root_path, filename)
                 display.info('%s -> %s' % (filename, new_name), verbosity=3)
                 filename = new_name
+            elif '/.ansible/test/tmp/' in filename:
+                # Rewrite the path of code running from an integration test temporary directory.
+                new_name = re.sub(r'^.*/\.ansible/test/tmp/[^/]+/', root_path, filename)
+                display.info('%s -> %s' % (filename, new_name), verbosity=3)
+                filename = new_name
 
             if group not in groups:
                 groups[group] = {}
