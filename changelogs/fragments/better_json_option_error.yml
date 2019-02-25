@@ -1,0 +1,2 @@
+bugfixes:
+  - handle option json errors more gracefully, also document options are not vaultable.

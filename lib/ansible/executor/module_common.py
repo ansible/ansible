@@ -687,7 +687,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        python_repred_params = repr(json.dumps(params))
+        try:
+            python_repred_params = repr(json.dumps(params))
+        except TypeError as e:
+            raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
         try:
             compression_method = getattr(zipfile, module_compression)
