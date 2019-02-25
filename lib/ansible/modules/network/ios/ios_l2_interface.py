@@ -33,6 +33,8 @@ options:
   mode:
     description:
       - Mode in which interface needs to be configured.
+        C(mode=voice-access) will configure both an access vlan
+        and a voice vlan on an interface.
     default: access
     choices: ['access', 'voice-access', 'trunk']
   access_vlan:
