@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -59,13 +60,14 @@ EXAMPLES = '''
       ssl: yes
       validate_certs: yes
 
-- name: create 1 day retention policy
+- name: create 1 day retention policy with 1 hour group duration
   influxdb_retention_policy:
       hostname: "{{influxdb_ip_address}}"
       database_name: "{{influxdb_database_name}}"
       policy_name: test
       duration: 1d
       replication: 1
+      shard_group_duration: 1h
 
 - name: create 1 week retention policy
   influxdb_retention_policy:
@@ -100,13 +102,11 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.influxdb import InfluxDb
-from ansible.module_utils._text import to_native
 
 
 def find_retention_policy(module, client):
     database_name = module.params['database_name']
     policy_name = module.params['policy_name']
-    hostname = module.params['hostname']
     retention_policy = None
 
     try:
@@ -116,7 +116,7 @@ def find_retention_policy(module, client):
                 retention_policy = policy
                 break
     except requests.exceptions.ConnectionError as e:
-        module.fail_json(msg="Cannot connect to database %s on %s : %s" % (database_name, hostname, to_native(e)))
+        module.fail_json(msg=str(e))
     return retention_policy
 
 
@@ -126,10 +126,11 @@ def create_retention_policy(module, client):
     duration = module.params['duration']
     replication = module.params['replication']
     default = module.params['default']
+    shard_group_duration = module.params['shard_group_duration']
 
     if not module.check_mode:
         try:
-            client.create_retention_policy(policy_name, duration, replication, database_name, default)
+            client.create_retention_policy(policy_name, duration, replication, database_name, default,shard_group_duration)
         except exceptions.InfluxDBClientError as e:
             module.fail_json(msg=e.content)
     module.exit_json(changed=True)
@@ -141,10 +142,12 @@ def alter_retention_policy(module, client, retention_policy):
     duration = module.params['duration']
     replication = module.params['replication']
     default = module.params['default']
+    shard_group_duration = module.params['shard_group_duration']
     duration_regexp = re.compile(r'(\d+)([hdw]{1})|(^INF$){1}')
     changed = False
 
     duration_lookup = duration_regexp.search(duration)
+    shard_duration_lookup = duration_regexp.search(shard_group_duration)
 
     if duration_lookup.group(2) == 'h':
         influxdb_duration_format = '%s0m0s' % duration
@@ -155,12 +158,22 @@ def alter_retention_policy(module, client, retention_policy):
     elif duration == 'INF':
         influxdb_duration_format = '0'
 
+    if shard_duration_lookup.group(2) == 'h':
+        influxdb_shard_duration_format = '%s0m0s' % duration
+    elif shard_duration_lookup.group(2) == 'd':
+        influxdb_shard_duration_format = '%sh0m0s' % (int(shard_duration_lookup.group(1)) * 24)
+    elif shard_duration_lookup.group(2) == 'w':
+        influxdb_shard_duration_format = '%sh0m0s' % (int(shard_duration_lookup.group(1)) * 24 * 7)
+    elif shard_group_duration == 'INF':
+        influxdb_shard_duration_format = '0'
+    
     if (not retention_policy['duration'] == influxdb_duration_format or
             not retention_policy['replicaN'] == int(replication) or
+            not retention_policy['shardGroupDuration'] == influxdb_shard_duration_format or
             not retention_policy['default'] == default):
         if not module.check_mode:
             try:
-                client.alter_retention_policy(policy_name, database_name, duration, replication, default)
+                client.alter_retention_policy(policy_name, database_name, duration, replication, default, shard_group_duration)
             except exceptions.InfluxDBClientError as e:
                 module.fail_json(msg=e.content)
         changed = True
@@ -174,7 +187,8 @@ def main():
         policy_name=dict(required=True, type='str'),
         duration=dict(required=True, type='str'),
         replication=dict(required=True, type='int'),
-        default=dict(default=False, type='bool')
+        default=dict(default=False, type='bool'),
+        shard_duration=dict(required=False, type='str', default='1d')
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -194,3 +208,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
