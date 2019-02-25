@@ -26,15 +26,11 @@ options:
       - Name of the plugin to operate on.
     required: true
     type: str
-    aliases:
-      - plugin_name
 
   alias:
     description:
       - Alias of the plugin to operate on. Same plugin can be installed with different alias.
     type: str
-    aliases:
-      - plugin_alias
 
   plugin_options:
     description:
@@ -45,10 +41,14 @@ options:
     description:
       - C(absent) remove the plugin.
       - C(present) install the plugin, if it does not already exist.
+      - C(enable) enable the plugin.
+      - C(disable) disable the plugin.
     default: present
     choices:
       - absent
       - present
+      - enable
+      - disable
 
 extends_documentation_fragment:
   - docker
@@ -68,7 +68,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: Create a plugin
+- name: Install a plugin
   docker_plugin:
     name: plugin_one
 
@@ -77,7 +77,7 @@ EXAMPLES = '''
     name: plugin_one
     state: absent
 
-- name: Create a plugin with options
+- name: Install a plugin with options
   docker_plugin:
     name: weaveworks/net-plugin:latest_release
     alias: weave-net-plugin
@@ -111,13 +111,21 @@ class TaskParameters(DockerBaseClass):
         super(TaskParameters, self).__init__()
         self.client = client
 
-        self.plugin_name = None
-        self.plugin_alias = None
+        self.name = None
+        self.alias = None
         self.plugin_options = None
         self.debug = None
 
         for key, value in iteritems(client.module.params):
             setattr(self, key, value)
+
+
+def prepare_options(options):
+    return ['%s=%s' % (k, v if v is not None else "") for k, v in iteritems(options)] if options else []
+
+
+def parse_options(options_list):
+    return dict((k, v) for k, v in map(lambda x: x.split('=', 1), options_list)) if options_list else {}
 
 
 class DockerPluginManager(object):
@@ -143,9 +151,13 @@ class DockerPluginManager(object):
             self.present()
         elif state == 'absent':
             self.absent()
+        elif state == 'enable':
+            self.enable()
+        elif state == 'disable':
+            self.disable()
 
     def get_plugin_name(self):
-        return self.parameters.plugin_alias or self.parameters.plugin_name
+        return self.parameters.alias or self.parameters.name
 
     def get_existing_plugin(self):
         name = self.get_plugin_name()
@@ -157,9 +169,6 @@ class DockerPluginManager(object):
             self.client.fail(text_type(e))
 
         return plugin
-
-    def parse_options(self, options_list):
-        return dict((k, v) for k, v in map(lambda x: x.split('=', 1), options_list)) if options_list else {}
 
     def has_different_config(self):
         """
@@ -173,7 +182,7 @@ class DockerPluginManager(object):
                 differences.append('plugin_options')
             else:
                 existing_options_list = self.existing_plugin.settings['Env']
-                existing_options = self.parse_options(existing_options_list)
+                existing_options = parse_options(existing_options_list)
 
                 for key, value in iteritems(self.parameters.plugin_options):
                     if ((not existing_options.get(key) and value) or
@@ -205,15 +214,12 @@ class DockerPluginManager(object):
             self.results['actions'].append("Removed plugin %s" % self.get_plugin_name())
             self.results['changed'] = True
 
-    def prepare_options(self, options):
-        return ['%s=%s' % (k, v if v is not None else "") for k, v in iteritems(options)] if options else []
-
     def update_plugin(self):
         if not self.check_mode:
             try:
                 if self.existing_plugin.enabled:
                     self.existing_plugin.disable()
-                self.existing_plugin.configure(self.prepare_options(self.parameters.plugin_options))
+                self.existing_plugin.configure(prepare_options(self.parameters.plugin_options))
                 self.existing_plugin.enable(1)
             except APIError as e:
                 self.client.fail(text_type(e))
@@ -237,17 +243,41 @@ class DockerPluginManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'docker_plugin': self.get_existing_plugin().attrs}
-
     def absent(self):
         self.remove_plugin()
+
+    def enable(self):
+        if self.existing_plugin:
+            if not self.check_mode:
+                try:
+                    self.existing_plugin.enable(1)
+                except APIError as e:
+                    self.client.fail(text_type(e))
+
+            self.results['actions'].append("Enabled plugin %s" % self.get_plugin_name())
+            self.results['changed'] = True
+        else:
+            self.fail("Cannot enable plugin: Plugin not exist")
+
+    def disable(self):
+        if self.existing_plugin:
+            if not self.check_mode:
+                try:
+                    self.existing_plugin.disable()
+                except APIError as e:
+                    self.client.fail(text_type(e))
+
+            self.results['actions'].append("Disable plugin %s" % self.get_plugin_name())
+            self.results['changed'] = True
+        else:
+            self.fail("Cannot disable plugin: Plugin not exist")
 
 
 def main():
     argument_spec = dict(
-        plugin_name=dict(type='str', required=True, aliases=['name']),
-        plugin_alias=dict(type='str', aliases=['alias']),
-        state=dict(type='str', default='present', choices=['present', 'absent']),
+        name=dict(type='str', required=True),
+        alias=dict(type='str'),
+        state=dict(type='str', default='present', choices=['present', 'absent', 'enable', 'disable']),
         plugin_options=dict(type='dict', default={}),
         debug=dict(type='bool', default=False)
     )
