@@ -23,17 +23,29 @@ from itertools import chain
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 
-try:
-    _UNSAFE_GROUP = re.compile(C.INVALID_GROUP_CHARS)
-except Exception as e:
-    raise AnsibleError('Invalid regex suplied for "invalid group names" (%s): %s ' % (to_native(C.INVALID_GROUP_CHARS), to_native(e)))
+from ansible.utils.display import Display
+
+display = Display()
+_UNSAFE_GROUP = re.compile("[^A-Za-z0-9_]")
+
+
+def replace_and_warn(match):
+    display.warning('Replacing invalid character (%s) in group name (%s)' % (to_text(match.group(0)), to_text(match.string)))
+    return '_'
 
 
 def to_safe_group_name(name, replacer="_"):
     ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
-    return _UNSAFE_GROUP.sub(replacer, name)
+
+    if C.TRANSFORM_INVALID_GROUP_CHARS:
+        name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
+    else:
+        matched = _UNSAFE_GROUP.search()
+        for match in set(matched.groups):
+            display.deprecated('Ignoring invalid character (%s) in group name, in the future this will be an error' % to_text(matched), version='2.12')
+    return name
 
 
 class Group:
