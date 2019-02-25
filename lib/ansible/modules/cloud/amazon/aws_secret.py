@@ -123,14 +123,11 @@ secret:
       sample: { "dc1ed59b-6d8e-4450-8b41-536dfe4600a9": [ "AWSCURRENT" ] }
 '''
 
-import os
-
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import snake_dict_to_camel_dict, camel_dict_to_snake_dict
 from ansible.module_utils.ec2 import boto3_tag_list_to_ansible_dict, compare_aws_tags, ansible_dict_to_boto3_tag_list
 
 try:
-    from boto3.exceptions import ResourceNotExistsError
     from botocore.exceptions import BotoCoreError, ClientError
 except ImportError:
     pass  # handled by AnsibleAWSModule
