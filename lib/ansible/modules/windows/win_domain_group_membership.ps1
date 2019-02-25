@@ -9,10 +9,8 @@ try {
     Import-Module ActiveDirectory
 }
 catch {
-    Fail-Json $result "Failed to import ActiveDirectory PowerShell module. This module should be run on a domain controller, and the ActiveDirectory module must be available."
+    Fail-Json $result "win_domain_group_membership requires the ActiveDirectory PS module to be installed"
 }
-
-$ErrorActionPreference = "Stop"
 
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
@@ -40,7 +38,6 @@ if ($domain_server -ne $null) {
 
 $result = @{
     changed = $false
-    name = $name
 }
 if ($state -in @("present", "pure")) {
     $result.added = @()
