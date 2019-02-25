@@ -36,6 +36,23 @@ options:
     type: str
     choices: [ absent, present, pure ]
     default: present
+  domain_username:
+    description:
+    - The username to use when interacting with AD.
+    - If this is not set then the user Ansible used to log in with will be
+      used instead when using CredSSP or Kerberos with credential delegation.
+    type: str
+  domain_password:
+    description:
+    - The password for I(username).
+    type: str
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    type: str
 seealso:
 - module: win_domain_user
 - module: win_domain_group
