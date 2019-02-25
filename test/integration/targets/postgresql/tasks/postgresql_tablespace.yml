@@ -18,6 +18,11 @@
     mode: 0755
   ignore_errors: yes
 
+- name: postgresql_tablespace - install policycoreutils-python
+  become: yes
+  yum: name=policycoreutils-python state=latest
+  ignore_errors: yes
+
 - name: postgresql_tablespace - change selinux context
   become: yes
   shell: semanage fcontext -a -t postgresql_db_t "/mnt/ssd(/.*)?"
