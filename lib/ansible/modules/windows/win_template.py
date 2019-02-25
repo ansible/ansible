@@ -40,8 +40,16 @@ options:
   dest:
     description:
       - Location to render the template to on the remote machine.
-    type: str
+    type: path
     required: yes
+  backup:
+    description:
+    - Determine whether a backup should be created.
+    - When set to C(yes), create a backup file including the timestamp information
+      so you can get the original file back if you somehow clobbered it incorrectly.
+    type: bool
+    default: no
+    version_added: '2.8'
   newline_sequence:
     description:
       - Specify the newline sequence to use for templating files.
@@ -99,6 +107,9 @@ notes:
     which changes the variable interpolation markers to  [% var %] instead of  {{ var }}.
     This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
     raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated."
+  - You can use the M(win_copy) module with the C(content:) option if you prefer the template inline,
+    as part of the playbook.
+
 seealso:
 - module: template
 - module: win_copy
@@ -117,4 +128,13 @@ EXAMPLES = r'''
     src: unix/config.conf.j2
     dest: C:\share\unix\config.conf
     newline_sequence: '\n'
+    backup: yes
+'''
+
+RETURN = r'''
+backup_file:
+    description: Name of the backup file that was created.
+    returned: if backup=yes
+    type: str
+    sample: C:\Path\To\File.txt.11540.20150212-220915.bak
 '''

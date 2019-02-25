@@ -23,7 +23,7 @@ options:
     path:
         description:
         - The path of remote servers XML.
-        type: str
+        type: path
         required: true
         aliases: [ dest, file ]
     fragment:
@@ -39,7 +39,9 @@ options:
         required: true
     backup:
         description:
-        - Whether to backup the remote server's XML before applying the change.
+        - Determine whether a backup should be created.
+        - When set to C(yes), create a backup file including the timestamp information
+          so you can get the original file back if you somehow clobbered it incorrectly.
         type: bool
         default: no
     type:
@@ -75,6 +77,11 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+backup_file:
+    description: Name of the backup file that was created.
+    returned: if backup=yes
+    type: str
+    sample: C:\Path\To\File.txt.11540.20150212-220915.bak
 msg:
     description: What was done.
     returned: always
@@ -85,9 +92,4 @@ err:
     returned: always, for type element and -vvv or more
     type: list
     sample: attribute mismatch for actual=string
-backup:
-    description: Name of the backup file, if created.
-    returned: changed
-    type: str
-    sample: C:\config.xml.19700101-000000
 '''

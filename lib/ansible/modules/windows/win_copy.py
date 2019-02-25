@@ -43,8 +43,18 @@ options:
       with "/" or "\", or C(src) is a directory.
     - If C(src) and C(dest) are files and if the parent directory of C(dest)
       doesn't exist, then the task will fail.
-    required: yes
     type: path
+    required: yes
+  backup:
+    description:
+    - Determine whether a backup should be created.
+    - When set to C(yes), create a backup file including the timestamp information
+      so you can get the original file back if you somehow clobbered it incorrectly.
+    - No backup is taken when C(remote_src=False) and multiple files are being
+      copied.
+    type: bool
+    default: no
+    version_added: '2.8'
   force:
     description:
     - If set to C(yes), the file will only be transferred if the content
@@ -107,6 +117,12 @@ EXAMPLES = r'''
     src: /srv/myfiles/foo.conf
     dest: C:\Temp\renamed-foo.conf
 
+- name: Copy a single file, but keep a backup
+  win_copy:
+    src: /srv/myfiles/foo.conf
+    dest: C:\Temp\renamed-foo.conf
+    backup: yes
+
 - name: Copy a single file keeping the filename
   win_copy:
     src: /src/myfiles/foo.conf
@@ -141,6 +157,11 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+backup_file:
+    description: Name of the backup file that was created.
+    returned: if backup=yes
+    type: str
+    sample: C:\Path\To\File.txt.11540.20150212-220915.bak
 dest:
     description: Destination file/path.
     returned: changed
