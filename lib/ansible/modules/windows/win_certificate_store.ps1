@@ -108,7 +108,7 @@ Function New-CertFile($cert, $path, $type, $password) {
             Fail-Json -obj $result -message "Failed to write cert to file, cert was null: $($_.Exception.Message)"
         } catch [System.IO.IOException] {
             Fail-Json -obj $result -message "Failed to write cert to file due to IO exception: $($_.Exception.Message)"
-        } catch [System.UnauthorizedAccessException, System>Security.SecurityException] {
+        } catch [System.UnauthorizedAccessException, System.Security.SecurityException] {
             Fail-Json -obj $result -message "Failed to write cert to file due to permission: $($_.Exception.Message)"
         } catch {
             Fail-Json -obj $result -message "Failed to write cert to file: $($_.Exception.Message)"
