@@ -103,7 +103,7 @@ guest_disk_facts:
             "backing_thinprovisioned": false,
             "backing_type": "FlatVer2",
             "backing_writethrough": false,
-            "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a"
+            "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a",
             "capacity_in_bytes": 10485760,
             "capacity_in_kb": 10240,
             "controller_key": 1000,
