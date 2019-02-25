@@ -43,8 +43,9 @@ def to_safe_group_name(name, replacer="_"):
         name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
     else:
         matched = _UNSAFE_GROUP.search(name)
-        for match in set(matched.groups):
-            display.deprecated('Ignoring invalid character (%s) in group name, in the future this will be an error' % to_text(matched), version='2.12')
+        if matched is not None:
+            for match in set(matched.groups):
+                display.deprecated('Ignoring invalid character (%s) in group name, in the future this will be an error' % to_text(matched), version='2.12')
     return name
 
 
