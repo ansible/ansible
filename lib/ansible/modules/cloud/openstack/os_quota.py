@@ -49,6 +49,12 @@ options:
         description: Maximum volume storage allowed for project.
     gigabytes_lvm:
         description: Maximum size in GB's of individual lvm volumes.
+    injected_file_content_bytes:
+        description: Number of content bytes allowed per injected file.
+        version_added: "2.8"
+    injected_file_path_bytes:
+        description: Length of injected file path.
+        version_added: "2.8"
     injected_file_size:
         description: Maximum file size in bytes.
     injected_files:
@@ -146,6 +152,8 @@ EXAMPLES = '''
     floating_ips: "{{ item.floating_ips }}"
     floatingip: "{{ item.floatingip }}"
     gigabytes: "{{ item.gigabytes }}"
+    injected_file_content_bytes: "{{ item.injected_file_content_bytes }}"
+    injected_file_path_bytes: "{{ item.injected_file_path_bytes }}"
     injected_file_size: "{{ item.injected_file_size }}"
     injected_files: "{{ item.injected_files }}"
     injected_path_size: "{{ item.injected_path_size }}"
@@ -333,6 +341,8 @@ def main():
         floatingip=dict(required=False, type='int', default=None, aliases=['network_floating_ips']),
         gigabytes=dict(required=False, type='int', default=None),
         gigabytes_types=dict(required=False, type='dict', default={}),
+        injected_file_content_bytes=dict(required=False, type='int', default=None),
+        injected_file_path_bytes=dict(required=False, type='int', default=None),
         injected_file_size=dict(required=False, type='int', default=None),
         injected_files=dict(required=False, type='int', default=None),
         injected_path_size=dict(required=False, type='int', default=None),
