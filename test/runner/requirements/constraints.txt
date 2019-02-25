@@ -39,3 +39,4 @@ mccabe == 0.6.1
 pylint == 2.1.1
 typed-ast == 1.1.0
 wrapt == 1.10.11
+botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
