@@ -41,6 +41,10 @@ options:
         description:
             - Determines how many independent copies of each point are stored in the cluster
         required: true
+    shard_group_duration:
+        description:
+            - Determines the size of a shard group
+        required: false
     default:
         description:
             - Sets the retention policy as default retention policy
@@ -130,7 +134,7 @@ def create_retention_policy(module, client):
 
     if not module.check_mode:
         try:
-            client.create_retention_policy(policy_name, duration, replication, database_name, default,shard_group_duration)
+            client.create_retention_policy(policy_name, duration, replication, database_name, default, shard_group_duration)
         except exceptions.InfluxDBClientError as e:
             module.fail_json(msg=e.content)
     module.exit_json(changed=True)
@@ -166,7 +170,7 @@ def alter_retention_policy(module, client, retention_policy):
         influxdb_shard_duration_format = '%sh0m0s' % (int(shard_duration_lookup.group(1)) * 24 * 7)
     elif shard_group_duration == 'INF':
         influxdb_shard_duration_format = '0'
-    
+ 
     if (not retention_policy['duration'] == influxdb_duration_format or
             not retention_policy['replicaN'] == int(replication) or
             not retention_policy['shardGroupDuration'] == influxdb_shard_duration_format or
@@ -208,4 +212,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
