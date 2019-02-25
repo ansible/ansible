@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 import re
 import sys
-from ipaddress import IPv4Network
 __metaclass__ = type
 
 
@@ -50,22 +49,14 @@ EXAMPLES = """
 # Note: examples below use the following provider dict to handle
 #       transport and authentication to the node.
 ---
-vars:
-  config_list:
-    - range 56832 56959
-    - range 61363 65185
-
 - name: configure UDP object-group service with port-object
   asa_og:
     name: service_object_test
     group_type: port-object
     protocol: udp
-    lines: "{{ item }}"
+    lines: ['range 56832 56959', 'range 61363 65185']
     provider: "{{ fws }}"
   register: result
-  loop:
-    - "{{ config_list }}"
-
 """
 
 RETURN = """
@@ -140,13 +131,12 @@ def map_config_to_obj(module):
     obj_dict['have_name'] = run_group_name
 
     if run_group_name:
-        if run_group_name[0] == True:
+        if run_group_name[0] is True:
             obj_dict['have_group_type'] = "port-object"
         elif 'network' in run_group_name[2]:
             obj_dict['have_group_type'] = "network-object"
-        elif 'service' in run_group_name[2] and run_group_name[0] == False:
+        elif 'service' in run_group_name[2] and run_group_name[0] is False:
             obj_dict['have_group_type'] = "service-object"
-
 
     if group_type == 'network-object':
         sh_run_group_type = get_config(module, flags=['object-group id {}'.format(group_name)])
@@ -165,7 +155,6 @@ def map_config_to_obj(module):
             obj_dict['have_lines'] = have_lines
         elif have_lines_raw is None:
             obj_dict['have_lines'] = have_lines_raw
-
 
     obj.append(obj_dict)
 
@@ -198,47 +187,46 @@ def map_obj_to_commands(want, have, module):
                         for i in lines:
                             if i not in have_lines:
                                 if 'object' not in i:
-                                    add_lines.append('network-object ' + i )
+                                    add_lines.append('network-object ' + i)
                                 else:
                                     add_lines.append(i)
 
                         for i in have_lines:
                             if i not in lines:
                                 if 'group-object' not in i:
-                                    remove_lines.append('no network-object ' + i )
+                                    remove_lines.append('no network-object ' + i)
                                 else:
-                                    remove_lines.append('no ' + i )
+                                    remove_lines.append('no ' + i)
 
                     elif 'service-object' in group_type and 'service' in have_group_type:
                         commands.append('object-group service {}'.format(name))
                         for i in lines:
                             if i not in have_lines:
                                 if 'group-object' not in i:
-                                    add_lines.append('service-object ' + i )
+                                    add_lines.append('service-object ' + i)
                                 else:
                                     add_lines.append(i)
 
                         for i in have_lines:
                             if i not in lines:
                                 if 'group-object' not in i:
-                                    remove_lines.append('no service-object ' + i )
+                                    remove_lines.append('no service-object ' + i)
                                 else:
-                                    remove_lines.append('no ' + i )
-
+                                    remove_lines.append('no ' + i)
 
                     elif 'port-object' in group_type and 'service' in have_group_type:
                         commands.append('object-group service {} {}'.format(name, protocol))
                         for i in lines:
                             if i not in have_lines:
                                 if 'group-object' not in i:
-                                    add_lines.append('port-object ' + i )
+                                    add_lines.append('port-object ' + i)
                                 else:
                                     add_lines.append(i)
 
                         for i in have_lines:
                             if i not in lines:
                                 if 'group-object' not in i:
-                                    remove_lines.append('no port-object ' + i )
+                                    remove_lines.append('no port-object ' + i)
                                 else:
                                     add_lines.append(i)
 
@@ -248,7 +236,6 @@ def map_obj_to_commands(want, have, module):
                     for i in list(set_add_lines) + list(set_remove_lines):
                         commands.append(i)
 
-
         elif have_lines is None and have_group_type is None:
 
             if 'network-object' in group_type :
@@ -256,7 +243,7 @@ def map_obj_to_commands(want, have, module):
 
                 for i in lines:
                     if 'object' not in i:
-                        add_lines.append('network-object ' + i )
+                        add_lines.append('network-object ' + i)
                     else:
                         add_lines.append(i)
 
@@ -267,7 +254,7 @@ def map_obj_to_commands(want, have, module):
                 commands.append('object-group service {}'.format(name))
 
                 for i in lines:
-                    add_lines.append('service-object ' + i )
+                    add_lines.append('service-object ' + i)
 
                 for i in set(add_lines):
                     commands.append(i)
@@ -275,7 +262,7 @@ def map_obj_to_commands(want, have, module):
             elif 'port-object' in group_type:
                 commands.append('object-group service {} {}'.format(name, protocol))
                 for i in lines:
-                    add_lines.append('port-object ' + i )
+                    add_lines.append('port-object ' + i)
 
                 for i in set(add_lines):
                     commands.append(i)
@@ -327,6 +314,7 @@ def main():
         result['changed'] = True
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
