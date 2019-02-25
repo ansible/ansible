@@ -24,6 +24,20 @@
       managed_policy:
         - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
     register: iam_role_output
+    ignore_errors: yes
+
+  # CI does not remove the role and comparing policies has a bug on Python3; fall back to use iam_role_facts
+  - name: get IAM role
+    iam_role_facts:
+      <<: *aws_connection_info
+      name: "test-secrets-manager-role"
+    when: iam_role_output is failed
+    register: iam_role_facts
+
+  - name: set iam_role_output
+    set_fact:
+      iam_role_output: "{{ iam_role_facts.iam_roles[0] }}"
+    when: iam_role_facts is defined
 
   - name: create a temporary directory
     tempfile:
@@ -175,7 +189,7 @@
       state: present
       secret_type: 'string'
       secret: "{{ super_secret_string }}"
-      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:hello-world-rre"
+      rotation_lambda: "arn:aws:lambda:{{ aws_region }}:{{ test_caller_facts.account }}:function:hello-world-{{ resource_prefix }}"
     register: result
     retries: 100
     delay: 5
@@ -233,6 +247,7 @@
       handler: 'hello_world.lambda_handler'
     ignore_errors: yes
 
+  # CI does not remove the IAM role
   - name: remove IAM role
     iam_role:
       <<: *aws_connection_info
