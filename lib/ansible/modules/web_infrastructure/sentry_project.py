@@ -108,7 +108,7 @@ def main():
     if state == 'present':
         if is_project_exists(project_name, organization, team, api_token):
             module.exit_json(changed=False, project_name=project_name,
-                             project_sl§ug=project_slug)
+                             project_slug=project_slug)
         else:
             response, info = fetch_url(
                 module, "{url}/api/0/teams/{organization}/{team}/projects/".format(
