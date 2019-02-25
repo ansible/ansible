@@ -293,7 +293,7 @@ class SecretsManagerInterface(object):
         if desired_secret.kms_key_id != current_secret.get("KmsKeyId"):
             return False
         current_secret_value = self.client.get_secret_value(SecretId=current_secret.get("Name"))
-        if desired_secret.secret != current_secret_value.get(desired_secret.secret_type).encode("utf-8"):
+        if desired_secret.secret != current_secret_value.get(desired_secret.secret_type):
             return False
         return True
 
