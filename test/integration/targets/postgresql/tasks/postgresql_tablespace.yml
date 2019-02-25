@@ -114,8 +114,8 @@
     login_user: "{{ pg_user }}"
     name: acme
     set:
-      random_page_cost: 1
       seq_page_cost: 4
+      random_page_cost: 1
   register: result
   ignore_errors: yes
 
