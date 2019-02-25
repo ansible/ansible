@@ -129,7 +129,6 @@ class TaskResult:
 
             result._result = x
         elif self._result:
-
             result._result = module_response_deepcopy(self._result)
 
             # actualy remove
