@@ -41,8 +41,10 @@ options:
     description:
       - Port number for ssh on the destination host.
       - Prior to Ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
+      - This parameter defaults to the value of C(ansible_ssh_port) or C(ansible_port),
+        the C(remote_port) config setting or the value from ssh client configuration
+        if none of the former have been set.
     type: int
-    default: Value of ansible_ssh_port for this host, remote_port config setting, or the value from ssh client configuration if none of those are set
     version_added: "1.5"
   mode:
     description:
@@ -91,13 +93,13 @@ options:
   recursive:
     description:
       - Recurse into directories.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   links:
     description:
       - Copy symlinks as symlinks.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   copy_links:
     description:
       - Copy symlinks as the item that they point to (the referent) is copied, rather than the symlink.
@@ -106,23 +108,23 @@ options:
   perms:
     description:
       - Preserve permissions.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   times:
     description:
       - Preserve modification times.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   owner:
     description:
       - Preserve owner (super user only).
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   group:
     description:
       - Preserve group.
+      - This parameter defaults to the value of the archive option.
     type: bool
-    default: the value of the archive option
   rsync_path:
     description:
       - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
@@ -384,7 +386,7 @@ def main():
             private_key=dict(type='path'),
             rsync_path=dict(type='str'),
             _local_rsync_path=dict(type='path', default='rsync'),
-            _local_rsync_password=dict(type='str', default=None, no_log=True),
+            _local_rsync_password=dict(type='str', no_log=True),
             _substitute_controller=dict(type='bool', default=False),
             archive=dict(type='bool', default=True),
             checksum=dict(type='bool', default=False),
