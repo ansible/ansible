@@ -41,7 +41,7 @@ options:
         description:
             - Determines how many independent copies of each point are stored in the cluster
         required: true
-    shard_group_duration:
+    shard_duration:
         description:
             - Determines the size of a shard group
         required: false
