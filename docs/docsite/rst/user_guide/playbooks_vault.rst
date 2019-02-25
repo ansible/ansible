@@ -126,6 +126,8 @@ To create a vaulted variable, use the :ref:`ansible-vault encrypt_string <ansibl
 
 This vaulted variable will be decrypted with the supplied vault secret and used as a normal variable. The ``ansible-vault`` command line supports stdin and stdout for encrypting data on the fly, which can be used from your favorite editor to create these vaulted variables; you just have to be sure to add the ``!vault`` tag so both Ansible and YAML are aware of the need to decrypt. The ``|`` is also required, as vault encryption results in a multi-line string.
 
+.. note::
+   Inline vaults ONLY work on variables, you cannot use directly on a task's options.
 
 .. _encrypt_string:
 
