@@ -355,8 +355,6 @@ class TaskParameters(DockerBaseClass):
                 continue
             if self.__dict__[k] != other.__dict__[k]:
                 differences.add(k, parameter=self.__dict__[k], active=other.__dict__[k])
-                import q
-                q.q(k, self.__dict__[k], other.__dict__[k])
         return differences
 
 
