@@ -430,19 +430,14 @@ class LaunchCtlList(LaunchCtlTask):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(
-                required=True,
-                aliases=['service']
-            ),
-            state=dict(
-                choices=['started', 'stopped', 'restarted', 'reloaded', 'unloaded'],
-            ),
+            name=dict(type='str', required=True, aliases=['service']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped', 'unloaded']),
             enabled=dict(type='bool'),
-            force_stop=dict(type='bool', required=False)
+            force_stop=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         required_one_of=[
-            ['state', 'enabled']
+            ['state', 'enabled'],
         ],
     )
 
