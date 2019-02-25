@@ -28,6 +28,7 @@ author:
 notes:
     - Tested on vSphere 6.0 and 6.5.
     - Disk UUID information is added in version 2.8.
+    - Additional information about guest disk backings added in version 2.8.
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -100,7 +101,9 @@ guest_disk_facts:
             "backing_eagerlyscrub": false,
             "backing_filename": "[datastore2] VM_225/VM_225.vmdk",
             "backing_thinprovisioned": false,
+            "backing_type": "FlatVer2",
             "backing_writethrough": false,
+            "backing_uuid": "200C3A00-f82a-97af-02ff-62a595f0020a"
             "capacity_in_bytes": 10485760,
             "capacity_in_kb": 10240,
             "controller_key": 1000,
@@ -108,6 +111,22 @@ guest_disk_facts:
             "label": "Hard disk 1",
             "summary": "10,240 KB",
             "unit_number": 0
+        },
+        "1": {
+            "backing_datastore": "datastore3",
+            "backing_devicename": "vml.012345678901234567890123456789012345678901234567890123",
+            "backing_disk_mode": "independent_persistent",
+            "backing_filename": "[datastore3] VM_226/VM_226.vmdk",
+            "backing_lunuuid": "012345678901234567890123456789012345678901234567890123",
+            "backing_type": "RawDiskMappingVer1",
+            "backing_uuid": null,
+            "capacity_in_bytes": 15728640,
+            "capacity_in_kb": 15360,
+            "controller_key": 1000,
+            "key": 2001,
+            "label": "Hard disk 3",
+            "summary": "15,360 KB",
+            "unit_number": 1
         },
     }
 """
