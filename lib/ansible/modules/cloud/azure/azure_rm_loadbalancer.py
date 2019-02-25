@@ -427,6 +427,37 @@ inbound_nat_pool_spec = dict(
 )
 
 
+inbound_nat_rule_spec = dict(
+        name=dict(
+        type='str',
+        required=True
+    ),
+    frontend_ip_configuration=dict(
+        type='str'
+    ),
+    protocol=dict(
+        type='str',
+        choices=['Tcp', 'Udp', 'All'],
+        default='Tcp'
+    ),
+    frontend_port=dict(
+        type='int'
+    ),
+    idle_timeout=dict(
+        type='int'
+    ),
+    backend_port=dict(
+        type='int'
+    ),
+    enable_floating_ip=dict(
+        type='bool'
+    ),
+    enable_tcp_reset=dict(
+        type='bool'
+    )
+)
+
+
 load_balancing_rule_spec = dict(
     name=dict(
         type='str',
@@ -511,6 +542,11 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 elements='dict',
                 options=probes_spec
             ),
+            inbound_nat_rules=dict(
+                type='list',
+                elements='dict',
+                options=inbound_nat_rule_spec
+            ),
             inbound_nat_pools=dict(
                 type='list',
                 elements='dict',
@@ -582,6 +618,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.frontend_ip_configurations = None
         self.backend_address_pools = None
         self.probes = None
+        self.inbound_nat_rules = None
         self.inbound_nat_pools = None
         self.load_balancing_rules = None
         self.public_ip_address_name = None
@@ -738,22 +775,42 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 enable_floating_ip=item.get('enable_floating_ip')
             ) for item in self.load_balancing_rules] if self.load_balancing_rules else None
 
+            inbound_nat_rules_param = [self.network_models.InboundNatRule(
+                name=item.get('name'),
+                frontend_ip_configuration=self.network_models.SubResource(
+                    id=frontend_ip_configuration_id(
+                        self.subscription_id,
+                        self.resource_group,
+                        self.name,
+                        item.get('frontend_ip_configuration')
+                    )
+                ) if item.get('frontend_ip_configuration') else None,
+                protocol=item.get('protocol'),
+                frontend_port=item.get('frontend_port'),
+                backend_port=item.get('backend_port'),
+                idle_timeout_in_minutes=item.get('idle_timeout'),
+                enable_tcp_reset=item.get('enable_tcp_reset'),
+                enable_floating_ip=item.get('enable_floating_ip')
+            ) for item in self.inbound_nat_rules] if self.inbound_nat_rules else None
+
             self.new_load_balancer = self.network_models.LoadBalancer(
                 sku=self.network_models.LoadBalancerSku(name=self.sku) if self.sku else None,
                 location=self.location,
-                tags=self.tags,
-                frontend_ip_configurations=frontend_ip_configurations_param,
-                backend_address_pools=backend_address_pools_param,
-                probes=probes_param,
-                inbound_nat_pools=inbound_nat_pools_param,
-                load_balancing_rules=load_balancing_rules_param
+                tags=self.tags or load_balancer.tags,
+                frontend_ip_configurations=frontend_ip_configurations_param or load_balancer.frontend_ip_configurations,
+                backend_address_pools=backend_address_pools_param or load_balancer.backend_address_pools,
+                probes=probes_param or load_balancer.probes,
+                inbound_nat_pools=inbound_nat_pools_param or load_balancer.inbound_nat_pools,
+                load_balancing_rules=load_balancing_rules_param or load_balancer.load_balancing_rules,
+                inbound_nat_rules=inbound_nat_rules_param or load_balancer.inbound_nat_rules
             )
 
             if load_balancer:
+                load_balancer_dict = load_balancer.as_dict()
                 new_dict = self.new_load_balancer.as_dict()
-                if (self.location != load_balancer['location'] or
-                        self.sku != load_balancer['sku']['name'] or
-                        not default_compare(new_dict, load_balancer, '')):
+                if (self.location != load_balancer_dict['location'] or
+                        self.sku != load_balancer_dict['sku']['name'] or
+                        not default_compare(new_dict, load_balancer_dict, '')):
                     changed = True
                 else:
                     changed = False
@@ -762,7 +819,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         elif self.state == 'absent' and load_balancer:
             changed = True
 
-        self.results['state'] = load_balancer if load_balancer else {}
+        self.results['state'] = load_balancer.as_dict() if load_balancer else {}
         if 'tags' in self.results['state']:
             update_tags, self.results['state']['tags'] = self.update_tags(self.results['state']['tags'])
             if update_tags:
@@ -773,7 +830,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         self.results['changed'] = changed
 
         if self.state == 'present' and changed:
-            self.results['state'] = self.create_or_update_load_balancer(self.new_load_balancer)
+            self.results['state'] = self.create_or_update_load_balancer(self.new_load_balancer).as_dict()
         elif self.state == 'absent' and changed:
             self.delete_load_balancer()
             self.results['state'] = None
@@ -790,7 +847,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         """Get a load balancer"""
         self.log('Fetching loadbalancer {0}'.format(self.name))
         try:
-            return self.network_client.load_balancers.get(self.resource_group, self.name).as_dict()
+            return self.network_client.load_balancers.get(self.resource_group, self.name)
         except CloudError:
             return None
 
@@ -807,7 +864,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         try:
             poller = self.network_client.load_balancers.create_or_update(self.resource_group, self.name, param)
             new_lb = self.get_poller_result(poller)
-            return new_lb.as_dict()
+            return new_lb
         except CloudError as exc:
             self.fail("Error creating or updating load balancer {0} - {1}".format(self.name, str(exc)))
 
