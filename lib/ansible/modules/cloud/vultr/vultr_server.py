@@ -32,12 +32,11 @@ options:
   os:
     description:
       - The operating system.
-      - Required if the server does not yet exist and is not restoring from a snapshot.
+      - Required if the server does not yet exist and are not restoring from a snapshot or application image.
   app:
     version_added: "2.8"
     description:
       - The name of the application image to use.
-      - Required if os='Application'.
   snapshot:
     version_added: "2.8"
     description:
@@ -364,8 +363,8 @@ class AnsibleVultrServer(Vultr):
             'network_v4': dict(key='v4_network'),
             'gateway_v4': dict(key='v4_gateway'),
             'os': dict(),
-            'app': dict(),
             'snapshot': dict(),
+            'app': dict(),
             'pending_charges': dict(convert_to='float'),
             'power_status': dict(),
             'ram': dict(),
@@ -392,6 +391,8 @@ class AnsibleVultrServer(Vultr):
     def get_os(self):
         if self.module.params.get('snapshot'):
             os_name = 'Snapshot'
+        elif self.module.params.get('app'):
+            os_name = 'Application'
         else:
             os_name = self.module.params.get('os')
 
@@ -402,19 +403,19 @@ class AnsibleVultrServer(Vultr):
             use_cache=True
         )
 
-    def get_app(self):
-        return self.query_resource_by_key(
-            key='name',
-            value=self.module.params.get('app'),
-            resource='app',
-            use_cache=True
-        )
-    
     def get_snapshot(self):
         return self.query_resource_by_key(
             key='description',
             value=self.module.params.get('snapshot'),
             resource='snapshot',
+            use_cache=True
+        )
+
+    def get_app(self):
+        return self.query_resource_by_key(
+            key='name',
+            value=self.module.params.get('app'),
+            resource='app',
             use_cache=True
         )
 
@@ -524,7 +525,8 @@ class AnsibleVultrServer(Vultr):
         ]
 
         snapshot_restore = self.module.params.get('snapshot') is not None
-        if snapshot_restore:
+        application_image = self.module.params.get('app') is not None
+        if snapshot_restore or application_image:
             required_params.remove('os')
 
         self.module.fail_on_missing_params(required_params=required_params)
@@ -537,6 +539,7 @@ class AnsibleVultrServer(Vultr):
                 'FIREWALLGROUPID': self.get_firewall_group().get('FIREWALLGROUPID'),
                 'OSID': self.get_os().get('OSID'),
                 'SNAPSHOTID': self.get_snapshot().get('SNAPSHOTID'),
+                'APPID': self.get_app().get('APPID'),
                 'label': self.module.params.get('name'),
                 'hostname': self.module.params.get('hostname'),
                 'SSHKEYID': ','.join([ssh_key['SSHKEYID'] for ssh_key in self.get_ssh_keys()]),
@@ -547,8 +550,8 @@ class AnsibleVultrServer(Vultr):
                 'tag': self.module.params.get('tag'),
                 'reserved_ip_v4': self.module.params.get('reserved_ip_v4'),
                 'user_data': self.get_user_data(),
-                'app': self.get_app(),
                 'snapshot': self.get_snapshot(),
+                'app': self.get_app(),
                 'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
             self.api_query(
@@ -885,6 +888,7 @@ def main():
         hostname=dict(),
         os=dict(),
         snapshot=dict(),
+        app=dict(),
         plan=dict(),
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
@@ -892,8 +896,6 @@ def main():
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),
-        app=dict(),
-        snapshot=dict(),
         reserved_ip_v4=dict(),
         firewall_group=dict(),
         startup_script=dict(),
