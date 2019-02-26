@@ -54,7 +54,6 @@ options:
         description:
             - A string containing the file location and name of the client certificate used for authentication.
     client_key:
-        required: False
         description:
             - A string containing the file location and name of the private key of the client certificate used for authentication.
     reason:
