@@ -46,9 +46,9 @@ options:
      - The ADOM the configuration should belong to.
     required: true
 
-  paramgram["mode"]:
+  mode:
     description:
-      - Sets one of three paramgram["mode"]s for managing the object.
+      - Sets one of three modes for managing the object.
       - Allows use of soft-adds instead of overwriting existing values.
     choices: ['add', 'set', 'delete', 'update']
     required: false
@@ -217,7 +217,7 @@ options:
     required: False
     choices: ["enable", "disable"]
 
-  syslog_paramgram["mode"]:
+  syslog_mode:
     description:
      - Remote syslog logging over UDP/Reliable TCP.
      - choice | udp | Enable syslogging over UDP.
@@ -447,20 +447,20 @@ EXAMPLES = '''
   fmgr_device_provision_template:
     provisioning_template: "default"
     snmp_status: "enable"
-    paramgram["mode"]: "set"
+    mode: "set"
 
 - name: SET SNMP SYSTEM INFO ANSIBLE ADOM
   fmgr_device_provision_template:
     provisioning_template: "default"
     snmp_status: "enable"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
 
 - name: SET SNMP SYSTEM INFO different template (SNMPv2)
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
     snmp_status: "enable"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     snmp_v2c_query_port: "162"
     snmp_v2c_trap_port: "161"
@@ -477,7 +477,7 @@ EXAMPLES = '''
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
     snmp_status: "enable"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     snmpv3_auth_proto: "sha"
     snmpv3_auth_pwd: "fortinet"
@@ -496,18 +496,18 @@ EXAMPLES = '''
 - name: SET SYSLOG INFO
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     syslog_server: "10.7.220.59"
     syslog_port: "514"
-    syslog_paramgram["mode"]: "disable"
+    syslog_mode: "disable"
     syslog_status: "enable"
     syslog_filter: "information"
 
 - name: SET NTP TO FORTIGUARD
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     ntp_status: "enable"
     ntp_sync_interval: "60"
@@ -516,7 +516,7 @@ EXAMPLES = '''
 - name: SET NTP TO CUSTOM SERVER
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     ntp_status: "enable"
     ntp_sync_interval: "60"
@@ -529,7 +529,7 @@ EXAMPLES = '''
 - name: SET ADMIN GLOBAL SETTINGS
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     admin_https_redirect: "enable"
     admin_https_port: "4433"
@@ -545,7 +545,7 @@ EXAMPLES = '''
 - name: SET CUSTOM SMTP SERVER
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     smtp_username: "ansible"
     smtp_password: "fortinet"
@@ -559,7 +559,7 @@ EXAMPLES = '''
 - name: SET DNS SERVERS
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     dns_suffix: "ansible.local"
     dns_primary_ipv4: "8.8.8.8"
@@ -568,14 +568,14 @@ EXAMPLES = '''
 - name: SET PROVISIONING TEMPLATE DEVICE TARGETS IN FORTIMANAGER
   fmgr_device_provision_template:
     provisioning_template: "ansibleTest"
-    paramgram["mode"]: "set"
+    mode: "set"
     adom: "ansible"
     provision_targets: "FGT1, FGT2"
 
 - name: DELETE ENTIRE PROVISIONING TEMPLATE
   fmgr_device_provision_template:
     delete_provisioning_template: "ansibleTest"
-    paramgram["mode"]: "delete"
+    mode: "delete"
     adom: "ansible"
 
 '''
@@ -583,7 +583,7 @@ RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule
