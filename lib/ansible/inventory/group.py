@@ -31,23 +31,18 @@ display = Display()
 _UNSAFE_GROUP = re.compile("[^A-Za-z0-9_]")
 
 
-def replace_and_warn(match):
-    display.warning('Replacing invalid character (%s) in group name (%s)' % (to_text(match.group(0)), to_text(match.string)))
-    return '_'
-
-
-def to_safe_group_name(name, replacer="_"):
-    ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
+def to_safe_group_name(name, replacer="_", force=False):
+    # Converts 'bad' characters in a string to underscores (or provided replacer) so they can be used as Ansible hosts or groups
 
     if name:  # when deserializing we might not have name yet
-        if C.TRANSFORM_INVALID_GROUP_CHARS:
-            name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
-        else:
-            invalid_chars = _UNSAFE_GROUP.findall(name)
-            if invalid_chars:
-                display.deprecated('Ignoring invalid character(s) "%s" in group (%s), in the future this will be an error' % (to_text(invalid_chars),
-                                                                                                                              to_text(name)),
-                                   version='2.12')
+        invalid_chars = _UNSAFE_GROUP.findall(name)
+        if invalid_chars:
+            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(invalid_chars), to_text(name))
+            if C.TRANSFORM_INVALID_GROUP_CHARS or force:
+                name = _UNSAFE_GROUP.sub(replacer, name)
+                display.warning('Replacing ' + msg)
+            else:
+                display.deprecated('Ignoring ' + msg, version='2.12')
     return name
 
 
