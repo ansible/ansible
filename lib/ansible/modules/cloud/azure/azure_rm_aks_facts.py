@@ -36,7 +36,7 @@ options:
     show_kubeconfig:
         description:
             - Show kubeconfig of the AKS cluster.
-            - Note the operation will cost more network overhead, not recommond to use when listing AKS.
+            - Note the operation will cost more network overhead, not recommended when listing AKS.
         version_added: 2.8
         choices:
             - user
