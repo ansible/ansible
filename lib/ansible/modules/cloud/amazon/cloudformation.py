@@ -382,7 +382,7 @@ def create_stack(module, stack_params, cfn, events_limit):
         stack_params['DisableRollback'] = module.params['disable_rollback']
     else:
         if module.params['disable_rollback']:
-            module.fail_json(msg='You can specify either "on_create_failure" or "disable_rollback", but not both')
+            module.fail_json(msg="You can specify either 'on_create_failure' or 'disable_rollback', but not both.")
         stack_params['OnFailure'] = module.params['on_create_failure']
     if module.params.get('create_timeout') is not None:
         stack_params['TimeoutInMinutes'] = module.params['create_timeout']
