@@ -154,6 +154,54 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         return existing
 
+    def _define_datavolumes(self, datavolumes, spec):
+        """
+        Takes datavoulmes parameter of Ansible and create kubevirt API datavolumesTemplateSpec
+        structure from it
+        """
+        if not datavolumes:
+            return
+
+        spec['dataVolumeTemplates'] = []
+        for dv in datavolumes:
+            # Add datavolume to datavolumetemplates spec:
+            dvt = virtdict()
+            dvt['metadata']['name'] = dv.get('name')
+            dvt['spec']['pvc'] = {
+                'accessModes': dv.get('pvc').get('accessModes'),
+                'resources': {
+                    'requests': {
+                        'storage': dv.get('pvc').get('storage'),
+                    }
+                }
+            }
+            dvt['spec']['source'] = dv.get('source')
+            spec['dataVolumeTemplates'].append(dvt)
+
+            # Add datavolume to disks spec:
+            if not spec['template']['spec']['domain']['devices']['disks']:
+                spec['template']['spec']['domain']['devices']['disks'] = []
+
+            spec['template']['spec']['domain']['devices']['disks'].append(
+                {
+                    'name': dv.get('name'),
+                    'disk': dv.get('disk', {'bus': 'virtio'}),
+                }
+            )
+
+            # Add datavolume to volumes spec:
+            if not spec['template']['spec']['volumes']:
+                spec['template']['spec']['volumes'] = []
+
+            spec['template']['spec']['volumes'].append(
+                {
+                    'dataVolume': {
+                        'name': dv.get('name')
+                    },
+                    'name': dv.get('name'),
+                }
+            )
+
     def _define_cloud_init(self, cloud_init_nocloud, template_spec):
         """
         Takes the user's cloud_init_nocloud parameter and fill it in kubevirt
@@ -237,6 +285,7 @@ class KubeVirtRawModule(KubernetesRawModule):
         memory = params.get('memory')
         cpu_cores = params.get('cpu_cores')
         labels = params.get('labels')
+        datavolumes = params.get('datavolumes')
         interfaces = params.get('interfaces')
         cloud_init_nocloud = params.get('cloud_init_nocloud')
         machine_type = params.get('machine_type')
@@ -263,6 +312,9 @@ class KubeVirtRawModule(KubernetesRawModule):
 
         # Define interfaces:
         self._define_interfaces(interfaces, template_spec)
+
+        # Define datavolumes:
+        self._define_datavolumes(datavolumes, definition['spec'])
 
         # Perform create/absent action:
         definition = dict(self.merge_dicts(self.resource_definitions[0], definition))
