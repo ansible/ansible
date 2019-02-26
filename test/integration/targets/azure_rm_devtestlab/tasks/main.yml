@@ -357,7 +357,7 @@
       - output.virtualmachines[0]['resource_group'] != None
       - output.virtualmachines[0]['lab_name'] != None
       - output.virtualmachines[0]['name'] != None
-      - output.virtualmachines[0]['compute_id'] != None
+      - output.virtualmachines[0]['compute_vm_id'] != None
       - output.virtualmachines[0]['disallow_public_ip_address'] != None
       - output.virtualmachines[0]['expiration_date'] != None
       - output.virtualmachines[0]['fqdn'] != None
