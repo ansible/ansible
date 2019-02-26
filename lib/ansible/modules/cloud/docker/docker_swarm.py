@@ -349,7 +349,8 @@ class TaskParameters(DockerBaseClass):
 
     def compare_to_active(self, other, differences):
         for k in self.__dict__:
-            if k in ('advertise_addr', 'listen_addr', 'rotate_worker_token', 'rotate_manager_token', 'spec'):
+            if k in ('advertise_addr', 'listen_addr', 'force_new_cluster', 'remote_addrs',
+                     'join_token', 'force', 'rotate_worker_token', 'rotate_manager_token', 'spec'):
                 continue
             if self.__dict__[k] is None:
                 continue
