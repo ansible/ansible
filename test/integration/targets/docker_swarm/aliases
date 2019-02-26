@@ -3,3 +3,5 @@ skip/osx
 skip/freebsd
 destructive
 skip/rhel8.0
+skip/docker
+needs/root
