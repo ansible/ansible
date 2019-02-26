@@ -22,7 +22,7 @@ EXAMPLES = """
   vars:
     qz_1: hello
     qz_2: world
-    qa_1: i wont show
+    qa_1: "I won't show"
     qz_: "I won't show either"
 
 - name: Show all variables
