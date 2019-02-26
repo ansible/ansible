@@ -106,7 +106,6 @@ notes:
   by the Cisco APIC Neutron plugin as part of the installation and configuration.
   This module can be used to query status of an OpenStack VMM domain.
 seealso:
-- module: aci_tenant
 - module: aci_ap
 - module: aci_epg
 - module: aci_domain
