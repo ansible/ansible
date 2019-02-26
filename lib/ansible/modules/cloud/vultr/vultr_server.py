@@ -33,10 +33,14 @@ options:
     description:
       - The operating system.
       - Required if the server does not yet exist.
-  appid:
+  app:
     description:
-      - The appid of the application image.
+      - The name of the application image.
       - Required if os='Application'.
+  snapshot:
+    description:
+      - The name of the snapshot image.
+      - Required if os='Snapshot'.
   firewall_group:
     description:
       - The firewall group to assign this server to.
@@ -359,7 +363,8 @@ class AnsibleVultrServer(Vultr):
             'network_v4': dict(key='v4_network'),
             'gateway_v4': dict(key='v4_gateway'),
             'os': dict(),
-            'appid': dict(),
+            'app': dict(),
+            'snapshot': dict(),
             'pending_charges': dict(convert_to='float'),
             'power_status': dict(),
             'ram': dict(),
@@ -391,9 +396,13 @@ class AnsibleVultrServer(Vultr):
             use_cache=True
         )
 
-    def get_appid(self):
-        appid = self.module.params.get('appid')
-        return appid
+    def get_app(self):
+        app = self.module.params.get('app')
+        return app
+    
+    def get_snapshot(self):
+        snapshot = self.module.params.get('snapshot')
+        return snapshot
 
     def get_ssh_keys(self):
         ssh_key_names = self.module.params.get('ssh_keys')
@@ -518,7 +527,8 @@ class AnsibleVultrServer(Vultr):
                 'tag': self.module.params.get('tag'),
                 'reserved_ip_v4': self.module.params.get('reserved_ip_v4'),
                 'user_data': self.get_user_data(),
-                'APPID': self.get_appid(),
+                'app': self.get_app(),
+                'snapshot': self.get_snapshot(),
                 'SCRIPTID': self.get_startup_script().get('SCRIPTID'),
             }
             self.api_query(
@@ -857,7 +867,8 @@ def main():
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
         tag=dict(),
-        appid=dict(),
+        app=dict(),
+        snapshot=dict(),
         reserved_ip_v4=dict(),
         firewall_group=dict(),
         startup_script=dict(),
