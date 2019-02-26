@@ -36,7 +36,7 @@ options:
       - Host or IP of the meta data API service.
       - If not set, determination by parsing the dhcp lease file.
     type: str
-    version_added: 2.4
+    version_added: '2.4'
 requirements: [ yaml ]
 '''
 

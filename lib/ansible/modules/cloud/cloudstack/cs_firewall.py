@@ -100,11 +100,11 @@ options:
     default: yes
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - "To delete all tags, set an empty list e.g. I(tags: [])."
     type: list
     aliases: [ tag ]
-    version_added: 2.4
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -178,7 +178,7 @@ cidrs:
   returned: success
   type: list
   sample: [ '0.0.0.0/0' ]
-  version_added: 2.5
+  version_added: '2.5'
 protocol:
   description: Protocol of the rule.
   returned: success

@@ -82,7 +82,7 @@ options:
     default: executable
     choices: [ all, featured, self, selfexecutable, sharedexecutable, executable, community ]
     aliases: [ iso_filter ]
-    version_added: 2.1
+    version_added: '2.1'
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new instance.
@@ -111,7 +111,7 @@ options:
   ip_to_networks:
     description:
       - "List of mappings in the form I({'network': NetworkName, 'ip': 1.2.3.4})"
-      - Mutually exclusive with C(networks) option.
+      - Mutually exclusive with I(networks) option.
     type: list
     aliases: [ ip_to_network ]
   disk_offering:
@@ -138,7 +138,7 @@ options:
       - Only considered when I(state=started) or instance is running.
       - Requires root admin privileges.
     type: str
-    version_added: 2.6
+    version_added: '2.6'
   domain:
     description:
       - Domain the instance is related to.
@@ -181,7 +181,7 @@ options:
       - Enables a volume shrinkage when the new size is smaller than the old one.
     type: bool
     default: no
-    version_added: 2.7
+    version_added: '2.7'
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -197,7 +197,7 @@ options:
     description:
       - Map to specify custom parameters.
     type: dict
-    version_added: 2.6
+    version_added: '2.6'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -344,7 +344,7 @@ default_ip6:
   returned: if available
   type: str
   sample: 2a04:c43:c00:a07:4b4:beff:fe00:74
-  version_added: 2.6
+  version_added: '2.6'
 public_ip:
   description: Public IP address with instance via static NAT rule.
   returned: if available
@@ -365,7 +365,7 @@ template_display_text:
   returned: success
   type: str
   sample: Linux Debian 9 64-bit 200G Disk (2017-10-08-622866)
-  version_added: 2.6
+  version_added: '2.6'
 service_offering:
   description: Name of the service offering the instance has.
   returned: success
@@ -406,7 +406,7 @@ host:
   returned: success and instance is running
   type: str
   sample: host-01.example.com
-  version_added: 2.6
+  version_added: '2.6'
 instance_name:
   description: Internal name of the instance (ROOT admin only).
   returned: success
