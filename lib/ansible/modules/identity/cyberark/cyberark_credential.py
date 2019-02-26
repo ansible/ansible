@@ -37,6 +37,7 @@ options:
     app_id:
         description:
             - A string containing the Application ID authorized for retrieving the credential.
+        type: str
     query:
         description:
             - A string containing details of the object being queried
@@ -48,16 +49,20 @@ options:
                 Address=<address listed for object>
                 Database=<optional file category for database objects>
                 PolicyID=<platform id managing object>.
+        type: str
         required: True
     client_cert:
         description:
             - A string containing the file location and name of the client certificate used for authentication.
+        type: str
     client_key:
         description:
             - A string containing the file location and name of the private key of the client certificate used for authentication.
+        type: str
     reason:
         description:
             - Reason for requesting credential if required by policy.
+        type: str
     state:
         default: present
         choices: [present]
