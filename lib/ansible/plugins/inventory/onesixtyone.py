@@ -36,7 +36,7 @@ DOCUMENTATION = '''
           type: int
           default: 10
           required: false
-        platforms:
+        platform:
           description: Dict containing additional mappings between Platform (key) and regex to match in sysDescr (value).
           type: dict
           default: {}
@@ -122,7 +122,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             'eos': re.compile(r'^Arista')
         }
 
-        platforms.update(self.get_option('platforms'))
+        platforms.update(self.get_option('platform'))
 
         for platform, rule in platforms.items():
             if rule.match(text):
