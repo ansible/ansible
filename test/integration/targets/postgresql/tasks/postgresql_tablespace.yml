@@ -1,11 +1,10 @@
 # Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Exceptions for RedHat 8 added because this is a problem of OS permissions, not of the module.
-
 # Preparation for tests.
 - name: postgresql_tablespace - drop dir for test tablespace
   become: yes
+  become_user: root
   file:
     path: /mnt/ssd
     state: absent
@@ -13,26 +12,12 @@
 
 - name: postgresql_tablespace - create dir for test tablespace
   become: yes
+  become_user: root
   file:
     path: /mnt/ssd
     state: directory
     owner: "{{ pg_user }}"
-    mode: 0755
-  ignore_errors: yes
-
-- name: postgresql_tablespace - install policycoreutils-python
-  become: yes
-  yum: name=policycoreutils-python state=latest
-  ignore_errors: yes
-
-- name: postgresql_tablespace - change selinux context
-  become: yes
-  shell: semanage fcontext -a -t postgresql_db_t "/mnt/ssd(/.*)?"
-  ignore_errors: yes
-
-- name: postgresql_tablespace - change selinux context
-  become: yes
-  shell: restorecon -R -v /mnt/ssd
+    mode: 0700
   ignore_errors: yes
 
 - name: postgresql_tablespace - create test role to test change ownership
@@ -79,7 +64,6 @@
     - result.tablespace == 'acme'
     - result.options == {}
     - result.location == '/mnt/ssd'
-  when: ansible_distribution != "RedHat" and ansible_distribution_major_version != '8'
 
 # Change tablespace owner
 - name: postgresql_tablespace - change tablespace owner to alice
@@ -101,7 +85,6 @@
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
-  when: ansible_distribution != "RedHat" and ansible_distribution_major_version != '8'
 
 # Try to change tablespace owner to alice again:
 - name: postgresql_tablespace - try to change tablespace owner to alice again to be sure that nothing changes
@@ -123,7 +106,6 @@
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
-  when: ansible_distribution != "RedHat" and ansible_distribution_major_version != '8'
 
 # Change tablespace options:
 - name: postgresql_tablespace - change tablespace options
@@ -146,7 +128,6 @@
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options.seq_page_cost == '4'
-  when: postgres_version_resp.stdout is version('9.0', '>=') and ansible_distribution != "RedHat" and ansible_distribution_major_version != '8'
 
 # Rename tablespace:
 - name: postgresql_tablespace - rename tablespace
@@ -165,7 +146,6 @@
     - result.changed == true
     - result.newname == 'foo'
     - result.queries == ["ALTER TABLESPACE acme RENAME TO foo"]
-  when: ansible_distribution != "RedHat" and ansible_distribution_major_version != '8'
 
 # Drop tablespace:
 - name: postgresql_tablespace - drop tablespace
@@ -184,7 +164,6 @@
     - result.changed == true
     - result.state == 'absent'
     - result.queries == ["DROP TABLESPACE foo"]
-  when: ansible_distribution != "RedHat" and ansible_distribution_major_version != '8'
 
 # Try to drop nonexistent tablespace to be sure that nothing changes:
 - name: postgresql_tablespace - try to drop nonexistent tablespace
