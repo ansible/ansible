@@ -212,8 +212,8 @@ def parse_facility(line, dest):
         i = 0
         for x in result:
             if x == 'facility':
-                return result[i+1]
-            i = i+1
+                return result[i + 1]
+            i = i + 1
     return facility
 
 
@@ -225,8 +225,8 @@ def parse_size(line, dest):
             i = 0
             for x in result:
                 if x == 'size':
-                    return result[i+1]
-                i = i+1
+                    return result[i + 1]
+                i = i + 1
             return '10485760'
     return size
 
@@ -239,14 +239,14 @@ def parse_name(line, dest):
             i = 0
             for x in result:
                 if x == 'server':
-                    name = result[i+1]
+                    name = result[i + 1]
     elif dest == 'logfile':
         if 'logging logfile' in line:
             result = line.split()
             i = 0
             for x in result:
                 if x == 'logfile':
-                    name = result[i+1]
+                    name = result[i + 1]
     else:
         name = None
     return name
@@ -286,10 +286,7 @@ def map_config_to_obj(module):
         if logs[0] != 'logging':
             continue
         if logs[1] == 'monitor' or logs[1] == 'console':
-            obj.append({
-                    'dest': logs[1],
-                    'level': logs[2]
-                })
+            obj.append({'dest': logs[1], 'level': logs[2]})
         elif logs[1] == 'logfile':
             level = '5'
             if logs[3] is not None:
@@ -297,12 +294,7 @@ def map_config_to_obj(module):
             size = '10485760'
             if len(logs) > 4:
                 size = logs[5]
-            obj.append({
-                    'dest': logs[1],
-                    'name': logs[2],
-                    'size': size,
-                    'level': level
-                })
+            obj.append({'dest': logs[1], 'name': logs[2], 'size': size, 'level': level})
         elif logs[1] == 'server':
             level = '5'
             facility = None
@@ -313,12 +305,7 @@ def map_config_to_obj(module):
                 facility = logs[4]
             if index > 4 and logs[4] == 'facility':
                 facility = logs[5]
-            obj.append({
-                    'dest': logs[1],
-                    'name': logs[2],
-                    'facility': facility,
-                    'level': level
-                })
+            obj.append({'dest': logs[1], 'name': logs[2], 'facility': facility, 'level': level})
         else:
             continue
     return obj
