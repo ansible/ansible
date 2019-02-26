@@ -173,51 +173,57 @@
       - output.virtualnetworks[0]['description'] != None
       - output.virtualnetworks[0]['provisioning_state'] != None
 
-#- name: Create instance of DevTest Labs artifacts source
-#  azure_rm_devtestlabartifactsource:
-#    resource_group: "{{ resource_group }}"
-#    lab_name: "{{ lab_name }}"
-#    name: "{{ artifacts_name }}"
-#    uri: https://github.com/Azure/azure_preview_modules.git
-#    source_type: github
-#    folder_path: /tasks
-#    security_token: "{{ github_token }}"
-#  register: output 
-#- name: Assert if the change was correctly reported
-#  assert:
-#    that:
-#      - output.changed
+- name: Create instance of DevTest Labs artifacts source
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    uri: https://github.com/Azure/azure_preview_modules.git
+    source_type: github
+    folder_path: /tasks
+    security_token: "{{ github_token }}"
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
 
-#- name: Update instance of DevTest Labs artifacts source with same parameters
-#  azure_rm_devtestlabartifactsource:
-#    resource_group: "{{ resource_group }}"
-#    lab_name: "{{ lab_name }}"
-#    name: "{{ artifacts_name }}"
-#    uri: https://github.com/Azure/azure_preview_modules.git
-#    source_type: github
-#    folder_path: /tasks
-#    security_token: "{{ github_token }}"
-#  register: output 
-#- name: Assert that nothing was changed
-#  assert:
-#    that:
-#      - output.changed == false
+- name: Update instance of DevTest Labs artifacts source with same parameters
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    uri: https://github.com/Azure/azure_preview_modules.git
+    source_type: github
+    folder_path: /tasks
+    security_token: "{{ github_token }}"
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert that nothing was changed
+  assert:
+    that:
+      - output.changed == false
+  when: "github_token | length > 0"
 
-#- name: Update instance of DevTest Labs artifacts source, add display name, change folder
-#  azure_rm_devtestlabartifactsource:
-#    resource_group: "{{ resource_group }}"
-#    lab_name: "{{ lab_name }}"
-#    name: "{{ artifacts_name }}"
-#    uri: https://github.com/Azure/azure_preview_modules.git
-#    source_type: github
-#    folder_path: /library
-#    security_token: "{{ github_token }}"
-#    display_name: My Artifacts Source
-#  register: output 
-#- name: Assert that nothing was changed
-#  assert:
-#    that:
-#      - output.changed
+- name: Update instance of DevTest Labs artifacts source, add display name, change folder
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    uri: https://github.com/Azure/azure_preview_modules.git
+    source_type: github
+    folder_path: /library
+    security_token: "{{ github_token }}"
+    display_name: My Artifacts Source
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert that nothing was changed
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
 
 - name: Create instance of DTL Virtual Machine
   azure_rm_devtestlabvirtualmachine:
@@ -370,17 +376,19 @@
       - output.virtualmachines[0]['user_name'] != None
       - output.virtualmachines[0]['vm_size'] != None
 
-#- name: Delete instance of DevTest Labs artifacts source
-#  azure_rm_devtestlabartifactsource:
-#    resource_group: "{{ resource_group }}"
-#    lab_name: "{{ lab_name }}"
-#    name: "{{ artifacts_name }}"
-#    state: absent
-#  register: output 
-#- name: Assert that change was correctly registered
-#  assert:
-#    that:
-#      - output.changed
+- name: Delete instance of DevTest Labs artifacts source
+  azure_rm_devtestlabartifactsource:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ artifacts_name }}"
+    state: absent
+  register: output 
+  when: "github_token | length > 0"
+- name: Assert that change was correctly registered
+  assert:
+    that:
+      - output.changed
+  when: "github_token | length > 0"
 
 - name: Delete instance of Lab -- check mode
   azure_rm_devtestlab:
