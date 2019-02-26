@@ -1,17 +1,4 @@
 ###
-# check ports setup
-
-- name: check for existence of screen directory
-  stat:
-    path: /usr/ports/sysutils/screen
-  register: dir_sysutils_screen
-
-- name: check for existence of sudo directory
-  stat:
-    path: /usr/ports/sysutils/screen
-  register: dir_security_sudo
-
-
 # setup portstree if needed
 - name: silent install of subversion and ca root certs with pkgng
   pkgng:
@@ -25,9 +12,6 @@
     dest: /usr/ports
     revision: 493256
     force: yes
-  when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
-
-
 
 ###
 # test portmake absent
@@ -63,7 +47,6 @@
     options_set: "XTERM_256"
     options_unset: "NETHACK"
     state: "present"
-    disable_vulnerabilities: true
 
 - name: check for added compile paramter of package screen
   shell: "pkg info screen | grep XTERM_256"

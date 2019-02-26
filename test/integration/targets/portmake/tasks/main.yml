@@ -1,3 +1,3 @@
 - name: include tests if OS is a FreeBSD
-  include_tasks: portmake.yml
+  include_tasks: reduced_tests.yml
   when: ansible_distribution == 'FreeBSD'
