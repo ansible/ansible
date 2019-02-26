@@ -43,6 +43,11 @@ options:
       - Whether to install C(present), remove C(absent), or purge C(purged) a package.
     choices: ['absent', 'purged', 'present']
     default: "present"
+  force:
+    description:
+      - Force upgrade when values are changed
+    type: bool
+    default: 'no'
   chart:
     description: |
       A map describing the chart to install. See examples for available options.
@@ -73,6 +78,20 @@ EXAMPLES = '''
     state: present
     name: my-memcached
     namespace: default
+
+- name: Force upgrade helm chart
+  helm:
+    host: localhost
+    chart:
+      name: memcached
+      version: 0.4.0
+      source:
+        type: repo
+        location: https://kubernetes-charts.storage.googleapis.com
+    state: present
+    name: my-memcached
+    namespace: default
+    force: yes
 
 - name: Uninstall helm chart
   helm:
@@ -119,6 +138,7 @@ def install(module, tserver):
     changed = False
     params = module.params
     name = params['name']
+    force = params['force']
     values = params['values']
     chart = module.params['chart']
     namespace = module.params['namespace']
@@ -128,9 +148,9 @@ def install(module, tserver):
                  if x.name == name and x.namespace == namespace)
     installed_release = next(r_matches, None)
     if installed_release:
-        if installed_release.chart.metadata.version != chart['version']:
-            tserver.update_release(chartb.get_helm_chart(), False,
-                                   namespace, name=name, values=values)
+        if installed_release.chart.metadata.version != chart['version'] or force:
+            tserver.update_release(chartb.get_helm_chart(), dry_run=False
+                                   namespace=namespace, name=name, values=values)
             changed = True
     else:
         tserver.install_release(chartb.get_helm_chart(), namespace,
@@ -168,6 +188,7 @@ def main():
             host=dict(type='str', default='localhost'),
             port=dict(type='int', default=44134),
             name=dict(type='str', default=''),
+            force=dict(type='bool', default=False),
             chart=dict(type='dict'),
             state=dict(
                 choices=['absent', 'purged', 'present'],
