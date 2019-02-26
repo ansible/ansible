@@ -1,0 +1,2 @@
+bugfixes:
+  - terraform - fixed issue where state "planned" wouldn't return an output and the project_path had to exist in two places (https://github.com/ansible/ansible/issues/39689)
