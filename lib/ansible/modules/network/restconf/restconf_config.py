@@ -111,14 +111,11 @@ def main():
     commit = not module.check_mode
     try:
         running = restconf.get(module, path, output=format)
-        if running:
-            key = path.split('/')[-1]
-            running = running[key]
     except ConnectionError as exc:
         if exc.code == 404:
             running = None
         else:
-            module.fail_json(msg=module.from_json(to_text(exc)), code=exc.code)
+            module.fail_json(msg=to_text(exc), code=exc.code)
 
     try:
         if method == 'delete':
@@ -148,7 +145,7 @@ def main():
                 result['changed'] = True
 
     except ConnectionError as exc:
-        module.fail_json(msg=module.from_json(str(exc)), code=exc.code)
+        module.fail_json(msg=str(exc), code=exc.code)
 
     result['response'] = response
 
