@@ -16,6 +16,7 @@ from lib.util import (
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.core_ci import (
@@ -162,14 +163,17 @@ class TowerCloudEnvironment(CloudEnvironment):
 
             time.sleep(5)
 
-    def configure_environment(self, env, cmd):
-        """Configuration which should be done once for each test target.
-        :type env: dict[str, str]
-        :type cmd: list[str]
+    def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
         """
         config = TowerConfig.parse(self.config_path)
 
-        env.update(config.environment)
+        env_vars = config.environment
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+        )
 
 
 class TowerConfig(object):

@@ -6,6 +6,7 @@ import os
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -144,13 +145,19 @@ class VcenterProvider(CloudProvider):
 
 class VcenterEnvironment(CloudEnvironment):
     """VMware vcenter/esx environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        cmd.append('-e')
-        cmd.append('vcsim=%s' % self._get_cloud_config('vcenter_host'))
+        env_vars = dict(
+            VCENTER_HOST=self._get_cloud_config('vcenter_host'),
+        )
 
-        # Send the container IP down to the integration test(s)
-        env['VCENTER_HOST'] = self._get_cloud_config('vcenter_host')
+        ansible_vars = dict(
+            vcsim=self._get_cloud_config('vcenter_host'),
+        )
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

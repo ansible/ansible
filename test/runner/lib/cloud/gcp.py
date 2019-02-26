@@ -7,11 +7,13 @@ import os
 
 from lib.util import (
     display,
+    read_lines_without_comments,
 )
 
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 
@@ -41,22 +43,17 @@ class GcpCloudProvider(CloudProvider):
 
 class GcpCloudEnvironment(CloudEnvironment):
     """GCP cloud environment plugin. Updates integration test environment after delegation."""
+    def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
+        """
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+        )
 
-    def configure_environment(self, env, cmd):
-        """
-        :type env: dict[str, str]
-        :type cmd: list[str]
-        """
-        cmd.append('-e')
-        cmd.append('@%s' % self.config_path)
+        ansible_vars_yaml = read_lines_without_comments(self.config_path, remove_blank_lines=True)
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
-
-    def on_failure(self, target, tries):
-        """
-        :type target: TestTarget
-        :type tries: int
-        """
-        if not tries and self.managed:
-            display.notice('%s failed' % target.name)
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+            ansible_vars_yaml=ansible_vars_yaml,
+        )

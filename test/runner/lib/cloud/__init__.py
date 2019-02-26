@@ -390,10 +390,9 @@ class CloudEnvironment(CloudBase):
         pass
 
     @abc.abstractmethod
-    def configure_environment(self, env, cmd):
-        """Configuration which should be done once for each test target.
-        :type env: dict[str, str]
-        :type cmd: list[str]
+    def get_environment_config(self):
+        """
+        :rtype: CloudEnvironmentConfig
         """
         pass
 
@@ -404,9 +403,17 @@ class CloudEnvironment(CloudBase):
         """
         pass
 
-    @property
-    def inventory_hosts(self):
+
+class CloudEnvironmentConfig(object):
+    """Configuration for the environment."""
+    def __init__(self, env_vars=None, ansible_vars=None, ansible_vars_yaml=None, module_defaults=None):
         """
-        :rtype: str | None
+        :type env_vars: dict[str, str] | None
+        :type ansible_vars: dict[str, any] | None
+        :type ansible_vars_yaml: list[str] | None
+        :type module_defaults: dict[str, dict[str, any]] | None
         """
-        return None
+        self.env_vars = env_vars
+        self.ansible_vars = ansible_vars
+        self.ansible_vars_yaml = ansible_vars_yaml
+        self.module_defaults = module_defaults

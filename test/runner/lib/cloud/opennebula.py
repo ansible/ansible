@@ -2,11 +2,13 @@
 
 from lib.cloud import (
     CloudProvider,
-    CloudEnvironment
+    CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
     display,
+    read_lines_without_comments,
 )
 
 
@@ -43,14 +45,17 @@ class OpenNebulaCloudEnvironment(CloudEnvironment):
     """
     Updates integration test environment after delegation. Will setup the config file as parameter.
     """
-
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        cmd.append('-e')
-        cmd.append('@%s' % self.config_path)
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
+        ansible_vars_yaml = read_lines_without_comments(self.config_path, remove_blank_lines=True)
+
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+            ansible_vars_yaml=ansible_vars_yaml,
+        )

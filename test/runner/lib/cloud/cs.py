@@ -9,6 +9,7 @@ import time
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -262,16 +263,25 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        changes = dict(
-            CLOUDSTACK_CONFIG=self.config_path,
+        parser = ConfigParser()
+        parser.read(self.config_path)
+
+        env_vars = dict(
+            CLOUDSTACK_ENDPOINT=parser.get('cloudstack', 'endpoint'),
+            CLOUDSTACK_KEY=parser.get('cloudstack', 'key'),
+            CLOUDSTACK_SECRET=parser.get('cloudstack', 'secret'),
+            CLOUDSTACK_TIMEOUT=parser.get('cloudstack', 'timeout'),
         )
 
-        env.update(changes)
+        ansible_vars = dict(
+            cs_resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('cs_resource_prefix=%s' % self.resource_prefix)
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

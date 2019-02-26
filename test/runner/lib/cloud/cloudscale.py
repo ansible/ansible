@@ -11,6 +11,7 @@ from os.path import isfile
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import ConfigParser, display
@@ -38,6 +39,7 @@ class CloudscaleCloudProvider(CloudProvider):
         super(CloudscaleCloudProvider, self).filter(targets, exclude)
 
     def setup(self):
+        """Setup the cloud resource before delegation and register a cleanup callback."""
         super(CloudscaleCloudProvider, self).setup()
 
         if isfile(self.config_static_path):
@@ -46,28 +48,28 @@ class CloudscaleCloudProvider(CloudProvider):
                          verbosity=1)
             self.config_path = self.config_static_path
             self.managed = False
-            return True
-
-        return False
 
 
 class CloudscaleCloudEnvironment(CloudEnvironment):
     """Cloudscale cloud environment plugin. Updates integration test environment
        after delegation.
     """
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
         parser = ConfigParser()
         parser.read(self.config_path)
 
-        changes = dict(
+        env_vars = dict(
             CLOUDSCALE_API_TOKEN=parser.get('default', 'cloudscale_api_token'),
         )
 
-        env.update(changes)
+        ansible_vars = dict(
+            cloudscale_resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('cloudscale_resource_prefix=%s' % self.resource_prefix)
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

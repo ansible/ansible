@@ -22,6 +22,8 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
+    format_yaml,
+    named_temporary_file,
 )
 
 from lib.cache import (
@@ -186,6 +188,36 @@ def integration_test_environment(args, target, inventory_path):
     finally:
         if not args.explain:
             shutil.rmtree(temp_dir)
+
+
+@contextlib.contextmanager
+def integration_test_config_file(args, env_config, integration_dir):
+    """
+    :type args: IntegrationConfig
+    :type env_config: CloudEnvironmentConfig
+    :type integration_dir: str
+    """
+    if not env_config:
+        yield None
+        return
+
+    config_file = '''
+%s
+ansible_test:
+  environment:%s
+  module_defaults:%s
+''' % (format_yaml(env_config.ansible_vars, env_config.ansible_vars_yaml, indent=0),
+       format_yaml(env_config.env_vars),
+       format_yaml(env_config.module_defaults))
+
+    config_file = config_file.strip()
+
+    with named_temporary_file(args, 'config-file-', '.yml', integration_dir, config_file) as path:
+        filename = os.path.relpath(path, integration_dir)
+
+        display.info('>>> Config File: %s\n%s' % (filename, config_file), verbosity=3)
+
+        yield path
 
 
 class IntegrationEnvironment(object):

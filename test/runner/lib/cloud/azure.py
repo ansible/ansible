@@ -12,6 +12,7 @@ from lib.util import (
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.http import (
@@ -135,22 +136,22 @@ class AzureCloudProvider(CloudProvider):
 
 class AzureCloudEnvironment(CloudEnvironment):
     """Azure cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        config = get_config(self.config_path)
+        env_vars = get_config(self.config_path)
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
-        cmd.append('-e')
-        cmd.append('resource_group=%s' % config['RESOURCE_GROUP'])
-        cmd.append('-e')
-        cmd.append('resource_group_secondary=%s' % config['RESOURCE_GROUP_SECONDARY'])
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+            resource_group=env_vars['RESOURCE_GROUP'],
+            resource_group_secondary=env_vars['RESOURCE_GROUP_SECONDARY'],
+        )
 
-        for key in config:
-            env[key] = config[key]
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )
 
     def on_failure(self, target, tries):
         """
