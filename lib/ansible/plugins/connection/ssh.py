@@ -516,11 +516,16 @@ class Connection(ConnectionBase):
         ssh_add_proc = subprocess.Popen(
             ('ssh-add', '-'), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            env={'SSH_AUTH_SOCK': self._ssh_agent_socket},
+            env=self._get_extra_ssh_proc_env_vars(),
         )
         with BytesIO(decrypted_contents) as pk:
             ssh_add_proc.communicate(input=pk.getvalue())
         self._terminate_process(ssh_add_proc)
+
+    def _get_extra_ssh_proc_env_vars(self):
+        return {
+            'SSH_AUTH_SOCK': self._ssh_agent_socket
+        } if self._ssh_version < (7, 3) else {}
 
     def _destroy_ssh_agent(self):
         self._terminate_process(self._ssh_agent)
@@ -669,7 +674,14 @@ class Connection(ConnectionBase):
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
         if self._ssh_agent_socket:
-            b_args = (b"-o", b'IdentityAgent="' + to_bytes(self._ssh_agent_socket) + b'"', b"-o", b'IdentitiesOnly=yes')
+            b_args = b"-o", b'IdentitiesOnly=yes'
+            if self._ssh_version >= (7, 3):
+                b_args += (
+                    b"-o",
+                    b'IdentityAgent="' +
+                    to_bytes(self._ssh_agent_socket) +
+                    b'"',
+                )
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set via ssh-agent")
 
         if not self._play_context.password:
@@ -851,12 +863,14 @@ class Connection(ConnectionBase):
                         stdin=slave, stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         pass_fds=self.sshpass_pipe,
+                        env=self._get_extra_ssh_proc_env_vars(),
                     )
                 else:
                     p = subprocess.Popen(
                         cmd,
                         stdin=slave, stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
+                        env=self._get_extra_ssh_proc_env_vars(),
                     )
                 stdin = os.fdopen(master, 'wb', 0)
                 os.close(slave)
@@ -871,12 +885,14 @@ class Connection(ConnectionBase):
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     pass_fds=self.sshpass_pipe,
+                    env=self._get_extra_ssh_proc_env_vars(),
                 )
             else:
                 p = subprocess.Popen(
                     cmd,
                     stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    env=self._get_extra_ssh_proc_env_vars(),
                 )
             stdin = p.stdin
 
@@ -1319,6 +1335,7 @@ class Connection(ConnectionBase):
                 cmd,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                env=self._get_extra_ssh_proc_env_vars(),
             )
             stdout, stderr = p.communicate()
             status_code = p.wait()
