@@ -16,13 +16,7 @@ module: aci_interface_policy_l2
 short_description: Manage Layer 2 interface policies (l2:IfPol)
 description:
 - Manage Layer 2 interface policies on Cisco ACI fabrics.
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(l2:IfPol).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
 options:
   l2_policy:
     description:
@@ -60,6 +54,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(l2:IfPol).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -178,17 +178,21 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 # Mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
-QINQ_MAPPING = dict(core='corePort', disabled='disabled', edge='edgePort')
+QINQ_MAPPING = dict(
+    core='corePort',
+    disabled='disabled',
+    edge='edgePort',
+)
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        l2_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
+        l2_policy=dict(type='str', aliases=['name']),  # Not required for querying all policies
         description=dict(type='str', aliases=['descr']),
         vlan_scope=dict(type='str', choices=['global', 'portlocal']),  # No default provided on purpose
         qinq=dict(type='str', choices=['core', 'disabled', 'edge']),

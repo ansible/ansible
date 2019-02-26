@@ -16,12 +16,6 @@ module: aci_tenant
 short_description: Manage tenants (fv:Tenant)
 description:
 - Manage tenants on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:Tenant).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   tenant:
@@ -43,6 +37,12 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:Tenant).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -190,14 +190,14 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['name', 'tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )

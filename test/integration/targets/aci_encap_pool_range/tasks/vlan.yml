@@ -168,7 +168,7 @@
 - name: missing required param - error message works
   aci_encap_pool_range:
     <<: *aci_range_present
-    pool_type: "{{ fake_var | default(omit) }}"
+    pool_type: '{{ omit }}'
   ignore_errors: yes
   register: range_present_pool_type
 
@@ -193,7 +193,7 @@
 - name: missing required param - error message works
   aci_encap_pool_range:
     <<: *aci_range_present
-    pool_allocation_mode: "{{ fake_var | default(omit) }}"
+    pool_allocation_mode: '{{ omit }}'
   ignore_errors: yes
   register: range_present_allocation
 
@@ -220,7 +220,7 @@
 - name: query vlan pool range - from, to, and name are filtered
   aci_encap_pool_range: &aci_range_query_filter
     <<: *aci_range_query
-    pool: "{{ fake_var | default(omit) }}"
+    pool: '{{ omit }}'
   register: range_query_from_to_name
 
 - name: query assertions
@@ -238,7 +238,7 @@
 - name: query vlan pool range - from and name are filtered
   aci_encap_pool_range:
     <<: *aci_range_query_filter
-    range_end: "{{ fake_var | default(omit) }}"
+    range_end: '{{ omit }}'
   register: range_query_from_name
 
 - name: query assertions
@@ -254,7 +254,7 @@
 - name: query vlan pool range - to and name are filtered
   aci_encap_pool_range:
     <<: *aci_range_query_filter
-    range_start: "{{ fake_var | default(omit) }}"
+    range_start: '{{ omit }}'
   register: range_query_to_name
 
 - name: query assertions
@@ -270,8 +270,8 @@
 - name: query vlan pool range - name is filtered
   aci_encap_pool_range:
     <<: *aci_range_query_filter
-    range_start: "{{ fake_var | default(omit) }}"
-    range_end: "{{ fake_var | default(omit) }}"
+    range_start: '{{ omit) }}'
+    range_end: '{{ omit }}'
   register: range_query_name
 
 - name: query assertions
@@ -285,7 +285,7 @@
 - name: query vlan pool range - from and to are filtered
   aci_encap_pool_range:
     <<: *aci_range_query_filter
-    range_name: "{{ fake_var | default(omit) }}"
+    range_name: '{{ omit }}'
   register: range_query_from_to
 
 - name: query assertions
@@ -317,7 +317,7 @@
   aci_encap_pool_range:
     <<: *aci_pool_present
     state: query
-    pool: "{{ fake_var | default(omit) }}"
+    pool: '{{ omit }}'
   register: range_query_all
 
 - name: query assertions
