@@ -47,7 +47,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_secprof_voip.Connection')
     return connection_class_mock
 
 
@@ -61,26 +61,8 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_voip_profile_modify(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # comment: None
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None, 'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None, 'open-contact-pinhole': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'rfc2543-branch': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None, 'info-rate': None, 'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None, 'strict-register': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-notify': None, 'max-idle-dialogs': None, 'malformed-request-line': None, 'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'block-prack': None, 'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None, 'malformed-header-expires': None, 'block-options': None, 'log-call-summary': None, 'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None, 'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None, 'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None, 'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None, 'malformed-header-route': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None, 'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None, 'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None, 'bye-rate': None, 'block-ack': None, 'malformed-header-sdp-r': None, 'block-refer': None, 'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: {'status': None, 'log-call-summary': None, 'block-mcast': None, 'max-calls': None, 'verify-header': None, 'log-violations': None}
-    # mode: delete
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible
-    # sip: {'block-publish': None, 'ssl-max-version': None, 'malformed-header-rack': None, 'rtp': None, 'publish-rate': None, 'ssl-client-renegotiation': None, 'malformed-header-from': None, 'ssl-client-certificate': None, 'malformed-header-p-asserted-identity': None, 'info-rate': None, 'malformed-header-via': None, 'notify-rate': None, 'preserve-override': None, 'block-info': None, 'options-rate': None, 'block-update': None, 'max-body-length': None, 'block-subscribe': None, 'ssl-pfs': None, 'ssl-send-empty-frags': None, 'ssl-auth-client': None, 'malformed-header-record-route': None, 'refer-rate': None, 'open-record-route-pinhole': None, 'register-rate': None, 'unknown-header': None, 'block-unknown': None, 'ssl-server-certificate': None, 'block-invite': None, 'malformed-request-line': None, 'max-dialogs': None, 'block-cancel': None, 'no-sdp-fixup': None, 'open-register-pinhole': None, 'block-options': None, 'max-idle-dialogs': None, 'strict-register': None, 'block-long-lines': None, 'log-violations': None, 'ssl-min-version': None, 'provisional-invite-expiry-time': None, 'rfc2543-branch': None, 'block-ack': None, 'malformed-header-max-forwards': None, 'block-message': None, 'malformed-header-call-id': None, 'invite-rate': None, 'cancel-rate': None, 'register-contact-trace': None, 'block-refer': None, 'block-register': None, 'ssl-mode': None, 'prack-rate': None, 'block-bye': None, 'ssl-algorithm': None, 'malformed-header-to': None, 'block-geo-red-options': None, 'call-keepalive': None, 'message-rate': None, 'malformed-header-expires': None, 'log-call-summary': None, 'hnt-restrict-source-ip': None, 'ssl-auth-server': None, 'contact-fixup': None, 'ack-rate': None, 'malformed-header-allow': None, 'malformed-header-sdp-v': None, 'malformed-header-sdp-t': None, 'malformed-header-contact': None, 'malformed-header-sdp-s': None, 'hosted-nat-traversal': None, 'subscribe-rate': None, 'malformed-header-content-length': None, 'malformed-header-sdp-z': None, 'malformed-header-route': None, 'block-notify': None, 'malformed-header-sdp-b': None, 'malformed-header-sdp-c': None, 'malformed-header-sdp-a': None, 'malformed-header-sdp-o': None, 'malformed-header-sdp-m': None, 'malformed-header-sdp-k': None, 'malformed-header-sdp-i': None, 'status': None, 'open-via-pinhole': None, 'bye-rate': None, 'block-prack': None, 'malformed-header-sdp-r': None, 'open-contact-pinhole': None, 'ips-rtp': None, 'malformed-header-content-type': None, 'nat-trace': None, 'malformed-header-rseq': None, 'max-line-length': None, 'update-rate': None, 'malformed-header-cseq': None}
-    # name: Ansible_VOIP_Profile
-    # adom: root
-    # sccp: {'status': 'enable', 'log-call-summary': 'enable', 'log-violations': 'enable', 'block-mcast': 'enable'}
-    # mode: set
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_secprof_voip.fmgr_voip_profile_modify(fmg_instance, fixture_data[0]['paramgram_used'])
