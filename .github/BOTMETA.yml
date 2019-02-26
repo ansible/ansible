@@ -1121,6 +1121,15 @@ files:
   $plugins/inventory/scaleway.py: *scaleway
   $plugins/inventory/script.py:
     support: core
+  $plugins/inventory/vmware_vm_inventory.py:
+    labels:
+      - vmware
+      - cloud
+    maintainers: $team_vmware
+    keywords:
+      - vmware inventory
+      - vmware dynamic inventory plugin
+    ignored: cigamit jcpowermac mtnbikenc tchernomax
   $plugins/inventory/vultr.py: *vultr
   $plugins/inventory/yaml.py:
     support: core
