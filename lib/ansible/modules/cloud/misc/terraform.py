@@ -241,28 +241,28 @@ def remove_workspace(bin_path, project_path, workspace):
     _workspace_cmd(bin_path, project_path, 'delete', workspace)
 
 
-def build_plan(bin_path, project_path, variables_args, state_file, targets, plan_path=None):
+def build_plan(command, project_path, variables_args, state_file, targets, state, plan_path=None):
     if plan_path is None:
         f, plan_path = tempfile.mkstemp(suffix='.tfplan')
 
-    command = [bin_path, 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
+    plan_command = [command[0], 'plan', '-input=false', '-no-color', '-detailed-exitcode', '-out', plan_path]
 
-    for t in (targets or []):
-        command.extend(['-target', t])
+    for t in (module.params.get('targets') or []):
+        plan_command.extend(['-target', t])
 
-    command.extend(_state_args(state_file))
+    plan_command.extend(_state_args(state_file))
 
-    rc, out, err = module.run_command(command + variables_args, cwd=project_path, use_unsafe_shell=True)
+    rc, out, err = module.run_command(plan_command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
     if rc == 0:
         # no changes
-        return plan_path, False
+        return plan_path, False, out, err, plan_command if state == 'planned' else command
     elif rc == 1:
         # failure to plan
         module.fail_json(msg='Terraform plan could not be created\r\nSTDOUT: {0}\r\n\r\nSTDERR: {1}'.format(out, err))
     elif rc == 2:
         # changes, but successful
-        return plan_path, True
+        return plan_path, True, out, err, plan_command if state == 'planned' else command
 
     module.fail_json(msg='Terraform plan failed with unexpected exit code {0}. \r\nSTDOUT: {1}\r\n\r\nSTDERR: {2}'.format(rc, out, err))
 
@@ -317,6 +317,11 @@ def main():
         else:
             select_workspace(command[0], project_path, workspace)
 
+    if state == 'present':
+        command.extend(APPLY_ARGS)
+    elif state == 'absent':
+        command.extend(DESTROY_ARGS)
+
     variables_args = []
     for k, v in variables.items():
         variables_args.extend([
@@ -327,11 +332,6 @@ def main():
         variables_args.extend(['-var-file', variables_file])
 
     preflight_validation(command[0], project_path, variables_args)
-
-    if state == 'present':
-        command.extend(APPLY_ARGS)
-    elif state == 'absent':
-        command.extend(DESTROY_ARGS)
 
     if module.params.get('lock') is not None:
         if module.params.get('lock'):
@@ -345,35 +345,30 @@ def main():
         command.extend(['-target', t])
 
     # we aren't sure if this plan will result in changes, so assume yes
-    needs_application, changed = True, True
+    needs_application, changed = True, False
 
-    if state == 'planned':
-        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, module.params.get('targets'), plan_file)
     if state == 'absent':
-        # deleting cannot use a statefile
-        needs_application = True
-        # add variables settings to destroy command
         command.extend(variables_args)
-    elif plan_file and os.path.exists(plan_file):
-        command.append(plan_file)
-    elif plan_file and not os.path.exists(plan_file):
-        module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
+    elif state == 'present' and plan_file:
+        if os.path.exists(project_path + "/" + plan_file):
+            command.append(plan_file)
+        else:
+            module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
     else:
-        plan_file, needs_application = build_plan(command[0], project_path, variables_args, state_file, module.params.get('targets'), plan_file)
+        plan_file, needs_application, out, err, command = build_plan(command, project_path, variables_args, state_file,
+                                                                     module.params.get('targets'), state, plan_file)
         command.append(plan_file)
 
     if needs_application and not module.check_mode and not state == 'planned':
         rc, out, err = module.run_command(command, cwd=project_path)
-        if state == 'absent' and 'Resources: 0' in out:
-            changed = False
+        # checks out to decide if changes were made during execution
+        if '0 added, 0 changed' not in out and not state == "absent" or '0 destroyed' not in out:
+            changed = True
         if rc != 0:
             module.fail_json(
                 msg="Failure when executing Terraform command. Exited {0}.\nstdout: {1}\nstderr: {2}".format(rc, out, err),
                 command=' '.join(command)
             )
-    else:
-        changed = False
-        out, err = '', ''
 
     outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
