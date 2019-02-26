@@ -28,7 +28,7 @@ EXAMPLES = """
 - name: Show all variables
   debug: msg="{{ lookup('varnames', '.+')}}"
 
-- name:  show variables with 'hosts' in their names
+- name: Show variables with 'hosts' in their names
   debug: msg="{{ lookup('varnames', 'hosts')}}"
 
 - name: Find several related variables that end specific way
