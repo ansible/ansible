@@ -103,7 +103,8 @@ EXAMPLES = '''
 # Examples don't contain the auth parameter for simplicity,
 # look at the ovirt_auth module to see how to reuse authentication.
 
-# Create an event
+- name: Create an event
+  ovirt_event:
 - ovirt_event:
     state: present
     description: "The file system /home on host xyz is almost full!"
