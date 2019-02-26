@@ -288,6 +288,11 @@ class AzureRMClusters(AzureRMModuleBase):
             elif self.state == 'present':
                 # get doesn't return storage profile, so can't be compared
                 old_response['properties']['storage_profile'] = self.parameters['properties']['storage_profile']
+
+                # cluster version returned by get may be longer, for instance "3.6.1000.67"
+                if old_response['properties']['cluster_version'].startswith(self.parameters['properties']['cluster_version']):
+                     self.parameters['properties']['cluster_version'] = old_response['properties']['cluster_version']
+
                 if (not default_compare(self.parameters, old_response, '', self.results)):
                     self.results['old_response'] = old_response
                     self.to_do = Actions.Update
