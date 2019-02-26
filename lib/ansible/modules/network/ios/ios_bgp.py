@@ -320,7 +320,6 @@ def main():
         'neighbor': dict(required=True),
         'remote_as': dict(type='int', required=True),
         'local_as': dict(type='int'),
-        'port': dict(type='int'),
         'update_source': dict(),
         'password': dict(no_log=True),
         'enabled': dict(type='bool'),

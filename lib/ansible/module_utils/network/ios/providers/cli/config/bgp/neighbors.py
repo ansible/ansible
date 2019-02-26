@@ -67,8 +67,10 @@ class Neighbors(CliProvider):
     def _render_enabled(self, item, config=None):
         cmd = 'neighbor %s shutdown' % item['neighbor']
         if item['enabled'] is True:
-            cmd = 'no %s' % cmd
-        if not config or cmd not in config:
+            if not config or cmd in config:
+                cmd = 'no %s' % cmd
+                return cmd
+        elif not config or cmd not in config:
             return cmd
 
     def _render_update_source(self, item, config=None):
@@ -152,7 +154,7 @@ class AFNeighbors(CliProvider):
             return cmd
 
     def _render_remove_private_as(self, item, config=None):
-        cmd = 'neighbor %s remove-private-AS' % item['neighbor']
+        cmd = 'neighbor %s remove-private-as' % item['neighbor']
         if item['remove_private_as'] is False:
             if not config or cmd in config:
                 cmd = 'no %s' % cmd
