@@ -12,13 +12,13 @@ DOCUMENTATION = """
       - Retrieves a list of matching Ansible variable names.
     options:
       _terms:
-        description: List of patterns to match to variable names.
+        description: List of Python regex patterns to match to variable names.
         required: True
 """
 
 EXAMPLES = """
 - name: List variables that start with qz_
-  debug: msg="{{ lookup('varnames', 'qz_.+')}}"
+  debug: msg="{{ lookup('varnames', '^qz_.+')}}"
   vars:
     qz_1: hello
     qz_2: world
@@ -31,8 +31,8 @@ EXAMPLES = """
 - name:  show variables with 'hosts' in their names
   debug: msg="{{ lookup('varnames', '.*hosts.*')}}"
 
-- name: find several related variables
-  debug: msg="{{ lookup('varnames', '.+_zone', '.+_location') }}"
+- name: find several related variables that end specific way
+  debug: msg="{{ lookup('varnames', '.+_zone$', '.+_location$') }}"
 
 """
 
