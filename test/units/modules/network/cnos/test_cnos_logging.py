@@ -53,7 +53,7 @@ class TestCnosLoggingModule(TestCnosModule):
 
     def test_cnos_logging_buffer_size_changed_implicit(self):
         set_module_args(dict(dest='logfile', name='anil'))
-        commands = ['logging logfile anil 7 size 10485760']
+        commands = ['logging logfile anil 5 size 10485760']
         self.execute_module(changed=True, commands=commands)
 
     def test_cnos_logging_logfile_size_changed_explicit(self):
