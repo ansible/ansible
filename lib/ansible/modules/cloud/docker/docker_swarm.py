@@ -256,7 +256,6 @@ class TaskParameters(DockerBaseClass):
         self.force_new_cluster = None
         self.remote_addrs = None
         self.join_token = None
-        self.force = None
 
         # Spec
         self.snapshot_interval = None
