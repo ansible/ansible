@@ -17,12 +17,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-- name: store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-
-- debug: var=vcsim
-
 - name: Wait for Flask controller to come up online
   wait_for:
     host: "{{ vcsim }}"
