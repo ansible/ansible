@@ -44,21 +44,6 @@ options:
     required: false
     default: root
 
-  host:
-    description:
-      - The FortiManager's Address.
-    required: true
-
-  username:
-    description:
-      - The username associated with the account.
-    required: true
-
-  password:
-    description:
-      - The password associated with the username account.
-    required: true
-
   mode:
     description:
       - Sets one of three modes for managing the object.
