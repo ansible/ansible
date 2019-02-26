@@ -64,6 +64,9 @@ class HttpApi(HttpApiBase):
 
         return handle_response(response_data.read())
 
+    def handle_httperror(self, exc):
+        return None
+
 
 def handle_response(response):
     if 'error' in response and 'jsonrpc' not in response:
