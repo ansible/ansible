@@ -1503,8 +1503,6 @@ MODULE_DEFAULTS_MERGE:
   env: [{name: ANSIBLE_MODULE_DEFAULTS_MERGE}]
   ini:
   - {key: module_defaults_merge, section: defaults}
-  yaml:
-  - {key: defaults.module_defaults_merge}
   type: bool
 NETWORK_GROUP_MODULES:
   name: Network module families
