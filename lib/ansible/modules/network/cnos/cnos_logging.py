@@ -89,27 +89,24 @@ EXAMPLES = """
     level: 7
     state: present
 
-- name: enable logging to all
-  cnos_logging:
-    dest : on
-
 - name: configure buffer size
   cnos_logging:
     dest: logfile
     level: 5
+    name: testfile
     size: 5000
 
 - name: Configure logging using aggregate
   cnos_logging:
     aggregate:
-      - { dest: console, level: notifications }
+      - { dest: console, level: 6 }
       - { dest: logfile, size: 9000 }
 
 - name: remove logging using aggregate
   cnos_logging:
     aggregate:
-      - { dest: console, level: notifications }
-      - { dest: logfile, size: 9000 }
+      - { dest: console, level: 6 }
+      - { dest: logfile, name: anil, size: 9000 }
     state: absent
 """
 
@@ -229,7 +226,7 @@ def parse_size(line, dest):
                 if x == 'size':
                     return result[i+1]
                 i = i+1
-            return '4096'
+            return '10485760'
     return size
 
 
