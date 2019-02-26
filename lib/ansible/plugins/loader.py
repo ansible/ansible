@@ -24,6 +24,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 
@@ -788,12 +789,9 @@ def _load_plugin_filter():
     return filters
 
 
-def _add_content_roots():
-    roots = C.config.get_config_value('INSTALLED_CONTENT_ROOTS')
-    pathset = set(sys.path)
-    for root in (to_native(r) for r in reversed(roots)):  # preserve as-listed precedence
-        if root not in pathset:
-            sys.path.insert(0, root)
+def _configure_collection_loader():
+    if not any((isinstance(l, AnsibleCollectionLoader) for l in sys.meta_path)):
+        sys.meta_path.insert(0, AnsibleCollectionLoader())
 
 
 # TODO: All of the following is initialization code   It should be moved inside of an initialization
@@ -801,7 +799,7 @@ def _add_content_roots():
 
 _PLUGIN_FILTERS = _load_plugin_filter()
 
-_add_content_roots()
+_configure_collection_loader()
 
 # doc fragments first
 fragment_loader = PluginLoader(
