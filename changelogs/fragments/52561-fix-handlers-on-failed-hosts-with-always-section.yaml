@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix handlers on failed hosts with always section (https://github.com/ansible/ansible/issues/52561)
