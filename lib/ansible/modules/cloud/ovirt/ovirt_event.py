@@ -44,6 +44,7 @@ options:
         description:
             - "Message for the event."
             - "Required when state is present."
+         type: str
 
     severity:
         description:
