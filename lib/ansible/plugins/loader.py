@@ -540,6 +540,7 @@ class PluginLoader:
                     self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
+                    continue
                 self._module_cache[path] = module
                 found_in_cache = False
 
