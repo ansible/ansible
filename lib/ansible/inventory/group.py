@@ -39,13 +39,14 @@ def replace_and_warn(match):
 def to_safe_group_name(name, replacer="_"):
     ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
 
-    if C.TRANSFORM_INVALID_GROUP_CHARS:
-        name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
-    else:
-        invalid_chars = _UNSAFE_GROUP.findall(name)
-        if invalid_chars:
-            display.deprecated('Ignoring invalid character(s) "%s" in group (%s), in the future this will be an error' % to_text(invalid_chars, to_text(name)),
-                               version='2.12')
+    if name: # when deserializing we might not have name yet
+        if C.TRANSFORM_INVALID_GROUP_CHARS:
+            name = _UNSAFE_GROUP.sub(replacer, name, replace_and_warn)
+        else:
+            invalid_chars = _UNSAFE_GROUP.findall(name)
+            if invalid_chars:
+                display.deprecated('Ignoring invalid character(s) "%s" in group (%s), in the future this will be an error' % to_text(invalid_chars, to_text(name)),
+                                   version='2.12')
     return name
 
 

@@ -23,7 +23,7 @@ import sys
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.inventory.group import Group, to_safe_group_name
+from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.module_utils.six import iteritems, string_types
 from ansible.utils.display import Display
@@ -158,15 +158,16 @@ class InventoryData(object):
     def add_group(self, group):
         ''' adds a group to inventory if not there already, returns named actually used '''
 
-        group = to_safe_group_name(group)
         if group:
             if not isinstance(group, string_types):
                 raise AnsibleError("Invalid group name supplied, expected a string but got %s for %s" % (type(group), group))
             if group not in self.groups:
                 g = Group(group)
-                self.groups[group] = g
-                self._groups_dict_cache = {}
-                display.debug("Added group %s to inventory" % group)
+                if g.name not in self.groups:
+                    self.groups[g.name] = g
+                    self._groups_dict_cache = {}
+                    display.debug("Added group %s to inventory" % group)
+                group = g.name
             else:
                 display.debug("group %s already in inventory" % group)
         else:
