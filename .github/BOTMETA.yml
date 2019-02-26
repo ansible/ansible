@@ -1343,6 +1343,7 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
+  test/units/modules/cloud/xenserver/: bvitnik
   test/units/modules/storage/hpe3par: *hpe3par
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
