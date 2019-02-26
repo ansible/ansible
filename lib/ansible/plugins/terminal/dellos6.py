@@ -46,7 +46,7 @@ class TerminalModule(TerminalBase):
         re.compile(br"'[^']' +returned error code: ?\d+"),
         re.compile(br"Invalid|invalid.*$", re.I),
         re.compile(br"((\bout of range\b)|(\bnot found\b)|(\bCould not\b)|(\bUnable to\b)|(\bCannot\b)).*", re.I),
-        re.compile(br"((\balready exists\b)|(\bdoes not exist\b)|(\bnot active\b)|(\bFailed\b)|(\bIncorrect\b)|(\bnot enabled\b)).*", re.I),
+        re.compile(br"((\balready exists\b)|(\bnot exist\b)|(\bnot active\b)|(\bFailed\b)|(\bIncorrect\b)|(\bnot enabled\b)).*", re.I),
 
     ]
 
