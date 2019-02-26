@@ -2,22 +2,9 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2019, Ansible Project
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -44,7 +31,7 @@ options:
         description:
             - "Message for the event."
             - "Required when state is present."
-         type: str
+        type: str
 
     severity:
         description:
@@ -52,11 +39,13 @@ options:
             - "Required when state is present."
         choices: ['error', 'normal', 'warning']
         default: normal
+        type: str
 
     origin:
         description:
             - "Originator of the event."
             - "Required when state is present."
+        type: str
 
     custom_id:
         description:
@@ -68,34 +57,42 @@ options:
         description:
             - "The event ID in the oVirt/RHV audit_log table. This ID is not the same as custom_id and is only used when state is absent."
             - "Required when state is absent."
+        type: str
 
     cluster:
         description:
             - "The id of the cluster associated with this event."
+        type: str
 
     data_center:
         description:
             - "The id of the data center associated with this event."
+        type: str
 
     host:
         description:
             - "The id of the host associated with this event."
+        type: str
 
     storage_domain:
         description:
             - "The id of the storage domain associated with this event."
+        type: str
 
     template:
         description:
             - "The id of the template associated with this event."
+        type: str
 
     user:
         description:
             - "The id of the user associated with this event."
+        type: str
 
     vm:
         description:
             - "The id of the VM associated with this event."
+        type: str
 extends_documentation_fragment: ovirt
 '''
 
@@ -105,7 +102,6 @@ EXAMPLES = '''
 
 - name: Create an event
   ovirt_event:
-- ovirt_event:
     state: present
     description: "The file system /home on host xyz is almost full!"
     origin: "mymonitor"
@@ -114,7 +110,6 @@ EXAMPLES = '''
 
 - name: Create an event and link it to a specific object
   ovirt_event:
-- ovirt_event:
     state: present
     description: "The file system /home is almost full!"
     origin: "mymonitor"
@@ -123,7 +118,8 @@ EXAMPLES = '''
     vm: "c79db183-46ef-44d1-95f9-1a368c516c19"
 
 # Remove an event
-- ovirt_event:
+- name: Remove an event
+  ovirt_event:
     state: absent
     id: 123456789
     wait: false
