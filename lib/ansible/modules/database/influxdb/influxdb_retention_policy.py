@@ -18,7 +18,7 @@ module: influxdb_retention_policy
 short_description: Manage InfluxDB retention policies
 description:
     - Manage InfluxDB retention policies
-version_added: 2.1
+version_added: 2.8
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
     - "python >= 2.6"
