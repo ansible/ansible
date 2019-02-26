@@ -574,7 +574,6 @@ class Base(FieldAttributeBase):
 
     # module default params
     _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
-    _module_defaults_merge = FieldAttribute(isa='bool', default=C.MODULE_DEFAULTS_MERGE)
 
     # flags and misc. settings
     _environment = FieldAttribute(isa='list', extend=True, prepend=True)

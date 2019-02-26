@@ -46,7 +46,6 @@ loop_control: |
 
 max_fail_percentage: can be used to abort the run after a given percentage of hosts in the current batch has failed.
 module_defaults: Specifies default parameter values for modules.
-module_defaults_merge: Defines the behavior of overwriting or merging module_defaults arguments for modules/groups in an outer and inner scope.
 name: "Identifier. Can be used for documentation, in or tasks/handlers."
 no_log: Boolean that controls information disclosure.
 notify: "List of handlers to notify when the task returns a 'changed=True' status."

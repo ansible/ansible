@@ -1,0 +1,49 @@
+- name: test module_defaults intentional overwrite behavior
+  hosts: localhost
+  tasks:
+  - name: set module_defaults to initial value
+    module_defaults:
+      group/aws:
+        profile: invalidprofile
+        region: us-west-1
+    block:
+    - name: overwrite module_defaults - clear profile and region defined before
+      module_defaults:
+        group/aws: {}
+      block:
+        - name: set module_defaults with new values
+          module_defaults:
+            group/aws:
+              region: us-east-1
+              aws_secret_key: foobar
+              aws_access_key: foobar
+          block:
+          - aws_s3_bucket_facts:
+            ignore_errors: true
+            register: s3
+          - assert:
+              that:
+                - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
+
+- name: test module_defaults overwrite-by default behavior
+  hosts: localhost
+  tasks:
+  - name: set initial module defaults
+    module_defaults:
+      group/aws:
+        profile: invalidprofile
+        region: us-west-1
+    block:
+    - name: set module_defaults again to overwrite profile in group/aws
+      module_defaults:
+        group/aws:
+          aws_secret_key: foobar
+          aws_access_key: foobar
+          region: us-east-1
+      block:
+        - aws_s3_bucket_facts:
+          ignore_errors: true
+          register: s3
+        - assert:
+            that:
+              - "'boto3 required' in s3.msg or 'InvalidAccessKeyId' in s3.msg"

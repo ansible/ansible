@@ -1,12 +1,14 @@
-- name: main block
-  vars:
-    test_file: /tmp/ansible-test.module_defaults.foo
-  module_defaults:
-    debug:
-      msg: test default
-    file:
-      path: '{{ test_file }}'
-  block:
+- hosts: localhost
+  tasks:
+  - name: test module_defaults
+    vars:
+      test_file: /tmp/ansible-test.module_defaults.foo
+    module_defaults:
+      debug:
+        msg: test default
+      file:
+        path: '{{ test_file }}'
+    block:
     - debug:
       register: foo
 
@@ -34,6 +36,19 @@
     - name: remove test file
       file:
         state: absent
+
+    - name: test that module defaults from parent are inherited and merged
+      module_defaults:
+        # Meaningless values to make sure that 'module_defaults' gets
+        # evaluated for this block
+        foo:
+          bar: baz
+      block:
+      - debug:
+        register: foo
+
+      - assert:
+          that: foo.msg == "test default"
 
     - name: test that module defaults from parent are inherited and merged
       module_defaults:
@@ -87,60 +102,36 @@
       - assert:
           that:
             foo.msg == "Hello world!"
+
 - name: Module group defaults block
-  module_defaults:
-    group/aws:
-      region: us-east-1
-      aws_secret_key: foobar
-  block:
+  hosts: localhost
+  tasks:
+  - name: test using module_defaults in block
+    module_defaults:
+      group/aws:
+        region: us-east-1
+        aws_secret_key: foobar
+    block:
     - aws_s3_bucket_facts:
       ignore_errors: true
       register: s3
     - assert:
         that:
           - "'Partial credentials' in s3.msg or 'boto3 required' in s3.msg"
+
 - name: Module group defaults block
-  module_defaults:
-    group/aws:
-      region: us-east-1
-      aws_secret_key: foobar
-      aws_access_key: foobar
-  block:
+  hosts: localhost
+  tasks:
+  - name: test invalid AWS keys in module defaults
+    module_defaults:
+      group/aws:
+        region: us-east-1
+        aws_secret_key: foobar
+        aws_access_key: foobar
+    block:
     - aws_s3_bucket_facts:
       ignore_errors: true
       register: s3
     - assert:
         that:
           - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
-- name: test module_defaults merge behavior
-  module_defaults_merge: False
-  module_defaults:
-    group/aws:
-      profile: invalidprofile
-      region: us-west-1
-  block:
-    - name: overwrite module_defaults - clear profile and region defined before
-      module_defaults:
-        group/aws:
-          region: us-east-1
-          aws_secret_key: foobar
-          aws_access_key: foobar
-      block:
-        - aws_s3_bucket_facts:
-          ignore_errors: true
-          register: s3
-        - assert:
-            that:
-              - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
-    - name: merge module_defaults - use profile defined before and update region
-      module_defaults_merge: yes
-      module_defaults:
-        group/aws:
-          region: us-east-1
-      block:
-        - aws_s3_bucket_facts:
-          ignore_errors: true
-          register: s3
-        - assert:
-            that:
-              - "'boto3 required' in s3.msg or s3.msg == 'The config profile (invalidprofile) could not be found'"
