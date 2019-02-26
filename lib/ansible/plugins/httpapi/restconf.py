@@ -54,7 +54,7 @@ class HttpApi(HttpApiBase):
         if data:
             data = json.dumps(data)
 
-        path = self.get_option('root_path') + message_kwargs.get('path', '')
+        path = '/'.join([self.get_option('root_path').rstrip('/'), message_kwargs.get('path', '').lstrip('/')])
 
         headers = {
             'Content-Type': message_kwargs.get('content_type') or CONTENT_TYPE,
