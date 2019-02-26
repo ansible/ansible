@@ -60,6 +60,7 @@ options:
     description:
       - Set logging severity levels. 0-emerg;1-alert;2-crit;3-err;4-warn;
         5-notif;6-inform;7-debug
+    default: 5
   aggregate:
     description: List of logging definitions.
   state:
@@ -391,9 +392,9 @@ def main():
         dest=dict(type='str',
                   choices=['server', 'console', 'monitor', 'logfile']),
         name=dict(type='str'),
-        size=dict(type='int'),
+        size=dict(type='int', default=10485760),
         facility=dict(type='str'),
-        level=dict(type='str', default='7'),
+        level=dict(type='str', default='5'),
         state=dict(default='present', choices=['present', 'absent']),
     )
 
