@@ -459,6 +459,8 @@ class Connection(ConnectionBase):
         self._ssh_agent = None
         self._ssh_agent_socket = None
 
+        self._ssh_version = self._get_ssh_version()
+
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
         # to work
@@ -471,6 +473,26 @@ class Connection(ConnectionBase):
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
     # management here.
+
+    @staticmethod
+    def _get_ssh_version():
+        ssh_version_proc = (
+            subprocess.Popen(
+                ('ssh', '-V'),
+                stderr=subprocess.PIPE,
+            )
+        )
+        ssh_version_string = (
+            ssh_version_proc.
+            stderr.readline().
+            split()[0].split('_')[1]
+        )
+        ssh_version_proc.terminate()
+        return tuple(
+            int(chunk) for chunk in
+            re.split(r'([^\d]|\w)', ssh_version_string)
+            if chunk.isdigit()
+        )[:2]
 
     def _spawn_ssh_agent(self):
         self._ssh_agent = subprocess.Popen(
