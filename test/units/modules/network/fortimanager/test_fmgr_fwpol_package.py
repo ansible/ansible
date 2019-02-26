@@ -15,6 +15,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import os
@@ -47,7 +48,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_fwpol_package.Connection')
     return connection_class_mock
 
 
@@ -61,74 +62,8 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_fwpol_package(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # ssl-ssh-profile: None
-    # name: ansibleTestPackage1
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: pkg
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # inspection-mode: flow
-    # scope_members: FGT2, FGT3
-    # mode: set
-    # parent_folder: None
-    # scope_members_vdom: root
-    # central-nat: disable
-    # ngfw-mode: profile-based
-    ##################################################
-    ##################################################
-    # ssl-ssh-profile: None
-    # name: ansibleTestPackage2
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: pkg
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # inspection-mode: flow
-    # scope_members: None
-    # mode: set
-    # parent_folder: ansibleTestFolder1
-    # scope_members_vdom: root
-    # central-nat: disable
-    # ngfw-mode: profile-based
-    ##################################################
-    ##################################################
-    # ssl-ssh-profile: None
-    # name: ansibleTestPackage1
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: pkg
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # inspection-mode: flow
-    # scope_members: None
-    # mode: delete
-    # parent_folder: None
-    # scope_members_vdom: root
-    # central-nat: disable
-    # ngfw-mode: profile-based
-    ##################################################
-    ##################################################
-    # ssl-ssh-profile: None
-    # name: ansibleTestPackage2
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: pkg
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # inspection-mode: flow
-    # scope_members: None
-    # mode: delete
-    # parent_folder: ansibleTestFolder1
-    # scope_members_vdom: root
-    # central-nat: disable
-    # ngfw-mode: profile-based
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_fwpol_package.fmgr_fwpol_package(fmg_instance, fixture_data[0]['paramgram_used'])
@@ -145,74 +80,8 @@ def test_fmgr_fwpol_package(fixture_data, mocker):
 
 
 def test_fmgr_fwpol_package_folder(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # ssl-ssh-profile: None
-    # name: ansibleTestFolder1
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: folder
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # inspection-mode: flow
-    # scope_members: None
-    # mode: set
-    # parent_folder: None
-    # scope_members_vdom: root
-    # central-nat: disable
-    # ngfw-mode: profile-based
-    ##################################################
-    ##################################################
-    # ssl-ssh-profile: None
-    # name: ansibleTestFolder2
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: folder
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # inspection-mode: flow
-    # scope_members: None
-    # mode: set
-    # parent_folder: ansibleTestFolder1
-    # scope_members_vdom: root
-    # central-nat: disable
-    # ngfw-mode: profile-based
-    ##################################################
-    ##################################################
-    # ssl-ssh-profile: None
-    # scope_members_vdom: root
-    # name: ansibleTestFolder2
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: folder
-    # fwpolicy-implicit-log: disable
-    # central-nat: disable
-    # inspection-mode: flow
-    # scope_members: None
-    # mode: delete
-    # parent_folder: ansibleTestFolder1
-    # package-folder: None
-    # ngfw-mode: profile-based
-    ##################################################
-    ##################################################
-    # adom: ansible
-    # fwpolicy6-implicit-log: disable
-    # object_type: folder
-    # inspection-mode: flow
-    # parent_folder: None
-    # ngfw-mode: profile-based
-    # ssl-ssh-profile: None
-    # name: ansibleTestFolder1
-    # central-nat: disable
-    # fwpolicy-implicit-log: disable
-    # package-folder: None
-    # scope_members: None
-    # mode: delete
-    # scope_members_vdom: root
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_fwpol_package.fmgr_fwpol_package_folder(fmg_instance, fixture_data[0]['paramgram_used'])
