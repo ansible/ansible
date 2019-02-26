@@ -68,7 +68,6 @@ options:
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
 seealso:
-- module: aci_tenant
 - module: aci_ap
 - module: aci_epg
 - module: aci_contract

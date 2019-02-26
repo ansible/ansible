@@ -52,6 +52,7 @@ options:
 extends_documentation_fragment: aci
 seealso:
 - module: aci_encap_pool_range
+- module: aci_vlan_pool
 - name: APIC Management Information Model reference
   description: More information about the internal APIC classes B(fvns:VlanInstP),
                B(fvns:VxlanInstP) and B(fvns:VsanInstP)
