@@ -16,20 +16,20 @@
 # test portmake absent
 
 - name: check absence of package screen
-  command: pkg info screen
+  command: pkg info tmux
   register: pkg_info_out
   failed_when: pkg_info_out.rc == 0
 
-- name: test removal of package screen  not installed
+- name: test removal of package tmux  not installed
   portmake:
-    name: "sysutils/screen"
+    name: "sysutils/tmux"
     state: "absent"
     
-- name: test removal of package screen not installed with unneded options
+- name: test removal of package tmux not installed with unneded options
   portmake:
-    name: "sysutils/screen"
+    name: "sysutils/tmux"
     state: "absent"
-    options_set: "XTERM_256"
+    options_set: "BACKSPACE"
 
 
 ###
@@ -46,20 +46,20 @@
     line: 'DEFAULT_VERSIONS += python=3.6'
     create: yes
 
-- name: install a port with options - screen
+- name: install a port with options - tmux
   portmake:
-    name: sysutils/screen
-    options_set: "XTERM_256"
-    options_unset: "NETHACK"
+    name: sysutils/tmux
+    options_set: "BACKSPACE"
+    options_unset: "EXAMPLES"
     state: "present"
 
-- name: check for added compile paramter of package screen
-  shell: "pkg info screen | grep XTERM_256"
+- name: check for added compile paramter of package tmux
+  shell: "pkg info tmux | grep BACKSPACE"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("on") == -1
 
-- name: check compile option NETHACK is absent
-  shell: "pkg info screen | grep 'NETHACK'"
+- name: check compile option EXAMPLES is absent
+  shell: "pkg info tmux | grep 'EXAMPLES'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("off") == -1
 
@@ -71,23 +71,23 @@
 
 - name: test installation of same package with an aditional option  and previous option saved in /etc/make.conf
   portmake:
-    name: sysutils/screen
+    name: sysutils/tmux
     state: "present"
-    options_set: "SHOWENC"
+    options_set: "LIBEVENT_STATIC"
     disable_vulnerabilities: true
     
 - name: check old compile paramter of package
-  shell: "pkg info screen | grep 'XTERM_256'"
+  shell: "pkg info tmux | grep 'BACKSPACE'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("on") == -1
 
-- name: check compile option NETHACK is absent
-  shell: "pkg info screen | grep 'NETHACK'"
+- name: check compile option EXAMPLES is absent
+  shell: "pkg info tmux | grep 'EXAMPLES'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("off") == -1
 
 - name: check new compile paramter of package
-  shell: "pkg info screen | grep 'SHOWENC'"
+  shell: "pkg info tmux | grep 'LIBEVENT_STATIC'"
   register: pkg_info_out
   failed_when: pkg_info_out.stdout.find("on") == -1
 
@@ -99,15 +99,15 @@
 ###
 # tests portmake absent removing pkg and make.conf lines
 
-- name: uninstall screen with unecessary options
+- name: uninstall tmux with unecessary options
   portmake:
-    name: sysutils/screen
-    options_set: "XTERM_256"
-    options_unset: "SHOWENC NETHACK"
+    name: sysutils/tmux
+    options_set: "BACKSPACE"
+    options_unset: "EXAMPLES DOCS"
     state: "absent"
     disable_vulnerabilities: true
     
-- name: check all options in make.conf are removed for screen
-  command: "grep 'sysutils_screen_' /etc/make.conf"
+- name: check all options in make.conf are removed for tmux
+  command: "grep 'sysutils_tmux_' /etc/make.conf"
   register: grep_makeconf_out
   failed_when: grep_makeconf_out.rc == 0
