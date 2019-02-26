@@ -125,6 +125,26 @@ DOCUMENTATION = """
         ini:
           - section: defaults
             key: use_persistent_connections
+      port:
+        description:
+            - Port on which ssh server is listening on
+        default: 22
+        type: int
+        vars:
+            - name: ansible_port
+            - name: ansible_ssh_port
+            - name: ansible_paramiko_port
+              version_added: '2.8'
+        env:
+          - name: ANSIBLE_REMOTE_PORT
+          - name: ANSIBLE_PARAMIKO_REMOTE_PORT
+            version_added: '2.8'
+        ini:
+          - key: remote_port
+            section: defaults
+          - key: remote_port
+            section: paramiko_connection
+            version_added: '2.8'
 # TODO:
 #timeout=self._play_context.timeout,
 """
@@ -142,7 +162,6 @@ from termios import tcflush, TCIFLUSH
 from distutils.version import LooseVersion
 from binascii import hexlify
 
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -245,7 +264,7 @@ class Connection(ConnectionBase):
     _log_channel = None
 
     def _cache_key(self):
-        return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
+        return "%s__%s__" % (self._play_context.remote_addr, self.get_option('remote_user'))
 
     def _connect(self):
         cache_key = self._cache_key()
@@ -290,7 +309,7 @@ class Connection(ConnectionBase):
             replacers = {
                 '%h': self._play_context.remote_addr,
                 '%p': port,
-                '%r': self._play_context.remote_user
+                '%r': self.get_option('remote_user')
             }
             for find, replace in replacers.items():
                 proxy_command = proxy_command.replace(find, str(replace))
@@ -310,8 +329,8 @@ class Connection(ConnectionBase):
         if not HAVE_PARAMIKO:
             raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMP_ERR))
 
-        port = self._play_context.port or 22
-        display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
+        port = self.get_option('port')
+        display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.get_option('remote_user'), port, self._play_context.remote_addr),
                     host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
@@ -352,7 +371,7 @@ class Connection(ConnectionBase):
 
             ssh.connect(
                 self._play_context.remote_addr.lower(),
-                username=self._play_context.remote_user,
+                username=self.get_option('remote_user'),
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
@@ -372,7 +391,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif u"Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
-                    self._play_context.remote_user, self._play_context.remote_addr, port, msg)
+                    self.get_option('remote_user'), self._play_context.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
             else:
                 raise AnsibleConnectionFailure(msg)
@@ -425,7 +444,7 @@ class Connection(ConnectionBase):
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if b'unknown user' in become_output:
-                            raise AnsibleError('user %s does not exist' % self._play_context.become_user)
+                            raise AnsibleError('user %s does not exist' % self._.become_user)
                         else:
                             break
                             # raise AnsibleError('ssh connection closed waiting for password prompt')
@@ -479,7 +498,7 @@ class Connection(ConnectionBase):
 
     def _connect_sftp(self):
 
-        cache_key = "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
+        cache_key = "%s__%s__" % (self._play_context.remote_addr, self.get_option('remote_user'))
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
