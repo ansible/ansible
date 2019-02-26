@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -160,9 +160,9 @@ def map_obj_to_commands(updates, module):
                     for i in w['interfaces']:
                         cmd = 'set interfaces ethernet {0} vif {1}'.format(i, vlan_id)
                         if w['name']:
-                            commands.append(cmd + ' description {}'.format(name))
+                            commands.append(cmd + ' description {0}'.format(name))
                         elif w['address']:
-                            commands.append(cmd + ' address {}'.format(address))
+                            commands.append(cmd + ' address {0}'.format(address))
                         else:
                             commands.append(cmd)
 

@@ -55,7 +55,7 @@ options:
     state:
       description:
         - Assert the state of the app service plan.
-        - Use 'present' to create or update an app service plan and 'absent' to delete it.
+        - Use C(present) to create or update an app service plan and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -74,13 +74,13 @@ EXAMPLES = '''
     - name: Create a windows app service plan
       azure_rm_appserviceplan:
         name: "windowsplan1"
-        resource_group: "appserviceplan_rg"
+        resource_group: myResourceGroup
         location: "eastus"
         sku: S1
 
     - name: Create a linux app service plan
       azure_rm_appserviceplan:
-        resource_group: "appserviceplan_rg"
+        resource_group: myResourceGroup
         name: "linuxplan1"
         location: "eastus"
         sku: S1
@@ -90,7 +90,7 @@ EXAMPLES = '''
     - name: update sku of existing windows app service plan
       azure_rm_appserviceplan:
         name: "windowsplan2"
-        resource_group: "appserviceplan_rg"
+        resource_group: myResourceGroup
         location: "eastus"
         sku: S2
 '''

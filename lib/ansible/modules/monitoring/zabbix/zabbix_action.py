@@ -54,6 +54,12 @@ options:
             - Status of the action.
         choices: ['enabled', 'disabled']
         default: 'enabled'
+    pause_in_maintenance:
+        description:
+            - Whether to pause escalation during maintenance periods or not.
+            - Can be used when I(event_source=trigger).
+        type: 'bool'
+        default: true
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
@@ -217,7 +223,7 @@ options:
             send_to_users:
                 type: list
                 description:
-                    - Users to send messages to.
+                    - Users (usernames or aliases) to send messages to.
             message:
                 description:
                     - Operation message text.
@@ -761,7 +767,8 @@ class Action(object):
         Returns:
             dict: dictionary of specified parameters
         """
-        return {
+
+        _params = {
             'name': kwargs['name'],
             'eventsource': to_numeric_value([
                 'trigger',
@@ -783,6 +790,12 @@ class Action(object):
                 'enabled',
                 'disabled'], kwargs['status'])
         }
+        if float(self._zapi.api_version().rsplit('.', 1)[0]) >= 4.0:
+            _params['pause_suppressed'] = '1' if kwargs['pause_in_maintenance'] else '0'
+        else:
+            _params['maintenance_mode'] = '1' if kwargs['pause_in_maintenance'] else '0'
+
+        return _params
 
     def check_difference(self, **kwargs):
         """Check difference between action and user specified parameters.
@@ -1609,6 +1622,7 @@ def main():
             event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
+            pause_in_maintenance=dict(type='bool', required=False, default=True),
             default_message=dict(type='str', required=False, default=None),
             default_subject=dict(type='str', required=False, default=None),
             recovery_default_message=dict(type='str', required=False, default=None),
@@ -1640,6 +1654,7 @@ def main():
     event_source = module.params['event_source']
     state = module.params['state']
     status = module.params['status']
+    pause_in_maintenance = module.params['pause_in_maintenance']
     default_message = module.params['default_message']
     default_subject = module.params['default_subject']
     recovery_default_message = module.params['recovery_default_message']
@@ -1682,6 +1697,7 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
+                pause_in_maintenance=pause_in_maintenance,
                 default_message=default_message,
                 default_subject=default_subject,
                 recovery_default_message=recovery_default_message,
@@ -1711,6 +1727,7 @@ def main():
                 event_source=event_source,
                 esc_period=esc_period,
                 status=status,
+                pause_in_maintenance=pause_in_maintenance,
                 default_message=default_message,
                 default_subject=default_subject,
                 recovery_default_message=recovery_default_message,

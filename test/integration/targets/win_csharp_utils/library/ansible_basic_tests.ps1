@@ -503,6 +503,47 @@ $tests = @{
         $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $expected_module_args}
     }
 
+    "Parse module args with list elements and delegate type" = {
+        $spec = @{
+            options = @{
+                list_delegate_type = @{
+                    type = "list"
+                    elements = [Func[[Object], [UInt16]]]{ [System.UInt16]::Parse($args[0]) }
+                }
+            }
+        }
+        $complex_args = @{
+            list_delegate_type = @(
+                "1234",
+                4321
+            )
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Params.list_delegate_type.GetType().Name | Assert-Equals -Expected 'List`1'
+        $m.Params.list_delegate_type[0].GetType().FullName | Assert-Equals -Expected "System.UInt16"
+        $m.Params.list_delegate_Type[1].GetType().FullName | Assert-Equals -Expected "System.UInt16"
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_test_out)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected_module_args = @{
+            list_delegate_type = @(
+                1234,
+                4321
+            )
+        }
+        $actual.Keys.Count | Assert-Equals -Expected 2
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $expected_module_args}
+    }
+
     "Parse module args with case insensitive input" = {
         $spec = @{
             options = @{

@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2016 Thomas Stringer, <tomstr@microsoft.com>
-#
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2016, Thomas Stringer <tomstr@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -46,8 +46,8 @@ options:
             - Dictionary containing application settings
     state:
         description:
-            - Assert the state of the Function App. Use 'present' to create or update a Function App and
-              'absent' to delete.
+            - Assert the state of the Function App. Use C(present) to create or update a Function App and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -64,13 +64,13 @@ author:
 EXAMPLES = '''
 - name: create function app
   azure_rm_functionapp:
-      resource_group: ansible-rg
+      resource_group: myResourceGroup
       name: myfunctionapp
       storage_account: mystorageaccount
 
 - name: create a function app with app settings
   azure_rm_functionapp:
-      resource_group: ansible-rg
+      resource_group: myResourceGroup
       name: myfunctionapp
       storage_account: mystorageaccount
       app_settings:
@@ -121,7 +121,7 @@ state:
         outbound_ip_addresses: ............
         container_size: 1536
         daily_memory_time_quota: 0
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
         default_host_name: myfunctionapp.azurewebsites.net
 '''  # NOQA
 
@@ -207,7 +207,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                     )
                     self.results['changed'] = True
                 except CloudError as exc:
-                    self.fail('Failure while deleting web app: {}'.format(exc))
+                    self.fail('Failure while deleting web app: {0}'.format(exc))
             else:
                 self.results['changed'] = False
         else:
@@ -235,7 +235,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
                     ).result()
                     self.results['state'] = new_function_app.as_dict()
                 except CloudError as exc:
-                    self.fail('Error creating or updating web app: {}'.format(exc))
+                    self.fail('Error creating or updating web app: {0}'.format(exc))
 
         return self.results
 
@@ -289,7 +289,7 @@ class AzureRMFunctionApp(AzureRMModuleBase):
     def storage_connection_string(self):
         """Construct the storage account connection string"""
 
-        return 'DefaultEndpointsProtocol=https;AccountName={};AccountKey={}'.format(
+        return 'DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}'.format(
             self.storage_account,
             self.storage_key
         )

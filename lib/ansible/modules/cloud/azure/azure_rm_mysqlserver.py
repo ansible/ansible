@@ -74,7 +74,7 @@ options:
         default: Default
     state:
         description:
-            - Assert the state of the MySQL Server. Use 'present' to create or update a server and 'absent' to delete it.
+            - Assert the state of the MySQL Server. Use C(present) to create or update a server and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -92,7 +92,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) MySQL Server
     azure_rm_mysqlserver:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       name: testserver
       sku:
         name: B_Gen5_1
@@ -111,7 +111,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/12345678-1234-1234-1234-123412341234/testrg/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/mysqlsrv1b6dd89593
 version:
     description:
         - 'Server version. Possible values include: C(5.6), C(5.7)'
@@ -228,7 +228,7 @@ class AzureRMServers(AzureRMModuleBase):
                 elif key == "location":
                     self.parameters["location"] = kwargs[key]
                 elif key == "storage_mb":
-                    self.parameters.setdefault("properties", {})["storage_mb"] = kwargs[key]
+                    self.parameters.setdefault("properties", {}).setdefault("storage_profile", {})["storage_mb"] = kwargs[key]
                 elif key == "version":
                     self.parameters.setdefault("properties", {})["version"] = kwargs[key]
                 elif key == "enforce_ssl":
@@ -321,6 +321,8 @@ class AzureRMServers(AzureRMModuleBase):
                                                             server_name=self.name,
                                                             parameters=self.parameters)
             else:
+                # structure of parameters for update must be changed
+                self.parameters.update(self.parameters.pop("properties", {}))
                 response = self.mysql_client.servers.update(resource_group_name=self.resource_group,
                                                             server_name=self.name,
                                                             parameters=self.parameters)

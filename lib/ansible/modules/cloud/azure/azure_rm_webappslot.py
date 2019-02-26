@@ -153,7 +153,7 @@ options:
     state:
       description:
         - Assert the state of the Web App deployment slot.
-        - Use 'present' to create or update a  slot and 'absent' to delete it.
+        - Use C(present) to create or update a  slot and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -171,7 +171,7 @@ author:
 EXAMPLES = '''
   - name: Create a webapp slot
     azure_rm_webapp_slot:
-      resource_group: myRG
+      resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       configuration_source: myJavaWebApp
@@ -180,7 +180,7 @@ EXAMPLES = '''
 
   - name: swap the slot with production slot
     azure_rm_webapp_slot:
-      resource_group: myRG
+      resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       swap:
@@ -188,14 +188,14 @@ EXAMPLES = '''
 
   - name: stop the slot
     azure_rm_webapp_slot:
-      resource_group: myRG
+      resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       app_state: stopped
 
   - name: udpate a webapp slot app settings
     azure_rm_webapp_slot:
-      resource_group: myRG
+      resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       app_settings:
@@ -203,7 +203,7 @@ EXAMPLES = '''
 
   - name: udpate a webapp slot frameworks
     azure_rm_webapp_slot:
-      resource_group: myRG
+      resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       frameworks:
@@ -216,7 +216,7 @@ id:
     description: Id of current slot.
     returned: always
     type: str
-    sample: /subscriptions/<subsid>/resourceGroups/myRG/providers/Microsoft.Web/sites/testapp/slots/stage1
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/testapp/slots/stage1
 '''
 
 import time
@@ -248,7 +248,7 @@ swap_spec = dict(
         type='str'
     ),
     preserve_vnet=dict(
-        type=bool,
+        type='bool',
         default=True
     )
 )

@@ -54,7 +54,7 @@ options:
       default: 'no'
     state:
         description:
-            - Assert the state of the MySQL Database. Use 'present' to create or update a database and 'absent' to delete it.
+            - Assert the state of the MySQL Database. Use C(present) to create or update a database and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -71,7 +71,7 @@ author:
 EXAMPLES = '''
   - name: Create (or update) MySQL Database
     azure_rm_mysqldatabase:
-      resource_group: TestGroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: db1
 '''
@@ -82,7 +82,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/databases/db1
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/testserver/databases/db1
 name:
     description:
         - Resource name.
@@ -145,6 +145,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
+        self.force_update = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -199,6 +200,7 @@ class AzureRMDatabases(AzureRMModuleBase):
                 if not self.check_mode:
                     self.delete_mysqldatabase()
             else:
+                self.fail("Database properties cannot be updated without setting 'force_update' option")
                 self.to_do = Actions.NoAction
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):

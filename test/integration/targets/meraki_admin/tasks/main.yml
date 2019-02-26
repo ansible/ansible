@@ -11,7 +11,7 @@
       org_name: '{{test_org_name}}'
       name: Jane Doe
       email: '{{email_prefix}}+janedoe@{{email_domain}}'
-      orgAccess: read-only
+      org_access: read-only
     delegate_to: localhost
     register: create_orgaccess
 

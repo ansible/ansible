@@ -46,7 +46,7 @@ options:
     description:
     - "IP or FQDN of NTP server(s)."
     - This accepts a list of NTP servers. For multiple servers, please look at the examples.
-    type: dict
+    type: list
     required: True
   state:
     description:

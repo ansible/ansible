@@ -36,6 +36,7 @@ options:
       - The C(type), C(control) and C(module_path) all must match a rule to be modified.
     type: str
     required: true
+    choices: [ account, -account, auth, -auth, password, -password, session, -session ]
   control:
     description:
       - The control of the PAM rule being modified.
@@ -54,6 +55,7 @@ options:
     description:
     - The new type to assign to the new rule.
     type: str
+    choices: [ account, -account, auth, -auth, password, -password, session, -session ]
   new_control:
     description:
     - The new control to assign to the new rule.
@@ -87,9 +89,9 @@ options:
     default: updated
   path:
     description:
-    - This is the path to the PAM service files
+    - This is the path to the PAM service files.
     type: path
-    default: /etc/pam.d/
+    default: /etc/pam.d
   backup:
      description:
        - Create a backup file including the timestamp information so you can
@@ -224,7 +226,7 @@ EXAMPLES = r'''
 
 RETURN = r'''
 change_count:
-    description: How many rules were changed
+    description: How many rules were changed.
     type: int
     sample: 1
     returned: success
@@ -791,9 +793,9 @@ def main():
             ("state", "before", ["new_module_path"]),
             ("state", "after", ["new_control"]),
             ("state", "after", ["new_type"]),
-            ("state", "after", ["new_module_path"])
+            ("state", "after", ["new_module_path"]),
 
-        ]
+        ],
     )
     content = str()
     fname = os.path.join(module.params["path"], module.params["name"])

@@ -217,7 +217,10 @@ def main():
     state = module.params['state']
     kind = 'storage#bucketAccessControl'
 
-    fetch = fetch_resource(module, self_link(module), kind)
+    if module.params['id']:
+        fetch = fetch_resource(module, self_link(module), kind)
+    else:
+        fetch = {}
     changed = False
 
     if fetch:

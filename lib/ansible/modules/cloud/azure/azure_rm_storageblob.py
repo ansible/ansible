@@ -69,7 +69,7 @@ options:
             - Set the blob md5 hash value.
     dest:
         description:
-            - Destination file path. Use with state 'present' to download a blob.
+            - Destination file path. Use with state C(present) to download a blob.
         aliases:
             - destination
     force:
@@ -86,16 +86,16 @@ options:
             - resource_group_name
     src:
         description:
-            - Source file path. Use with state 'present' to upload a blob.
+            - Source file path. Use with state C(present) to upload a blob.
         aliases:
             - source
     state:
         description:
             - Assert the state of a container or blob.
-            - Use state 'absent' with a container value only to delete a container. Include a blob value to remove
+            - Use state C(absent) with a container value only to delete a container. Include a blob value to remove
               a specific blob. A container will not be deleted, if it contains blobs. Use the force option to override,
               deleting the container and all associated blobs.
-            - Use state 'present' to create or update a container and upload or download a blob. If the container
+            - Use state C(present) to create or update a container and upload or download a blob. If the container
               does not exist, it will be created. If it exists, it will be updated with configuration options. Provide
               a blob name and either src or dest to upload or download. Provide a src path to upload and a dest path
               to download. If a blob (uploading) or a file (downloading) already exists, it will not be overwritten
@@ -125,14 +125,14 @@ author:
 EXAMPLES = '''
 - name: Remove container foo
   azure_rm_storageblob:
-    resource_group: testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     state: absent
 
 - name: Create container foo and upload a file
   azure_rm_storageblob:
-    resource_group: Testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     blob: graylog.png
@@ -142,7 +142,7 @@ EXAMPLES = '''
 
 - name: Download the file
   azure_rm_storageblob:
-    resource_group: Testing
+    resource_group: myResourceGroup
     storage_account_name: clh0002
     container: foo
     blob: graylog.png

@@ -1,66 +1,65 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2016, Yanis Guenane <yanis+ansible@guenane.org>
+# Copyright: (c) 2016, Yanis Guenane <yanis+ansible@guenane.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: openssl_privatekey
-author:
-    - "Yanis Guenane (@Spredzy)"
-    - "Felix Fontein (@felixfontein)"
 version_added: "2.3"
-short_description: Generate OpenSSL private keys.
+short_description: Generate OpenSSL private keys
 description:
-    - "This module allows one to (re)generate OpenSSL private keys. One can
-       generate L(RSA,https://en.wikipedia.org/wiki/RSA_(cryptosystem)),
-       L(DSA,https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) or
-       L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography)
-       private keys. Keys are generated in PEM format."
-    - "The module can use the cryptography Python library, or the pyOpenSSL Python
-       library. By default, it tries to detect which one is available. This can be
-       overridden with the I(select_crypto_backend) option."
+    - This module allows one to (re)generate OpenSSL private keys.
+    - One can generate L(RSA,https://en.wikipedia.org/wiki/RSA_(cryptosystem)),
+      L(DSA,https://en.wikipedia.org/wiki/Digital_Signature_Algorithm) or
+      L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography)
+      private keys.
+    - Keys are generated in PEM format.
+    - The module can use the cryptography Python library, or the pyOpenSSL Python
+      library. By default, it tries to detect which one is available. This can be
+      overridden with the I(select_crypto_backend) option."
 requirements:
-    - "One of the following Python libraries:"
-    - "cryptography >= 1.2.3 (older versions might work as well)"
-    - "pyOpenSSL"
+    - Either cryptography >= 1.2.3 (older versions might work as well)
+    - Or pyOpenSSL
+author:
+    - Yanis Guenane (@Spredzy)
+    - Felix Fontein (@felixfontein)
 options:
     state:
-        required: false
-        default: "present"
-        choices: [ present, absent ]
         description:
             - Whether the private key should exist or not, taking action if the state is different from what is stated.
+        type: str
+        default: present
+        choices: [ absent, present ]
     size:
-        required: false
+        description:
+            - Size (in bits) of the TLS/SSL key to generate.
+        type: int
         default: 4096
-        description:
-            - Size (in bits) of the TLS/SSL key to generate
     type:
-        required: false
-        default: "RSA"
-        choices:
-            - RSA
-            - DSA
-            - ECC
-            # - X448
-            # - X25519
         description:
-            - The algorithm used to generate the TLS/SSL private key
-            - "Note that C(ECC) requires the C(cryptography) backend. Depending on the curve, you need a newer
-               version of the cryptography backend."
+            - The algorithm used to generate the TLS/SSL private key.
+            - Note that C(ECC) requires the C(cryptography) backend.
+            - Depending on the curve, you need a newer version of the cryptography backend.
+        type: str
+        default: RSA
+        #choices: [ DSA, ECC, RSA, X448, X25519 ]
+        choices: [ DSA, ECC, RSA ]
     curve:
-        required: false
+        description:
+            - Note that not all curves are supported by all versions of C(cryptography).
+            - For maximal interoperability, C(secp384r1) or C(secp256k1) should be used.
+            - We use the curve names as defined in the
+              L(IANA registry for TLS,https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8).
+        type: str
         choices:
             - secp384r1
             - secp521r1
@@ -80,105 +79,100 @@ options:
             - sect283r1
             - sect233r1
             - sect163r2
-        description:
-            - Note that not all curves are supported by all versions of C(cryptography).
-            - For maximal interoperability, C(secp384r1) or C(secp256k1) should be used.
-            - We use the curve names as defined in the
-              L(IANA registry for TLS,https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8).
         version_added: "2.8"
     force:
-        required: false
-        default: False
-        type: bool
         description:
-            - Should the key be regenerated even if it already exists
+            - Should the key be regenerated even if it already exists.
+        type: bool
+        default: no
     path:
-        required: true
         description:
             - Name of the file in which the generated TLS/SSL private key will be written. It will have 0600 mode.
+        type: path
+        required: true
     passphrase:
-        required: false
         description:
             - The passphrase for the private key.
+        type: str
         version_added: "2.4"
     cipher:
-        required: false
         description:
             - The cipher to encrypt the private key. (cipher can be found by running `openssl list-cipher-algorithms`)
             - When using the C(cryptography) backend, use C(auto).
+        type: str
         version_added: "2.4"
     select_crypto_backend:
         description:
-            - "Determines which crypto backend to use. The default choice is C(auto),
-               which tries to use C(cryptography) if available, and falls back to
-               C(pyopenssl)."
-            - "If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/)
-               library."
-            - "If set to C(cryptography), will try to use the
-               L(cryptography,https://cryptography.io/) library."
+            - Determines which crypto backend to use.
+            - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
+            - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
+            - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
         type: str
-        default: 'auto'
-        choices:
-          - auto
-          - cryptography
-          - pyopenssl
+        default: auto
+        choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.8"
-extends_documentation_fragment: files
+extends_documentation_fragment:
+- files
+seealso:
+- module: openssl_certificate
+- module: openssl_csr
+- module: openssl_dhparam
+- module: openssl_pkcs12
+- module: openssl_publickey
 '''
 
-EXAMPLES = '''
-# Generate an OpenSSL private key with the default values (4096 bits, RSA)
-- openssl_privatekey:
+EXAMPLES = r'''
+- name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+  openssl_privatekey:
     path: /etc/ssl/private/ansible.com.pem
 
-# Generate an OpenSSL private key with the default values (4096 bits, RSA)
-# and a passphrase
-- openssl_privatekey:
+- name: Generate an OpenSSL private key with the default values (4096 bits, RSA) and a passphrase
+  openssl_privatekey:
     path: /etc/ssl/private/ansible.com.pem
     passphrase: ansible
     cipher: aes256
 
-# Generate an OpenSSL private key with a different size (2048 bits)
-- openssl_privatekey:
+- name: Generate an OpenSSL private key with a different size (2048 bits)
+  openssl_privatekey:
     path: /etc/ssl/private/ansible.com.pem
     size: 2048
 
-# Force regenerate an OpenSSL private key if it already exists
-- openssl_privatekey:
+- name: Force regenerate an OpenSSL private key if it already exists
+  openssl_privatekey:
     path: /etc/ssl/private/ansible.com.pem
-    force: True
+    force: yes
 
-# Generate an OpenSSL private key with a different algorithm (DSA)
-- openssl_privatekey:
+- name: Generate an OpenSSL private key with a different algorithm (DSA)
+  openssl_privatekey:
     path: /etc/ssl/private/ansible.com.pem
     type: DSA
 '''
 
-RETURN = '''
+RETURN = r'''
 size:
-    description: Size (in bits) of the TLS/SSL private key
+    description: Size (in bits) of the TLS/SSL private key.
     returned: changed or success
     type: int
     sample: 4096
 type:
-    description: Algorithm used to generate the TLS/SSL private key
+    description: Algorithm used to generate the TLS/SSL private key.
     returned: changed or success
     type: str
     sample: RSA
 curve:
-    description: Elliptic curve used to generate the TLS/SSL private key
+    description: Elliptic curve used to generate the TLS/SSL private key.
     returned: changed or success, and I(type) is C(ECC)
     type: str
     sample: secp256k1
 filename:
-    description: Path to the generated TLS/SSL private key file
+    description: Path to the generated TLS/SSL private key file.
     returned: changed or success
     type: str
     sample: /etc/ssl/private/ansible.com.pem
 fingerprint:
-    description: The fingerprint of the public key. Fingerprint will be generated for
-                 each C(hashlib.algorithms) available.
-                 The PyOpenSSL backend requires PyOpenSSL >= 16.0 for meaningful output.
+    description:
+    - The fingerprint of the public key. Fingerprint will be generated for each C(hashlib.algorithms) available.
+    - The PyOpenSSL backend requires PyOpenSSL >= 16.0 for meaningful output.
     returned: changed or success
     type: dict
     sample:
@@ -557,25 +551,25 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            size=dict(default=4096, type='int'),
-            type=dict(default='RSA', choices=[
+            state=dict(type='str', default='present', choices=['present', 'absent']),
+            size=dict(type='int', default=4096),
+            type=dict(type='str', default='RSA', choices=[
                 'RSA', 'DSA', 'ECC',
                 # x25519 is missing serialization functions: https://github.com/pyca/cryptography/issues/4386
                 # x448 is also missing it: https://github.com/pyca/cryptography/pull/4580#issuecomment-437913340
                 # 'X448', 'X25519',
-            ], type='str'),
-            curve=dict(choices=[
+            ]),
+            curve=dict(type='str', choices=[
                 'secp384r1', 'secp521r1', 'secp224r1', 'secp192r1', 'secp256k1',
                 'brainpoolP256r1', 'brainpoolP384r1', 'brainpoolP512r1',
                 'sect571k1', 'sect409k1', 'sect283k1', 'sect233k1', 'sect163k1',
                 'sect571r1', 'sect409r1', 'sect283r1', 'sect233r1', 'sect163r2',
-            ], type='str'),
-            force=dict(default=False, type='bool'),
-            path=dict(required=True, type='path'),
+            ]),
+            force=dict(type='bool', default=False),
+            path=dict(type='path', required=True),
             passphrase=dict(type='str', no_log=True),
             cipher=dict(type='str'),
-            select_crypto_backend=dict(required=False, choices=['auto', 'pyopenssl', 'cryptography'], default='auto', type='str'),
+            select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,
         add_file_common_args=True,

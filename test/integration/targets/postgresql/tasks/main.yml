@@ -765,6 +765,12 @@
 # Verify different session_role scenarios
 - include: session_role.yml
 
+# Test postgresql_idx module
+- include: postgresql_idx.yml
+
+# Test postgresql_query module
+- include: postgresql_query.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql

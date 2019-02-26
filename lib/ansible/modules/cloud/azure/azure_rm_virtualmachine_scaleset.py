@@ -36,10 +36,10 @@ options:
     state:
         description:
             - Assert the state of the virtual machine scale set.
-            - State 'present' will check that the machine exists with the requested configuration. If the configuration
+            - State C(present) will check that the machine exists with the requested configuration. If the configuration
               of the existing machine does not match, the machine will be updated.
               state.
-            - State 'absent' will remove the virtual machine scale set.
+            - State C(absent) will remove the virtual machine scale set.
         default: present
         choices:
             - absent
@@ -227,7 +227,7 @@ EXAMPLES = '''
 
 - name: Create VMSS
   azure_rm_virtualmachine_scaleset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2
@@ -252,7 +252,7 @@ EXAMPLES = '''
 
 - name: Create a VMSS with a custom image
   azure_rm_virtualmachine_scaleset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2
@@ -265,7 +265,7 @@ EXAMPLES = '''
 
 - name: Create a VMSS with a custom image from a particular resource group
   azure_rm_virtualmachine_scaleset:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: testvmss
     vm_size: Standard_DS1_v2
     capacity: 2

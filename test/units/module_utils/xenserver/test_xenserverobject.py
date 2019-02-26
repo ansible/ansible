@@ -39,7 +39,7 @@ def test_xenserverobject(mocker, fake_ansible_module, XenAPI, xenserver):
         "pool.get_all.return_value": [fake_xenapi_ref('pool')],
         "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
         "session.get_this_host.return_value": fake_xenapi_ref('host'),
-        "host.get_software_version.return_value": {"product_version_text_short": "7.2"},
+        "host.get_software_version.return_value": {"product_version": "7.2.0"},
     }
 
     mocked_xenapi.configure_mock(**mocked_returns)
@@ -47,4 +47,4 @@ def test_xenserverobject(mocker, fake_ansible_module, XenAPI, xenserver):
     xso = xenserver.XenServerObject(fake_ansible_module)
 
     assert xso.pool_ref == fake_xenapi_ref('pool')
-    assert xso.xenserver_version == ['7', '2']
+    assert xso.xenserver_version == [7, 2, 0]

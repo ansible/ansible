@@ -27,6 +27,7 @@ options:
       - The file on the remote system to fetch. This I(must) be a file, not a directory.
     type: path
     required: true
+    aliases: [ path ]
 notes:
    - This module returns an 'in memory' base64 encoded version of the file, take into account that this will require at least twice the RAM as the
      original file size.

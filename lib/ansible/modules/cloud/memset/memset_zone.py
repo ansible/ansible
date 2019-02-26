@@ -187,8 +187,6 @@ def create_zone(args=None, zone_exists=None, payload=None):
         api_method = 'dns.zone_info'
         _has_failed, _msg, response = memset_api_call(api_key=args['api_key'], api_method=api_method, payload=payload)
         memset_api = response.json()
-    else:
-        msg = msg
 
     return(has_failed, has_changed, memset_api, msg)
 

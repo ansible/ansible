@@ -1,27 +1,13 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'network'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: nxos_pim_interface
 extends_documentation_fragment: nxos
@@ -47,82 +33,92 @@ options:
   interface:
     description:
       - Full name of the interface such as Ethernet1/33.
+    type: str
     required: true
   sparse:
     description:
       - Enable/disable sparse-mode on the interface.
     type: bool
-    default: 'no'
+    default: no
   dr_prio:
     description:
       - Configures priority for PIM DR election on interface.
+    type: str
   hello_auth_key:
     description:
       - Authentication for hellos on this interface.
+    type: str
   hello_interval:
     description:
       - Hello interval in milliseconds for this interface.
-    type: bool
+    type: int
   jp_policy_out:
     description:
       - Policy for join-prune messages (outbound).
+    type: str
   jp_policy_in:
     description:
       - Policy for join-prune messages (inbound).
+    type: str
   jp_type_out:
     description:
       - Type of policy mapped to C(jp_policy_out).
-    choices: ['prefix', 'routemap']
+    type: str
+    choices: [ prefix, routemap ]
   jp_type_in:
     description:
       - Type of policy mapped to C(jp_policy_in).
-    choices: ['prefix', 'routemap']
+    type: str
+    choices: [ prefix, routemap ]
   border:
     description:
       - Configures interface to be a boundary of a PIM domain.
     type: bool
-    default: 'no'
+    default: no
   neighbor_policy:
     description:
       - Configures a neighbor policy for filtering adjacencies.
+    type: str
   neighbor_type:
     description:
       - Type of policy mapped to neighbor_policy.
-    choices: ['prefix', 'routemap']
+    type: str
+    choices: [ prefix, routemap ]
   state:
     description:
       - Manages desired state of the resource.
+    type: str
+    choices: [ present, default ]
     default: present
-    choices: ['present', 'default']
 '''
-EXAMPLES = '''
-# ensure PIM is not running on the interface
-- nxos_pim_interface:
+EXAMPLES = r'''
+- name: Ensure PIM is not running on the interface
+  nxos_pim_interface:
     interface: eth1/33
     state: absent
 
-# ensure the interface has pim-sm enabled with the appropriate priority and hello interval
-- nxos_pim_interface:
+- name: Ensure the interface has pim-sm enabled with the appropriate priority and hello interval
+  nxos_pim_interface:
     interface: eth1/33
     dr_prio: 10
     hello_interval: 40
     state: present
 
-# ensure join-prune policies exist
-- nxos_pim_interface:
+- name: Ensure join-prune policies exist
+  nxos_pim_interface:
     interface: eth1/33
     jp_policy_in: JPIN
     jp_policy_out: JPOUT
     jp_type_in: routemap
     jp_type_out: routemap
 
-# ensure defaults are in place
-- nxos_pim_interface:
+- name: Ensure defaults are in place
+  nxos_pim_interface:
     interface: eth1/33
     state: default
 '''
 
-RETURN = '''
+RETURN = r'''
 commands:
     description: command sent to the device
     returned: always
@@ -436,19 +432,19 @@ def config_pim_interface_defaults(existing, jp_bidir, isauth):
 
 def main():
     argument_spec = dict(
-        interface=dict(required=True),
+        interface=dict(type='str', required=True),
         sparse=dict(type='bool', default=False),
         dr_prio=dict(type='str'),
         hello_auth_key=dict(type='str'),
         hello_interval=dict(type='int'),
         jp_policy_out=dict(type='str'),
         jp_policy_in=dict(type='str'),
-        jp_type_out=dict(choices=['prefix', 'routemap']),
-        jp_type_in=dict(choices=['prefix', 'routemap']),
+        jp_type_out=dict(type='str', choices=['prefix', 'routemap']),
+        jp_type_in=dict(type='str', choices=['prefix', 'routemap']),
         border=dict(type='bool', default=False),
         neighbor_policy=dict(type='str'),
-        neighbor_type=dict(choices=['prefix', 'routemap']),
-        state=dict(choices=['present', 'absent', 'default'], default='present'),
+        neighbor_type=dict(type='str', choices=['prefix', 'routemap']),
+        state=dict(type='str', default='present', choices=['absent', 'default', 'present']),
     )
     argument_spec.update(nxos_argument_spec)
 

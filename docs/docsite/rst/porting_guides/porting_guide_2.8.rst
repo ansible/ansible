@@ -50,10 +50,22 @@ In Ansible 2.8::
 In Ansible 2.7 and older::
 
     {{ ((foo | default({})).bar | default({})).baz | default('DEFAULT') }}
-    
+
     or
-    
+
     {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
+
+Module option conversion to string
+----------------------------------
+
+Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.0'``. Such conversions can result in unexpected behavior depending on context.
+
+This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
+
+Command line facts
+------------------
+
+``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
 
 Command Line
 ============
@@ -116,7 +128,6 @@ PowerShell module options and option choices are currently case insensitive to w
 specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
 A future release of Ansible will make these checks case sensitive.
 
-
 Modules removed
 ---------------
 
@@ -137,6 +148,8 @@ The following modules will be removed in Ansible 2.12. Please update your playbo
 * ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
 * ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
+* ``panos`` use `Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
 Noteworthy module changes
@@ -184,10 +197,17 @@ Noteworthy module changes
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 
-* The ``docker_swarm_service`` module no longer sets a default for the ``user`` option. Before, the default was ``root``.
+* The ``docker_swarm_service`` module no longer sets a defaults for the following options:
+    * ``user``. Before, the default was ``root``.
+    * ``update_delay``. Before, the default was ``10``.
+    * ``update_parallelism``. Before, the default was ``1``.
 
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
+
+* The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
+  <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
+  `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
 
 
 Plugins
@@ -220,6 +240,7 @@ Plugins
   ``CLIARGS.get('tags')`` and ``CLIARGS['tags']`` work as expected but you won't be able to modify
   the cli arguments at all.
 
+* Play recap now counts ``ignored`` and ``rescued`` tasks as well as ``ok``, ``changed``, ``unreachable``, ``failed`` and ``skipped`` tasks, thanks to two additional stat counters in the ``default`` callback plugin. Tasks that fail and have ``ignore_errors: yes`` set are listed as ``ignored``. Tasks that fail and then execute a rescue section are listed as ``rescued``. Note that ``rescued`` tasks are no longer counted as ``failed`` as in Ansible 2.7 (and earlier).
 
 Porting custom scripts
 ======================

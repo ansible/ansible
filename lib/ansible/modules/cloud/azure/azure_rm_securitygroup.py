@@ -115,8 +115,8 @@ options:
                 default: Inbound
     state:
         description:
-            - Assert the state of the security group. Set to 'present' to create or update a security group. Set to
-              'absent' to remove a security group.
+            - Assert the state of the security group. Set to C(present) to create or update a security group. Set to
+              C(absent) to remove a security group.
         default: present
         choices:
             - absent
@@ -136,7 +136,7 @@ EXAMPLES = '''
 
 # Create a security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       purge_rules: yes
       rules:
@@ -168,7 +168,7 @@ EXAMPLES = '''
 
 # Update rules on existing security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       rules:
           - name: DenySSH
@@ -190,7 +190,7 @@ EXAMPLES = '''
 
 # Delete security group
 - azure_rm_securitygroup:
-      resource_group: mygroup
+      resource_group: myResourceGroup
       name: mysecgroup
       state: absent
 '''

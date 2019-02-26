@@ -123,6 +123,9 @@ files:
   $modules/cloud/docker/docker_network.py:
     <<: *docker
     maintainers: $team_docker olsaki
+  $modules/cloud/docker/docker_swarm_service.py:
+    <<: *docker
+    maintainers: $team_docker hannseman
   $modules/cloud/google/:
     supershipit: $team_google
     maintainers: $team_google
@@ -132,12 +135,16 @@ files:
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
   $modules/cloud/memset/: glitchcrab
-  $modules/cloud/misc/ovirt.py: &virt
-    ignored: skvidal vincentvdk
-    keywords: [ kvm, libvirt, ovirt, proxmox, qemu, RHEV, RHV ]
+  $modules/cloud/misc/ovirt.py: &ovirt
+    ignored: vincentvdk
+    keywords: [ ovirt, RHEV, RHV ]
+    labels: [ cloud, ovirt ]
+    maintainers: $team_ovirt
+  $modules/cloud/misc/proxmox.py: &virt
+    ignored: skvidal
+    keywords: [ kvm, libvirt, proxmox, qemu ]
     labels: [ cloud, virt ]
     maintainers: $team_virt
-  $modules/cloud/misc/proxmox.py: *virt
   $modules/cloud/misc/proxmox_kvm.py: *virt
   $modules/cloud/misc/proxmox_template.py: *virt
   $modules/cloud/misc/rhevm.py: *virt
@@ -148,7 +155,7 @@ files:
     ignored: andyhky
   $modules/cloud/opennebula/: ilicmilan kustodian
   $modules/cloud/openstack/: $team_openstack
-  $modules/cloud/ovirt/: *virt
+  $modules/cloud/ovirt/: *ovirt
   $modules/cloud/profitbricks/: baldwinSPC
   $modules/cloud/rackspace/:
     ignored: sivel angstwad
@@ -160,7 +167,7 @@ files:
     maintainers: $team_solaris
   $modules/cloud/univention/: keachi
   $modules/cloud/vmware/: &vmware
-    ignored: cigamit jcpowermac mtnbikenc
+    ignored: cigamit jcpowermac mtnbikenc tchernomax
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
     labels: vmware
     maintainers: $team_vmware
@@ -170,7 +177,7 @@ files:
     labels: [ cloud, vultr ]
     maintainers: $team_vultr
   $modules/cloud/webfaction/: quentinsf
-  $modules/cloud/xenserver/xenserver_guest.py: bvitnik
+  $modules/cloud/xenserver/: bvitnik
   $modules/clustering/k8s/:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
@@ -187,15 +194,15 @@ files:
   $modules/database/influxdb/: kamsz
   $modules/database/mssql/mssql_db.py: Jmainguy kenichi-ogawa-1988
   $modules/database/mysql/: &mysql
-    keywords: [ mariadb ]
-    labels: mysql
+    keywords: [ mariadb, proxysql ]
+    labels: [ database, mysql ]
     maintainers: $team_mysql
   $modules/database/postgresql/: &postgresql
     keywords: [ postgres, postgresql ]
     labels: postgresql
     maintainers: $team_postgresql
     notified: jbscalia
-  $modules/database/proxysql/: bmildren
+  $modules/database/proxysql/: *mysql
   $modules/database/vertica/: dareko
   $modules/files/acl.py:
     ignored: astorije
@@ -336,6 +343,7 @@ files:
     keywords: [ brew, cask, darwin, homebrew, macosx, macports, osx ]
     labels: macos
     maintainers: $team_macos
+    notified: chris-short
   $modules/packaging/os/homebrew_: *macos
   $modules/packaging/os/installp.py: &aix
     keywords: [ aix, efix, lpar, wpar ]
@@ -372,6 +380,7 @@ files:
   $modules/remote_management/hpilo/: dagwieers haad
   $modules/remote_management/imc/: dagwieers
   $modules/remote_management/ipmi/: cloudnull
+  $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
   $modules/remote_management/redfish/: $team_redfish
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
@@ -436,7 +445,9 @@ files:
   $modules/utilities/logic/include_vars.py: $team_ansible
   $modules/utilities/logic/pause.py: samdoran
   $modules/utilities/logic/wait_for.py: gregswift
-  $modules/web_infrastructure/ansible_tower/: $team_tower
+  $modules/web_infrastructure/ansible_tower/: &tower
+    labels: [ tower ]
+    maintainers: $team_tower
   $modules/web_infrastructure/sophos_utm/:
     maintainers: $team_e_spirit
     keywords:
@@ -483,7 +494,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  contrib/inventory/ovirt4.py: *virt
+  contrib/inventory/ovirt4.py: *ovirt
   contrib/inventory/infoblox.py:
     keywords:
       - infoblox dynamic inventory script
@@ -539,9 +550,7 @@ files:
   $module_utils:
     support: community
   $module_utils/acme.py: *crypto
-  $module_utils/ansible_tower.py:
-    support: community
-    maintainers: $team_tower
+  $module_utils/ansible_tower.py: *tower
   $module_utils/azure_rm_common.py:
     maintainers: $team_azure
     labels:
@@ -650,10 +659,10 @@ files:
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
   $module_utils/network/aci: &aci
+    keywords: [ ACI, Cisco MSC, Cisco MSO, MultiSite, Multi-Site ]
+    labels: [ aci, networking ]
     maintainers: $team_aci
-    labels:
-    - aci
-    - networking
+    notified: koladiya
   $module_utils/network/aireos:
     maintainers: jmighion
   $module_utils/network/aos:
@@ -747,7 +756,7 @@ files:
     maintainers: $team_openstack
     labels:
       - cloud
-  $module_utils/ovirt.py: *virt
+  $module_utils/ovirt.py: *ovirt
   $module_utils/postgres.py: *postgresql
   $module_utils/powershell: *windows_core
   $module_utils/pure.py:
@@ -755,6 +764,9 @@ files:
     labels: pure_storage
   $module_utils/redfish_utils.py:
     maintainers: $team_redfish
+  $module_utils/remote_management/lxca:
+    maintainers: navalkp prabhosa
+    labels: lxca
   $module_utils/remote_management/ucs:
     maintainers: $team_ucs
     labels: ucs
@@ -937,7 +949,6 @@ files:
     support: core
   $plugins/callback/grafana_annotations.py:
     maintainers: rrey
-    support: community
   $plugins/callback/junit:
     support: core
   $plugins/callback/minimal:
@@ -949,15 +960,12 @@ files:
     support: core
   $plugins/callback/stderr.py:
     maintainers: ysn2233
-    support: community
   $plugins/callback/sumologic.py:
     maintainers: ryancurrah
-    support: community
   $plugins/callback/tree:
     support: core
   $plugins/callback/unixy.py:
     maintainers: akatch
-    support: community
 ###############################
 # plugins/cliconf
 
@@ -1048,6 +1056,7 @@ files:
   $plugins/doc_fragments/mso.py: *aci
   $plugins/doc_fragments/mysql.py: *mysql
   $plugins/doc_fragments/postgres.py: *postgresql
+  $plugins/doc_fragments/proxysql.py: *mysql
   $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
@@ -1120,14 +1129,18 @@ files:
 # plugins/lookup
   $plugins/lookup/__init__.py:
     support: core
+  $plugins/lookup/aws:
+    labels:
+      - aws
+      - cloud
   $plugins/lookup/conjur_variable.py:
     maintainers: $team_cyberark_conjur
     notified: cyberark-bizdev
   $plugins/lookup/dig:
     maintainers: jpmens
-    labels: community
   $plugins/lookup/cyberarkpassword.py:
     notified: cyberark-bizdev
+  $plugins/lookup/hashi_vault: defionscode
   $plugins/lookup/k8s.py:
     support: community
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
@@ -1305,6 +1318,7 @@ files:
     support: community
   test/units/module_utils/facts/network/test_generic_bsd.py: *bsd
   test/units/module_utils/test_acme.py: *crypto
+  test/units/module_utils/xenserver/: bvitnik
   test/units/modules/cloud/docker:
     <<: *docker
     support: community
@@ -1315,6 +1329,7 @@ files:
     maintainers: $team_nxos
     labels:
       - networking
+  test/units/modules/cloud/xenserver/: bvitnik
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
@@ -1327,12 +1342,12 @@ macros:
   module_utils: lib/ansible/module_utils
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
-  team_aci: brunocalogero dagwieers jmcgill298 schunduri
+  team_aci: brunocalogero dagwieers jmcgill298 mtorelli rsmeyers schunduri smnmtzgr
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
-  team_bsd: AMDmi3 bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
+  team_bsd: bcoca dagwieers jasperla JoergFiedler MacLemon mekanix opoplawski overhacked tuxillo
   team_cloudscale: gaudenz resmo
   team_cloudstack: resmo dpassante rhtyd
   team_crypto: felixfontein MarkusTeufelberger puiterwijk resmo Spredzy Shaps Xyon
@@ -1343,16 +1358,16 @@ macros:
   team_e_spirit: MatrixCrawler getjack
   team_extreme: bigmstone LindsayHill
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
-  team_gitlab: dagwieers dj-wasabi Lunik marwatk Shaps waheedi
+  team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
   team_hpux: bcoca dagwieers davx8342
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
-  team_macos: dagwieers kyleabenson
+  team_macos: akasurde dagwieers kyleabenson
   team_manageiq: gtanzillo abellotti zgalor yaacov cben
   team_meraki: dagwieers kbreit
-  team_mysql: bmalynovytch dagwieers michaelcoburn oneiroi tolland Xyon
+  team_mysql: bmalynovytch bmildren michaelcoburn oneiroi tolland Xyon
   team_netapp: hulquest lmprice ndswartz amit0701 schmots1 carchi8py lonico
   team_netbox: sieben anthony25 fragmentedpacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
@@ -1363,7 +1378,8 @@ macros:
   team_onyx: anasbadaha samerd
   team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me evrardjp cloudnull
   team_openswitch: Qalthos gdpak
-  team_postgresql: amenonsen Andersson007 andytom dagwieers Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
+  team_ovirt: machacekondra mwperina
+  team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
   team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
@@ -1371,9 +1387,9 @@ macros:
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
-  team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb dagwieers
-  team_vmware: Akasurde dav1x warthog9 ckotte
-  team_virt: joshainglis karmab machacekondra mwperina
+  team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb
+  team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9
+  team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
   team_windows: dagwieers jborean93 jhawkesworth nitzmahone
   team_windows_core: nitzmahone jborean93

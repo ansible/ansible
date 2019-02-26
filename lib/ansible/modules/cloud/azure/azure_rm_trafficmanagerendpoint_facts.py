@@ -54,12 +54,12 @@ author:
 EXAMPLES = '''
     - name: Get endpoints facts of a Traffic Manager profile
       azure_rm_trafficmanagerendpoint_facts:
-        resource_group: TestRG
+        resource_group: myResourceGroup
         profile_name: Testing
 
     - name: Get specific endpoint of a Traffic Manager profile
       azure_rm_trafficmanager_facts:
-        resource_group: TestRG
+        resource_group: myResourceGroup
         profile_name: Testing
         name: test_external_endpoint
 
@@ -76,7 +76,7 @@ endpoints:
                 - Name of a resource group.
             returned: always
             type: str
-            sample: testGroup
+            sample: myResourceGroup
         name:
             description:
                 - Name of the Traffic Manager endpoint.
@@ -92,7 +92,7 @@ endpoints:
             description:
                 - The Azure Resource URI of the of the endpoint.
             type: str
-            sample: /subscriptions/XXXXXX...XXXXXXXXX/resourceGroups/vscjavaci/providers/Microsoft.ClassicCompute/domainNames/vscjavaci
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ClassicCompute/domainNames/vscjavaci
         target:
             description:
                 - The fully-qualified DNS name of the endpoint.

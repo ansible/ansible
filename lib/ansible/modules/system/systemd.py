@@ -47,13 +47,13 @@ options:
             - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
             - When set to C(yes), runs daemon-reload even if the module does not start or stop anything.
         type: bool
-        default: 'no'
+        default: no
         aliases: [ daemon-reload ]
     daemon_reexec:
         description:
             - Run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
         type: bool
-        default: 'no'
+        default: no
         aliases: [ daemon-reexec ]
         version_added: "2.8"
     user:
@@ -62,7 +62,7 @@ options:
               of the system.
             - This option is deprecated and will eventually be removed in 2.11. The ``scope`` option should be used instead.
         type: bool
-        default: 'no'
+        default: no
     scope:
         description:
             - run systemctl within a given service manager scope, either as the default system scope (system),
@@ -71,14 +71,13 @@ options:
               The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
         choices: [ system, user, global ]
-        default: 'system'
         version_added: "2.7"
     no_block:
         description:
             - Do not synchronously wait for the requested operation to finish.
               Enqueued job will continue without Ansible blocking on its completion.
         type: bool
-        default: 'no'
+        default: no
         version_added: "2.3"
 notes:
     - Since 2.4, one of the following options is required 'state', 'enabled', 'masked', 'daemon_reload', and all except 'daemon_reload' also require 'name'.

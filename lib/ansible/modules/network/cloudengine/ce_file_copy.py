@@ -1,20 +1,7 @@
 #!/usr/bin/python
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# -*- coding: utf-8 -*-
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -281,7 +268,7 @@ class FileCopy(object):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(hostname=hostname, username=username, password=password, port=port)
-        full_remote_path = '{}{}'.format(self.file_system, dest)
+        full_remote_path = '{0}{1}'.format(self.file_system, dest)
         scp = SCPClient(ssh.get_transport())
         try:
             scp.put(self.local_file, full_remote_path)
@@ -351,7 +338,7 @@ class FileCopy(object):
 
         if not os.path.isfile(self.local_file):
             self.module.fail_json(
-                msg="Local file {} not found".format(self.local_file))
+                msg="Local file {0} not found".format(self.local_file))
 
         dest = self.remote_file or ('/' + os.path.basename(self.local_file))
         remote_exists, file_size = self.remote_file_exists(

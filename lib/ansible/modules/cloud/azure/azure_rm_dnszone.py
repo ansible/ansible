@@ -47,8 +47,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the zone. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the zone. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -86,13 +86,13 @@ EXAMPLES = '''
 
 - name: Create a DNS zone
   azure_rm_dnszone:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: example.com
     state: present
 
 - name: Delete a DNS zone
   azure_rm_dnszone:
-    resource_group: Testing
+    resource_group: myResourceGroup
     name: example.com
     state: absent
 

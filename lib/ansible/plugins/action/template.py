@@ -141,7 +141,7 @@ class ActionModule(ActionBase):
 
                 # add ansible 'template' vars
                 temp_vars = task_vars.copy()
-                temp_vars.update(generate_ansible_template_vars(source))
+                temp_vars.update(generate_ansible_template_vars(source, dest))
 
                 old_vars = self._templar._available_variables
                 self._templar.set_available_variables(temp_vars)

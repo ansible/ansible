@@ -1,7 +1,7 @@
 #!/usr/bin/python
-#
-# Copyright (c) 2017 Sertac Ozercan, <seozerca@microsoft.com>
+# -*- coding: utf-8 -*-
 
+# Copyright: (c) 2017, Sertac Ozercan <seozerca@microsoft.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -55,17 +55,17 @@ author:
 EXAMPLES = '''
     - name: Get facts for a virtual machine scale set
       azure_rm_virtualmachine_scaleset_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: testvmss001
         format: curated
 
     - name: Get facts for all virtual networks
       azure_rm_virtualmachine_scaleset_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
     - name: Get facts by tags
       azure_rm_virtualmachine_scaleset_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         tags:
           - testing
 '''
@@ -81,7 +81,7 @@ vmss:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.Compute/scalesets/myscaleset
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/scalesets/myscaleset
         admin_username:
             description:
                 - Admin username used to access the host after it is created.
@@ -192,7 +192,7 @@ vmss:
                 - Resource group.
             type: str
             returned: always
-            sample: testrg
+            sample: myResourceGroup
         ssh_password_enabled:
             description:
                 - Is SSH password authentication enabled. Valid only for Linux.
@@ -373,7 +373,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
     def get_item(self):
         """Get a single virtual machine scale set"""
 
-        self.log('Get properties for {}'.format(self.name))
+        self.log('Get properties for {0}'.format(self.name))
 
         item = None
         results = []
@@ -396,7 +396,7 @@ class AzureRMVirtualMachineScaleSetFacts(AzureRMModuleBase):
         try:
             response = self.compute_client.virtual_machine_scale_sets.list(self.resource_group)
         except CloudError as exc:
-            self.fail('Failed to list all items - {}'.format(str(exc)))
+            self.fail('Failed to list all items - {0}'.format(str(exc)))
 
         results = []
         for item in response:

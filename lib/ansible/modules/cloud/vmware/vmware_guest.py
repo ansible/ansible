@@ -82,6 +82,12 @@ options:
     - This is required if C(name) is not supplied.
     - If virtual machine does not exists, then this parameter is ignored.
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
+  use_instance_uuid:
+    description:
+    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    default: no
+    type: bool
+    version_added: '2.8'
   template:
     description:
     - Template or existing virtual machine used to create new virtual machine.
@@ -177,10 +183,12 @@ options:
     - '     - C(thin) thin disk'
     - '     - C(eagerzeroedthick) eagerzeroedthick disk, added in version 2.5'
     - '     Default: C(None) thick disk, no eagerzero.'
-    - ' - C(datastore) (string): Datastore to use for the disk. If C(autoselect_datastore) is enabled, filter datastore selection.'
+    - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
+          then will select the less used datastore whose name contains this "disk.datastore" string.'
     - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
-    - ' - C(autoselect_datastore) (bool): select the less used datastore. Specify only if C(datastore) is not specified.'
+    - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
+          will not be used if C(datastore) is specified outside this C(disk) configuration.'
     - ' - C(disk_mode) (string): Type of disk mode. Added in version 2.6'
     - '     - Available options are :'
     - '     - C(persistent): Changes are immediately and permanently written to the virtual disk. This is default.'
@@ -344,9 +352,9 @@ options:
   datastore:
     description:
     - Specify datastore or datastore cluster to provision virtual machine.
-    - 'This will take precendence over "disk.datastore" parameter.'
-    - This parameter is useful to override datastore or datastore cluster setting.
-    - For example, when user has different datastore or datastore cluster for templates and virtual machines.
+    - 'This parameter takes precedence over "disk.datastore" parameter.'
+    - 'This parameter can be used to override datastore or datastore cluster setting of the virtual machine when deployed
+      from the template.'
     - Please see example for more usage.
     version_added: '2.7'
   convert:
@@ -1810,8 +1818,8 @@ class PyVmomiHelper(PyVmomi):
             if 'filename' in expected_disk_spec and expected_disk_spec['filename'] is not None:
                 self.add_existing_vmdk(vm_obj, expected_disk_spec, diskspec, scsi_ctl)
                 continue
-            elif vm_obj is None:
-                # We are creating new VM
+            elif vm_obj is None or self.params['template']:
+                # We are creating new VM or from Template
                 diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
@@ -2120,7 +2128,7 @@ class PyVmomiHelper(PyVmomi):
 
         # set the destination datastore for VM & disks
         if self.params['datastore']:
-            # Give precendence to datastore value provided by user
+            # Give precedence to datastore value provided by user
             # User may want to deploy VM to specific datastore.
             datastore_name = self.params['datastore']
             # Check if user has provided datastore cluster first
@@ -2521,6 +2529,7 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        use_instance_uuid=dict(type='bool', default=False),
         folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),

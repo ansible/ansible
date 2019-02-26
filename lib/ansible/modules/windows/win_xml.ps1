@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Backup
 
 Set-StrictMode -Version 2
 
@@ -79,12 +80,6 @@ function Compare-XmlDocs($actual, $expected) {
     }
 }
 
-function BackupFile($path) {
-	$backuppath = $path + "." + [DateTime]::Now.ToString("yyyyMMdd-HHmmss");
-	Copy-Item $path $backuppath;
-	return $backuppath;
-}
-
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
@@ -94,7 +89,7 @@ $debug = $debug_level -gt 2
 $dest = Get-AnsibleParam $params "path" -type "path" -FailIfEmpty $true -aliases "dest", "file"
 $fragment = Get-AnsibleParam $params "fragment" -type "str" -FailIfEmpty $true -aliases "xmlstring"
 $xpath = Get-AnsibleParam $params "xpath" -type "str" -FailIfEmpty $true
-$backup = Get-AnsibleParam $params "backup" -type "bool" -Default $false
+$backup = Get-AnsibleParam $params "backup" -type "bool" -default $false
 $type = Get-AnsibleParam $params "type" -type "str" -Default "element" -ValidateSet "element", "attribute", "text"
 $attribute = Get-AnsibleParam $params "attribute" -type "str" -FailIfEmpty ($type -eq "attribute")
 $state = Get-AnsibleParam $params "state" -type "str" -Default "present"
@@ -174,15 +169,15 @@ if ($type -eq "element") {
     }
 
     if ($changed) {
-        $result.changed = $true
-        if (!$check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            $xmlorig.Save($dest)
-        } else {
-            $result.msg += " check mode"
+        if ($backup) {
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
+            # Ensure backward compatibility (deprecate in future)
+            $result.backup = $result.backup_file
         }
+        if (-not $check_mode) {
+            $xmlorig.Save($dest)
+        }
+        $result.changed = $true
     } else {
         $result.msg = "not changed"
     }
@@ -190,17 +185,17 @@ if ($type -eq "element") {
     $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
     [bool]$add = ($node.get_InnerText() -ne $fragment)
     if ($add) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            $node.set_InnerText($fragment)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        } else {
-            $result.msg = "text changed check mode"
+        if ($backup) {
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
+            # Ensure backward compatibility (deprecate in future)
+            $result.backup = $result.backup_file
         }
+        $node.set_InnerText($fragment)
+        if (-not $check_mode) {
+            $xmlorig.Save($dest)
+        }
+        $result.changed = $true
+        $result.msg = "text changed"
     } else {
         $result.msg = "not changed"
     }
@@ -208,30 +203,32 @@ if ($type -eq "element") {
     $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
     [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
     if ($add -And ($state -eq "present")) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            if (!$node.HasAttribute($attribute)) {
-	            $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
-            }
-            $node.SetAttribute($attribute, $fragment)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        } else {
-            $result.msg = "text changed check mode"
+        if ($backup) {
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
+            # Ensure backward compatibility (deprecate in future)
+            $result.backup = $result.backup_file
         }
+        if (!$node.HasAttribute($attribute)) {
+            $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+        }
+        $node.SetAttribute($attribute, $fragment)
+        if (-not $check_mode) {
+            $xmlorig.Save($dest)
+        }
+        $result.changed = $true
+        $result.msg = "text changed"
     } elseif (!$add -And ($state -eq "absent")) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
-            $node.RemoveAttribute($attribute)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
+        if ($backup) {
+            $result.backup_file = Backup-File -path $dest -WhatIf:$check_mode
+            # Ensure backward compatibility (deprecate in future)
+            $result.backup = $result.backup_file
         }
+        $node.RemoveAttribute($attribute)
+        if (-not $check_mode) {
+            $xmlorig.Save($dest)
+        }
+        $result.changed = $true
+        $result.msg = "text changed"
     } else {
         $result.msg = "not changed"
     }

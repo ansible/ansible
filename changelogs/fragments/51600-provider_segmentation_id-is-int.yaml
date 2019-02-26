@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - os_network - According to the OpenStack Networking API the attribute
+    provider:segmentation_id of a network has to be an integer.
+    (https://github.com/ansible/ansible/issues/51655)

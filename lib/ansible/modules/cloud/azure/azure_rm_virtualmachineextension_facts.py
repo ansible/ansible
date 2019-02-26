@@ -48,13 +48,13 @@ author:
 EXAMPLES = '''
   - name: Get information on specific Virtual Machine Extension
     azure_rm_virtualmachineextension_facts:
-      resource_group: myrg
+      resource_group: myResourceGroup
       virtual_machine_name: myvm
       name: myextension
 
   - name: List installed Virtual Machine Extensions
     azure_rm_virtualmachineextension_facts:
-      resource_group: myrg
+      resource_group: myResourceGroup
       virtual_machine_name: myvm
 '''
 
@@ -69,13 +69,14 @@ extensions:
                 - Resource Id
             returned: always
             type: str
-            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myrg/providers/Microsoft.Compute/myvm/testVM/extensions/myextension
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/myvm/testVM/extens
+                     ions/myextension"
         resource_group:
             description:
                 - Resource group name
             returned: always
             type: str
-            sample: myrg
+            sample: myResourceGroup
         virtual_machine_name:
             description:
                 - Virtual machine name

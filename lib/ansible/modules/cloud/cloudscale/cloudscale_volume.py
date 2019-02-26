@@ -261,17 +261,17 @@ def main():
         volume.delete()
 
     if module.params['state'] == 'present':
-        for param, conv in (('server_uuids', set), ('size_gb', int)):
-            if module.params[param] is None:
-                continue
-            if conv(volume.info[param]) != conv(module.params[param]):
-                volume.update(param)
-
         if (module.params['type'] is not None
            and volume.info['type'] != module.params['type']):
             module.fail_json(
                 msg='Cannot change type of an existing volume.',
             )
+
+        for param, conv in (('server_uuids', set), ('size_gb', int)):
+            if module.params[param] is None:
+                continue
+            if conv(volume.info[param]) != conv(module.params[param]):
+                volume.update(param)
 
     module.exit_json(changed=volume.changed, **volume.info)
 

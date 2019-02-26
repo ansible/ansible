@@ -1,67 +1,64 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015 Jonathan Mainguy <jon@soh.re>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright: (c) 2015, Jonathan Mainguy <jon@soh.re>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard mysql documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   login_user:
     description:
       - The username used to authenticate with.
+    type: str
   login_password:
     description:
       - The password used to authenticate with.
+    type: str
   login_host:
     description:
       - Host running the database.
+    type: str
     default: localhost
   login_port:
     description:
       - Port of the MySQL server. Requires I(login_host) be defined as other than localhost if login_port is used.
+    type: int
     default: 3306
   login_unix_socket:
     description:
       - The path to a Unix domain socket for local connections.
+    type: str
   connect_timeout:
     description:
       - The connection timeout when connecting to the MySQL server.
+    type: int
     default: 30
     version_added: "2.1"
   config_file:
     description:
       - Specify a config file from which user and password are to be read.
+    type: path
     default: '~/.my.cnf'
     version_added: "2.0"
   ssl_ca:
-    version_added: "2.0"
     description:
       - The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate
         as used by the server.
-  ssl_cert:
+    type: path
     version_added: "2.0"
+  ssl_cert:
     description:
       - The path to a client public key certificate.
-  ssl_key:
+    type: path
     version_added: "2.0"
+  ssl_key:
     description:
       - The path to the client private key.
+    type: path
+    version_added: "2.0"
 requirements:
    - PyMySQL (Python 2.7 and Python 3.X), or
    - MySQLdb (Python 2.x)

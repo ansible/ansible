@@ -24,16 +24,16 @@ options:
   volume_name:
     description:
       - Name of the volume to operate on.
-    required: true
     type: str
+    required: yes
     aliases:
       - name
 
   driver:
     description:
       - Specify the type of volume. Docker provides the C(local) driver, but 3rd party drivers can also be used.
-    default: local
     type: str
+    default: local
 
   driver_options:
     description:
@@ -67,16 +67,18 @@ options:
       - The value C(never) makes sure the volume will not be recreated.
       - The value C(options-changed) makes sure the volume will be recreated if the volume
         already exist and the driver, driver options or labels differ.
+    type: str
+    default: never
     choices:
     - always
     - never
     - options-changed
-    default: never
 
   state:
     description:
       - C(absent) deletes the volume.
       - C(present) creates the volume, if it does not already exist.
+    type: str
     default: present
     choices:
       - absent
@@ -113,8 +115,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-facts:
-    description: Volume inspection results for the affected volume.
+docker_volume:
+    description:
+    - Volume inspection results for the affected volume.
+    - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
+      are also accessible directly.
     returned: success
     type: dict
     sample: {}
@@ -284,7 +289,9 @@ class DockerVolumeManager(object):
         if not self.check_mode and not self.parameters.debug:
             self.results.pop('actions')
 
-        self.results['ansible_facts'] = {u'docker_volume': self.get_existing_volume()}
+        volume_facts = self.get_existing_volume()
+        self.results['ansible_facts'] = {u'docker_volume': volume_facts}
+        self.results['docker_volume'] = volume_facts
 
     def absent(self):
         self.diff_tracker.add('exists', parameter=False, active=self.existing_volume is not None)

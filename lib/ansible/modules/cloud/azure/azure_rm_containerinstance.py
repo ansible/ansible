@@ -39,7 +39,7 @@ options:
         default: linux
     state:
         description:
-            - Assert the state of the container instance. Use 'present' to create or update an container instance and 'absent' to delete it.
+            - Assert the state of the container instance. Use C(present) to create or update an container instance and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -107,7 +107,7 @@ author:
 EXAMPLES = '''
   - name: Create sample container group
     azure_rm_containerinstance:
-      resource_group: testrg
+      resource_group: myResourceGroup
       name: mynewcontainergroup
       os_type: linux
       ip_address: public
@@ -127,7 +127,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerInstance/containerGroups/aci1b6dd89
 provisioning_state:
     description:
         - Provisioning state of the container.

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Dag Wieers (@dagwieers) <dag@wieers.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -38,10 +39,12 @@ options:
     - C(p) for named pipes,
     - C(s) for socket files.
     type: str
+    choices: [ a, b, c, d, f, l, p, s ]
     default: a
   setype:
     description:
     - SELinux type for the specified target.
+    type: str
     required: yes
   seuser:
     description:
@@ -63,12 +66,12 @@ options:
     - Reload SELinux policy after commit.
     - Note that this does not apply SELinux file contexts to existing files.
     type: bool
-    default: 'yes'
+    default: yes
   ignore_selinux_state:
     description:
     - Useful for scenarios (chrooted environment) that you can't get the real SELinux state.
     type: bool
-    default: false
+    default: no
     version_added: '2.8'
 notes:
 - The changes are persistent across reboots.
@@ -125,7 +128,7 @@ except ImportError:
 
 # Add missing entries (backward compatible)
 if HAVE_SEOBJECT:
-    seobject.file_types.update(dict(
+    seobject.file_types.update(
         a=seobject.SEMANAGE_FCONTEXT_ALL,
         b=seobject.SEMANAGE_FCONTEXT_BLOCK,
         c=seobject.SEMANAGE_FCONTEXT_CHAR,
@@ -134,7 +137,7 @@ if HAVE_SEOBJECT:
         l=seobject.SEMANAGE_FCONTEXT_LINK,
         p=seobject.SEMANAGE_FCONTEXT_PIPE,
         s=seobject.SEMANAGE_FCONTEXT_SOCK,
-    ))
+    )
 
 # Make backward compatible
 option_to_file_type_str = dict(
@@ -252,7 +255,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             ignore_selinux_state=dict(type='bool', default=False),
-            target=dict(required=True, aliases=['path']),
+            target=dict(type='str', required=True, aliases=['path']),
             ftype=dict(type='str', default='a', choices=option_to_file_type_str.keys()),
             setype=dict(type='str', required=True),
             seuser=dict(type='str'),

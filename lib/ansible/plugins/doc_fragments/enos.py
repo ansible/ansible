@@ -1,20 +1,14 @@
-# (C) 2017 Red Hat Inc.
-# Copyright (C) 2017 Lenovo.
-#
-# GNU General Public License v3.0+
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2017, Red Hat Inc.
+# Copyright: (c) 2017, Lenovo.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   authorize:
     description:
@@ -24,7 +18,7 @@ options:
         is not specified in the task, the value of environment variable
         C(ANSIBLE_NET_AUTHORIZE) will be used instead.
     type: bool
-    default: 'no'
+    default: no
   auth_pass:
     description:
       - Specifies the password to use if required to enter privileged mode
@@ -34,16 +28,19 @@ options:
   provider:
     description:
       - A dict object containing connection details.
+    type: dict
     suboptions:
       host:
         description:
           - Specifies the DNS host name or address for connecting to the remote
             device over the specified transport.  The value of host is used as
             the destination address for the transport.
+        type: str
         required: true
       port:
         description:
           - Specifies the port to use when building the connection to the remote device.
+        type: int
         default: 22
       username:
         description:
@@ -51,17 +48,20 @@ options:
             the remote device.  This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_USERNAME) will be used instead.
+        type: str
       password:
         description:
           - Specifies the password to use to authenticate the connection to
             the remote device.   This value is used to authenticate
             the SSH session. If the value is not specified in the task, the
             value of environment variable C(ANSIBLE_NET_PASSWORD) will be used instead.
+        type: str
       timeout:
         description:
           - Specifies the timeout in seconds for communicating with the network device
             for either connecting or sending commands.  If the timeout is
             exceeded before the operation is completed, the module will error.
+        type: int
         default: 10
       ssh_keyfile:
         description:
@@ -70,6 +70,7 @@ options:
             key used to authenticate the SSH session. If the value is not specified
             in the task, the value of environment variable C(ANSIBLE_NET_SSH_KEYFILE)
             will be used instead.
+        type: path
       authorize:
         description:
           - Instructs the module to enter privileged mode on the remote device
@@ -78,11 +79,12 @@ options:
             is not specified in the task, the value of environment variable
             C(ANSIBLE_NET_AUTHORIZE) will be used instead.
         type: bool
-        default: 'no'
+        default: no
       auth_pass:
         description:
           - Specifies the password to use if required to enter privileged mode
             on the remote device.  If I(authorize) is false, then this argument
             does nothing. If the value is not specified in the task, the value of
             environment variable C(ANSIBLE_NET_AUTH_PASS) will be used instead.
+        type: str
 '''

@@ -205,7 +205,7 @@
     assert:
       that:
         - 'net_query_one.data.name == "IntTestNetworkSwitch"'
-        - 'query_config_template.data.name == "DevConfigTemplate"'
+        - 'query_config_template.data.name == "{{ test_template_name }}"'
         
 
 #############################################################################

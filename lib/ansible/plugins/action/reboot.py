@@ -217,7 +217,7 @@ class ActionModule(ActionBase):
                 out=to_native(command_result['stdout']))
             raise RuntimeError(msg)
 
-        display.vvv("{action}: system sucessfully rebooted".format(action=self._task.action))
+        display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
         max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)

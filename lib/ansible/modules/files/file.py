@@ -470,9 +470,9 @@ def ensure_absent(path):
                                                           'path': path})
 
         diff = initial_diff(path, 'absent', prev_state)
-        result.update({'path': path, 'changed': True, 'diff': diff})
+        result.update({'path': path, 'changed': True, 'diff': diff, 'state': 'absent'})
     else:
-        result.update({'path': path, 'changed': False})
+        result.update({'path': path, 'changed': False, 'state': 'absent'})
 
     return result
 

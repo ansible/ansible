@@ -49,12 +49,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for one security group
       azure_rm_securitygroup_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
         name: secgroup001
 
     - name: Get facts for all security groups
       azure_rm_securitygroup_facts:
-        resource_group: Testing
+        resource_group: myResourceGroup
 
 '''
 

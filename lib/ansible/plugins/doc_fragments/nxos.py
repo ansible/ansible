@@ -7,7 +7,7 @@
 class ModuleDocFragment(object):
 
     # Standard files documentation fragment
-    DOCUMENTATION = """
+    DOCUMENTATION = r'''
 options:
   provider:
     description:
@@ -90,10 +90,11 @@ options:
             device over cli (ssh) or nxapi.
         type: str
         required: true
+        choices: [ cli, nxapi ]
         default: cli
       use_ssl:
         description:
-          - Configures the I(transport) to use SSL if set to true only when the
+          - Configures the I(transport) to use SSL if set to C(yes) only when the
             C(transport=nxapi), otherwise this value is ignored.
         type: bool
         default: no
@@ -115,4 +116,4 @@ notes:
   - For information on using CLI and NX-API see the :ref:`NXOS Platform Options guide <nxos_platform_options>`
   - For more information on using Ansible to manage network devices see the :ref:`Ansible Network Guide <network_guide>`
   - For more information on using Ansible to manage Cisco devices see the `Cisco integration page <https://www.ansible.com/integrations/networks/cisco>`_.
-"""
+'''

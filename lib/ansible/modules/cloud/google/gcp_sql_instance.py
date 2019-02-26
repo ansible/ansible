@@ -259,6 +259,33 @@ options:
           For MySQL instances, this field determines whether the instance is Second
           Generation (recommended) or First Generation.
         required: false
+      availability_type:
+        description:
+        - The availabilityType define if your postgres instance is run zonal or regional.
+        required: false
+        choices:
+        - ZONAL
+        - REGIONAL
+      backup_configuration:
+        description:
+        - The daily backup configuration for the instance.
+        required: false
+        suboptions:
+          enabled:
+            description:
+            - Enable Autobackup for your instance.
+            required: false
+            type: bool
+          binary_log_enabled:
+            description:
+            - Whether binary log is enabled. If backup configuration is disabled,
+              binary log must be disabled as well. MySQL only.
+            required: false
+            type: bool
+          start_time:
+            description:
+            - Define the backup start time in UTC (HH:MM) .
+            required: false
       settings_version:
         description:
         - The version of instance settings. This is a required field for update method
@@ -538,6 +565,33 @@ settings:
         Generation (recommended) or First Generation.
       returned: success
       type: str
+    availabilityType:
+      description:
+      - The availabilityType define if your postgres instance is run zonal or regional.
+      returned: success
+      type: str
+    backupConfiguration:
+      description:
+      - The daily backup configuration for the instance.
+      returned: success
+      type: complex
+      contains:
+        enabled:
+          description:
+          - Enable Autobackup for your instance.
+          returned: success
+          type: bool
+        binaryLogEnabled:
+          description:
+          - Whether binary log is enabled. If backup configuration is disabled, binary
+            log must be disabled as well. MySQL only.
+          returned: success
+          type: bool
+        startTime:
+          description:
+          - Define the backup start time in UTC (HH:MM) .
+          returned: success
+          type: str
     settingsVersion:
       description:
       - The version of instance settings. This is a required field for update method
@@ -614,6 +668,10 @@ def main():
                         ),
                     ),
                     tier=dict(type='str'),
+                    availability_type=dict(type='str', choices=['ZONAL', 'REGIONAL']),
+                    backup_configuration=dict(
+                        type='dict', options=dict(enabled=dict(type='bool'), binary_log_enabled=dict(type='bool'), start_time=dict(type='str'))
+                    ),
                     settings_version=dict(type='int'),
                 ),
             ),
@@ -927,6 +985,8 @@ class InstanceSettings(object):
             {
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get('ip_configuration', {}), self.module).to_request(),
                 u'tier': self.request.get('tier'),
+                u'availabilityType': self.request.get('availability_type'),
+                u'backupConfiguration': InstanceBackupconfiguration(self.request.get('backup_configuration', {}), self.module).to_request(),
                 u'settingsVersion': self.request.get('settings_version'),
             }
         )
@@ -936,6 +996,8 @@ class InstanceSettings(object):
             {
                 u'ipConfiguration': InstanceIpconfiguration(self.request.get(u'ipConfiguration', {}), self.module).from_response(),
                 u'tier': self.request.get(u'tier'),
+                u'availabilityType': self.request.get(u'availabilityType'),
+                u'backupConfiguration': InstanceBackupconfiguration(self.request.get(u'backupConfiguration', {}), self.module).from_response(),
                 u'settingsVersion': self.request.get(u'settingsVersion'),
             }
         )
@@ -993,6 +1055,25 @@ class InstanceAuthorizednetworksArray(object):
 
     def _response_from_item(self, item):
         return remove_nones_from_dict({u'expirationTime': item.get(u'expirationTime'), u'name': item.get(u'name'), u'value': item.get(u'value')})
+
+
+class InstanceBackupconfiguration(object):
+    def __init__(self, request, module):
+        self.module = module
+        if request:
+            self.request = request
+        else:
+            self.request = {}
+
+    def to_request(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get('enabled'), u'binaryLogEnabled': self.request.get('binary_log_enabled'), u'startTime': self.request.get('start_time')}
+        )
+
+    def from_response(self):
+        return remove_nones_from_dict(
+            {u'enabled': self.request.get(u'enabled'), u'binaryLogEnabled': self.request.get(u'binaryLogEnabled'), u'startTime': self.request.get(u'startTime')}
+        )
 
 
 if __name__ == '__main__':

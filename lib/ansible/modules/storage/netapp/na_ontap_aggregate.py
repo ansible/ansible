@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -117,15 +117,32 @@ options:
     choices: ['Pool0', 'Pool1']
     version_added: '2.8'
 
+  wait_for_online:
+    description:
+    - Set this parameter to 'true' for synchronous execution during create (wait until aggregate status is online)
+    - Set this parameter to 'false' for asynchronous execution
+    - For asynchronous, execution exits as soon as the request is sent, without checking aggregate status
+    type: bool
+    default: false
+    version_added: '2.8'
+
+  time_out:
+    description:
+      - time to wait for aggregate creation in seconds
+      - default is set to 100 seconds
+    default: 100
+    version_added: "2.8"
 '''
 
 EXAMPLES = """
-- name: Create Aggregates
+- name: Create Aggregates and wait 5 minutes until aggregate is online
   na_ontap_aggregate:
     state: present
     service_state: online
     name: ansibleAggr
     disk_count: 1
+    wait_for_online: True
+    time_out: 300
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
@@ -166,6 +183,7 @@ EXAMPLES = """
 RETURN = """
 
 """
+import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -197,6 +215,8 @@ class NetAppOntapAggregate(object):
             spare_pool=dict(required=False, choices=['Pool0', 'Pool1']),
             state=dict(required=False, choices=['present', 'absent'], default='present'),
             unmount_volumes=dict(required=False, type='bool'),
+            wait_for_online=dict(required=False, type='bool', default=False),
+            time_out=dict(required=False, type='int', default=100)
         ))
 
         self.module = AnsibleModule(
@@ -235,12 +255,13 @@ class NetAppOntapAggregate(object):
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(query_details)
         aggr_get_iter.add_child_elem(query)
+        result = None
         try:
             result = self.server.invoke_successfully(aggr_get_iter, enable_tunneling=False)
         except netapp_utils.zapi.NaApiError as error:
             # Error 13040 denotes an aggregate not being found.
             if to_native(error.code) == "13040":
-                return None
+                pass
             else:
                 self.module.fail_json(msg=to_native(error), exception=traceback.format_exc())
         return result
@@ -340,6 +361,16 @@ class NetAppOntapAggregate(object):
 
         try:
             self.server.invoke_successfully(aggr_create, enable_tunneling=False)
+            if self.parameters.get('wait_for_online'):
+                # round off time_out
+                retries = (self.parameters['time_out'] + 5) / 10
+                current = self.get_aggr()
+                status = None if current is None else current['service_state']
+                while status != 'online' and retries > 0:
+                    time.sleep(10)
+                    retries = retries - 1
+                    current = self.get_aggr()
+                    status = None if current is None else current['service_state']
         except netapp_utils.zapi.NaApiError as error:
             self.module.fail_json(msg="Error provisioning aggregate %s: %s"
                                       % (self.parameters['name'], to_native(error)),

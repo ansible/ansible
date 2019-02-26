@@ -94,6 +94,7 @@ _ANSIBALLZ_WRAPPER = True # For test-module script to tell this is a ANSIBALLZ_W
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def _ansiballz_main():
+%(rlimit)s
     import os
     import os.path
     import sys
@@ -348,6 +349,22 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         atexit.register(atexit_coverage)
 
         cov.start()
+'''
+
+ANSIBALLZ_RLIMIT_TEMPLATE = '''
+    import resource
+
+    existing_soft, existing_hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+
+    # adjust soft limit subject to existing hard limit
+    requested_soft = min(existing_hard, %(rlimit_nofile)d)
+
+    if requested_soft != existing_soft:
+        try:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (requested_soft, existing_hard))
+        except ValueError:
+            # some platforms (eg macOS) lie about their hard limit
+            pass
 '''
 
 
@@ -670,7 +687,10 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
-        python_repred_params = repr(json.dumps(params))
+        try:
+            python_repred_params = repr(json.dumps(params))
+        except TypeError as e:
+            raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
         try:
             compression_method = getattr(zipfile, module_compression)
@@ -764,6 +784,19 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         interpreter_parts = interpreter.split(u' ')
         interpreter = u"'{0}'".format(u"', '".join(interpreter_parts))
 
+        # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
+        rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
+
+        if not isinstance(rlimit_nofile, int):
+            rlimit_nofile = int(templar.template(rlimit_nofile))
+
+        if rlimit_nofile:
+            rlimit = ANSIBALLZ_RLIMIT_TEMPLATE % dict(
+                rlimit_nofile=rlimit_nofile,
+            )
+        else:
+            rlimit = ''
+
         coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
 
         if coverage_config:
@@ -791,6 +824,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             minute=now.minute,
             second=now.second,
             coverage=coverage,
+            rlimit=rlimit,
         )))
         b_module_data = output.getvalue()
 

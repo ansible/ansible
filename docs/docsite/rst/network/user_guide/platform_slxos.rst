@@ -5,7 +5,7 @@ SLX-OS Platform Options
 ***************************************
 
 Extreme SLX-OS Ansible modules only support CLI connections today. ``httpapi`` modules may be added in future.
-This page offers details on how to use ``network_cli`` on SLX-OS in Ansible 2.6.
+This page offers details on how to use ``network_cli`` on SLX-OS in Ansible.
 
 .. contents:: Topics
 
@@ -36,8 +36,8 @@ Connections Available
 
 SLX-OS does not support ``ansible_connection: local``. You must use ``ansible_connection: network_cli``.
 
-Using CLI in Ansible 2.6
-================================================================================
+Using CLI in Ansible
+====================
 
 Example CLI ``group_vars/slxos.yml``
 ------------------------------------

@@ -43,12 +43,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for one Function App
       azure_rm_functionapp_facts:
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
         name: myfunctionapp
 
     - name: Get facts for all Function Apps in a resource group
       azure_rm_functionapp_facts:
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
 
     - name: Get facts for all Function Apps by tags
       azure_rm_functionapp_facts:
@@ -94,7 +94,7 @@ azure_functionapps:
         outbound_ip_addresses: ............
         container_size: 1536
         daily_memory_time_quota: 0
-        resource_group: ansible-rg
+        resource_group: myResourceGroup
         default_host_name: myfunctionapp.azurewebsites.net
 '''
 

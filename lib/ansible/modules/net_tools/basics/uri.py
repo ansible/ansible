@@ -32,14 +32,16 @@ options:
       - A path of where to download the file to (if desired). If I(dest) is a
         directory, the basename of the file on the remote server will be used.
     type: path
-  user:
+  url_username:
     description:
       - A username for the module to use for Digest, Basic or WSSE authentication.
     type: str
-  password:
+    aliases: [ user ]
+  url_password:
     description:
       - A password for the module to use for Digest, Basic or WSSE authentication.
     type: str
+    aliases: [ password ]
   body:
     description:
       - The body of the http request/response to the web service. If C(body_format) is set
@@ -101,8 +103,8 @@ options:
   status_code:
     description:
       - A list of valid, numeric, HTTP status codes that signifies success of the request.
-    type: int
-    default: 200
+    type: list
+    default: [ 200 ]
   timeout:
     description:
       - The socket level timeout in seconds
@@ -159,6 +161,26 @@ options:
     type: bool
     default: no
     version_added: '2.7'
+  force:
+    description:
+      - If C(yes) do not get a cached copy.
+    type: bool
+    default: no
+    aliases: [ thirsty ]
+  use_proxy:
+    description:
+      - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+    type: bool
+    default: yes
+  unix_socket:
+    description:
+    - Path to Unix domain socket to use for connection
+    version_added: '2.8'
+  http_agent:
+    description:
+      - Header to identify as, generally appears in web server logs.
+    type: str
+    default: ansible-httpget
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
@@ -175,9 +197,8 @@ EXAMPLES = r'''
   uri:
     url: http://www.example.com
 
-# Check that a page returns a status 200 and fail if the word AWESOME is not
-# in the page contents.
-- uri:
+- name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
+  uri:
     url: http://www.example.com
     return_content: yes
   register: this
@@ -186,18 +207,16 @@ EXAMPLES = r'''
 - name: Create a JIRA issue
   uri:
     url: https://your.jira.example.com/rest/api/2/issue/
-    method: POST
     user: your_username
     password: your_pass
+    method: POST
     body: "{{ lookup('file','issue.json') }}"
     force_basic_auth: yes
     status_code: 201
     body_format: json
 
-# Login to a form based webpage, then use the returned cookie to
-# access the app in later tasks
-
-- uri:
+- name: Login to a form based webpage, then use the returned cookie to access the app in later tasks
+  uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
     body_format: form-urlencoded
@@ -208,8 +227,8 @@ EXAMPLES = r'''
     status_code: 302
   register: login
 
-# Same, but now using a list of tuples
-- uri:
+- name: Login to a form based webpage using a list of tuples
+  uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
     body_format: form-urlencoded
@@ -220,7 +239,8 @@ EXAMPLES = r'''
     status_code: 302
   register: login
 
-- uri:
+- name: Connect to website using a previously stored cookie
+  uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
     return_content: yes
@@ -230,24 +250,24 @@ EXAMPLES = r'''
 - name: Queue build of a project in Jenkins
   uri:
     url: http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}
-    method: GET
     user: "{{ jenkins.user }}"
     password: "{{ jenkins.password }}"
+    method: GET
     force_basic_auth: yes
     status_code: 201
 
 - name: POST from contents of local file
   uri:
-    url: "https://httpbin.org/post"
+    url: https://httpbin.org/post
     method: POST
     src: file.json
 
 - name: POST from contents of remote file
   uri:
-    url: "https://httpbin.org/post"
+    url: https://httpbin.org/post
     method: POST
     src: /path/to/my/file.json
-    remote_src: true
+    remote_src: yes
 '''
 
 RETURN = r'''
@@ -286,7 +306,6 @@ import os
 import shutil
 import sys
 import tempfile
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY2, iteritems, string_types
@@ -312,7 +331,7 @@ def write_file(module, url, dest, content, resp):
     except Exception as e:
         os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
-        module.fail_json(msg=msg, exception=traceback.format_exc(), **resp)
+        module.fail_json(msg=msg, **resp)
     f.close()
 
     checksum_src = None
@@ -353,7 +372,7 @@ def write_file(module, url, dest, content, resp):
         except Exception as e:
             os.remove(tmpsrc)
             msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
-            module.fail_json(msg=msg, exception=traceback.format_exc(), **resp)
+            module.fail_json(msg=msg, **resp)
 
     os.remove(tmpsrc)
 
@@ -434,7 +453,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             })
             data = open(src, 'rb')
         except OSError:
-            module.fail_json(msg='Unable to open source file %s' % src, exception=traceback.format_exc(), elapsed=0)
+            module.fail_json(msg='Unable to open source file %s' % src, elapsed=0)
     else:
         data = body
 
@@ -449,7 +468,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
             _, redir_info = fetch_url(module, url, data=body,
                                       headers=headers,
                                       method=method,
-                                      timeout=socket_timeout)
+                                      timeout=socket_timeout, unix_socket=module.params['unix_socket'])
             # if we are redirected, update the url with the location header,
             # and update dest with the new url filename
             if redir_info['status'] in (301, 302, 303, 307):
@@ -464,7 +483,8 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
         module.params['follow_redirects'] = follow_redirects
 
     resp, info = fetch_url(module, url, data=data, headers=headers,
-                           method=method, timeout=socket_timeout, **kwargs)
+                           method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
+                           **kwargs)
 
     try:
         content = resp.read()
@@ -489,7 +509,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout):
 
 def main():
     argument_spec = url_argument_spec()
-    argument_spec.update(dict(
+    argument_spec.update(
         dest=dict(type='path'),
         url_username=dict(type='str', aliases=['user']),
         url_password=dict(type='str', aliases=['password'], no_log=True),
@@ -503,8 +523,9 @@ def main():
         removes=dict(type='path'),
         status_code=dict(type='list', default=[200]),
         timeout=dict(type='int', default=30),
-        headers=dict(type='dict', default={})
-    ))
+        headers=dict(type='dict', default={}),
+        unix_socket=dict(type='path'),
+    )
 
     module = AnsibleModule(
         argument_spec=argument_spec,

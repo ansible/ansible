@@ -45,13 +45,13 @@ author:
 EXAMPLES = '''
   - name: Get instance of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: testgroup
+      resource_group: myResourceGroup
       server_name: testserver
       name: testrule
 
   - name: List instances of SQL Firewall Rule
     azure_rm_sqlfirewallrule_facts:
-      resource_group: testgroup
+      resource_group: myResourceGroup
       server_name: testserver
 '''
 
@@ -66,7 +66,7 @@ rules:
                 - Resource ID
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testgroup/providers/Microsoft.Sql/servers/testser
+            sample: "/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/testser
                     ver/firewallRules/testrule"
         resource_group:
             description:

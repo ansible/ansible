@@ -53,6 +53,7 @@ options:
             - content_view
             - lifecycle_environment
             - activation_key
+            - product
 
         required: true
     action:
@@ -248,7 +249,7 @@ class NailGun(object):
 
     def find_organization(self, name, **params):
         org = self._entities.Organization(self._server, name=name, **params)
-        response = org.search(set(), {'search': 'name={}'.format(name)})
+        response = org.search(set(), {'search': 'name={0}'.format(name)})
 
         if len(response) == 1:
             return response[0]
@@ -545,7 +546,8 @@ def main():
             username=dict(type='str', required=True, no_log=True),
             password=dict(type='str', required=True, no_log=True),
             entity=dict(type='str', required=True,
-                        choices=['repository', 'manifest', 'repository_set', 'sync_plan', 'content_view', 'lifecycle_environment', 'activation_key']),
+                        choices=['repository', 'manifest', 'repository_set', 'sync_plan',
+                                 'content_view', 'lifecycle_environment', 'activation_key', 'product']),
             action=dict(type='str', choices=['sync', 'publish', 'promote']),
             verify_ssl=dict(type='bool', default=False),
             task_timeout=dict(type='int', default=1000),

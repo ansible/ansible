@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mount
 short_description: Control active and configured mount points
@@ -27,33 +27,41 @@ options:
   path:
     description:
       - Path to the mount point (e.g. C(/mnt/files)).
-      - Before 2.3 this option was only usable as I(dest), I(destfile) and
-        I(name).
+      - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
+    type: path
     required: true
     aliases: [ name ]
   src:
     description:
-      - Device to be mounted on I(path). Required when I(state) set to
-        C(present) or C(mounted).
+      - Device to be mounted on I(path).
+      - Required when I(state) set to C(present) or C(mounted).
+    type: path
   fstype:
     description:
-      - Filesystem type. Required when I(state) is C(present) or C(mounted).
+      - Filesystem type.
+      - Required when I(state) is C(present) or C(mounted).
+    type: str
   opts:
     description:
       - Mount options (see fstab(5), or vfstab(4) on Solaris).
+    type: str
   dump:
     description:
-      - Dump (see fstab(5)). Note that if set to C(null) and I(state) set to
-        C(present), it will cease to work and duplicate entries will be made
+      - Dump (see fstab(5)).
+      - Note that if set to C(null) and I(state) set to C(present),
+        it will cease to work and duplicate entries will be made
         with subsequent runs.
       - Has no effect on Solaris systems.
+    type: str
     default: 0
   passno:
     description:
-      - Passno (see fstab(5)). Note that if set to C(null) and I(state) set to
-        C(present), it will cease to work and duplicate entries will be made
+      - Passno (see fstab(5)).
+      - Note that if set to C(null) and I(state) set to C(present),
+        it will cease to work and duplicate entries will be made
         with subsequent runs.
       - Deprecated on Solaris systems.
+    type: str
     default: 0
   state:
     description:
@@ -66,38 +74,38 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+    type: str
     required: true
     choices: [ absent, mounted, present, unmounted ]
   fstab:
     description:
-      - File to use instead of C(/etc/fstab). You shouldn't use this option
-        unless you really know what you are doing. This might be useful if
-        you need to configure mountpoints in a chroot environment.  OpenBSD
-        does not allow specifying alternate fstab files with mount so do not
-        use this on OpenBSD with any state that operates on the live
-        filesystem.
-    default: /etc/fstab (/etc/vfstab on Solaris)
+      - File to use instead of C(/etc/fstab).
+      - You should npt use this option unless you really know what you are doing.
+      - This might be useful if you need to configure mountpoints in a chroot environment.
+      - OpenBSD does not allow specifying alternate fstab files with mount so do not
+        use this on OpenBSD with any state that operates on the live filesystem.
+      - This parameter defaults to /etc/fstab or /etc/vfstab on Solaris.
+    type: str
   boot:
     description:
       - Determines if the filesystem should be mounted on boot.
       - Only applies to Solaris systems.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: '2.2'
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
-    required: false
     type: bool
-    default: "no"
+    default: no
     version_added: '2.5'
 notes:
   - As of Ansible 2.3, the I(name) option has been changed to I(path) as
     default, but I(name) still works as well.
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Before 2.3, option 'name' was used instead of 'path'
 - name: Mount DVD read-only
   mount:
@@ -583,7 +591,7 @@ def main():
             opts=dict(type='str'),
             passno=dict(type='str'),
             src=dict(type='path'),
-            backup=dict(default=False, type='bool'),
+            backup=dict(type='bool', default=False),
             state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
         ),
         supports_check_mode=True,

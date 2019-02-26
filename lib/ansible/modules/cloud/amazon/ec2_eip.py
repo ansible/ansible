@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -227,7 +229,7 @@ def _find_address_by_ip(ec2, public_ip):
     try:
         return ec2.get_all_addresses([public_ip])[0]
     except boto.exception.EC2ResponseError as e:
-        if "Address '{}' not found.".format(public_ip) not in e.message:
+        if "Address '{0}' not found.".format(public_ip) not in e.message:
             raise
 
 
