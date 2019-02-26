@@ -959,7 +959,7 @@ files:
     support: core
   $plugins/callback/oneline:
     support: core
-  $plugins/callback/osx_say.py: *macos
+  $plugins/callback/say.py: *macos
   $plugins/callback/profile:
     support: core
   $plugins/callback/stderr.py:
