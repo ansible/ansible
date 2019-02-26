@@ -47,6 +47,7 @@ options:
     choices: [ absent, present, query ]
 extends_documentation_fragment: aci
 seealso:
+- module: aci_aep_to_domain
 - name: APIC Management Information Model reference
   description: More information about the internal APIC classes B(infra:AttEntityP) and B(infra:ProvAcc).
   link: https://developer.cisco.com/docs/apic-mim-ref/
