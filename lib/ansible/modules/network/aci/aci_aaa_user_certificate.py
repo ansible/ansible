@@ -230,7 +230,7 @@ def main():
         aaa_user=dict(type='str', required=True),
         aaa_user_type=dict(type='str', default='user', choices=['appuser', 'user']),
         certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
-        certificate_name=dict(type='str', aliases=['cert_name']), # Not required for querying all objects
+        certificate_name=dict(type='str', aliases=['cert_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

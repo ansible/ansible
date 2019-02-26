@@ -240,21 +240,21 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 ACI_CLASS_MAPPING = dict(
-    consumer=dict(
-      class='fvRsCons',
-      rn='rscons-',
-    ),
-    provider=dict(
-      class='fvRsProv',
-      rn='rsprov-',
-    )
+    consumer={
+        'class': 'fvRsCons',
+        'rn': 'rscons-',
+    },
+    provider={
+        'class': 'fvRsProv',
+        'rn': 'rsprov-',
+    },
 )
 
 PROVIDER_MATCH_MAPPING = dict(
     all='All',
-    at_least_one='AtleastOne'
-    at_most_one='tmostOne'
-    none='None'
+    at_least_one='AtleastOne',
+    at_most_one='tmostOne',
+    none='None',
 )
 
 

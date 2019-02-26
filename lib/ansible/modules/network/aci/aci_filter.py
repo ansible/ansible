@@ -212,8 +212,8 @@ from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        filter=dict(type='str', required=False, aliases=['name', 'filter_name']),  # Not required for querying all objects
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
+        filter=dict(type='str', aliases=['name', 'filter_name']),  # Not required for querying all objects
+        tenant=dict(type='str', aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
