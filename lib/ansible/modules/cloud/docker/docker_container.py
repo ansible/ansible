@@ -878,7 +878,7 @@ docker_container:
       - Before 2.3 this was 'ansible_docker_container' but was renamed due to conflicts with the connection plugin.
       - Facts representing the current state of the container. Matches the docker inspection output.
       - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
-        are also accessible directly.
+        are also accessible directly. Note that the returned fact will be removed in Ansible 2.12.
       - Empty if C(state) is I(absent)
       - If detached is I(False), will include Output attribute containing any output from container run.
     returned: always

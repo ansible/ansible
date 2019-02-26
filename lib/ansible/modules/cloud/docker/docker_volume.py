@@ -119,7 +119,7 @@ docker_volume:
     description:
     - Volume inspection results for the affected volume.
     - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
-      are also accessible directly.
+      are also accessible directly. Note that the returned fact will be removed in Ansible 2.12.
     returned: success
     type: dict
     sample: {}
