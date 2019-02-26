@@ -219,7 +219,7 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
-                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL', 'REQUIRENONE' ,
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL', 'REQUIRENONE',
                          'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
                          'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
                          'BINLOG ENCRYPTION ADMIN', 'CONNECTION ADMIN',
@@ -229,6 +229,7 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
                          'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
                          'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
+
 
 class InvalidPrivsError(Exception):
     pass
@@ -535,7 +536,7 @@ def privileges_grant(cursor, user, host, db_table, priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL' , 'REQUIRENONE')])
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
     query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
     if 'REQUIRESSL' in priv:
