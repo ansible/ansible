@@ -50,7 +50,6 @@ options:
                 PolicyID=<platform id managing object>.
         required: True
     client_cert:
-        required: False
         description:
             - A string containing the file location and name of the client certificate used for authentication.
     client_key:
