@@ -204,6 +204,54 @@ options:
                 description:
                     - Configures SNAT for the VMs in the backend pool to use the publicIP address specified in the frontend of the load balancing rule.
         version_added: 2.5
+    inbound_nat_rules:
+        description:
+            - Collection of inbound NAT Rules used by a load balancer.
+            - Defining inbound NAT rules on your load balancer is mutually exclusive with defining an inbound NAT pool.
+            - Inbound NAT pools are referenced from virtual machine scale sets.
+            - NICs that are associated with individual virtual machines cannot reference an Inbound NAT pool.
+            - They have to reference individual inbound NAT rules.
+        suboptions:
+            name:
+                description: name of the inbound nat rule.
+                required: True
+            frontend_ip_configuration:
+                description: A reference to frontend IP addresses.
+                required: True
+            protocol:
+                description: IP protocol for the inbound nat rule.
+                choices:
+                    - Tcp
+                    - Udp
+                    - All
+                default: Tcp
+            frontend_port:
+                description:
+                    - The port for the external endpoint.
+                    - Frontend port numbers must be unique across all rules within the load balancer.
+                    - Acceptable values are between 0 and 65534.
+                    - Note that value 0 enables "Any Port"
+            backend_port:
+                description:
+                    - The port used for internal connections on the endpoint.
+                    - Acceptable values are between 0 and 65535.
+                    - Note that value 0 enables "Any Port"
+            idle_timeout:
+                description:
+                    - The timeout for the TCP idle connection.
+                    - The value can be set between 4 and 30 minutes.
+                    - The default value is 4 minutes.
+                    - This element is only used when the protocol is set to TCP.
+            enable_floating_ip:
+                description:
+                    - Configures a virtual machine's endpoint for the floating IP capability required to configure a SQL AlwaysOn Availability Group.
+                    - This setting is required when using the SQL AlwaysOn Availability Groups in SQL server.
+                    - This setting can't be changed after you create the endpoint.
+            enable_tcp_reset:
+                description:
+                    - Receive bidirectional TCP Reset on TCP flow idle timeout or unexpected connection termination.
+                    - This element is only used when the C(protocol) is set to C(Tcp).
+        version_added: 2.8
     public_ip_address_name:
         description:
             - (deprecated) Name of an existing public IP address object to associate with the security group.
@@ -317,6 +365,12 @@ EXAMPLES = '''
         frontend_port: 80
         backend_port: 80
         probe: prob0
+    inbound_nat_rules:
+      - name: inboundnatrule0
+        backend_port: 8080
+        protocol: Tcp
+        frontend_port: 8080
+        frontend_ip_configuration: frontendipconf0
 '''
 
 RETURN = '''
@@ -428,12 +482,13 @@ inbound_nat_pool_spec = dict(
 
 
 inbound_nat_rule_spec = dict(
-        name=dict(
+    name=dict(
         type='str',
         required=True
     ),
     frontend_ip_configuration=dict(
-        type='str'
+        type='str',
+        required=True
     ),
     protocol=dict(
         type='str',
@@ -441,13 +496,15 @@ inbound_nat_rule_spec = dict(
         default='Tcp'
     ),
     frontend_port=dict(
-        type='int'
+        type='int',
+        required=True
     ),
     idle_timeout=dict(
         type='int'
     ),
     backend_port=dict(
-        type='int'
+        type='int',
+        required=True
     ),
     enable_floating_ip=dict(
         type='bool'
