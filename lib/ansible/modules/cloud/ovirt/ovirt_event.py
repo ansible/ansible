@@ -112,7 +112,8 @@ EXAMPLES = '''
     custom_id: 123456789
     severity: warning
 
-# Create an event and link it to a specific object
+- name: Create an event and link it to a specific object
+  ovirt_event:
 - ovirt_event:
     state: present
     description: "The file system /home is almost full!"
