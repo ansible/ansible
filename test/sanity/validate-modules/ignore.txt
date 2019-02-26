@@ -161,9 +161,6 @@ lib/ansible/modules/cloud/google/gcpubsub_facts.py E322
 lib/ansible/modules/cloud/google/gcpubsub_facts.py E324
 lib/ansible/modules/cloud/google/gcpubsub_facts.py E326
 lib/ansible/modules/cloud/google/gcspanner.py E322
-lib/ansible/modules/cloud/kubevirt/kubevirt_preset.py E325
-lib/ansible/modules/cloud/kubevirt/kubevirt_rs.py E325
-lib/ansible/modules/cloud/kubevirt/kubevirt_vm.py E325
 lib/ansible/modules/cloud/linode/linode.py E322
 lib/ansible/modules/cloud/linode/linode.py E324
 lib/ansible/modules/cloud/lxc/lxc_container.py E210
@@ -346,8 +343,6 @@ lib/ansible/modules/clustering/etcd3.py E326
 lib/ansible/modules/clustering/k8s/_kubernetes.py E322
 lib/ansible/modules/clustering/k8s/_kubernetes.py E323
 lib/ansible/modules/clustering/k8s/_kubernetes.py E324
-lib/ansible/modules/clustering/k8s/k8s.py E325
-lib/ansible/modules/clustering/k8s/k8s_scale.py E325
 lib/ansible/modules/clustering/znode.py E326
 lib/ansible/modules/commands/command.py E322
 lib/ansible/modules/commands/command.py E323
