@@ -47,7 +47,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_secprof_appctrl.Connection')
     return connection_class_mock
 
 
@@ -61,78 +61,8 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_application_list_modify(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # other-application-log: None
-    # replacemsg-group: None
-    # adom: ansible
-    # unknown-application-log: None
-    # p2p-black-list: None
-    # unknown-application-action: None
-    # extended-log: None
-    # deep-app-inspection: None
-    # mode: delete
-    # other-application-action: None
-    # entries: {'behavior': None, 'rate-duration': None, 'sub-category': None, 'session-ttl': None, 'per-ip-shaper': None, 'category': None, 'log': None, 'parameters': {'value': None}, 'technology': None, 'quarantine-expiry': None, 'application': None, 'protocols': None, 'log-packet': None, 'quarantine-log': None, 'vendor': None, 'risk': None, 'rate-count': None, 'quarantine': None, 'popularity': None, 'shaper': None, 'shaper-reverse': None, 'rate-track': None, 'rate-mode': None, 'action': None}
-    # options: None
-    # app-replacemsg: None
-    # name: Ansible_Application_Control_Profile
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # other-application-log: None
-    # replacemsg-group: None
-    # p2p-black-list: None
-    # unknown-application-log: None
-    # adom: ansible
-    # unknown-application-action: None
-    # extended-log: None
-    # deep-app-inspection: None
-    # mode: set
-    # other-application-action: None
-    # entries: [{'quarantine-log': 'enable', 'log': 'enable', 'quarantine': 'attacker', 'action': 'block', 'log-packet': 'enable', 'protocols': ['1']}, {'action': 'pass', 'category': ['2', '3', '4']}]
-    # options: None
-    # app-replacemsg: None
-    # name: Ansible_Application_Control_Profile
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # other-application-log: None
-    # replacemsg-group: None
-    # adom: ansible
-    # unknown-application-log: None
-    # p2p-black-list: None
-    # unknown-application-action: None
-    # extended-log: None
-    # options: None
-    # deep-app-inspection: None
-    # mode: delete
-    # other-application-action: None
-    # entries: {'behavior': None, 'rate-duration': None, 'sub-category': None, 'session-ttl': None, 'per-ip-shaper': None, 'category': None, 'log': None, 'parameters': {'value': None}, 'technology': None, 'quarantine-expiry': None, 'application': None, 'protocols': None, 'log-packet': None, 'quarantine-log': None, 'vendor': None, 'risk': None, 'rate-count': None, 'quarantine': None, 'popularity': None, 'shaper': None, 'shaper-reverse': None, 'rate-track': None, 'rate-mode': None, 'action': None}
-    # app-replacemsg: None
-    # name: Ansible_Application_Ctl_Profile2
-    ##################################################
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # adom: ansible
-    # unknown-application-log: None
-    # extended-log: None
-    # other-application-action: None
-    # entries: {'rate-duration': None, 'sub-category': None, 'vendor': None, 'technology': None, 'risk': None, 'category': None, 'log': 'enable', 'parameters': {'value': None}, 'per-ip-shaper': None, 'quarantine-expiry': None, 'application': None, 'protocols': "['1']", 'log-packet': 'enable', 'quarantine-log': 'enable', 'session-ttl': None, 'behavior': None, 'rate-count': None, 'quarantine': 'attacker', 'popularity': None, 'shaper': None, 'shaper-reverse': None, 'rate-track': None, 'rate-mode': None, 'action': 'pass'}
-    # replacemsg-group: None
-    # other-application-log: None
-    # name: Ansible_Application_Ctl_Profile2
-    # p2p-black-list: None
-    # unknown-application-action: None
-    # deep-app-inspection: None
-    # mode: set
-    # app-replacemsg: None
-    # options: None
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_secprof_appctrl.fmgr_application_list_modify(fmg_instance, fixture_data[0]['paramgram_used'])
