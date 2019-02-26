@@ -344,8 +344,10 @@ def restart_server(compute_api, server):
 def stop_server(compute_api, server):
     return perform_action(compute_api=compute_api, server=server, action="poweroff")
 
+
 def terminate_server(compute_api, server):
     return perform_action(compute_api=compute_api, server=server, action="terminate")
+
 
 def start_server(compute_api, server):
     return perform_action(compute_api=compute_api, server=server, action="poweron")
@@ -460,8 +462,7 @@ def absent_strategy_terminate(compute_api, wished_server):
         response = terminate_server(compute_api=compute_api, server=target_server)
 
         if not response.ok:
-            err_msg = 'Error while terminating a server [{0}: {1}]'.format(response.status_code,
-                                                                                           response.json)
+            err_msg = 'Error while terminating a server [{0}: {1}]'.format(response.status_code, response.json)
             compute_api.module.fail_json(msg=err_msg)
 
         wait_to_complete_state_transition(compute_api=compute_api, server=target_server)
