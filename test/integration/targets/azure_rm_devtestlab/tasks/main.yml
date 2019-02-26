@@ -234,7 +234,7 @@
 
 - name:
   set_fact:
-    artifact_source: None
+    artifact_source: null
   when: "github_token | length == 0"
 
 - name: Create instance of DTL Virtual Machine
