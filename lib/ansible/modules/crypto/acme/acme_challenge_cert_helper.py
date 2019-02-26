@@ -39,22 +39,26 @@ options:
   challenge:
     description:
       - "The challenge type."
+    type: str
     required: yes
     choices:
     - tls-alpn-01
   challenge_data:
     description:
       - "The C(challenge_data) entry provided by M(acme_certificate) for the challenge."
+    type: dict
     required: yes
   private_key_src:
     description:
       - "Path to a file containing the private key file to use for this challenge
          certificate."
       - "Mutually exclusive with C(private_key_content)."
+    type: path
   private_key_content:
     description:
       - "Content of the private key to use for this challenge certificate."
       - "Mutually exclusive with C(private_key_src)."
+    type: str
 '''
 
 EXAMPLES = '''
@@ -169,8 +173,8 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            challenge=dict(required=True, choices=['tls-alpn-01'], type='str'),
-            challenge_data=dict(required=True, type='dict'),
+            challenge=dict(type='str', required=True, choices=['tls-alpn-01']),
+            challenge_data=dict(type='dict', required=True),
             private_key_src=dict(type='path'),
             private_key_content=dict(type='str', no_log=True),
         ),

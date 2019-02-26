@@ -25,15 +25,18 @@ options:
         description:
         - Name of the dashboard administrator.
         - Required when creating a new administrator.
+        type: str
     email:
         description:
         - Email address for the dashboard administrator.
         - Email cannot be updated.
         - Required when creating or editing an administrator.
+        type: str
     orgAccess:
         description:
         - Privileges assigned to the administrator in the organization.
         choices: [ full, none, read-only ]
+        type: str
     tags:
         description:
         - Tags the administrator has privileges on.
@@ -49,15 +52,18 @@ options:
         - If C(state) is C(absent), name takes priority over email if both are specified.
         choices: [ absent, present, query ]
         required: true
+        type: str
     org_name:
         description:
         - Name of organization.
         - Used when C(name) should refer to another object.
         - When creating a new administrator, C(org_name), C(network), or C(tags) must be specified.
         aliases: ['organization']
+        type: str
     org_id:
         description:
         - ID of organization.
+        type: str
 author:
     - Kevin Breit (@kbreit)
 extends_documentation_fragment: meraki
@@ -141,6 +147,26 @@ data:
             returned: success
             type: str
             sample: John Doe
+        accountStatus:
+            description: Status of account.
+            returned: success
+            type: str
+            sample: ok
+        twoFactorAuthEnabled:
+            description: Enabled state of two-factor authentication for administrator.
+            returned: success
+            type: bool
+            sample: false
+        hasApiKey:
+            description: Defines whether administrator has an API assigned to their account.
+            returned: success
+            type: bool
+            sample: false
+        lastActive:
+            description: Date and time of time the administrator was active within Dashboard.
+            returned: success
+            type: str
+            sample: 2019-01-28 14:58:56 -0800
         networks:
             description: List of networks administrator has access on.
             returned: success
@@ -176,6 +202,7 @@ data:
             returned: success
             type: str
             sample: full
+
 '''
 
 import os
@@ -209,7 +236,7 @@ def get_admin_id(meraki, data, name=None, email=None):
                     admin_id = a['id']
         elif meraki.params['email']:
             if meraki.params['email'] == a['email']:
-                    return a['id']
+                return a['id']
     if admin_id is None:
         meraki.fail_json(msg='No admin_id found')
     return admin_id
@@ -306,7 +333,7 @@ def main():
                          tags=dict(type='json'),
                          networks=dict(type='json'),
                          org_name=dict(type='str', aliases=['organization']),
-                         org_id=dict(type='int'),
+                         org_id=dict(type='str'),
                          )
 
     # seed the result dict in the object

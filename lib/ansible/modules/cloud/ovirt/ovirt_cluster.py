@@ -114,6 +114,19 @@ options:
             - "If I(True) enables fencing on the cluster."
             - "Fencing is enabled by default."
         type: bool
+    fence_skip_if_gluster_bricks_up:
+        description:
+            - "A flag indicating if fencing should be skipped if Gluster bricks are up and running in the host being fenced."
+            - "This flag is optional, and the default value is `false`."
+        type: bool
+        version_added: "2.8"
+    fence_skip_if_gluster_quorum_not_met:
+        description:
+            - "A flag indicating if fencing should be skipped if Gluster bricks are up and running and Gluster quorum will not
+               be met without those bricks."
+            - "This flag is optional, and the default value is `false`."
+        type: bool
+        version_added: "2.8"
     fence_skip_if_sd_active:
         description:
             - "If I(True) any hosts in the cluster that are Non Responsive
@@ -235,6 +248,21 @@ options:
                C(id) is required."
             - "This is supported since oVirt version 4.2."
         version_added: 2.5
+    firewall_type:
+        description:
+            - "The type of firewall to be used on hosts in this cluster."
+            - "Up to version 4.1, it was always I(iptables). Since version 4.2, you can choose between I(iptables) and I(firewalld).
+               For clusters with a compatibility version of 4.2 and higher, the default firewall type is I(firewalld)."
+        type: str
+        version_added: 2.8
+        choices: ['firewalld', 'iptables']
+    gluster_tuned_profile:
+        description:
+            - "The name of the U(https://fedorahosted.org/tuned) to set on all the hosts in the cluster. This is not mandatory
+               and relevant only for clusters with Gluster service."
+            - "Could be for example I(virtual-host), I(rhgs-sequential-io), I(rhgs-random-io)"
+        version_added: 2.8
+        type: str
 extends_documentation_fragment: ovirt
 '''
 
@@ -458,6 +486,8 @@ class ClustersModule(BaseModule):
             ) if self.param('resilience_policy') else None,
             fencing_policy=otypes.FencingPolicy(
                 enabled=self.param('fence_enabled'),
+                skip_if_gluster_bricks_up=self.param('fence_skip_if_gluster_bricks_up'),
+                skip_if_gluster_quorum_not_met=self.param('fence_skip_if_gluster_quorum_not_met'),
                 skip_if_connectivity_broken=otypes.SkipIfConnectivityBroken(
                     enabled=self.param('fence_skip_if_connectivity_broken'),
                     threshold=self.param('fence_connectivity_threshold'),
@@ -472,6 +502,8 @@ class ClustersModule(BaseModule):
                 self.param('fence_enabled') is not None or
                 self.param('fence_skip_if_sd_active') is not None or
                 self.param('fence_skip_if_connectivity_broken') is not None or
+                self.param('fence_skip_if_gluster_bricks_up') is not None or
+                self.param('fence_skip_if_gluster_quorum_not_met') is not None or
                 self.param('fence_connectivity_threshold') is not None
             ) else None,
             display=otypes.Display(
@@ -523,6 +555,10 @@ class ClustersModule(BaseModule):
                     value=str(sp.get('value')),
                 ) for sp in self.param('scheduling_policy_properties') if sp
             ] if self.param('scheduling_policy_properties') is not None else None,
+            firewall_type=otypes.FirewallType(
+                self.param('firewall_type')
+            ) if self.param('firewall_type') else None,
+            gluster_tuned_profile=self.param('gluster_tuned_profile'),
         )
 
     def _matches_entity(self, item, entity):
@@ -584,6 +620,8 @@ class ClustersModule(BaseModule):
             equal(self.param('vm_reason'), entity.optional_reason) and
             equal(self.param('spice_proxy'), getattr(entity.display, 'proxy', None)) and
             equal(self.param('fence_enabled'), entity.fencing_policy.enabled) and
+            equal(self.param('fence_skip_if_gluster_bricks_up'), entity.fencing_policy.skip_if_gluster_bricks_up) and
+            equal(self.param('fence_skip_if_gluster_quorum_not_met'), entity.fencing_policy.skip_if_gluster_quorum_not_met) and
             equal(self.param('fence_skip_if_sd_active'), entity.fencing_policy.skip_if_sd_active.enabled) and
             equal(self.param('fence_skip_if_connectivity_broken'), entity.fencing_policy.skip_if_connectivity_broken.enabled) and
             equal(self.param('fence_connectivity_threshold'), entity.fencing_policy.skip_if_connectivity_broken.threshold) and
@@ -594,6 +632,8 @@ class ClustersModule(BaseModule):
             equal(self.param('serial_policy'), str(getattr(entity.serial_number, 'policy', None))) and
             equal(self.param('serial_policy_value'), getattr(entity.serial_number, 'value', None)) and
             equal(self.param('scheduling_policy'), getattr(self._connection.follow_link(entity.scheduling_policy), 'name', None)) and
+            equal(self.param('firewall_type'), str(entity.firewall_type)) and
+            equal(self.param('gluster_tuned_profile'), getattr(entity, 'gluster_tuned_profile', None)) and
             equal(self._get_policy_id(), getattr(migration_policy, 'id', None)) and
             equal(self._get_memory_policy(), entity.memory_policy.over_commit.percent) and
             equal(self.__get_minor(self.param('compatibility_version')), self.__get_minor(entity.version)) and
@@ -638,6 +678,8 @@ def main():
         rng_sources=dict(default=None, type='list'),
         spice_proxy=dict(default=None),
         fence_enabled=dict(default=None, type='bool'),
+        fence_skip_if_gluster_bricks_up=dict(default=None, type='bool'),
+        fence_skip_if_gluster_quorum_not_met=dict(default=None, type='bool'),
         fence_skip_if_sd_active=dict(default=None, type='bool'),
         fence_skip_if_connectivity_broken=dict(default=None, type='bool'),
         fence_connectivity_threshold=dict(default=None, type='int'),
@@ -664,6 +706,8 @@ def main():
         mac_pool=dict(default=None),
         external_network_providers=dict(default=None, type='list'),
         scheduling_policy_properties=dict(type='list'),
+        firewall_type=dict(choices=['iptables', 'firewalld'], default=None),
+        gluster_tuned_profile=dict(default=None),
     )
     module = AnsibleModule(
         argument_spec=argument_spec,

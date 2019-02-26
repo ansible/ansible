@@ -159,11 +159,11 @@ def run_module():
                                          '{1} '.format(alu, to_native(e)),
                                      **result)
         else:
-                module.fail_json(msg='No such storage group named '
-                                     '{0}'.format(module.params['name']),
-                                     **result)
+            module.fail_json(msg='No such storage group named '
+                                 '{0}'.format(module.params['name']),
+                                 **result)
     except VNXCredentialError as e:
-            module.fail_json(msg='{0}'.format(to_native(e)), **result)
+        module.fail_json(msg='{0}'.format(to_native(e)), **result)
 
     module.exit_json(**result)
 

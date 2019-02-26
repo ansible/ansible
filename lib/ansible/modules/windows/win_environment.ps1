@@ -12,6 +12,9 @@ $spec = @{
         state = @{ type = "str"; choices = "absent", "present"; default = "present" }
         value = @{ type = "str" }
     }
+    required_by = @{
+        present = @("value")
+    }
     required_if = @(,@("state", "present", @("value")))
     supports_check_mode = $true
 }

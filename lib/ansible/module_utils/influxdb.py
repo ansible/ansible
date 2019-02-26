@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2017, Ansible Project
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
@@ -49,17 +50,17 @@ class InfluxDb():
     @staticmethod
     def influxdb_argument_spec():
         return dict(
-            hostname=dict(default='localhost', type='str'),
-            port=dict(default=8086, type='int'),
-            username=dict(default='root', type='str', aliases=['login_username']),
-            password=dict(default='root', type='str', no_log=True, aliases=['login_password']),
-            ssl=dict(default=False, type='bool'),
-            validate_certs=dict(default=True, type='bool'),
+            hostname=dict(type='str', default='localhost'),
+            port=dict(type='int', default=8086),
+            username=dict(type='str', default='root', aliases=['login_username']),
+            password=dict(type='str', default='root', no_log=True, aliases=['login_password']),
+            ssl=dict(type='bool', default=False),
+            validate_certs=dict(type='bool', default=True),
             timeout=dict(type='int'),
-            retries=dict(default=3, type='int'),
-            proxies=dict(default={}, type='dict'),
-            use_udp=dict(default=False, type='bool'),
-            udp_port=dict(type=int)
+            retries=dict(type='int', default=3),
+            proxies=dict(type='dict', default={}),
+            use_udp=dict(type='bool', default=False),
+            udp_port=dict(type='int'),
         )
 
     def connect_to_influxdb(self):

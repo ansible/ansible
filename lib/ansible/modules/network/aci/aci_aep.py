@@ -17,12 +17,6 @@ short_description: Manage attachable Access Entity Profile (AEP) objects (infra:
 description:
 - Connect to external virtual and physical domains by using
   attachable Access Entity Profiles (AEP) on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(infra:AttEntityP) and B(infra:ProvAcc).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
   aep:
@@ -52,6 +46,13 @@ options:
     default: present
     choices: [ absent, present, query ]
 extends_documentation_fragment: aci
+seealso:
+- module: aci_aep_to_domain
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(infra:AttEntityP) and B(infra:ProvAcc).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
 '''
 
 EXAMPLES = r'''
@@ -199,8 +200,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():

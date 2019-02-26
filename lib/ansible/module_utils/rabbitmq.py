@@ -27,15 +27,15 @@ except ImportError:
 
 def rabbitmq_argument_spec():
     return dict(
-        login_user=dict(default='guest', type='str'),
-        login_password=dict(default='guest', type='str', no_log=True),
-        login_host=dict(default='localhost', type='str'),
-        login_port=dict(default='15672', type='str'),
-        login_protocol=dict(default='http', choices=['http', 'https'], type='str'),
-        cacert=dict(required=False, type='path', default=None),
-        cert=dict(required=False, type='path', default=None),
-        key=dict(required=False, type='path', default=None),
-        vhost=dict(default='/', type='str'),
+        login_user=dict(type='str', default='guest'),
+        login_password=dict(type='str', default='guest', no_log=True),
+        login_host=dict(type='str', default='localhost'),
+        login_port=dict(type='str', default='15672'),
+        login_protocol=dict(type='str', default='http', choices=['http', 'https']),
+        cacert=dict(type='path'),
+        cert=dict(type='path'),
+        key=dict(type='path'),
+        vhost=dict(type='str', default='/'),
     )
 
 
@@ -77,14 +77,14 @@ class RabbitClient():
     @staticmethod
     def rabbitmq_argument_spec():
         return dict(
-            url=dict(default=None, type='str'),
-            proto=dict(default=None, type='str', choices=['amqps', 'amqp']),
-            host=dict(default=None, type='str'),
-            port=dict(default=None, type='int'),
-            username=dict(default=None, type='str'),
-            password=dict(default=None, type='str', no_log=True),
-            vhost=dict(default=None, type='str'),
-            queue=dict(default=None, type='str')
+            url=dict(type='str'),
+            proto=dict(type='str', choices=['amqp', 'amqps']),
+            host=dict(type='str'),
+            port=dict(type='int'),
+            username=dict(type='str'),
+            password=dict(type='str', no_log=True),
+            vhost=dict(type='str'),
+            queue=dict(type='str')
         )
 
     ''' Consider some file size limits here '''

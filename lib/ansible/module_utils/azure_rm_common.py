@@ -14,7 +14,10 @@ import json
 from os.path import expanduser
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+try:
+    from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
+except Exception:
+    ANSIBLE_VERSION = 'unknown'
 from ansible.module_utils.six.moves import configparser
 import ansible.module_utils.six.moves.urllib.parse as urlparse
 
@@ -202,7 +205,7 @@ def normalize_location_name(name):
 AZURE_PKG_VERSIONS = {
     'StorageManagementClient': {
         'package_name': 'storage',
-        'expected_version': '1.5.0'
+        'expected_version': '3.1.0'
     },
     'ComputeManagementClient': {
         'package_name': 'compute',
@@ -376,6 +379,7 @@ class AzureRMModuleBase(object):
         :param tags: metadata tags from the object
         :return: bool, dict
         '''
+        tags = tags or dict()
         new_tags = copy.copy(tags) if isinstance(tags, dict) else dict()
         param_tags = self.module.params.get('tags') if isinstance(self.module.params.get('tags'), dict) else dict()
         append_tags = self.module.params.get('append_tags') if self.module.params.get('append_tags') is not None else True
@@ -787,12 +791,12 @@ class AzureRMModuleBase(object):
         if not self._storage_client:
             self._storage_client = self.get_mgmt_svc_client(StorageManagementClient,
                                                             base_url=self._cloud_environment.endpoints.resource_manager,
-                                                            api_version='2017-10-01')
+                                                            api_version='2018-07-01')
         return self._storage_client
 
     @property
     def storage_models(self):
-        return StorageManagementClient.models("2017-10-01")
+        return StorageManagementClient.models("2018-07-01")
 
     @property
     def network_client(self):
@@ -1026,24 +1030,24 @@ class AzureRMAuth(object):
         elif self.credentials.get('client_id') is not None and \
                 self.credentials.get('secret') is not None and \
                 self.credentials.get('tenant') is not None:
-                self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
-                                                                     secret=self.credentials['secret'],
-                                                                     tenant=self.credentials['tenant'],
-                                                                     cloud_environment=self._cloud_environment,
-                                                                     verify=self._cert_validation_mode == 'validate')
+            self.azure_credentials = ServicePrincipalCredentials(client_id=self.credentials['client_id'],
+                                                                 secret=self.credentials['secret'],
+                                                                 tenant=self.credentials['tenant'],
+                                                                 cloud_environment=self._cloud_environment,
+                                                                 verify=self._cert_validation_mode == 'validate')
 
         elif self.credentials.get('ad_user') is not None and \
                 self.credentials.get('password') is not None and \
                 self.credentials.get('client_id') is not None and \
                 self.credentials.get('tenant') is not None:
 
-                self.azure_credentials = self.acquire_token_with_username_password(
-                    self._adfs_authority_url,
-                    self._resource,
-                    self.credentials['ad_user'],
-                    self.credentials['password'],
-                    self.credentials['client_id'],
-                    self.credentials['tenant'])
+            self.azure_credentials = self.acquire_token_with_username_password(
+                self._adfs_authority_url,
+                self._resource,
+                self.credentials['ad_user'],
+                self.credentials['password'],
+                self.credentials['client_id'],
+                self.credentials['tenant'])
 
         elif self.credentials.get('ad_user') is not None and self.credentials.get('password') is not None:
             tenant = self.credentials.get('tenant')

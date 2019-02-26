@@ -61,8 +61,8 @@ options:
         default: 'no'
     state:
         description:
-            - Assert the state of the virtual network. Use 'present' to create or update and
-              'absent' to delete.
+            - Assert the state of the virtual network. Use C(present) to create or update and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -82,7 +82,7 @@ EXAMPLES = '''
     - name: Create a virtual network
       azure_rm_virtualnetwork:
         name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
         address_prefixes_cidr:
             - "10.1.0.0/16"
             - "172.100.0.0/16"
@@ -96,7 +96,7 @@ EXAMPLES = '''
     - name: Delete a virtual network
       azure_rm_virtualnetwork:
         name: foobar
-        resource_group: Testing
+        resource_group: myResourceGroup
         state: absent
 '''
 RETURN = '''

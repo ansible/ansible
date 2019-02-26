@@ -703,7 +703,6 @@ class YumModule(YumDnf):
         # setting system proxy environment and saving old, if exists
         my = self.yum_base()
         namepass = ""
-        proxy_url = ""
         scheme = ["http", "https"]
         old_proxy_env = [os.getenv("http_proxy"), os.getenv("https_proxy")]
         try:
@@ -726,10 +725,7 @@ class YumModule(YumDnf):
                         )
                 else:
                     for item in scheme:
-                        os.environ[item + "_proxy"] = re.sub(
-                            r"(http://)",
-                            r"\g<1>", proxy_url
-                        )
+                        os.environ[item + "_proxy"] = my.conf.proxy
             yield
         except yum.Errors.YumBaseError:
             raise
@@ -812,6 +808,8 @@ class YumModule(YumDnf):
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
+        else:
+            res['changes'] = dict(installed=pkgs)
 
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
@@ -1047,6 +1045,8 @@ class YumModule(YumDnf):
         if pkgs:
             if self.module.check_mode:
                 self.module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
+            else:
+                res['changes'] = dict(removed=pkgs)
 
             # run an actual yum transaction
             if self.autoremove:
@@ -1277,38 +1277,38 @@ class YumModule(YumDnf):
                     self.module.fail_json(**res)
 
         # check_mode output
-        if self.module.check_mode:
-            to_update = []
-            for w in will_update:
-                if w.startswith('@'):
-                    to_update.append((w, None))
-                elif w not in updates:
-                    other_pkg = will_update_from_other_package[w]
-                    to_update.append(
-                        (
-                            w,
-                            'because of (at least) %s-%s.%s from %s' % (
-                                other_pkg,
-                                updates[other_pkg]['version'],
-                                updates[other_pkg]['dist'],
-                                updates[other_pkg]['repo']
-                            )
+        to_update = []
+        for w in will_update:
+            if w.startswith('@'):
+                to_update.append((w, None))
+            elif w not in updates:
+                other_pkg = will_update_from_other_package[w]
+                to_update.append(
+                    (
+                        w,
+                        'because of (at least) %s-%s.%s from %s' % (
+                            other_pkg,
+                            updates[other_pkg]['version'],
+                            updates[other_pkg]['dist'],
+                            updates[other_pkg]['repo']
                         )
                     )
-                else:
-                    to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
-
-            if self.update_only:
-                res['changes'] = dict(installed=[], updated=to_update)
+                )
             else:
-                res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+                to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
+        if self.update_only:
+            res['changes'] = dict(installed=[], updated=to_update)
+        else:
+            res['changes'] = dict(installed=pkgs['install'], updated=to_update)
+
+        if obsoletes:
+            res['obsoletes'] = obsoletes
+
+        # return results before we actually execute stuff
+        if self.module.check_mode:
             if will_update or pkgs['install']:
                 res['changed'] = True
-
-            if obsoletes:
-                res['obsoletes'] = obsoletes
-
             return res
 
         # run commands
@@ -1343,9 +1343,6 @@ class YumModule(YumDnf):
 
         if rc:
             res['failed'] = True
-
-        if obsoletes:
-            res['obsoletes'] = obsoletes
 
         return res
 

@@ -1,0 +1,2 @@
+minor_changes:
+    - when showing defaults for CLI options in manpage/docs/--help avoid converting paths

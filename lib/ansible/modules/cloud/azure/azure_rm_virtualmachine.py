@@ -50,17 +50,17 @@ options:
     state:
         description:
             - Assert the state of the virtual machine.
-            - State 'present' will check that the machine exists with the requested configuration. If the configuration
+            - State C(present) will check that the machine exists with the requested configuration. If the configuration
               of the existing machine does not match, the machine will be updated. Use options started, allocated and restarted to change the machine's power
               state.
-            - State 'absent' will remove the virtual machine.
+            - State C(absent) will remove the virtual machine.
         default: present
         choices:
             - absent
             - present
     started:
         description:
-            - Use with state 'present' to start the machine. Set to false to have the machine be 'stopped'.
+            - Use with state C(present) to start the machine. Set to false to have the machine be 'stopped'.
         default: true
         type: bool
     allocated:
@@ -70,13 +70,13 @@ options:
         type: bool
     generalized:
         description:
-            - Use with state 'present' to generalize the machine. Set to true to generalize the machine.
+            - Use with state C(present) to generalize the machine. Set to true to generalize the machine.
             - Please note that this operation is irreversible.
         type: bool
         version_added: "2.8"
     restarted:
         description:
-            - Use with state 'present' to restart a running VM.
+            - Use with state C(present) to restart a running VM.
         type: bool
     location:
         description:
@@ -1779,10 +1779,10 @@ class AzureRMVirtualMachine(AzureRMModuleBase):
             self.log("Storage account {0} found.".format(storage_account_name))
             self.check_provisioning_state(account)
             return account
-        sku = self.storage_models.Sku(self.storage_models.SkuName.standard_lrs)
+        sku = self.storage_models.Sku(name=self.storage_models.SkuName.standard_lrs)
         sku.tier = self.storage_models.SkuTier.standard
         kind = self.storage_models.Kind.storage
-        parameters = self.storage_models.StorageAccountCreateParameters(sku, kind, self.location)
+        parameters = self.storage_models.StorageAccountCreateParameters(sku=sku, kind=kind, location=self.location)
         self.log("Creating storage account {0} in location {1}".format(storage_account_name, self.location))
         self.results['actions'].append("Created storage account {0}".format(storage_account_name))
         try:

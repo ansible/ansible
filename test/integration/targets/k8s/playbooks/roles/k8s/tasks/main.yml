@@ -285,6 +285,7 @@
       loop: "{{ k8s_facts.results }}"
 
     - include_tasks: crd.yml
+    - include_tasks: lists.yml
     - include_tasks: append_hash.yml
 
   always:

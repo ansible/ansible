@@ -25,14 +25,13 @@ options:
             - The hostname or ID of node as registered in Swarm.
             - If more than one node is registered using the same hostname the ID must be used,
               otherwise module will fail.
-        required: true
         type: str
+        required: yes
     labels:
         description:
             - User-defined key/value metadata that will be assigned as node attribute.
             - The actual state of labels assigned to the node when module completes its work depends on
               I(labels_state) and I(labels_to_remove) parameters values. See description below.
-        required: false
         type: dict
     labels_state:
         description:
@@ -43,12 +42,11 @@ options:
               If I(labels) is empty then no changes will be made.
             - Set to C(replace) to replace all assigned labels with provided ones. If I(labels) is empty then
               all labels assigned to the node will be removed.
+        type: str
+        default: 'merge'
         choices:
           - merge
           - replace
-        default: 'merge'
-        required: false
-        type: str
     labels_to_remove:
         description:
             - List of labels that will be removed from the node configuration. The list has to contain only label
@@ -58,7 +56,6 @@ options:
               assigned to the node.
             - If I(labels_state) is C(replace) and I(labels) is not provided or empty then all labels assigned to
               node are removed and I(labels_to_remove) is ignored.
-        required: false
         type: list
     availability:
         description: Node availability to assign. If not provided then node availability remains unchanged.
@@ -66,14 +63,12 @@ options:
           - active
           - pause
           - drain
-        required: false
         type: str
     role:
         description: Node role to assign. If not provided then node role remains unchanged.
         choices:
           - manager
           - worker
-        required: false
         type: str
 extends_documentation_fragment:
   - docker
@@ -183,16 +178,16 @@ class SwarmNodeManager(DockerBaseClass):
 
     def node_update(self):
         if not (self.client.check_if_swarm_node(node_id=self.parameters.hostname)):
-            self.client.fail(msg="This node is not part of a swarm.")
+            self.client.fail("This node is not part of a swarm.")
             return
 
         if self.client.check_if_swarm_node_is_down():
-            self.client.fail(msg="Can not update the node. The node is down.")
+            self.client.fail("Can not update the node. The node is down.")
 
         try:
             node_info = self.client.inspect_node(node_id=self.parameters.hostname)
         except APIError as exc:
-            self.client.fail(msg="Failed to get node information for %s" % to_native(exc))
+            self.client.fail("Failed to get node information for %s" % to_native(exc))
 
         changed = False
         node_spec = dict(
@@ -234,15 +229,20 @@ class SwarmNodeManager(DockerBaseClass):
 
             if self.parameters.labels_to_remove is not None:
                 for key in self.parameters.labels_to_remove:
-                    if not self.parameters.labels.get(key):
+                    if self.parameters.labels is not None:
+                        if not self.parameters.labels.get(key):
+                            if node_spec['Labels'].get(key):
+                                node_spec['Labels'].pop(key)
+                                changed = True
+                        else:
+                            self.client.module.warn(
+                                "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
+                                "Keeping the assigned label value."
+                                % to_native(key))
+                    else:
                         if node_spec['Labels'].get(key):
                             node_spec['Labels'].pop(key)
                             changed = True
-                    else:
-                        self.client.module.warn(
-                            "Label '%s' listed both in 'labels' and 'labels_to_remove'. "
-                            "Keeping the assigned label value."
-                            % to_native(key))
 
         if changed is True:
             if not self.check_mode:
@@ -250,7 +250,7 @@ class SwarmNodeManager(DockerBaseClass):
                     self.client.update_node(node_id=node_info['ID'], version=node_info['Version']['Index'],
                                             node_spec=node_spec)
                 except APIError as exc:
-                    self.client.fail(msg="Failed to update node : %s" % to_native(exc))
+                    self.client.fail("Failed to update node : %s" % to_native(exc))
             self.results['node_facts'] = self.client.get_node_inspect(node_id=node_info['ID'])
             self.results['changed'] = changed
         else:
@@ -262,7 +262,7 @@ def main():
     argument_spec = dict(
         hostname=dict(type='str', required=True),
         labels=dict(type='dict'),
-        labels_state=dict(type='str', choices=['merge', 'replace'], default='merge'),
+        labels_state=dict(type='str', default='merge', choices=['merge', 'replace']),
         labels_to_remove=dict(type='list', elements='str'),
         availability=dict(type='str', choices=['active', 'pause', 'drain']),
         role=dict(type='str', choices=['worker', 'manager']),

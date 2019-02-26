@@ -448,14 +448,14 @@ class LinuxHardware(Hardware):
 
     def get_mount_info(self, mount, device, uuids):
 
-            mount_size = get_mount_size(mount)
+        mount_size = get_mount_size(mount)
 
-            # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
-            # see _run_lsblk() above
-            # https://github.com/ansible/ansible/issues/36077
-            uuid = uuids.get(device, self._udevadm_uuid(device))
+        # _udevadm_uuid is a fallback for versions of lsblk <= 2.23 that don't have --paths
+        # see _run_lsblk() above
+        # https://github.com/ansible/ansible/issues/36077
+        uuid = uuids.get(device, self._udevadm_uuid(device))
 
-            return mount_size, uuid
+        return mount_size, uuid
 
     def get_mount_facts(self):
 

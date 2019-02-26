@@ -260,7 +260,7 @@ class ActionModule(ActionBase):
         if content is not None:
             os.remove(content_tempfile)
 
-    def _copy_single_file(self, local_file, dest, source_rel, task_vars, tmp):
+    def _copy_single_file(self, local_file, dest, source_rel, task_vars, tmp, backup):
         if self._play_context.check_mode:
             module_return = dict(changed=True)
             return module_return
@@ -275,7 +275,8 @@ class ActionModule(ActionBase):
                 dest=dest,
                 src=tmp_src,
                 _original_basename=source_rel,
-                _copy_mode="single"
+                _copy_mode="single",
+                backup=backup,
             )
         )
         copy_args.pop('content', None)
@@ -286,7 +287,7 @@ class ActionModule(ActionBase):
 
         return copy_result
 
-    def _copy_zip_file(self, dest, files, directories, task_vars, tmp):
+    def _copy_zip_file(self, dest, files, directories, task_vars, tmp, backup):
         # create local zip file containing all the files and directories that
         # need to be copied to the server
         if self._play_context.check_mode:
@@ -317,7 +318,8 @@ class ActionModule(ActionBase):
             dict(
                 src=tmp_src,
                 dest=dest,
-                _copy_mode="explode"
+                _copy_mode="explode",
+                backup=backup,
             )
         )
         copy_args.pop('content', None)
@@ -342,6 +344,7 @@ class ActionModule(ActionBase):
         local_follow = boolean(self._task.args.get('local_follow', False), strict=False)
         force = boolean(self._task.args.get('force', True), strict=False)
         decrypt = boolean(self._task.args.get('decrypt', True), strict=False)
+        backup = boolean(self._task.args.get('backup', False), strict=False)
 
         result['src'] = source
         result['dest'] = dest
@@ -383,7 +386,8 @@ class ActionModule(ActionBase):
                     _copy_mode="remote",
                     dest=dest,
                     src=source,
-                    force=force
+                    force=force,
+                    backup=backup,
                 )
             )
             new_module_args.pop('content', None)
@@ -472,7 +476,7 @@ class ActionModule(ActionBase):
                 force=force,
                 files=source_files['files'],
                 directories=source_files['directories'],
-                symlinks=source_files['symlinks']
+                symlinks=source_files['symlinks'],
             )
         )
         # src is not required for query, will fail path validation is src has unix allowed chars
@@ -493,20 +497,19 @@ class ActionModule(ActionBase):
             # we only need to copy 1 file, don't mess around with zips
             file_src = query_return['files'][0]['src']
             file_dest = query_return['files'][0]['dest']
-            copy_result = self._copy_single_file(file_src, dest, file_dest,
-                                                 task_vars, self._connection._shell.tmpdir)
-
+            result.update(self._copy_single_file(file_src, dest, file_dest,
+                                                 task_vars, self._connection._shell.tmpdir, backup))
+            if result.get('failed') is True:
+                result['msg'] = "failed to copy file %s: %s" % (file_src, result['msg'])
             result['changed'] = True
-            if copy_result.get('failed') is True:
-                result['failed'] = True
-                result['msg'] = "failed to copy file %s: %s" % (file_src, copy_result['msg'])
+
         elif len(query_return['files']) > 0 or len(query_return['directories']) > 0:
             # either multiple files or directories need to be copied, compress
             # to a zip and 'explode' the zip on the server
             # TODO: handle symlinks
             result.update(self._copy_zip_file(dest, source_files['files'],
                                               source_files['directories'],
-                                              task_vars, self._connection._shell.tmpdir))
+                                              task_vars, self._connection._shell.tmpdir, backup))
             result['changed'] = True
         else:
             # no operations need to occur

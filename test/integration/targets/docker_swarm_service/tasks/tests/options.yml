@@ -889,6 +889,196 @@
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in force_update_1.msg"
   when: docker_api_version is version('1.25', '<')
 
+####################################################################
+## groups ##########################################################
+####################################################################
+
+- name: groups
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - 1234
+      - 5678
+  register: groups_1
+
+- name: groups (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - 1234
+      - 5678
+  register: groups_2
+
+- name: groups (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups:
+      - 1234
+  register: groups_3
+
+- name: groups (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups: []
+  register: groups_4
+
+- name: groups (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    groups: []
+  register: groups_5
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - groups_1 is changed
+    - groups_2 is not changed
+    - groups_3 is changed
+    - groups_4 is changed
+    - groups_5 is not changed
+
+####################################################################
+## healthcheck #####################################################
+####################################################################
+
+- name: healthcheck
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test:
+        - CMD
+        - sleep
+        - 1
+      timeout: 2s
+      interval: 0h0m2s3ms4us
+      retries: 2
+  register: healthcheck_1
+
+- name: healthcheck (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test:
+        - CMD
+        - sleep
+        - 1
+      timeout: 2s
+      interval: 0h0m2s3ms4us
+      retries: 2
+  register: healthcheck_2
+
+- name: healthcheck (changed)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test:
+        - CMD
+        - sleep
+        - 1
+      timeout: 3s
+      interval: 0h1m2s3ms4us
+      retries: 3
+  register: healthcheck_3
+
+- name: healthcheck (disabled)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test:
+        - NONE
+  register: healthcheck_4
+
+- name: healthcheck (disabled, idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test:
+      - NONE
+  register: healthcheck_5
+
+- name: healthcheck (string in healthcheck test, changed)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test: "sleep 1"
+  register: healthcheck_6
+
+- name: healthcheck (string in healthcheck test, idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    healthcheck:
+      test: "sleep 1"
+  register: healthcheck_7
+
+- name: healthcheck (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    labels: {}
+  register: healthcheck_8
+
+- name: healthcheck (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    labels: {}
+  register: healthcheck_9
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - healthcheck_1 is changed
+    - healthcheck_2 is not changed
+    - healthcheck_3 is changed
+    - healthcheck_4 is changed
+    - healthcheck_5 is not changed
+    - healthcheck_6 is changed
+    - healthcheck_7 is not changed
+    - healthcheck_8 is changed
+    - healthcheck_9 is not changed
+  when: docker_py_version is version('2.4.0', '>=')
+- assert:
+    that:
+    - healthcheck_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.4.0') in healthcheck_1.msg"
+  when: docker_py_version is version('2.4.0', '<')
+
 ###################################################################
 ## hostname #######################################################
 ###################################################################
@@ -1361,13 +1551,51 @@
       - "{{ network_name_1 }}"
   register: networks_2
 
+- name: networks (change more)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_3
+
+- name: networks (change more idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_1 }}"
+      - "{{ network_name_2 }}"
+  register: networks_4
+
+- name: networks (change less)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+  register: networks_5
+
+- name: networks (change less idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    networks:
+      - "{{ network_name_2 }}"
+  register: networks_6
+
 - name: networks (empty)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     networks: []
-  register: networks_3
+  register: networks_7
 
 - name: networks (empty idempotency)
   docker_swarm_service:
@@ -1375,7 +1603,7 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     networks: []
-  register: networks_4
+  register: networks_8
 
 - name: cleanup
   docker_swarm_service:
@@ -1389,6 +1617,102 @@
       - networks_2 is not changed
       - networks_3 is changed
       - networks_4 is not changed
+      - networks_5 is changed
+      - networks_6 is not changed
+      - networks_7 is changed
+      - networks_8 is not changed
+
+- assert:
+    that:
+    - networks_3.rebuilt == false
+    - networks_5.rebuilt == false
+  when: docker_api_version is version('1.29', '>=')
+
+- assert:
+    that:
+    - networks_3.rebuilt == true
+    - networks_5.rebuilt == true
+  when: docker_api_version is version('1.29', '<')
+
+####################################################################
+## stop_grace_period ###############################################
+####################################################################
+
+- name: stop_signal
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_grace_period: 60s
+  register: stop_signal_1
+
+- name: stop_signal (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_grace_period: 60s
+  register: stop_signal_2
+
+- name: stop_signal (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_grace_period: 1m30s
+  register: stop_signal_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - stop_signal_1 is changed
+    - stop_signal_2 is not changed
+    - stop_signal_3 is changed
+
+####################################################################
+## stop_signal #####################################################
+####################################################################
+
+- name: stop_signal
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_signal: 30
+  register: stop_signal_1
+
+- name: stop_signal (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_signal: 30
+  register: stop_signal_2
+
+- name: stop_signal (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    stop_signal: 9
+  register: stop_signal_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - stop_signal_1 is changed
+    - stop_signal_2 is not changed
+    - stop_signal_3 is changed
 
 ####################################################################
 ## placement_preferences ###########################################
@@ -1815,7 +2139,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    restart_policy_delay: 5
+    restart_policy_delay: 5000000000
   register: restart_policy_delay_1
 
 - name: restart_policy_delay (idempotency)
@@ -1823,7 +2147,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    restart_policy_delay: 5
+    restart_policy_delay: 5s
   register: restart_policy_delay_2
 
 - name: restart_policy_delay (change)
@@ -1831,7 +2155,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    restart_policy_delay: 10
+    restart_policy_delay: 10000000000
   register: restart_policy_delay_3
 
 - name: cleanup
@@ -1855,7 +2179,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    restart_policy_window: 10
+    restart_policy_window: 10000000000
   register: restart_policy_window_1
 
 - name: restart_policy_window (idempotency)
@@ -1863,7 +2187,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    restart_policy_window: 10
+    restart_policy_window: 10s
   register: restart_policy_window_2
 
 - name: restart_policy_window (change)
@@ -1871,7 +2195,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    restart_policy_window: 20
+    restart_policy_window: 20s
   register: restart_policy_window_3
 
 - name: cleanup
@@ -2017,7 +2341,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    update_delay: 5
+    update_delay: 5000000000
   register: update_delay_1
 
 - name: update_delay (idempotency)
@@ -2025,7 +2349,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    update_delay: 5
+    update_delay: 5s
   register: update_delay_2
 
 - name: update_delay (change)
@@ -2033,7 +2357,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    update_delay: 12
+    update_delay: 12000000000
   register: update_delay_3
 
 - name: cleanup
@@ -2145,7 +2469,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    update_monitor: 10000000000
+    update_monitor: 10s
   register: update_monitor_2
 
 - name: update_monitor (change)
@@ -2153,7 +2477,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    update_monitor: 6000000000
+    update_monitor: 60s
   register: update_monitor_3
 
 - name: cleanup
@@ -2293,6 +2617,43 @@
       - user_1 is changed
       - user_2 is not changed
       - user_3 is changed
+
+####################################################################
+## working_dir #####################################################
+####################################################################
+
+- name: working_dir
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    working_dir: /tmp
+  register: working_dir_1
+
+- name: working_dir (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    working_dir: /tmp
+  register: working_dir_2
+
+- name: working_dir (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    working_dir: /
+  register: working_dir_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+    - working_dir_1 is changed
+    - working_dir_2 is not changed
+    - working_dir_3 is changed
 
 ####################################################################
 ####################################################################

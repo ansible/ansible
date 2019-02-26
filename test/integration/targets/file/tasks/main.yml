@@ -493,6 +493,10 @@
 - name: create file as root with all write permissions
   file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user}}
 
+- name: Pause to ensure stat times are not the exact same
+  pause:
+    seconds: 1
+
 - block:
   - name: get previous time
     stat: path=/tmp/write_utime

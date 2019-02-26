@@ -4,6 +4,7 @@
     docker_swarm:
       state: absent
       force: true
+    diff: no
 
   - name: Test parameters with state=join
     docker_swarm:
@@ -29,33 +30,105 @@
          - 'output.failed'
          - 'output.msg == "state is remove but all of the following are missing: node_id"'
 
+  - name: Create a Swarm cluster (check mode)
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+    check_mode: yes
+    diff: yes
+    register: output_1
+
   - name: Create a Swarm cluster
     docker_swarm:
       state: present
-    register: output
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+    diff: yes
+    register: output_2
+
+  - name: Create a Swarm cluster (idempotent)
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+    diff: yes
+    register: output_3
+
+  - name: Create a Swarm cluster (idempotent, check mode)
+    docker_swarm:
+      state: present
+      advertise_addr: "{{ansible_default_ipv4.address}}"
+    check_mode: yes
+    diff: yes
+    register: output_4
 
   - name: assert changed when create a new swarm cluster
     assert:
       that:
-         - 'output.changed'
-         - 'output.actions[0] | regex_search("New Swarm cluster created: ")'
-         - 'output.swarm_facts.JoinTokens.Manager'
-         - 'output.swarm_facts.JoinTokens.Worker'
+         - 'output_1 is changed'
+         - 'output_1.diff.before is defined'
+         - 'output_1.diff.after is defined'
+         - 'output_2 is changed'
+         - 'output_2.actions[0] | regex_search("New Swarm cluster created: ")'
+         - 'output_2.swarm_facts.JoinTokens.Manager'
+         - 'output_2.swarm_facts.JoinTokens.Worker'
+         - 'output_2.diff.before is defined'
+         - 'output_2.diff.after is defined'
+         - 'output_3 is not changed'
+         - 'output_3.diff.before is defined'
+         - 'output_3.diff.after is defined'
+         - 'output_4 is not changed'
+         - 'output_4.diff.before is defined'
+         - 'output_4.diff.after is defined'
+
+  - name: Remove a Swarm cluster (check mode)
+    docker_swarm:
+      state: absent
+      force: true
+    check_mode: yes
+    diff: yes
+    register: output_1
 
   - name: Remove a Swarm cluster
     docker_swarm:
       state: absent
       force: true
-    register: output
+    diff: yes
+    register: output_2
+
+  - name: Remove a Swarm cluster (idempotent)
+    docker_swarm:
+      state: absent
+      force: true
+    diff: yes
+    register: output_3
+
+  - name: Remove a Swarm cluster (idempotent, check mode)
+    docker_swarm:
+      state: absent
+      force: true
+    check_mode: yes
+    diff: yes
+    register: output_4
 
   - name: assert changed when remove a swarm cluster
     assert:
       that:
-         - 'output.changed'
-         - 'output.actions[0] == "Node has left the swarm cluster"'
+         - 'output_1 is changed'
+         - 'output_1.diff.before is defined'
+         - 'output_1.diff.after is defined'
+         - 'output_2 is changed'
+         - 'output_2.actions[0] == "Node has left the swarm cluster"'
+         - 'output_2.diff.before is defined'
+         - 'output_2.diff.after is defined'
+         - 'output_3 is not changed'
+         - 'output_3.diff.before is defined'
+         - 'output_3.diff.after is defined'
+         - 'output_4 is not changed'
+         - 'output_4.diff.before is defined'
+         - 'output_4.diff.after is defined'
 
   always:
   - name: Cleanup
     docker_swarm:
       state: absent
       force: true
+    diff: no

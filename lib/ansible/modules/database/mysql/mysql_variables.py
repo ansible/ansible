@@ -1,46 +1,46 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Balazs Pocze <banyek@gawker.com>
+# Copyright: (c) 2013, Balazs Pocze <banyek@gawker.com>
 # Certain parts are taken from Mark Theunissen's mysqldb module
-#
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mysql_variables
 
 short_description: Manage MySQL global variables
 description:
-    - Query / Set MySQL variables
+    - Query / Set MySQL variables.
 version_added: 1.3
-author: "Balazs Pocze (@banyek)"
+author:
+- Balazs Pocze (@banyek)
 options:
     variable:
         description:
             - Variable name to operate
+        type: str
         required: True
     value:
         description:
             - If set, then sets variable value to this
-        required: False
-extends_documentation_fragment: mysql
+        type: str
+extends_documentation_fragment:
+- mysql
 '''
-EXAMPLES = '''
-# Check for sync_binlog setting
+EXAMPLES = r'''
+- name: Check for sync_binlog setting
 - mysql_variables:
     variable: sync_binlog
 
-# Set read_only variable to 1
+- name: Set read_only variable to 1
 - mysql_variables:
     variable: read_only
     value: 1
@@ -112,19 +112,19 @@ def setvariable(cursor, mysqlvar, value):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            variable=dict(default=None),
-            value=dict(default=None),
-            ssl_cert=dict(default=None),
-            ssl_key=dict(default=None),
-            ssl_ca=dict(default=None),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type="path")
-        )
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            variable=dict(type='str'),
+            value=dict(type='str'),
+            ssl_cert=dict(type='path'),
+            ssl_key=dict(type='path'),
+            ssl_ca=dict(type='path'),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+        ),
     )
     user = module.params["login_user"]
     password = module.params["login_password"]

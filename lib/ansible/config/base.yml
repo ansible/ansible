@@ -1590,6 +1590,20 @@ PLUGIN_FILTERS_CFG:
   - key: plugin_filters_cfg
     section: defaults
   type: path
+PYTHON_MODULE_RLIMIT_NOFILE:
+  name: Adjust maximum file descriptor soft limit during Python module execution
+  description:
+  - Attempts to set RLIMIT_NOFILE soft limit to the specified value when executing Python modules (can speed up subprocess usage on
+    Python 2.x. See https://bugs.python.org/issue11284). The value will be limited by the existing hard limit. Default
+    value of 0 does not attempt to adjust existing system-defined limits.
+  default: 0
+  env:
+  - {name: ANSIBLE_PYTHON_MODULE_RLIMIT_NOFILE}
+  ini:
+  - {key: python_module_rlimit_nofile, section: defaults}
+  vars:
+  - {name: ansible_python_module_rlimit_nofile}
+  version_added: '2.8'
 RETRY_FILES_ENABLED:
   name: Retry files
   default: True
@@ -1690,4 +1704,19 @@ NETCONF_SSH_CONFIG:
   - {key: ssh_config, section: netconf_connection}
   yaml: {key: netconf_connection.ssh_config}
   default: null
+STRING_CONVERSION_ACTION:
+  version_added: '2.8'
+  description:
+    - Action to take when a module parameter value is converted to a string (this does not affect variables).
+      For string parameters, values such as '1.00', "['a', 'b',]", and 'yes', 'y', etc.
+      will be converted by the YAML parser unless fully quoted.
+    - Valid options are 'error', 'warn', and 'ignore'.
+    - Since 2.8, this option defaults to 'warn' but will change to 'error' in 2.12.
+  default: 'warn'
+  env:
+    - name: ANSIBLE_STRING_CONVERSION_ACTION
+  ini:
+    - section: defaults
+      key: string_conversion_action
+  type: string
 ...

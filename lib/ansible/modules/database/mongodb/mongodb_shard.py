@@ -190,7 +190,7 @@ def shard_find(client, shard):
     else:
         s = shard
     for shard in client["config"].shards.find({"_id": s}):
-                return shard
+        return shard
     return False
 
 

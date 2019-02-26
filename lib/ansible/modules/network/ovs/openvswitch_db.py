@@ -170,7 +170,7 @@ def map_config_to_obj(module):
             obj['key'] = module.params['key']
             obj['value'] = col_value_to_dict[module.params['key']]
     else:
-            obj['value'] = str(col_value.strip())
+        obj['value'] = str(col_value.strip())
 
     return obj
 

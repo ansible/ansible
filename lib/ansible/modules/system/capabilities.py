@@ -24,6 +24,7 @@ options:
             - Specifies the path to the file to be managed.
         type: str
         required: yes
+        aliases: [ key ]
     capability:
         description:
             - Desired capability to set (with operator and flags, if state is C(present)) or remove (if state is C(absent))

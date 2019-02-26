@@ -104,7 +104,7 @@ result:
             description: The ipv4 address of the object
             type: str
         address6:
-            description: The ipv6 adress of the object
+            description: The ipv6 address of the object
             type: str
         comment:
             description: The comment string

@@ -63,6 +63,38 @@
       - output.changed == false
       - output.state == 'Ready'
 
+- name: Update instance of MySQL Server, change storage size
+  azure_rm_mysqlserver:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 128000
+    version: 5.6
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+- debug:
+    var: output
+
+- name: Gather facts MySQL Server
+  azure_rm_mysqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: mysqlsrv{{ rpfx }}
+  register: output
+- name: Assert that storage size is correct
+  assert:
+    that:
+      - output.servers[0]['storage_mb'] == 128000
+
 - name: Create second instance of MySQL Server
   azure_rm_mysqlserver:
     resource_group: "{{ resource_group }}"
@@ -164,6 +196,8 @@
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
+    collation: latin1_swedish_ci
+    charset: latin1
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -176,11 +210,42 @@
     resource_group: "{{ resource_group }}"
     server_name: mysqlsrv{{ rpfx }}
     name: testdatabase
+    collation: latin1_swedish_ci
+    charset: latin1
   register: output
 - name: Assert the state has not changed
   assert:
     that:
       - output.changed == false
+      - output.name == 'testdatabase'
+
+- name: Try to update database without force_update
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_czech_ci
+    charset: latin1
+  ignore_errors: yes
+  register: output
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - output.changed == False
+
+- name: Update instance of database using force_update
+  azure_rm_mysqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: mysqlsrv{{ rpfx }}
+    name: testdatabase
+    collation: latin1_czech_ci
+    charset: latin1
+    force_update: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
       - output.name == 'testdatabase'
 
 - name: Create second instance of MySQL Database

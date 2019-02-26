@@ -26,7 +26,7 @@ options:
   attributes:
     description:
     - A list of device attributes.
-    type: list
+    type: dict
   device:
     description:
     - The name of the device.

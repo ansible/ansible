@@ -1,31 +1,19 @@
-#
-#  Copyright 2018 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2018,  Red Hat | Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Options used by scale modules.
 
 
 class ModuleDocFragment(object):
 
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
 options:
   replicas:
     description:
       - The desired number of replicas.
+    type: int
   current_replicas:
     description:
       - For Deployment, ReplicaSet, Replication Controller, only scale, if the number of existing replicas
@@ -40,7 +28,7 @@ options:
       - For Deployment, ReplicaSet, Replication Controller, wait for the status value of I(ready_replicas) to change
         to the number of I(replicas). In the case of a Job, this option is ignored.
     type: bool
-    default: true
+    default: yes
   wait_timeout:
     description:
       - When C(wait) is I(True), the number of seconds to wait for the I(ready_replicas) status to equal  I(replicas).

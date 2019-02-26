@@ -17,9 +17,6 @@ try:
 except ImportError:
     pass
 
-from ansible.module_utils._text import to_text
-from ansible.module_utils.urls import fetch_url
-from ansible.module_utils.six import integer_types, iteritems, string_types
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
 
@@ -269,10 +266,10 @@ def is_valid_ip6_prefix(ip6_prefix):
 
 
 def get_object_ref(module, name, uuid=None, obj_type="VM", fail=True, msg_prefix=""):
-    """Finds and returns a reference to arbitary XAPI object.
+    """Finds and returns a reference to arbitrary XAPI object.
 
     An object is searched by using either name (name_label) or UUID
-    with UUID taken precendence over name.
+    with UUID taken precedence over name.
 
     Args:
         module: Reference to Ansible module object.
@@ -302,7 +299,7 @@ def get_object_ref(module, name, uuid=None, obj_type="VM", fail=True, msg_prefix
 
     obj_ref = None
 
-    # UUID has precendence over name.
+    # UUID has precedence over name.
     if uuid:
         try:
             # Find object by UUID. If no object is found using given UUID,
@@ -408,7 +405,7 @@ def gather_vm_params(module, vm_ref):
         # Detect customization agent.
         xenserver_version = get_xenserver_version(module)
 
-        if (int(xenserver_version[0]) >= 7 and int(xenserver_version[1]) >= 0 and vm_params.get('guest_metrics') and
+        if (xenserver_version[0] >= 7 and xenserver_version[1] >= 0 and vm_params.get('guest_metrics') and
                 "feature-static-ip-setting" in vm_params['guest_metrics']['other']):
             vm_params['customization_agent'] = "native"
         else:
@@ -756,12 +753,19 @@ def get_xenserver_version(module):
         module: Reference to Ansible module object.
 
     Returns:
-        list: Element [0] is major version. Element [1] i minor version.
+        list: Element [0] is major version. Element [1] is minor version.
+        Element [2] is update number.
     """
     xapi_session = XAPI.connect(module)
 
     host_ref = xapi_session.xenapi.session.get_this_host(xapi_session._session)
-    return xapi_session.xenapi.host.get_software_version(host_ref)['product_version_text_short'].split('.')
+
+    try:
+        xenserver_version = [int(version_number) for version_number in xapi_session.xenapi.host.get_software_version(host_ref)['product_version'].split('.')]
+    except ValueError:
+        xenserver_version = [0, 0, 0]
+
+    return xenserver_version
 
 
 class XAPI(object):

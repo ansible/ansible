@@ -16,17 +16,6 @@ module: aci_filter_entry
 short_description: Manage filter entries (vz:Entry)
 description:
 - Manage filter entries for a filter on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(filter) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_filter) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_filter
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:Entry).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 options:
   arp_flag:
@@ -108,6 +97,17 @@ options:
     type: str
     aliases: [ tenant_name ]
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(filter) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_filter) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_filter
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:Entry).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Jacob McGill (@jmcgill298)
 '''
 
 EXAMPLES = r'''
@@ -230,8 +230,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VALID_ARP_FLAGS = ['arp_reply', 'arp_request', 'unspecified']
 VALID_ETHER_TYPES = ['arp', 'fcoe', 'ip', 'mac_security', 'mpls_ucast', 'trill', 'unspecified']

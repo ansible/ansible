@@ -252,11 +252,11 @@ class HashiVault:
 
 
 class LookupModule(LookupBase):
-    def run(self, terms, variables, **kwargs):
+    def run(self, terms, variables=None, **kwargs):
         if not HAS_HVAC:
             raise AnsibleError("Please pip install hvac to use the hashi_vault lookup module.")
 
-        vault_args = terms[0].split(' ')
+        vault_args = terms[0].split()
         vault_dict = {}
         ret = []
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """ this is interface module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
@@ -43,7 +43,7 @@ options:
   home_node:
     description:
     - Specifies the LIF's home node.
-    - Required when C(state=present).
+    - By default, the first node from the cluster is considered as home node
 
   home_port:
     description:
@@ -100,9 +100,10 @@ options:
 
   protocols:
     description:
-       Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
-       Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
-       Protocol values of none, iscsi or fcp can't be combined with any other data protocol(s).
+    - Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
+    - Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
+    - Protocol values of none, iscsi, fc-nvme or fcp can't be combined with any other data protocol(s).
+    - address, netmask and firewall_policy parameters are not supported for 'fc-nvme' option.
 
 '''
 
@@ -155,27 +156,26 @@ class NetAppOntapInterface(object):
     def __init__(self):
 
         self.argument_spec = netapp_utils.na_ontap_host_argument_spec()
-        self.argument_spec.update(dict(
-            state=dict(required=False, choices=[
-                       'present', 'absent'], default='present'),
-            interface_name=dict(required=True, type='str'),
-            home_node=dict(required=False, type='str', default=None),
-            home_port=dict(required=False, type='str'),
-            role=dict(required=False, type='str'),
-            address=dict(required=False, type='str'),
-            netmask=dict(required=False, type='str'),
-            vserver=dict(required=True, type='str'),
-            firewall_policy=dict(required=False, type='str', default=None),
-            failover_policy=dict(required=False, type='str', default=None),
-            admin_status=dict(required=False, choices=['up', 'down']),
-            subnet_name=dict(required=False, type='str'),
-            is_auto_revert=dict(required=False, type=bool, default=None),
-            protocols=dict(required=False, type='list')
-        ))
+        self.argument_spec.update(
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            interface_name=dict(type='str', required=True),
+            home_node=dict(type='str'),
+            home_port=dict(type='str'),
+            role=dict(type='str'),
+            address=dict(type='str'),
+            netmask=dict(type='str'),
+            vserver=dict(type='str', required=True),
+            firewall_policy=dict(type='str'),
+            failover_policy=dict(type='str'),
+            admin_status=dict(type='str', choices=['up', 'down']),
+            subnet_name=dict(type='str'),
+            is_auto_revert=dict(type='bool'),
+            protocols=dict(type='list'),
+        )
 
         self.module = AnsibleModule(
             argument_spec=self.argument_spec,
-            supports_check_mode=True
+            supports_check_mode=True,
         )
         self.na_helper = NetAppModule()
         self.parameters = self.na_helper.set_parameters(self.module.params)
@@ -205,7 +205,6 @@ class NetAppOntapInterface(object):
         interface_info.add_child_elem(query)
         result = self.server.invoke_successfully(interface_info, True)
         return_value = None
-
         if result.get_child_by_name('num-records') and \
                 int(result.get_child_content('num-records')) >= 1:
 
@@ -216,12 +215,15 @@ class NetAppOntapInterface(object):
                 'admin_status': interface_attributes['administrative-status'],
                 'home_port': interface_attributes['home-port'],
                 'home_node': interface_attributes['home-node'],
-                'address': interface_attributes['address'],
-                'netmask': interface_attributes['netmask'],
                 'failover_policy': interface_attributes['failover-policy'].replace('_', '-'),
-                'firewall_policy': interface_attributes['firewall-policy'],
                 'is_auto_revert': True if interface_attributes['is-auto-revert'] == 'true' else False,
             }
+            if interface_attributes.get_child_by_name('address'):
+                return_value['address'] = interface_attributes['address']
+            if interface_attributes.get_child_by_name('netmask'):
+                return_value['netmask'] = interface_attributes['netmask']
+            if interface_attributes.get_child_by_name('firewall-policy'):
+                return_value['firewall_policy'] = interface_attributes['firewall-policy']
         return return_value
 
     def set_options(self, options, parameters):
@@ -243,28 +245,76 @@ class NetAppOntapInterface(object):
         if parameters.get('admin_status') is not None:
             options['administrative-status'] = parameters['admin_status']
 
-    def create_interface(self):
-        ''' calling zapi to create interface '''
+    def set_protocol_option(self, required_keys):
+        """ set protocols for create """
+        if self.parameters.get('protocols') is not None:
+            data_protocols_obj = netapp_utils.zapi.NaElement('data-protocols')
+            for protocol in self.parameters.get('protocols'):
+                if protocol.lower() == 'fc-nvme':
+                    required_keys.remove('address')
+                    required_keys.remove('home_port')
+                    required_keys.remove('netmask')
+                    not_required_params = set(['address', 'netmask', 'firewall_policy'])
+                    if not not_required_params.isdisjoint(set(self.parameters.keys())):
+                        self.module.fail_json(msg='Error: Following parameters for creating interface are not supported'
+                                                  ' for data-protocol fc-nvme: %s' % ', '.join(not_required_params))
+                data_protocols_obj.add_new_child('data-protocol', protocol)
+            return data_protocols_obj
+        return None
+
+    def get_home_node_for_cluster(self):
+        ''' get the first node name from this cluster '''
+        get_node = netapp_utils.zapi.NaElement('cluster-node-get-iter')
+        attributes = {
+            'query': {
+                'cluster-node-info': {}
+            }
+        }
+        get_node.translate_struct(attributes)
+        try:
+            result = self.server.invoke_successfully(get_node, enable_tunneling=True)
+        except netapp_utils.zapi.NaApiError as exc:
+            self.module.fail_json(msg='Error fetching node for interface %s: %s' %
+                                  (self.parameters['interface_name'], to_native(exc)),
+                                  exception=traceback.format_exc())
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
+            attributes = result.get_child_by_name('attributes-list')
+            return attributes.get_child_by_name('cluster-node-info').get_child_content('node-name')
+        return None
+
+    def validate_create_parameters(self, keys):
+        '''
+            Validate if required parameters for create are present.
+            Parameter requirement might vary based on given data-protocol.
+            :return: None
+        '''
+        if self.parameters.get('home_node') is None:
+            node = self.get_home_node_for_cluster()
+            if node is not None:
+                self.parameters['home_node'] = node
         # validate if mandatory parameters are present for create
-        required_keys = set(['role', 'address', 'home_node', 'home_port', 'netmask'])
-        if not required_keys.issubset(set(self.parameters.keys())):
+        if not keys.issubset(set(self.parameters.keys())):
             self.module.fail_json(msg='Error: Missing one or more required parameters for creating interface: %s'
-                                  % ', '.join(required_keys))
+                                      % ', '.join(keys))
         # if role is intercluster, protocol cannot be specified
         if self.parameters['role'] == "intercluster" and self.parameters.get('protocols') is not None:
             self.module.fail_json(msg='Error: Protocol cannot be specified for intercluster role,'
                                       'failed to create interface')
+
+    def create_interface(self):
+        ''' calling zapi to create interface '''
+        required_keys = set(['role', 'address', 'home_port', 'netmask'])
+        data_protocols_obj = self.set_protocol_option(required_keys)
+        self.validate_create_parameters(required_keys)
+
         options = {'interface-name': self.parameters['interface_name'],
                    'role': self.parameters['role'],
                    'home-node': self.parameters.get('home_node'),
                    'vserver': self.parameters['vserver']}
         self.set_options(options, self.parameters)
         interface_create = netapp_utils.zapi.NaElement.create_node_with_children('net-interface-create', **options)
-        if self.parameters.get('protocols') is not None:
-            data_protocols_obj = netapp_utils.zapi.NaElement('data-protocols')
+        if data_protocols_obj is not None:
             interface_create.add_child_elem(data_protocols_obj)
-            for protocol in self.parameters.get('protocols'):
-                data_protocols_obj.add_new_child('data-protocol', protocol)
         try:
             self.server.invoke_successfully(interface_create, enable_tunneling=True)
         except netapp_utils.zapi.NaApiError as exc:

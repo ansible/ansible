@@ -121,8 +121,8 @@ options:
   comment:
     description:
       - free text to describe policy.
-notes:
-  - This module requires pyFG library.
+requirements:
+  - pyFG
 """
 
 EXAMPLES = """

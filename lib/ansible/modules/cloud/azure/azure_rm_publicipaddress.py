@@ -53,8 +53,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the Public IP. Use 'present' to create or update a and
-              'absent' to delete.
+            - Assert the state of the Public IP. Use C(present) to create or update a and
+              C(absent) to delete.
         default: present
         choices:
             - absent
@@ -102,14 +102,14 @@ author:
 EXAMPLES = '''
     - name: Create a public ip address
       azure_rm_publicipaddress:
-        resource_group: testing
+        resource_group: myResourceGroup
         name: my_public_ip
         allocation_method: static
         domain_name: foobar
 
     - name: Delete public ip
       azure_rm_publicipaddress:
-        resource_group: testing
+        resource_group: myResourceGroup
         name: my_public_ip
         state: absent
 '''

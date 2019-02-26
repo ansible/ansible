@@ -51,6 +51,7 @@ PASS_VARS = {
     'shell_executable': '_shell',
     'socket': '_socket_path',
     'syslog_facility': '_syslog_facility',
+    'string_conversion_action': '_string_conversion_action',
     'tmpdir': '_tmpdir',
     'verbosity': '_verbosity',
     'version': 'ansible_version',
@@ -748,7 +749,7 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None):
+                 required_if=None, required_by=None):
 
         '''
         Common code for quickly building an ansible module in Python
@@ -777,6 +778,7 @@ class AnsibleModule(object):
         self.required_together = required_together
         self.required_one_of = required_one_of
         self.required_if = required_if
+        self.required_by = required_by
         self.cleanup_files = []
         self._debug = False
         self._diff = False
@@ -789,6 +791,7 @@ class AnsibleModule(object):
         self._warnings = []
         self._deprecations = []
         self._clean = {}
+        self._string_conversion_action = ''
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
@@ -848,6 +851,7 @@ class AnsibleModule(object):
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
             self._check_required_if(required_if)
+            self._check_required_by(required_by)
 
         self._set_defaults(pre=False)
 
@@ -1555,8 +1559,6 @@ class AnsibleModule(object):
             if HAVE_SELINUX and self.selinux_enabled():
                 kwargs['secontext'] = ':'.join(self.selinux_context(path))
             kwargs['size'] = st[stat.ST_SIZE]
-        else:
-            kwargs['state'] = 'absent'
         return kwargs
 
     def _check_locale(self):
@@ -1706,6 +1708,24 @@ class AnsibleModule(object):
                         msg += " found in %s" % " -> ".join(self._options_context)
                     self.fail_json(msg=msg)
 
+    def _check_required_by(self, spec, param=None):
+        if spec is None:
+            return
+        if param is None:
+            param = self.params
+        for (key, value) in spec.items():
+            if key not in param or param[key] is None:
+                continue
+            missing = []
+            # Support strings (single-item lists)
+            if isinstance(value, string_types):
+                value = [value, ]
+            for required in value:
+                if required not in param or param[required] is None:
+                    missing.append(required)
+            if len(missing) > 0:
+                self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
+
     def _check_required_arguments(self, spec=None, param=None):
         ''' ensure all required arguments are present '''
         missing = []
@@ -1839,9 +1859,18 @@ class AnsibleModule(object):
     def _check_type_str(self, value):
         if isinstance(value, string_types):
             return value
-        # Note: This could throw a unicode error if value's __str__() method
-        # returns non-ascii.  Have to port utils.to_bytes() if that happens
-        return str(value)
+
+        # Ignore, warn, or error when converting to a string.
+        # The current default is to warn. Change this in Anisble 2.12 to error.
+        common_msg = 'quote the entire value to ensure it does not change.'
+        if self._string_conversion_action == 'error':
+            msg = common_msg.capitalize()
+            raise TypeError(msg)
+        elif self._string_conversion_action == 'warn':
+            msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
+                   'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+            self.warn(msg)
+        return to_native(value, errors='surrogate_or_strict')
 
     def _check_type_list(self, value):
         if isinstance(value, list):
@@ -2008,12 +2037,45 @@ class AnsibleModule(object):
                         self._check_required_together(v.get('required_together', None), param)
                         self._check_required_one_of(v.get('required_one_of', None), param)
                         self._check_required_if(v.get('required_if', None), param)
+                        self._check_required_by(v.get('required_by', None), param)
 
                     self._set_defaults(pre=False, spec=spec, param=param)
 
                     # handle multi level options (sub argspec)
                     self._handle_options(spec, param)
                 self._options_context.pop()
+
+    def _get_wanted_type(self, wanted, k):
+        if not callable(wanted):
+            if wanted is None:
+                # Mostly we want to default to str.
+                # For values set to None explicitly, return None instead as
+                # that allows a user to unset a parameter
+                wanted = 'str'
+            try:
+                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+            except KeyError:
+                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+        else:
+            # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
+            type_checker = wanted
+            wanted = getattr(wanted, '__name__', to_native(type(wanted)))
+
+        return type_checker, wanted
+
+    def _handle_elements(self, wanted, param, values):
+        type_checker, wanted_name = self._get_wanted_type(wanted, param)
+        validated_params = []
+        for value in values:
+            try:
+                validated_params.append(type_checker(value))
+            except (TypeError, ValueError) as e:
+                msg = "Elements value for option %s" % param
+                if self._options_context:
+                    msg += " found in '%s'" % " -> ".join(self._options_context)
+                msg += " is of type %s and we were unable to convert to %s: %s" % (type(value), wanted_name, to_native(e))
+                self.fail_json(msg=msg)
+        return validated_params
 
     def _check_argument_types(self, spec=None, param=None):
         ''' ensure all arguments have the requested type '''
@@ -2032,28 +2094,25 @@ class AnsibleModule(object):
             if value is None:
                 continue
 
-            if not callable(wanted):
-                if wanted is None:
-                    # Mostly we want to default to str.
-                    # For values set to None explicitly, return None instead as
-                    # that allows a user to unset a parameter
-                    if param[k] is None:
-                        continue
-                    wanted = 'str'
-                try:
-                    type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
-                except KeyError:
-                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-            else:
-                # set the type_checker to the callable, and reset wanted to the callable's name (or type if it doesn't have one, ala MagicMock)
-                type_checker = wanted
-                wanted = getattr(wanted, '__name__', to_native(type(wanted)))
-
+            type_checker, wanted_name = self._get_wanted_type(wanted, k)
             try:
                 param[k] = type_checker(value)
+                wanted_elements = v.get('elements', None)
+                if wanted_elements:
+                    if wanted != 'list' or not isinstance(param[k], list):
+                        msg = "Invalid type %s for option '%s'" % (wanted_name, param)
+                        if self._options_context:
+                            msg += " found in '%s'." % " -> ".join(self._options_context)
+                        msg += ", elements value check is supported only with 'list' type"
+                        self.fail_json(msg=msg)
+                    param[k] = self._handle_elements(wanted_elements, k, param[k])
+
             except (TypeError, ValueError) as e:
-                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s: %s" %
-                               (k, type(value), wanted, to_native(e)))
+                msg = "argument %s is of type %s" % (k, type(value))
+                if self._options_context:
+                    msg += " found in '%s'." % " -> ".join(self._options_context)
+                msg += " and we were unable to convert to %s: %s" % (wanted_name, to_native(e))
+                self.fail_json(msg=msg)
 
     def _set_defaults(self, pre=True, spec=None, param=None):
         if spec is None:
@@ -2849,8 +2908,6 @@ class AnsibleModule(object):
                     if prompt_re.search(stdout) and not data:
                         if encoding:
                             stdout = to_native(stdout, encoding=encoding, errors=errors)
-                        else:
-                            stdout = stdout
                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and

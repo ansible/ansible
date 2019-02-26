@@ -3,6 +3,8 @@ import pytest
 from ansible.module_utils.docker.common import (
     compare_dict_allow_more_present,
     compare_generic,
+    convert_duration_to_nanosecond,
+    parse_healthcheck
 )
 
 DICT_ALLOW_MORE_PRESENT = (
@@ -462,3 +464,52 @@ def test_dict_allow_more_present(entry):
 @pytest.mark.parametrize("entry", COMPARE_GENERIC)
 def test_compare_generic(entry):
     assert compare_generic(entry['a'], entry['b'], entry['method'], entry['type']) == entry['result']
+
+
+def test_convert_duration_to_nanosecond():
+    nanoseconds = convert_duration_to_nanosecond('5s')
+    assert nanoseconds == 5000000000
+    nanoseconds = convert_duration_to_nanosecond('1m5s')
+    assert nanoseconds == 65000000000
+    with pytest.raises(ValueError):
+        convert_duration_to_nanosecond([1, 2, 3])
+    with pytest.raises(ValueError):
+        convert_duration_to_nanosecond('10x')
+
+
+def test_parse_healthcheck():
+    result, disabled = parse_healthcheck({
+        'test': 'sleep 1',
+        'interval': '1s',
+    })
+    assert disabled is False
+    assert result == {
+        'test': ['CMD-SHELL', 'sleep 1'],
+        'interval': 1000000000
+    }
+
+    result, disabled = parse_healthcheck({
+        'test': ['NONE'],
+    })
+    assert result is None
+    assert disabled
+
+    result, disabled = parse_healthcheck({
+        'test': 'sleep 1',
+        'interval': '1s423ms'
+    })
+    assert result == {
+        'test': ['CMD-SHELL', 'sleep 1'],
+        'interval': 1423000000
+    }
+    assert disabled is False
+
+    result, disabled = parse_healthcheck({
+        'test': 'sleep 1',
+        'interval': '1h1m2s3ms4us'
+    })
+    assert result == {
+        'test': ['CMD-SHELL', 'sleep 1'],
+        'interval': 3662003004000
+    }
+    assert disabled is False

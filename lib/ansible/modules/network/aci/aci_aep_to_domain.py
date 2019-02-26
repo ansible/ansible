@@ -17,17 +17,6 @@ module: aci_aep_to_domain
 short_description: Bind AEPs to Physical or Virtual Domains (infra:RsDomP)
 description:
 - Bind AEPs to Physical or Virtual Domains on Cisco ACI fabrics.
-notes:
-- The C(aep) and C(domain) parameters should exist before using this module.
-  The M(aci_aep) and M(aci_domain) can be used for these.
-seealso:
-- module: aci_aep
-- module: aci_domain
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(infra:RsDomP).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.5'
 options:
   aep:
@@ -61,6 +50,17 @@ options:
     type: str
     choices: [ cloudfoundry, kubernetes, microsoft, openshift, openstack, redhat, vmware ]
 extends_documentation_fragment: aci
+notes:
+- The C(aep) and C(domain) parameters should exist before using this module.
+  The M(aci_aep) and M(aci_domain) can be used for these.
+seealso:
+- module: aci_aep
+- module: aci_domain
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(infra:RsDomP).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -213,8 +213,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 VM_PROVIDER_MAPPING = dict(
     cloudfoundry='CloudFoundry',

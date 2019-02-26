@@ -22,20 +22,22 @@ options:
     host:
       description:
         - The host to get the cert for (IP is fine)
-      required: True
+      type: str
+      required: true
     ca_certs:
       description:
         - A PEM file containing a list of root certificates; if present, the cert will be validated against these root certs.
         - Note that this only validates the certificate is signed by the chain; not that the cert is valid for the host presenting it.
-      required: False
+      type: path
     port:
       description:
         - The port to connect to
-      required: True
+      type: int
+      required: true
     timeout:
       description:
         - The timeout in seconds
-      required: False
+      type: int
       default: 10
 
 notes:
@@ -128,10 +130,10 @@ else:
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            ca_certs=dict(required=False, type='path', default=None),
-            host=dict(required=True),
-            port=dict(required=True, type='int'),
-            timeout=dict(required=False, type='int', default=10),
+            ca_certs=dict(type='path'),
+            host=dict(type='str', required=True),
+            port=dict(type='int', required=True),
+            timeout=dict(type='int', default=10),
         ),
     )
 

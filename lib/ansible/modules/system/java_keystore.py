@@ -163,7 +163,7 @@ def run_commands(module, cmd, check_rc=True):
 
 
 def create_file(path, content):
-    with open(path, 'wb') as f:
+    with open(path, 'w') as f:
         f.write(content)
     return path
 

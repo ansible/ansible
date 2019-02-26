@@ -543,15 +543,15 @@
     #      of hello-world. We don't know why this happens, but it happens
     #      often enough to be annoying. That's why we disable this for now,
     #      and simply test that 'Output' is contained in the result.
-    - "'Output' in detach_no_cleanup.ansible_facts.docker_container"
-    # - "'Hello from Docker!' in detach_no_cleanup.ansible_facts.docker_container.Output"
+    - "'Output' in detach_no_cleanup.docker_container"
+    # - "'Hello from Docker!' in detach_no_cleanup.docker_container.Output"
     - detach_no_cleanup_cleanup is changed
-    - "'Output' in detach_cleanup.ansible_facts.docker_container"
-    # - "'Hello from Docker!' in detach_cleanup.ansible_facts.docker_container.Output"
+    - "'Output' in detach_cleanup.docker_container"
+    # - "'Hello from Docker!' in detach_cleanup.docker_container.Output"
     - detach_cleanup_cleanup is not changed
 - assert:
     that:
-    - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.ansible_facts.docker_container.Output"
+    - "'Cannot retrieve result as auto_remove is enabled' == detach_auto_remove.docker_container.Output"
     - detach_auto_remove_cleanup is not changed
   when: docker_py_version is version('2.1.0', '>=')
 
@@ -2373,7 +2373,7 @@
     - memory_swap_1 is changed
     # Sometimes (in particular during integration tests, maybe when not running
     # on a proper VM), memory_swap cannot be set and will be -1 afterwards.
-    - memory_swap_2 is not changed or memory_swap_2.ansible_facts.docker_container.HostConfig.MemorySwap == -1
+    - memory_swap_2 is not changed or memory_swap_2.docker_container.HostConfig.MemorySwap == -1
     - memory_swap_3 is changed
 
 - debug: var=memory_swap_1
@@ -2775,7 +2775,7 @@
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
     state: started
-    pid_mode: "container:{{ pid_mode_helper.ansible_facts.docker_container.Id }}"
+    pid_mode: "container:{{ pid_mode_helper.docker_container.Id }}"
   register: pid_mode_1
   ignore_errors: yes
   # docker-py < 2.0 does not support "arbitrary" pid_mode values
@@ -3098,9 +3098,9 @@
     - recreate_2 is changed
     - recreate_3 is changed
     - recreate_4 is changed
-    - recreate_1.ansible_facts.docker_container.Id != recreate_2.ansible_facts.docker_container.Id
-    - recreate_2.ansible_facts.docker_container.Id == recreate_3.ansible_facts.docker_container.Id
-    - recreate_3.ansible_facts.docker_container.Id != recreate_4.ansible_facts.docker_container.Id
+    - recreate_1.docker_container.Id != recreate_2.docker_container.Id
+    - recreate_2.docker_container.Id == recreate_3.docker_container.Id
+    - recreate_3.docker_container.Id != recreate_4.docker_container.Id
 
 ####################################################################
 ## restart #########################################################
@@ -3139,7 +3139,7 @@
     that:
     - restart_1 is changed
     - restart_2 is changed
-    - restart_1.ansible_facts.docker_container.Id == restart_2.ansible_facts.docker_container.Id
+    - restart_1.docker_container.Id == restart_2.docker_container.Id
 
 ####################################################################
 ## restart_policy ##################################################

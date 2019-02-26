@@ -378,7 +378,7 @@ class Rhsm(RegistrationBase):
         if release:
             args.extend(['--release', release])
 
-        rc, stderr, stdout = self.module.run_command(args, check_rc=True)
+        rc, stderr, stdout = self.module.run_command(args, check_rc=True, expand_user_and_vars=False)
 
     def unsubscribe(self, serials=None):
         '''

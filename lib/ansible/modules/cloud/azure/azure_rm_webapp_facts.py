@@ -50,12 +50,12 @@ author:
 EXAMPLES = '''
     - name: Get facts for web app by name
       azure_rm_webapp_facts:
-        resource_group: testrg
+        resource_group: myResourceGroup
         name: winwebapp1
 
     - name: Get facts for web apps in resource group
       azure_rm_webapp_facts:
-        resource_group: testrg
+        resource_group: myResourceGroup
 
     - name: Get facts for web apps with tags
       azure_rm_webapp_facts:
@@ -75,7 +75,7 @@ webapps:
                 - Id of the web app.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Web/sites/xx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/xx
         name:
             description:
                 - Name of the web app.
@@ -86,6 +86,7 @@ webapps:
                 - Resource group of the web app.
             returned: always
             type: str
+            sample: myResourceGroup
         location:
             description:
                 - Location of the web app.
@@ -96,7 +97,7 @@ webapps:
                 - Id of app service plan used by the web app.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/xxx/providers/Microsoft.Web/serverfarms/xxx
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/serverfarms/xxx
         app_settings:
             description:
                 - App settings of the application. Only returned when web app has app settings.
@@ -167,12 +168,12 @@ class AzureRMWebAppFacts(AzureRMModuleBase):
             name=dict(type='str'),
             resource_group=dict(type='str'),
             tags=dict(type='list'),
-            return_publish_profile=dict(type=bool, default=False)
+            return_publish_profile=dict(type='bool', default=False),
         )
 
         self.results = dict(
             changed=False,
-            webapps=[]
+            webapps=[],
         )
 
         self.name = None

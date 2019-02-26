@@ -109,7 +109,7 @@ Function New-CertFile($module, $cert, $path, $type, $password) {
             $module.FailJson("Failed to write cert to file, cert was null: $($_.Exception.Message)", $_)
         } catch [System.IO.IOException] {
             $module.FailJson("Failed to write cert to file due to IO Exception: $($_.Exception.Message)", $_)
-        } catch [System.UnauthorizedAccessException, System>Security.SecurityException] {
+        } catch [System.UnauthorizedAccessException, System.Security.SecurityException] {
             $module.FailJson("Failed to write cert to file due to permissions: $($_.Exception.Message)", $_)
         } catch {
             $module.FailJson("Failed to write cert to file: $($_.Exception.Message)", $_)

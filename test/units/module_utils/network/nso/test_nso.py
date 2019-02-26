@@ -331,7 +331,7 @@ class MockResponse(object):
         return self.body
 
 
-def mock_call(calls, url, timeout, data=None, headers=None, method=None):
+def mock_call(calls, url, timeout, validate_certs, data=None, headers=None, method=None):
     result = calls[0]
     del calls[0]
 
@@ -366,7 +366,7 @@ class TestJsonRpc(unittest.TestCase):
             MockResponse('exists', {'path': '/not-exists'}, 200, '{"result": {"exists": false}}')
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
-        client = nso.JsonRpc('http://localhost:8080/jsonrpc', 10)
+        client = nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False)
         self.assertEquals(True, client.exists('/exists'))
         self.assertEquals(False, client.exists('/not-exists'))
 
@@ -379,7 +379,7 @@ class TestJsonRpc(unittest.TestCase):
             MockResponse('exists', {'path': '/list{missing-parent}/list{child}'}, 200, '{"error":{"type":"data.not_found"}}')
         ]
         open_url_mock.side_effect = lambda *args, **kwargs: mock_call(calls, *args, **kwargs)
-        client = nso.JsonRpc('http://localhost:8080/jsonrpc', 10)
+        client = nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False)
         self.assertEquals(False, client.exists('/list{missing-parent}/list{child}'))
 
         self.assertEqual(0, len(calls))
@@ -400,7 +400,7 @@ class TestValueBuilder(unittest.TestCase):
             SCHEMA_DATA['/an:id-name-leaf'])
         schema = schema_data['data']
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, 'ansible-nso:id-two', schema)
         self.assertEquals(1, len(vb.values))
         value = vb.values[0]
@@ -425,7 +425,7 @@ class TestValueBuilder(unittest.TestCase):
             SCHEMA_DATA['/an:id-name-values/id-name-value'])
         schema = schema_data['data']
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, 'id-name-value', [{'name': 'ansible-nso:id-one', 'value': '1'}], schema)
         self.assertEquals(1, len(vb.values))
         value = vb.values[0]
@@ -450,7 +450,7 @@ class TestValueBuilder(unittest.TestCase):
             SCHEMA_DATA['/test:test'])
         schema = schema_data['data']
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, [{'name': 'direct', 'direct-child': 'direct-value'},
                                 {'name': 'nested', 'nested-child': 'nested-value'}], schema)
         self.assertEquals(2, len(vb.values))
@@ -480,7 +480,7 @@ class TestValueBuilder(unittest.TestCase):
             SCHEMA_DATA['/test:test'])
         schema = schema_data['data']
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
         self.assertEquals(1, len(vb.values))
         value = vb.values[0]
@@ -503,7 +503,7 @@ class TestValueBuilder(unittest.TestCase):
             SCHEMA_DATA['/test:test'])
         schema = schema_data['data']
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, {'device-list': ['one', 'two']}, schema)
         self.assertEquals(3, len(vb.values))
         value = vb.values[0]
@@ -537,7 +537,7 @@ class TestValueBuilder(unittest.TestCase):
             'c': '3',
         }
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, values, schema)
         self.assertEquals(3, len(vb.values))
         value = vb.values[0]
@@ -570,7 +570,7 @@ class TestValueBuilder(unittest.TestCase):
             'b': '2'
         }
 
-        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10))
+        vb = nso.ValueBuilder(nso.JsonRpc('http://localhost:8080/jsonrpc', 10, False))
         vb.build(parent, None, values, schema)
         self.assertEquals(2, len(vb.values))
         value = vb.values[0]

@@ -1,0 +1,2 @@
+bugfixes:
+  - 'do not return ``state: absent`` when the module returns either ``path`` or ``dest`` but the file does not exists (https://github.com/ansible/ansible/issues/35382)'

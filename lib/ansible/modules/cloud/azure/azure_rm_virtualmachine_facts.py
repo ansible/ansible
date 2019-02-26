@@ -49,16 +49,16 @@ author:
 EXAMPLES = '''
   - name: Get facts for all virtual machines of a resource group
     azure_rm_virtualmachine_facts:
-      resource_group: Testing
+      resource_group: myResourceGroup
 
   - name: Get facts by name
     azure_rm_virtualmachine_facts:
-      resource_group: Testing
+      resource_group: myResourceGroup
       name: vm
 
   - name: Get facts by tags
     azure_rm_virtualmachine_facts:
-      resource_group: Testing
+      resource_group: myResourceGroup
       tags:
         - testing
         - foo:bar
@@ -107,7 +107,8 @@ vms:
                 - Resource ID.
             returned: always
             type: str
-            sample: /subscriptions/xxxx/resourceGroups/myclusterrg/providers/Microsoft.Compute/virtualMachines/mycluster-node-2
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/my
+                     cluster-node-2"
         image:
             description:
                 - Image specification
@@ -167,6 +168,7 @@ vms:
             description:
                 - Resource group.
             type: str
+            sample: myResourceGroup
         state:
             description:
                 - State of the resource.
@@ -347,10 +349,10 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         disks = result['properties']['storageProfile']['dataDisks']
         for disk_index in range(len(disks)):
             new_result['data_disks'].append({
-                'lun': disks[disk_index]['lun'],
-                'disk_size_gb': disks[disk_index]['diskSizeGB'],
-                'managed_disk_type': disks[disk_index]['managedDisk']['storageAccountType'],
-                'caching': disks[disk_index]['caching']
+                'lun': disks[disk_index].get('lun'),
+                'disk_size_gb': disks[disk_index].get('diskSizeGB'),
+                'managed_disk_type': disks[disk_index].get('managedDisk', {}).get('storageAccountType'),
+                'caching': disks[disk_index].get('caching')
             })
 
         new_result['network_interface_names'] = []

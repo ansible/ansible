@@ -35,8 +35,8 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the vm extension. Use 'present' to create or update a vm extension and
-              'absent' to delete a vm extension.
+            - Assert the state of the vm extension. Use C(present) to create or update a vm extension and
+              C(absent) to delete a vm extension.
         default: present
         choices:
             - absent
@@ -80,7 +80,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_extension:
         name: myvmextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_machine_name: myvm
         publisher: Microsoft.Azure.Extensions
         virtual_machine_extension_type: CustomScript
@@ -92,7 +92,7 @@ EXAMPLES = '''
       azure_rm_virtualmachine_extension:
         name: myvmextension
         location: eastus
-        resource_group: Testing
+        resource_group: myResourceGroup
         virtual_machine_name: myvm
         state: absent
 '''

@@ -12,36 +12,39 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: docker_swarm_service
-author: "Dario Zanzico (@dariko), Jason Witkowski (@jwitko)"
+author:
+  - "Dario Zanzico (@dariko)"
+  - "Jason Witkowski (@jwitko)"
+  - "Hannes Ljungberg (@hannseman)"
 short_description: docker swarm service
-description: |
-  Manage docker services. Allows live altering of already defined services
+description:
+  - Manages docker services via a swarm manager node.
 version_added: "2.7"
 options:
   name:
-    required: true
-    type: str
     description:
       - Service name.
       - Corresponds to the C(--name) option of C(docker service create).
-  image:
-    required: true
     type: str
+    required: yes
+  image:
     description:
       - Service image path and tag.
       - Corresponds to the C(IMAGE) parameter of C(docker service create).
+    type: str
+    required: yes
   resolve_image:
-    type: bool
-    default: true
     description:
       - If the current image digest should be resolved from registry and updated if changed.
+    type: bool
+    default: yes
     version_added: 2.8
   state:
-    required: true
-    type: str
-    default: present
     description:
       - Service state.
+    type: str
+    required: yes
+    default: present
     choices:
       - present
       - absent
@@ -49,82 +52,122 @@ options:
     description:
       - List arguments to be passed to the container.
       - Corresponds to the C(ARG) parameter of C(docker service create).
+    type: list
   command:
     description:
       - Command to execute when the container starts.
       - A command may be either a string or a list or a list of strings.
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
+    type: raw
     version_added: 2.8
   constraints:
-    type: list
     description:
       - List of the service constraints.
       - Corresponds to the C(--constraint) option of C(docker service create).
-  placement_preferences:
     type: list
+  placement_preferences:
     description:
       - List of the placement preferences as key value pairs.
       - Corresponds to the C(--placement-pref) option of C(docker service create).
       - Requires API version >= 1.27.
+    type: list
     version_added: 2.8
+  healthcheck:
+    description:
+      - Configure a check that is run to determine whether or not containers for this service are "healthy".
+        See the docs for the L(HEALTHCHECK Dockerfile instruction,https://docs.docker.com/engine/reference/builder/#healthcheck)
+        for details on how healthchecks work.
+      - "I(interval), I(timeout) and I(start_period) are specified as durations. They accept duration as a string in a format
+        that look like: C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+      - Requires API version >= 1.25.
+    type: dict
+    suboptions:
+      test:
+        description:
+          - Command to run to check health.
+          - Must be either a string or a list. If it is a list, the first item must be one of C(NONE), C(CMD) or C(CMD-SHELL).
+        type: raw
+      interval:
+        description:
+          - Time between running the check.
+        type: str
+      timeout:
+        description:
+          - Maximum time to allow one check to run.
+        type: str
+      retries:
+        description:
+          - Consecutive failures needed to report unhealthy. It accept integer value.
+        type: int
+      start_period:
+        description:
+          - Start period for the container to initialize before starting health-retries countdown.
+        type: str
+    version_added: "2.8"
   hostname:
-    type: str
     description:
       - Container hostname.
       - Corresponds to the C(--hostname) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: str
   tty:
-    type: bool
     description:
       - Allocate a pseudo-TTY.
       - Corresponds to the C(--tty) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: bool
   dns:
-    type: list
     description:
       - List of custom DNS servers.
       - Corresponds to the C(--dns) option of C(docker service create).
       - Requires API version >= 1.25.
-  dns_search:
     type: list
+  dns_search:
     description:
       - List of custom DNS search domains.
       - Corresponds to the C(--dns-search) option of C(docker service create).
       - Requires API version >= 1.25.
-  dns_options:
     type: list
+  dns_options:
     description:
       - List of custom DNS options.
       - Corresponds to the C(--dns-option) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: list
   force_update:
-    type: bool
-    default: false
     description:
       - Force update even if no changes require it.
       - Corresponds to the C(--force) option of C(docker service update).
       - Requires API version >= 1.25.
+    type: bool
+    default: no
+  groups:
+    description:
+      - List of additional group names and/or IDs that the container process will run as.
+      - Corresponds to the C(--group) option of C(docker service update).
+      - Requires API version >= 1.25.
+    type: list
+    version_added: "2.8"
   labels:
-    type: dict
     description:
       - Dictionary of key value pairs.
       - Corresponds to the C(--label) option of C(docker service create).
-  container_labels:
     type: dict
+  container_labels:
     description:
       - Dictionary of key value pairs.
       - Corresponds to the C(--container-label) option of C(docker service create).
+    type: dict
   endpoint_mode:
-    type: str
     description:
       - Service endpoint mode.
       - Corresponds to the C(--endpoint-mode) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: str
     choices:
       - vip
       - dnsrr
   env:
-    type: raw
     description:
       - List or dictionary of the service environment variables.
       - If passed a list each items need to be in the format of C(KEY=VALUE).
@@ -132,36 +175,36 @@ options:
         booleans or other types by the YAML parser must be quoted (e.g. C("true"))
         in order to avoid data loss.
       - Corresponds to the C(--env) option of C(docker service create).
+    type: raw
   env_files:
-    type: list
     description:
       - List of paths to files, present on the target, containing environment variables C(FOO=BAR).
       - The order of the list is significant in determining the value assigned to a
         variable that shows up more than once.
       - If variable also present in I(env), then I(env) value will override.
+    type: list
     version_added: "2.8"
   log_driver:
-    type: str
     description:
       - Configure the logging driver for a service.
       - Corresponds to the C(--log-driver) option of C(docker service create).
+    type: str
   log_driver_options:
-    type: dict
     description:
       - Options for service logging driver.
       - Corresponds to the C(--log-opt) option of C(docker service create).
+    type: dict
   limit_cpu:
-    type: float
     description:
       - Service CPU limit. C(0) equals no limit.
       - Corresponds to the C(--limit-cpu) option of C(docker service create).
-  reserve_cpu:
     type: float
+  reserve_cpu:
     description:
       - Service CPU reservation. C(0) equals no reservation.
       - Corresponds to the C(--reserve-cpu) option of C(docker service create).
+    type: float
   limit_memory:
-    type: str
     description:
       - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -169,8 +212,8 @@ options:
       - C(0) equals no limit.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--limit-memory) option of C(docker service create).
-  reserve_memory:
     type: str
+  reserve_memory:
     description:
       - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
         Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
@@ -178,230 +221,265 @@ options:
       - C(0) equals no reservation.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--reserve-memory) option of C(docker service create).
-  mode:
     type: str
-    default: replicated
+  mode:
     description:
       - Service replication mode.
       - Corresponds to the C(--mode) option of C(docker service create).
+    type: str
+    default: replicated
   mounts:
-    type: list
     description:
       - List of dictionaries describing the service mounts.
       - Corresponds to the C(--mount) option of C(docker service create).
+    type: list
     suboptions:
       source:
-        type: str
-        required: true
         description:
           - Mount source (e.g. a volume name or a host path).
-      target:
         type: str
-        required: true
+        required: yes
+      target:
         description:
           - Container path.
+        type: str
+        required: yes
       type:
+        description:
+          - The mount type.
         type: str
         default: bind
         choices:
           - bind
           - volume
           - tmpfs
-        description:
-          - The mount type.
       readonly:
-        type: bool
-        default: false
         description:
           - Whether the mount should be read-only.
+        type: bool
+        default: no
   secrets:
-    type: list
     description:
       - List of dictionaries describing the service secrets.
       - Corresponds to the C(--secret) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: list
     suboptions:
       secret_id:
-        type: str
-        required: true
         description:
           - Secret's ID.
-      secret_name:
         type: str
-        required: true
+        required: yes
+      secret_name:
         description:
           - Secret's name as defined at its creation.
-      filename:
         type: str
+        required: yes
+      filename:
         description:
           - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
+        type: str
       uid:
-        type: int
-        default: 0
         description:
           - UID of the secret file's owner.
-      gid:
         type: int
         default: 0
+      gid:
         description:
           - GID of the secret file's group.
-      mode:
         type: int
-        default: 0o444
+        default: 0
+      mode:
         description:
           - File access mode inside the container.
+        type: int
+        default: 0o444
   configs:
-    type: list
     description:
       - List of dictionaries describing the service configs.
       - Corresponds to the C(--config) option of C(docker service create).
       - Requires API version >= 1.30.
+    type: list
     suboptions:
       config_id:
-        type: str
-        required: true
         description:
           - Config's ID.
-      config_name:
         type: str
-        required: true
+        required: yes
+      config_name:
         description:
           - Config's name as defined at its creation.
-      filename:
         type: str
-        required: true
+        required: yes
+      filename:
         description:
           - Name of the file containing the config. Defaults to the I(config_name) if not specified.
+        type: str
+        required: yes
       uid:
-        type: int
-        default: 0
         description:
           - UID of the config file's owner.
-      gid:
         type: int
         default: 0
+      gid:
         description:
           - GID of the config file's group.
+        type: int
+        default: 0
       mode:
-        type: str
-        default: "0o444"
         description:
           - File access mode inside the container.
+        type: str
+        default: "0o444"
   networks:
-    type: list
     description:
       - List of the service networks names.
+      - Prior to API version 1.29, updating and removing networks is not supported.
+        If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
-  publish:
     type: list
+  stop_grace_period:
+    description:
+        - Time to wait before force killing a container.
+        - "Accepts a duration as a string in a format that look like:
+          C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+        - Corresponds to the C(--stop-grace-period) option of C(docker service create).
+    type: str
+    version_added: "2.8"
+  stop_signal:
+    description:
+      - Override default signal used to stop the container.
+      - Corresponds to the C(--stop-signal) option of C(docker service create).
+    type: str
+    version_added: "2.8"
+  publish:
     description:
       - List of dictionaries describing the service published ports.
       - Corresponds to the C(--publish) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: list
     suboptions:
       published_port:
-        type: int
-        required: true
         description:
           - The port to make externally available.
-      target_port:
         type: int
-        required: true
+        required: yes
+      target_port:
         description:
           - The port inside the container to expose.
+        type: int
+        required: yes
       protocol:
-        type: str
-        default: tcp
         description:
           - What protocol to use.
+        type: str
+        default: tcp
         choices:
           - tcp
           - udp
       mode:
-        type: str
         description:
           - What publish mode to use.
+          - Service will be removed and recreated when changed.
           - Requires API version >= 1.32.
+        type: str
         choices:
           - ingress
           - host
   replicas:
-    type: int
-    default: -1
     description:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
       - If set to C(-1), and service is not present, service replicas will be set to C(1).
       - If set to C(-1), and service is present, service replicas will be unchanged.
       - Corresponds to the C(--replicas) option of C(docker service create).
+    type: int
+    default: -1
   restart_policy:
-    type: str
     description:
       - Restart condition of the service.
       - Corresponds to the C(--restart-condition) option of C(docker service create).
+    type: str
     choices:
       - none
       - on-failure
       - any
   restart_policy_attempts:
-    type: int
     description:
       - Maximum number of service restarts.
       - Corresponds to the C(--restart-condition) option of C(docker service create).
-  restart_policy_delay:
     type: int
+  restart_policy_delay:
     description:
       - Delay between restarts.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--restart-delay) option of C(docker service create).
+    type: raw
   restart_policy_window:
-    type: int
     description:
       - Restart policy evaluation window.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--restart-window) option of C(docker service create).
+    type: raw
   update_delay:
-    type: int
-    default: 10
     description:
-      - Rolling update delay in nanoseconds.
+      - Rolling update delay.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-delay) option of C(docker service create).
+      - Before Ansible 2.8, the default value for this option was C(10).
+    type: raw
   update_parallelism:
-    type: int
-    default: 1
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
-  update_failure_action:
+      - Before Ansible 2.8, the default value for this option was C(1).
     type: int
+  update_failure_action:
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
+    type: str
     choices:
       - continue
       - pause
   update_monitor:
-    type: int
     description:
-      - Time to monitor updated tasks for failures, in nanoseconds.
+      - Time to monitor updated tasks for failures.
+      - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-monitor) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: raw
   update_max_failure_ratio:
-    type: float
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Corresponds to the C(--update-max-failure-ratio) option of C(docker service create).
       - Requires API version >= 1.25.
+    type: float
   update_order:
-    type: str
     description:
       - Specifies the order of operations when rolling out an updated task.
       - Corresponds to the C(--update-order) option of C(docker service create).
       - Requires API version >= 1.29.
-  user:
     type: str
+    choices:
+        - stop-first
+        - start-first
+  user:
     description:
       - Sets the username or UID used for the specified command.
       - Before Ansible 2.8, the default value for this option was C(root).
       - The default has been removed so that the user defined in the image is used if no user is specified here.
       - Corresponds to the C(--user) option of C(docker service create).
+    type: str
+  working_dir:
+    description:
+      - Path to the working directory.
+      - Corresponds to the C(--workdir) option of C(docker service create).
+    type: str
+    version_added: "2.8"
 extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
@@ -561,10 +639,23 @@ EXAMPLES = '''
   docker_swarm_service:
     name: myservice
     state: absent
+
+- name: Start service with healthcheck
+  docker_swarm_service:
+    name: myservice
+    image: nginx:1.13
+    healthcheck:
+      # Check if nginx server is healthy by curl'ing the server.
+      # If this fails or timeouts, the healthcheck fails.
+      test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 '''
 
-import time
 import shlex
+import time
 import operator
 
 from distutils.version import LooseVersion
@@ -573,6 +664,9 @@ from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,
     DockerBaseClass,
+    convert_duration_to_nanosecond,
+    parse_healthcheck
+
 )
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils.six import string_types
@@ -583,9 +677,13 @@ try:
     from docker.utils import (
         parse_repository_tag,
         parse_env_file,
-        format_environment
+        format_environment,
     )
-    from docker.errors import APIError, DockerException
+    from docker.errors import (
+        APIError,
+        DockerException,
+        NotFound,
+    )
 except ImportError:
     # missing docker-py handled in ansible.module_utils.docker.common
     pass
@@ -635,6 +733,23 @@ def get_docker_environment(env, env_files):
     return sorted(env_list)
 
 
+def get_nanoseconds_from_raw_option(name, value):
+    if value is None:
+        return None
+    elif isinstance(value, int):
+        return value
+    elif isinstance(value, string_types):
+        try:
+            return int(value)
+        except ValueError:
+            return convert_duration_to_nanosecond(value)
+    else:
+        raise ValueError(
+            'Invalid type for %s %s (%s). Only string or int allowed.'
+            % (name, value, type(value))
+        )
+
+
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
@@ -643,12 +758,15 @@ class DockerService(DockerBaseClass):
         self.args = None
         self.endpoint_mode = None
         self.dns = None
+        self.healthcheck = None
+        self.healthcheck_disabled = None
         self.hostname = None
         self.tty = None
         self.dns_search = None
         self.dns_options = None
         self.env = None
         self.force_update = None
+        self.groups = None
         self.log_driver = None
         self.log_driver_options = None
         self.labels = None
@@ -664,6 +782,8 @@ class DockerService(DockerBaseClass):
         self.secrets = None
         self.constraints = None
         self.networks = None
+        self.stop_grace_period = None
+        self.stop_signal = None
         self.publish = None
         self.placement_preferences = None
         self.replicas = -1
@@ -679,6 +799,8 @@ class DockerService(DockerBaseClass):
         self.update_monitor = None
         self.update_max_failure_ratio = None
         self.update_order = None
+        self.working_dir = None
+        self.can_update_networks = None
 
     def get_facts(self):
         return {
@@ -692,9 +814,12 @@ class DockerService(DockerBaseClass):
             'dns': self.dns,
             'dns_search': self.dns_search,
             'dns_options': self.dns_options,
+            'healthcheck': self.healthcheck,
+            'healthcheck_disabled': self.healthcheck_disabled,
             'hostname': self.hostname,
             'env': self.env,
             'force_update': self.force_update,
+            'groups': self.groups,
             'log_driver': self.log_driver,
             'log_driver_options': self.log_driver_options,
             'publish': self.publish,
@@ -706,6 +831,8 @@ class DockerService(DockerBaseClass):
             'replicas': self.replicas,
             'endpoint_mode': self.endpoint_mode,
             'restart_policy': self.restart_policy,
+            'stop_grace_period': self.stop_grace_period,
+            'stop_signal': self.stop_signal,
             'limit_cpu': self.limit_cpu,
             'limit_memory': self.limit_memory,
             'reserve_cpu': self.reserve_cpu,
@@ -718,13 +845,15 @@ class DockerService(DockerBaseClass):
             'update_failure_action': self.update_failure_action,
             'update_monitor': self.update_monitor,
             'update_max_failure_ratio': self.update_max_failure_ratio,
-            'update_order': self.update_order
+            'update_order': self.update_order,
+            'working_dir': self.working_dir,
         }
 
     @staticmethod
-    def from_ansible_params(ap, old_service, image_digest):
+    def from_ansible_params(ap, old_service, image_digest, can_update_networks):
         s = DockerService()
         s.image = image_digest
+        s.can_update_networks = can_update_networks
         s.constraints = ap['constraints']
         s.placement_preferences = ap['placement_preferences']
         s.args = ap['args']
@@ -732,6 +861,7 @@ class DockerService(DockerBaseClass):
         s.dns = ap['dns']
         s.dns_search = ap['dns_search']
         s.dns_options = ap['dns_options']
+        s.healthcheck, s.healthcheck_disabled = parse_healthcheck(ap['healthcheck'])
         s.hostname = ap['hostname']
         s.tty = ap['tty']
         s.log_driver = ap['log_driver']
@@ -742,17 +872,15 @@ class DockerService(DockerBaseClass):
         s.reserve_cpu = ap['reserve_cpu']
         s.mode = ap['mode']
         s.networks = ap['networks']
+        s.stop_signal = ap['stop_signal']
         s.restart_policy = ap['restart_policy']
         s.restart_policy_attempts = ap['restart_policy_attempts']
-        s.restart_policy_delay = ap['restart_policy_delay']
-        s.restart_policy_window = ap['restart_policy_window']
-        s.update_delay = ap['update_delay']
         s.update_parallelism = ap['update_parallelism']
         s.update_failure_action = ap['update_failure_action']
-        s.update_monitor = ap['update_monitor']
         s.update_max_failure_ratio = ap['update_max_failure_ratio']
         s.update_order = ap['update_order']
         s.user = ap['user']
+        s.working_dir = ap['working_dir']
 
         s.command = ap['command']
         if isinstance(s.command, string_types):
@@ -785,8 +913,32 @@ class DockerService(DockerBaseClass):
 
         s.env = get_docker_environment(ap['env'], ap['env_files'])
 
+        s.restart_policy_delay = get_nanoseconds_from_raw_option(
+            'restart_policy_delay',
+            ap['restart_policy_delay']
+        )
+        s.restart_policy_window = get_nanoseconds_from_raw_option(
+            'restart_policy_window',
+            ap['restart_policy_window']
+        )
+        if ap['stop_grace_period'] is not None:
+            s.stop_grace_period = convert_duration_to_nanosecond(ap['stop_grace_period'])
+        s.update_delay = get_nanoseconds_from_raw_option(
+            'update_delay',
+            ap['update_delay']
+        )
+        s.update_monitor = get_nanoseconds_from_raw_option(
+            'update_monitor',
+            ap['update_monitor']
+        )
+
         if ap['force_update']:
             s.force_update = int(str(time.time()).replace('.', ''))
+
+        if ap['groups'] is not None:
+            # In case integers are passed as groups, we need to convert them to
+            # strings as docker internally treats them as strings.
+            s.groups = [str(g) for g in ap['groups']]
 
         if ap['replicas'] == -1:
             if old_service:
@@ -846,6 +998,7 @@ class DockerService(DockerBaseClass):
                 service_s['gid'] = param_m['gid']
                 service_s['mode'] = param_m['mode']
                 s.secrets.append(service_s)
+
         return s
 
     def compare(self, os):
@@ -871,7 +1024,7 @@ class DockerService(DockerBaseClass):
             differences.add('secrets', parameter=self.secrets, active=os.secrets)
         if self.networks is not None and self.networks != (os.networks or []):
             differences.add('networks', parameter=self.networks, active=os.networks)
-            needs_rebuild = True
+            needs_rebuild = not self.can_update_networks
         if self.replicas != os.replicas:
             differences.add('replicas', parameter=self.replicas, active=os.replicas)
         if self.command is not None and self.command != (os.command or []):
@@ -882,6 +1035,8 @@ class DockerService(DockerBaseClass):
             differences.add('constraints', parameter=self.constraints, active=os.constraints)
         if self.placement_preferences is not None and self.placement_preferences != (os.placement_preferences or []):
             differences.add('placement_preferences', parameter=self.placement_preferences, active=os.placement_preferences)
+        if self.groups is not None and self.groups != (os.groups or []):
+            differences.add('groups', parameter=self.groups, active=os.groups)
         if self.labels is not None and self.labels != (os.labels or {}):
             differences.add('labels', parameter=self.labels, active=os.labels)
         if self.limit_cpu is not None and self.limit_cpu != os.limit_cpu:
@@ -894,6 +1049,10 @@ class DockerService(DockerBaseClass):
             differences.add('reserve_memory', parameter=self.reserve_memory, active=os.reserve_memory)
         if self.container_labels is not None and self.container_labels != (os.container_labels or {}):
             differences.add('container_labels', parameter=self.container_labels, active=os.container_labels)
+        if self.stop_signal is not None and self.stop_signal != os.stop_signal:
+            differences.add('stop_signal', parameter=self.stop_signal, active=os.stop_signal)
+        if self.stop_grace_period is not None and self.stop_grace_period != os.stop_grace_period:
+            differences.add('stop_grace_period', parameter=self.stop_grace_period, active=os.stop_grace_period)
         if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
         if self.restart_policy is not None and self.restart_policy != os.restart_policy:
@@ -927,13 +1086,24 @@ class DockerService(DockerBaseClass):
             differences.add('dns_search', parameter=self.dns_search, active=os.dns_search)
         if self.dns_options is not None and self.dns_options != (os.dns_options or []):
             differences.add('dns_options', parameter=self.dns_options, active=os.dns_options)
+        if self.has_healthcheck_changed(os):
+            differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
         if self.hostname is not None and self.hostname != os.hostname:
             differences.add('hostname', parameter=self.hostname, active=os.hostname)
         if self.tty is not None and self.tty != os.tty:
             differences.add('tty', parameter=self.tty, active=os.tty)
+        if self.working_dir is not None and self.working_dir != os.working_dir:
+            differences.add('working_dir', parameter=self.working_dir, active=os.working_dir)
         if self.force_update:
             force_update = True
         return not differences.empty or force_update, differences, needs_rebuild, force_update
+
+    def has_healthcheck_changed(self, old_publish):
+        if self.healthcheck_disabled is False and self.healthcheck is None:
+            return False
+        if self.healthcheck_disabled and old_publish.healthcheck is None:
+            return False
+        return self.healthcheck != old_publish.healthcheck
 
     def has_publish_changed(self, old_publish):
         if self.publish is None:
@@ -1040,13 +1210,23 @@ class DockerService(DockerBaseClass):
             container_spec_args['user'] = self.user
         if self.container_labels is not None:
             container_spec_args['labels'] = self.container_labels
+        if self.healthcheck is not None:
+            container_spec_args['healthcheck'] = types.Healthcheck(**self.healthcheck)
         if self.hostname is not None:
             container_spec_args['hostname'] = self.hostname
+        if self.stop_grace_period is not None:
+            container_spec_args['stop_grace_period'] = self.stop_grace_period
+        if self.stop_signal is not None:
+            container_spec_args['stop_signal'] = self.stop_signal
         if self.tty is not None:
             container_spec_args['tty'] = self.tty
+        if self.groups is not None:
+            container_spec_args['groups'] = self.groups
+        if self.working_dir is not None:
+            container_spec_args['workdir'] = self.working_dir
         if secrets is not None:
             container_spec_args['secrets'] = secrets
-        if self.mounts is not None:
+        if mounts is not None:
             container_spec_args['mounts'] = mounts
         if dns_config is not None:
             container_spec_args['dns_config'] = dns_config
@@ -1210,20 +1390,10 @@ class DockerServiceManager(object):
         return [{'name': n['Name'], 'id': n['Id']} for n in self.client.networks()]
 
     def get_service(self, name):
-        # The Docker API allows filtering services by name but the filter looks
-        # for a substring match, not an exact match. (Filtering for "foo" would
-        # return information for services "foobar" and "foobuzz" even if the
-        # service "foo" doesn't exist.) Avoid incorrectly determining that a
-        # service is present by filtering the list of services returned from the
-        # Docker API so that the name must be an exact match.
-        raw_data = [
-            service for service in self.client.services(filters={'name': name})
-            if service['Spec']['Name'] == name
-        ]
-        if len(raw_data) == 0:
+        try:
+            raw_data = self.client.inspect_service(name)
+        except NotFound:
             return None
-
-        raw_data = raw_data[0]
         ds = DockerService()
 
         task_template_data = raw_data['Spec']['TaskTemplate']
@@ -1232,6 +1402,19 @@ class DockerServiceManager(object):
         ds.env = task_template_data['ContainerSpec'].get('Env')
         ds.command = task_template_data['ContainerSpec'].get('Command')
         ds.args = task_template_data['ContainerSpec'].get('Args')
+        ds.groups = task_template_data['ContainerSpec'].get('Groups')
+        ds.stop_grace_period = task_template_data['ContainerSpec'].get('StopGracePeriod')
+        ds.stop_signal = task_template_data['ContainerSpec'].get('StopSignal')
+        ds.working_dir = task_template_data['ContainerSpec'].get('Dir')
+
+        healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
+        if healthcheck_data:
+            options = ['test', 'interval', 'timeout', 'start_period', 'retries']
+            healthcheck = dict(
+                (key.lower(), value) for key, value in healthcheck_data.items()
+                if value is not None and key.lower() in options
+            )
+            ds.healthcheck = healthcheck
 
         update_config_data = raw_data['Spec'].get('UpdateConfig')
         if update_config_data:
@@ -1404,6 +1587,10 @@ class DockerServiceManager(object):
         digest = distribution_data['Descriptor']['digest']
         return '%s@%s' % (name, digest)
 
+    def can_update_networks(self):
+        # Before Docker API 1.29 adding/removing networks was not supported
+        return self.client.docker_api_version >= LooseVersion('1.29')
+
     def run(self):
         self.diff_tracker = DifferenceTracker()
         module = self.client.module
@@ -1415,23 +1602,30 @@ class DockerServiceManager(object):
                 resolve=module.params['resolve_image']
             )
         except DockerException as e:
-            return module.fail_json(
-                msg="Error looking for an image named %s: %s" % (image, e))
+            self.client.fail(
+                'Error looking for an image named %s: %s'
+                % (image, e)
+            )
+
         try:
             current_service = self.get_service(module.params['name'])
         except Exception as e:
-            return module.fail_json(
-                msg='Error looking for service named %s: %s' %
-                    (module.params['name'], e))
+            self.client.fail(
+                'Error looking for service named %s: %s'
+                % (module.params['name'], e)
+            )
         try:
+            can_update_networks = self.can_update_networks()
             new_service = DockerService.from_ansible_params(
                 module.params,
                 current_service,
-                image_digest
+                image_digest,
+                can_update_networks
             )
         except Exception as e:
-            return module.fail_json(
-                msg='Error parsing module parameters: %s' % e)
+            return self.client.fail(
+                'Error parsing module parameters: %s' % e
+            )
 
         changed = False
         msg = 'noop'
@@ -1514,49 +1708,54 @@ def _detect_publish_mode_usage(client):
     return False
 
 
+def _detect_healthcheck_start_period(client):
+    return client.module.params['healthcheck']['start_period'] is not None
+
+
 def main():
     argument_spec = dict(
-        name=dict(required=True),
+        name=dict(type='str', required=True),
         image=dict(type='str'),
-        state=dict(default='present', choices=['present', 'absent']),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
         mounts=dict(type='list', elements='dict', options=dict(
             source=dict(type='str', required=True),
             target=dict(type='str', required=True),
             type=dict(
-                default='bind',
                 type='str',
+                default='bind',
                 choices=['bind', 'volume', 'tmpfs']
             ),
-            readonly=dict(default=False, type='bool'),
+            readonly=dict(type='bool', default=False),
         )),
         configs=dict(type='list', elements='dict', options=dict(
             config_id=dict(type='str', required=True),
             config_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(default=0, type='int'),
-            gid=dict(default=0, type='int'),
-            mode=dict(default=0o444, type='int'),
+            uid=dict(type='int', default=0),
+            gid=dict(type='int', default=0),
+            mode=dict(type='int', default=0o444),
         )),
         secrets=dict(type='list', elements='dict', options=dict(
             secret_id=dict(type='str', required=True),
             secret_name=dict(type='str', required=True),
             filename=dict(type='str'),
-            uid=dict(default=0, type='int'),
-            gid=dict(default=0, type='int'),
-            mode=dict(default=0o444, type='int'),
+            uid=dict(type='int', default=0),
+            gid=dict(type='int', default=0),
+            mode=dict(type='int', default=0o444),
         )),
-        networks=dict(type='list'),
+        networks=dict(type='list', elements='str'),
         command=dict(type='raw'),
-        args=dict(type='list'),
+        args=dict(type='list', elements='str'),
         env=dict(type='raw'),
         env_files=dict(type='list', elements='path'),
-        force_update=dict(default=False, type='bool'),
+        force_update=dict(type='bool', default=False),
+        groups=dict(type='list', elements='str'),
         log_driver=dict(type='str'),
         log_driver_options=dict(type='dict'),
         publish=dict(type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
-            protocol=dict(default='tcp', type='str', choices=('tcp', 'udp')),
+            protocol=dict(type='str', default='tcp', choices=('tcp', 'udp')),
             mode=dict(type='str', choices=('ingress', 'host')),
         )),
         constraints=dict(type='list'),
@@ -1565,28 +1764,38 @@ def main():
         dns=dict(type='list'),
         dns_search=dict(type='list'),
         dns_options=dict(type='list'),
+        healthcheck=dict(type='dict', options=dict(
+            test=dict(type='raw'),
+            interval=dict(type='str'),
+            timeout=dict(type='str'),
+            start_period=dict(type='str'),
+            retries=dict(type='int'),
+        )),
         hostname=dict(type='str'),
         labels=dict(type='dict'),
         container_labels=dict(type='dict'),
-        mode=dict(default='replicated', type='str'),
-        replicas=dict(default=-1, type='int'),
-        endpoint_mode=dict(choices=['vip', 'dnsrr']),
+        mode=dict(type='str', default='replicated'),
+        replicas=dict(type='int', default=-1),
+        endpoint_mode=dict(type='str', choices=['vip', 'dnsrr']),
+        stop_grace_period=dict(type='str'),
+        stop_signal=dict(type='str'),
         limit_cpu=dict(type='float'),
         limit_memory=dict(type='str'),
         reserve_cpu=dict(type='float'),
         reserve_memory=dict(type='str'),
-        resolve_image=dict(default=True, type='bool'),
-        restart_policy=dict(choices=['none', 'on-failure', 'any']),
-        restart_policy_delay=dict(type='int'),
+        resolve_image=dict(type='bool', default=True),
+        restart_policy=dict(type='str', choices=['none', 'on-failure', 'any']),
+        restart_policy_delay=dict(type='raw'),
         restart_policy_attempts=dict(type='int'),
-        restart_policy_window=dict(type='int'),
-        update_delay=dict(default=10, type='int'),
-        update_parallelism=dict(default=1, type='int'),
-        update_failure_action=dict(choices=['continue', 'pause']),
-        update_monitor=dict(type='int'),
+        restart_policy_window=dict(type='raw'),
+        update_delay=dict(type='raw'),
+        update_parallelism=dict(type='int'),
+        update_failure_action=dict(type='str', choices=['continue', 'pause']),
+        update_monitor=dict(type='raw'),
         update_max_failure_ratio=dict(type='float'),
-        update_order=dict(type='str'),
-        user=dict(type='str')
+        update_order=dict(type='str', choices=['stop-first', 'start-first']),
+        user=dict(type='str'),
+        working_dir=dict(type='str'),
     )
 
     option_minimal_versions = dict(
@@ -1595,13 +1804,16 @@ def main():
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         endpoint_mode=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+        groups=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         update_max_failure_ratio=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_monitor=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
+        stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         placement_preferences=dict(docker_py_version='2.4.0', docker_api_version='1.27'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         # specials
@@ -1610,6 +1822,12 @@ def main():
             docker_api_version='1.25',
             detect_usage=_detect_publish_mode_usage,
             usage_msg='set publish.mode'
+        ),
+        healthcheck_start_period=dict(
+            docker_py_version='2.4.0',
+            docker_api_version='1.25',
+            detect_usage=_detect_healthcheck_start_period,
+            usage_msg='set healthcheck.start_period'
         )
     )
 

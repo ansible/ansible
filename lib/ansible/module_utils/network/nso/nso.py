@@ -1,23 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2017 Cisco and/or its affiliates.
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-
+# Copyright: (c) 2017, Cisco and/or its affiliates.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import open_url
@@ -35,10 +19,11 @@ except NameError:
 
 
 nso_argument_spec = dict(
-    url=dict(required=True),
-    username=dict(fallback=(env_fallback, ['ANSIBLE_NET_USERNAME']), required=True),
-    password=dict(fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD']), required=True, no_log=True),
-    timeout=dict(default=300, type=int)
+    url=dict(type='str', required=True),
+    username=dict(type='str', required=True, fallback=(env_fallback, ['ANSIBLE_NET_USERNAME'])),
+    password=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['ANSIBLE_NET_PASSWORD'])),
+    timeout=dict(type='int', default=300),
+    validate_certs=dict(type='bool', default=False)
 )
 
 
@@ -68,10 +53,10 @@ class NsoException(Exception):
 
 
 class JsonRpc(object):
-    def __init__(self, url, timeout):
+    def __init__(self, url, timeout, validate_certs):
         self._url = url
         self._timeout = timeout
-
+        self._validate_certs = validate_certs
         self._id = 0
         self._trans = {}
         self._headers = {'Content-Type': 'application/json'}
@@ -240,7 +225,8 @@ class JsonRpc(object):
         data = json.dumps(payload)
         resp = open_url(
             self._url, timeout=self._timeout,
-            method='POST', data=data, headers=self._headers)
+            method='POST', data=data, headers=self._headers,
+            validate_certs=self._validate_certs)
         if resp.code != 200:
             raise NsoException(
                 'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
@@ -651,7 +637,9 @@ class ValueBuilder(object):
 
 
 def connect(params):
-    client = JsonRpc(params['url'], params['timeout'])
+    client = JsonRpc(params['url'],
+                     params['timeout'],
+                     params['validate_certs'])
     client.login(params['username'], params['password'])
     return client
 

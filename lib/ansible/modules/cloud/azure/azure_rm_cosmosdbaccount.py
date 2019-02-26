@@ -115,7 +115,7 @@ options:
         suboptions:
             subnet:
                 description:
-                    - It can be a string containing resource if of a subnet.
+                    - It can be a string containing resource id of a subnet.
                     - It can be a dictionary containing 'resource_group', 'virtual_network_name' and 'subnet_name'
             ignore_missing_vnet_service_endpoint:
                 description:
@@ -129,7 +129,7 @@ options:
     state:
       description:
         - Assert the state of the Database Account.
-        - Use 'present' to create or update an Database Account and 'absent' to delete it.
+        - Use C(present) to create or update an Database Account and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -147,7 +147,7 @@ author:
 EXAMPLES = '''
   - name: Create Cosmos DB Account - min
     azure_rm_cosmosdbaccount:
-      resource_group: testResourceGroup
+      resource_group: myResourceGroup
       name: ddb1
       location: westus
       geo_rep_locations:
@@ -157,7 +157,7 @@ EXAMPLES = '''
 
   - name: Create Cosmos DB Account - max
     azure_rm_cosmosdbaccount:
-      resource_group: testResourceGroup
+      resource_group: myResourceGroup
       name: ddb1
       location: westus
       kind: mongo_db
@@ -181,7 +181,7 @@ id:
         - The unique resource identifier of the database account.
     returned: always
     type: str
-    sample: /subscriptions/subid/resourceGroups/rg1/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DocumentDB/databaseAccounts/ddb1
 '''
 
 import time
@@ -284,6 +284,9 @@ class AzureRMCosmosDBAccount(AzureRMModuleBase):
                     id=dict(
                         type='str',
                         required=True
+                    ),
+                    ignore_missing_vnet_service_endpoint=dict(
+                        type='bool'
                     )
                 )
             ),

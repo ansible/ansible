@@ -236,7 +236,7 @@ EXAMPLES = '''
 
 ---
 # Typical output of a vsphere_facts run on a guest
-# If vmware tools is not installed, ipadresses with return None
+# If vmware tools is not installed, ipaddresses with return None
 
 - hw_eth0:
   - addresstype: "assigned"

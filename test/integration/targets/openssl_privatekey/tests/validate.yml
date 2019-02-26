@@ -1,6 +1,6 @@
 ---
 - name: Validate privatekey1 (test - RSA key with size 4096 bits)
-  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey1.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey1
 
 - name: Validate privatekey1 (assert - RSA key with size 4096 bits)
@@ -10,7 +10,7 @@
 
 
 - name: Validate privatekey2 (test - RSA key with size 2048 bits)
-  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey2.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey2.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey2
 
 - name: Validate privatekey2 (assert - RSA key with size 2048 bits)
@@ -20,7 +20,7 @@
 
 
 - name: Validate privatekey3 (test - DSA key with size 3072 bits)
-  shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  shell: "openssl dsa -noout -text -in {{ output_dir }}/privatekey3.pem  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey3
 
 - name: Validate privatekey3 (assert - DSA key with size 3072 bits)
@@ -41,7 +41,7 @@
 
 
 - name: Validate privatekey5 (test - Passphrase protected key + idempotence)
-  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey5.pem -passin pass:ansible  | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey5.pem -passin pass:ansible  | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey5
   # Current version of OS/X that runs in the CI (10.11) does not have an up to date version of the OpenSSL library
   # leading to this test to fail when run in the CI. However, this test has been run for 10.12 and has returned succesfully.
@@ -60,7 +60,7 @@
 
 
 - name: Validate privatekey6 (test - Passphrase protected key with non ascii character)
-  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey6.pem -passin pass:ànsïblé | grep Private | sed 's/\\(RSA\\s\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
+  shell: "openssl rsa -noout -text -in {{ output_dir }}/privatekey6.pem -passin pass:ànsïblé | grep Private | sed 's/\\(RSA *\\)*Private-Key: (\\(.*\\) bit.*)/\\2/'"
   register: privatekey6
   when: openssl_version.stdout is version('0.9.8zh', '>=')
 

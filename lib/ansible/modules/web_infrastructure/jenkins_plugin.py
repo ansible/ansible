@@ -65,7 +65,7 @@ options:
       - URL of the Update Centre.
       - Used as the base URL to download the plugins and the
         I(update-center.json) JSON file.
-    default: https://updates.jenkins-ci.org
+    default: https://updates.jenkins.io
   url:
     description:
       - URL of the Jenkins server.
@@ -478,7 +478,7 @@ class JenkinsPlugin(object):
                             self._write_file(plugin_file, data)
 
                         changed = True
-            else:
+            elif self.params['version'] == 'latest':
                 # Check for update from the updates JSON file
                 plugin_data = self._download_updates()
 
@@ -721,7 +721,7 @@ def main():
             default='present'),
         timeout=dict(default=30, type="int"),
         updates_expiration=dict(default=86400, type="int"),
-        updates_url=dict(default='https://updates.jenkins-ci.org'),
+        updates_url=dict(default='https://updates.jenkins.io'),
         url=dict(default='http://localhost:8080'),
         url_password=dict(no_log=True),
         version=dict(),

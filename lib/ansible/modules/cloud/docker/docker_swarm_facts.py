@@ -21,7 +21,10 @@ description:
   - Retrieves facts about a Docker Swarm.
   - Returns lists of swarm objects names for the services - nodes, services, tasks.
   - The output differs depending on API version available on docker host.
-  - Must be run on Swarm Manager node otherwise module fails with error message.
+  - Must be run on Swarm Manager node; otherwise module fails with error message.
+    It does return boolean flags in on both error and success which indicate whether
+    the docker daemon can be communicated with, whether it is in Swarm mode, and
+    whether it is a Swarm Manager node.
 
 version_added: "2.8"
 
@@ -86,7 +89,17 @@ requirements:
 EXAMPLES = '''
 - name: Get info on Docker Swarm
   docker_swarm_facts:
+  ignore_errors: yes
   register: result
+
+- name: Inform about basic flags
+  debug:
+    msg: |
+      Was able to talk to docker daemon: {{ result.can_talk_to_docker }}
+      Docker in Swarm mode: {{ result.docker_swarm_active }}
+      This is a Manager node: {{ result.docker_swarm_manager }}
+
+- block:
 
 - name: Get info on Docker Swarm and list of registered nodes
   docker_swarm_facts:
@@ -111,6 +124,26 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+can_talk_to_docker:
+    description:
+      - Will be C(true) if the module can talk to the docker daemon.
+    returned: both on success and on error
+    type: bool
+docker_swarm_active:
+    description:
+      - Will be C(true) if the module can talk to the docker daemon,
+        and the docker daemon is in Swarm mode.
+    returned: both on success and on error
+    type: bool
+docker_swarm_manager:
+    description:
+      - Will be C(true) if the module can talk to the docker daemon,
+        the docker daemon is in Swarm mode, and the current node is
+        a manager node.
+      - Only if this one is C(true), the module will not fail.
+    returned: both on success and on error
+    type: bool
+
 docker_swarm_facts:
     description:
       - Facts representing the basic state of the docker Swarm cluster.
@@ -180,7 +213,7 @@ class DockerSwarmManager(DockerBaseClass):
         try:
             return self.client.inspect_swarm()
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker swarm: %s" % to_native(exc))
+            self.client.fail("Error inspecting docker swarm: %s" % to_native(exc))
 
     def get_docker_items_list(self, docker_object=None, filters=None):
         items = None
@@ -194,8 +227,8 @@ class DockerSwarmManager(DockerBaseClass):
             elif docker_object == 'services':
                 items = self.client.services(filters=filters)
         except APIError as exc:
-            self.client.fail_json(msg="Error inspecting docker swarm for object '%s': %s" %
-                                      (docker_object, to_native(exc)))
+            self.client.fail("Error inspecting docker swarm for object '%s': %s" %
+                             (docker_object, to_native(exc)))
 
         if self.verbose_output:
             return items
@@ -289,7 +322,15 @@ def main():
         supports_check_mode=True,
         min_docker_version='1.10.0',
         min_docker_api_version='1.24',
+        fail_results=dict(
+            can_talk_to_docker=False,
+            docker_swarm_active=False,
+            docker_swarm_manager=False,
+        ),
     )
+    client.fail_results['can_talk_to_docker'] = True
+    client.fail_results['docker_swarm_active'] = client.check_if_swarm_node()
+    client.fail_results['docker_swarm_manager'] = client.check_if_swarm_manager()
 
     results = dict(
         changed=False,
@@ -297,6 +338,7 @@ def main():
     )
 
     DockerSwarmManager(client, results)
+    results.update(client.fail_results)
     client.module.exit_json(**results)
 
 

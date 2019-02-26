@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2017, Ansible by Red Hat, inc
+# Copyright: (c) 2017, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -170,23 +170,23 @@ def map_obj_to_commands(updates, module):
         if state == 'absent' and obj_in_have:
             if obj_in_have['ipv4']:
                 if ipv4:
-                    commands.append('no ip address {}'.format(ipv4))
+                    commands.append('no ip address {0}'.format(ipv4))
                 else:
                     commands.append('no ip address')
             if obj_in_have['ipv6']:
                 if ipv6:
-                    commands.append('no ipv6 address {}'.format(ipv6))
+                    commands.append('no ipv6 address {0}'.format(ipv6))
                 else:
                     commands.append('no ipv6 address')
 
         elif state == 'present':
             if ipv4:
                 if obj_in_have is None or obj_in_have['ipv4'] is None or ipv4 != obj_in_have['ipv4']:
-                    commands.append('ip address {}'.format(ipv4))
+                    commands.append('ip address {0}'.format(ipv4))
 
             if ipv6:
                 if obj_in_have is None or obj_in_have['ipv6'] is None or ipv6.lower() != obj_in_have['ipv6'].lower():
-                    commands.append('ipv6 address {}'.format(ipv6))
+                    commands.append('ipv6 address {0}'.format(ipv6))
 
         if commands[-1] == interface:
             commands.pop(-1)

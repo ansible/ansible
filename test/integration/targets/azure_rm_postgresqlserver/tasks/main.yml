@@ -60,6 +60,37 @@
       - output.changed == false
       - output.state == 'Ready'
 
+- name: Update instance of PostgreSQL Server, change storage size
+  azure_rm_postgresqlserver:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+    sku:
+      name: B_Gen5_1
+      tier: Basic
+    location: westus2
+    storage_mb: 128000
+    enforce_ssl: True
+    admin_username: zimxyz
+    admin_password: Testpasswordxyz12!
+  register: output
+- name: Assert the state has not changed
+  assert:
+    that:
+      - output.changed
+      - output.state == 'Ready'
+- debug:
+    var: output
+
+- name: Gather facts postgresql Server
+  azure_rm_postgresqlserver_facts:
+    resource_group: "{{ resource_group }}"
+    name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that storage size is correct
+  assert:
+    that:
+      - output.servers[0]['storage_mb'] == 128000
+
 - name: Create second instance of PostgreSQL Server
   azure_rm_postgresqlserver:
     resource_group: "{{ resource_group }}"
@@ -139,6 +170,41 @@
       - output.servers[1]['user_visible_state'] != None
       - output.servers[1]['fully_qualified_domain_name'] != None
 
+#
+# azure_rm_postgresqlconfiguration_facts tests below
+#
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length == 1
+
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Get all settings
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length > 1
 
 #
 # azure_rm_postgresqldatabase tests below
@@ -148,6 +214,8 @@
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: testdatabase
+    charset: UTF8
+    collation: English_United States.1252
   check_mode: yes
   register: output
 - name: Assert the resource instance is well created
@@ -160,6 +228,8 @@
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: testdatabase
+    charset: UTF8
+    collation: English_United States.1252
   register: output
 - name: Assert the resource instance is well created
   assert:
@@ -172,11 +242,42 @@
     resource_group: "{{ resource_group }}"
     server_name: postgresqlsrv{{ rpfx }}
     name: testdatabase
+    charset: UTF8
+    collation: English_United States.1252
   register: output
 - name: Assert the state has not changed
   assert:
     that:
       - output.changed == false
+      - output.name == 'testdatabase'
+
+- name: Try to update PostgreSQL Database without force_update
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: testdatabase
+    charset: WIN1252
+    collation: SQL_Latin1_General_CP1_CS_AS
+  ignore_errors: yes
+  register: output
+- name: Assert that nothing has changed
+  assert:
+    that:
+      - output.changed == False
+
+- name: Try to update PostgreSQL Database with force_update
+  azure_rm_postgresqldatabase:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: testdatabase
+    charset: WIN1252
+    collation: SQL_Latin1_General_CP1_CS_AS
+    force_update: yes
+  register: output
+- name: Assert the state has changed
+  assert:
+    that:
+      - output.changed
       - output.name == 'testdatabase'
 
 - name: Create second instance of PostgreSQL Database

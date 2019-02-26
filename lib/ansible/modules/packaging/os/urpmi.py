@@ -208,20 +208,14 @@ def main():
 
     p = module.params
 
-    force_yes = p['force']
-    no_recommends_yes = p['no_recommends']
-    root = p['root']
-
     if p['update_cache']:
         update_package_db(module)
 
-    packages = p['package']
-
     if p['state'] in ['installed', 'present']:
-        install_packages(module, packages, root, force_yes, no_recommends_yes)
+        install_packages(module, p['name'], p['root'], p['force'], p['no_recommends'])
 
     elif p['state'] in ['removed', 'absent']:
-        remove_packages(module, packages, root)
+        remove_packages(module, p['name'], p['root'])
 
 
 if __name__ == '__main__':

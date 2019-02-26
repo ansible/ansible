@@ -179,7 +179,7 @@ options:
                 description: A value indicating whether to send email to subscription co-administrators.
     state:
         default: present
-        description: Assert the state of the virtual network. Use 'present' to create or update and 'absent' to delete.
+        description: Assert the state of the virtual network. Use C(present) to create or update and C(absent) to delete.
         choices:
         - present
         - absent
@@ -218,7 +218,7 @@ EXAMPLES = '''
         recurrence_hours:
         - '18'
       name: scale
-      resource_group: foo
+      resource_group: myResourceGroup
 
 - name: Create an auto scale with compicated profile
   azure_rm_autoscale:
@@ -256,12 +256,12 @@ EXAMPLES = '''
         custom_emails:
         - yuwzho@microsoft.com
       name: scale
-      resource_group: foo
+      resource_group: myResourceGroup
 
 - name: Delete an Azure Auto Scale Setting
   azure_rm_autoscale:
     state: absent
-    resource_group: foo
+    resource_group: myResourceGroup
     name: scale
 '''
 

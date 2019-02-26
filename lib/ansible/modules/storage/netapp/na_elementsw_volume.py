@@ -340,8 +340,8 @@ class ElementOSVolume(object):
                     volume_qos = volume_detail.qos.__dict__
                     if volume_qos['min_iops'] != self.qos['minIOPS'] or volume_qos['max_iops'] != self.qos['maxIOPS'] \
                        or volume_qos['burst_iops'] != self.qos['burstIOPS']:
-                            update_volume = True
-                            changed = True
+                        update_volume = True
+                        changed = True
                 else:
                     # If check fails, do nothing
                     pass

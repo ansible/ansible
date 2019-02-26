@@ -30,7 +30,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the container registry. Use 'present' to create or update an container registry and 'absent' to delete it.
+            - Assert the state of the container registry. Use C(present) to create or update an container registry and C(absent) to delete it.
         default: present
         choices:
             - absent
@@ -66,7 +66,7 @@ EXAMPLES = '''
       azure_rm_containerregistry:
         name: testacr1
         location: eastus
-        resource_group: testrg
+        resource_group: myResourceGroup
         state: present
         admin_user_enabled: true
         sku: Premium
@@ -77,7 +77,7 @@ EXAMPLES = '''
     - name: Remove an azure container registry
       azure_rm_containerregistry:
         name: testacr2
-        resource_group: testrg
+        resource_group: myResourceGroup
         state: absent
 '''
 RETURN = '''
@@ -86,7 +86,7 @@ id:
         - Resource ID
     returned: always
     type: str
-    sample: /subscriptions/00000000-0000-0000-0000-000000000/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
+    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.ContainerRegistry/registries/myRegistry
 name:
     description:
         - Registry name

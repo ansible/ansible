@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
+# Copyright: (c) 2012, Mark Theunissen <mark.theunissen@gmail.com>
 # Sponsored by Four Kitchens http://fourkitchens.com.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -13,38 +14,40 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: mysql_user
-short_description: Adds or removes a user from a MySQL database.
+short_description: Adds or removes a user from a MySQL database
 description:
    - Adds or removes a user from a MySQL database.
 version_added: "0.6"
 options:
   name:
     description:
-      - name of the user (role) to add or remove
+      - Name of the user (role) to add or remove.
+    type: str
     required: true
   password:
     description:
-      - set the user's password.
+      - Set the user's password..
+    type: str
   encrypted:
     description:
-      - Indicate that the 'password' field is a `mysql_native_password` hash
+      - Indicate that the 'password' field is a `mysql_native_password` hash.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.0"
   host:
     description:
-      - the 'host' part of the MySQL username
+      - The 'host' part of the MySQL username.
+    type: str
     default: localhost
   host_all:
     description:
-      - override the host option, making ansible apply changes to
-        all hostnames for a given user.  This option cannot be used
-        when creating users
+      - Override the host option, making ansible apply changes to all hostnames for a given user.
+      - This option cannot be used when creating users.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.1"
   priv:
     description:
@@ -57,37 +60,41 @@ options:
         exactly as returned by a C(SHOW GRANT) statement. If not followed,
         the module will always report changes. It includes grouping columns
         by permission (C(SELECT(col1,col2)) instead of C(SELECT(col1),SELECT(col2))).
+    type: str
   append_privs:
     description:
       - Append the privileges defined by priv to the existing ones for this
         user instead of overwriting existing ones.
     type: bool
-    default: 'no'
+    default: no
     version_added: "1.4"
   sql_log_bin:
     description:
       - Whether binary logging should be enabled or disabled for the connection.
     type: bool
-    default: 'yes'
+    default: yes
     version_added: "2.1"
   state:
     description:
-      - Whether the user should exist.  When C(absent), removes
-        the user.
+      - Whether the user should exist.
+      - When C(absent), removes the user.
+    type: str
+    choices: [ absent, present ]
     default: present
-    choices: [ "present", "absent" ]
   check_implicit_admin:
     description:
       - Check if mysql allows login as root/nopassword before trying supplied credentials.
     type: bool
-    default: 'no'
+    default: no
     version_added: "1.3"
   update_password:
-    default: always
-    choices: ['always', 'on_create']
-    version_added: "2.0"
     description:
-      - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+      - C(always) will update passwords if they differ.
+      - C(on_create) will only set the password for newly created users.
+    type: str
+    choices: [ always, on_create ]
+    default: always
+    version_added: "2.0"
 notes:
    - "MySQL server installs with default login_user of 'root' and no password. To secure this user
      as part of an idempotent playbook, you must create at least two tasks: the first must change the root user's password,
@@ -96,74 +103,76 @@ notes:
      the file."
    - Currently, there is only support for the `mysql_native_password` encrypted password hash module.
 
-author: "Jonathan Mainguy (@Jmainguy)"
+author:
+- Jonathan Mainguy (@Jmainguy)
 extends_documentation_fragment: mysql
 '''
 
-EXAMPLES = """
-# Removes anonymous user account for localhost
-- mysql_user:
+EXAMPLES = r'''
+- name: Removes anonymous user account for localhost
+  mysql_user:
     name: ''
     host: localhost
     state: absent
 
-# Removes all anonymous user accounts
-- mysql_user:
+- name: Removes all anonymous user accounts
+  mysql_user:
     name: ''
     host_all: yes
     state: absent
 
-# Create database user with name 'bob' and password '12345' with all database privileges
-- mysql_user:
+- name: Create database user with name 'bob' and password '12345' with all database privileges
+  mysql_user:
     name: bob
     password: 12345
     priv: '*.*:ALL'
     state: present
 
-# Create database user with name 'bob' and previously hashed mysql native password '*EE0D72C1085C46C5278932678FBE2C6A782821B4' with all database privileges
-- mysql_user:
+- name: Create database user using hashed password with all database privileges
+  mysql_user:
     name: bob
     password: '*EE0D72C1085C46C5278932678FBE2C6A782821B4'
     encrypted: yes
     priv: '*.*:ALL'
     state: present
 
-# Creates database user 'bob' and password '12345' with all database privileges and 'WITH GRANT OPTION'
-- mysql_user:
+- name: Create database user with password and all database privileges and 'WITH GRANT OPTION'
+  mysql_user:
     name: bob
     password: 12345
     priv: '*.*:ALL,GRANT'
     state: present
 
-# Modify user Bob to require SSL connections. Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
-- mysql_user:
+# Note that REQUIRESSL is a special privilege that should only apply to *.* by itself.
+- name: Modify user to require SSL connections.
+  mysql_user:
     name: bob
-    append_privs: true
+    append_privs: yes
     priv: '*.*:REQUIRESSL'
     state: present
 
-# Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
-- mysql_user:
+- name: Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
+  mysql_user:
     login_user: root
     login_password: 123456
     name: sally
     state: absent
 
-# Ensure no user named 'sally' exists at all
-- mysql_user:
+- name: Ensure no user named 'sally' exists at all
+  mysql_user:
     name: sally
     host_all: yes
     state: absent
 
-# Specify grants composed of more than one word
-- mysql_user:
+- name: Specify grants composed of more than one word
+  mysql_user:
     name: replication
     password: 12345
     priv: "*.*:REPLICATION CLIENT"
     state: present
 
-# Revoke all privileges for user 'bob' and password '12345'
-- mysql_user:
+- name: Revoke all privileges for user 'bob' and password '12345'
+  mysql_user:
     name: bob
     password: 12345
     priv: "*.*:USAGE"
@@ -172,14 +181,14 @@ EXAMPLES = """
 # Example privileges string format
 # mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 
-# Example using login_unix_socket to connect to server
-- mysql_user:
+- name: Example using login_unix_socket to connect to server
+  mysql_user:
     name: root
     password: abc123
     login_unix_socket: /var/run/mysqld/mysqld.sock
 
-# Example of skipping binary logging while adding user 'bob'
-- mysql_user:
+- name: Example of skipping binary logging while adding user 'bob'
+  mysql_user:
     name: bob
     password: 12345
     priv: "*.*:USAGE"
@@ -190,11 +199,10 @@ EXAMPLES = """
 # [client]
 # user=root
 # password=n<_665{vS43y
-"""
+'''
 
 import re
 import string
-import traceback
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError
@@ -211,7 +219,16 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
-                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL'))
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL',
+                         'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
+                         'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
+                         'BINLOG ENCRYPTION ADMIN', 'CONNECTION ADMIN',
+                         'ENCRYPTION KEY ADMIN', 'FIREWALL ADMIN', 'FIREWALL USER',
+                         'GROUP REPLICATION ADMIN', 'PERSIST RO VARIABLES ADMIN',
+                         'REPLICATION SLAVE ADMIN', 'RESOURCE GROUP ADMIN',
+                         'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
+                         'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
+                         'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
 
 
 class InvalidPrivsError(Exception):
@@ -427,7 +444,7 @@ def privileges_get(cursor, user, host):
             return x
 
     for grant in grants:
-        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\5)? ?(.*)""", grant[0])
+        res = re.match("""GRANT (.+) ON (.+) TO (['`"]).*\\3@(['`"]).*\\4( IDENTIFIED BY PASSWORD (['`"]).+\\6)? ?(.*)""", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
@@ -535,29 +552,29 @@ def privileges_grant(cursor, user, host, db_table, priv):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            login_user=dict(default=None),
-            login_password=dict(default=None, no_log=True),
-            login_host=dict(default="localhost"),
-            login_port=dict(default=3306, type='int'),
-            login_unix_socket=dict(default=None),
-            user=dict(required=True, aliases=['name']),
-            password=dict(default=None, no_log=True, type='str'),
-            encrypted=dict(default=False, type='bool'),
-            host=dict(default="localhost"),
-            host_all=dict(type="bool", default="no"),
-            state=dict(default="present", choices=["absent", "present"]),
-            priv=dict(default=None),
-            append_privs=dict(default=False, type='bool'),
-            check_implicit_admin=dict(default=False, type='bool'),
-            update_password=dict(default="always", choices=["always", "on_create"]),
-            connect_timeout=dict(default=30, type='int'),
-            config_file=dict(default="~/.my.cnf", type='path'),
-            sql_log_bin=dict(default=True, type='bool'),
-            ssl_cert=dict(default=None, type='path'),
-            ssl_key=dict(default=None, type='path'),
-            ssl_ca=dict(default=None, type='path'),
+            login_user=dict(type='str'),
+            login_password=dict(type='str', no_log=True),
+            login_host=dict(type='str', default='localhost'),
+            login_port=dict(type='int', default=3306),
+            login_unix_socket=dict(type='str'),
+            user=dict(type='str', required=True, aliases=['name']),
+            password=dict(type='str', no_log=True),
+            encrypted=dict(type='bool', default=False),
+            host=dict(type='str', default='localhost'),
+            host_all=dict(type="bool", default=False),
+            state=dict(type='str', default='present', choices=['absent', 'present']),
+            priv=dict(type='str'),
+            append_privs=dict(type='bool', default=False),
+            check_implicit_admin=dict(type='bool', default=False),
+            update_password=dict(type='str', default='always', choices=['always', 'on_create']),
+            connect_timeout=dict(type='int', default=30),
+            config_file=dict(type='path', default='~/.my.cnf'),
+            sql_log_bin=dict(type='bool', default=True),
+            ssl_cert=dict(type='path'),
+            ssl_key=dict(type='path'),
+            ssl_ca=dict(type='path'),
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
     )
     login_user = module.params["login_user"]
     login_password = module.params["login_password"]
@@ -605,7 +622,7 @@ def main():
         try:
             mode = get_mode(cursor)
         except Exception as e:
-            module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+            module.fail_json(msg=to_native(e))
         try:
             priv = privileges_unpack(priv, mode)
         except Exception as e:
@@ -620,14 +637,14 @@ def main():
                     changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module)
 
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
-                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+                module.fail_json(msg=to_native(e))
         else:
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
                 changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
             except (SQLParseError, InvalidPrivsError, mysql_driver.Error) as e:
-                module.fail_json(msg=to_native(e), exception=traceback.format_exc())
+                module.fail_json(msg=to_native(e))
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):
             changed = user_delete(cursor, user, host, host_all, module.check_mode)

@@ -44,12 +44,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of PostgreSQL Server
     azure_rm_postgresqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
       name: server_name
 
   - name: List instances of PostgreSQL Server
     azure_rm_postgresqlserver_facts:
-      resource_group: resource_group_name
+      resource_group: myResourceGroup
 '''
 
 RETURN = '''
@@ -63,13 +63,14 @@ servers:
                 - Resource ID
             returned: always
             type: str
-            sample: /subscriptions/ffffffff-ffff-ffff-ffff-ffffffffffff/resourceGroups/TestGroup/providers/Microsoft.DBforPostgreSQL/servers/postgreabdud1223
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforPostgreSQL/servers/po
+                     stgreabdud1223"
         resource_group:
             description:
                 - Resource group name.
             returned: always
             type: str
-            sample: testresourcegroup
+            sample: myResourceGroup
         name:
             description:
                 - Resource name.

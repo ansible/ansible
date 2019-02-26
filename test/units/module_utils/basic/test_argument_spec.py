@@ -19,30 +19,48 @@ from ansible.module_utils.six.moves import builtins
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
 
-
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
 VALID_SPECS = (
     # Simple type=int
     ({'arg': {'type': 'int'}}, {'arg': 42}, 42),
+    # Simple type=list, elements=int
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42, 32]}, [42, 32]),
     # Type=int with conversion from string
     ({'arg': {'type': 'int'}}, {'arg': '42'}, 42),
+    # Type=list elements=int with conversion from string
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': ['42', '32']}, [42, 32]),
     # Simple type=float
     ({'arg': {'type': 'float'}}, {'arg': 42.0}, 42.0),
+    # Simple type=list, elements=float
+    ({'arg': {'type': 'list', 'elements': 'float'}}, {'arg': [42.1, 32.2]}, [42.1, 32.2]),
     # Type=float conversion from int
     ({'arg': {'type': 'float'}}, {'arg': 42}, 42.0),
+    # type=list, elements=float conversion from int
+    ({'arg': {'type': 'list', 'elements': 'float'}}, {'arg': [42, 32]}, [42.0, 32.0]),
     # Type=float conversion from string
     ({'arg': {'type': 'float'}}, {'arg': '42.0'}, 42.0),
+    # type=list, elements=float conversion from string
+    ({'arg': {'type': 'list', 'elements': 'float'}}, {'arg': ['42.1', '32.2']}, [42.1, 32.2]),
     # Type=float conversion from string without decimal point
     ({'arg': {'type': 'float'}}, {'arg': '42'}, 42.0),
+    # Type=list elements=float conversion from string without decimal point
+    ({'arg': {'type': 'list', 'elements': 'float'}}, {'arg': ['42', '32.2']}, [42.0, 32.2]),
     # Simple type=bool
     ({'arg': {'type': 'bool'}}, {'arg': True}, True),
+    # Simple type=list elements=bool
+    ({'arg': {'type': 'list', 'elements': 'bool'}}, {'arg': [True, 'true', 1, 'yes', False, 'false', 'no', 0]},
+     [True, True, True, True, False, False, False, False]),
     # Type=int with conversion from string
     ({'arg': {'type': 'bool'}}, {'arg': 'yes'}, True),
     # Type=str converts to string
     ({'arg': {'type': 'str'}}, {'arg': 42}, '42'),
+    # Type=list elements=str simple converts to string
+    ({'arg': {'type': 'list', 'elements': 'str'}}, {'arg': ['42', '32']}, ['42', '32']),
     # Type is implicit, converts to string
     ({'arg': {'type': 'str'}}, {'arg': 42}, '42'),
+    # Type=list elements=str implicit converts to string
+    ({'arg': {'type': 'list', 'elements': 'str'}}, {'arg': [42, 32]}, ['42', '32']),
     # parameter is required
     ({'arg': {'required': True}}, {'arg': 42}, '42'),
 )
@@ -50,10 +68,16 @@ VALID_SPECS = (
 INVALID_SPECS = (
     # Type is int; unable to convert this string
     ({'arg': {'type': 'int'}}, {'arg': "bad"}, "invalid literal for int() with base 10: 'bad'"),
+    # Type is list elements is int; unable to convert this string
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [1, "bad"]}, "invalid literal for int() with base 10: 'bad'"),
     # Type is int; unable to convert float
     ({'arg': {'type': 'int'}}, {'arg': 42.1}, "'float'> cannot be converted to an int"),
+    # Type is list, elements is int; unable to convert float
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42.1, 32, 2]}, "'float'> cannot be converted to an int"),
     # type is a callable that fails to convert
     ({'arg': {'type': MOCK_VALIDATOR_FAIL}}, {'arg': "bad"}, "bad conversion"),
+    # type is a list, elements is callable that fails to convert
+    ({'arg': {'type': 'list', 'elements': MOCK_VALIDATOR_FAIL}}, {'arg': [1, "bad"]}, "bad conversion"),
     # unknown parameter
     ({'arg': {'type': 'int'}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
      'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg'),
@@ -70,6 +94,7 @@ def complex_argspec():
         bam=dict(),
         baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
         bar1=dict(type='bool'),
+        bar3=dict(type='list', elements='path'),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
     )
@@ -92,11 +117,16 @@ def options_argspec_list():
     options_spec = dict(
         foo=dict(required=True, aliases=['dup']),
         bar=dict(),
+        bar1=dict(type='list', elements='str'),
+        bar2=dict(type='list', elements='int'),
+        bar3=dict(type='list', elements='float'),
+        bar4=dict(type='list', elements='path'),
         bam=dict(),
         baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
         bam1=dict(),
         bam2=dict(default='test'),
         bam3=dict(type='bool'),
+        bam4=dict(type='str'),
     )
 
     arg_spec = dict(
@@ -116,7 +146,10 @@ def options_argspec_list():
             ],
             required_together=[
                 ['bam1', 'baz']
-            ]
+            ],
+            required_by={
+                'bam4': ('bam1', 'bam3'),
+            },
         )
     )
 
@@ -134,6 +167,7 @@ def options_argspec_dict(options_argspec_list):
     # should test ok, for options in dict format.
     kwargs = options_argspec_list
     kwargs['argument_spec']['foobar']['type'] = 'dict'
+    kwargs['argument_spec']['foobar']['elements'] = None
 
     return kwargs
 
@@ -274,50 +308,89 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['zardoz2'], list)
         assert am.params['zardoz2'] == ['one', 'three']
 
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar3': ['~/test', 'test/']}], indirect=['stdin'])
+    def test_list_with_elements_path(self, capfd, mocker, stdin, complex_argspec):
+        """Test choices with list"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['bar3'], list)
+        assert am.params['bar3'][0].startswith('/')
+        assert am.params['bar3'][1] == 'test/'
+
 
 class TestComplexOptions:
     """Test arg spec options"""
 
-    # (Paramaters, expected value of module.params['foobar'])
+    # (Parameters, expected value of module.params['foobar'])
     OPTIONS_PARAMS_LIST = (
         ({'foobar': [{"foo": "hello", "bam": "good"}, {"foo": "test", "bar": "good"}]},
-         [{'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None},
-          {'foo': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None},
-          ]),
+         [{'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None,
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None},
+          {'foo': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None,
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}]
+         ),
         # Alias for required param
         ({'foobar': [{"dup": "test", "bar": "good"}]},
-         [{'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None}]
+         [{'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None,
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}]
          ),
         # Required_if utilizing default value of the requirement
         ({'foobar': [{"foo": "bam2", "bar": "required_one_of"}]},
-         [{'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}]
+         [{'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2',
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}]
          ),
         # Check that a bool option is converted
         ({"foobar": [{"foo": "required", "bam": "good", "bam3": "yes"}]},
-         [{'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bar': None, 'baz': None, 'foo': 'required'}]
+         [{'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bam4': None, 'bar': None, 'baz': None, 'foo': 'required',
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}]
+         ),
+        # Check required_by options
+        ({"foobar": [{"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}]},
+         [{'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None, 'foo': 'required',
+           'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}]
+         ),
+        # Check for elements in sub-options
+        ({"foobar": [{"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"], "bar2": ['1', 1], "bar3":['1.3', 1.3, 1]}]},
+         [{'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': None, 'baz': None, 'bam': 'required_one_of',
+           'bar1': ["1", "good", "yes"], 'bar2': [1, 1], 'bar3': [1.3, 1.3, 1.0], 'bar4': None}]
          ),
     )
 
-    # (Paramaters, expected value of module.params['foobar'])
+    # (Parameters, expected value of module.params['foobar'])
     OPTIONS_PARAMS_DICT = (
         ({'foobar': {"foo": "hello", "bam": "good"}},
-         {'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None}
+         {'foo': 'hello', 'bam': 'good', 'bam2': 'test', 'bar': None, 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None,
+          'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}
          ),
         # Alias for required param
         ({'foobar': {"dup": "test", "bar": "good"}},
-         {'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None}
+         {'foo': 'test', 'dup': 'test', 'bam': None, 'bam2': 'test', 'bar': 'good', 'baz': None, 'bam1': None, 'bam3': None, 'bam4': None,
+          'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}
          ),
         # Required_if utilizing default value of the requirement
         ({'foobar': {"foo": "bam2", "bar": "required_one_of"}},
-         {'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2'}
+         {'bam': None, 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': 'required_one_of', 'baz': None, 'foo': 'bam2',
+          'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}
          ),
         # Check that a bool option is converted
         ({"foobar": {"foo": "required", "bam": "good", "bam3": "yes"}},
-         {'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bar': None, 'baz': None, 'foo': 'required'}
+         {'bam': 'good', 'bam1': None, 'bam2': 'test', 'bam3': True, 'bam4': None, 'bar': None, 'baz': None, 'foo': 'required',
+          'bar1': None, 'bar2': None, 'bar3': None, 'bar4': None}
+         ),
+        # Check required_by options
+        ({"foobar": {"foo": "required", "bar": "good", "baz": "good", "bam4": "required_by", "bam1": "ok", "bam3": "yes"}},
+         {'bar': 'good', 'baz': 'good', 'bam1': 'ok', 'bam2': 'test', 'bam3': True, 'bam4': 'required_by', 'bam': None,
+          'foo': 'required', 'bar1': None, 'bar3': None, 'bar2': None, 'bar4': None}
+         ),
+        # Check for elements in sub-options
+        ({"foobar": {"foo": "good", "bam": "required_one_of", "bar1": [1, "good", "yes"],
+                     "bar2": ['1', 1], "bar3": ['1.3', 1.3, 1]}},
+         {'foo': 'good', 'bam1': None, 'bam2': 'test', 'bam3': None, 'bam4': None, 'bar': None,
+          'baz': None, 'bam': 'required_one_of',
+          'bar1': ["1", "good", "yes"], 'bar2': [1, 1], 'bar3': [1.3, 1.3, 1.0], 'bar4': None}
          ),
     )
 
-    # (Paramaters, failure message)
+    # (Parameters, failure message)
     FAILING_PARAMS_LIST = (
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
@@ -335,9 +408,12 @@ class TestComplexOptions:
         # Missing required_together option
         ({'foobar': [{"foo": "test", "bar": "required_one_of", "bam1": "bad"}]},
          'parameters are required together: bam1, baz found in foobar'),
+        # Missing required_by options
+        ({'foobar': [{"foo": "test", "bar": "required_one_of", "bam4": "required_by"}]},
+         "missing parameter(s) required by 'bam4': bam1, bam3"),
     )
 
-    # (Paramaters, failure message)
+    # (Parameters, failure message)
     FAILING_PARAMS_DICT = (
         # Missing required option
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
@@ -356,6 +432,9 @@ class TestComplexOptions:
         # Missing required_together option
         ({'foobar': {"foo": "test", "bar": "required_one_of", "bam1": "bad"}},
          'parameters are required together: bam1, baz found in foobar'),
+        # Missing required_by options
+        ({'foobar': {"foo": "test", "bar": "required_one_of", "bam4": "required_by"}},
+         "missing parameter(s) required by 'bam4': bam1, bam3"),
     )
 
     @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_DICT, indirect=['stdin'])
@@ -411,6 +490,17 @@ class TestComplexOptions:
 
         assert isinstance(am.params['foobar']['baz'], str)
         assert am.params['foobar']['baz'] == 'test data'
+
+    @pytest.mark.parametrize('stdin',
+                             [{'foobar': {'foo': 'required', 'bam1': 'test', 'baz': 'data', 'bar': 'case', 'bar4': '~/test'}}],
+                             indirect=['stdin'])
+    def test_elements_path_in_option(self, mocker, stdin, options_argspec_dict):
+        """Test that the complex argspec works with elements path type"""
+
+        am = basic.AnsibleModule(**options_argspec_dict)
+
+        assert isinstance(am.params['foobar']['bar4'][0], str)
+        assert am.params['foobar']['bar4'][0].startswith('/')
 
     @pytest.mark.parametrize('stdin,spec,expected', [
         ({},

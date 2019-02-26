@@ -383,15 +383,15 @@ def config_igmp_interface(delta, existing, existing_oif_prefix_source):
                         commands.append(CMDS.get('oif_prefix').format(pf))
             if existing_oif_prefix_source:
                 for each in existing_oif_prefix_source:
-                        # remove stale prefix/sources
-                        pf = each['prefix']
-                        src = ''
-                        if 'source' in each.keys():
-                            src = each['source']
-                        if src:
-                            commands.append('no ' + CMDS.get('oif_prefix_source').format(pf, src))
-                        else:
-                            commands.append('no ' + CMDS.get('oif_prefix').format(pf))
+                    # remove stale prefix/sources
+                    pf = each['prefix']
+                    src = ''
+                    if 'source' in each.keys():
+                        src = each['source']
+                    if src:
+                        commands.append('no ' + CMDS.get('oif_prefix_source').format(pf, src))
+                    else:
+                        commands.append('no ' + CMDS.get('oif_prefix').format(pf))
         elif key == 'oif_routemap':
             if value == 'default':
                 if existing.get(key):
