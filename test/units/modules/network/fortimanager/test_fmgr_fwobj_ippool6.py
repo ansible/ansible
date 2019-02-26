@@ -47,7 +47,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_fwobj_ippool6.Connection')
     return connection_class_mock
 
 
@@ -61,28 +61,8 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_fwobj_ippool6_modify(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # endip: None
-    # name: IPv6 IPPool
-    # adom: ansible
-    # startip: None
-    # dynamic_mapping: {'startip': None, 'endip': None, 'comments': None}
-    # comments: None
-    # mode: delete
-    ##################################################
-    ##################################################
-    # endip: fd30:fc67:cb18:ae44::ffff:ffff
-    # name: IPv6 IPPool
-    # adom: ansible
-    # startip: fd30:fc67:cb18:ae44::aaaa:aaaa
-    # dynamic_mapping: {'startip': None, 'endip': None, 'comments': None}
-    # comments: Created by Ansible
-    # mode: add
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_fwobj_ippool6.fmgr_fwobj_ippool6_modify(fmg_instance, fixture_data[0]['paramgram_used'])
