@@ -48,6 +48,7 @@ options:
       - Force upgrade when values are changed
     type: bool
     default: 'no'
+    version_added: '2.8'
   chart:
     description: |
       A map describing the chart to install. See examples for available options.
