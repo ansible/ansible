@@ -290,7 +290,8 @@ from ansible.errors import (
 )
 from ansible.errors import AnsibleOptionsError
 from ansible.compat import selectors
-from ansible.module_utils.six import PY3, BytesIO, text_type, binary_type
+from ansible.module_utils.common._io_compat import BytesIO
+from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
