@@ -495,6 +495,10 @@ def main():
                 rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
+
+                elif stderr and ('FATAL' in stderr or 'ERROR' in stderr):
+                    module.fail_json(msg=stderr, stdout=stdout, rc=1, cmd=cmd)
+
                 else:
                     module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
             except SQLParseError as e:
