@@ -37,6 +37,7 @@ options:
             - "Should the event be present/absent."
             - "The wait option must be set to false when state is absent."
         choices: ['present', 'absent']
+        type: str
         default: present
 
     description:
