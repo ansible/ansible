@@ -18,7 +18,7 @@ module: influxdb_retention_policy
 short_description: Manage InfluxDB retention policies
 description:
     - Manage InfluxDB retention policies
-version_added: 2.8
+version_added: 2.1
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
     - "python >= 2.6"
@@ -45,6 +45,7 @@ options:
         description:
             - Determines the size of a shard group
         required: false
+        version_added: 2.8
     default:
         description:
             - Sets the retention policy as default retention policy
