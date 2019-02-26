@@ -32,6 +32,9 @@ author: Gabriele Gerbino (@GGabriele)
 notes:
   - Tested against NXOSv 7.3.(0)D1(1) on VIRL
   - Default, where supported, restores params default value.
+  - In case of `state=absent' the options ['route_target_both_auto_evpn',
+    'route_target_import', 'route_target_export', 'route_target_both'] are
+    ignored.
 options:
   vrf:
     description:
