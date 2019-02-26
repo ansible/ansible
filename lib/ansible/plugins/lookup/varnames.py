@@ -71,7 +71,7 @@ class LookupModule(LookupBase):
             try:
                 name = re.compile(term)
             except Exception as e:
-                raise AnsibleError('Unable to use %s as a search parameter: %s' % (term, to_native(e)))
+                raise AnsibleError('Unable to use "%s" as a search parameter: %s' % (term, to_native(e)))
 
             for varname in variable_names:
                 if name.search(varname):
