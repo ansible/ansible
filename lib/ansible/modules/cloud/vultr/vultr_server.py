@@ -35,12 +35,14 @@ options:
       - Required if the server does not yet exist.
   app:
     description:
-      - The name of the application image.
+      - The name of the application image to use.
       - Required if os='Application'.
+    version_added: "2.8"
   snapshot:
     description:
-      - The name of the snapshot image.
+      - The name of the snapshot image to use.
       - Required if os='Snapshot'.
+    version_added: "2.8"
   firewall_group:
     description:
       - The firewall group to assign this server to.
