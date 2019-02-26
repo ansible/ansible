@@ -30,7 +30,7 @@ short_description: Create or delete an event in oVirt/RHV
 author: "Chris Keller (@nasx)"
 version_added: "2.8"
 description:
-    - "Create or delete an event in oVirt/RHV."
+    - "This module can be used to create or delete an event in oVirt/RHV."
 options:
     state:
         description:
