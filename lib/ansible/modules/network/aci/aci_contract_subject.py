@@ -16,17 +16,6 @@ module: aci_contract_subject
 short_description: Manage initial Contract Subjects (vz:Subj)
 description:
 - Manage initial Contract Subjects on Cisco ACI fabrics.
-notes:
-- The C(tenant) and C(contract) used must exist before using this module in your playbook.
-  The M(aci_tenant) and M(aci_contract) modules can be used for this.
-seealso:
-- module: aci_contract
-- module: aci_tenant
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(vz:Subj).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Swetha Chunduri (@schunduri)
 version_added: '2.4'
 options:
   tenant:
@@ -89,6 +78,17 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant) and C(contract) used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_contract) modules can be used for this.
+seealso:
+- module: aci_contract
+- module: aci_tenant
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(vz:Subj).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Swetha Chunduri (@schunduri)
 '''
 
 EXAMPLES = r'''
@@ -245,10 +245,15 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
-MATCH_MAPPING = dict(all='All', at_least_one='AtleastOne', at_most_one='AtmostOne', none='None')
+MATCH_MAPPING = dict(
+    all='All',
+    at_least_one='AtleastOne',
+    at_most_one='AtmostOne',
+    none='None',
+)
 
 
 def main():
