@@ -35,10 +35,16 @@
 ###
 # test portmake present
 
-- name: remove an possibly existing make.conf file to test creation thereof
+- name: remove an possibly existing make.conf.
   file:
     path: /etc/make.conf
     state: absent
+
+- name: set default python version for build to work...
+  lineinfile:
+    path: /etc/make.conf
+    line: 'DEFAULT_VERSIONS += python=3.6'
+    create: yes
 
 - name: install a port with options - screen
   portmake:
