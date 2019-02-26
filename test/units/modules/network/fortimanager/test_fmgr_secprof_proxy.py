@@ -47,7 +47,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_secprof_proxy.Connection')
     return connection_class_mock
 
 
@@ -61,40 +61,8 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_web_proxy_profile_modify(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # header-via-request: None
-    # name: Ansible_Web_Proxy_Profile
-    # header-front-end-https: None
-    # log-header-change: None
-    # adom: root
-    # headers: {'action': None, 'content': None, 'name': None}
-    # mode: delete
-    # header-via-response: None
-    # header-x-authenticated-user: None
-    # strip-encoding: None
-    # header-x-forwarded-for: None
-    # header-x-authenticated-groups: None
-    # header-client-ip: None
-    ##################################################
-    ##################################################
-    # header-via-request: remove
-    # header-client-ip: pass
-    # header-front-end-https: add
-    # header-x-authenticated-groups: add
-    # name: Ansible_Web_Proxy_Profile
-    # log-header-change: enable
-    # adom: root
-    # headers: {'action': 'add-to-request', 'content': 'test', 'name': 'test_header'}
-    # mode: set
-    # header-via-response: pass
-    # header-x-authenticated-user: remove
-    # strip-encoding: enable
-    # header-x-forwarded-for: pass
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_secprof_proxy.fmgr_web_proxy_profile_modify(fmg_instance, fixture_data[0]['paramgram_used'])
