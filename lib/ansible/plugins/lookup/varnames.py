@@ -29,7 +29,7 @@ EXAMPLES = """
   debug: msg="{{ lookup('varnames', '.+')}}"
 
 - name:  show variables with 'hosts' in their names
-  debug: msg="{{ lookup('varnames', '.*hosts.*')}}"
+  debug: msg="{{ lookup('varnames', 'hosts')}}"
 
 - name: find several related variables that end specific way
   debug: msg="{{ lookup('varnames', '.+_zone$', '.+_location$') }}"
