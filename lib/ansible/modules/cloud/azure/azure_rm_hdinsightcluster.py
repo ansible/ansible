@@ -291,7 +291,7 @@ class AzureRMClusters(AzureRMModuleBase):
 
                 # cluster version returned by get may be longer, for instance "3.6.1000.67"
                 if old_response['properties']['cluster_version'].startswith(self.parameters['properties']['cluster_version']):
-                     self.parameters['properties']['cluster_version'] = old_response['properties']['cluster_version']
+                    self.parameters['properties']['cluster_version'] = old_response['properties']['cluster_version']
 
                 if (not default_compare(self.parameters, old_response, '', self.results)):
                     self.results['old_response'] = old_response
