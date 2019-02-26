@@ -125,7 +125,7 @@
   cnos_logging:
     aggregate:
       - { dest: console, level: 6 }
-      - { dest: logfile, name: mylog , size: 4096, level: 1 }
+      - { dest: logfile, name: mylog, size: 4096, level: 1 }
     state: absent
   register: result
 
@@ -134,4 +134,3 @@
       - 'result.changed == true'
       - '"no logging console" in result.commands'
       - '"no logging logfile" in result.commands'
-
