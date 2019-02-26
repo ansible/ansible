@@ -84,14 +84,12 @@ virtualmachines:
             returned: always
             type: str
             sample: myVm
-
         notes:
             description:
                 - Notes of the virtual machine.
             returned: always
             type: str
             sample: My VM notes
-
         disallow_public_ip_address:
             description:
                 - Whether public IP should be not allowed.
@@ -164,12 +162,24 @@ virtualmachines:
             returned: always
             type: str
             sample: standard
-        compute_id:
+        compute_vm_id:
             description:
                 - Resource id of compute virtual machine.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myLab-myVm-097933/providers/Microsoft.Compute/virtualMachines/myVm
+        compute_vm_resource_group:
+            description:
+                - Resource group where compute virtual machine is created.
+            returned: always
+            type: str
+            sample: myLab-myVm-097933
+        compute_vm_name:
+            description:
+                - Name of compute virtual machine.
+            returned: always
+            type: str
+            sample: myVm
         fqdn:
             description:
                 - Fully qualified domain name.
@@ -201,7 +211,7 @@ except ImportError:
     pass
 
 
-class AzureRMVirtualMachineFacts(AzureRMModuleBase):
+class AzureRMDtlVirtualMachineFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -229,7 +239,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
         self.lab_name = None
         self.name = None
         self.tags = None
-        super(AzureRMVirtualMachineFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlVirtualMachineFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -291,7 +301,9 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
             'vm_size': d.get('size'),
             'user_name': d.get('user_name'),
             'storage_type': d.get('storage_type').lower(),
-            'compute_id': d.get('compute_id'),
+            'compute_vm_id': d.get('compute_id'),
+            'compute_vm_resource_group': self.parse_resource_to_dict(d.get('compute_id')).get('resource_group'),
+            'compute_vm_name': self.parse_resource_to_dict(d.get('compute_id')).get('name'),
             'fqdn': d.get('fqdn'),
             'provisioning_state': d.get('provisioning_state'),
             'tags': d.get('tags', None)
@@ -300,7 +312,7 @@ class AzureRMVirtualMachineFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMVirtualMachineFacts()
+    AzureRMDtlVirtualMachineFacts()
 
 
 if __name__ == '__main__':
