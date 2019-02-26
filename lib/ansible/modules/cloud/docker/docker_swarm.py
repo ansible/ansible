@@ -391,6 +391,11 @@ class SwarmManager(DockerBaseClass):
 
         choice_map.get(self.state)()
 
+        if self.client.module._diff or self.parameters.debug:
+            diff = dict()
+            diff['before'], diff['after'] = self.differences.get_before_after()
+            self.results['diff'] = diff
+
     def __isSwarmManager(self):
         try:
             data = self.client.inspect_swarm()
