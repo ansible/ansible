@@ -515,6 +515,7 @@ class Connection(ConnectionBase):
         decrypted_contents = self._loader._get_file_contents(key_path)[0]
         ssh_add_proc = subprocess.Popen(
             ('ssh-add', '-'), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             env={'SSH_AUTH_SOCK': self._ssh_agent_socket},
         )
         with BytesIO(decrypted_contents) as pk:
