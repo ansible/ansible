@@ -149,6 +149,8 @@ class VcenterEnvironment(CloudEnvironment):
         :type env: dict[str, str]
         :type cmd: list[str]
         """
+        cmd.append('-e')
+        cmd.append('vcsim=%s' % self._get_cloud_config('vcenter_host'))
 
         # Send the container IP down to the integration test(s)
-        env['vcenter_host'] = self._get_cloud_config('vcenter_host')
+        env['VCENTER_HOST'] = self._get_cloud_config('vcenter_host')

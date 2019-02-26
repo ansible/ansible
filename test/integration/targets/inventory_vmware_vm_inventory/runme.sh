@@ -8,8 +8,7 @@ set -euo pipefail
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
 export ANSIBLE_CONFIG=ansible.cfg
-export vcenter_host="${vcenter_host:-0.0.0.0}"
-export VMWARE_SERVER="${vcenter_host}"
+export VMWARE_SERVER="${VCENTER_HOST}"
 export VMWARE_USERNAME="${VMWARE_USERNAME:-user}"
 export VMWARE_PASSWORD="${VMWARE_PASSWORD:-pass}"
 VMWARE_CONFIG=test-config.vmware.yaml
@@ -36,16 +35,16 @@ cleanup() {
 
 trap cleanup INT TERM EXIT
 
-echo "DEBUG: Using ${vcenter_host} with username ${VMWARE_USERNAME} and password ${VMWARE_PASSWORD}"
+echo "DEBUG: Using ${VCENTER_HOST} with username ${VMWARE_USERNAME} and password ${VMWARE_PASSWORD}"
 
 echo "Kill all previous instances"
-curl "http://${vcenter_host}:5000/killall" > /dev/null 2>&1
+curl "http://${VCENTER_HOST}:5000/killall" > /dev/null 2>&1
 
 echo "Start new VCSIM server"
-curl "http://${vcenter_host}:5000/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
+curl "http://${VCENTER_HOST}:5000/spawn?datacenter=1&cluster=1&folder=0" > /dev/null 2>&1
 
 echo "Debugging new instances"
-curl "http://${vcenter_host}:5000/govc_find"
+curl "http://${VCENTER_HOST}:5000/govc_find"
 
 # Get inventory
 ansible-inventory -i ${VMWARE_CONFIG} --list
