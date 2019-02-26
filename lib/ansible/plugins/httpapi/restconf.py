@@ -69,6 +69,11 @@ class HttpApi(HttpApiBase):
 
 
 def handle_response(response):
+    try:
+        response = json.loads(response)
+    except ValueError:
+        return response
+
     if 'error' in response and 'jsonrpc' not in response:
         error = response['error']
 
