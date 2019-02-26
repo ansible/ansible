@@ -76,6 +76,8 @@ def handle_response(response):
     try:
         response_json = json.loads(response.read())
     except ValueError:
+        if isinstance(response, HTTPError):
+            raise response
         return response.read()
 
     if 'errors' in response_json and 'jsonrpc' not in response_json:
