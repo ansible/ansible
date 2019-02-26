@@ -1,0 +1,5 @@
+---
+- name: Include tasks that have a failure in a block
+  hosts: localhost
+  tasks:
+  - include_tasks: block_fail_tasks.yml
