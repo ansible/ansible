@@ -28,7 +28,8 @@ options:
     required: true
   content:
     description:
-      - The configuration data in format as specififed in C(format) option.
+      - The configuration data in format as specififed in C(format) option. Required unless C(method) is
+        I(delete).
   method:
     description:
       - The RESTCONF method to manage the configuration change on device. The value I(post) is used to
@@ -85,13 +86,19 @@ def main():
     """
     argument_spec = dict(
         path=dict(required=True),
-        content=dict(required=True),
+        content=dict(),
         method=dict(choices=['post', 'put', 'patch', 'delete'], default='post'),
         format=dict(choices=['json', 'xml'], default='json'),
     )
+    required_if = [
+        ['method', 'post', ['content']],
+        ['method', 'put', ['content']],
+        ['method', 'patch', ['content']],
+    ]
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        required_if=required_if,
         supports_check_mode=True
     )
 
