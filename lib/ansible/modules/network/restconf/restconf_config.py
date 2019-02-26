@@ -120,7 +120,7 @@ def main():
             module.fail_json(msg=module.from_json(to_text(exc)), code=exc.code)
 
     try:
-        if method.lower() == 'delete':
+        if method == 'delete':
             if running:
                 if commit:
                     response = restconf.edit_config(module, path=path, method='DELETE')
@@ -129,7 +129,7 @@ def main():
                 warnings.append("delete not executed as resource '%s' does not exist" % path)
         else:
             if running:
-                if method.lower() == 'post':
+                if method == 'post':
                     module.fail_json(msg="resource '%s' already exist" % path, code=409)
                 diff = dict_diff(running, candidate)
                 result['candidate'] = candidate
