@@ -1,12 +1,12 @@
-"""."""
+"""Compat shim for BytesIO."""
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ..six import BytesIO, PY2
+from ..six import BytesIO
 
-if PY2:
+if not hasattr(BytesIO, '__enter__') or not hasattr(BytesIO, '__exit__'):
     class BytesIO(BytesIO):
         def __enter__(self):
             return self
