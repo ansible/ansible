@@ -394,6 +394,7 @@ files:
     labels: gitlab
     maintainers: $team_gitlab
     notified: jlozadad
+  $modules/storage/hpe3par/: farhan7500 gautamphegde
   $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/: $team_netapp
   $modules/storage/purestorage/:
@@ -782,6 +783,9 @@ files:
   $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
       maintainers: bvitnik
+  $module_utils/storage/hpe3par/hpe3par.py: &hpe3par
+    maintainers: farhan7500 gautamphegde
+    support: community
 
 ###############################
 # playbook
@@ -1060,6 +1064,7 @@ files:
   $plugins/doc_fragments/vultr.py: *vultr
   $plugins/doc_fragments/xenserver.py:
     maintainers: bvitnik
+  $plugins/doc_fragments/hpe3par.py: *hpe3par
 ###############################
 # plugins/filter
   $plugins/filter/:
@@ -1339,6 +1344,7 @@ files:
     labels:
       - networking
   test/units/modules/cloud/xenserver/: bvitnik
+  test/units/modules/storage/hpe3par: *hpe3par
   test/sanity/pep8/legacy-files.txt:
     notified: mattclay
   hacking/report.py:
