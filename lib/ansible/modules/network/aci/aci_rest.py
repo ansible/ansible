@@ -18,21 +18,6 @@ short_description: Direct access to the Cisco APIC REST API
 description:
 - Enables the management of the Cisco ACI fabric through direct access to the Cisco APIC REST API.
 - Thanks to the idempotent nature of the APIC, this module is idempotent and reports changes.
-notes:
-- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
-  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
-  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
-  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
-  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
-- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
-seealso:
-- module: aci_tenant
-- name: Cisco APIC REST API Configuration Guide
-  description: More information about the APIC REST API.
-  link: http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.4'
 requirements:
 - lxml (when using XML payload)
@@ -72,6 +57,21 @@ options:
     type: path
     aliases: [ config_file ]
 extends_documentation_fragment: aci
+notes:
+- Certain payloads are known not to be idempotent, so be careful when constructing payloads,
+  e.g. using C(status="created") will cause idempotency issues, use C(status="modified") instead.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- Certain payloads (and used paths) are known to report no changes happened when changes did happen.
+  This is a known APIC problem and has been reported to the vendor. A workaround for this issue exists.
+  More information in :ref:`the ACI documentation <aci_guide_known_issues>`.
+- XML payloads require the C(lxml) and C(xmljson) python libraries. For JSON payloads nothing special is needed.
+seealso:
+- module: aci_tenant
+- name: Cisco APIC REST API Configuration Guide
+  description: More information about the APIC REST API.
+  link: http://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
