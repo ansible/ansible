@@ -168,7 +168,7 @@ EXAMPLES = r'''
     port: 22
     host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
-    delay: 10
+    delay: 300
   connection: local
 
 # Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
@@ -177,7 +177,7 @@ EXAMPLES = r'''
     port: 22
     host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
-    delay: 10
+    delay: 300
   vars:
     ansible_connection: local
 '''
