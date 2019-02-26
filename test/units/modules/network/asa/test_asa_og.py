@@ -23,12 +23,12 @@ from units.modules.utils import set_module_args
 from .ios_module import TestIosModule, load_fixture
 
 
-class TestIosNtpModule(TestIosModule):
+class TestAsaOgModule(TestIosModule):
 
     module = asa_og
 
     def setUp(self):
-        super(TestIosNtpModule, self).setUp()
+        super(TestAsaOgModule, self).setUp()
 
         self.mock_get_config = patch('ansible.modules.network.asa.asa_og.get_config')
         self.get_config = self.mock_get_config.start()
@@ -37,7 +37,7 @@ class TestIosNtpModule(TestIosModule):
         self.load_config = self.mock_load_config.start()
 
     def tearDown(self):
-        super(TestIosNtpModule, self).tearDown()
+        super(TestAsaOgModule, self).tearDown()
         self.mock_get_config.stop()
         self.mock_load_config.stop()
 

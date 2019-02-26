@@ -2,6 +2,7 @@
 #
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -64,7 +65,6 @@ commands:
     ]
 """
 
-from __future__ import absolute_import, division, print_function
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.asa.asa import asa_argument_spec, check_args
 from ansible.module_utils.network.asa.asa import get_config, load_config, run_commands
@@ -72,6 +72,7 @@ from ansible.module_utils.network.common.config import NetworkConfig, dumps
 import re
 import sys
 __metaclass__ = type
+
 
 class Parser():
     '''Regex class for outputs parsing'''
@@ -179,7 +180,7 @@ def map_obj_to_commands(want, have, module):
                 if have_group_type:
 
                     if 'network-object' in group_type and 'network' in have_group_type:
-                        commands.append('object-group network {}'.format(name))
+                        commands.append('object-group network {0}'.format(name))
                         for i in lines:
                             if i not in have_lines:
                                 if 'object' not in i:
@@ -195,7 +196,7 @@ def map_obj_to_commands(want, have, module):
                                     remove_lines.append('no ' + i)
 
                     elif 'service-object' in group_type and 'service' in have_group_type:
-                        commands.append('object-group service {}'.format(name))
+                        commands.append('object-group service {0}'.format(name))
                         for i in lines:
                             if i not in have_lines:
                                 if 'group-object' not in i:
@@ -211,7 +212,7 @@ def map_obj_to_commands(want, have, module):
                                     remove_lines.append('no ' + i)
 
                     elif 'port-object' in group_type and 'service' in have_group_type:
-                        commands.append('object-group service {} {}'.format(name, protocol))
+                        commands.append('object-group service {0} {1}'.format(name, protocol))
                         for i in lines:
                             if i not in have_lines:
                                 if 'group-object' not in i:
