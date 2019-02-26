@@ -281,7 +281,7 @@ RETURN = """
 api_result:
   description: full API response, includes status code and message
   returned: always
-  type: string
+  type: str
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -289,7 +289,6 @@ from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
 from ansible.module_utils.network.fortimanager.common import FMGBaseException
 from ansible.module_utils.network.fortimanager.common import FMGRCommon
-from ansible.module_utils.network.fortimanager.common import FMGRMethods
 from ansible.module_utils.network.fortimanager.common import DEFAULT_RESULT_OBJ
 from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 from ansible.module_utils.network.fortimanager.common import prepare_dict
