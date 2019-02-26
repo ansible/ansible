@@ -74,6 +74,7 @@ options:
       - Terminate and trash a server with its volumes instead of deleting it
     default: false
     type: bool
+    version_added: "2.8"
 
   tags:
     description:
