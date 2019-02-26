@@ -661,7 +661,10 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
 
         if self.state == 'present':
             # compatible parameters
-            if not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools:
+            is_compatible_param = not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools
+            is_compatible_param = is_compatible_param and not load_balancer # the instance should not be exist
+            is_compatible_param = is_compatible_param or self.public_ip_address_name or self.probe_protocol or self.natpool_protocol or self.protocol
+            if is_compatible_param:
                 self.deprecate('Discrete load balancer config settings are deprecated and will be removed.'
                                ' Use frontend_ip_configurations, backend_address_pools, probes, inbound_nat_pools lists instead.', version='2.9')
                 frontend_ip_name = 'frontendip0'
@@ -793,19 +796,21 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 enable_floating_ip=item.get('enable_floating_ip')
             ) for item in self.inbound_nat_rules] if self.inbound_nat_rules else None
 
+            # construct the new instance, if the parameter is none, keep remote one
             self.new_load_balancer = self.network_models.LoadBalancer(
                 sku=self.network_models.LoadBalancerSku(name=self.sku) if self.sku else None,
                 location=self.location,
-                tags=self.tags or load_balancer.tags,
-                frontend_ip_configurations=frontend_ip_configurations_param or load_balancer.frontend_ip_configurations,
-                backend_address_pools=backend_address_pools_param or load_balancer.backend_address_pools,
-                probes=probes_param or load_balancer.probes,
-                inbound_nat_pools=inbound_nat_pools_param or load_balancer.inbound_nat_pools,
-                load_balancing_rules=load_balancing_rules_param or load_balancer.load_balancing_rules,
-                inbound_nat_rules=inbound_nat_rules_param or load_balancer.inbound_nat_rules
+                tags=self.tags,
+                frontend_ip_configurations=frontend_ip_configurations_param,
+                backend_address_pools=backend_address_pools_param,
+                probes=probes_param,
+                inbound_nat_pools=inbound_nat_pools_param,
+                load_balancing_rules=load_balancing_rules_param,
+                inbound_nat_rules=inbound_nat_rules_param
             )
 
             if load_balancer:
+                self.new_load_balancer = self.object_assign(self.new_load_balancer, load_balancer)
                 load_balancer_dict = load_balancer.as_dict()
                 new_dict = self.new_load_balancer.as_dict()
                 if (self.location != load_balancer_dict['location'] or
@@ -868,6 +873,12 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         except CloudError as exc:
             self.fail("Error creating or updating load balancer {0} - {1}".format(self.name, str(exc)))
 
+    def object_assign(self, patch, origin):
+        attribute_map = set(self.network_models.LoadBalancer._attribute_map.keys()) - set(self.network_models.LoadBalancer._validation.keys())
+        for key in attribute_map:
+            if not getattr(patch, key):
+                setattr(patch, key, getattr(origin, key))
+        return patch
 
 def default_compare(new, old, path):
     if isinstance(new, dict):
