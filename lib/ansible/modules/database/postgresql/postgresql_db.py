@@ -496,7 +496,7 @@ def main():
                 if rc != 0:
                     module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
 
-                elif stderr and ('FATAL' in stderr or 'ERROR' in stderr):
+                elif stderr and ('FATAL' in str(stderr) or 'ERROR' in str(stderr)):
                     module.fail_json(msg=stderr, stdout=stdout, rc=1, cmd=cmd)
 
                 else:
