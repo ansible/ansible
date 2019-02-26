@@ -39,7 +39,8 @@ EXAMPLES = """
 RETURN = """
 _value:
   description:
-    - value of the variables requested.
+    - List of the variable names requested.
+  type: list
 """
 
 import re
