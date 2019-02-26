@@ -45,7 +45,7 @@ def to_safe_group_name(name, replacer="_"):
         else:
             invalid_chars = _UNSAFE_GROUP.findall(name)
             if invalid_chars:
-                display.deprecated('Ignoring invalid character(s) "%s" in group (%s), in the future this will be an error' % to_text(invalid_chars, to_text(name)),
+                display.deprecated('Ignoring invalid character(s) "%s" in group (%s), in the future this will be an error' % to_text(invalid_chars), to_text(name)),
                                    version='2.12')
     return name
 
