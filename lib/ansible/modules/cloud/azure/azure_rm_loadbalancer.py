@@ -719,7 +719,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         if self.state == 'present':
             # compatible parameters
             is_compatible_param = not self.frontend_ip_configurations and not self.backend_address_pools and not self.probes and not self.inbound_nat_pools
-            is_compatible_param = is_compatible_param and not load_balancer # the instance should not be exist
+            is_compatible_param = is_compatible_param and not load_balancer  # the instance should not be exist
             is_compatible_param = is_compatible_param or self.public_ip_address_name or self.probe_protocol or self.natpool_protocol or self.protocol
             if is_compatible_param:
                 self.deprecate('Discrete load balancer config settings are deprecated and will be removed.'
@@ -934,6 +934,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
             if not getattr(patch, key):
                 setattr(patch, key, getattr(origin, key))
         return patch
+
 
 def default_compare(new, old, path):
     if isinstance(new, dict):
