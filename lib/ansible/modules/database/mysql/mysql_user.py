@@ -219,7 +219,7 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'EXECUTE', 'FILE', 'CREATE TABLESPACE', 'CREATE USER',
                          'PROCESS', 'PROXY', 'RELOAD', 'REPLICATION CLIENT',
                          'REPLICATION SLAVE', 'SHOW DATABASES', 'SHUTDOWN',
-                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL',
+                         'SUPER', 'ALL', 'ALL PRIVILEGES', 'USAGE', 'REQUIRESSL', 'REQUIRENONE' ,
                          'CREATE ROLE', 'DROP ROLE', 'APPLICATION PASSWORD ADMIN',
                          'AUDIT ADMIN', 'BACKUP ADMIN', 'BINLOG ADMIN',
                          'BINLOG ENCRYPTION ADMIN', 'CONNECTION ADMIN',
@@ -229,7 +229,6 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'RESOURCE GROUP USER', 'ROLE ADMIN', 'SET USER ID',
                          'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
                          'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
-
 
 class InvalidPrivsError(Exception):
     pass
@@ -507,6 +506,8 @@ def privileges_unpack(priv, mode):
     if '*.*' not in output:
         output['*.*'] = ['USAGE']
 
+    if 'REQUIRENONE' in priv and not set(output['*.*']).difference(set(['GRANT', 'REQUIRENONE'])):
+        output['*.*'].append('USAGE')
     # if we are only specifying something like REQUIRESSL and/or GRANT (=WITH GRANT OPTION) in *.*
     # we still need to add USAGE as a privilege to avoid syntax errors
     if 'REQUIRESSL' in priv and not set(output['*.*']).difference(set(['GRANT', 'REQUIRESSL'])):
@@ -523,7 +524,7 @@ def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
         query.append("FROM %s@%s")
         query = ' '.join(query)
         cursor.execute(query, (user, host))
-    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
     query = ["REVOKE %s ON %s" % (priv_string, db_table)]
     query.append("FROM %s@%s")
     query = ' '.join(query)
@@ -534,11 +535,13 @@ def privileges_grant(cursor, user, host, db_table, priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL' , 'REQUIRENONE')])
     query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
     if 'REQUIRESSL' in priv:
         query.append("REQUIRE SSL")
+    if 'REQUIRENONE' in priv:
+        query.append("REQUIRE NONE")
     if 'GRANT' in priv:
         query.append("WITH GRANT OPTION")
     query = ' '.join(query)
