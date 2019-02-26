@@ -39,4 +39,4 @@ Available Tests
 
 Tests can be listed with ``ansible-test sanity --list-tests``.
 
-See the full list of :ref:`sanity tests <all_sanity_tests>` details what the various checks test and how to fix CI issues identified.
+See the full list of :ref:`sanity tests <all_sanity_tests>`, which details the various tests and details how to fix identified issues.
