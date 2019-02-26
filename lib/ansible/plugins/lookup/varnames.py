@@ -12,7 +12,7 @@ DOCUMENTATION = """
       - Retrieves a list of matching Ansible variable names.
     options:
       _terms:
-        description: List of Python regex patterns to match to variable names.
+        description: List of Python regex patterns to search for in variable names.
         required: True
 """
 
