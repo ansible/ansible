@@ -26,7 +26,7 @@ Function Backup-File {
             }
             # Ensure original ACLs are restore to backup file
             Try {
-                Get-Acl -LiteralPath $path | Set-Acl -LiteralPath $backuppath
+                Get-Acl -LiteralPath $path | Set-Acl -LiteralPath $backup_path
             } Catch {
                 throw "Failed to copy ACLs from '$path' to backup file '$backup_path'. ($($_.Exception.Message))"
             }
