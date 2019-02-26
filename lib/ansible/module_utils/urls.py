@@ -665,6 +665,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     '''
     CONNECT_COMMAND = "CONNECT %s:%s HTTP/1.0\r\n"
 
+    tmp_certs = (None, None)
+
     def __init__(self, hostname, port):
         self.hostname = hostname
         self.port = port
@@ -672,6 +674,9 @@ class SSLValidationHandler(urllib_request.BaseHandler):
     def get_ca_certs(self):
         # tries to find a valid CA cert in one of the
         # standard locations for the current distribution
+
+        if SSLValidationHandler.tmp_certs[0] and os.path.isfile(SSLValidationHandler.tmp_certs[0]):
+            return SSLValidationHandler.tmp_certs
 
         ca_certs = []
         paths_checked = []
@@ -723,6 +728,7 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                         except (OSError, IOError):
                             pass
 
+        SSLValidationHandler.tmp_certs = (tmp_path, paths_checked)
         return (tmp_path, paths_checked)
 
     def validate_proxy_response(self, response, valid_codes=None):
