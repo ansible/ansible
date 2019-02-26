@@ -7,7 +7,6 @@
     lbname_b: "lbb{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     lbname_c: "lbc{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     lbname_d: "lbd{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    lbname_e: "lbd{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: create public ip
@@ -25,14 +24,8 @@
 - name: clear load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lbname_{{ item }}"
+    name: "{{ lbname_a }}"
     state: absent
-  with_items:
-    - a
-    - b
-    - c
-    - d
-    - e
 
 - name: create load balancer
   azure_rm_loadbalancer:
@@ -44,6 +37,28 @@
 - name: assert load balancer created
   assert:
     that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_a }}"
+    state: absent
+  register: output
+
+- name: assert load balancer deleted
+  assert:
+    that: output.changed
+
+- name: delete load balancer (idempotent)
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_a }}"
+    state: absent
+  register: output
+
+- name: assert load balancer deleted (idempotent)
+  assert:
+    that: not output.changed
 
 - name: create another load balancer with more options
   azure_rm_loadbalancer:
@@ -124,6 +139,12 @@
     that:
     - output.changed
 
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_b }}"
+    state: absent
+
 - name: create load balancer with multiple parameters
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
@@ -156,10 +177,16 @@
   assert:
     that: output.changed
 
-- name: create loadbalancer with inbound nat rules
+- name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname_d }}"
+    name: "{{ lbname_c }}"
+    state: absent
+
+- name: create load balancer with multiple parameters
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         public_ip_address: "{{ pipaname }}"
@@ -168,12 +195,6 @@
     probes:
       - name: prob0
         port: 80
-    inbound_nat_rules:
-      - name: inboundnatrule0
-        backend_port: 8080
-        protocol: Tcp
-        frontend_port: 8080
-        frontend_ip_configuration: frontendipconf0
     load_balancing_rules:
       - name: lbrbalancingrule0
         frontend_ip_configuration: frontendipconf0
@@ -181,11 +202,23 @@
         frontend_port: 80
         backend_port: 80
         probe: prob0
+    inbound_nat_rules:
+      - name: inboundnatrule0
+        backend_port: 8080
+        protocol: Tcp
+        frontend_port: 8080
+        frontend_ip_configuration: frontendipconf0
   register: output
 
-- assert:
-    that:
-        output.changed
+- name: assert complex load balancer created
+  assert:
+    that: output.changed
+
+- name: delete load balancer
+  azure_rm_loadbalancer:
+    resource_group: '{{ resource_group }}'
+    name: "{{ lbname_c }}"
+    state: absent
 
 - name: Create virtual network
   azure_rm_virtualnetwork:
@@ -204,7 +237,7 @@
 - name: create internal loadbalancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "{{ lbname_e }}"
+    name: "{{ lbname_d }}"
     frontend_ip_configurations:
       - name: frontendipconf0
         private_ip_address: 10.10.0.10
@@ -235,17 +268,11 @@
   assert:
     that: output.changed
 
-- name: clear load balancer
+- name: delete load balancer
   azure_rm_loadbalancer:
     resource_group: '{{ resource_group }}'
-    name: "lbname_{{ item }}"
+    name: "{{ lbname_d }}"
     state: absent
-  with_items:
-    - a
-    - b
-    - c
-    - d
-    - e
 
 - name: cleanup public ip
   azure_rm_publicipaddress:
