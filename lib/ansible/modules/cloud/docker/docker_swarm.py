@@ -158,8 +158,8 @@ requirements:
   - "docker >= 2.6.0"
   - Docker API >= 1.25
 author:
-  - Piotr Wojciechowski (@WojciechowskiPiotr)
   - Thierry Bouvet (@tbouvet)
+  - Piotr Wojciechowski (@WojciechowskiPiotr)
 '''
 
 EXAMPLES = '''
@@ -395,15 +395,17 @@ class SwarmManager(DockerBaseClass):
 
         choice_map.get(self.state)()
 
+        if self.state == 'inspect':
+            self.client.module.deprecate(
+                "The 'inspect' state is deprecated, please use 'docker_swarm_facts' to inspect swarm cluster",
+                version='2.12')
+
         if self.client.module._diff or self.parameters.debug:
             diff = dict()
             diff['before'], diff['after'] = self.differences.get_before_after()
             self.results['diff'] = diff
 
     def inspect_swarm(self):
-        self.client.module.deprecate(
-            "The 'inspect' state is deprecated, please use 'docker_swarm_facts' to inspect swarm cluster",
-            version='2.12')
         try:
             data = self.client.inspect_swarm()
             json_str = json.dumps(data, ensure_ascii=False)
@@ -415,7 +417,6 @@ class SwarmManager(DockerBaseClass):
 
     def init_swarm(self):
         if self.client.check_if_swarm_manager():
-            self.inspect_swarm()
             self.__update_swarm()
             return
 
