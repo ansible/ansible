@@ -295,6 +295,8 @@ class TaskParameters(DockerBaseClass):
         ca_config = spec.get('CAConfig') or dict()
         if self.node_cert_expiry is None:
             self.node_cert_expiry = ca_config.get('NodeCertExpiry')
+        if self.ca_force_rotate is None:
+            self.ca_force_rotate = ca_config.get('ForceRotate')
 
         dispatcher = spec.get('Dispatcher') or dict()
         if self.dispatcher_heartbeat_period is None:
