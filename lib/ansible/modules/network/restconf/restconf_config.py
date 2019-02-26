@@ -32,11 +32,12 @@ options:
   method:
     description:
       - The RESTCONF method to manage the configuration change on device. The value I(post) is used to
-        create a data resource or invoke an operation resource, value I(put) is used to replace the
-        target data resource and value I(delete) is used to delete the target resource.
+        create a data resource or invoke an operation resource, I(put) is used to replace the target
+        data resource, I(patch) is used to modify the target resource, and I(delete) is used to delete
+        the target resource.
     required: false
     default: post
-    choices: ['post', 'put', 'delete']
+    choices: ['post', 'put', 'patch', 'delete']
   format:
     description:
     - The format of the configuration provided as value of C(content). Accepted values are I(xml) and I(json) and
@@ -85,7 +86,7 @@ def main():
     argument_spec = dict(
         path=dict(required=True),
         content=dict(required=True),
-        method=dict(choices=['post', 'put', 'delete'], default='post'),
+        method=dict(choices=['post', 'put', 'patch', 'delete'], default='post'),
         format=dict(choices=['json', 'xml'], default='json'),
     )
 
