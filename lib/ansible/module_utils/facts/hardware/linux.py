@@ -183,19 +183,19 @@ class LinuxHardware(Hardware):
 
         cpu_facts['processor'] = []
         cmd = self.module.get_bin_path('lscpu')
-        cmd = cmd + " | egrep '^(Socket|Thread|Core|CPU|Model name)'"
-        rc, lscpu_out, err = self.module.run_command(cmd, use_unsafe_shell=True)
+        # cmd = cmd + " | egrep '^(Socket|Thread|Core|CPU|Model name)'"
+        rc, lscpu_out, err = self.module.run_command(cmd)
         if lscpu_out:
             for line in lscpu_out.splitlines():
                 data = line.split(' ')
-                if line.startswith('Socket'):
+                if line.startswith('Socket(s)'):
                     cpu_facts['processor_count'] = data[-1]
                     continue
-                if line.startswith('Thread'):
-                    cpu_facts['processor_threads_per_core'] = data[-1]
-                    continue
-                if line.startswith('Core'):
+                if line.startswith('Core(s) per socket'):
                     cpu_facts['processor_cores'] = data[-1]
+                    continue
+                if line.startswith('Thread(s) per core'):
+                    cpu_facts['processor_threads_per_core'] = data[-1]
                     continue
                 if line.startswith('Model name'):
                     data = line.split(':')
