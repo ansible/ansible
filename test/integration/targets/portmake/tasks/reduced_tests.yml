@@ -4,7 +4,6 @@
   pkgng:
     name: subversion,ca_root_nss
     state: present
-  when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
   
 - name: checkout a tested revision of the ports tree to make the tests less dependent on externals
   subversion:
