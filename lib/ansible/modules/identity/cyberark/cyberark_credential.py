@@ -76,6 +76,7 @@ EXAMPLES = """
   register: cyberarkcredential
   result:
     '{ api_base_url }"/AIMWebService/api/Accounts?AppId="{ app_id }"&"{ query }'
+
 - name: Retrieve credential from CyberArk Vault using PAS Web Services SDK via Central Credential Provider
   cyberark_credential:
     api_base_url: "{{ web_services_base_url }}"
