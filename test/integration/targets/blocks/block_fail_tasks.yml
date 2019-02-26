@@ -1,5 +1,5 @@
 - block:
-  - name: fail task
+  - name: EXPECTED FAILURE
     fail:
       msg: failure
 
