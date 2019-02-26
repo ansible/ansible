@@ -520,7 +520,7 @@ class Connection(ConnectionBase):
         )
         with BytesIO(decrypted_contents) as pk:
             ssh_add_proc.communicate(input=pk.getvalue())
-        ssh_add_proc.terminate()
+        self._terminate_process(ssh_add_proc)
 
     def _destroy_ssh_agent(self):
         self._terminate_process(self._ssh_agent)
