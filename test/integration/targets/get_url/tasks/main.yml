@@ -288,41 +288,26 @@
 - name: create sha1 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha1sum.txt'
-    content: "a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt"
-
-- name: add sha1 checksum not going to be downloaded
-  lineinfile:
-    dest: "{{ files_dir }}/sha1sum.txt"
-    line: "{{ item }}"
-  loop:
-    - '3911340502960ca33aece01129234460bfeb2791  not_target1.txt'
-    - '1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt'
+    content: |
+      a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt
+      3911340502960ca33aece01129234460bfeb2791  not_target1.txt
+      1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
 
 - name: create sha256 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha256sum.txt'
-    content: "b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt"
-
-- name: add sha256 checksum not going to be downloaded
-  lineinfile:
-    dest: "{{ files_dir }}/sha256sum.txt"
-    line: "{{ item }}"
-  loop:
-    - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt'
-    - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
 
 - name: create sha256 checksum file of src with a dot leading path
   copy:
     dest: '{{ files_dir }}/sha256sum_with_dot.txt'
-    content: "b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt"
-
-- name: add sha256 checksums with dot leading path not going to be downloaded
-  lineinfile:
-    dest: "{{ files_dir }}/sha256sum_with_dot.txt"
-    line: "{{ item }}"
-  loop:
-    - '30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt'
-    - 'd0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt
 
 - copy:
     src: "testserver.py"
