@@ -27,6 +27,7 @@ options:
     api_base_url:
         description:
             - A string containing the base URL of the server hosting the Central Credential Provider
+        type: str
     validate_certs:
         type: bool
         default: 'true'
