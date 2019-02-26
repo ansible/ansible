@@ -495,8 +495,9 @@ class Connection(ConnectionBase):
         )[:2]
 
     def _spawn_ssh_agent(self):
+        ssh_agent_args = 'D' if self._ssh_version >= (6, 9) else ''
         self._ssh_agent = subprocess.Popen(
-            ('ssh-agent', '-sD'),
+            ('ssh-agent', '-s%s' % ssh_agent_args),
             stdout=subprocess.PIPE,
         )
         self._ssh_agent_socket = (
