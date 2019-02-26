@@ -1,0 +1,125 @@
+###
+# check ports setup
+
+- name: check for existence of screen directory
+  stat:
+    path: /usr/ports/sysutils/screen
+  register: dir_sysutils_screen
+
+- name: check for existence of sudo directory
+  stat:
+    path: /usr/ports/sysutils/screen
+  register: dir_security_sudo
+
+
+# setup portstree if needed
+- name: silent install of subversion and ca root certs with pkgng
+  pkgng:
+    name: subversion,ca_root_nss
+    state: present
+  when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
+  
+- name: checkout a tested revision of the ports tree to make the tests less dependent on externals
+  subversion:
+    repo: https://svn.FreeBSD.org/ports/head
+    dest: /usr/ports
+    revision: 493256
+    force: yes
+  when: dir_sysutils_screen.stat.exists == False or dir_security_sudo.stat.exists == False
+
+
+
+###
+# test portmake absent
+
+- name: check absence of package screen
+  command: pkg info screen
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc == 0
+
+- name: test removal of package screen  not installed
+  portmake:
+    name: "sysutils/screen"
+    state: "absent"
+    
+- name: test removal of package screen not installed with unneded options
+  portmake:
+    name: "sysutils/screen"
+    state: "absent"
+    options_set: "XTERM_256"
+
+
+###
+# test portmake present
+
+- name: remove an possibly existing make.conf file to test creation thereof
+  file:
+    path: /etc/make.conf
+    state: absent
+
+- name: install a port with options - screen
+  portmake:
+    name: sysutils/screen
+    options_set: "XTERM_256"
+    options_unset: "NETHACK"
+    state: "present"
+    disable_vulnerabilities: true
+
+- name: check for added compile paramter of package screen
+  shell: "pkg info screen | grep XTERM_256"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: check compile option NETHACK is absent
+  shell: "pkg info screen | grep 'NETHACK'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("off") == -1
+
+- name: write a test line to make.conf file to test it is not overwritten
+  lineinfile:
+    path: /etc/make.conf
+    line: 'TEST_VARIABLE=nonsense'
+    create: yes
+
+- name: test installation of same package with an aditional option  and previous option saved in /etc/make.conf
+  portmake:
+    name: sysutils/screen
+    state: "present"
+    options_set: "SHOWENC"
+    disable_vulnerabilities: true
+    
+- name: check old compile paramter of package
+  shell: "pkg info screen | grep 'XTERM_256'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: check compile option NETHACK is absent
+  shell: "pkg info screen | grep 'NETHACK'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("off") == -1
+
+- name: check new compile paramter of package
+  shell: "pkg info screen | grep 'SHOWENC'"
+  register: pkg_info_out
+  failed_when: pkg_info_out.stdout.find("on") == -1
+
+- name: check test line in make.conf is still here
+  command: "grep 'TEST_VARIABLE=nonsense' /etc/make.conf"
+  register: grep_makeconf_out
+  failed_when: grep_makeconf_out.rc != 0
+
+###
+# tests portmake absent removing pkg and make.conf lines
+
+- name: uninstall screen with unecessary options
+  portmake:
+    name: sysutils/screen
+    options_set: "XTERM_256"
+    options_unset: "SHOWENC NETHACK"
+    state: "absent"
+    disable_vulnerabilities: true
+    
+- name: check all options in make.conf are removed for screen
+  command: "grep 'sysutils_screen_' /etc/make.conf"
+  register: grep_makeconf_out
+  failed_when: grep_makeconf_out.rc == 0
