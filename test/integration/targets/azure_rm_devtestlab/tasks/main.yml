@@ -315,6 +315,61 @@
     that:
       - output.changed
 
+- name: Get Facts of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: "{{ vm_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.virtualmachines[0]['id'] != None
+      - output.virtualmachines[0]['resource_group'] != None
+      - output.virtualmachines[0]['lab_name'] != None
+      - output.virtualmachines[0]['name'] != None
+      - output.virtualmachines[0]['compute_vm_id'] != None
+      - output.virtualmachines[0]['compute_vm_resource_group'] != None
+      - output.virtualmachines[0]['compute_vm_name'] != None
+      - output.virtualmachines[0]['disallow_public_ip_address'] != None
+      - output.virtualmachines[0]['expiration_date'] != None
+      - output.virtualmachines[0]['fqdn'] != None
+      - output.virtualmachines[0]['id'] != None
+      - output.virtualmachines[0]['image'] != None
+      - output.virtualmachines[0]['notes'] != None
+      - output.virtualmachines[0]['os_type'] != None
+      - output.virtualmachines[0]['provisioning_state'] != None
+      - output.virtualmachines[0]['storage_type'] != None
+      - output.virtualmachines[0]['user_name'] != None
+      - output.virtualmachines[0]['vm_size'] != None
+
+- name: List Facts of DTL Virtual Machine
+  azure_rm_devtestlabvirtualmachine_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.virtualmachines[0]['id'] != None
+      - output.virtualmachines[0]['resource_group'] != None
+      - output.virtualmachines[0]['lab_name'] != None
+      - output.virtualmachines[0]['name'] != None
+      - output.virtualmachines[0]['compute_vm_id'] != None
+      - output.virtualmachines[0]['disallow_public_ip_address'] != None
+      - output.virtualmachines[0]['expiration_date'] != None
+      - output.virtualmachines[0]['fqdn'] != None
+      - output.virtualmachines[0]['id'] != None
+      - output.virtualmachines[0]['image'] != None
+      - output.virtualmachines[0]['notes'] != None
+      - output.virtualmachines[0]['os_type'] != None
+      - output.virtualmachines[0]['provisioning_state'] != None
+      - output.virtualmachines[0]['storage_type'] != None
+      - output.virtualmachines[0]['user_name'] != None
+      - output.virtualmachines[0]['vm_size'] != None
+
 #- name: Delete instance of DevTest Labs artifacts source
 #  azure_rm_devtestlabartifactsource:
 #    resource_group: "{{ resource_group }}"
