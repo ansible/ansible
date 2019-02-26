@@ -4,19 +4,23 @@
 # Preparation for tests.
 - name: postgresql_tablespace - drop dir for test tablespace
   become: yes
-  become_user: root
   file:
-    path: /mnt/ssd
+    path: /ssd
     state: absent
+  ignore_errors: yes
+
+- name: postgresql_tablespace - disable selinux
+  become: yes
+  shell: setenforce 0
   ignore_errors: yes
 
 - name: postgresql_tablespace - create dir for test tablespace
   become: yes
-  become_user: root
   file:
-    path: /mnt/ssd
+    path: /ssd
     state: directory
     owner: "{{ pg_user }}"
+    group: "{{ pg_user }}"
     mode: 0700
   ignore_errors: yes
 
@@ -28,6 +32,7 @@
     login_user: "{{ pg_user }}"
     name: bob
     state: present
+  ignore_errors: yes
 
 - name: postgresql_tablespace - create test role to test change ownership
   become_user: "{{ pg_user }}"
@@ -37,6 +42,7 @@
     login_user: "{{ pg_user }}"
     name: alice
     state: present
+  ignore_errors: yes
 
 ###############
 # Do main tests
@@ -51,7 +57,7 @@
     login_user: "{{ pg_user }}"
     name: acme
     owner: bob
-    location: /mnt/ssd
+    location: /ssd
   register: result
   ignore_errors: yes
 
@@ -59,11 +65,11 @@
     that:
     - result.changed == true
     - result.owner == 'bob'
-    - result.queries == ["CREATE TABLESPACE acme LOCATION '/mnt/ssd'", "ALTER TABLESPACE acme OWNER TO bob"]
+    - result.queries == ["CREATE TABLESPACE acme LOCATION '/ssd'", "ALTER TABLESPACE acme OWNER TO bob"]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
-    - result.location == '/mnt/ssd'
+    - result.location == '/ssd'
 
 # Change tablespace owner
 - name: postgresql_tablespace - change tablespace owner to alice
