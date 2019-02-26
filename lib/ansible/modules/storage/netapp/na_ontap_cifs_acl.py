@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018-2019, NetApp, Inc
+# (c) 2018, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -40,7 +40,7 @@ options:
     description:
       - "The user or group name for which the permissions are listed."
     required: true
-short_description: NetApp ONTAP manage cifs-share-access-control
+short_description: "NetApp ONTAP manage cifs-share-access-control"
 version_added: "2.6"
 
 '''
@@ -52,7 +52,6 @@ EXAMPLES = """
         share_name: cifsShareName
         user_or_group: Everyone
         permission: read
-        vserver: "{{ netapp_vserver }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
@@ -60,9 +59,7 @@ EXAMPLES = """
       na_ontap_cifs_acl:
         state: present
         share_name: cifsShareName
-        user_or_group: Everyone
         permission: change
-        vserver: "{{ netapp_vserver }}"
         hostname: "{{ netapp_hostname }}"
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
