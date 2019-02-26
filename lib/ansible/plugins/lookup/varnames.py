@@ -23,7 +23,7 @@ EXAMPLES = """
     qz_1: hello
     qz_2: world
     qa_1: i wont show
-    qz_: i wont show either
+    qz_: "I won't show either"
 
 - name: Show all variables
   debug: msg="{{ lookup('varnames', '.+')}}"
