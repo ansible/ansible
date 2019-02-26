@@ -225,6 +225,18 @@
       - output.changed
   when: "github_token | length > 0"
 
+- name:
+  set_fact:
+    artifact_source:
+      - source_name: "{{ artifacts_name }}"
+        source_path: "/Artifacts/linux-install-mongodb"
+  when: "github_token | length > 0"
+
+- name:
+  set_fact:
+    artifact_source: None
+  when: "github_token | length == 0"
+
 - name: Create instance of DTL Virtual Machine
   azure_rm_devtestlabvirtualmachine:
     resource_group: "{{ resource_group }}"
@@ -245,9 +257,7 @@
       sku: 16.04-LTS
       os_type: Linux
       version: latest
-#    artifacts:
-#      - source_name: "{{ artifacts_name }}"
-#        source_path: "/Artifacts/linux-install-mongodb"
+    artifacts: "{{ artifact_source }}"
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
   register: output
@@ -277,9 +287,7 @@
       sku: 16.04-LTS
       os_type: Linux
       version: latest
-#    artifacts:
-#      - source_name: "{{ artifacts_name }}"
-#        source_path: "/Artifacts/linux-install-mongodb"
+    artifacts: "{{ artifact_source }}"
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
   register: output
@@ -309,9 +317,7 @@
       sku: 16.04-LTS
       os_type: Linux
       version: latest
-#    artifacts:
-#      - source_name: "{{ artifacts_name }}"
-#        source_path: "/Artifacts/linux-install-mongodb"
+    artifacts: "{{ artifact_source }}"
     allow_claim: no
     expiration_date: "2029-02-22T01:49:12.117974Z"
   register: output
