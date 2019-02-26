@@ -17,6 +17,42 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ============================================================
+- name: create user with basic ssl privileges
+  mysql_user: name="ssluser" password=somepass priv=*.*:REQUIRESSL state=present
+
+- name: run command to show privileges for user (expect privileges in stdout)
+  command: mysql "-e select ssl_type from mysql.user where User='ssluser';"
+  register: result
+
+- name: assert user has correct SSL privileges
+  assert: { that: "'ANY' in result.stdout" }
+
+- name:  reset priv to REQUIRE NONE
+  mysql_user: name=ssluser priv="*.*:REQUIRENONE" append_privs=yes state=present
+
+- name: run command to show privileges for user (expect privileges in stdout)
+  command: mysql "-e select ssl_type from mysql.user where User='ssluser';"
+  register: result
+
+- name: assert user doesnt have SSL privileges
+  assert: { that: "'ANY' not in result.stdout" }
+
+- name: delete user
+  command: mysql "-e drop user ssluser@'localhost';"
+#============================================================
+- name: create user with  privileges
+  mysql_user: name="ssluser" password=somepass priv=*.*:REQUIRENONE state=present
+
+- name: run command to show privileges for user (expect privileges in stdout)
+  command: mysql "-e select ssl_type from mysql.user where User='ssluser';"
+  register: result
+
+- name: assert user doesnt have SSL privileges
+  assert: { that: "'ANY' not in result.stdout" }
+
+- name: delete user
+  command: mysql "-e drop user ssluser@'localhost';"
+#============================================================
 - name: create user with basic select privileges
   mysql_user:
     name: '{{ user_name_2 }}'
