@@ -248,12 +248,6 @@ class TaskExecutor:
 
         elif self._task.loop is not None:
             items = templar.template(self._task.loop)
-            if not isinstance(items, list):
-                raise AnsibleError(
-                    "Invalid data passed to 'loop', it requires a list, got this instead: %s."
-                    " Hint: If you passed a list/dict of just one element,"
-                    " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
-                )
 
         # now we restore any old job variables that may have been modified,
         # and delete them if they were in the play context vars but not in
@@ -265,9 +259,18 @@ class TaskExecutor:
                 del self._job_vars[k]
 
         if items:
-            for idx, item in enumerate(items):
+            def _get_item(item):
+                """Change item to UnsafeProxy if apply"""
                 if item is not None and not isinstance(item, UnsafeProxy):
-                    items[idx] = UnsafeProxy(item)
+                    return UnsafeProxy(item)
+                else:
+                    return item
+
+            if isinstance(items, list):
+                items = [_get_item(item) for item in items]
+            elif isinstance(items, dict):
+                # keep python2.6 compability
+                items = dict((key, _get_item(item)) for key, item in items.items())
 
         return items
 
