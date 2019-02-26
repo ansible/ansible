@@ -55,7 +55,7 @@ options:
 EXAMPLES = '''
     - name: Add initiators to an igroup
       na_ontap_igroup_initiator:
-        names: abc.test:def.com,def.test:efg.com
+        names: abc.test:def.com, def.test:efg.com
         initiator_group: test_group
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
@@ -65,7 +65,7 @@ EXAMPLES = '''
     - name: Remove an initiator from an igroup
       na_ontap_igroup_initiator:
         state: absent
-        names: abc.test:def.com
+        name: abc.test:def.com
         initiator_group: test_group
         vserver: ansibleVServer
         hostname: "{{ netapp_hostname }}"
