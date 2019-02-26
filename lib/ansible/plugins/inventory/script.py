@@ -153,7 +153,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                     try:
                         got = data_from_meta.get(host, {})
                     except AttributeError as e:
-                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)))
+                        raise AnsibleError("Improperly formatted host information for %s: %s" % (host, to_native(e)), orig_exc=e)
 
                 self._populate_host_vars([host], got)
 
