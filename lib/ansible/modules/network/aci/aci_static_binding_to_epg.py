@@ -17,18 +17,6 @@ module: aci_static_binding_to_epg
 short_description: Bind static paths to EPGs (fv:RsPathAtt)
 description:
 - Bind static paths to EPGs on Cisco ACI fabrics.
-notes:
-- The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
-  The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
-seealso:
-- module: aci_tenant
-- module: aci_ap
-- module: aci_epg
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(fv:RsPathAtt).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Bruno Calogero (@brunocalogero)
 version_added: '2.5'
 options:
   tenant:
@@ -121,6 +109,18 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(tenant), C(ap), C(epg) used must exist before using this module in your playbook.
+  The M(aci_tenant), M(aci_ap), M(aci_epg) modules can be used for this.
+seealso:
+- module: aci_tenant
+- module: aci_ap
+- module: aci_epg
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(fv:RsPathAtt).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Bruno Calogero (@brunocalogero)
 '''
 
 EXAMPLES = r'''
@@ -279,8 +279,25 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
+
+INTERFACE_MODE_MAPPING = {
+    '802.1p': 'native',
+    'access': 'untagged',
+    'native': 'native',
+    'regular': 'regular',
+    'tagged': 'regular',
+    'trunk': 'regular',
+    'untagged': 'untagged',
+}
+
+INTERFACE_TYPE_MAPPING = dict(
+    fex='topology/pod-{pod_id}/paths-{leafs}/extpaths-{extpaths}/pathep-[eth{interface}]',
+    port_channel='topology/pod-{pod_id}/paths-{leafs}/pathep-[{interface}]',
+    switch_port='topology/pod-{pod_id}/paths-{leafs}/pathep-[eth{interface}]',
+    vpc='topology/pod-{pod_id}/protpaths-{leafs}/pathep-[{interface}]',
+)
 
 # TODO: change 'deploy_immediacy' to 'resolution_immediacy' (as seen in aci_epg_to_domain)?
 
@@ -299,8 +316,8 @@ def main():
                             aliases=['interface_mode_name', 'mode']),
         interface_type=dict(type='str', default='switch_port', choices=['fex', 'port_channel', 'switch_port', 'vpc']),
         pod_id=dict(type='int', aliases=['pod', 'pod_number']),  # Not required for querying all objects
-        leafs=dict(type='list', aliases=['leaves', 'nodes', 'paths', 'switches']),
-        interface=dict(type='str'),
+        leafs=dict(type='list', aliases=['leaves', 'nodes', 'paths', 'switches']),  # Not required for querying all objects
+        interface=dict(type='str'),  # Not required for querying all objects
         extpaths=dict(type='int'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -333,53 +350,31 @@ def main():
             # Users are likely to use integers for leaf IDs, which would raise an exception when using the join method
             leafs.extend(str(leaf).split('-'))
         if len(leafs) == 1:
-            if interface_type != 'vpc':
-                leafs = leafs[0]
-            else:
-                module.fail_json(msg='A interface_type of "vpc" requires 2 leafs')
-        elif len(leafs) == 2:
             if interface_type == 'vpc':
-                leafs = "-".join(leafs)
-            else:
+                module.fail_json(msg='A interface_type of "vpc" requires 2 leafs')
+            leafs = leafs[0]
+        elif len(leafs) == 2:
+            if interface_type != 'vpc':
                 module.fail_json(msg='The interface_types "switch_port", "port_channel", and "fex" \
                     do not support using multiple leafs for a single binding')
+            leafs = "-".join(leafs)
         else:
             module.fail_json(msg='The "leafs" parameter must not have more than 2 entries')
     interface = module.params['interface']
     extpaths = module.params['extpaths']
     state = module.params['state']
-    static_path = ''
 
     if encap_id is not None:
-        if encap_id in range(1, 4097):
-            encap_id = 'vlan-{0}'.format(encap_id)
-        else:
+        if encap_id not in range(1, 4097):
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
+        encap_id = 'vlan-{0}'.format(encap_id)
 
     if primary_encap_id is not None:
-        if primary_encap_id in range(1, 4097):
-            primary_encap_id = 'vlan-{0}'.format(primary_encap_id)
-        else:
+        if primary_encap_id not in range(1, 4097):
             module.fail_json(msg='Valid VLAN assigments are from 1 to 4096')
+        primary_encap_id = 'vlan-{0}'.format(primary_encap_id)
 
-    INTERFACE_MODE_MAPPING = {
-        '802.1p': 'native',
-        'access': 'untagged',
-        'native': 'native',
-        'regular': 'regular',
-        'tagged': 'regular',
-        'trunk': 'regular',
-        'untagged': 'untagged',
-    }
-
-    INTERFACE_TYPE_MAPPING = dict(
-        fex='topology/pod-{0}/paths-{1}/extpaths-{2}/pathep-[eth{3}]'.format(pod_id, leafs, extpaths, interface),
-        port_channel='topology/pod-{0}/paths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
-        switch_port='topology/pod-{0}/paths-{1}/pathep-[eth{2}]'.format(pod_id, leafs, interface),
-        vpc='topology/pod-{0}/protpaths-{1}/pathep-[{2}]'.format(pod_id, leafs, interface),
-    )
-
-    static_path = INTERFACE_TYPE_MAPPING[interface_type]
+    static_path = INTERFACE_TYPE_MAPPING[interface_type].format(pod_id=pod_id, leafs=leafs, extpaths=extpaths, interface=interface)
 
     path_target_filter = {}
     if pod_id is not None and leafs is not None and interface is not None and (interface_type != 'fex' or extpaths is not None):

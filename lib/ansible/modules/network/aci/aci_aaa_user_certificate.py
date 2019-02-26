@@ -17,16 +17,6 @@ module: aci_aaa_user_certificate
 short_description: Manage AAA user certificates (aaa:UserCert)
 description:
 - Manage AAA user certificates on Cisco ACI fabrics.
-notes:
-- The C(aaa_user) must exist before using this module in your playbook.
-  The M(aci_aaa_user) module can be used for this.
-seealso:
-- module: aci_aaa_user
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC class B(aaa:UserCert).
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.5'
 options:
   aaa_user:
@@ -58,6 +48,16 @@ options:
     choices: [ absent, present, query ]
     default: present
 extends_documentation_fragment: aci
+notes:
+- The C(aaa_user) must exist before using this module in your playbook.
+  The M(aci_aaa_user) module can be used for this.
+seealso:
+- module: aci_aaa_user
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC class B(aaa:UserCert).
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -209,8 +209,8 @@ url:
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 '''
 
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 ACI_MAPPING = dict(
     appuser=dict(
@@ -227,9 +227,9 @@ ACI_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
-        aaa_user=dict(type='str', required=True),  # Not required for querying all objects
+        aaa_user=dict(type='str', required=True),
         aaa_user_type=dict(type='str', default='user', choices=['appuser', 'user']),
-        certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),  # Not required for querying all objects
+        certificate=dict(type='str', aliases=['cert_data', 'certificate_data']),
         certificate_name=dict(type='str', aliases=['cert_name']),  # Not required for querying all objects
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )

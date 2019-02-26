@@ -16,13 +16,6 @@ module: aci_domain
 short_description: Manage physical, virtual, bridged, routed or FC domain profiles (phys:DomP, vmm:DomP, l2ext:DomP, l3ext:DomP, fc:DomP)
 description:
 - Manage physical, virtual, bridged, routed or FC domain profiles on Cisco ACI fabrics.
-seealso:
-- name: APIC Management Information Model reference
-  description: More information about the internal APIC classes B(phys:DomP),
-               B(vmm:DomP), B(l2ext:DomP), B(l3ext:DomP) and B(fc:DomP)
-  link: https://developer.cisco.com/docs/apic-mim-ref/
-author:
-- Dag Wieers (@dagwieers)
 version_added: '2.5'
 options:
   domain:
@@ -78,6 +71,13 @@ options:
     type: str
     choices: [ avs, default, dvs, unknown ]
 extends_documentation_fragment: aci
+seealso:
+- name: APIC Management Information Model reference
+  description: More information about the internal APIC classes B(phys:DomP),
+               B(vmm:DomP), B(l2ext:DomP), B(l3ext:DomP) and B(fc:DomP)
+  link: https://developer.cisco.com/docs/apic-mim-ref/
+author:
+- Dag Wieers (@dagwieers)
 '''
 
 EXAMPLES = r'''
@@ -260,6 +260,7 @@ VM_PROVIDER_MAPPING = dict(
     redhat='Redhat',
     vmware='VMware',
 )
+
 VSWITCH_MAPPING = dict(
     avs='n1kv',
     default='default',
@@ -271,12 +272,12 @@ VSWITCH_MAPPING = dict(
 def main():
     argument_spec = aci_argument_spec()
     argument_spec.update(
+        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),
+        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),  # Not required for querying all objects
         dscp=dict(type='str',
                   choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
                            'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
                   aliases=['target']),
-        domain=dict(type='str', aliases=['domain_name', 'domain_profile', 'name']),  # Not required for querying all objects
-        domain_type=dict(type='str', required=True, choices=['fc', 'l2dom', 'l3dom', 'phys', 'vmm'], aliases=['type']),  # Not required for querying all objects
         encap_mode=dict(type='str', choices=['unknown', 'vlan', 'vxlan']),
         multicast_address=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
