@@ -58,8 +58,6 @@ notes:
 - The C(tenant), C(contract), C(subject), and C(filter_name) must exist before using this module in your playbook.
   The M(aci_tenant), M(aci_contract), M(aci_contract_subject), and M(aci_filter) modules can be used for these.
 seealso:
-- module: aci_tenant
-- module: aci_contract
 - module: aci_contract_subject
 - module: aci_filter
 - name: APIC Management Information Model reference

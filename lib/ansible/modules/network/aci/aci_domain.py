@@ -72,6 +72,9 @@ options:
     choices: [ avs, default, dvs, unknown ]
 extends_documentation_fragment: aci
 seealso:
+- module: aci_aep_to_domain
+- module: aci_domain_to_encap_pool
+- module: aci_domain_to_vlan_pool
 - name: APIC Management Information Model reference
   description: More information about the internal APIC classes B(phys:DomP),
                B(vmm:DomP), B(l2ext:DomP), B(l3ext:DomP) and B(fc:DomP)
