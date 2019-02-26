@@ -17,7 +17,7 @@ author:
  - Cyberark Bizdev (@cyberark-bizdev)
  - erasmix (@erasmix)
  - James Stutes (@jimmyjamcabd)
-version_added: 2.8
+version_added: "2.8"
 description:
     - Creates a URI for retrieving a credential from the Cyberark Vault through the Privileged
       Account Security Web Services SDK by requesting access to a specific object through an Application ID
