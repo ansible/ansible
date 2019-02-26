@@ -26,3 +26,11 @@ env python -c \
     'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
+
+# run test that includes tasks that fail inside a block with always
+rm -f block_test.out block_test_wo_colors.out
+ansible-playbook -vv block_fail.yml -i ../../inventory "$@" | tee block_test.out
+env python -c \
+    'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
+    <block_test.out >block_test_wo_colors.out
+[ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(egrep '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
