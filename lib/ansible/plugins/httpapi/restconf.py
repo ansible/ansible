@@ -41,6 +41,7 @@ options:
 
 import json
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.six.moves.urllib.error import HTTPError
@@ -77,7 +78,7 @@ def handle_response(response):
         response_json = json.loads(response.read())
     except ValueError:
         if isinstance(response, HTTPError):
-            raise response
+            raise ConnectionError(to_text(response), code=response.code)
         return response.read()
 
     if 'errors' in response_json and 'jsonrpc' not in response_json:
