@@ -1,2 +1,3 @@
 bugfixes:
 - "docker_swarm - do not crash with older docker daemons (https://github.com/ansible/ansible/issues/51175)."
+- "docker_swarm - improve idempotency checking; ``rotate_worker_token`` and ``rotate_manager_token`` are now also used when all other parameters have not changed."

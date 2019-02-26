@@ -356,6 +356,10 @@ class TaskParameters(DockerBaseClass):
                 continue
             if self.__dict__[k] != other.__dict__[k]:
                 differences.add(k, parameter=self.__dict__[k], active=other.__dict__[k])
+        if self.rotate_worker_token:
+            differences.add('rotate_worker_token', parameter=True, active=False)
+        if self.rotate_manager_token:
+            differences.add('rotate_manager_token', parameter=True, active=False)
         return differences
 
 
