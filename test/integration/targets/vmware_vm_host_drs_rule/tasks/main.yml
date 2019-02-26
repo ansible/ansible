@@ -4,11 +4,6 @@
 
 # TODO: vcsim does not support manage DRS rule
 
-- name: Store the vcenter container ip
-  set_fact:
-    vcsim: "{{ lookup('env', 'vcenter_host') }}"
-- debug: var=vcsim
-
 - name: Wait for flask server
   wait_for:
     host: "{{ vcsim }}"
