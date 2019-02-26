@@ -307,7 +307,7 @@ service_facts:
   - A dictionary mapping the service's name to a dictionary of containers.
   - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
     are also accessible directly. The service's name is the variable with which the container dictionary
-    can be accessed.
+    can be accessed. Note that the returned facts will be removed in Ansible 2.12.
   returned: success
   type: complex
   contains:

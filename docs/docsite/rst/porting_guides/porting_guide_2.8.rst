@@ -195,7 +195,17 @@ Noteworthy module changes
 * The ``digital_ocean`` module has been deprecated in favor of modules that do not require external dependencies.
   This allows for more flexibility and better module support.
 
+* The ``docker_container`` module has deprecated the returned fact ``docker_container``. The same value is
+  available as the returned variable ``docker_container``. The returned fact will be removed in Ansible 2.12.
+* The ``docker_network`` module has deprecated the returned fact ``docker_container``. The same value is
+  available as the returned variable ``docker_network``. The returned fact will be removed in Ansible 2.12.
+* The ``docker_volume`` module has deprecated the returned fact ``docker_container``. The same value is
+  available as the returned variable ``docker_volume``. The returned fact will be removed in Ansible 2.12.
+
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
+* The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary
+  of these facts is returned as the regular return value ``service_facts``. The returned facts will be removed in
+  Ansible 2.12.
 
 * The ``docker_swarm_service`` module no longer sets a defaults for the following options:
     * ``user``. Before, the default was ``root``.
