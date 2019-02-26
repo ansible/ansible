@@ -25,14 +25,15 @@ options:
     name:
         description:
             - Unique name of role assignment.
-        required: True
-    principal_id:
+    assignee_object_id:
         description:
-            - The principal id assigned to the role. This maps to the ID inside the Active Directory.
+            - The object id of assignee. This maps to the ID inside the Active Directory.
             - It can point to a user, service principal or security group.
+            - Required when creating role assignment.
     role_definition_id:
         description:
-            -  The role definition id used in the role assignment.
+            - The role definition id used in the role assignment.
+            - Required when creating role assignment.
     scope:
         description:
             - The scope of the role assignment to create.
@@ -59,10 +60,14 @@ author:
 EXAMPLES = '''
     - name: Create a role assignment
       azure_rm_roleassignment:
-        name: myRoleAssignment
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        principal_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        role_definition_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        assignee_object_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        role_definition_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+    - name: Delete a role assignment
+      azure_rm_roleassignment:
+        name: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 '''
 
@@ -75,7 +80,7 @@ id:
       "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 '''
 
-import time
+import uuid
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
@@ -95,7 +100,7 @@ def roleassignment_to_dict(assignment):
         id=assignment.id,
         name=assignment.name,
         type=assignment.type,
-        principal_id=assignment.principal_id,
+        assignee_object_id=assignment.principal_id,
         role_definition_id=assignment.role_definition_id,
         scope=assignment.scope
     )
@@ -107,19 +112,16 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             name=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             scope=dict(
                 type='str'
             ),
-            principal_id=dict(
-                type='str',
-                required=True
+            assignee_object_id=dict(
+                type='str'
             ),
             role_definition_id=dict(
-                type='str',
-                required=True
+                type='str'
             ),
             state=dict(
                 type='str',
@@ -130,7 +132,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
 
         self.name = None
         self.scope = None
-        self.principal_id = None
+        self.assignee_object_id = None
         self.role_definition_id = None
 
         self.results = dict(
@@ -162,6 +164,9 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
 
         # build cope
         self.scope = self.build_scope()
+
+        if self.name is None:
+            self.name = str(uuid.uuid4())
 
         # get existing role assignment
         old_response = self.get_roleassignment()
@@ -218,9 +223,9 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
         self.log("Creating role assignment {0}".format(self.name))
 
         try:
-            parameters = RoleAssignmentCreateParameters(role_definition_id=self.role_definition_id, principal_id=self.principal_id)
+            parameters = RoleAssignmentCreateParameters(role_definition_id=self.role_definition_id, principal_id=self.assignee_object_id)
             response = self._client.role_assignments.create(scope=self.scope,
-                                                            name=self.name,
+                                                            role_assignment_name=self.name,
                                                             parameters=parameters)
 
         except CloudError as exc:
@@ -273,3 +278,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
