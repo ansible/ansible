@@ -140,7 +140,7 @@ try:
     try:
         hashlib.md5()
     except ValueError:
-        algorithms.pop('md5', None)
+        AVAILABLE_HASH_ALGORITHMS.pop('md5', None)
 except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
