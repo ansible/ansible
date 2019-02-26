@@ -134,6 +134,7 @@
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options.seq_page_cost == '4'
+  when: postgres_version_resp.stdout is version('9.0', '>=')
 
 # Rename tablespace:
 - name: postgresql_tablespace - rename tablespace
