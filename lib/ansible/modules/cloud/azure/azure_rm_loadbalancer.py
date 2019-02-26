@@ -813,9 +813,7 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 self.new_load_balancer = self.object_assign(self.new_load_balancer, load_balancer)
                 load_balancer_dict = load_balancer.as_dict()
                 new_dict = self.new_load_balancer.as_dict()
-                if (self.location != load_balancer_dict['location'] or
-                        self.sku != load_balancer_dict['sku']['name'] or
-                        not default_compare(new_dict, load_balancer_dict, '')):
+                if not default_compare(new_dict, load_balancer_dict, ''):
                     changed = True
                 else:
                     changed = False

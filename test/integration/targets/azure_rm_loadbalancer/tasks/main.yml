@@ -11,13 +11,6 @@
 
 - name: create public ip
   azure_rm_publicipaddress:
-    name: "{{ pipbname }}"
-    sku: Standard
-    allocation_method: Static
-    resource_group: '{{ resource_group }}'
-
-- name: create public ip
-  azure_rm_publicipaddress:
     name: "{{ pipaname }}"
     resource_group: '{{ resource_group }}'
 
