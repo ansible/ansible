@@ -47,7 +47,7 @@ def module_mock(mocker):
 
 @pytest.fixture(autouse=True)
 def connection_mock(mocker):
-    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_device.Connection')
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_fwobj_service.Connection')
     return connection_class_mock
 
 
@@ -61,202 +61,8 @@ fmg_instance = FortiManagerHandler(connection_mock, module_mock)
 
 
 def test_fmgr_fwobj_service_custom(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # comment: None
-    # protocol-number: None
-    # protocol: None
-    # custom_type: tcp_udp_sctp
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: None
-    # iprange: 0.0.0.0
-    # category: ansibleCategoryTest
-    # explicit-proxy: disable
-    # udp-idle-timer: 0
-    # group-member: None
-    # application: None
-    # tcp-portrange: 443
-    # icmp_code: None
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_service
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: 51
-    # sctp-portrange: 100
-    ##################################################
-    ##################################################
-    # comment: None
-    # protocol: None
-    # custom_type: tcp_udp_sctp
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: None
-    # iprange: 0.0.0.0
-    # category: None
-    # protocol-number: None
-    # udp-idle-timer: 0
-    # explicit-proxy: disable
-    # group-member: None
-    # application: None
-    # tcp-portrange: 443:1000-2000,80-82:10000-20000
-    # icmp_code: None
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_serviceWithSource
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: 51:100-200,162:200-400
-    # sctp-portrange: 100:2000-2500
-    ##################################################
-    ##################################################
-    # comment: None
-    # protocol-number: None
-    # protocol: None
-    # custom_type: icmp
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: 8
-    # iprange: 0.0.0.0
-    # category: None
-    # explicit-proxy: disable
-    # udp-idle-timer: 0
-    # group-member: None
-    # application: None
-    # tcp-portrange: None
-    # icmp_code: 3
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_icmp
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: None
-    # sctp-portrange: None
-    ##################################################
-    ##################################################
-    # comment: None
-    # protocol: None
-    # custom_type: icmp6
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: 5
-    # iprange: 0.0.0.0
-    # category: None
-    # protocol-number: None
-    # udp-idle-timer: 0
-    # explicit-proxy: disable
-    # group-member: None
-    # application: None
-    # tcp-portrange: None
-    # icmp_code: 1
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_icmp6
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: None
-    # sctp-portrange: None
-    ##################################################
-    ##################################################
-    # comment: None
-    # protocol-number: 12
-    # protocol: None
-    # custom_type: ip
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: None
-    # iprange: 0.0.0.0
-    # category: None
-    # explicit-proxy: disable
-    # udp-idle-timer: 0
-    # group-member: None
-    # application: None
-    # tcp-portrange: None
-    # icmp_code: None
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_ip
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: None
-    # sctp-portrange: None
-    ##################################################
-    ##################################################
-    # comment: None
-    # protocol: None
-    # custom_type: all
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: None
-    # iprange: www.ansible.com
-    # category: None
-    # protocol-number: None
-    # udp-idle-timer: 0
-    # explicit-proxy: enable
-    # group-member: None
-    # application: None
-    # tcp-portrange: 443:1000-2000,80-82:10000-20000
-    # icmp_code: None
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_proxy_all
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: None
-    # sctp-portrange: None
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[0]['paramgram_used'])
@@ -276,45 +82,41 @@ def test_fmgr_fwobj_service_custom(fixture_data, mocker):
     # Test using fixture 6 #
     output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[5]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 7 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[6]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 8 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[7]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 9 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[8]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 10 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[9]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 11 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[10]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+    # Test using fixture 12 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_custom(fmg_instance, fixture_data[11]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == 0
+
+
+def test_fmgr_fwobj_service_group(fixture_data, mocker):
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
+
+    # Test using fixture 1 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_group(fmg_instance, fixture_data[0]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == -3
+    # Test using fixture 2 #
+    output = fmgr_fwobj_service.fmgr_fwobj_service_group(fmg_instance, fixture_data[1]['paramgram_used'])
+    assert output['raw_response']['status']['code'] == -10131
 
 
 def test_fmgr_fwobj_service_category(fixture_data, mocker):
-    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request", 
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
                  side_effect=fixture_data)
-    #  Fixture sets used:###########################
-
-    ##################################################
-    # comment: None
-    # protocol: None
-    # custom_type: tcp_udp_sctp
-    # color: 22
-    # object_type: custom
-    # group-name: None
-    # tcp-halfclose-timer: 0
-    # icmp_type: None
-    # iprange: 0.0.0.0
-    # category: ansibleCategoryTest
-    # protocol-number: None
-    # udp-idle-timer: 0
-    # explicit-proxy: disable
-    # group-member: None
-    # application: None
-    # tcp-portrange: 443
-    # icmp_code: None
-    # session-ttl: 0
-    # adom: ansible
-    # visibility: enable
-    # tcp-timewait-timer: 0
-    # name: ansible_custom_service
-    # app-service-type: None
-    # fqdn: 
-    # app-category: None
-    # check-reset-range: None
-    # mode: add
-    # tcp-halfopen-timer: 0
-    # udp-portrange: 51
-    # sctp-portrange: 100
-    ##################################################
 
     # Test using fixture 1 #
     output = fmgr_fwobj_service.fmgr_fwobj_service_category(fmg_instance, fixture_data[0]['paramgram_used'])
