@@ -71,7 +71,8 @@ class AzureRMAKSVersion(AzureRMModuleBase):
     def __init__(self):
 
         self.module_args = dict(
-            location=dict(type='str')
+            location=dict(type='str', required=True),
+            version=dict(type='str')
         )
 
         self.results = dict(
