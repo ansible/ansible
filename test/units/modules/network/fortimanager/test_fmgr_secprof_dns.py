@@ -19,15 +19,13 @@ __metaclass__ = type
 
 import os
 import json
-from pyFMG.fortimgr import FortiManager
+from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
 import pytest
 
 try:
     from ansible.modules.network.fortimanager import fmgr_secprof_dns
 except ImportError:
     pytest.skip("Could not load required modules for testing", allow_module_level=True)
-
-fmg_instance = FortiManager("1.1.1.1", "admin", "")
 
 
 def load_fixtures():
@@ -41,33 +39,32 @@ def load_fixtures():
     return [fixture_data]
 
 
+@pytest.fixture(autouse=True)
+def module_mock(mocker):
+    connection_class_mock = mocker.patch('ansible.module_utils.basic.AnsibleModule')
+    return connection_class_mock
+
+
+@pytest.fixture(autouse=True)
+def connection_mock(mocker):
+    connection_class_mock = mocker.patch('ansible.modules.network.fortimanager.fmgr_secprof_dns.Connection')
+    return connection_class_mock
+
+
 @pytest.fixture(scope="function", params=load_fixtures())
 def fixture_data(request):
     func_name = request.function.__name__.replace("test_", "")
     return request.param.get(func_name, None)
 
 
-def test_fmgr_dnsfilter_profile_addsetdelete(fixture_data, mocker):
-    mocker.patch("pyFMG.fortimgr.FortiManager._post_request", side_effect=fixture_data)
+fmg_instance = FortiManagerHandler(connection_mock, module_mock)
+
+
+def test_fmgr_dnsfilter_profile_modify(fixture_data, mocker):
+    mocker.patch("ansible.module_utils.network.fortimanager.fortimanager.FortiManagerHandler.process_request",
+                 side_effect=fixture_data)
     #  Fixture sets used:###########################
 
-    ##################################################
-    # comment: Created by Ansible Module TEST
-    # ftgd-dns: {'options': None, 'filters': {'action': None, 'category': None, 'log': None}}
-    # name: Ansible_DNS_Profile
-    # adom: root
-    # redirect-portal: None
-    # sdns-ftgd-err-log: None
-    # youtube-restrict: None
-    # sdns-domain-log: None
-    # domain-filter: {'domain-filter-table': None}
-    # log-all-domain: None
-    # mode: delete
-    # block-botnet: None
-    # safe-search: None
-    # external-ip-blocklist: None
-    # block-action: None
-    ##################################################
     ##################################################
     # comment: Created by Ansible Module TEST
     # ftgd-dns: {'options': None, 'filters': {'action': None, 'category': None, 'log': None}}
@@ -87,8 +84,5 @@ def test_fmgr_dnsfilter_profile_addsetdelete(fixture_data, mocker):
     ##################################################
 
     # Test using fixture 1 #
-    output = fmgr_secprof_dns.fmgr_dnsfilter_profile_addsetdelete(fmg_instance, fixture_data[0]['paramgram_used'])
-    assert output['raw_response']['status']['code'] == 0
-    # Test using fixture 2 #
-    output = fmgr_secprof_dns.fmgr_dnsfilter_profile_addsetdelete(fmg_instance, fixture_data[1]['paramgram_used'])
+    output = fmgr_secprof_dns.fmgr_dnsfilter_profile_modify(fmg_instance, fixture_data[0]['paramgram_used'])
     assert output['raw_response']['status']['code'] == 0
