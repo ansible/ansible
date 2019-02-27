@@ -234,7 +234,7 @@ class PlaybookExecutor:
         '''
 
         # make sure we have a unique list of hosts
-        all_hosts = self._inventory.get_hosts(play.hosts)
+        all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
         all_hosts_len = len(all_hosts)
 
         # the serial value can be listed as a scalar or a list of

@@ -232,7 +232,9 @@ class StrategyBase:
         # make sure that all of the hosts are advanced to their final task.
         # This should be safe, as everything should be ITERATING_COMPLETE by
         # this point, though the strategy may not advance the hosts itself.
-        [iterator.get_next_task_for_host(host) for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+
+        inv_hosts = self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)
+        [iterator.get_next_task_for_host(host) for host in inv_hosts if host.name not in self._tqm._unreachable_hosts]
 
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
