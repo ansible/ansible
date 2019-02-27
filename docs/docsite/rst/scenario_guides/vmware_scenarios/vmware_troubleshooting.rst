@@ -8,8 +8,8 @@ Troubleshooting Ansible for VMware
 
 This section lists things that can go wrong and possible ways to fix them.
 
-Debugging
-=========
+Debugging Ansible for VMware
+============================
 
 When debugging or creating a new issue, you will need information about your VMware infrastructure. You can get this information using
 `govc <https://github.com/vmware/govmomi/tree/master/govc>`_, For example:
@@ -22,8 +22,8 @@ When debugging or creating a new issue, you will need information about your VMw
     $ export GOVC_URL=https://ESXI_OR_VCENTER_HOSTNAME:443
     $ govc find /
 
-Known issues
-============
+Known issues with Ansible for VMware
+====================================
 
 
 Network settings with vmware_guest in Ubuntu 18.04
@@ -35,15 +35,15 @@ This issue is tracked via:
 * https://github.com/vmware/open-vm-tools/issues/240
 * https://github.com/ansible/ansible/issues/41133
 
-Potential Workaround
-^^^^^^^^^^^^^^^^^^^^
+Potential Workarounds
+^^^^^^^^^^^^^^^^^^^^^
 
 There are several workarounds for this issue.
 
-1) Modifying the Ubuntu 18.04 images and installing ``ifupdown`` in them via ``sudo apt install ifupdown``.
+1) Modify the Ubuntu 18.04 images and installing ``ifupdown`` in them via ``sudo apt install ifupdown``.
    If so you need to remove ``netplan`` via ``sudo apt remove netplan.io`` and you need stop ``systemd-networkd`` via ``sudo systemctl disable systemctl-networkd``.
 
-2) You can generate the ``systemd-networkd`` files with a task in your vmware Ansible role:
+2) Generate the ``systemd-networkd`` files with a task in your VMware Ansible role:
 
 .. code-block:: yaml
 
@@ -100,14 +100,3 @@ There are several workarounds for this issue.
      delegate_to: localhost
 
 3) Wait for ``netplan`` support in ``open-vm-tools``
-
-
-Troubleshooting Item
-====================
-
-Description
-
-Potential Workaround
---------------------
-
-How to fix...

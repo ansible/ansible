@@ -1,5 +1,5 @@
-Getting Started with Docker
-===========================
+Docker Guide
+============
 
 Ansible offers the following modules for orchestrating Docker containers:
 
@@ -327,7 +327,3 @@ For the default host and each host in the hosts list define the following attrib
      description: The port containers use for SSH
      required: false
      default: 22
-
-
-
-
