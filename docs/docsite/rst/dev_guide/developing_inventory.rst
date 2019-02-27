@@ -200,6 +200,7 @@ inventory cache
 Extend the inventory plugin documentation with the inventory_cache documentation fragment and use the Cacheable base class to have the caching system at your disposal.
 
 .. code-block:: yaml
+
     extends_documentation_fragment:
       - inventory_cache
 
