@@ -300,8 +300,7 @@ def role_exists(module, cursor, rolname):
     query = "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % rolname
     try:
         cursor.execute(query)
-        if cursor.rowcount > 0:
-            return True
+        return cursor.rowcount > 0
 
     except Exception as e:
         module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
@@ -567,6 +566,9 @@ class Connection(object):
                 else:
                     for_whom.append(pg_quote_identifier(r, 'role'))
 
+            if not for_whom:
+                return False
+
             for_whom = ','.join(for_whom)
 
         status_before = get_status(objs)
@@ -798,7 +800,6 @@ def main():
         else:
             roles = p.roles.split(',')
 
-        if roles != 'PUBLIC':
             if len(roles) == 1 and not role_exists(module, conn.cursor, roles[0]):
                 module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
                 module.exit_json(changed=False)
