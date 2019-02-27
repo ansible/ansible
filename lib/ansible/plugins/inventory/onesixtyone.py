@@ -67,13 +67,13 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cachea
 
 try:
     from netaddr import IPSet
-except:
+except Exception:
     raise AnsibleParserError('this inventory plugin requires the netapp library. Try: pip install netaddr')
 
 try:
     import gevent
     from gevent import socket
-except:
+except Exception:
     raise AnsibleParserError('this inventory plugin requires the gevent library. Try: yum install python-gevent')
 
 
