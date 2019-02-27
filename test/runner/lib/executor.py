@@ -1178,9 +1178,7 @@ def command_integration_script(args, target, test_dir, inventory_path):
 
         with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:
             if config_path:
-                env.update(dict(
-                    ANSIBLE_TEST_CONFIG=config_path,
-                ))
+                cmd += ['-e', '@%s' % config_path]
 
             intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
@@ -1259,13 +1257,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
 
-            with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:
-                if config_path:
-                    env.update(dict(
-                        ANSIBLE_TEST_CONFIG=config_path,
-                    ))
-
-                intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_units(args):
