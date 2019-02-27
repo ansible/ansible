@@ -1,0 +1,2 @@
+minor_changes:
+  - ecs_service - adds support for service_registries and scheduling_strategies. desired_count may now be none to support scheduling_strategies
