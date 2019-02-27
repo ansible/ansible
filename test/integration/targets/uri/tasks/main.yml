@@ -487,6 +487,32 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Get JSON payload
+  uri:
+    url: https://{{ httpbin_host }}/json
+    return_content: yes
+  register: result
+
+- name: Validate JSON payload
+  assert:
+    that:
+    - result.json is defined
+    - result.json.slideshow.author == 'Yours Truly'
+    - result.json.slideshow.slides[0].title == 'Wake up to WonderWidgets!'
+
+- name: Get XML payload
+  uri:
+    url: https://{{ httpbin_host }}/xml
+    return_content: yes
+  register: result
+
+- name: Validate XML payload
+  assert:
+    that:
+    - result.xml is defined
+    - result.xml.slideshow['@author'] == 'Yours Truly'
+    - result.xml.slideshow.slide[0].title == 'Wake up to WonderWidgets!'
+
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml
 

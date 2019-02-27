@@ -21,6 +21,8 @@ description:
     HTTP authentication mechanisms.
   - For Windows targets, use the M(win_uri) module instead.
 version_added: "1.1"
+requires:
+- xmltodict (when dealing with XML)
 options:
   url:
     description:
@@ -307,6 +309,12 @@ import shutil
 import sys
 import tempfile
 
+try:
+    import xmltodict
+    HAS_XMLTODICT=True
+except ImportError:
+    HAS_XMLTODICT=False
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
@@ -314,8 +322,8 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
-JSON_CANDIDATES = ('text', 'json', 'javascript')
-
+JSON_CANDIDATES = ('javascript', 'json')
+XML_CANDIDATES = ('soap', 'xhtml', 'xml')
 
 def format_message(err, resp):
     msg = resp.pop('msg')
@@ -632,11 +640,19 @@ def main():
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
-                js = json.loads(u_content)
-                uresp['json'] = js
+                uresp['json'] = json.loads(u_content)
             except Exception:
                 if PY2:
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+        if any(candidate in content_type for candidate in XML_CANDIDATES):
+            if HAS_XMLTODICT:
+                try:
+                    uresp['xml'] = xmltodict.parse(u_content)
+                except Exception:
+                    if PY2:
+                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
+            else:
+                module.warn("Unable to parse XML content because 'xmltodict' python library is not installed.")
     else:
         u_content = to_text(content, encoding=content_encoding)
 
