@@ -455,6 +455,7 @@ def azure_id_to_dict(id):
         index += 1
     return result
 
+
 # VM list (all, N resource groups): VM -> InstanceView, N NICs, N PublicIPAddress)
 # VMSS VMs (all SS, N specific SS, N resource groups?): SS -> VM -> InstanceView, N NICs, N PublicIPAddress)
 
