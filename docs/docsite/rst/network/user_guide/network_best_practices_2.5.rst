@@ -1,14 +1,16 @@
 .. _network-best-practices:
 
-**************************************
-Network Best Practices for Ansible 2.5
-**************************************
+**********************************
+Network Best Practices for Ansible
+**********************************
 
+.. contents::
+   :local:
 
 Overview
 ========
 
-This document explains the best practices for using Ansible 2.5 to manage your network infrastructure.
+This document explains the best practices for using Ansible to manage your network infrastructure.
 
 
 Audience
@@ -341,6 +343,62 @@ You can also look at the backup files:
 If `ansible-playbook` fails, please follow the debug steps in :doc:`network_debug_troubleshooting`.
 
 
+.. _network-agnostic-examples:
+
+Using network agnostic modules
+==============================
+
+If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``cli_command`` or ``cli_config`` in place of the platform-specific modules such as ``eos_config``, ``ios_config``, and ``junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
+
+.. note::
+  Network agnostic modules require the ``network_cli`` connection plugin.
+
+
+Example: show interfaces using the  ``cli_command``
+---------------------------------------------------
+
+This example assumes three platforms, Arista EOS, Cisco IOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks:
+
+.. code-block:: yaml
+
+  ---
+  - name: RUN ARISTA COMMAND
+    eos_command:
+      commands: show ip int br
+    when: ansible_network_os == 'eos'
+
+  - name: RUN CISCO NXOS COMMAND
+    nxos_command:
+      commands: show ip int br
+    when: ansible_network_os == 'eos'
+
+  - name: RUN JUNOS COMMAND
+    junos_command:
+      commands: show interface terse
+    when: ansible_network_os == 'junos'
+
+If you replace these platform-specific modules with the network agnostic ``cli_command`` module, this playbook can be simplified to:
+
+.. code-block:: yaml
+
+  ---
+  - name: RUN COMMAND AND PRINT TO TERMINAL WINDOW
+    hosts: routers
+    gather_facts: false
+
+    tasks:
+      - name: RUN SHOW COMMAND
+        cli_command:
+          command: "{{show_interfaces}}"
+        register: command_output
+
+      - name: PRINT TO TERMINAL WINDOW
+        debug:
+          msg: "{{command_output.stdout}}"
+
+You can see a full example of this and a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_.
+
+
 Implementation Notes
 ====================
 
@@ -373,7 +431,3 @@ If you receive an connection error please double check the inventory and Playboo
   * :ref:`network_guide`
   * :doc:`../../user_guide/intro_inventory`
   * :ref:`Vault best practices <best_practices_for_variables_and_vaults>`
-
-
-
-
