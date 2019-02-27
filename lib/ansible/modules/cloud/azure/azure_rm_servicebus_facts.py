@@ -89,6 +89,7 @@ EXAMPLES = '''
 - name: Get all subscriptions under a resource group
   azure_rm_servicebus_facts:
     resource_group: foo
+    type: subscription
     namespace: bar
     topic: sbtopic
 '''
@@ -102,42 +103,52 @@ servicebuses:
             description:
                 -  Resource Id
             type: str
+            sample: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.ServiceBus/namespaces/bar/topics/baz/subscriptions/qux
         name:
             description:
                 -  Resource name
             type: str
+            sample: qux
         location:
             description:
                 -  The Geo-location where the resource lives.
             type: str
+            sample: eastus
         namespace:
             description:
                 - Namespace name of the queue or topic, subscription.
             type: str
+            sample: bar
         topic:
             description:
                 - Topic name of a subscription.
             type: str
+            sample: baz
         tags:
             description:
                 -  Resource tags.
             type: str
+            sample: {env: sandbox}
         sku:
             description:
-                -  Porperties of Sku.
+                -  Properties of namespace's sku.
             type: str
+            sample: Standard
         provisioning_state:
             description:
                 -  Provisioning state of the namespace.
             type: str
+            sample: Succeeded
         service_bus_endpoint:
             description:
                 -  Endpoint you can use to perform Service Bus operations.
             type: str
+            sample: "https://bar.servicebus.windows.net:443/"
         metric_id:
             description:
-                -  Identifier for Azure Insights metrics
+                -  Identifier for Azure Insights metrics of namespace.
             type: str
+            sample: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX:bar"
         type:
             description:
                 - Resource type
@@ -163,8 +174,9 @@ servicebuses:
             sample: "2019-01-25 02:46:55.543953+00:00"
         subscription_count:
             description:
-                - Number of subscriptions.
+                - Number of subscriptions under a topic.
             type: int
+            sample: 1
         count_details:
             description:
                 - Message count deatils.
@@ -174,105 +186,129 @@ servicebuses:
                     description:
                         - Number of active messages in the queue, topic, or subscription.
                     type: int
+                    sample: 0
                 dead_letter_message_count:
                     description:
                         - Number of messages that are dead lettered.
                     type: int
+                    sample: 0
                 scheduled_message_count:
                     description:
                         - Number of scheduled messages.
                     type: int
+                    sample: 0
                 transfer_message_count:
                     description:
                         - Number of messages transferred to another queue, topic, or subscription.
                     type: int
+                    sample: 0
                 transfer_dead_letter_message_count:
                     description:
                         - Number of messages transferred into dead letters.
                     type: int
+                    sample: 0
         support_ordering:
             description:
                 - Value that indicates whether the topic supports ordering.
             type: bool
+            sample: true
         status:
             description:
               - The status of a messaging entity.
             type: str
+            sample: active
         requires_session:
             description:
                 - A value that indicates whether the  queue or topic supports the concept of sessions.
             type: bool
+            sample: true
         requires_duplicate_detection:
             description:
                - A value indicating if this queue or topic requires duplicate detection.
             type: bool
+            sample: true
         max_size_in_mb:
             description:
                 - Maximum size of the queue or topic in megabytes, which is the size of the memory allocated for the topic.
             type: int
+            sample: 5120
         max_delivery_count:
             description:
                 - The maximum delivery count.
                 - A message is automatically deadlettered after this number of deliveries.
             type: int
+            sample: 10
         lock_duration_in_seconds:
             description:
                 - ISO 8601 timespan duration of a peek-lock.
                 - The amount of time that the message is locked for other receivers.
                 - The maximum value for LockDuration is 5 minutes.
             type: int
+            sample: 60
         forward_to:
             description:
                 - Queue or topic name to forward the messages
             type: str
+            sample: quux
         forward_dead_lettered_messages_to:
             description:
                 - Queue or topic name to forward the Dead Letter message
             type: str
+            sample: corge
         enable_partitioning:
             description:
                 - Value that indicates whether the queue or topic to be partitioned across multiple message brokers is enabled.
             type: bool
+            sample: true
         enable_express:
             description:
                 - Value that indicates whether Express Entities are enabled.
                 - An express topic holds a message in memory temporarily before writing it to persistent storage.
             type: bool
+            sample: true
         enable_batched_operations:
             description:
                 - Value that indicates whether server-side batched operations are enabled.
             type: bool
+            sample: true
         duplicate_detection_time_in_seconds:
             description:
                 - ISO 8601 timeSpan structure that defines the duration of the duplicate detection history.
             type: int
+            sample: 600
         default_message_time_to_live_seconds:
             description:
                 - ISO 8061 Default message timespan to live value.
                 - This is the duration after which the message expires, starting from when the message is sent to Service Bus.
                 - This is the default value used when TimeToLive is not set on a message itself.
             type: int
+            sample: 0
         dead_lettering_on_message_expiration:
             description:
                 - A value that indicates whether this  queue or topic has dead letter support when a message expires.
             type: int
+            sample: 0
         dead_lettering_on_filter_evaluation_exceptions:
             description:
                 - Value that indicates whether a subscription has dead letter support on filter evaluation exceptions.
             type: int
+            sample: 0
         auto_delete_on_idle_in_seconds:
             description:
                 - ISO 8061 timeSpan idle interval after which the  queue or topic is automatically deleted.
                 - The minimum duration is 5 minutes.
             type: int
+            sample: true
         size_in_bytes:
             description:
                 - The size of the queue or topic, in bytes.
             type: int
+            sample: 0
         message_count:
             description:
                 - Number of messages.
             type: int
+            sample: 10
 '''
 
 try:

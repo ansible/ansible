@@ -425,7 +425,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
                 else:
                     self.fail("Error creating namespace {0} - {1}".format(self.namespace, check_name.message or str(check_name)))
             except Exception as exc:
-                self.fail('Error creating namespace {0} - {1}'.format(self.namespace, exc.message or str(exc)))
+                self.fail('Error creating namespace {0} - {1}'.format(self.namespace, str(exc.inner_exception) or str(exc)))
         return ns
 
     def create_or_update(self, param):
