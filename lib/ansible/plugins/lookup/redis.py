@@ -28,7 +28,7 @@ DOCUMENTATION = """
             key: host
       port:
         description: port on which Redis is listening on
-        default: 6379A
+        default: 6379
         type: int
         env:
           - name: ANSIBLE_REDIS_PORT
@@ -75,6 +75,7 @@ try:
 except ImportError:
     pass
 
+from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
@@ -104,7 +105,8 @@ class LookupModule(LookupBase):
                 res = conn.get(term)
                 if res is None:
                     res = ""
-                ret.append(res)
-            except Exception:
-                ret.append("")  # connection failed or key not found
+                ret.append(to_text(res))
+            except Exception as e:
+                # connection failed or key not found
+                raise AnsibleError('Encountered exception while fetching {0}: {1}'.format(term, e))
         return ret
