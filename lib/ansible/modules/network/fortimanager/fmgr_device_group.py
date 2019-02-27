@@ -29,6 +29,8 @@ DOCUMENTATION = '''
 ---
 module: fmgr_device_group
 version_added: "2.8"
+notes:
+    - Full Documentation at U(https://ftnt-ansible-docs.readthedocs.io/en/latest/).
 author:
     - Luke Weighall (@lweighall)
     - Andrew Welsh (@Ghilli3)
@@ -49,21 +51,6 @@ options:
       - The VDOM of the Fortigate you want to add, must match the device in FMGR. Usually root.
     required: false
     default: root
-
-  host:
-    description:
-      - The FortiManager's address.
-    required: true
-
-  username:
-    description:
-      - The username to log into the FortiManager.
-    required: true
-
-  password:
-    description:
-      - The password associated with the username account.
-    required: false
 
   mode:
     description:
@@ -96,9 +83,6 @@ options:
 EXAMPLES = '''
 - name: CREATE DEVICE GROUP
   fmgr_device_group:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     grp_name: "TestGroup"
     grp_desc: "CreatedbyAnsible"
     adom: "ansible"
@@ -106,9 +90,6 @@ EXAMPLES = '''
 
 - name: CREATE DEVICE GROUP 2
   fmgr_device_group:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     grp_name: "AnsibleGroup"
     grp_desc: "CreatedbyAnsible"
     adom: "ansible"
@@ -116,9 +97,6 @@ EXAMPLES = '''
 
 - name: ADD DEVICES TO DEVICE GROUP
   fmgr_device_group:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     mode: "add"
     grp_name: "TestGroup"
     grp_members: "FGT1,FGT2"
@@ -127,9 +105,6 @@ EXAMPLES = '''
 
 - name: REMOVE DEVICES TO DEVICE GROUP
   fmgr_device_group:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     mode: "delete"
     grp_name: "TestGroup"
     grp_members: "FGT1,FGT2"
@@ -137,9 +112,6 @@ EXAMPLES = '''
 
 - name: DELETE DEVICE GROUP
   fmgr_device_group:
-    host: "{{inventory_hostname}}"
-    username: "{{ username }}"
-    password: "{{ password }}"
     grp_name: "AnsibleGroup"
     grp_desc: "CreatedbyAnsible"
     mode: "delete"
@@ -154,20 +126,23 @@ api_result:
 """
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback
-from ansible.module_utils.network.fortimanager.fortimanager import AnsibleFortiManager
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
+from ansible.module_utils.network.fortimanager.common import FMGBaseException
+from ansible.module_utils.network.fortimanager.common import FMGRCommon
+from ansible.module_utils.network.fortimanager.common import FMGRMethods
+from ansible.module_utils.network.fortimanager.common import DEFAULT_RESULT_OBJ
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
 
-# check for pyFMG lib
-try:
-    from pyFMG.fortimgr import FortiManager
-    HAS_PYFMGR = True
-except ImportError:
-    HAS_PYFMGR = False
-
-
-def get_groups(fmg, paramgram):
+def get_groups(fmgr, paramgram):
     """
-    This method is used GET the HA PEERS of a FortiManager Node
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
 
     datagram = {
@@ -175,16 +150,21 @@ def get_groups(fmg, paramgram):
     }
 
     url = '/dvmdb/adom/{adom}/group'.format(adom=paramgram["adom"])
-    response = fmg.get(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.GET)
     return response
 
 
-def add_device_group(fmg, paramgram):
+def add_device_group(fmgr, paramgram):
     """
-    This method is used to add device groups
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
     # INIT A BASIC OBJECTS
-    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    response = DEFAULT_RESULT_OBJ
     url = ""
     mode = paramgram["mode"]
 
@@ -198,23 +178,28 @@ def add_device_group(fmg, paramgram):
 
     # IF MODE = SET -- USE THE 'SET' API CALL MODE
     if mode == "set":
-        response = fmg.set(url, datagram)
+        response = fmgr.process_request(url, datagram, FMGRMethods.SET)
     # IF MODE = UPDATE -- USER THE 'UPDATE' API CALL MODE
     elif mode == "update":
-        response = fmg.update(url, datagram)
+        response = fmgr.process_request(url, datagram, FMGRMethods.UPDATE)
     # IF MODE = ADD  -- USE THE 'ADD' API CALL MODE
     elif mode == "add":
-        response = fmg.add(url, datagram)
+        response = fmgr.process_request(url, datagram, FMGRMethods.ADD)
 
     return response
 
 
-def delete_device_group(fmg, paramgram):
+def delete_device_group(fmgr, paramgram):
     """
-    This method is used to add devices to the FMGR
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
     # INIT A BASIC OBJECTS
-    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    response = DEFAULT_RESULT_OBJ
     url = ""
 
     datagram = {
@@ -223,16 +208,21 @@ def delete_device_group(fmg, paramgram):
     }
 
     url = '/dvmdb/adom/{adom}/group/{grp_name}'.format(adom=paramgram["adom"], grp_name=paramgram["grp_name"])
-    response = fmg.delete(url, datagram)
+    response = fmgr.process_request(url, datagram, FMGRMethods.DELETE)
     return response
 
 
-def add_group_member(fmg, paramgram):
+def add_group_member(fmgr, paramgram):
     """
-    This method is used to update device groups add members
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
     # INIT A BASIC OBJECTS
-    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    response = DEFAULT_RESULT_OBJ
     url = ""
     device_member_list = paramgram["grp_members"].replace(' ', '')
     device_member_list = device_member_list.split(',')
@@ -242,17 +232,22 @@ def add_group_member(fmg, paramgram):
 
         url = '/dvmdb/adom/{adom}/group/{grp_name}/object member'.format(adom=paramgram["adom"],
                                                                          grp_name=paramgram["grp_name"])
-        response = fmg.add(url, datagram)
+        response = fmgr.process_request(url, datagram, FMGRMethods.ADD)
 
     return response
 
 
-def delete_group_member(fmg, paramgram):
+def delete_group_member(fmgr, paramgram):
     """
-    This method is used to update device groups add members
+    :param fmgr: The fmgr object instance from fortimanager.py
+    :type fmgr: class object
+    :param paramgram: The formatted dictionary of options to process
+    :type paramgram: dict
+    :return: The response from the FortiManager
+    :rtype: dict
     """
     # INIT A BASIC OBJECTS
-    response = (-100000, {"msg": "Illegal or malformed paramgram discovered. System Exception"})
+    response = DEFAULT_RESULT_OBJ
     url = ""
     device_member_list = paramgram["grp_members"].replace(' ', '')
     device_member_list = device_member_list.split(',')
@@ -262,65 +257,22 @@ def delete_group_member(fmg, paramgram):
 
         url = '/dvmdb/adom/{adom}/group/{grp_name}/object member'.format(adom=paramgram["adom"],
                                                                          grp_name=paramgram["grp_name"])
-        response = fmg.delete(url, datagram)
+        response = fmgr.process_request(url, datagram, FMGRMethods.DELETE)
 
     return response
-
-
-# FUNCTION/METHOD FOR LOGGING OUT AND ANALYZING ERROR CODES
-def fmgr_logout(fmg, module, msg="NULL", results=(), good_codes=(0,), logout_on_fail=True, logout_on_success=False):
-    """
-    THIS METHOD CONTROLS THE LOGOUT AND ERROR REPORTING AFTER AN METHOD OR FUNCTION RUNS
-    """
-
-    # VALIDATION ERROR (NO RESULTS, JUST AN EXIT)
-    if msg != "NULL" and len(results) == 0:
-        try:
-            fmg.logout()
-        except Exception:
-            pass
-        module.fail_json(msg=msg)
-
-    # SUBMISSION ERROR
-    if len(results) > 0:
-        if msg == "NULL":
-            try:
-                msg = results[1]['status']['message']
-            except Exception:
-                msg = "No status message returned from pyFMG. Possible that this was a GET with a tuple result."
-
-            if results[0] not in good_codes:
-                if logout_on_fail:
-                    fmg.logout()
-                    module.fail_json(msg=msg, **results[1])
-                else:
-                    return_msg = msg + " -- LOGOUT ON FAIL IS OFF, MOVING ON"
-                    return return_msg
-            else:
-                if logout_on_success:
-                    fmg.logout()
-                    module.exit_json(msg=msg, **results[1])
-                else:
-                    return_msg = msg + " -- LOGOUT ON SUCCESS IS OFF, MOVING ON TO REST OF CODE"
-                    return return_msg
 
 
 def main():
     argument_spec = dict(
         adom=dict(required=False, type="str", default="root"),
         vdom=dict(required=False, type="str", default="root"),
-        host=dict(required=True, type="str"),
-        username=dict(fallback=(env_fallback, ["ANSIBLE_NET_USERNAME"])),
-        password=dict(fallback=(env_fallback, ["ANSIBLE_NET_PASSWORD"]), no_log=True),
         mode=dict(choices=["add", "set", "delete", "update"], type="str", default="add"),
         grp_desc=dict(required=False, type="str"),
         grp_name=dict(required=True, type="str"),
         grp_members=dict(required=False, type="str"),
     )
 
-    module = AnsibleModule(argument_spec, supports_check_mode=True, )
-
-    # handle params passed via provider and insure they are represented as the data type expected by fortimanager
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
     paramgram = {
         "mode": module.params["mode"],
         "grp_name": module.params["grp_name"],
@@ -329,49 +281,48 @@ def main():
         "adom": module.params["adom"],
         "vdom": module.params["vdom"]
     }
-
-    # validate required arguments are passed; not used in argument_spec to allow params to be called from provider
-    # check if params are set
-    if module.params["host"] is None or module.params["username"] is None or module.params["password"] is None:
-        module.fail_json(msg="Host and username are required for connection")
-
-    # CHECK IF LOGIN FAILED
-    fmg = AnsibleFortiManager(module, module.params["host"], module.params["username"], module.params["password"])
-    response = fmg.login()
-    if response[1]['status']['code'] != 0:
-        module.fail_json(msg="Connection to FortiManager Failed")
+    module.paramgram = paramgram
+    fmgr = None
+    if module._socket_path:
+        connection = Connection(module._socket_path)
+        fmgr = FortiManagerHandler(connection, module)
+        fmgr.tools = FMGRCommon()
     else:
-        # START SESSION LOGIC
+        module.fail_json(**FAIL_SOCKET_MSG)
 
+    # BEGIN MODULE-SPECIFIC LOGIC -- THINGS NEED TO HAPPEN DEPENDING ON THE ENDPOINT AND OPERATION
+    results = DEFAULT_RESULT_OBJ
+    try:
         # PROCESS THE GROUP ADDS FIRST
         if paramgram["grp_name"] is not None and paramgram["mode"] in ["add", "set", "update"]:
             # add device group
-            results = add_device_group(fmg, paramgram)
-            if results[0] != 0 and results[0] != -2:
-                fmgr_logout(fmg, module, msg="Failed to Add Device Group", results=results, good_codes=[0])
+            results = add_device_group(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results,
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
         # PROCESS THE GROUP MEMBER ADDS
         if paramgram["grp_members"] is not None and paramgram["mode"] in ["add", "set", "update"]:
             # assign devices to device group
-            results = add_group_member(fmg, paramgram)
-            if results[0] != 0 and results[0] != -2:
-                fmgr_logout(fmg, module, msg="Failed to Add Group Member(s)", results=results, good_codes=[0])
+            results = add_group_member(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results,
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
         # PROCESS THE GROUP MEMBER DELETES
         if paramgram["grp_members"] is not None and paramgram["mode"] == "delete":
             # remove devices grom a group
-            results = delete_group_member(fmg, paramgram)
-            if results[0] != 0:
-                fmgr_logout(fmg, module, msg="Failed to Delete Group Member(s)", results=results, good_codes=[0])
+            results = delete_group_member(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results,
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
         # PROCESS THE GROUP DELETES, ONLY IF GRP_MEMBERS IS NOT NULL TOO
         if paramgram["grp_name"] is not None and paramgram["mode"] == "delete" and paramgram["grp_members"] is None:
             # delete device group
-            results = delete_device_group(fmg, paramgram)
-            if results[0] != 0:
-                fmgr_logout(fmg, module, msg="Failed to Delete Device Group", results=results, good_codes=[0])
+            results = delete_device_group(fmgr, paramgram)
+            fmgr.govern_response(module=module, results=results,
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
+    except Exception as err:
+        raise FMGBaseException(err)
 
-    # RETURN THE RESULTS
     return module.exit_json(**results[1])
 
 
