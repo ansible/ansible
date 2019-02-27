@@ -108,8 +108,8 @@ def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
         schema=dict(type='str', required=True),
-        site=dict(type='str', required=False, aliases=['name']),
-        template=dict(type='str', required=False),
+        site=dict(type='str', aliases=['name']),
+        template=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

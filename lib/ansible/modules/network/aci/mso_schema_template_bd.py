@@ -161,7 +161,7 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
-        bd=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        bd=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         display_name=dict(type='str'),
         intersite_bum_traffic=dict(type='bool'),
         optimize_wan_bandwidth=dict(type='bool'),
