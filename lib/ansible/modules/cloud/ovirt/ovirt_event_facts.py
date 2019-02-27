@@ -2,22 +2,9 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2019, Ansible Project
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -27,7 +14,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: ovirt_event_facts
-short_description: Retrieve facts about one or more oVirt/RHV events
+short_description: This module can be used to retrieve facts about one or more oVirt/RHV events
 author: "Chris Keller (@nasx)"
 version_added: "2.8"
 description:
@@ -61,16 +48,19 @@ options:
             - "Search term which is accepted by the oVirt/RHV API."
             - "For example to search for events of severity alert use the following pattern: severity=alert"
         required: false
+        type: str
 
     headers:
         description:
             - "Additional HTTP headers."
         required: false
+        type: str
 
     query:
         description:
             - "Additional URL query parameters."
         required: false
+        type: str
 
     wait:
         description:
@@ -85,15 +75,15 @@ EXAMPLES = '''
 # Examples don't contain the auth parameter for simplicity,
 # look at the ovirt_auth module to see how to reuse authentication.
 
-# Return all events
-- ovirt_event_facts:
+- name: Return all events
+  ovirt_event_facts:
 
-# Return the last 10 events
-- ovirt_event_facts:
+- name: Return the last 10 events
+  ovirt_event_facts:
     max: 10
 
-# Return all events of type alert
-- ovirt_event_facts:
+- name: Return all events of type alert
+  ovirt_event_facts:
     search: "severity=alert"
 '''
 
