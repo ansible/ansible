@@ -175,8 +175,8 @@ def main():
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
         filter=dict(type='str', required=True),
-        filter_display_name=dict(type='str', aliases=['filter_display_name']),
-        entry=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        filter_display_name=dict(type='str'),
+        entry=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         description=dict(type='str', aliases=['entry_description']),
         display_name=dict(type='str', aliases=['entry_display_name']),
         ethertype=dict(type='str', choices=['arp', 'fcoe', 'ip', 'ipv4', 'ipv6', 'mac-security', 'mpls-unicast', 'trill', 'unspecified']),

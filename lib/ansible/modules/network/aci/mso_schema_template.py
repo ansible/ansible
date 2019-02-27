@@ -114,7 +114,7 @@ def main():
     argument_spec.update(
         tenant=dict(type='str', required=True),
         schema=dict(type='str', required=True),
-        template=dict(type='str', required=False, aliases=['name']),
+        template=dict(type='str', aliases=['name']),
         display_name=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
