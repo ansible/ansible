@@ -390,7 +390,8 @@ def main():
 
                 return True
 
-            def _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, requested_cpu_limit, requested_mem_limit, existing_task_definition):
+            def _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn,
+                                         requested_cpu_limit, requested_mem_limit, existing_task_definition):
                 if td['status'] != "ACTIVE":
                     return None
 
@@ -447,7 +448,8 @@ def main():
                 requested_task_role_arn = module.params['task_role_arn']
                 requested_cpu_limit = module.params['cpu']
                 requested_mem_limit = module.params['memory']
-                existing = _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn, requested_cpu_limit, requested_mem_limit, td)
+                existing = _task_definition_matches(requested_volumes, requested_containers, requested_task_role_arn,
+                                                    requested_cpu_limit, requested_mem_limit, td)
 
                 if existing:
                     break
