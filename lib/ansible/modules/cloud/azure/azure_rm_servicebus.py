@@ -498,7 +498,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             elif isinstance(value, self.servicebus_models.MessageCountDetails):
                 result[attribute] = value.as_dict()
             elif isinstance(value, self.servicebus_models.SBSku):
-                result[attribute] = value.name
+                result[attribute] = value.name.lower()
             elif isinstance(value, datetime):
                 result[attribute] = str(value)
             elif isinstance(value, str):
