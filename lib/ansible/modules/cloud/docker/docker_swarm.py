@@ -123,7 +123,7 @@ options:
   labels:
     description:
       - User-defined key/value metadata.
-      - Labels operations in this module applies to docker swarm cluster.
+      - Label operations in this module apply to the docker swarm cluster.
         Use M(docker_node) module to add/modify/remove swarm node labels.
     type: dict
   signing_ca_cert:
