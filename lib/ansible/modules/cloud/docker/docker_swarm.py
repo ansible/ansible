@@ -434,7 +434,7 @@ class SwarmManager(DockerBaseClass):
                 self.client.fail("Swarm not created or other error!")
         self.inspect_swarm()
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info.get('ID')))
-        self.differences.add('state', parameter='absent', active='present')
+        self.differences.add('state', parameter='present', active='absent')
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info.get('JoinTokens')}
 
