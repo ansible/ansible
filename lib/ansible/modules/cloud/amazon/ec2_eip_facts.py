@@ -50,6 +50,24 @@ EXAMPLES = '''
          - i-123456789
          - i-987654321
   register: my_vms_eips
+  
+# List all EIP addresses using the 'Name' tag as a filter.
+- ec2_eip_facts:
+    filters:
+      tag:Name: www.example.com
+  register: my_vms_eips
+  
+# List all EIP addresses using the Allocation-id as a filter
+- ec2_eip_facts:
+    filters:
+      allocation-id: eipalloc-64de1b01
+  register: my_vms_eips
+
+# Set the variable eip_alloc to the value of the first allocation_id
+# and set the variable my_pub_ip to the value of the first public_ip
+- set_fact:
+    eip_alloc: my_vms_eips.addresses[0].allocation_id
+    my_pub_ip: my_vms_eips.addresses[0].public_ip
 
 '''
 
