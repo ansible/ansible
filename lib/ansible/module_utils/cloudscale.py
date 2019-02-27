@@ -49,7 +49,7 @@ class AnsibleCloudscaleBase(object):
 
     def _post_or_patch(self, api_call, method, data):
         headers = self._auth_header.copy()
-        if data:
+        if data is not None:
             # Sanitize data dictionary
             # Deepcopy: Duplicate the data object for iteration, because
             # iterating an object and changing it at the same time is insecure
