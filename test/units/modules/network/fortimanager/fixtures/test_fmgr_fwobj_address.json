@@ -1,59 +1,6 @@
 {
     "fmgr_fwobj_ipv6": [
         {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address6"
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "name": "ansible_v6Obj_Range",
-                "color": "22",
-                "dynamic_mapping": [],
-                "visibility": "enable",
-                "end-ip": "2001:0db8:85a3:0000:0000:8a2e:0370:7446",
-                "start-ip": "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-                "type": "iprange"
-            },
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": null,
-                "ipv6": "iprange",
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": "2001:0db8:85a3:0000:0000:8a2e:0370:7446",
-                "start-ip": "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-                "name": "ansible_v6Obj_Range",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "add"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "Object does not exist",
-                    "code": -3
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/addrgrp6/ansibleIPv6Group"
-            },
-            "datagram_sent": {},
             "paramgram_used": {
                 "comment": null,
                 "obj-id": null,
@@ -79,9 +26,25 @@
                 "wildcard": null,
                 "ipv6addr": null
             },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/addrgrp6/ansibleIPv6Group"
+            },
             "post_method": "delete"
         },
         {
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address6/ansible_v6Obj_Range"
+            },
+            "datagram_sent": {},
             "paramgram_used": {
                 "comment": null,
                 "obj-id": null,
@@ -107,25 +70,9 @@
                 "wildcard": null,
                 "ipv6addr": null
             },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address6/ansible_v6Obj_Range"
-            },
             "post_method": "delete"
         },
         {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address6/ansible_v6Obj"
-            },
-            "datagram_sent": {},
             "paramgram_used": {
                 "comment": null,
                 "obj-id": null,
@@ -150,6 +97,14 @@
                 "mode": "delete",
                 "wildcard": null,
                 "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address6/ansible_v6Obj"
             },
             "post_method": "delete"
         },
@@ -246,6 +201,544 @@
     "fmgr_fwobj_ipv4": [
         {
             "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": "ansibleIPv4Group",
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "group",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": null,
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/addrgrp/ansibleIPv4Group"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Range"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "iprange",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_Range",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "iprange",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_MORE",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_MORE"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_ipMask2"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "iprange",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_ipMask2",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "iprange",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_Range2",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Range2"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_ipMask"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "ipmask",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_ipMask",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "ipmask",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_Subnet2",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Subnet2"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Subnet1"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "ipmask",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_Subnet1",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "wildcard",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_v4Obj_wildCard",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_wildCard"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/Synology myds DDNS service"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "wildcard-fqdn",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "Synology myds DDNS service",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "fqdn",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "Bluesnews",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {},
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/Bluesnews"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_geo"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "geography",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": null,
+                "start-ip": null,
+                "name": "ansible_geo",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "delete",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address"
+            },
+            "datagram_sent": {
+                "comment": "Dev Example for Ansible",
+                "cache-ttl": null,
+                "name": "ansible_v4Obj_Range",
+                "subnet": [
+                    "0.0.0.0",
+                    "0.0.0.0"
+                ],
+                "color": "22",
+                "meta fields": {},
+                "dynamic_mapping": [],
+                "visibility": "disable",
+                "associated-interface": null,
+                "end-ip": "10.7.220.50",
+                "start-ip": "10.7.220.1",
+                "allow-routing": "disable",
+                "type": "iprange"
+            },
+            "paramgram_used": {
+                "comment": "Dev Example for Ansible",
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "iprange",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": "10.7.220.50",
+                "start-ip": "10.7.220.1",
+                "name": "ansible_v4Obj_Range",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "set",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "post_method": "set"
+        },
+        {
+            "paramgram_used": {
+                "comment": "Dev Example for Ansible",
+                "obj-id": null,
+                "color": "22",
+                "group_name": null,
+                "allow-routing": "disable",
+                "wildcard-fqdn": null,
+                "ipv4": "iprange",
+                "ipv6": null,
+                "cache-ttl": null,
+                "adom": "ansible",
+                "group_members": null,
+                "visibility": "enable",
+                "end-ip": "10.7.220.150",
+                "start-ip": "10.7.220.100",
+                "name": "ansible_v4Obj_Range2",
+                "country": null,
+                "ipv4addr": null,
+                "fqdn": null,
+                "multicast": null,
+                "associated-interface": null,
+                "mode": "set",
+                "wildcard": null,
+                "ipv6addr": null
+            },
+            "datagram_sent": {
+                "comment": "Dev Example for Ansible",
+                "cache-ttl": null,
+                "name": "ansible_v4Obj_Range2",
+                "subnet": [
+                    "0.0.0.0",
+                    "0.0.0.0"
+                ],
+                "color": "22",
+                "meta fields": {},
+                "dynamic_mapping": [],
+                "visibility": "disable",
+                "associated-interface": null,
+                "end-ip": "10.7.220.150",
+                "start-ip": "10.7.220.100",
+                "allow-routing": "disable",
+                "type": "iprange"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/address"
+            },
+            "post_method": "set"
+        },
+        {
+            "paramgram_used": {
                 "comment": "Dev Example for Ansible",
                 "obj-id": null,
                 "color": "22",
@@ -291,438 +784,6 @@
                 "url": "/pm/config/adom/ansible/obj/firewall/address"
             },
             "post_method": "add"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "Object does not exist",
-                    "code": -3
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/addrgrp/ansibleIPv4Group"
-            },
-            "datagram_sent": {},
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": "ansibleIPv4Group",
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "group",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": null,
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "iprange",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_Range",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Range"
-            },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_MORE"
-            },
-            "datagram_sent": {},
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "iprange",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_MORE",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "iprange",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_ipMask2",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "Object does not exist",
-                    "code": -3
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_ipMask2"
-            },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Range2"
-            },
-            "datagram_sent": {},
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "iprange",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_Range2",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "ipmask",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_ipMask",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "Object does not exist",
-                    "code": -3
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_ipMask"
-            },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Subnet2"
-            },
-            "datagram_sent": {},
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "ipmask",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_Subnet2",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "ipmask",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_Subnet1",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_Subnet1"
-            },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_v4Obj_wildCard"
-            },
-            "datagram_sent": {},
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "wildcard",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_wildCard",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "wildcard-fqdn",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "Synology myds DDNS service",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/Synology myds DDNS service"
-            },
-            "post_method": "delete"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/Bluesnews"
-            },
-            "datagram_sent": {},
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "fqdn",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "Bluesnews",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "geography",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_geo",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "delete",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {},
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address/ansible_geo"
-            },
-            "post_method": "delete"
         },
         {
             "raw_response": {
@@ -819,17 +880,17 @@
             "datagram_sent": {
                 "comment": "Ansible more options",
                 "cache-ttl": "180",
-                "name": "ansible_v4Obj_MORE",
-                "subnet": [
-                    "10.7.220.41",
-                    "255.255.255.255"
-                ],
                 "color": "6",
                 "meta fields": {},
                 "dynamic_mapping": [],
                 "visibility": "enable",
-                "associated-interface": "port1",
                 "allow-routing": "enable",
+                "subnet": [
+                    "10.7.220.41",
+                    "255.255.255.255"
+                ],
+                "name": "ansible_v4Obj_MORE",
+                "associated-interface": "port1",
                 "type": "ipmask"
             },
             "paramgram_used": {
@@ -858,364 +919,20 @@
                 "ipv6addr": null
             },
             "post_method": "set"
-        },
-        {
-            "paramgram_used": {
-                "comment": null,
-                "obj-id": null,
-                "color": "22",
-                "group_name": "ansibleIPv4Group",
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "group",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": "Bluesnews, ansible_v4Obj_Range",
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": null,
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {
-                "comment": null,
-                "name": "ansibleIPv4Group",
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "enable",
-                "member": [
-                    "Bluesnews",
-                    "ansible_v4Obj_Range"
-                ]
-            },
-            "raw_response": {
-                "status": {
-                    "message": "datasrc invalid. object: firewall addrgrp member ansibleIPv4Group. detail: Bluesnews. solution: data not exist",
-                    "code": -10131
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/addrgrp"
-            },
-            "post_method": "add"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address"
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "cache-ttl": null,
-                "name": "ansible_v4Obj_Subnet1",
-                "subnet": [
-                    "10.7.220.0",
-                    "255.255.255.128"
-                ],
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "disable",
-                "associated-interface": null,
-                "allow-routing": "disable",
-                "type": "ipmask"
-            },
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "ipmask",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_Subnet1",
-                "country": null,
-                "ipv4addr": "10.7.220.0/25",
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "add"
-        },
-        {
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "ipmask",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_Subnet2",
-                "country": null,
-                "ipv4addr": "10.7.220.128/255.255.255.128",
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "cache-ttl": null,
-                "name": "ansible_v4Obj_Subnet2",
-                "subnet": [
-                    "10.7.220.128",
-                    "255.255.255.128"
-                ],
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "disable",
-                "associated-interface": null,
-                "allow-routing": "disable",
-                "type": "ipmask"
-            },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address"
-            },
-            "post_method": "add"
-        },
-        {
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "iprange",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": "10.7.220.50",
-                "start-ip": "10.7.220.1",
-                "name": "ansible_v4Obj_Range",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "set",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "cache-ttl": null,
-                "name": "ansible_v4Obj_Range",
-                "subnet": [
-                    "0.0.0.0",
-                    "0.0.0.0"
-                ],
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "disable",
-                "associated-interface": null,
-                "end-ip": "10.7.220.50",
-                "start-ip": "10.7.220.1",
-                "allow-routing": "disable",
-                "type": "iprange"
-            },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address"
-            },
-            "post_method": "set"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address"
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "cache-ttl": null,
-                "name": "ansible_v4Obj_Range2",
-                "subnet": [
-                    "0.0.0.0",
-                    "0.0.0.0"
-                ],
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "disable",
-                "associated-interface": null,
-                "end-ip": "10.7.220.150",
-                "start-ip": "10.7.220.100",
-                "allow-routing": "disable",
-                "type": "iprange"
-            },
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "iprange",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": "10.7.220.150",
-                "start-ip": "10.7.220.100",
-                "name": "ansible_v4Obj_Range2",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "set",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "post_method": "set"
-        },
-        {
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": "*.myds.com",
-                "ipv4": "wildcard-fqdn",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "Synology myds DDNS service",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": null,
-                "ipv6addr": null
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "cache-ttl": null,
-                "name": "Synology myds DDNS service",
-                "wildcard-fqdn": "*.myds.com",
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "disable",
-                "associated-interface": null,
-                "allow-routing": "disable",
-                "type": "wildcard-fqdn"
-            },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address"
-            },
-            "post_method": "add"
-        },
-        {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/address"
-            },
-            "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "cache-ttl": null,
-                "color": "22",
-                "meta fields": {},
-                "dynamic_mapping": [],
-                "visibility": "disable",
-                "allow-routing": "disable",
-                "name": "ansible_v4Obj_wildCard",
-                "associated-interface": null,
-                "wildcard": [
-                    "10.7.220.0",
-                    "255.255.255.0"
-                ],
-                "type": "wildcard"
-            },
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": "wildcard",
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_v4Obj_wildCard",
-                "country": null,
-                "ipv4addr": null,
-                "fqdn": null,
-                "multicast": null,
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": "10.7.220.0/24",
-                "ipv6addr": null
-            },
-            "post_method": "add"
         }
     ],
     "fmgr_fwobj_multicast": [
         {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/multicast-address/ansible_broadcastSubnet"
+            },
+            "datagram_sent": {
+                "name": "ansible_broadcastSubnet"
+            },
             "paramgram_used": {
                 "comment": null,
                 "obj-id": null,
@@ -1241,29 +958,9 @@
                 "wildcard": null,
                 "ipv6addr": null
             },
-            "datagram_sent": {
-                "name": "ansible_broadcastSubnet"
-            },
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/multicast-address/ansible_broadcastSubnet"
-            },
             "post_method": "delete"
         },
         {
-            "raw_response": {
-                "status": {
-                    "message": "OK",
-                    "code": 0
-                },
-                "url": "/pm/config/adom/ansible/obj/firewall/multicast-address/ansible_multicastrange"
-            },
-            "datagram_sent": {
-                "name": "ansible_multicastrange"
-            },
             "paramgram_used": {
                 "comment": null,
                 "obj-id": null,
@@ -1289,54 +986,17 @@
                 "wildcard": null,
                 "ipv6addr": null
             },
-            "post_method": "delete"
-        },
-        {
-            "paramgram_used": {
-                "comment": "Dev Example for Ansible",
-                "obj-id": null,
-                "color": "22",
-                "group_name": null,
-                "allow-routing": "disable",
-                "wildcard-fqdn": null,
-                "ipv4": null,
-                "ipv6": null,
-                "cache-ttl": null,
-                "adom": "ansible",
-                "group_members": null,
-                "visibility": "enable",
-                "end-ip": null,
-                "start-ip": null,
-                "name": "ansible_broadcastSubnet",
-                "country": null,
-                "ipv4addr": "10.7.220.0/24",
-                "fqdn": null,
-                "multicast": "broadcastmask",
-                "associated-interface": null,
-                "mode": "add",
-                "wildcard": null,
-                "ipv6addr": null
-            },
             "datagram_sent": {
-                "comment": "Dev Example for Ansible",
-                "subnet": [
-                    "10.7.220.0",
-                    "255.255.255.0"
-                ],
-                "name": "ansible_broadcastSubnet",
-                "color": "22",
-                "visibility": "enable",
-                "associated-interface": null,
-                "type": "broadcastmask"
+                "name": "ansible_multicastrange"
             },
             "raw_response": {
                 "status": {
                     "message": "OK",
                     "code": 0
                 },
-                "url": "/pm/config/adom/ansible/obj/firewall/multicast-address"
+                "url": "/pm/config/adom/ansible/obj/firewall/multicast-address/ansible_multicastrange"
             },
-            "post_method": "add"
+            "post_method": "delete"
         },
         {
             "raw_response": {
