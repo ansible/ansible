@@ -348,6 +348,7 @@ class PluginLoader:
 
         pkg = sys.modules.get(package)
         if not pkg:
+            # FIXME: there must be cheaper/safer way to do this
             pkg = importlib.import_module(package)
 
         # if the package is one of our flatmaps, we need to consult its loader to find the path, since the file could be
