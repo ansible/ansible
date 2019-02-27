@@ -67,22 +67,22 @@ from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cachea
 
 try:
     from netaddr import IPSet
+    HAS_NETADDR = True
 except Exception:
-    raise AnsibleParserError('this inventory plugin requires the netapp library. Try: pip install netaddr')
+    HAS_NETADDR = False
 
 try:
     import gevent
     from gevent import socket
+    HAS_GEVENT = True
 except Exception:
-    raise AnsibleParserError('this inventory plugin requires the gevent library. Try: yum install python-gevent')
-
+    HAS_GEVENT = False
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'onesixtyone'
 
     def __init__(self):
         super(InventoryModule, self).__init__()
-        self._onesixtyone = get_bin_path(self.NAME, True)
 
     def verify_file(self, path):
         """ Verify the existence of plugin's configuration file """
@@ -96,7 +96,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def parse(self, inventory, loader, path, cache=False):
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
+        self._onesixtyone = get_bin_path(self.NAME, True)
         self._read_config_data(path)
+
+        if not HAS_NETADDR:
+            raise AnsibleParserError('this inventory plugin requires the netaddr library. Try: pip install netaddr')
+        
+        if not HAS_GEVENT:
+            raise AnsibleParserError('this inventory plugin requires the gevent library. Try: yum install python-gevent')
 
         try:
             # Using gevent to pallelize reverse dns lookups and adding entries to inventory
