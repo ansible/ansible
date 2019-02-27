@@ -1,2 +1,5 @@
 bugfixes:
   - postgresql_privs - change fail to warn if PostgreSQL role does not exist (https://github.com/ansible/ansible/issues/46168).
+
+minor_changes:
+  - postgresql_privs - add fail_on_role parameter to control the behavior (fail or warn) when target role does not exist.

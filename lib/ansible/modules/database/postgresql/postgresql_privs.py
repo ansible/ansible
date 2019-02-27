@@ -70,6 +70,13 @@ options:
         for the implicitly defined PUBLIC group.
       - 'Alias: I(role)'
     required: yes
+  fail_on_role:
+    version_added: "2.8"
+    description:
+      - If C(yes), fail when target role (for whom privs need to be granted) does not exist.
+        Otherwise just warn and continue.
+    default: yes
+    type: bool
   session_role:
     version_added: "2.8"
     description: |
@@ -480,7 +487,7 @@ class Connection(object):
     # Manipulating privileges
 
     def manipulate_privs(self, obj_type, privs, objs, roles,
-                         state, grant_option, schema_qualifier=None):
+                         state, grant_option, schema_qualifier=None, fail_on_role=True):
         """Manipulate database object privileges.
 
         :param obj_type: Type of database object to grant/revoke
@@ -562,7 +569,11 @@ class Connection(object):
             for_whom = []
             for r in roles:
                 if not role_exists(self.module, self.cursor, r):
-                    self.module.warn("Role '%s' does not exist, pass it" % r.strip())
+                    if fail_on_role:
+                        self.module.fail_json(msg="Role '%s' does not exist" % r.strip())
+
+                    else:
+                        self.module.warn("Role '%s' does not exist, pass it" % r.strip())
                 else:
                     for_whom.append(pg_quote_identifier(r, 'role'))
 
@@ -709,10 +720,13 @@ def main():
             password=dict(default='', aliases=['login_password'], no_log=True),
             ssl_mode=dict(default="prefer",
                           choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None)
+            ssl_rootcert=dict(default=None),
+            fail_on_role=dict(type='bool', default=True),
         ),
         supports_check_mode=True
     )
+
+    fail_on_role = module.params['fail_on_role']
 
     # Create type object as namespace for module params
     p = type('Params', (), module.params)
@@ -801,8 +815,13 @@ def main():
             roles = p.roles.split(',')
 
             if len(roles) == 1 and not role_exists(module, conn.cursor, roles[0]):
-                module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
                 module.exit_json(changed=False)
+
+                if fail_on_role:
+                    module.fail_json(msg="Role '%s' does not exist" % roles[0].strip())
+
+                else:
+                    module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
 
         changed = conn.manipulate_privs(
             obj_type=p.type,
@@ -811,7 +830,8 @@ def main():
             roles=roles,
             state=p.state,
             grant_option=p.grant_option,
-            schema_qualifier=p.schema
+            schema_qualifier=p.schema,
+            fail_on_role=fail_on_role,
         )
 
     except Error as e:
