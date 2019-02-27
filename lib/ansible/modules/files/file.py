@@ -32,8 +32,8 @@ options:
     aliases: [ dest, name ]
   state:
     description:
-    - If C(absent), directories will be recursively deleted when C(recurse=yes), and file
-      or symlinks will be unlinked.
+    - If C(absent), file or symlinks will be unlinked. For directories and C(recurse=yes) a tree delete will be
+      attempted, for C(recurse=no) only empty directories will be removed.
     - Note that C(absent) will not cause C(file) to fail if the C(path) does not exist as the state did not change.
       the C(path) does not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
