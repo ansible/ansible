@@ -565,7 +565,7 @@ class FedoraHostname(Hostname):
 
 class SLESHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Suse linux enterprise server '
+    distribution = 'Sles'
     try:
         distribution_version = get_distribution_version()
         # cast to float may raise ValueError on non SLES, we use float for a little more safety over int
@@ -579,7 +579,13 @@ class SLESHostname(Hostname):
 
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Opensuse '
+    distribution = 'Opensuse leap'
+    strategy_class = SystemdStrategy
+
+
+class TumbleweedHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Opensuse tumbleweed'
     strategy_class = SystemdStrategy
 
 
