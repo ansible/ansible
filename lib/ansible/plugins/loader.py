@@ -12,6 +12,7 @@ import imp
 import os
 import os.path
 import pkgutil
+import importlib
 import sys
 import warnings
 
@@ -24,7 +25,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionLoader, AnsibleFlatMapLoader
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
 
@@ -325,28 +326,50 @@ class PluginLoader:
         if extension:
             resource += extension
 
-        plugin_content = None
+        #plugin_content = None
 
-        try:
-            plugin_content = pkgutil.get_data(package, resource)
-
-            if plugin_content is None:
-                return None
-
-            # HACK: if this is a typed loader, ensure there's a class in there
-            # NB: this hack should not be necessary for type-specific plugins
-            if self.class_name:
-                if not b"class %s" % to_bytes(self.class_name) in plugin_content:
-                    return None
-        except IOError:
-            if extension:
-                return None  # extension was specified and we didn't find it, move on
+        # try:
+        #     # FIXME: now that we're doing custom loader magic, get rid of the get_data reverse-engineering and directly
+        #     # consult the packages and/or custom loaders to just get the file path instead of loading here
+        #     # longer-term, maybe optimize everything to use get_data instead?
+        #     plugin_content = pkgutil.get_data(package, resource)
+        #
+        #     if plugin_content is None:
+        #         return None
+        #
+        #     # HACK: if this is a typed loader, ensure there's a class in there
+        #     # NB: this hack should not be necessary for type-specific plugins
+        #     if self.class_name:
+        #         if not b"class %s" % to_bytes(self.class_name) in plugin_content:
+        #             return None
+        # except IOError:
+        #     if extension:
+        #         return None  # extension was specified and we didn't find it, move on
 
         pkg = sys.modules.get(package)
+        if not pkg:
+            pkg = importlib.import_module(package)
+
+        # if the package is one of our flatmaps, we need to consult its loader to find the path, since the file could be
+        # anywhere in the tree
+        if hasattr(pkg, '__loader__') and isinstance(pkg.__loader__, AnsibleFlatMapLoader):
+            try:
+                file_path = pkg.__loader__.find_file(resource)
+                return file_path
+            except IOError:
+                # this loader already takes care of extensionless files, so if we didn't find it, just bail
+                return None
+
         pkg_path = os.path.dirname(pkg.__file__)
 
-        if plugin_content:  # we found it earlier, just return the reconstructed path
-            return os.path.join(pkg_path, resource)
+        #if plugin_content:  # we found it earlier, just return the reconstructed path
+        #    return os.path.join(pkg_path, resource)
+
+        resource_path = os.path.join(pkg_path, resource)
+
+        # FIXME: and is file or file link or ...
+        if os.path.exists(resource_path):
+            return resource_path
 
         # look for any matching extension in the package location (sans filter)
         ext_blacklist = ['.pyc', '.pyo']
@@ -378,9 +401,6 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
-        if check_aliases:
-            name = self.aliases.get(name, name)
-
         # TODO: we should still probably require a well-known prefix on FQNS so we don't paint ourselves into a corner with future stuff
         if ('.' in name or collection_list) and not name.startswith('Ansible'):  # HACK: need this right now so we can still load shipped PS module_utils
             if '.' in name or not collection_list:
@@ -391,7 +411,12 @@ class PluginLoader:
             errors = []
             for candidate_name in candidates:
                 try:
-                    p = self._find_fq_plugin(candidate_name, suffix)
+                    # HACK: refactor this properly
+                    if candidate_name.startswith('ansible.legacy'):
+                        # just pass the raw name to the old lookup function to check in all the usual locations
+                        p = self._find_plugin_legacy(name, mod_type, ignore_deprecated, check_aliases, suffix)
+                    else:
+                        p = self._find_fq_plugin(candidate_name, suffix)
                     if p:
                         return p
                 except Exception as ex:
@@ -400,6 +425,15 @@ class PluginLoader:
             if errors:
                 raise Exception('; '.join(errors))
             return None
+
+        # if we got here, there's no collection list and it's not an FQ name, so do legacy lookup
+
+        return self._find_plugin_legacy(name, mod_type, ignore_deprecated, check_aliases, suffix)
+
+    def _find_plugin_legacy(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, suffix=None):
+
+        if check_aliases:
+            name = self.aliases.get(name, name)
 
         # The particular cache to look for modules within.  This matches the
         # requested mod_type

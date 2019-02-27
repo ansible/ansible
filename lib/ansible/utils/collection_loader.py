@@ -4,28 +4,48 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import os.path
+import re
+import sys
 
 from importlib import import_module
 from types import ModuleType
 
 from ansible import constants as C
-from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems, string_types
 
 _SYNTHETIC_PACKAGES = {
     'a.ansible': dict(type='pkg_only'),
     'a.ansible.core': dict(type='pkg_only'),
     'a.ansible.core.plugins': dict(type='map', map='ansible.plugins'),
-    'a.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils'),
-    'a.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules'),
+    'a.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
+    'a.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
 
-
+# FIXME: exception handling/error logging
 class AnsibleCollectionLoader(object):
     def __init__(self):
         self._configured_paths = C.config.get_config_value('INSTALLED_CONTENT_ROOTS')
         self._playbook_paths = []
+        # pre-inject grafted package maps so we can force them to use the right loader instead of potentially delegating to a "normal" loader
+        for p in (p for p in iteritems(_SYNTHETIC_PACKAGES) if p[1].get('graft')):
+            pkg_name = p[0]
+            pkg_def = p[1]
+
+            newmod = ModuleType(pkg_name)
+            newmod.__package__ = pkg_name
+            newmod.__file__ = '<ansible_synthetic_collection_package>'
+            pkg_type = pkg_def.get('type')
+
+            # TODO: need to rethink map style so we can just delegate all the loading
+
+            if pkg_type == 'flatmap':
+                newmod.__loader__ = AnsibleFlatMapLoader(import_module(pkg_def['flatmap']))
+            newmod.__path__ = []
+
+            sys.modules[pkg_name] = newmod
+
 
     @property
     def _collection_paths(self):
@@ -37,8 +57,8 @@ class AnsibleCollectionLoader(object):
 
         added_paths = set()
 
-        # de-dupe
-        self._playbook_paths = [p for p in playbook_paths if not (p in added_paths or added_paths.add(p))]
+        # de-dupe and ensure the paths are native strings (Python seems to do this for package paths etc, so assume it's safe)
+        self._playbook_paths = [to_native(p) for p in playbook_paths if not (p in added_paths or added_paths.add(p))]
         # FIXME: only allow setting this once, or handle any necessary cache/package path invalidations internally?
 
     def find_module(self, fullname, path=None):
@@ -72,6 +92,7 @@ class AnsibleCollectionLoader(object):
 
         synpkg_def = _SYNTHETIC_PACKAGES.get(fullname)
 
+        # FIXME: collapse as much of this back to on-demand as possible (maybe stub packages that get replaced when actually loaded?)
         if synpkg_def:
             pkg_type = synpkg_def.get('type')
             if not pkg_type:
@@ -158,6 +179,60 @@ class AnsibleCollectionLoader(object):
     def get_data(self, filename):
         with open(filename, 'rb') as fd:
             return fd.read()
+
+
+class AnsibleFlatMapLoader(object):
+    _extension_blacklist = ['.pyc', '.pyo']
+    def __init__(self, root_package):
+        self._root_package = root_package
+        self._dirtree = None
+
+    def _init_dirtree(self):
+        # FIXME: thread safety
+        root_path = os.path.dirname(self._root_package.__file__)
+        flat_files = []
+        # FIXME: make this a dict of filename->dir for faster direct lookup?
+        # FIXME: deal with _ prefixed deprecated files (or require another method for collections?)
+        # FIXME: fix overloaded filenames (eg, rename Windows setup to win_setup)
+        for root, dirs, files in os.walk(root_path):
+            # add all files in this dir that don't have a blacklisted extension
+            flat_files.extend(((root, f) for f in files if not any((f.endswith(ext) for ext in self._extension_blacklist))))
+        self._dirtree = flat_files
+
+    def find_file(self, filename):
+        try:
+            # FIXME: thread safety
+            if not self._dirtree:
+                self._init_dirtree()
+
+            if '.' not in filename:  # no extension specified, use extension regex to filter
+                extensionless_re = re.compile(r'^{0}(\..+)?$'.format(re.escape(filename)))
+                # why doesn't Python have first()?
+                try:
+                    # FIXME: store extensionless in a separate direct lookup?
+                    filepath = next(os.path.join(r, f) for r, f in self._dirtree if extensionless_re.match(f))
+                except StopIteration:
+                    raise IOError("couldn't find {0}".format(filename))
+            else:  # actual filename, just look it up
+                # FIXME: this case sucks; make it a lookup
+                try:
+                    filepath = next(os.path.join(r, f) for r, f in self._dirtree if f == filename)
+                except StopIteration:
+                    raise IOError("couldn't find {0}".format(filename))
+
+            return filepath
+        except Exception as ex:
+            print("bang")
+            raise
+
+    def get_data(self, filename):
+        found_file = self.find_file(filename)
+
+        with open(found_file, 'rb') as fd:
+            data = fd.read()
+
+        return data
+
 
 # TODO: implement these for easier inline debugging?
 #    def get_source(self, fullname):
