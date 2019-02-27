@@ -69,6 +69,8 @@ class CloudscaleCloudEnvironment(CloudEnvironment):
             cloudscale_resource_prefix=self.resource_prefix,
         )
 
+        env_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
+
         return CloudEnvironmentConfig(
             env_vars=env_vars,
             ansible_vars=ansible_vars,
