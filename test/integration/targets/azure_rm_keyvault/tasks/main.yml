@@ -1,14 +1,8 @@
 - name: Prepare random number
   set_fact:
     rpfx: "{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
-    tenant_id: "{{ lookup('env','AZURE_TENANT') }}"
+    tenant_id: "{{ azure_tenant }}"
   run_once: yes
-
-- name: set service principal info
-  set_fact:
-    azure_client_id: "{{ lookup('env','AZURE_CLIENT_ID') }}"
-    azure_secret: "{{ lookup('env','AZURE_SECRET') }}"
-  no_log: yes
 
 - name: lookup service principal object id
   set_fact:

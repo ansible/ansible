@@ -144,9 +144,9 @@ class AzureCloudEnvironment(CloudEnvironment):
 
         ansible_vars = dict(
             resource_prefix=self.resource_prefix,
-            resource_group=env_vars['RESOURCE_GROUP'],
-            resource_group_secondary=env_vars['RESOURCE_GROUP_SECONDARY'],
         )
+
+        ansible_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
 
         return CloudEnvironmentConfig(
             env_vars=env_vars,
