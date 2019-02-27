@@ -80,7 +80,8 @@ class TestAsaOgModule(TestAsaModule):
         ))
         commands = [
             'object-group service service_object_test udp',
-            'no port-object range 56832 56959'
-            'no port-object range 61363 65185'
+            'no port-object range 56832 56959',
+            'no port-object range 61363 65185',
+            'port-object range 1024 4201'
         ]
         self.execute_module(changed=True, commands=commands)
