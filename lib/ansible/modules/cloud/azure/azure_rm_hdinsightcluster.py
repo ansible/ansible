@@ -35,7 +35,7 @@ options:
             - Resource location. If not set, location from the resource group will be used as default.
     cluster_version:
         description:
-            - The version of the cluster.
+            - The version of the cluster. For example I(3.6)
     os_type:
         description:
             - The type of operating system.
@@ -54,6 +54,11 @@ options:
             kind:
                 description:
                     - The type of cluster.
+                choices:
+                    - hadoop
+                    - spark
+                    - hbase
+                    - storm
             gateway_rest_username:
                 description:
                     - Gateway REST user name.
