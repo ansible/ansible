@@ -28,7 +28,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.utils.display import Display
 
 display = Display()
-_UNSAFE_GROUP = re.compile(C.VALID_VARIABLE_NAMES)
+_UNSAFE_GROUP = re.compile(C.INVALID_VARIABLE_NAMES)
 
 
 def to_safe_group_name(name, replacer="_", force=False, silent=False):

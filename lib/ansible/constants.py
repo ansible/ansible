@@ -116,7 +116,7 @@ RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
-VALID_VARIABLE_NAMES = r'[a-zA-Z_][a-zA-Z0-9_]*'
+INVALID_VARIABLE_NAMES = r'[^a-zA-Z_][^a-zA-Z0-9_]*'
 
 # FIXME: remove once play_context mangling is removed
 # the magic variable mapping dictionary below is used to translate
