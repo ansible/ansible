@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import crypt
 import glob
 import hashlib
 import itertools
@@ -28,7 +27,6 @@ import json
 import ntpath
 import os.path
 import re
-import string
 import sys
 import time
 import uuid
