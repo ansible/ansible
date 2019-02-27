@@ -1,0 +1,2 @@
+bugfixes:
+  - get_url - return no change in check mode when checksum matches
