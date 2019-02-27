@@ -263,14 +263,14 @@ class AWSInventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         aws_profile = self.get_option('boto_profile')
         credentials['aws_access_key_id'] = self.get_option('aws_access_key_id')
         credentials['aws_secret_access_key'] = self.get_option('aws_secret_access_key')
-        credentials['aws_security_token'] = self.get_option('aws_security_token')
+        credentials['aws_session_token'] = self.get_option('aws_security_token')
 
         if not aws_profile and not (credentials['aws_access_key_id'] and credentials['aws_secret_access_key']):
             session = botocore.session.get_session()
             if session.get_credentials() is not None:
                 credentials['aws_access_key_id'] = session.get_credentials().access_key
                 credentials['aws_secret_access_key'] = session.get_credentials().secret_key
-                credentials['aws_security_token'] = session.get_credentials().token
+                credentials['aws_session_token'] = session.get_credentials().token
 
         for key in dict(credentials):
             if not credentials[key]:

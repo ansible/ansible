@@ -153,10 +153,14 @@ def test_get_credentials(inventory):
     access_keys = {
         'aws_access_key_id': 'test_access_key',
         'aws_secret_access_key': 'test_secret_key',
-        'aws_security_token': 'test_security_token'
+        'aws_session_token': 'test_security_token'
     }
-    inventory._options = dict(access_keys)
-    inventory._options.update({'boto_profile': 'test_profile'})
+    inventory._options = {
+        'aws_access_key_id': 'test_access_key',
+        'aws_secret_access_key': 'test_secret_key',
+        'aws_security_token': 'test_security_token',
+        'boto_profile': 'test_profile'
+    }
     profile, credentials = inventory.get_credentials()
     assert profile == 'test_profile'
     assert credentials == access_keys
