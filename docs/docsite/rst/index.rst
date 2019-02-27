@@ -48,7 +48,7 @@ Ansible releases a new major release of Ansible approximately three to four time
 .. toctree::
    :glob:
    :maxdepth: 1
-   :caption: Integration Guides
+   :caption: Integrating Ansible with Other Stuff
 
    scenario_guides/integration_guides.rst
 
