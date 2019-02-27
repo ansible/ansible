@@ -36,6 +36,9 @@ class TestAsaOgModule(TestAsaModule):
         self.mock_load_config = patch('ansible.modules.network.asa.asa_og.load_config')
         self.load_config = self.mock_load_config.start()
 
+        self.mock_get_connection = patch('ansible.module_utils.network.asa.asa.get_connection')
+        self.get_connection = self.mock_get_connection.start()
+
     def tearDown(self):
         super(TestAsaOgModule, self).tearDown()
         self.mock_get_config.stop()
