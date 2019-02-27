@@ -127,11 +127,13 @@ options:
   signing_ca_cert:
     description:
       - The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
-    type: path
+      - This must not be a path to a certificate, but the contents of the certificate.
+    type: str
   signing_ca_key:
     description:
       - The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
-    type: path
+      - This must not be a path to a key, but the contents of the key.
+    type: str
   ca_force_rotate:
     description:
       - An integer whose purpose is to force swarm to generate a new signing CA certificate and key,
@@ -530,8 +532,8 @@ def main():
         node_cert_expiry=dict(type='int'),
         name=dict(type='str'),
         labels=dict(type='dict'),
-        signing_ca_cert=dict(type='path'),
-        signing_ca_key=dict(type='path'),
+        signing_ca_cert=dict(type='str'),
+        signing_ca_key=dict(type='str'),
         ca_force_rotate=dict(type='int'),
         autolock_managers=dict(type='bool'),
         node_id=dict(type='str'),
