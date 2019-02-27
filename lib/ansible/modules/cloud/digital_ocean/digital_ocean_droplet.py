@@ -597,7 +597,6 @@ def main():
         argument_spec=argument_spec,
         required_one_of=(
             ['id', 'name'],
-            ['oauth_token', 'api_token'],  # FIXME: oauth_token docs should have 'required: yes'
         ),
         supports_check_mode=True,
     )
