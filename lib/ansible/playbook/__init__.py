@@ -64,11 +64,6 @@ class Playbook:
 
         self._file_name = file_name
 
-
-        # HACK: we *really* don't want this changing for every playbook; decide how to set once using only startup basedir, do it much earlier
-        local_collection_path = os.path.join(self._basedir, 'plugin_content')
-        if os.path.isdir(to_bytes(local_collection_path)) and local_collection_path not in sys.path:
-            sys.path.insert(0, local_collection_path)
         try:
             ds = self._loader.load_from_file(os.path.basename(file_name))
         except UnicodeDecodeError as e:

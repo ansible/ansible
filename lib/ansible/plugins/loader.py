@@ -303,8 +303,8 @@ class PluginLoader:
 
     def _find_fq_plugin(self, fq_name, extension):
         # prefix our extension Python namespace if it isn't already there
-        if not fq_name.startswith('a.'):
-            fq_name = 'a.' + fq_name
+        if not fq_name.startswith('ansible_collections.'):
+            fq_name = 'ansible_collections.' + fq_name
 
         splitname = fq_name.rsplit('.', 1)
         if len(splitname) != 2:

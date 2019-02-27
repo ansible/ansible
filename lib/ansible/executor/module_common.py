@@ -435,7 +435,7 @@ class ModuleDepFinder(ast.NodeVisitor):
                 py_mod = alias.name[self.IMPORT_PREFIX_SIZE:]
                 py_mod = tuple(py_mod.split('.'))
                 self.submodules.add(py_mod)
-            elif alias.name.startswith('a.'):
+            elif alias.name.startswith('ansible_collections.'):
                 # keep 'a' as a sentinel prefix to trigger collection-loaded MU path
                 # FIXME: maybe make this a fancier type or use a reserved explicit sentinel instead?
                 self.submodules.add(tuple(alias.name.split('.')))
@@ -460,7 +460,7 @@ class ModuleDepFinder(ast.NodeVisitor):
                 for alias in node.names:
                     self.submodules.add((alias.name,))
 
-        elif node.module.startswith('a.'):
+        elif node.module.startswith('ansible_collections.'):
             # TODO: finish out the subpackage et al cases
             self.submodules.add(tuple(node.module.split('.')))
         self.generic_visit(node)
@@ -565,7 +565,7 @@ def recursive_finder(name, data, py_module_names, py_module_cache, zf):
             module_info = imp.find_module('_six', [os.path.join(p, 'six') for p in module_utils_paths])
             py_module_name = ('six', '_six')
             idx = 0
-        elif py_module_name[0] == 'a':  # FIXME: use a better sentinel or fancier data structure here?
+        elif py_module_name[0] == 'ansible_collections':  # FIXME: use a better sentinel or fancier data structure here?
             # FIXME: replicate module name resolution like below for granular imports
             # this is a collection-hosted MU; look it up with get_data
             package_name = '.'.join(py_module_name[:-1])

@@ -16,11 +16,11 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types
 
 _SYNTHETIC_PACKAGES = {
-    'a.ansible': dict(type='pkg_only'),
-    'a.ansible.core': dict(type='pkg_only'),
-    'a.ansible.core.plugins': dict(type='map', map='ansible.plugins'),
-    'a.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
-    'a.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
+    'ansible_collections.ansible': dict(type='pkg_only'),
+    'ansible_collections.ansible.core': dict(type='pkg_only'),
+    'ansible_collections.ansible.core.plugins': dict(type='map', map='ansible.plugins'),
+    'ansible_collections.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
+    'ansible_collections.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
 
 # FIXME: exception handling/error logging
@@ -63,7 +63,7 @@ class AnsibleCollectionLoader(object):
 
     def find_module(self, fullname, path=None):
         # this loader is only concerned with items under the Ansible Collections namespace hierarchy, ignore others
-        if fullname.startswith('a.') or fullname == 'a':
+        if fullname.startswith('ansible_collections.') or fullname == 'ansible_collections':
             return self
 
         return None
