@@ -20,10 +20,10 @@ __metaclass__ = type
 from units.compat.mock import patch
 from ansible.modules.network.asa import asa_og
 from units.modules.utils import set_module_args
-from .ios_module import TestIosModule, load_fixture
+from .asa_module import TestAsaModule, load_fixture
 
 
-class TestAsaOgModule(TestIosModule):
+class TestAsaOgModule(TestAsaModule):
 
     module = asa_og
 

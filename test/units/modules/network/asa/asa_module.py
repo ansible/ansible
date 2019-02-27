@@ -47,7 +47,7 @@ def load_fixture(name):
     return data
 
 
-class TestIosModule(ModuleTestCase):
+class TestAsaModule(ModuleTestCase):
 
     def execute_module(self, failed=False, changed=False, commands=None, sort=True, defaults=False):
 
