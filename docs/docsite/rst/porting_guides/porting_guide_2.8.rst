@@ -267,48 +267,7 @@ Plugins
 
 * ``osx_say`` callback plugin was renamed into :ref:`say <say_callback>`.
 
-* Cache plugins can now be used for caching inventory. To make a new or custom cache plugin compatible with inventory
-  plugins, the cache plugin should accept the options ``_uri``, ``_prefix``, and ``_timeout``. The inventory plugin will instantiate
-  the cache by passing it keyword arguments. Use ``super`` to initialize the base class, which will set the options using
-  ``self.set_options(direct=kwargs)``. After calling the base class the options should be accessed with ``self.get_option(<option_name>)``.
-  Cache plugins should not use ``ansible.constants`` to retrieve user options since inventory-specific cache options will not be
-  accessible.
-
-  .. code-block:: python
-
-     from ansible.plugins.cache import BaseCacheModule
-
-     class CacheModule(BaseCacheModule):
-         def __init__(self, *args, **kwargs):
-             super(CacheModule, self).__init__(*args, **kwargs)
-             self._connection = self.get_option('_uri')
-             self._prefix = self.get_option('_prefix')
-             self._timeout = self.get_option('_timeout')
-
-  Additionally, cache plugins should never be imported directly. Instead, import ``cache_loader`` from ``ansible.plugins.loader``
-  and get the cache plugin with ``cache_loader.get(plugin_name)`` so that ``self.get_option(<option_name>)`` is available to use.
-
-  Once the cache plugin reconciles inventory cache options, inventory plugins may use it to store data (such as expensive API calls).
-  You can enable inventory caching via environment variables, inventory configuration files, or Ansible configuration files.
-  For example, in an ``ansible.cfg`` file you might have separate options for your fact gathering and inventory caching:
-
-.. code-block:: ini
-
-  [defaults]
-  fact_caching = redis
-  fact_caching_connection = localhost:6379:0
-  fact_caching_timeout = 3600
-  fact_caching_prefix = ansible_facts_
-
-  [inventory]
-  cache = yes
-
-  # Inventory plugin specific cache options; if not provided those in [defaults] are used
-  cache_connection = /tmp/custom_cache
-  cache_plugin = custom_cache
-  cache_timeout = 7200
-  cache_prefix = ansible_inventory_
-
+* Inventory plugins now support caching via cache plugins. To start using a cache plugin with your inventory see the section on caching in the :ref:`inventory guide<using_inventory>`. To port a custom cache plugin to be compatible with inventory see :ref:`developer guide on cache plugins<developing_cache_plugins>`.
 
 Porting custom scripts
 ======================
