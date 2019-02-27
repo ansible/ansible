@@ -48,11 +48,11 @@ author:
 EXAMPLES = '''
     - name: List Role Definitions in scope
       azure_rm_roledefinition_facts:
-        scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myresourceGroup
+        scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
 
     - name: Get Role Definition by name
       azure_rm_roledefinition_facts:
-        scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myresourceGroup
+        scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup
         name: myRoleDefinition
 '''
 
@@ -92,25 +92,28 @@ roledefinitions:
                 description:
                     - List of allowed actions.
                 returned: always
+                type: list
                 sample: Microsoft.Compute/virtualMachines/read
             not_actions:
                 description:
                     - List of denied actions.
                 returned: always
+                type: list
                 sample: Microsoft.Compute/virtualMachines/write
             data_actions:
                 description:
                     - List of allowed data actions.
                 returned: always
+                type: list
                 sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read
             not_data_actions:
                 description:
                     - List of denied actions.
                 returned: always
+                type: list
                 sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write
 '''
 
-import uuid
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 from ansible.module_utils._text import to_native
 

@@ -220,7 +220,6 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
                                                 base_url=self._cloud_environment.endpoints.resource_manager,
                                                 api_version="2018-01-01-preview")
 
-        # build cope
         self.scope = self.build_scope()
 
         # get existing role definition
@@ -259,7 +258,7 @@ class AzureRMRoleDefinition(AzureRMModuleBase):
                 self.log('role definition deleted')
 
             else:
-                self.fail("role definition {0} not exists.".format(self.name))
+                self.log("role definition {0} not exists.".format(self.name))
 
         if self.to_do == Actions.CreateOrUpdate:
             self.log('Need to Create/Update role definition')
