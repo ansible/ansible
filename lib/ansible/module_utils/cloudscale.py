@@ -34,7 +34,7 @@ class AnsibleCloudscaleBase(object):
                                timeout=self._module.params['api_timeout'])
 
         if info['status'] == 200:
-            return self._module.from_json(to_text(resp.read()))
+            return self._module.from_json(to_text(resp.read(), errors='surrogate_or_strict'))
         elif info['status'] == 404:
             return None
         else:
@@ -55,7 +55,7 @@ class AnsibleCloudscaleBase(object):
                                timeout=self._module.params['api_timeout'])
 
         if info['status'] in (200, 201):
-            return self._module.from_json(to_text(resp.read()))
+            return self._module.from_json(to_text(resp.read(), errors='surrogate_or_strict'))
         elif info['status'] == 204:
             return None
         else:
