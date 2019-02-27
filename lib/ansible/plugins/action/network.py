@@ -40,9 +40,7 @@ class ActionModule(_ActionModule):
     def run(self, task_vars=None):
         config_module = hasattr(self, '_config_module') and self._config_module
         if config_module and self._task.args.get('src'):
-            src_result = self._handle_src_option()
-            if src_result:
-                return src_result
+            self._handle_src_option()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
 
