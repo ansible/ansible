@@ -480,7 +480,7 @@ class SwarmManager(DockerBaseClass):
         self.results['changed'] = True
 
     def leave(self):
-        if not(self.client.check_if_swarm_node()):
+        if not self.client.check_if_swarm_node():
             self.results['actions'].append("This node is not part of a swarm.")
             return
         if not self.check_mode:
@@ -493,7 +493,7 @@ class SwarmManager(DockerBaseClass):
         self.results['changed'] = True
 
     def remove(self):
-        if not(self.client.check_if_swarm_manager()):
+        if not self.client.check_if_swarm_manager():
             self.client.fail("This node is not a manager.")
 
         try:
