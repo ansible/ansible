@@ -255,7 +255,7 @@ class AzureRMClusters(AzureRMModuleBase):
         dict_expand(self.parameters, ['cluster_definition'], 'properties')
         dict_expand(self.parameters, ['compute_profile_roles', 'vm_size'], 'hardware_profile')
         dict_rename(self.parameters, ['compute_profile_roles', 'linux_profile'], 'linux_operating_system_profile')
-        dict_expand(self.parameters, ['compute_profile_roles', 'linux_profile'], 'os_profile')
+        dict_expand(self.parameters, ['compute_profile_roles', 'linux_operating_system_profile'], 'os_profile')
         dict_rename(self.parameters, ['compute_profile_roles'], 'roles')
         dict_expand(self.parameters, ['roles'], 'compute_profile')
         dict_expand(self.parameters, ['compute_profile'], 'properties')
