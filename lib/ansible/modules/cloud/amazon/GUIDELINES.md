@@ -655,16 +655,10 @@ for the given service should be used. The [cloudonaut](https://iam.cloudonaut.io
 
 The simplest way is to run the tests using ample permissions with the `debug_botocore_endpoint_logs` module option for AnsibleAWSModule modules.
 After the `PLAY RECAP` of the completed tests the list of AWS actions that need to be allowed will be displayed.
-1) Ensure you set the `debug_botocore_endpoint_logs` module option set to True in your tests.
-```
-- module_defaults:
-    group/aws:
-      debug_botocore_endpoint_logs: True
-```
-2) Run your tests. There should be a list of `AWS ACTIONS` at the end with all the permissions used.
+1) Run your tests. There should be a list of `AWS ACTIONS` at the end with all the permissions used.
   [Create a policy](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start) that allows those actions.
-3) Inspect the documentation and add resource restriction to account, region, and and prefix where possible.
-4) Run the tests with a user or role that only allows the new policy.
+2) Inspect the documentation and add resource restriction to account, region, and and prefix where possible.
+3) Run the tests with a user or role that only allows the new policy.
     a) If the tests are failing you will need to troubleshoot.
         - Is a boto/AnsibleModule module being used? If so, use the iterative approach for the failure outlined below.
         - You may need to wait a few minutes for your policy to update before rerunning the tests.
@@ -677,7 +671,7 @@ After the `PLAY RECAP` of the completed tests the list of AWS actions that need 
         - Use a search engine.
         - Ask in the Ansible IRC channel #ansible-aws.
     c) Modify the policy if it is incorrect and repeat step 4 until the tests complete.
-6) Share the minimum policy in a comment.
+4) Share the minimum policy in a comment.
 
 If your tests are using boto/AnsibleModule modules an iterative approach over each failure will need to be used for that portion of the tests.
 1) Run the integration tests with the policy created above (or without any IAM permissions at all if the `debug_botocore_endpoint_logs` process was not used).
