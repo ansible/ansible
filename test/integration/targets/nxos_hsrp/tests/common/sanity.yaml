@@ -9,7 +9,7 @@
 
 - block:
   - name: "Enable feature hsrp"
-    nxos_feature: 
+    nxos_feature:
       feature: hsrp
       provider: "{{ connection }}"
       state: enabled
@@ -155,7 +155,7 @@
 
   always:
   - name: "Disable feature hsrp"
-    nxos_feature: 
+    nxos_feature:
       feature: hsrp
       provider: "{{ connection }}"
       state: disabled
