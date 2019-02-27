@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
                     'supported_by': 'core'}
@@ -22,7 +21,7 @@ description:
   - For Windows targets, use the M(win_uri) module instead.
 version_added: "1.1"
 requires:
-- xmltodict (when dealing with XML)
+- xmltodict (when dealing with XML content)
 options:
   url:
     description:
@@ -46,16 +45,18 @@ options:
     aliases: [ password ]
   body:
     description:
-      - The body of the http request/response to the web service. If C(body_format) is set
-        to 'json' it will take an already formatted JSON string or convert a data structure
-        into JSON. If C(body_format) is set to 'form-urlencoded' it will convert a dictionary
-        or list of tuples into an 'application/x-www-form-urlencoded' string. (Added in v2.7)
+      - The body of the HTTP request/response to the web service.
+      - If C(body_format) is set to 'json' it will take an already formatted JSON string or
+        convert a data structure into JSON.
+      - If C(body_format) is set to 'form-urlencoded' it will convert a dictionary or
+        list of tuples into an 'application/x-www-form-urlencoded' string. Added in Ansible 2.7.
     type: raw
   body_format:
     description:
-      - The serialization format of the body. When set to C(json) or C(form-urlencoded), encodes the
-        body argument, if needed, and automatically sets the Content-Type header accordingly.
-        As of C(2.3) it is possible to override the `Content-Type` header, when
+      - The serialization format of the body.
+      - When set to C(json) or C(form-urlencoded), encodes the body argument, if needed, and
+        automatically sets the Content-Type header accordingly.
+      - As of Ansible 2.3 it is possible to override the `Content-Type` header, when
         set to C(json) or C(form-urlencoded) via the I(headers) option.
     type: str
     choices: [ form-urlencoded, json, raw ]
@@ -71,26 +72,30 @@ options:
     description:
       - Whether or not to return the body of the response as a "content" key in
         the dictionary result.
-      - If the reported Content-type is "application/json", then the JSON is
+      - If the reported Content-type is "application/json", then the JSON payload is
         additionally loaded into a key called C(json) in the dictionary results.
+      - If the reported Content-type is "text/xml" or "text/xhtml", then the XML payload is
+        additionally loaded into a key called C(xml) in the dictionary results.
     type: bool
     default: no
   force_basic_auth:
     description:
       - Force the sending of the Basic authentication header upon initial request.
       - The library used by the uri module only sends authentication information when a webservice
-        responds to an initial request with a 401 status. Since some basic auth services do not properly
-        send a 401, logins will fail.
+        responds to an initial request with a 401 status.
+      - Since some basic auth services do not properly send a 401, logins will fail.
     type: bool
     default: no
   follow_redirects:
     description:
-      - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
-        C(safe) will follow only "safe" redirects, where "safe" means that the client is only
-        doing a GET or HEAD on the URI to which it is being redirected. C(none) will not follow
-        any redirects. Note that C(yes) and C(no) choices are accepted for backwards compatibility,
-        where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe). C(yes) and C(no)
-        are deprecated and will be removed in some future version of Ansible.
+      - Whether or not the URI module should follow redirects.
+      - C(all) will follow all redirects.
+      - C(safe) will follow only "safe" redirects, where "safe" means that the client is only
+        doing a GET or HEAD on the URI to which it is being redirected.
+      - C(none) will not follow any redirects.
+      - Note that C(yes) and C(no) choices are accepted for backwards compatibility,
+        where C(yes) is the equivalent of C(all) and C(no) is the equivalent of C(safe).
+      - C(yes) and C(no) are deprecated and will be removed in some future version of Ansible.
     type: str
     choices: [ all, 'none', safe ]
     default: safe
@@ -117,24 +122,24 @@ options:
       - Any parameter starting with "HEADER_" is a sent with your request as a header.
         For example, HEADER_Content-Type="application/json" would send the header
         "Content-Type" along with your request with a value of "application/json".
-      - This option is deprecated as of C(2.1) and will be removed in Ansible 2.9.
+      - This option is deprecated as of Ansible 2.1 and will be removed in Ansible 2.9.
         Use I(headers) instead.
     type: dict
   headers:
     description:
-        - Add custom HTTP headers to a request in the format of a YAML hash. As
-          of C(2.3) supplying C(Content-Type) here will override the header
+        - Add custom HTTP headers to a request in the format of a YAML hash.
+        - As of Ansible 2.3 supplying C(Content-Type) here will override the header
           generated by supplying C(json) or C(form-urlencoded) for I(body_format).
     type: dict
     version_added: '2.1'
   others:
     description:
-      - All arguments accepted by the M(file) module also work here
+      - All arguments accepted by the M(file) module also work here.
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated.
       - This should only set to C(no) used on personally controlled sites using self-signed certificates.
-      - Prior to 1.9.2 the code defaulted to C(no).
+      - Prior to Ansible 1.9.2 the code defaulted to C(no).
     type: bool
     default: yes
     version_added: '1.9.2'
@@ -323,7 +328,7 @@ from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, url_argument_spec
 
 JSON_CANDIDATES = ('javascript', 'json')
-XML_CANDIDATES = ('soap', 'xhtml', 'xml')
+XML_CANDIDATES = ('xhtml', 'xml')
 
 def format_message(err, resp):
     msg = resp.pop('msg')
