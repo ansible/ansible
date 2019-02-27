@@ -712,7 +712,7 @@ class PgClusterFacts(object):
             elif unit == 'MB':
                 val_in_bytes = int(setting) * 1024 * 1024
 
-            if val_in_bytes < 0:
+            if val_in_bytes is not None and val_in_bytes < 0:
                 val_in_bytes = 0
 
             set_dict[i[0]] = dict(
