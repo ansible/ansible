@@ -500,6 +500,11 @@
     - result.json.slideshow.author == 'Yours Truly'
     - result.json.slideshow.slides[0].title == 'Wake up to WonderWidgets!'
 
+- name: Install xmltodict
+  pip:
+    name: xmltodict
+  register: xmltodict
+
 - name: Get XML payload
   uri:
     url: https://{{ httpbin_host }}/xml
@@ -512,6 +517,12 @@
     - result.xml is defined
     - result.xml.slideshow['@author'] == 'Yours Truly'
     - result.xml.slideshow.slide[0].title == 'Wake up to WonderWidgets!'
+
+- name: Uninstall xmltodict
+  pip:
+    name: xmltodict
+    state: absent
+  when: xmltodict is changed
 
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml
