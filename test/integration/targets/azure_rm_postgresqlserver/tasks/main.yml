@@ -171,42 +171,6 @@
       - output.servers[1]['fully_qualified_domain_name'] != None
 
 #
-# azure_rm_postgresqlconfiguration_facts tests below
-#
-- name: Gather facts PostgreSQL Configuration
-  azure_rm_postgresqlconfiguration_facts:
-    resource_group: "{{ resource_group }}"
-    server_name: postgresqlsrv{{ rpfx }}
-    name: deadlock_timeout
-  register: output
-- name: Assert that facts are returned
-  assert:
-    that:
-      - output.changed == False
-      - output.settings[0].id != None
-      - output.settings[0].name != None
-      - output.settings[0].value != None
-      - output.settings[0].description != None
-      - output.settings[0].source != None
-      - output.settings | length == 1
-
-- name: Gather facts PostgreSQL Configuration
-  azure_rm_postgresqlconfiguration_facts:
-    resource_group: "{{ resource_group }}"
-    server_name: postgresqlsrv{{ rpfx }}
-  register: output
-- name: Get all settings
-  assert:
-    that:
-      - output.changed == False
-      - output.settings[0].id != None
-      - output.settings[0].name != None
-      - output.settings[0].value != None
-      - output.settings[0].description != None
-      - output.settings[0].source != None
-      - output.settings | length > 1
-
-#
 # azure_rm_postgresqldatabase tests below
 #
 - name: Create instance of PostgreSQL Database -- check mode
@@ -503,6 +467,103 @@
       - "output.rules | length == 0"
 
 #
+# azure_rm_postgresql_configuration
+#
+- name: Create instance of Configuration -- check mode
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+  check_mode: yes
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to change default configuration
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to change default configuration -- idempotent
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    value: 2000
+  register: output
+- name: Assert that change was not registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Try to reset configuration
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - output.changed
+
+- name: Try to reset configuration -- idempotent
+  azure_rm_postgresqlconfiguration:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+    state: absent
+  register: output
+- name: Assert that change was registered
+  assert:
+    that:
+      - not output.changed
+
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+    name: deadlock_timeout
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length == 1
+
+- name: Gather facts PostgreSQL Configuration
+  azure_rm_postgresqlconfiguration_facts:
+    resource_group: "{{ resource_group }}"
+    server_name: postgresqlsrv{{ rpfx }}
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.settings[0].id != None
+      - output.settings[0].name != None
+      - output.settings[0].value != None
+      - output.settings[0].description != None
+      - output.settings[0].source != None
+      - output.settings | length > 1
+
+#
 # azure_rm_postgresqlserver continuation / clean up
 #
 
@@ -545,8 +606,5 @@
     resource_group: "{{ resource_group }}"
     name: postgresqlsrv{{ rpfx }}second
     state: absent
-  register: output
-- name: Assert the state has changed
-  assert:
-    that:
-      - output.changed
+  async: 400
+  poll: 0
