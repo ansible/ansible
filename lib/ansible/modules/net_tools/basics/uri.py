@@ -62,6 +62,8 @@ options:
   method:
     description:
       - The HTTP method of the request or response.
+      - In more recent versions we do not restrict the method at the module level anymore
+        but it still must be a valid method accepted by the service handling the request.
     type: str
     default: GET
   return_content:
