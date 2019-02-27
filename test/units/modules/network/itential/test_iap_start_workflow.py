@@ -32,7 +32,7 @@ from ansible.modules.network.itential import iap_start_workflow
 
 class TestWorkflowModule(unittest.TestCase):
 
-    @mock.patch('iap_start_workflow.start_workflow')
+    @mock.patch('ansible.modules.network.itential.iap_start_workflow.start_workflow')
     def test_iap_workflow(self, iap_workflow):
         params = {"description": "NewTestAnsible",
                   "https": "false",
