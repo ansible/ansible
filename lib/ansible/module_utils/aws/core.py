@@ -295,14 +295,6 @@ class _RetryingBotoClientWrapper(object):
             return unwrapped
 
 
-def inject_botocore_logged_actions(method):
-    def run_method(self, *args, **kwargs):
-        if self.params.get('debug_botocore_endpoint_logs'):
-            kwargs['resource_actions'] = self._get_resource_action_list()
-        return method(self, *args, **kwargs)
-    return run_method
-
-
 def is_boto3_error_code(code, e=None):
     """Check if the botocore exception is raised by a specific error code.
 
