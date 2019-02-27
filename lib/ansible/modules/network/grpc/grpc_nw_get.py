@@ -21,20 +21,20 @@ author:
     - "Ganesh Nalawade (@ganeshrn)"
 short_description: Fetch configuration/state data from gRPC enabled target hosts.
 description:
-    - gRPC is a high performance, open-source universal RPC framework
+    - gRPC is a high performance, open-source universal RPC framework.
     - This module allows the user to fetch configuration and state data from gRPC
       enabled devices.
 options:
   section:
     description:
       - This option specifies the string which acts as a filter to restrict the portions of
-        the data to be are retrieved from the target host device. If this option is not specified entire
-        configuration or state data is returned in response.
+        the data to be retrieved from the target host device. If this option is not specified the entire
+        configuration or state data is returned in response provided it is supported by target host.
   command:
     description:
       - The option specifies the command to be executed on the target host and return the response
-        in result. This option is supported if the gRPC target host supports executing cli command
-        over gRPC connection.
+        in result. This option is supported if the gRPC target host supports executing CLI command
+        over the gRPC connection.
   display:
     description:
       - Encoding scheme to use when serializing output from the device. The encoding scheme
@@ -53,8 +53,8 @@ requirements:
 notes:
   - This module requires the gRPC system service be enabled on
     the target host being managed.
-  - This module supports the use of connection=grpc
-  - This module required value of 'ansible_network_os' to be defined as inventory variable.
+  - This module supports the use of connection=grpc.
+  - This module requires the value of 'ansible_network_os' be defined as an inventory variable.
   - Tested against iosxrv 9k version 6.1.2.
 """
 
@@ -92,7 +92,7 @@ stdout_lines:
   sample: ['...', '...']
 output:
   description: A dictionary representing a JSON-formatted response, if the response
-               os valid json string
+               is a valid json string
   returned: when the device response is valid JSON
   type: list
   sample: |

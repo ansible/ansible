@@ -47,7 +47,7 @@
       - "result.failed == true"
       - "'operation without filter is not supported' in result['msg']"
 
-- name: "worng display type"
+- name: "Invalid display type - failure scenario"
   grpc_nw_get:
     command: 'show version'
     display: xml
@@ -59,7 +59,7 @@
       - "result.failed == true"
       - "'display option \\'xml\\' is not supported on this target host' in result['msg']"
 
-- name: "worng data type"
+- name: "Invalid data type - failure scenario"
   grpc_nw_get:
     section: '{"Cisco-IOS-XR-ip-static-cfg:router-static": [null]}'
     data_type: state

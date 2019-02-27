@@ -8,9 +8,9 @@ DOCUMENTATION = """
 ---
 author: Ansible Networking Team
 grpc : iosxr
-short_description: gRPC Plugin for iosxr devices
+short_description: gRPC Plugin for IOS XR devices
 description:
-  - This gRPC plugin provides methods to connect and talk to iosxr
+  - This gRPC plugin provides methods to connect and talk to Cisco IOS XR
     devices over gRPC protocol.
 version_added: "2.8"
 """
