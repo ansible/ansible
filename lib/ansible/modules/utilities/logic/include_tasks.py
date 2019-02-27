@@ -46,6 +46,8 @@ seealso:
 - module: import_role
 - module: import_tasks
 - module: include_role
+- ref: playbooks_reuse_includes
+  description: More information related to including and importing playbooks, roles and tasks.
 '''
 
 EXAMPLES = r'''
