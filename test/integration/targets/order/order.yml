@@ -1,6 +1,3 @@
-
-
-
 - name: just plain order
   hosts: all
   gather_facts: false
