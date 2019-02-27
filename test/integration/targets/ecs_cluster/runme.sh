@@ -12,6 +12,8 @@ trap 'rm -rf "${MYTMPDIR}"' EXIT
 # but for the python3 tests we need virtualenv to use python3
 PYTHON=${ANSIBLE_TEST_PYTHON_INTERPRETER:-python}
 
+
+
 # Test graceful failure for older versions of botocore
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-1.7.40"
 source "${MYTMPDIR}/botocore-1.7.40/bin/activate"
@@ -42,5 +44,5 @@ ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../c
 # Run full test suite
 virtualenv --system-site-packages --python "${PYTHON}" "${MYTMPDIR}/botocore-recent"
 source "${MYTMPDIR}/botocore-recent/bin/activate"
-$PYTHON -m pip install 'botocore>=1.8.4' boto3
+$PYTHON -m pip install 'botocore>=1.10.37' boto3 # version 1.10.37 for scheduling strategy
 ansible-playbook -i ../../inventory -e @../../integration_config.yml -e @../../cloud-config-aws.yml -v playbooks/full_test.yml "$@"
