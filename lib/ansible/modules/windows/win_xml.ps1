@@ -85,6 +85,19 @@ function BackupFile($path) {
 	return $backuppath;
 }
 
+function Save-ChangedXml($xmlorig, $result, $message, $check_mode, $backup) {
+    $result.changed = $true
+    if (-Not $check_mode) {
+        if ($backup) {
+            $result.backup = BackupFile($dest)
+        }
+        $xmlorig.Save($dest)
+        $result.msg = $message
+    } else {
+        $result.msg += " check mode"
+    }
+}
+
 $params = Parse-Args $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 
@@ -98,6 +111,7 @@ $backup = Get-AnsibleParam $params "backup" -type "bool" -Default $false
 $type = Get-AnsibleParam $params "type" -type "str" -Default "element" -ValidateSet "element", "attribute", "text"
 $attribute = Get-AnsibleParam $params "attribute" -type "str" -FailIfEmpty ($type -eq "attribute")
 $state = Get-AnsibleParam $params "state" -type "str" -Default "present"
+$count = Get-AnsibleParam $params "count" -type "bool" -Default $false
 
 $result = @{
     changed = $false
@@ -122,119 +136,107 @@ $localname = $xmlorig.DocumentElement.LocalName
 
 $namespaceMgr.AddNamespace($xmlorig.$localname.SchemaInfo.Prefix, $namespace)
 
+$nodeList = $xmlorig.SelectNodes($xpath, $namespaceMgr)
+$nodeListCount = $nodeList.get_Count()
+if ($count) {
+    $result.count = $nodeListCount
+}
+## Exit early if xpath did not match any nodes
+if ($nodeListCount -eq 0) {
+    $result.msg = "xpath '" + $xpath + "' did not match any nodes.  If this is unexpected, check your xpaths"
+    Exit-Json $result
+} 
+
+$changed = $false
+$result.msg = "not changed"
+
 if ($type -eq "element") {
-    $xmlchild = $null
-    Try {
-        $xmlchild = [xml]$fragment
-    } Catch {
-        Fail-Json $result "Failed to parse fragment as XML: $($_.Exception.Message)"
-    }
-
-    $child = $xmlorig.CreateElement($xmlchild.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
-    Copy-Xml $child $xmlchild.DocumentElement $xmlorig
-
-    $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
-    if ($node.get_NodeType() -eq "Document") {
-        $node = $node.get_DocumentElement()
-    }
-    $elements = $node.get_ChildNodes()
-    [bool]$present = $false
-    [bool]$changed = $false
-    if ($elements.get_Count()) {
-        if ($debug) {
-            $err = @()
-            $result.err = {$err}.Invoke()
-        }
-        foreach ($element in $elements) {
-            try {
-                Compare-XmlDocs $child $element
-                $present = $true
-                break
-            } catch {
+    if ($state -eq "absent") {
+        foreach ($node in $nodeList) {
+            # there are some nodes that match xpath, delete without comparing them to fragment
+            if (-Not $check_mode) {
+                $removedNode = $node.get_ParentNode().RemoveChild($node)
+                $changed = $true
                 if ($debug) {
-                    $result.err.Add($_.Exception.ToString())
+                    $result.removed += $result.removed + $removedNode.get_OuterXml()
                 }
             }
         }
-        if (!$present -and ($state -eq "present")) {
-            [void]$node.AppendChild($child)
-            $result.msg = "xml added"
-            $changed = $true
-        } elseif ($present -and ($state -eq "absent")) {
-            [void]$node.RemoveChild($element)
-            $result.msg = "xml removed"
-            $changed = $true
+    } else { # state = 'present'
+        $xmlchild = $null
+        Try {
+            $xmlchild = [xml]$fragment
+        } Catch {
+            Fail-Json $result "Failed to parse fragment as XML: $($_.Exception.Message)"
         }
-    } else {
-        if ($state -eq "present") {
-            [void]$node.AppendChild($child)
-            $result.msg = "xml added"
-            $changed = $true
-        }
-    }
 
-    if ($changed) {
-        $result.changed = $true
-        if (!$check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
+        $child = $xmlorig.CreateElement($xmlchild.get_DocumentElement().get_Name(), $xmlorig.get_DocumentElement().get_NamespaceURI())
+        Copy-Xml $child $xmlchild.DocumentElement $xmlorig
+
+        foreach ($node in $nodeList) {
+            if ($node.get_NodeType() -eq "Document") {
+                $node = $node.get_DocumentElement()
             }
-            $xmlorig.Save($dest)
-        } else {
-            $result.msg += " check mode"
+            $elements = $node.get_ChildNodes()
+            [bool]$present = $false
+            [bool]$changed = $false
+            if ($elements.get_Count()) {
+                if ($debug) {
+                    $err = @()
+                    $result.err = {$err}.Invoke()
+                }
+                foreach ($element in $elements) {
+                    try {
+                        Compare-XmlDocs $child $element
+                        $present = $true
+                        break
+                    } catch {
+                        if ($debug) {
+                            $result.err.Add($_.Exception.ToString())
+                        }
+                    }
+                }
+                if (-Not $present -and ($state -eq "present")) {
+                    [void]$node.AppendChild($child)
+                    $result.msg = $result.msg + "xml added "
+                    $changed = $true
+                }
+            }
         }
-    } else {
-        $result.msg = "not changed"
     }
 } elseif ($type -eq "text") {
-    $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
-    [bool]$add = ($node.get_InnerText() -ne $fragment)
-    if ($add) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
+    foreach ($node in $nodeList) {
+        if ($node.get_InnerText() -ne $fragment) {
             $node.set_InnerText($fragment)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        } else {
-            $result.msg = "text changed check mode"
+            $changed = $true
         }
-    } else {
-        $result.msg = "not changed"
     }
 } elseif ($type -eq "attribute") {
-    $node = $xmlorig.SelectSingleNode($xpath, $namespaceMgr)
-    [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
-    if ($add -And ($state -eq "present")) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
+    foreach ($node in $nodeList) {
+        [bool]$add = !$node.HasAttribute($attribute) -Or ($node.$attribute -ne $fragment)
+        if ($add -And ($state -eq "present")) {
             if (!$node.HasAttribute($attribute)) {
-	            $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
+                $node.SetAttributeNode($attribute, $xmlorig.get_DocumentElement().get_NamespaceURI())
             }
             $node.SetAttribute($attribute, $fragment)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
-        } else {
-            $result.msg = "text changed check mode"
-        }
-    } elseif (!$add -And ($state -eq "absent")) {
-        $result.changed = $true
-        if (-Not $check_mode) {
-            if ($backup) {
-                $result.backup = BackupFile($dest)
-            }
+            $changed = $true
+        } elseif (!$add -And ($state -eq "absent")) {
             $node.RemoveAttribute($attribute)
-            $xmlorig.Save($dest)
-            $result.msg = "text changed"
+            $changed = $true
+        } else {
+            Add-Warning $result "Unexpected state when processing attribute $($attribute), add was $add, state was $state"
         }
-    } else {
-        $result.msg = "not changed"
     }
+}
+
+
+if ($changed) {
+    if ($state -eq "absent") {
+        $summary = "$type removed"
+    } else {
+        $summary = "$type changed"
+    }
+    Save-ChangedXml $xmlorig $result $summary $check_mode $backup
 }
 
 Exit-Json $result
