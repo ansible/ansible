@@ -45,6 +45,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.parsing.convert_bool import boolean as to_bool
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
@@ -82,17 +83,6 @@ def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
         # Fallback to the to_json filter
         display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
         return to_json(a, *args, **kw)
-
-
-def to_bool(a):
-    ''' return a bool for the arg '''
-    if a is None or isinstance(a, bool):
-        return a
-    if isinstance(a, string_types):
-        a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
-        return True
-    return False
 
 
 def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
@@ -589,7 +579,7 @@ class FilterModule(object):
             'fileglob': fileglob,
 
             # types
-            'bool': to_bool,
+            'bool': partial(to_bool, strict=False),
             'to_datetime': to_datetime,
 
             # date formatting
