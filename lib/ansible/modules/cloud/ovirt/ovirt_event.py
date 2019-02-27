@@ -117,7 +117,6 @@ EXAMPLES = '''
     severity: warning
     vm: "c79db183-46ef-44d1-95f9-1a368c516c19"
 
-# Remove an event
 - name: Remove an event
   ovirt_event:
     state: absent
