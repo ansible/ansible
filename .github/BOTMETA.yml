@@ -1215,11 +1215,11 @@ files:
     maintainers: rdvencioneck
   $plugins/terminal/ios.py:
     <<: *ios
-    maintainers: $team_networking $teamios
+    maintainers: $team_networking $team_ios
     support: network
   $plugins/terminal/iosxr.py:
     <<: *iosxr
-    maintainers: $team_networking $teamiosxr
+    maintainers: $team_networking $team_iosxr
     support: network
   $plugins/terminal/ironware.py:
     maintainers: paulquack
