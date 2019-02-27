@@ -105,9 +105,10 @@ import json
 
 try:
     import requests
-    HAS_REQUESTS=True
+    HAS_REQUESTS = True
 except:
-    HAS_REQUESTS=False
+    HAS_REQUESTS = False
+
 
 def decode_current_state(current_pool_state):
 
