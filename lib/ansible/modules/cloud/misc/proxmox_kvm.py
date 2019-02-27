@@ -14,12 +14,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: proxmox_kvm
-short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluster.
+short_description: Management of Qemu(KVM) Virtual Machines in Proxmox VE cluster
 description:
   - Allows you to create/delete/stop Qemu(KVM) Virtual Machines in Proxmox VE cluster.
 version_added: "2.3"
 author:
-- Abdoul Bah (@helldorado) <bahabdoul at gmail.com>
+- Abdoul Bah (@helldorado)
 options:
   acpi:
     description:
@@ -34,7 +34,7 @@ options:
     description:
       - Pass arbitrary arguments to kvm.
       - This option is for experts only!
-      - This parameter defauls to C(-serial unix:/var/run/qemu-server/VMID.serial,server,nowait)
+      - This parameter defauls to C(-serial unix:/var/run/qemu-server/VMID.serial,server,nowait).
     type: str
   api_host:
     description:
@@ -164,7 +164,7 @@ options:
     description:
       - Enable/disable hugepages memory.
     type: str
-    choices: ['any', '2', '1024']
+    choices: [ any, '2', '1024' ]
   ide:
     description:
       - A hash/dictionary of volume used as IDE hard disk or CD-ROM. C(ide='{"key":"value", "key":"value"}').
@@ -870,7 +870,7 @@ def main():
             api_password=dict(type='str', no_log=True),
             autostart=dict(type='bool', default=False),
             balloon=dict(type='int', default=0),
-            bios=dict(type='str', choices=['seabios', 'ovmf']),
+            bios=dict(type='str', choices=['ovmf', 'seabios']),
             boot=dict(type='str', default='cnd'),
             bootdisk=dict(type='str'),
             clone=dict(type='str'),
@@ -904,7 +904,7 @@ def main():
             numa=dict(type='dict'),
             numa_enabled=dict(type='bool'),
             onboot=dict(type='bool', default=True),
-            ostype=dict(default='l26', choices=['l24', 'l26', 'other', 'solaris', 'w2k', 'w2k3', 'w2k8', 'win7', 'win8', 'wvista', 'wxp']),
+            ostype=dict(type='str', default='l26', choices=['l24', 'l26', 'other', 'solaris', 'w2k', 'w2k3', 'w2k8', 'win7', 'win8', 'wvista', 'wxp']),
             parallel=dict(type='dict'),
             pool=dict(type='str'),
             protection=dict(type='bool'),
@@ -912,7 +912,7 @@ def main():
             revert=dict(type='list'),
             sata=dict(type='dict'),
             scsi=dict(type='dict'),
-            scsihw=dict(choices=['lsi', 'lsi53c810', 'megasas', 'pvscsi', 'virtio-scsi-pci', 'virtio-scsi-single']),
+            scsihw=dict(type='str', choices=['lsi', 'lsi53c810', 'megasas', 'pvscsi', 'virtio-scsi-pci', 'virtio-scsi-single']),
             serial=dict(type='dict'),
             shares=dict(type='int'),
             skiplock=dict(type='bool'),
