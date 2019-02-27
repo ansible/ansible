@@ -1,7 +1,7 @@
 .. _vmware_ansible:
 
 ******************
-Ansible for VMware
+VMware Guide
 ******************
 
 Welcome to the Ansible for VMware Guide! This is a set of placeholder docs to be filled in.
