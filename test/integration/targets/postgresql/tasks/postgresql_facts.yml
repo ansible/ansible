@@ -13,13 +13,13 @@
 
 - assert:
     that:
-      - result.postgresql_facts.version != {}
-      - result.postgresql_facts.databases.{{ db_default }}.collate
-      - result.postgresql_facts.languages
-      - result.postgresql_facts.namespaces.information_schema
-      - result.postgresql_facts.settings
-      - result.postgresql_facts.tablespaces
-      - result.postgresql_facts.roles
+      - result.version != {}
+      - result.databases.{{ db_default }}.collate
+      - result.languages
+      - result.namespaces.information_schema
+      - result.settings
+      - result.tablespaces
+      - result.roles
 
 - name: postgresql_facts - check filter param passed by list
   become_user: "{{ pg_user }}"
@@ -35,16 +35,16 @@
 
 - assert:
     that:
-      - result.postgresql_facts.version != {}
-      - result.postgresql_facts.roles
-      - result.postgresql_facts.databases == {}
-      - result.postgresql_facts.extensions == {}
-      - result.postgresql_facts.namespaces == {}
-      - result.postgresql_facts.languages == {}
-      - result.postgresql_facts.repl_slots == {}
-      - result.postgresql_facts.replications == {}
-      - result.postgresql_facts.settings == {}
-      - result.postgresql_facts.tablespaces == {}
+      - result.version != {}
+      - result.roles
+      - result.databases == {}
+      - result.extensions == {}
+      - result.namespaces == {}
+      - result.languages == {}
+      - result.repl_slots == {}
+      - result.replications == {}
+      - result.settings == {}
+      - result.tablespaces == {}
 
 - name: postgresql_facts - check filter param passed by string
   become_user: "{{ pg_user }}"
@@ -58,16 +58,16 @@
 
 - assert:
     that:
-      - result.postgresql_facts.version != {}
-      - result.postgresql_facts.roles
-      - result.postgresql_facts.databases == {}
-      - result.postgresql_facts.extensions == {}
-      - result.postgresql_facts.namespaces == {}
-      - result.postgresql_facts.languages == {}
-      - result.postgresql_facts.repl_slots == {}
-      - result.postgresql_facts.replications == {}
-      - result.postgresql_facts.settings == {}
-      - result.postgresql_facts.tablespaces == {}
+      - result.version != {}
+      - result.roles
+      - result.databases == {}
+      - result.extensions == {}
+      - result.namespaces == {}
+      - result.languages == {}
+      - result.repl_slots == {}
+      - result.replications == {}
+      - result.settings == {}
+      - result.tablespaces == {}
 
 - name: postgresql_facts - check filter param passed by string
   become_user: "{{ pg_user }}"
@@ -81,8 +81,8 @@
 
 - assert:
     that:
-      - result.postgresql_facts.version
-      - result.postgresql_facts.roles == {}
+      - result.version
+      - result.roles == {}
 
 - name: postgresql_facts - check excluding filter param passed by list
   become_user: "{{ pg_user }}"
@@ -98,6 +98,6 @@
 
 - assert:
     that:
-      - result.postgresql_facts.version == {}
-      - result.postgresql_facts.roles == {}
-      - result.postgresql_facts.databases
+      - result.version == {}
+      - result.roles == {}
+      - result.databases
