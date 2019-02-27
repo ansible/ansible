@@ -171,8 +171,11 @@ class TowerCloudEnvironment(CloudEnvironment):
 
         env_vars = config.environment
 
+        ansible_vars = dict((key.lower(), value) for key, value in env_vars.items())
+
         return CloudEnvironmentConfig(
             env_vars=env_vars,
+            ansible_vars=ansible_vars,
         )
 
 

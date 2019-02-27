@@ -2,8 +2,6 @@
 - name: Check that SSL is available
   tower_organization:
     name: Default
-  environment:
-    TOWER_HOST: "https://{{ lookup('env', 'TOWER_HOST') }}"
   register: result
 
 - name: Check we haven't changed anything
@@ -14,7 +12,6 @@
   tower_organization:
     name: Default
   environment:
-    TOWER_HOST: "https://{{ lookup('env', 'TOWER_HOST') }}"
     TOWER_CERTIFICATE: /dev/null  # force check failure
   ignore_errors: true
   register: check_ssl_is_used
@@ -42,7 +39,6 @@
       tower_organization:
         name: Default
       environment:
-        TOWER_HOST: "https://{{ lookup('env', 'TOWER_HOST') }}"
         TOWER_CERTIFICATE: /dev/null  # should not fail because verify_ssl is disabled
   always:
     - name: Delete ~/.tower_cli.cfg
