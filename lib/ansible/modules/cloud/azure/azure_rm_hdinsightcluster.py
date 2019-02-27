@@ -256,11 +256,11 @@ class AzureRMClusters(AzureRMModuleBase):
         dict_expand(self.parameters, ['compute_profile_roles', 'vm_size'], 'hardware_profile')
         dict_rename(self.parameters, ['compute_profile_roles', 'linux_profile'], 'linux_operating_system_profile')
         dict_expand(self.parameters, ['compute_profile_roles', 'linux_profile'], 'os_profile')
-        dict_rename(self.parameters, ['compute_profile_roles'], 'roles')
         dict_expand(self.parameters, ['compute_profile_roles'], 'compute_profile')
+        dict_rename(self.parameters, ['compute_profile_roles'], 'roles')
         dict_expand(self.parameters, ['compute_profile'], 'properties')
         dict_rename(self.parameters, ['storage_accounts'], 'storageaccounts')
-        dict_expand(self.parameters, ['storage_accounts'], 'storage_profile')
+        dict_expand(self.parameters, ['storageaccounts'], 'storage_profile')
         dict_expand(self.parameters, ['storage_profile'], 'properties')
 
         response = None
