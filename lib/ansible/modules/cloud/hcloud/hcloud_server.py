@@ -77,7 +77,12 @@ options:
             - Resize the disk size, when resizing a server.
             - If you want to downgrade the server later, this value should be False.
         type: bool
-        default: False
+        default: no
+    force_upgrade:
+        description:
+            - Force the upgrade of the server. Power off the server if it is running on upgrade
+        type: bool
+        default: no
     user_data:
         description:
             - User Data to be passed to the server on creation.
@@ -280,7 +285,13 @@ class AnsibleHcloudServer(Hcloud):
         ):
             if self.hcloud_server.status == Server.STATUS_RUNNING:
                 if not self.module.check_mode:
-                    self.stop_server()  # Only stopped server can be upgraded.
+                    if self.module.params.get("force_upgrade"):
+                        self.stop_server()  # Only stopped server can be upgraded
+                    else:
+                        self.module.warn(
+                            "You can not upgrade a running instance %s. You need to stop the instance or use force_upgrade=yes."
+                            % self.hcloud_server.name
+                        )
             timeout = 100
             if self.module.params.get("upgrade_disk"):
                 timeout = (
@@ -338,6 +349,7 @@ class AnsibleHcloudServer(Hcloud):
                 volumes={"type": "list"},
                 backups={"type": "bool", "default": False},
                 upgrade_disk={"type": "bool", "default": False},
+                force_upgrade={"type": "bool", "default": False},
                 state={
                     "choices": ["present", "absent", "restarted", "started", "stopped"],
                     "default": "present",

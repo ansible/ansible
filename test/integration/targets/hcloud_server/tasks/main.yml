@@ -11,6 +11,17 @@
     that:
     - result is success
 
+- name: test create server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: present
+  register: result
+  check_mode: yes
+- name: test create server server
+  assert:
+    that:
+      - result is changed
+
 - name: test create server
   hcloud_server:
     name: "{{ hcloud_server_name}}"
@@ -26,6 +37,19 @@
       - main_server.hcloud_server.status == "running"
       - main_server.root_password != ""
 
+
+- name: test stop server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: stopped
+  register: result
+  check_mode: yes
+- name: verify stop server with check mode
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.status == "running"
+
 - name: test stop server
   hcloud_server:
     name: "{{ hcloud_server_name }}"
@@ -36,6 +60,17 @@
     that:
       - result is changed
       - result.hcloud_server.status == "off"
+
+- name: test start server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: started
+  register: result
+  check_mode: true
+- name: verify start server idempotence
+  assert:
+    that:
+      - result is changed
 
 - name: test start server
   hcloud_server:
@@ -69,6 +104,31 @@
     that:
       - result is changed
       - result.hcloud_server.status == "off"
+
+- name: test resize server running without force
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: present
+  register: result
+  check_mode: true
+- name: verify test resize server running without force
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.server_type == "cx11"
+
+- name: test resize server with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: stopped
+  register: result
+  check_mode: true
+- name: verify resize server with check mode
+  assert:
+    that:
+      - result is changed
 
 - name: test resize server without disk
   hcloud_server:
@@ -106,6 +166,19 @@
     that:
       - result is changed
       - result.hcloud_server.server_type == "cx21"
+
+- name: test enable backups with check mode
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    backups: true
+    state: stopped
+  register: result
+  check_mode: true
+- name: verify enable backups with check mode
+  assert:
+    that:
+      - result is changed
+      - result.hcloud_server.backup_window == ""
 
 - name: test enable backups
   hcloud_server:
