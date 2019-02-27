@@ -28,6 +28,7 @@ PASS_VARS = {
     'remote_tmp': '_remote_tmp',
     'selinux_special_fs': '_selinux_special_fs',
     'shell_executable': '_shell',
+    'string_conversion_action': '_string_conversion_action',
     'socket': '_socket_path',
     'string_conversion_action': '_string_conversion_action',
     'syslog_facility': '_syslog_facility',
