@@ -1,12 +1,12 @@
 # Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
 from ansible.module_utils.ansible_release import __version__
-from ansible.module_utils.basic import env_fallback
+from ansible.module_utils.basic import env_fallback, missing_required_lib
 
 try:
     import hcloud
@@ -22,7 +22,7 @@ class Hcloud(object):
         self.represent = represent
         self.result = {"changed": False, self.represent: None}
         if not HCLOUD_AVAILABLE:
-            module.fail_json(msg="hcloud-python must be available to use this module")
+            module.fail_json(msg=missing_required_lib("hcloud-python"))
         self._build_client()
 
     def _build_client(self):
@@ -43,6 +43,7 @@ class Hcloud(object):
                 "type": "str",
                 "required": True,
                 "fallback": (env_fallback, ["HCLOUD_TOKEN"]),
+                "no_log": True,
             },
             "endpoint": {"type": "str", "default": "https://api.hetzner.cloud/v1"},
         }

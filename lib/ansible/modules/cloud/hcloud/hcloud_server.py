@@ -22,7 +22,7 @@ short_description: Create and manage cloud servers on the Hetzner Cloud
 version_added: "2.8"
 
 description:
-    - "Create and manage cloud servers on the Hetzner Cloud."
+    - "Create, update and manage cloud servers on the Hetzner Cloud."
 
 author:
     - Lukas Kaemmerling (@lkaemmerling)
@@ -47,6 +47,7 @@ options:
         description:
             - List of SSH Keys Names
         type: list
+        aliases: [ ssh_key ]
     volumes:
         description:
             - List of Volumes IDs that should be attached to the server on server creation
@@ -59,12 +60,12 @@ options:
     location:
         description:
             - Location of Server
-            - Required if no datacenter is given and server does not exists
+            - Required if no I(datacenter) is given and server does not exists
         type: str
     datacenter:
         description:
             - Datacenter of Server
-            - Required of no location is given and server does not exists
+            - Required of no I(location) is given and server does not exists
         type: str
     backups:
         description:
@@ -73,8 +74,8 @@ options:
         default: False
     upgrade_disk:
         description:
-            - Resize the disk size, when resizing a server. If you want to downgrade the server later, this value should
-            - be False.
+            - Resize the disk size, when resizing a server.
+            - If you want to downgrade the server later, this value should be False.
         type: bool
         default: False
     user_data:
@@ -98,16 +99,49 @@ EXAMPLES = """
     name: my-server
     server_type: cx11
     image: ubuntu-18.04
+    state: present
 
 # Create a server in an specific location and with ssh keys
-- name: Create a basic server
+- name: Create a basic server with ssh key
   hcloud_server:
     name: my-server
     server_type: cx11
     image: ubuntu-18.04
     location: fsn1
-    ssh-keys:
-        - my-ssh-key
+    ssh-key: my-ssh-key
+    state: present
+
+# Resize an existing server
+- name: Resize an existing server
+  hcloud_server:
+    name: my-server
+    server_type: cx21
+    keep_disk: true
+    state: present
+
+# Remove a server
+- name: server should be absent
+  hcloud_server:
+    name: my-server
+    state: absent
+
+# Start a server
+- name: server should be started
+  hcloud_server:
+    name: my-server
+    state: started
+
+# Stop a server
+- name: server should be stopped
+  hcloud_server:
+    name: my-server
+    state: stopped
+
+# Restart a server
+- name: server should be restarted
+  hcloud_server:
+    name: my-server
+    state: restarted
 """
 
 RETURN = """
@@ -134,6 +168,7 @@ hcloud_server:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.hcloud import Hcloud
+
 try:
     from hcloud.volumes.domain import Volume
     from hcloud.ssh_keys.domain import SSHKey
@@ -214,10 +249,11 @@ class AnsibleHcloudServer(Hcloud):
         else:
             self.module.fail_json(msg="Please specify a datacenter or location.")
 
-        resp = self.client.servers.create(**params)
-        self.result["root_password"] = resp.root_password
-        resp.action.wait_until_finished()
-        [action.wait_until_finished() for action in resp.next_actions]
+        if not self.module.check_mode:
+            resp = self.client.servers.create(**params)
+            self.result["root_password"] = resp.root_password
+            resp.action.wait_until_finished()
+            [action.wait_until_finished() for action in resp.next_actions]
         self._mark_as_changed()
         self._get_server()
 
@@ -226,43 +262,49 @@ class AnsibleHcloudServer(Hcloud):
             self.module.params.get("backups")
             and self.hcloud_server.backup_window is None
         ):
-            self.hcloud_server.enable_backup().wait_until_finished()
+            if not self.module.check_mode:
+                self.hcloud_server.enable_backup().wait_until_finished()
             self._mark_as_changed()
         elif (
             not self.module.params.get("backups")
             and self.hcloud_server.backup_window is not None
         ):
-            self.hcloud_server.disable_backup().wait_until_finished()
+            if not self.module.check_mode:
+                self.hcloud_server.disable_backup().wait_until_finished()
             self._mark_as_changed()
 
         server_type = self.module.params.get("server_type")
         if (
-            server_type is not None and
-            self.hcloud_server.server_type.name != server_type
+            server_type is not None
+            and self.hcloud_server.server_type.name != server_type
         ):
             if self.hcloud_server.status == Server.STATUS_RUNNING:
-                self.stop_server()  # Only stopped server can be upgraded.
+                if not self.module.check_mode:
+                    self.stop_server()  # Only stopped server can be upgraded.
             timeout = 100
             if self.module.params.get("upgrade_disk"):
                 timeout = (
                     500
                 )  # When we upgrade the disk too the resize progress takes some more time.
-            self.hcloud_server.change_type(
-                server_type=self.client.server_types.get_by_name(server_type),
-                upgrade_disk=self.module.params.get("upgrade_disk"),
-            ).wait_until_finished(timeout)
+            if not self.module.check_mode:
+                self.hcloud_server.change_type(
+                    server_type=self.client.server_types.get_by_name(server_type),
+                    upgrade_disk=self.module.params.get("upgrade_disk"),
+                ).wait_until_finished(timeout)
             self._mark_as_changed()
         self._get_server()
 
     def start_server(self):
         if self.hcloud_server.status != Server.STATUS_RUNNING:
-            self.client.servers.power_on(self.hcloud_server).wait_until_finished()
+            if not self.module.check_mode:
+                self.client.servers.power_on(self.hcloud_server).wait_until_finished()
             self._mark_as_changed()
         self._get_server()
 
     def stop_server(self):
         if self.hcloud_server.status != Server.STATUS_OFF:
-            self.client.servers.power_off(self.hcloud_server).wait_until_finished()
+            if not self.module.check_mode:
+                self.client.servers.power_off(self.hcloud_server).wait_until_finished()
             self._mark_as_changed()
         self._get_server()
 
@@ -276,7 +318,8 @@ class AnsibleHcloudServer(Hcloud):
     def delete_server(self):
         self._get_server()
         if self.hcloud_server is not None:
-            self.client.servers.delete(self.hcloud_server).wait_until_finished()
+            if not self.module.check_mode:
+                self.client.servers.delete(self.hcloud_server).wait_until_finished()
             self._mark_as_changed()
         self.hcloud_server = None
 
@@ -291,7 +334,7 @@ class AnsibleHcloudServer(Hcloud):
                 location={"type": "str"},
                 datacenter={"type": "str"},
                 user_data={"type": "str"},
-                ssh_keys={"type": "list"},
+                ssh_keys={"type": "list", "aliases": ["ssh_key"]},
                 volumes={"type": "list"},
                 backups={"type": "bool", "default": False},
                 upgrade_disk={"type": "bool", "default": False},
@@ -300,7 +343,8 @@ class AnsibleHcloudServer(Hcloud):
                     "default": "present",
                 },
                 **Hcloud.base_module_arguments()
-            )
+            ),
+            supports_check_mode=True,
         )
 
 
