@@ -268,6 +268,19 @@
     that:
       - result is not changed
 
+- name: test checksum match in check mode
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ output_dir }}/test'
+    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+  check_mode: True
+  register: result
+
+- name: Assert that check mode was green
+  assert:
+    that:
+      - result is not changed
+
 # https://github.com/ansible/ansible/issues/27617
 
 - name: set role facts
