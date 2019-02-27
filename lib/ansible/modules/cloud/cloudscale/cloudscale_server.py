@@ -388,8 +388,6 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
                 self._module.warn("Changes won't be applied to running servers. "
                                   "Use force=yes to allow the server '%s' to be stopped/started." % server_info['name'])
                 return server_info
-            else:
-                self._module.warn("The server '%s' will be stopped/started to apply changes because force=true is provided" % server_info['name'])
 
         # Either the server is stopped or change is forced
         self._result['changed'] = True
