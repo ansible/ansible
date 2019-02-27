@@ -213,8 +213,7 @@ class AzureRMClusters(AzureRMModuleBase):
             ),
             os_type=dict(
                 type='str',
-                choices=['windows',
-                         'linux']
+                choices=['linux']
             ),
             tier=dict(
                 type='str',
