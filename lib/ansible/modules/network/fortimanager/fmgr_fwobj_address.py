@@ -599,7 +599,12 @@ def main():
 
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False,
+                           mutually_exclusive=[
+                               ['ipv4', 'ipv6'],
+                               ['ipv4', 'multicast'],
+                               ['ipv6', 'multicast']
+                           ])
     paramgram = {
         "adom": module.params["adom"],
         "allow-routing": module.params["allow_routing"],
@@ -637,19 +642,22 @@ def main():
 
     results = DEFAULT_RESULT_OBJ
     try:
-        if paramgram["ipv4"] is not None and paramgram["ipv6"] is None and paramgram["multicast"] is None:
+        # if paramgram["ipv4"] is not None and paramgram["ipv6"] is None and paramgram["multicast"] is None:
+        if paramgram["ipv4"]:
             # PROCESS IPv4
             results = fmgr_fwobj_ipv4(fmgr, paramgram)
             fmgr.govern_response(module=module, results=results,
                                  ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
-        if paramgram["ipv4"] is None and paramgram["ipv6"] is not None and paramgram["multicast"] is None:
+        # if paramgram["ipv4"] is None and paramgram["ipv6"] is not None and paramgram["multicast"] is None:
             # PROCESS IPv6
+        elif paramgram["ipv6"]:
             results = fmgr_fwobj_ipv6(fmgr, paramgram)
             fmgr.govern_response(module=module, results=results,
                                  ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
 
-        if paramgram["ipv4"] is None and paramgram["ipv6"] is None and paramgram["multicast"] is not None:
+        # if paramgram["ipv4"] is None and paramgram["ipv6"] is None and paramgram["multicast"] is not None:
+        elif paramgram["multicast"]:
             # PROCESS MULTICAST
             results = fmgr_fwobj_multicast(fmgr, paramgram)
             fmgr.govern_response(module=module, results=results,
