@@ -244,7 +244,7 @@
   ignore_errors: true
 
 - name: remote directory foobar
-  file: path={{output_dir}}/foobar state=absent
+  file: path={{output_dir}}/foobar state=absent recurse=yes
 
 - name: remove file foo.txt
   file: path={{output_dir}}/foo.txt state=absent
@@ -301,7 +301,7 @@
       - "file11_result.uid == 1235"
 
 - name: remove directory foobar
-  file: path={{output_dir}}/foobar state=absent
+  file: path={{output_dir}}/foobar state=absent recurse=true
   register: file14_result
 
 - name: verify that the directory was removed

@@ -464,13 +464,16 @@ def ensure_absent(path, recurse):
     if prev_state != 'absent':
         if not module.check_mode:
             if prev_state == 'directory':
-                try:
-                    if recurse:
+                if recurse:
+                    try:
                         shutil.rmtree(b_path, ignore_errors=False)
-                    else:
+                    except Exception as e:
+                        raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e)})
+                else:
+                    try:
                         os.rmdir(b_path)
-                except Exception as e:
-                    raise AnsibleModuleError(results={'msg': "rmtree failed: %s" % to_native(e)})
+                    except Exception as e:
+                        raise AnsibleModuleError(results={'msg': "rmdir failed: %s - if you meant to remove the whole directory tree add recurse=yes to this task" % to_native(e)})
             else:
                 try:
                     os.unlink(b_path)
