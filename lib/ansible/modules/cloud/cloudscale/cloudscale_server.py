@@ -160,7 +160,7 @@ EXAMPLES = '''
     ssh_keys: ssh-rsa XXXXXXXXXXX ansible@cloudscale
     api_token: xxxxxx
   register: server
-  until: server.ssh_fingerprints is defined
+  until: server.ssh_fingerprints is defined and server.ssh_fingerprints
   retries: 60
   delay: 2
 '''
