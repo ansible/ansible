@@ -487,24 +487,26 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
-- name: Get JSON payload
-  uri:
-    url: https://{{ httpbin_host }}/json
-    return_content: yes
-  register: result
-
-- name: Validate JSON payload
-  assert:
-    that:
-    - result.json is defined
-    - result.json.slideshow.author == 'Yours Truly'
-    - result.json.slideshow.slides[0].title == 'Wake up to WonderWidgets!'
+# FIXME: This requires httpbin 0.7.1 or newer
+#- name: Get JSON payload
+#  uri:
+#    url: https://{{ httpbin_host }}/json
+#    return_content: yes
+#  register: result
+#
+#- name: Validate JSON payload
+#  assert:
+#    that:
+#    - result.json is defined
+#    - result.json.slideshow.author == 'Yours Truly'
+#    - result.json.slideshow.slides[0].title == 'Wake up to WonderWidgets!'
 
 - name: Install xmltodict
   pip:
     name: xmltodict
   register: xmltodict
 
+# NOTE: This requires httpbin 0.2.0 or newer
 - name: Get XML payload
   uri:
     url: https://{{ httpbin_host }}/xml
