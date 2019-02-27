@@ -5,7 +5,7 @@
       aws_secret_key: '{{ aws_secret_key }}'
       security_token: '{{ security_token }}'
       region: '{{ aws_region }}'
-    no_log: yes
+  no_log: yes
 
 - name: get image ID to create an instance
   ec2_ami_facts:
