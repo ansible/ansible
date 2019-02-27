@@ -31,8 +31,10 @@ DOCUMENTATION = """
 module: ftd_configuration
 short_description: Manages configuration on Cisco FTD devices over REST API
 description:
-  - Manages configuration on Cisco FTD devices including creating, updating, removing configuration objects,
-    scheduling and staring jobs, deploying pending changes, etc. All operations are performed over REST API.
+  - Manages configuration on Cisco Firepower Threat Defense NGFW devices over over the [FTD REST API](https://developer.cisco.com/firepower/threat-defense/).
+  - Includes creating, reading, updating, and deleting configuration objects.
+  - Provides actions such as scheduling and staring jobs, deploying pending changes, and more.  
+  - Visit [Cisco DevNet - Ansible for FTD](https://developer.cisco.com/site/ftd-ansible/) for additional playbook examples.
 version_added: "2.7"
 author: "Cisco Systems, Inc. (@annikulin)"
 options:
@@ -76,7 +78,6 @@ EXAMPLES = """
       value: "192.168.2.0"
       dnsResolution: "IPV4_AND_IPV6"
       type: "networkobject"
-      isSystemDefined: false
     register_as: "hostNetwork"
 
 - name: Delete the network object
