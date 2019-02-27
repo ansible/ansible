@@ -1,4 +1,4 @@
-:orphan:
+.. _integration_guides:
 
 ******************
 Integration Guides
