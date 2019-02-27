@@ -78,6 +78,7 @@ try:
 except Exception:
     HAS_GEVENT = False
 
+
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'onesixtyone'
 
@@ -101,7 +102,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if not HAS_NETADDR:
             raise AnsibleParserError('this inventory plugin requires the netaddr library. Try: pip install netaddr')
-        
+
         if not HAS_GEVENT:
             raise AnsibleParserError('this inventory plugin requires the gevent library. Try: yum install python-gevent')
 
