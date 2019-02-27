@@ -4,6 +4,11 @@
       - AnsibleDev1
       - AnsibleDev2
 
+- debug:
+    msg: 
+      - "Digital Ocean does not allow deletion of projects."
+      - "Project creation is disabled until digital_ocean_project is merged."
+
 # - name: Create new projects
 #   digital_ocean_project:
 #     state: present
