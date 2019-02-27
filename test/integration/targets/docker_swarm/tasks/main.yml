@@ -6,6 +6,21 @@
     - "tests/*.yml"
 
   always:
+  - name: Cleanup (trying)
+    docker_swarm:
+      state: absent
+      force: true
+    diff: no
+    ignore_errors: yes
+
+  - name: Restart docker daemon
+    service:
+      name: docker
+      state: restarted
+    become: yes
+  - name: Wait for docker daemon to be fully restarted
+    command: docker ps
+
   - name: Cleanup
     docker_swarm:
       state: absent
