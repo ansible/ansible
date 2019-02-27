@@ -31,7 +31,7 @@ display = Display()
 _UNSAFE_GROUP = re.compile("[^A-Za-z0-9_]")
 
 
-def to_safe_group_name(name, replacer="_", force=False):
+def to_safe_group_name(name, replacer="_", force=False, silent=False):
     # Converts 'bad' characters in a string to underscores (or provided replacer) so they can be used as Ansible hosts or groups
 
     if name:  # when deserializing we might not have name yet
@@ -40,7 +40,8 @@ def to_safe_group_name(name, replacer="_", force=False):
             msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(invalid_chars), to_text(name))
             if C.TRANSFORM_INVALID_GROUP_CHARS or force:
                 name = _UNSAFE_GROUP.sub(replacer, name)
-                display.warning('Replacing ' + msg)
+                if not silent:
+                    display.warning('Replacing ' + msg)
             else:
                 display.deprecated('Ignoring ' + msg, version='2.12')
     return name
