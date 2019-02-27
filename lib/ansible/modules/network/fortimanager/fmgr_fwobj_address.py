@@ -643,14 +643,12 @@ def main():
     results = DEFAULT_RESULT_OBJ
     try:
         if paramgram["ipv4"]:
-            # PROCESS IPv4
             results = fmgr_fwobj_ipv4(fmgr, paramgram)
 
         elif paramgram["ipv6"]:
             results = fmgr_fwobj_ipv6(fmgr, paramgram)
 
         elif paramgram["multicast"]:
-            # PROCESS MULTICAST
             results = fmgr_fwobj_multicast(fmgr, paramgram)
 
         fmgr.govern_response(module=module, results=results,
