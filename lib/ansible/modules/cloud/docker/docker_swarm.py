@@ -254,7 +254,6 @@ class TaskParameters(DockerBaseClass):
 
         self.advertise_addr = None
         self.listen_addr = None
-        self.force_new_cluster = None
         self.remote_addrs = None
         self.join_token = None
 
@@ -353,8 +352,8 @@ class TaskParameters(DockerBaseClass):
 
     def compare_to_active(self, other):
         for k in self.__dict__:
-            if k in ('advertise_addr', 'listen_addr', 'force_new_cluster', 'remote_addrs',
-                     'join_token', 'force', 'rotate_worker_token', 'rotate_manager_token', 'spec'):
+            if k in ('advertise_addr', 'listen_addr', 'remote_addrs', 'join_token',
+                     'rotate_worker_token', 'rotate_manager_token', 'spec'):
                 continue
             if self.__dict__[k] is None:
                 continue
@@ -414,7 +413,7 @@ class SwarmManager(DockerBaseClass):
             return
 
     def init_swarm(self):
-        if self.__isSwarmManager():
+        if not self.force and self.__isSwarmManager():
             self.__update_swarm()
             return
 
@@ -422,7 +421,7 @@ class SwarmManager(DockerBaseClass):
             try:
                 self.client.init_swarm(
                     advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
-                    force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
+                    force_new_cluster=self.force, swarm_spec=self.parameters.spec)
             except APIError as exc:
                 self.client.fail("Can not create a new Swarm Cluster: %s" % to_native(exc))
 
