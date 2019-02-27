@@ -113,7 +113,7 @@ def main():
     argument_spec.update(
         schema=dict(type='str', required=True),
         template=dict(type='str', required=True),
-        l3out=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        l3out=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         display_name=dict(type='str'),
         vrf=dict(type='dict', options=mso_reference_spec()),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),

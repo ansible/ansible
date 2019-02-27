@@ -162,7 +162,7 @@ def main():
         contract_display_name=dict(type='str'),
         contract_scope=dict(type='str', choices=['application-profile', 'global', 'tenant', 'vrf']),
         contract_filter_type=dict(type='str', choices=['both-way', 'one-way']),
-        filter=dict(type='str', required=False, aliases=['name']),  # This parameter is not required for querying all objects
+        filter=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
         filter_template=dict(type='str'),
         filter_schema=dict(type='str'),
         filter_type=dict(type='str', default='both-way', choices=FILTER_KEYS.keys(), aliases=['type']),
