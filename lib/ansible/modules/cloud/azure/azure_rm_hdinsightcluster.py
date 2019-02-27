@@ -58,7 +58,7 @@ options:
             gateway_rest_username:
                 description:
                     - Gateway REST user name.
-            gateway_rest_username:
+            gateway_rest_password:
                 description:
                     - Gateway REST password.
     compute_profile_roles:
@@ -499,7 +499,7 @@ def dict_expand(d, path, outer_dict_name):
             old_value = d.pop(path[0], None)
             if old_value is not None:
                 d[outer_dict_name] = d.get(outer_dict_name, {})
-                d[outer_dict_name] = old_value
+                d[outer_dict_name][path[0]] = old_value
         else:
             sd = d.get(path[0], None)
             if sd is not None:
