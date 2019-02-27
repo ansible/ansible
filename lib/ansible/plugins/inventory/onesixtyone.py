@@ -62,6 +62,7 @@ import subprocess
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.process import get_bin_path
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
@@ -80,14 +81,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     NAME = 'onesixtyone'
 
     def __init__(self):
-        self._onesixtyone = None
-        for path in os.environ.get('PATH').split(':'):
-            candidate = os.path.join(path, 'onesixtyone')
-            if os.path.exists(candidate):
-                self._onesixtyone = candidate
-                break
-
         super(InventoryModule, self).__init__()
+        self._onesixtyone = get_bin_path(self.NAME, True)
 
     def verify_file(self, path):
         """ Verify the existence of plugin's configuration file """
