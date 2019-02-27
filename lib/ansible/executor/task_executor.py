@@ -613,9 +613,9 @@ class TaskExecutor:
             else:
                 overwrite_groups = [group for group in default if module_defaults.get(group) and default[group].keys() != module_defaults[group].keys()]
                 if overwrite_groups:
-                    module_defaults_warning = 'Overwriting module_defaults modules and groups by default is deprecated. Some keys in groups {0} would be overwritten.' \
-                                              ' Enable MODULE_DEFAULTS_MERGE to enable merging or set the module/group to an empty dictionary to clear the previous' \
-                                              ' values. In 2.12 merging will be enabled by default'.format(overwrite_groups)
+                    module_defaults_warning = 'Overwriting module_defaults modules and groups by default is deprecated. Some keys in groups {0} would be' \
+                                              ' overwritten. Enable MODULE_DEFAULTS_MERGE to use merging or set the module/group to an empty dictionary' \
+                                              ' to clear the previous values. In 2.12 merging will be enabled by default'.format(overwrite_groups)
                 module_defaults.update(default)
         if module_defaults:
             module_defaults = templar.template(module_defaults)
