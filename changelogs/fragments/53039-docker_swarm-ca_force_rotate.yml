@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm - fixes idempotency for the ``ca_force_rotate`` option."
