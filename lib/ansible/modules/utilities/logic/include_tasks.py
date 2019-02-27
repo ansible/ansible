@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright:  Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -13,25 +13,26 @@ ANSIBLE_METADATA = {
     'supported_by': 'core'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author: Ansible Core Team (@ansible)
 module: include_tasks
 short_description: Dynamically include a task list
 description:
   - Includes a file with a list of tasks to be executed in the current playbook.
-version_added: "2.4"
+version_added: '2.4'
 options:
   file:
     description:
       - The name of the imported file is specified directly without any other option.
       - Unlike M(import_tasks), most keywords, including loop, with_items, and conditionals, apply to this statement.
       - The do until loop is not supported on M(include_tasks).
+    type: str
     version_added: '2.7'
   apply:
     description:
       - Accepts a hash of task keywords (e.g. C(tags), C(become)) that will be applied to the tasks within the include.
+    type: str
     version_added: '2.7'
   free-form:
     description:
@@ -40,9 +41,14 @@ options:
         of specifying an argument of I(file).
 notes:
   - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
+seealso:
+- module: import_playbook
+- module: import_role
+- module: import_tasks
+- module: include_role
 '''
 
-EXAMPLES = """
+EXAMPLES = r'''
 - hosts: all
   tasks:
     - debug:
@@ -80,8 +86,8 @@ EXAMPLES = """
         - install
   tags:
     - always
-"""
+'''
 
-RETURN = """
+RETURN = r'''
 # This module does not return anything except tasks to execute.
-"""
+'''
