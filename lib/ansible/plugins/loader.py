@@ -414,7 +414,7 @@ class PluginLoader:
                     # HACK: refactor this properly
                     if candidate_name.startswith('ansible.legacy'):
                         # just pass the raw name to the old lookup function to check in all the usual locations
-                        p = self._find_plugin_legacy(name, mod_type, ignore_deprecated, check_aliases, suffix)
+                        p = self._find_plugin_legacy(name.replace('ansible.legacy.', '', 1), ignore_deprecated, check_aliases, suffix)
                     else:
                         p = self._find_fq_plugin(candidate_name, suffix)
                     if p:
@@ -428,9 +428,9 @@ class PluginLoader:
 
         # if we got here, there's no collection list and it's not an FQ name, so do legacy lookup
 
-        return self._find_plugin_legacy(name, mod_type, ignore_deprecated, check_aliases, suffix)
+        return self._find_plugin_legacy(name, ignore_deprecated, check_aliases, suffix)
 
-    def _find_plugin_legacy(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, suffix=None):
+    def _find_plugin_legacy(self, name, ignore_deprecated=False, check_aliases=False, suffix=None):
 
         if check_aliases:
             name = self.aliases.get(name, name)
