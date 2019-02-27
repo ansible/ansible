@@ -103,7 +103,8 @@ servicebuses:
             description:
                 -  Resource Id
             type: str
-            sample: /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.ServiceBus/namespaces/bar/topics/baz/subscriptions/qux
+            sample: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.ServiceBus/
+                     namespaces/bar/topics/baz/subscriptions/qux"
         name:
             description:
                 -  Resource name
