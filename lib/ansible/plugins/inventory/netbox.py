@@ -447,6 +447,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         # Netbox access
         token = self.get_option("token")
         self.api_endpoint = self.get_option("api_endpoint")
+        # Handle extra "/" from api_endpoint configuration and trim if necessary, see PR#49943
+        if self.api_endpoint.endswith("/"):
+            self.api_endpoint = self.get_option("api_endpoint")[:-1]
+        else:
+            self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
         self.validate_certs = self.get_option("validate_certs")
         self.config_context = self.get_option("config_context")
