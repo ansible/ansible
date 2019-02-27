@@ -31,7 +31,7 @@ options:
     - Alternative to the name, you can use C(user_id).
     type: str
     required: yes
-    aliases: [ name, user_name ]
+    aliases: [ name ]
   user_password:
     description:
     - The password of the user.
@@ -146,8 +146,8 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        user_id=dict(type='str', required=False),
-        user=dict(type='str', required=False, aliases=['name', 'user_name']),
+        user_id=dict(type='str'),
+        user=dict(type='str', aliases=['name']),
         user_password=dict(type='str', no_log=True),
         first_name=dict(type='str'),
         last_name=dict(type='str'),
@@ -164,8 +164,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['user_name']],
-            ['state', 'present', ['user_name']],
+            ['state', 'absent', ['user']],
+            ['state', 'present', ['user']],
         ],
     )
 
