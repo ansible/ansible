@@ -7,9 +7,19 @@ __metaclass__ = type
 import sys
 import os.path
 
+from importlib import import_module
 from types import ModuleType
+
 from ansible import constants as C
 from ansible.module_utils.six import string_types
+
+_SYNTHETIC_PACKAGES = {
+    'a.ansible': dict(type='pkg_only'),
+    'a.ansible.core': dict(type='pkg_only'),
+    'a.ansible.core.plugins': dict(type='map', map='ansible.plugins'),
+    'a.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils'),
+    'a.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules'),
+}
 
 
 class AnsibleCollectionLoader(object):
@@ -59,6 +69,35 @@ class AnsibleCollectionLoader(object):
         # if so, we don't want distributed namespace behavior; first mynamespace.mycollection on the path is where
         # we'll load everything from (ie, don't fall back to another mynamespace.mycollection lower on the path)
         sub_collection = fullname.count('.') > 1
+
+        synpkg_def = _SYNTHETIC_PACKAGES.get(fullname)
+
+        if synpkg_def:
+            pkg_type = synpkg_def.get('type')
+            if not pkg_type:
+                raise KeyError('invalid synthetic package type (no package "type" specified)')
+            if pkg_type == 'map':
+                map_package = synpkg_def.get('map')
+
+                if not map_package:
+                    raise KeyError('invalid synthetic map package definition (no target "map" defined)')
+                mod = import_module(map_package)
+
+                sys.modules[fullname] = mod
+
+                return mod
+            elif pkg_type == 'flatmap':
+                raise NotImplementedError()
+            elif pkg_type == 'pkg_only':
+                newmod = ModuleType(fullname)
+                newmod.__package__ = fullname
+                newmod.__file__ = '<ansible_synthetic_collection_package>'
+                newmod.__loader__ = self
+                newmod.__path__ = []
+
+                sys.modules[fullname] = newmod
+
+                return newmod
 
         if not parent_pkg:  # top-level package, look for NS subpackages on all collection paths
             package_paths = [self._extend_path_with_ns(p, fullname) for p in self._collection_paths]
