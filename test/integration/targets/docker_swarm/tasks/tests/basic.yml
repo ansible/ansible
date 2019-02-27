@@ -61,6 +61,23 @@
   diff: yes
   register: output_4
 
+- name: Create a Swarm cluster (force re-create)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address}}"
+    force: yes
+  diff: yes
+  register: output_5
+
+- name: Create a Swarm cluster (force re-create, check mode)
+  docker_swarm:
+    state: present
+    advertise_addr: "{{ansible_default_ipv4.address}}"
+    force: yes
+  check_mode: yes
+  diff: yes
+  register: output_6
+
 - name: assert changed when create a new swarm cluster
   assert:
     that:
@@ -79,6 +96,12 @@
        - 'output_4 is not changed'
        - 'output_4.diff.before is defined'
        - 'output_4.diff.after is defined'
+       - 'output_5 is changed'
+       - 'output_5.diff.before is defined'
+       - 'output_5.diff.after is defined'
+       - 'output_6 is changed'
+       - 'output_6.diff.before is defined'
+       - 'output_6.diff.after is defined'
 
 ####################################################################
 ## Removal #########################################################
