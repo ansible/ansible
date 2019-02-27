@@ -222,8 +222,7 @@ def igmp_snooping_gt_dependency(command, existing, module):
     # group-timeout will fail if igmp snooping is disabled
     gt = [i for i in command if i.startswith('ip igmp snooping group-timeout')]
     if gt:
-        if 'no ip igmp snooping' in command or \
-            (existing['snooping'] is False and 'ip igmp snooping' not in command):
+        if 'no ip igmp snooping' in command or (existing['snooping'] is False and 'ip igmp snooping' not in command):
             msg = "group-timeout cannot be enabled or changed when ip igmp snooping is disabled"
             module.fail_json(msg=msg)
         else:

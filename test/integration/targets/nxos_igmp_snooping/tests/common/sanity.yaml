@@ -53,9 +53,7 @@
         that:
           - "result.failed == true"
           - "result.msg == 'group-timeout cannot be enabled or changed when ip igmp snooping is disabled'"
-    when: gt_run
 
-  - block:
     - name: Configure group-timeout non-default
       nxos_igmp_snooping: &non-defgt
         snooping: true
@@ -65,9 +63,7 @@
       register: result
 
     - assert: *true
-    when: gt_run
 
-  - block:
     - name: "Check Idempotence"
       nxos_igmp_snooping: *non-defgt
       register: result
