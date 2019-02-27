@@ -433,6 +433,8 @@ def default_compare(new, old, path, result):
                 return False
         return True
     else:
+        if path.endswith('password'):
+            return True
         if path == '/location' or path.endswith('location_name'):
             new = new.replace(' ', '').lower()
             old = new.replace(' ', '').lower()
