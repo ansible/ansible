@@ -176,7 +176,7 @@ def map_obj_to_commands(want, have, module):
         lines = sorted(set(w['lines']))
 
         if have_lines:
-            if cmp(lines, sorted(have_lines)) != 0:
+            if lines != sorted(have_lines):
                 if have_group_type:
 
                     if 'network-object' in group_type and 'network' in have_group_type:
