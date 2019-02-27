@@ -252,6 +252,13 @@ class AzureRMClusters(AzureRMModuleBase):
         dict_expand(self.parameters, ['os_type'], 'properties')
         dict_camelize(self.parameters, ['tier'], True)
         dict_expand(self.parameters, ['tier'], 'properties')
+
+        dict_rename(self.parameters, ['cluster_definition', 'gateway_rest_username'], 'restAuthCredential.username')
+        dict_rename(self.parameters, ['cluster_definition', 'gateway_rest_password'], 'restAuthCredential.password')
+        dict_expand(self.parameters, ['cluster_definition', 'restAuthCredential.username'], 'gateway')
+        dict_expand(self.parameters, ['cluster_definition', 'restAuthCredential.password'], 'gateway')
+        dict_expand(self.parameters, ['cluster_definition', 'gateway'], 'configurations')
+
         dict_expand(self.parameters, ['cluster_definition'], 'properties')
         dict_expand(self.parameters, ['compute_profile_roles', 'vm_size'], 'hardware_profile')
         dict_rename(self.parameters, ['compute_profile_roles', 'linux_profile'], 'linux_operating_system_profile')

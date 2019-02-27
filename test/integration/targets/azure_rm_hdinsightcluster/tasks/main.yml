@@ -35,11 +35,8 @@
     tier: standard
     cluster_definition:
       kind: spark
-      configurations:
-        gateway:
-          #restAuthCredential.isEnabled: True
-          restAuthCredential.username: http-user
-          restAuthCredential.password: MuABCPassword!!@123 
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
     storage_accounts:
       - name: storage{{ rpfx }}.blob.core.windows.net 
         is_default: yes
@@ -81,11 +78,8 @@
     tier: standard
     cluster_definition:
       kind: spark
-      configurations:
-        gateway:
-          #restAuthCredential.isEnabled: True
-          restAuthCredential.username: http-user
-          restAuthCredential.password: MuABCPassword!!@123 
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
     storage_accounts:
       - name: storage{{ rpfx }}.blob.core.windows.net 
         is_default: yes
@@ -127,11 +121,8 @@
     tier: standard
     cluster_definition:
       kind: spark
-      configurations:
-        gateway:
-          #restAuthCredential.isEnabled: True
-          restAuthCredential.username: http-user
-          restAuthCredential.password: MuABCPassword!!@123 
+      gateway_rest_username: http-user
+      gateway_rest_password: MuABCPassword!!@123 
     storage_accounts:
       - name: storage{{ rpfx }}.blob.core.windows.net 
         is_default: yes
