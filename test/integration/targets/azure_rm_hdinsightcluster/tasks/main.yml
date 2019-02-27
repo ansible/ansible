@@ -49,20 +49,18 @@
       - name: headnode
         target_instance_count: 2
         vm_size: Standard_D3
-        os_profile:
-          linux_operating_system_profile:
-            username: sshuser
-            password: MuABCPassword!!@123
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 2
         vm_size: Standard_D3
-        os_profile:
-          linux_operating_system_profile:
-            username: sshuser
-            password: MuABCPassword!!@123
+        linux_profile:
+          username: sshuser
+          password: MuABCPassword!!@123
       - name: zookeepernode
         target_instance_count: 3
-        vm_size: Standard_D3
+        vm_size: Medium
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -108,7 +106,7 @@
           password: MuABCPassword!!@123
       - name: zookeepernode
         target_instance_count: 3
-        vm_size: Standard_D3
+        vm_size: Medium
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -154,7 +152,7 @@
           password: MuABCPassword!!@123
       - name: zookeepernode
         target_instance_count: 3
-        vm_size: Standard_D3
+        vm_size: Medium
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
