@@ -474,7 +474,7 @@ def ensure_absent(path, recurse):
                         os.rmdir(b_path)
                     except Exception as e:
                         raise AnsibleModuleError(
-                                 results={'msg': "rmdir failed: %s - if you meant to remove the whole directory tree add recurse=yes to this task" 
+                                 results={'msg': "rmdir failed: %s - if you meant to remove the whole directory tree add recurse=yes to this task"
                                                  % to_native(e)})
             else:
                 try:
