@@ -1446,10 +1446,10 @@ TRANSFORM_INVALID_GROUP_CHARS:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'false' it will allow for the group name but warn about the issue.
     - When 'true' it will replace any invalid charachters with '_' (underscore).
-  env: [{name: ANSIBLE__TRANSFORM_INVALID_GROUP_CHARS}]
+  env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
-  type: bool 
+  type: bool
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
