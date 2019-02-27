@@ -314,18 +314,20 @@ import shutil
 import sys
 import tempfile
 
-try:
-    import xmltodict
-    HAS_XMLTODICT = True
-except ImportError:
-    HAS_XMLTODICT = False
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, url_argument_spec
+
+try:
+    import xmltodict
+    HAS_XMLTODICT = True
+except ImportError:
+    HAS_XMLTODICT = False
+    if PY2:
+        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
 
 JSON_CANDIDATES = ('javascript', 'json')
 XML_CANDIDATES = ('xhtml', 'xml')
