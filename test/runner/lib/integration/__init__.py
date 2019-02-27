@@ -210,7 +210,7 @@ ansible_test:
        format_yaml(env_config.env_vars),
        format_yaml(env_config.module_defaults))
 
-    config_file = config_file.strip()
+    config_file = config_file.lstrip()
 
     with named_temporary_file(args, 'config-file-', '.yml', integration_dir, config_file) as path:
         filename = os.path.relpath(path, integration_dir)
