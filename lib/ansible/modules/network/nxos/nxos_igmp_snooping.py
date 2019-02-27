@@ -217,6 +217,19 @@ def get_igmp_snooping_defaults():
 
     return default
 
+def igmp_snooping_gt_dependency(command, existing, module):
+    # group-timeout will fail if igmp snooping is disabled
+    gt = [i for i in command if i.startswith('ip igmp snooping group-timeout')]
+    if gt:
+        invalid1 = 'no ip igmp snooping' in command
+        invalid2 = existing['snooping'] == False and not 'ip igmp snooping' in command
+        if invalid1 or invalid2:
+            msg = "group-timeout cannot be enabled or changed when ip igmp snooping is disabled"
+            module.fail_json(msg=msg)
+        else:
+            # ensure that group-timeout command is configured last
+            command.remove(gt[0])
+            command.append(gt[0])
 
 def main():
     argument_spec = dict(
@@ -260,6 +273,7 @@ def main():
         if delta:
             command = config_igmp_snooping(delta, existing)
             if command:
+                igmp_snooping_gt_dependency(command, existing, module)
                 commands.append(command)
     elif state == 'default':
         proposed = get_igmp_snooping_defaults()
