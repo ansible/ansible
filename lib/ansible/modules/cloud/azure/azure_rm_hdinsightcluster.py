@@ -40,7 +40,6 @@ options:
         description:
             - The type of operating system.
         choices:
-            - 'windows'
             - 'linux'
     tier:
         description:
@@ -69,6 +68,10 @@ options:
             name:
                 description:
                     - The name of the role.
+                choices:
+                    - 'headnode'
+                    - 'workernode'
+                    - 'zookepernode'
             min_instance_count:
                 description:
                     - The minimum instance count of the cluster.
@@ -81,6 +84,13 @@ options:
             linux_profile:
                 description:
                     - The Linux OS profile.
+                suboptions:
+                    username:
+                        description:
+                            - User name
+                    password:
+                        description:
+                            - Password
     storage_accounts:
         description:
             - The list of storage accounts in the cluster.
@@ -88,16 +98,13 @@ options:
         suboptions:
             name:
                 description:
-                    - The name of the storage account.
+                    - Blob storage endpoint.
             is_default:
                 description:
                     - Whether or not the storage account is the default storage account.
             container:
                 description:
-                    - The container in the storage account, only to be specified for WASB storage accounts.
-            file_system:
-                description:
-                    - The filesystem, only to be specified for Azure Data Lake Storage Gen 2.
+                    - The container in the storage account.
             key:
                 description:
                     - The storage account access key.
@@ -298,7 +305,7 @@ class AzureRMClusters(AzureRMModuleBase):
                 old_response['properties']['cluster_definition'] = self.parameters['properties']['cluster_definition']
 
                 # cluster version returned by get may be longer, for instance "3.6.1000.67"
-                if old_response['properties']['cluster_version'].startswith(self.parameters['properties']['cluster_version']):
+                if old_response['properties']['cluster_version'].startswith(self.parameters['properties'].get('cluster_version', '')):
                     self.parameters['properties']['cluster_version'] = old_response['properties']['cluster_version']
 
                 if (not default_compare(self.parameters, old_response, '', self.results)):
