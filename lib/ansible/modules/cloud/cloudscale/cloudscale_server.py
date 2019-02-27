@@ -244,16 +244,11 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         # Initialize server dictionary
         self._info = {}
 
-        # Keys to transform in get_returns()
-        self._transforms = {
-            'status': dict(to_key='state'),
-        }
-
     def _init_server_container(self):
         return {
             'uuid': self._module.params.get('uuid') or self._info.get('uuid'),
             'name': self._module.params.get('name') or self._info.get('name'),
-            'status': 'absent',
+            'state': 'absent',
         }
 
     def _get_server_info(self, refresh=False):
@@ -266,7 +261,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         if uuid is not None:
             server_info = self._get('servers/%s' % uuid)
             if server_info:
-                self._info = server_info
+                self._info = self._transform_state(server_info)
 
         else:
             name = self._module.params.get('name')
@@ -278,25 +273,35 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
                         matching_server.append(server)
 
                 if len(matching_server) == 1:
-                    self._info = matching_server[0]
+                    self._info = self._transform_state(matching_server[0])
                 elif len(matching_server) > 1:
                     self._module.fail_json(msg="More than one server with name '%s' exists. "
                                            "Use the 'uuid' parameter to identify the server." % name)
 
         return self._info
 
+    @staticmethod
+    def _transform_state(server):
+        if 'status' in server:
+            server['state'] = server['status']
+            del server['status']
+        else:
+            server['state'] = 'absent'
+        return server
+
     def _wait_for_state(self, states):
         start = datetime.now()
         timeout = self._module.params['api_timeout'] * 2
         while datetime.now() - start < timedelta(seconds=timeout):
             server_info = self._get_server_info(refresh=True)
-            if server_info.get('status') in states:
+            if server_info.get('state') in states:
                 return server_info
             sleep(1)
+
         # Timeout succeeded
         if server_info.get('name') is not None:
             msg = "Timeout while waiting for a state change on server %s to states %s. " \
-                  "Current state is %s." % (server_info.get('name'), states, server_info.get('status'))
+                  "Current state is %s." % (server_info.get('name'), states, server_info.get('state'))
         else:
             name_uuid = self._module.params.get('name') or self._module.params.get('uuid')
             msg = 'Timeout while waiting to find the server %s' % name_uuid
@@ -309,16 +314,16 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             'running': 'start',
         }
 
-        server_status = server_info.get('status')
-        if server_status != target_state:
+        server_state = server_info.get('state')
+        if server_state != target_state:
             self._result['changed'] = True
 
             if not ignore_diff:
                 self._result['diff']['before'].update({
-                    'status': server_info.get('status'),
+                    'state': server_info.get('state'),
                 })
                 self._result['diff']['after'].update({
-                    'status': target_state,
+                    'state': target_state,
                 })
             if not self._module.check_mode:
                 self._post('servers/%s/%s' % (server_info['uuid'], actions[target_state]))
@@ -383,7 +388,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             return server_info
 
         # We have changed keys but we ignore them unless forced if server is running
-        if server_info.get('status') == "running":
+        if server_info.get('state') == "running":
             if not self._module.params.get('force'):
                 self._module.warn("Changes won't be applied to running servers. "
                                   "Use force=yes to allow the server '%s' to be stopped/started." % server_info['name'])
@@ -392,8 +397,8 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         # Either the server is stopped or change is forced
         self._result['changed'] = True
         if not self._module.check_mode:
-            # Remember the status of the server before we ensure it is stopped
-            previous_status = server_info.get('status')
+            # Remember the state of the server before we ensure it is stopped
+            previous_state = server_info.get('state')
             self._start_stop_server(server_info, target_state="stopped", ignore_diff=True)
 
             # The API does not allow to change multiple attributes at the same time.
@@ -406,8 +411,8 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
                 # State changes to "changing" after update, waiting for stopped
                 server_info = self._wait_for_state(('stopped', ))
 
-            # Restore the status before we ensure stopped
-            if previous_status == "running":
+            # Restore the state before we ensure stopped
+            if previous_state == "running":
                 self._start_stop_server(server_info, target_state="running", ignore_diff=True)
 
             server_info = self._get_server_info(refresh=True)
@@ -417,7 +422,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
     def present_server(self):
         server_info = self._get_server_info()
 
-        if server_info.get('status') != "absent":
+        if server_info.get('state') != "absent":
 
             # If target state is stopped, stop before an potential update and force would not be required
             if self._module.params.get('state') == "stopped":
@@ -435,7 +440,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
     def absent_server(self):
         server_info = self._get_server_info()
-        if server_info.get('status') != "absent":
+        if server_info.get('state') != "absent":
             self._result['changed'] = True
             self._result['diff']['before'] = deepcopy(server_info)
             self._result['diff']['after'] = self._init_server_container()
@@ -476,9 +481,8 @@ def main():
     else:
         server = cloudscale_server.present_server()
 
-    returns = cloudscale_server.get_returns(server)
-
-    module.exit_json(**returns)
+    result = cloudscale_server.get_result(server)
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':
