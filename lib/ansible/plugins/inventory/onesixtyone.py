@@ -62,7 +62,7 @@ import subprocess
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.basic import is_executable
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 try:
@@ -85,6 +85,43 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def __init__(self):
         super(InventoryModule, self).__init__()
 
+    @staticmethod
+    def get_bin_path(arg, required=False, opt_dirs=None):
+        '''
+        find system executable in PATH.
+        Optional arguments:
+           - required:  if executable is not found and required is true, fail_json
+           - opt_dirs:  optional list of directories to search in addition to PATH
+        if found return full path; otherwise return None
+        '''
+        opt_dirs = [] if opt_dirs is None else opt_dirs
+
+        sbin_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        paths = []
+        for d in opt_dirs:
+            if d is not None and os.path.exists(d):
+                paths.append(d)
+
+        paths += os.environ.get('PATH', '').split(os.pathsep)
+        bin_path = None
+        # mangle PATH to include /sbin dirs
+        for p in sbin_paths:
+            if p not in paths and os.path.exists(p):
+                paths.append(p)
+
+        for d in paths:
+            if not d:
+                continue
+            path = os.path.join(d, arg)
+            if os.path.exists(path) and not os.path.isdir(path) and is_executable(path):
+                bin_path = path
+                break
+
+        if required and bin_path is None:
+            raise AnsibleParserError('Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
+
+        return bin_path
+
     def verify_file(self, path):
         """ Verify the existence of plugin's configuration file """
         if not super(InventoryModule, self).verify_file(path):
@@ -97,7 +134,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def parse(self, inventory, loader, path, cache=False):
         super(InventoryModule, self).parse(inventory, loader, path, cache=cache)
-        self._onesixtyone = get_bin_path(self.NAME, True)
+        self._onesixtyone = self.get_bin_path(self.NAME, True)
         self._read_config_data(path)
 
         if not HAS_NETADDR:
