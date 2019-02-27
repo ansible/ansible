@@ -213,9 +213,9 @@ EXAMPLES = '''
 
 -  name: Add Management vmkernel port to Distributed Switch
    vmware_vmkernel:
-      hostname: '{{ esxi_hostname }}'
-      username: '{{ esxi_username }}'
-      password: '{{ esxi_password }}'
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
       esxi_hostname: '{{ esxi_hostname }}'
       dvswitch_name: dvSwitch1
       portgroup_name: dvPG_0001
@@ -229,9 +229,9 @@ EXAMPLES = '''
 
 -  name: Add vMotion vmkernel port with vMotion TCP/IP stack
    vmware_vmkernel:
-      hostname: '{{ esxi_hostname }}'
-      username: '{{ esxi_username }}'
-      password: '{{ esxi_password }}'
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
       esxi_hostname: '{{ esxi_hostname }}'
       dvswitch_name: dvSwitch1
       portgroup_name: dvPG_0001
