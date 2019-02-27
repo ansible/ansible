@@ -31,7 +31,7 @@ options:
     - Alternative to the name, you can use C(role_id).
     type: str
     required: yes
-    aliases: [ name, role_name ]
+    aliases: [ name ]
   display_name:
     description:
     - The name of the role to be displayed in the web UI.
@@ -131,8 +131,8 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        role=dict(type='str', required=False, aliases=['name', 'role_name']),
-        role_id=dict(type='str', required=False),
+        role=dict(type='str', aliases=['name']),
+        role_id=dict(type='str'),
         display_name=dict(type='str'),
         description=dict(type='str'),
         permissions=dict(type='list', choices=[

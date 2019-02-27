@@ -47,7 +47,7 @@ options:
     - Alternative to the name, you can use C(site_id).
     type: str
     required: yes
-    aliases: [ name, site_name ]
+    aliases: [ name ]
   labels:
     description:
     - The labels for this site.
@@ -153,8 +153,8 @@ def main():
         apic_username=dict(type='str', default='admin'),
         labels=dict(type='list'),
         location=dict(type='dict', options=location_arg_spec),
-        site=dict(type='str', required=False, aliases=['name', 'site_name']),
-        site_id=dict(type='str', required=False),
+        site=dict(type='str', aliases=['name']),
+        site_id=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         urls=dict(type='list'),
     )

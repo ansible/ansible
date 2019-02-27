@@ -31,7 +31,7 @@ options:
     - The name of the schema.
     type: str
     required: yes
-    aliases: [ name, schema_name ]
+    aliases: [ name ]
   templates:
     description:
     - A list of templates for this schema.
@@ -116,8 +116,8 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        schema=dict(type='str', required=False, aliases=['name', 'schema_name']),
-        schema_id=dict(type='str', required=False),
+        schema=dict(type='str', aliases=['name']),
+        schema_id=dict(type='str'),
         templates=dict(type='list'),
         sites=dict(type='list'),
         # messages=dict(type='dict'),
