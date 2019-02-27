@@ -417,7 +417,7 @@ postgresql_facts:
       sample:
       - { "work_mem": { "boot_val": "4096", "context": "user", "max_val": "2147483647",
         "min_val": "64", "setting": "8192", "sourcefile": "/var/lib/pgsql/10/data/postgresql.auto.conf",
-        "unit": "kB", "vartype": "integer" } }
+        "unit": "kB", "vartype": "integer", "val_in_bytes": 4194304 } }
       contains:
         setting:
           description: Current value of the parameter.
@@ -469,6 +469,12 @@ postgresql_facts:
           returned: always
           type: str
           sample: integer
+        val_in_bytes:
+          description:
+          - Current value of the parameter in bytes.
+          returned: if supported
+          type: int
+          sample: 2147483647
 '''
 
 from fnmatch import fnmatch
@@ -695,9 +701,25 @@ class PgClusterFacts(object):
 
         set_dict = {}
         for i in res:
+            val_in_bytes = None
+            setting = i[1]
+            if i[2]:
+                unit = i[2]
+            else:
+                unit = ''
+
+            if unit == 'kB':
+                val_in_bytes = int(setting) * 1024
+
+            elif unit == '8kB':
+                val_in_bytes = int(setting) * 1024 * 8
+
+            elif unit == 'MB':
+                val_in_bytes = int(setting) * 1024 * 1024
+
             set_dict[i[0]] = dict(
-                setting=i[1],
-                unit=i[2] if i[2] else '',
+                setting=setting,
+                unit=unit,
                 context=i[3],
                 vartype=i[4],
                 boot_val=i[5] if i[5] else '',
@@ -705,6 +727,8 @@ class PgClusterFacts(object):
                 max_val=i[7] if i[7] else '',
                 sourcefile=i[8] if i[8] else '',
             )
+            if val_in_bytes is not None:
+                set_dict[i[0]]['val_in_bytes'] = val_in_bytes
 
         self.pg_facts["settings"] = set_dict
 
@@ -892,13 +916,7 @@ def main():
     # Do job:
     pg_facts = PgClusterFacts(module, cursor)
 
-    if filter_:
-        kw['postgresql_facts'] = pg_facts.collect(filter_)
-
-    else:
-        kw['postgresql_facts'] = pg_facts.collect()
-
-    module.exit_json(**kw)
+    module.exit_json(**pg_facts.collect(filter_))
 
 
 if __name__ == '__main__':
