@@ -208,6 +208,8 @@ Extend the inventory plugin documentation with the inventory_cache documentation
 
     class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
+        NAME = 'myplugin'
+
 Next, load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. If your inventory plugin does not use ``_read_config_data``, you must load the cache explicitly with ``load_cache_plugin``.
 
 .. code-block:: python
