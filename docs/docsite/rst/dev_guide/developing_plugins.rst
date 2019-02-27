@@ -153,7 +153,7 @@ Cache plugins
 
 Cache plugins store gathered facts and data retrieved by inventory plugins.
 
-Cache plugins should not be imported directly in the code base. Import cache plugins using the cache_loader so ``self.set_options()`` and ``self.get_option(<option_name>)`` can be used. Not using the cache_loader would restrict options to be only be available via ``ansible.constants``. This would also break its ability to be used by an inventory plugin.
+Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
 
 .. code-block:: python
 
@@ -178,11 +178,11 @@ New cache plugins should take the options ``_uri``, ``_prefix``, and ``_timeout`
             self._prefix = self.get_option('_prefix')
             self._timeout = self.get_option('_timeout')
 
-Caches that use ``BaseCacheModule`` will need to implement the methods ``get``, ``contains``, ``keys``, ``set``, ``delete``, ``flush``, and ``copy``. The ``contains`` method should return a boolean that indicates if the key exists and has not expired. Unlike file-based caches, the ``get`` method does not raise a KeyError if the cache has expired.
+If you use the ``BaseCacheModule``, you must implement the methods ``get``, ``contains``, ``keys``, ``set``, ``delete``, ``flush``, and ``copy``. The ``contains`` method should return a boolean that indicates if the key exists and has not expired. Unlike file-based caches, the ``get`` method does not raise a KeyError if the cache has expired.
 
-Caches that use ``BaseFileCacheModule`` must implement ``_load`` and ``_dump`` methods that will be called from the base class methods ``get`` and ``set``.
+If you use the ``BaseFileCacheModule``, you must implement ``_load`` and ``_dump`` methods that will be called from the base class methods ``get`` and ``set``.
 
-If the cache plugin stores JSON, ``AnsibleJSONEncoder`` should be used in the ``_dump`` or ``set`` method  and ``AnsibleJSONDecoder`` should be used in the ``_load`` or ``get`` method.
+If your cache plugin stores JSON, use ``AnsibleJSONEncoder`` in the ``_dump`` or ``set`` method  and ``AnsibleJSONDecoder`` in the ``_load`` or ``get`` method.
 
 For example cache plugins, see the source code for the `cache plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/cache>`_.
 
