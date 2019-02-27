@@ -8,18 +8,21 @@
       name: "servicebus{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       type: namespace
+      sku: basic
   register: namespace
 
 - assert:
     that:
       - namespace.id
       - namespace.changed
+      - namespace.sku == 'basic'
 
 - name: Create a namespace (idempontent)
   azure_rm_servicebus:
       name: "servicebus{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       type: namespace
+      sku: basic
   register: namespace
 
 - assert:

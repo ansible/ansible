@@ -46,6 +46,15 @@ options:
     location:
         description:
             - Namespace location.
+    sku:
+        description:
+            - Namespace sku.
+        choices:
+            - standard
+            - basic
+            - premium
+        default:
+            standard
     type:
         description:
             - Type of the messaging application.
@@ -249,6 +258,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             location=dict(type='str'),
+            sku=dict(type='str', choices=['basic', 'standard', 'premium'], default='standard'),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             namespace=dict(type='str'),
             type=dict(type='str', choices=['queue', 'topic', 'subscription', 'namespace'], required=True),
@@ -306,6 +316,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
         self.support_ordering = None
         self.location = None
         self.sas_policies = None
+        self.sku = None
 
         self.results = dict(
             changed=False,
@@ -418,9 +429,11 @@ class AzureRMServiceBus(AzureRMModuleBase):
             try:
                 check_name = self.servicebus_client.namespaces.check_name_availability_method(self.namespace)
                 if check_name and check_name.name_available:
+                    sku = self.servicebus_models.SBSku(name=str.capitalize(self.sku))
                     poller = self.servicebus_client.namespaces.create_or_update(self.resource_group,
                                                                                 self.namespace,
-                                                                                self.servicebus_models.SBNamespace(location=self.location))
+                                                                                self.servicebus_models.SBNamespace(location=self.location,
+                                                                                                                   sku=sku))
                     ns = self.get_poller_result(poller)
                 else:
                     self.fail("Error creating namespace {0} - {1}".format(self.namespace, check_name.message or str(check_name)))
