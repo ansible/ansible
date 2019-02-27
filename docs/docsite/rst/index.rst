@@ -50,7 +50,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    :maxdepth: 1
    :caption: Integration Guides
 
-   scenario_guides/guides.rst
+   scenario_guides/integration_guides.rst
 
 .. toctree::
    :maxdepth: 2
