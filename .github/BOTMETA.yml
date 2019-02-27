@@ -261,10 +261,14 @@ files:
   $modules/net_tools/netbox/: fragmentedpacket
   $modules/network/a10/: ericchou1 mischapeters
   $modules/network/aci/: $team_aci
-  $modules/network/aireos/: jmighion
+  $modules/network/aireos/: &aireos
+    maintainers: $team_aireos
+    labels: [ aireos, cisco, networking ]
   $modules/network/aos/: dgarros jeremyschulman
   $modules/network/aruba/: jmighion
-  $modules/network/asa/: ogenstad gdpak
+  $modules/network/asa/: &asa
+    maintainers: $team_asa
+    labels: [ asa, cisco, networking ]
   $modules/network/avi/: $team_avi
   $modules/network/bigswitch/: jayakody tedelhourani vuile
   $modules/network/cloudengine/: QijunPan
@@ -286,13 +290,19 @@ files:
   $modules/network/fortimanager/: $team_fortimanager
   $modules/network/illumos/: *solaris
   $modules/network/interface/: $team_networking
-  $modules/network/ios/: rcarrillocruz
-  $modules/network/iosxr/: rcarrillocruz gdpak
+  $modules/network/ios/: &ios
+    labels: [ cisco, ios, networking ]
+    maintainers: $team_ios
+  $modules/network/iosxr/: &iosxr
+    labels: [ cisco, iosxr, networking ]
+    maintainers: $team_iosxr
   $modules/network/ironware/: paulquack
   $modules/network/junos/: Qalthos ganeshrn
   $modules/network/layer2/: $team_networking
   $modules/network/layer3/: $team_networking
-  $modules/network/meraki/: $team_meraki
+  $modules/network/meraki/: &meraki
+    labels: [ cisco, meraki, networking ]
+    maintainers: $team_meraki
   $modules/network/netconf/netconf_config.py: userlerueda $team_networking
   $modules/network/netconf/netconf_get.py: $team_networking
   $modules/network/netconf/netconf_rpc.py: $team_networking
@@ -300,8 +310,13 @@ files:
   $modules/network/netvisor/: $team_netvisor
   $modules/network/nos/: $team_extreme
   $modules/network/nuage/: pdellaert
-  $modules/network/nxos/: $team_nxos
-  $modules/network/nso/: $team_nso
+  $modules/network/nxos/: &nxos
+    keywords: [ nxapi ]
+    labels: [ cisco, networking, nxos ]
+    maintainers: $team_nxos
+  $modules/network/nso/: &nso
+    labels: [ cisco, network, nso ]
+    maintainers: $team_nso
   $modules/network/onyx/: $team_onyx
   $modules/network/ordnance/: alexanderturner djh00t
   $modules/network/ovs/:
@@ -378,13 +393,17 @@ files:
   $modules/packaging/os/zypper_repository.py: robinro
   $modules/remote_management/foreman/: ehelms
   $modules/remote_management/hpilo/: dagwieers haad
-  $modules/remote_management/imc/: dagwieers
+  $modules/remote_management/imc/:
+    labels: cisco
+    maintainers: $team_imc
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
   $modules/remote_management/redfish/: $team_redfish
   $modules/remote_management/stacki/stacki_host.py: bbyhuy bsanders
-  $modules/remote_management/ucs/: $team_ucs
+  $modules/remote_management/ucs/: &ucs
+    labels: [ cisco, remote_management, ucs ]
+    maintainers: $team_ucs
   $modules/remote_management/dellemc/: rajeevarakkal
   $modules/source_control/git.py: $team_ansible
   $modules/source_control/github_key.py:
@@ -664,14 +683,12 @@ files:
     labels: [ aci, networking ]
     maintainers: $team_aci
     notified: koladiya
-  $module_utils/network/aireos:
-    maintainers: jmighion
+  $module_utils/network/aireos: *aireos
   $module_utils/network/aos:
     maintainers: dgarros jeremyschulman
   $module_utils/network/aruba:
     maintainers: jmighion
-  $module_utils/network/asa:
-    maintainers: ogenstad gdpak
+  $module_utils/network/asa: *asa
   $module_utils/network/avi:
     maintainers: $team_avi
   $module_utils/network/bigswitch:
@@ -713,19 +730,16 @@ files:
       - networking
   $module_utils/network/ios:
     support: network
-    maintainers: $team_networking
+    maintainers: $team_networking $team_ios
   $module_utils/network/iosxr:
+    <<: *iosxr
+    maintainers: $team_networking $team_iosxr
     support: network
-    maintainers: $team_networking
   $module_utils/network/ironware:
     maintainers: paulquack
   $module_utils/network/junos:
     support: network
-  $module_utils/network/meraki: &meraki
-    maintainers: $team_meraki
-    labels:
-      - meraki
-      - networking
+  $module_utils/network/meraki: *meraki
   $module_utils/network/netconf:
     support: network
     maintainers: $team_networking
@@ -733,11 +747,10 @@ files:
     maintainers: $team_netscaler
   $module_utils/network/nos:
     maintainers: $team_extreme
-  $module_utils/network/nso:
-    maintainers: $team_nso
+  $module_utils/network/nso: *nso
   $module_utils/network/nxos:
+    <<: *nxos
     support: network
-    maintainers: $team_nxos
   $module_utils/network/onyx:
     maintainers: $team_onyx
   $module_utils/network/ordnance:
@@ -768,9 +781,7 @@ files:
   $module_utils/remote_management/lxca:
     maintainers: navalkp prabhosa
     labels: lxca
-  $module_utils/remote_management/ucs:
-    maintainers: $team_ucs
-    labels: ucs
+  $module_utils/remote_management/ucs: *ucs
   $module_utils/remote_management/dellemc:
     maintainers: rajeevarakkal
   $module_utils/scaleway.py: &scaleway
@@ -880,12 +891,8 @@ files:
   $plugins/action/win: *windows_core
   $plugins/action/yum.py:
     support: core
-  $plugins/action/asa:
-    maintainers: ogenstad gdpak
-    labels: networking
-  $plugins/action/aireos:
-    maintainers: jmighion
-    labels: networking
+  $plugins/action/asa: *asa
+  $plugins/action/aireos: *aireos
   $plugins/action/aruba:
     maintainers: jmighion
     labels: networking
@@ -903,13 +910,13 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/action/ios:
+    <<: *ios
+    maintainers: $team_networking $team_ios
     support: network
-    maintainers: $team_networking
-    labels: networking
   $plugins/action/iosxr:
+    <<: *iosxr
+    maintainers: $team_networking $team_iosxr
     support: network
-    maintainers: $team_networking
-    labels: networking
   $plugins/action/ironware:
     maintainers: paulquack
     labels: networking
@@ -922,11 +929,9 @@ files:
     maintainers: $team_networking
     labels: networking
   $plugins/action/nxos:
+    <<: *nxos
     support: network
     maintainers: $team_networking
-    labels:
-      - networking
-      - nxos
   $plugins/action/onyx_config.py:
     maintainers: $team_onyx
     labels: networking
@@ -984,11 +989,13 @@ files:
   $plugins/cliconf/exos.py:
     maintainers: rdvencioneck
   $plugins/cliconf/ios.py:
+    <<: *ios
+    maintainers: $team_networking $team_ios
     support: network
-    maintainers: $team_networking
   $plugins/cliconf/iosxr.py:
+    <<: *iosxr
+    maintainers: $team_networking $team_iosxr
     support: network
-    maintainers: $team_networking
   $plugins/cliconf/ironware.py:
     maintainers: paulquack
   $plugins/cliconf/junos.py:
@@ -997,9 +1004,8 @@ files:
   $plugins/cliconf/nos.py:
     maintainers: $team_extreme
   $plugins/cliconf/nxos.py:
+    <<: *nxos
     support: network
-    maintainers: $team_nxos
-    labels: nxos
   $plugins/cliconf/onyx.py:
     maintainers: $team_onyx
   $plugins/cliconf/routeros.py:
@@ -1195,8 +1201,7 @@ files:
     labels: networking
   $plugins/terminal/__init__.py:
     support: network
-  $plugins/terminal/asa.py:
-    maintainers: ogenstad gdpak
+  $plugins/terminal/asa.py: *asa
   $plugins/terminal/dellos10:
     maintainers: skg-net
   $plugins/terminal/edgeos.py:
@@ -1209,11 +1214,13 @@ files:
   $plugins/terminal/exos.py:
     maintainers: rdvencioneck
   $plugins/terminal/ios.py:
+    <<: *ios
+    maintainers: $team_networking $teamios
     support: network
-    maintainers: $team_networking
   $plugins/terminal/iosxr.py:
+    <<: *iosxr
+    maintainers: $team_networking $teamiosxr
     support: network
-    maintainers: $team_networking
   $plugins/terminal/ironware.py:
     maintainers: paulquack
   $plugins/terminal/junos.py:
@@ -1222,6 +1229,7 @@ files:
   $plugins/terminal/nos.py:
     maintainers: $team_extreme
   $plugins/terminal/nxos.py:
+    <<: *nxos
     support: network
     maintainers: $team_networking
   $plugins/terminal/onyx.py:
@@ -1305,10 +1313,7 @@ files:
   test/integration/targets/meraki: *meraki
   test/integration/targets/mso: *aci
   test/integration/targets/mysql: *mysql
-  test/integration/targets/nxos:
-    maintainers: $team_nxos
-    labels:
-      - networking
+  test/integration/targets/nxos: *nxos
   test/integration/targets/openssl: *crypto
   test/integration/targets/postgresql: *postgresql
   test/integration/targets/setup_acme: *crypto
@@ -1317,10 +1322,7 @@ files:
   test/integration/targets/setup_mysql_db: *mysql
   test/integration/targets/setup_zabbix:
     maintainers: eikef D3DeFi
-  test/integration/targets/ucs:
-    maintainers: $team_ucs
-    labels:
-      - remote_management
+  test/integration/targets/ucs: *ucs
   test/integration/targets/vultr: *vultr
   test/legacy/:
     notified: mattclay
@@ -1339,10 +1341,7 @@ files:
   test/units/modules/network:
     maintainers: $team_networking
     labels: networking
-  test/units/modules/network/nxos:
-    maintainers: $team_nxos
-    labels:
-      - networking
+  test/units/modules/network/nxos: *nxos
   test/units/modules/cloud/xenserver/: bvitnik
   test/units/modules/storage/hpe3par: *hpe3par
   test/sanity/pep8/legacy-files.txt:
@@ -1358,7 +1357,9 @@ macros:
   modules: lib/ansible/modules
   plugins: lib/ansible/plugins
   team_aci: brunocalogero dagwieers jmcgill298 mtorelli rsmeyers schunduri smnmtzgr
+  team_aireos: jmighion
   team_aix: bcoca dagwieers flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
+  team_asa: gdpak ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_azure: haroldwongms nitzmahone trstringer yuwzho xscript zikalino
@@ -1376,6 +1377,9 @@ macros:
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
   team_hpux: bcoca dagwieers davx8342
+  team_imc: dagwieers
+  team_ios: rcarrillocruz
+  team_iosxr: rcarrillocruz gdpak
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_linode: InTheCloudDan lwm displague rmcintosh
