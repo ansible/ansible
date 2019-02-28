@@ -446,9 +446,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         # Netbox access
         token = self.get_option("token")
-        self.api_endpoint = self.get_option("api_endpoint")
         # Handle extra "/" from api_endpoint configuration and trim if necessary, see PR#49943
-        if self.api_endpoint.endswith("/"):
+        if self.get_option("api_endpoint").endswith("/"):
             self.api_endpoint = self.get_option("api_endpoint").strip('/')
         else:
             self.api_endpoint = self.get_option("api_endpoint")
