@@ -1,0 +1,3 @@
+bugfixes:
+  - ecs_ecr and iam_role - replace uses of sort_json_policy_dict with compare_policies which is compatible with Python 3
+  - Remove recommendation to use sort_json_policy_dict in the AWS guidelines
