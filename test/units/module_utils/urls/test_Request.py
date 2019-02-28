@@ -363,8 +363,14 @@ def test_Request_open_cookies(urlopen_mock, install_opener_mock):
 
 
 def test_Request_open_invalid_method(urlopen_mock, install_opener_mock):
-    with pytest.raises(ConnectionError):
-        r = Request().open('BOGUS', 'https://ansible.com/')
+    r = Request().open('UNKNOWN', 'https://ansible.com/')
+
+    args = urlopen_mock.call_args[0]
+    req = args[0]
+
+    assert req.data is None
+    assert req.get_method() == 'UNKNOWN'
+    # assert r.status == 504
 
 
 def test_Request_open_custom_method(urlopen_mock, install_opener_mock):

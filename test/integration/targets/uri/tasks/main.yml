@@ -390,6 +390,20 @@
     - result is failure
     - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
 
+- name: Validate invalid method
+  uri:
+    url: https://{{ httpbin_host }}/anything
+    method: UNKNOWN
+  register: result
+  ignore_errors: yes
+
+- name: Assert invalid method fails
+  assert:
+    that:
+    - result is failure
+    - result.status == 405
+    - "'METHOD NOT ALLOWED' in result.msg"
+
 - name: Test client cert auth, no certs
   uri:
     url: "https://ansible.http.tests/ssl_client_verify"
