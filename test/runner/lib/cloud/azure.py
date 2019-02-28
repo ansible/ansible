@@ -126,6 +126,8 @@ class AzureCloudProvider(CloudProvider):
 
             config = '\n'.join('%s: %s' % (key, values[key]) for key in sorted(values))
 
+            config = '[default]\n' + config
+
         self._write_config(config)
 
     def _create_ansible_core_ci(self):
