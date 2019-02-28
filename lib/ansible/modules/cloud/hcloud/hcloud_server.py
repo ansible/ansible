@@ -178,6 +178,7 @@ try:
     from hcloud.volumes.domain import Volume
     from hcloud.ssh_keys.domain import SSHKey
     from hcloud.servers.domain import Server
+    from hcloud import APIException
 except ImportError:
     pass
 
@@ -204,14 +205,17 @@ class AnsibleHcloudServer(Hcloud):
         }
 
     def _get_server(self):
-        if self.module.params.get("id") is not None:
-            self.hcloud_server = self.client.servers.get_by_id(
-                self.module.params.get("id")
-            )
-        else:
-            self.hcloud_server = self.client.servers.get_by_name(
-                self.module.params.get("name")
-            )
+        try:
+            if self.module.params.get("id") is not None:
+                self.hcloud_server = self.client.servers.get_by_id(
+                    self.module.params.get("id")
+                )
+            else:
+                self.hcloud_server = self.client.servers.get_by_name(
+                    self.module.params.get("name")
+                )
+        except APIException as e:
+            self.module.fail_json(msg=e.message)
 
     def _create_server(self):
         params = {
