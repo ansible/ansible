@@ -18,8 +18,10 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     from ansible.module_utils.basic import missing_required_lib
 except Exception:
+    # This is to support older versions of Ansible.
+    # azure_rm_common.py file is used by azure/azure_preview_modules role which may be used with older Ansible versions.
     def missing_required_lib(msg, reason=None, url=None):
-        return msg
+        return "Missing required library: " + msg
 
 try:
     from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
