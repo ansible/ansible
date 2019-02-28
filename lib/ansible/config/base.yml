@@ -1308,6 +1308,14 @@ DISPLAY_SKIPPED_HOSTS:
   ini:
   - {key: display_skipped_hosts, section: defaults}
   type: boolean
+DOCSITE_ROOT_URL:
+  name: Root docsite URL
+  default: https://docs.ansible.com/ansible/
+  description: Root docsite URL used to generate docs URLs in warning/error text;
+               must be an absolute URL with valid scheme and trailing slash.
+  ini:
+  - {key: docsite_root_url, section: defaults}
+  version_added: "2.8"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True
@@ -1381,6 +1389,55 @@ HOST_PATTERN_MISMATCH:
   ini:
   - {key: host_pattern_mismatch, section: inventory}
   choices: ['warning', 'error', 'ignore']
+  version_added: "2.8"
+INTERPRETER_PYTHON:
+  name: Python interpreter path (or automatic discovery behavior) used for module execution
+  default: auto_legacy
+  env: [{name: ANSIBLE_PYTHON_INTERPRETER}]
+  ini:
+  - {key: interpreter_python, section: defaults}
+  vars:
+  - {name: ansible_python_interpreter}
+  version_added: "2.8"
+  description:
+  - Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode.
+    Supported discovery modes are ``auto``, ``auto_silent``, and ``auto_legacy`` (the default). All discovery modes
+    employ a lookup table to use the included system Python (on distributions known to include one), falling back to a
+    fixed ordered list of well-known Python interpreter locations if a platform-specific default is not available. The
+    fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters installed
+    later may change which one is used). This warning behavior can be disabled by setting ``auto_silent``. The default
+    value of ``auto_legacy`` provides all the same behavior, but for backwards-compatibility with older Ansible releases
+    that always defaulted to ``/usr/bin/python``, will use that interpreter if present (and issue a warning that the
+    default behavior will change to that of ``auto`` in a future Ansible release.
+INTERPRETER_PYTHON_DISTRO_MAP:
+  name: Mapping of known included platform pythons for various Linux distros
+  default:
+    centos: &rhelish
+      '6': /usr/bin/python
+      '8': /usr/libexec/platform-python
+    fedora:
+      '23': /usr/bin/python3
+    redhat: *rhelish
+    rhel: *rhelish
+    ubuntu:
+      '14': /usr/bin/python
+      '16': /usr/bin/python3
+  version_added: "2.8"
+  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
+  # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
+INTERPRETER_PYTHON_FALLBACK:
+  name: Ordered list of Python interpreters to check for in discovery
+  default:
+  - /usr/bin/python
+  - python3.7
+  - python3.6
+  - python3.5
+  - python2.7
+  - python2.6
+  - /usr/libexec/platform-python
+  - /usr/bin/python3
+  - python
+  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   version_added: "2.8"
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings

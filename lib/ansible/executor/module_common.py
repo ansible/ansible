@@ -34,6 +34,7 @@ from io import BytesIO
 from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
@@ -459,18 +460,46 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
        file rather than trust that we reformatted what they already have
        correctly.
     """
-    interpreter_config = u'ansible_%s_interpreter' % os.path.basename(interpreter).strip()
+    interpreter_name = os.path.basename(interpreter).strip()
 
-    if interpreter_config not in task_vars:
-        return (None, interpreter)
+    # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
-    interpreter = templar.template(task_vars[interpreter_config].strip())
-    shebang = u'#!' + interpreter
+    # check for first-class interpreter config
+    interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
+
+    if C.config.get_configuration_definitions().get(interpreter_config_key):
+        # a config def exists for this interpreter type; consult config for the value
+        interpreter_out = C.config.get_config_value(interpreter_config_key, variables=task_vars)
+        discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+
+        interpreter_out = templar.template(interpreter_out.strip())
+
+        facts_from_task_vars = task_vars.get('ansible_facts', {})
+
+        # handle interpreter discovery if requested
+        if interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
+            if discovered_interpreter_config not in facts_from_task_vars:
+                # interpreter discovery is desired, but has not been run for this host
+                raise InterpreterDiscoveryRequiredError("interpreter discovery needed",
+                                                        interpreter_name=interpreter_name,
+                                                        discovery_mode=interpreter_out)
+            else:
+                interpreter_out = facts_from_task_vars[discovered_interpreter_config]
+    else:
+        # a config def does not exist for this interpreter type; consult vars for a possible direct override
+        interpreter_config = u'ansible_%s_interpreter' % interpreter_name
+
+        if interpreter_config not in task_vars:
+            return None, interpreter
+
+        interpreter_out = templar.template(task_vars[interpreter_config].strip())
+
+    shebang = u'#!' + interpreter_out
 
     if args:
         shebang = shebang + u' ' + u' '.join(args)
 
-    return (shebang, interpreter)
+    return shebang, interpreter_out
 
 
 def recursive_finder(name, data, py_module_names, py_module_cache, zf):
