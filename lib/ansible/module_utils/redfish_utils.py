@@ -324,7 +324,7 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "Storage resource not found"}
 
     def get_disk_inventory(self):
-        result = {}
+        result = {'entries': []}
         controller_list = []
         disk_results = []
         # Get these entries, but does not fail if not found
@@ -341,39 +341,69 @@ class RedfishUtils(object):
             return response
         data = response['data']
 
-        if 'Storage' not in data:
-            return {'ret': False, 'msg': "Storage resource not found"}
+        if 'SimpleStorage' not in data and 'Storage' not in data:
+            return {'ret': False, 'msg': "SimpleStorage and Storage resource \
+                     not found"}
 
-        # Get a list of all storage controllers and build respective URIs
-        storage_uri = data[u'Storage'][u'@odata.id']
-        response = self.get_request(self.root_uri + storage_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
+        if 'Storage' in data:
+            # Get a list of all storage controllers and build respective URIs
+            storage_uri = data[u'Storage'][u'@odata.id']
+            response = self.get_request(self.root_uri + storage_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
 
-        if data[u'Members']:
+            if data[u'Members']:
+                for controller in data[u'Members']:
+                    controller_list.append(controller[u'@odata.id'])
+                for c in controller_list:
+                    uri = self.root_uri + c
+                    response = self.get_request(uri)
+                    if response['ret'] is False:
+                        return response
+                    data = response['data']
+                    if 'Drives' in data:
+                        for device in data[u'Drives']:
+                            disk_uri = self.root_uri + device[u'@odata.id']
+                            response = self.get_request(disk_uri)
+                            data = response['data']
+
+                            disk_result = {}
+                            for property in properties:
+                                if property in data:
+                                    if data[property] is not None:
+                                        disk_result[property] = data[property]
+                            disk_results.append(disk_result)
+                result["entries"].append(disk_results)
+
+        if 'SimpleStorage' in data:
+            # Get a list of all storage controllers and build respective URIs
+            storage_uri = data["SimpleStorage"]["@odata.id"]
+            response = self.get_request(self.root_uri + storage_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+
             for controller in data[u'Members']:
                 controller_list.append(controller[u'@odata.id'])
+
             for c in controller_list:
                 uri = self.root_uri + c
                 response = self.get_request(uri)
                 if response['ret'] is False:
                     return response
                 data = response['data']
-                if 'Drives' in data:
-                    for device in data[u'Drives']:
-                        disk_uri = self.root_uri + device[u'@odata.id']
-                        response = self.get_request(disk_uri)
-                        data = response['data']
 
-                        disk_result = {}
-                        for property in properties:
-                            if property in data:
-                                if data[property] is not None:
-                                    disk_result[property] = data[property]
-                        disk_results.append(disk_result)
-            result["entries"] = disk_results
+                for device in data[u'Devices']:
+                    disk_resuilt = {}
+                    for property in properties:
+                        if property in device:
+                            disk_resuilt[property] = device[property]
+                    disk_results.append(disk_result)
+            result["entries"].append(disk_results)
+
         return result
 
     def restart_manager_gracefully(self):
