@@ -202,11 +202,16 @@ def map_obj_to_ele(module, want):
         else:
             operation = 'merge'
 
-        user = SubElement(login, 'user', {'operation': operation})
-
-        SubElement(user, 'name').text = item['name']
+        if item['name'] != 'root':
+            user = SubElement(login, 'user', {'operation': operation})
+            SubElement(user, 'name').text = item['name']
+        else:
+            user = auth = SubElement(element, 'root-authentication', {'operation': operation})
 
         if operation == 'merge':
+            if item['name'] == 'root' and (not item['active'] or item['role'] or item['full_name']):
+                module.fail_json(msg="'root' account cannot deactive, set role and set full_name.")
+
             if item['active']:
                 user.set('active', 'active')
             else:
@@ -219,7 +224,8 @@ def map_obj_to_ele(module, want):
                 SubElement(user, 'full-name').text = item['full_name']
 
             if item.get('sshkey'):
-                auth = SubElement(user, 'authentication')
+                if 'auth' not in locals():
+                    auth = SubElement(user, 'authentication')
                 if 'ssh-rsa' in item['sshkey']:
                     ssh_rsa = SubElement(auth, 'ssh-rsa')
                 elif 'ssh-dss' in item['sshkey']:
