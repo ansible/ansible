@@ -54,7 +54,7 @@ EXAMPLES = '''
   - name: Get facts by name
     azure_rm_virtualmachine_facts:
       resource_group: myResourceGroup
-      name: vm
+      name: myVm
 
   - name: Get facts by tags
     azure_rm_virtualmachine_facts:
@@ -107,8 +107,7 @@ vms:
                 - Resource ID.
             returned: always
             type: str
-            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/my
-                     cluster-node-2"
+            sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVm
         image:
             description:
                 - Image specification
@@ -119,22 +118,32 @@ vms:
                     description:
                         - Offer.
                     type: str
+                    returned: when created from marketplace image
                     sample: RHEL
                 publisher:
                     description:
                         - Publisher name.
                     type: str
+                    returned: when created from marketplace image
                     sample: RedHat
                 sku:
                     description:
                         - SKU name.
                     type: str
+                    returned: when created from marketplace image
                     sample: 7-RAW
                 version:
                     description:
                         - Image version.
                     type: str
+                    returned: when created from marketplace image
                     sample: 7.5.2018050901
+                id:
+                    description:
+                        - Custom image resource id.
+                    type: str
+                    returned: when created from custom image
+                    sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage
         location:
             description:
                 - Resource location.
@@ -146,13 +155,13 @@ vms:
                 - Resource name.
             returned: always
             type: str
-            sample: mycluster-node-2
+            sample: myVm
         network_interface_names:
             description:
                 - List of attached network interfaces.
             type: list
             sample: [
-                "mycluster-node-2-nic"
+                "myNetworkInterface"
             ]
         os_disk_caching:
             description:
