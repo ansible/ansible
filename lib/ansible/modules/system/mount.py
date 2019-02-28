@@ -208,10 +208,14 @@ def set_mount(module, args):
 
             continue
 
+        fields = line.split()
+
         # Check if we got a valid line for splitting
+        # (on Linux the 5th and the 6th field is optional)
         if (
-                get_platform() == 'SunOS' and len(line.split()) != 7 or
-                get_platform() != 'SunOS' and len(line.split()) != 6):
+                get_platform() == 'SunOS' and len(fields) != 7 or
+                get_platform() == 'Linux' and len(fields) not in [4, 5, 6] or
+                get_platform() not in ['SunOS', 'Linux'] and len(fields) != 6):
             to_write.append(line)
 
             continue
@@ -227,16 +231,17 @@ def set_mount(module, args):
                 ld['passno'],
                 ld['boot'],
                 ld['opts']
-            ) = line.split()
+            ) = fields
         else:
-            (
-                ld['src'],
-                ld['name'],
-                ld['fstype'],
-                ld['opts'],
-                ld['dump'],
-                ld['passno']
-            ) = line.split()
+            fields_labels = ['src', 'name', 'fstype', 'opts', 'dump', 'passno']
+
+            # The last two fields are optional on Linux so we fill in default values
+            ld['dump'] = 0
+            ld['passno'] = 0
+
+            # Fill in the rest of the available fields
+            for i, field in enumerate(fields):
+                ld[fields_labels[i]] = field
 
         # Check if we found the correct line
         if (
