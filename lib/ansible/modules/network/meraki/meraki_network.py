@@ -48,13 +48,15 @@ options:
         - Type of network device network manages.
         - Required when creating a network.
         - As of Ansible 2.8, C(combined) type is no longer accepted.
+        - As of Ansible 2.8, changes to this parameter are no longer idempotent.
         choices: [ appliance, switch, wireless ]
         aliases: [net_type]
         type: list
     tags:
         type: list
         description:
-        - Comma delimited list of tags to assign to network.
+        - List of tags to assign to network.
+        - C(tags) name conflicts with the tags parameter in Ansible. Indentation problems may cause unexpected behaviors.
     timezone:
         description:
         - Timezone associated to network.
