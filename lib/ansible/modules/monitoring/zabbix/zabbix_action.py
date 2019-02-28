@@ -913,7 +913,7 @@ class Operations(object):
                 'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
                 'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
                     operation.get('media_type')
-                )['mediatypeid'] if operation.get('media_type') is not None else None,
+                )['mediatypeid'] if operation.get('media_type') is not None else '0',
                 'message': operation.get('message'),
                 'subject': operation.get('subject'),
             }
