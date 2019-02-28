@@ -98,7 +98,7 @@ def remove_internal_keys(data):
 
     # cleanse fact values that are allowed from actions but not modules
     for key in list(data.get('ansible_facts', {}).keys()):
-        if key.startswith('discovered_interpreter_'):
+        if key.startswith('discovered_interpreter_') or key.startswith('ansible_discovered_interpreter_'):
             del data['ansible_facts'][key]
 
 

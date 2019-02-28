@@ -95,7 +95,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         if action._connection.has_pipelining:
             res = action._low_level_execute_command(found_interpreters[0], sudoable=False, in_data=platform_script)
         else:
-            # FIXME: implement on-disk case (via script action or ?)
+            # FUTURE: implement on-disk case (via script action or ?)
             raise NotImplementedError('pipelining support required for extended interpreter discovery')
 
         platform_info = json.loads(res.get('stdout'))

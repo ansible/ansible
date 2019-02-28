@@ -11,6 +11,7 @@
   set_fact:
     distro: '{{ ansible_distribution | default("unknown") | lower }}'
     distro_version: '{{ ansible_distribution_version | default("unknown") }}'
+    os_family: '{{ ansible_os_family | default("unknown") }}'
 
 - name: test that python discovery is working and that fact persistence makes it only run once
   block:
@@ -95,8 +96,7 @@
   block:
   - test_echo_module:
       facts:
-        # FIXME: this is a hole; prefixing this with "ansible" lets it get used because it gets stripped off
-        # ansible_discovered_interpreter_bogus: from module
+        ansible_discovered_interpreter_bogus: from module
         discovered_interpreter_bogus: from_module
         ansible_bogus_interpreter: from_module
         test_fact: from_module
@@ -110,8 +110,36 @@
       # this one will exist in facts, but with its prefix removed
       - ansible_facts['ansible_bogus_interpreter'] | default('nope') == 'nope'
       - ansible_facts['discovered_interpreter_bogus'] | default('nope') == 'nope'
+
+  - name: fedora assertions
+    assert:
+      that:
+      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3'
+    when: distro == 'fedora' and distro_version is version('23', '>=')
+
+  - name: rhel assertions
+    assert:
+      that:
+      # rhel 6/7
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('8','<')) or distro_version is version('8','>=')
+      # rhel 8+
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/libexec/platform-python' and distro_version is version('8','>=')) or distro_version is version('8','<')
+    when: distro == 'redhat'
+
+  - name: ubuntu assertions
+    assert:
+      that:
+      # ubuntu < 16
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('16.04','<')) or distro_version is version('16.04','>=')
+      # ubuntu >= 16
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('16.04','>=')) or distro_version is version('16.04','<')
+    when: distro == 'ubuntu'
+
+  - name: mac assertions
+    assert:
+      that:
+      - auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python'
+    when: os_family == 'darwin'
+
   always:
   - meta: clear_facts
-
-# TODO: use a few hardcoded platforms/distros/versions to spot-check so we don't have to reimplement the whole
-# discovery process in a role

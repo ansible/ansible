@@ -1423,9 +1423,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
       '14': /usr/bin/python
       '16': /usr/bin/python3
   version_added: "2.8"
-  # FIXME: add inventory override once we're sure it can't be abused by a rogue target
-  # FIXME: detailed description
-  # FIXME: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
+  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
+  # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
@@ -1438,8 +1437,7 @@ INTERPRETER_PYTHON_FALLBACK:
   - /usr/libexec/platform-python
   - /usr/bin/python3
   - python
-  # FIXME: add inventory override once we're sure it can't be abused by a rogue target
-  # FIXME: detailed description
+  # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   version_added: "2.8"
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
