@@ -174,7 +174,7 @@ def get_config(config_path):
     parser = ConfigParser()
     parser.read(config_path)
 
-    config = dict(parser.items('default'))
+    config = dict((key.upper(), value) for key, value in parser.items('default'))
 
     rg_vars = (
         'RESOURCE_GROUP',
