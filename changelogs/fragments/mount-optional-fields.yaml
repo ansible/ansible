@@ -1,0 +1,2 @@
+minor_changes:
+  - mount - make last two fields optional (https://github.com/ansible/ansible/issues/43855)
