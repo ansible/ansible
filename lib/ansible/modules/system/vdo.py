@@ -127,6 +127,8 @@ options:
               volumes will maintain their previously configured
               setting unless a different value is specified in the
               playbook.
+              The read cache feature is available in VDO 6.1 and
+              older.
         type: str
         choices: [ disabled, enabled ]
     readcachesize:
@@ -142,6 +144,8 @@ options:
               Existing volumes will maintain their previously
               configured setting unless a different value is specified
               in the playbook.
+              The read cache feature is available in VDO 6.1 and
+              older.
         type: str
     emulate512:
         description:
