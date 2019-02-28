@@ -6,7 +6,7 @@
     .Parameter password
     Password of the user which is used for the action
 #>
-function Create-Credential {
+function ConvertTo-Credential {
     [CmdletBinding()] param([Parameter(Mandatory = $true)][string] $username, [Parameter(Mandatory = $true)][string] $password)   
     Write-DebugLog "Preparing credentials..."
     $passwordEncrypted = ConvertTo-SecureString -String $password -AsPlainText -Force

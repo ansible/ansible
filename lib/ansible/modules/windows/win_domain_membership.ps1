@@ -190,7 +190,7 @@ $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
-$domainJoinCredential = Create-Credential -username $domain_admin_user -password $domain_admin_password
+$domainJoinCredential = ConvertTo-Credential -username $domain_admin_user -password $domain_admin_password
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
