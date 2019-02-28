@@ -11,6 +11,24 @@ import sys
 import importlib
 import pytest
 
+from .FakeAnsibleModule import FakeAnsibleModule
+
+
+@pytest.fixture
+def fake_ansible_module(request):
+    """Returns fake AnsibleModule with fake module params."""
+    if hasattr(request, 'param'):
+        return FakeAnsibleModule(request.param)
+    else:
+        params = {
+            "hostname": "somehost",
+            "username": "someuser",
+            "password": "somepwd",
+            "validate_certs": True,
+        }
+
+        return FakeAnsibleModule(params)
+
 
 @pytest.fixture(autouse=True)
 def XenAPI():
@@ -42,3 +60,16 @@ def xenserver_guest_facts(XenAPI):
     from ansible.modules.cloud.xenserver import xenserver_guest_facts
 
     return xenserver_guest_facts
+
+
+@pytest.fixture
+def xenserver_guest_powerstate(XenAPI):
+    """Imports and returns xenserver_guest_powerstate module."""
+
+    # Since we are wrapping fake XenAPI module inside a fixture, all modules
+    # that depend on it have to be imported inside a test function. To make
+    # this easier to handle and remove some code repetition, we wrap the import
+    # of xenserver_guest_powerstate module with a fixture.
+    from ansible.modules.cloud.xenserver import xenserver_guest_powerstate
+
+    return xenserver_guest_powerstate
