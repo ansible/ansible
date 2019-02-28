@@ -273,7 +273,8 @@ def main():
         if delta:
             command = config_igmp_snooping(delta, existing)
             if command:
-                igmp_snooping_gt_dependency(command, existing, module)
+                if group_timeout:
+                    igmp_snooping_gt_dependency(command, existing, module)
                 commands.append(command)
     elif state == 'default':
         proposed = get_igmp_snooping_defaults()
