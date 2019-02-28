@@ -32,19 +32,30 @@ DOCUMENTATION = """
           - name: ANSIBLE_EXECUTABLE
         vars:
           - name: ansible_executable
+      chroot_exe:
+        version_added: '2.8'
+        description:
+            - User specified chroot binary
+        ini:
+          - section: chroot_connection
+            key: exe
+        env:
+          - name: ANSIBLE_CHROOT_EXE
+        vars:
+          - name: ansible_chroot_exe
+        default: chroot
 """
 
-import distutils.spawn
 import os
 import os.path
 import subprocess
 import traceback
 
-from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.basic import is_executable
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.six.moves import shlex_quote
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
 from ansible.utils.display import Display
 
@@ -84,9 +95,13 @@ class Connection(ConnectionBase):
         if not (is_executable(chrootsh) or (os.path.lexists(chrootsh) and os.path.islink(chrootsh))):
             raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
-        self.chroot_cmd = distutils.spawn.find_executable('chroot')
+        if os.path.isabs(self.get_option('chroot_exe')):
+            self.chroot_cmd = self.get_option('chroot_exe')
+        else:
+            self.chroot_cmd = get_bin_path(self.get_option('chroot_exe'))
+
         if not self.chroot_cmd:
-            raise AnsibleError("chroot command not found in PATH")
+            raise AnsibleError("chroot command (%s) not found in PATH" % to_native(self.get_option('chroot_exe')))
 
     def _connect(self):
         ''' connect to the chroot; nothing to do here '''
@@ -103,7 +118,7 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        executable = self.get_option('executable')
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
