@@ -30,6 +30,8 @@ options:
     labels:
         description:
             - User-defined key/value metadata that will be assigned as node attribute.
+            - Label operations in this module apply to the docker swarm node specified by I(hostname).
+              Use M(docker_swarm) module to add/modify/remove swarm cluster labels.
             - The actual state of labels assigned to the node when module completes its work depends on
               I(labels_state) and I(labels_to_remove) parameters values. See description below.
         type: dict
