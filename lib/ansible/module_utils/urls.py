@@ -1128,8 +1128,6 @@ class Request:
         urllib_request.install_opener(opener)
 
         data = to_bytes(data, nonstring='passthru')
-        if method not in ('OPTIONS', 'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT', 'PATCH'):
-            raise ConnectionError('invalid HTTP request method; %s' % method)
         request = RequestWithMethod(url, method, data)
 
         # add the custom agent header, to help prevent issues

@@ -28,7 +28,6 @@ options:
     description:
     - The HTTP Method of the request or response.
     type: str
-    choices: [ CONNECT, DELETE, GET, HEAD, MERGE, OPTIONS, PATCH, POST, PUT, REFRESH, TRACE ]
     default: GET
   content_type:
     description:
