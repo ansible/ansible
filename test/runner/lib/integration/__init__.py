@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import contextlib
+import json
 import os
 import shutil
 import tempfile
@@ -22,12 +23,15 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
-    format_yaml,
     named_temporary_file,
 )
 
 from lib.cache import (
     CommonCache,
+)
+
+from lib.cloud import (
+    CloudEnvironmentConfig,
 )
 
 
@@ -201,18 +205,18 @@ def integration_test_config_file(args, env_config, integration_dir):
         yield None
         return
 
-    config_file = '''
-%s
-ansible_test:
-  environment:%s
-  module_defaults:%s
-''' % (format_yaml(env_config.ansible_vars, env_config.ansible_vars_yaml, indent=0),
-       format_yaml(env_config.env_vars),
-       format_yaml(env_config.module_defaults))
+    config_vars = (env_config.ansible_vars or {}).copy()
 
-    config_file = config_file.lstrip()
+    config_vars.update(dict(
+        ansible_test=dict(
+            environment=env_config.env_vars,
+            module_defaults=env_config.module_defaults,
+        )
+    ))
 
-    with named_temporary_file(args, 'config-file-', '.yml', integration_dir, config_file) as path:
+    config_file = json.dumps(config_vars, indent=4, sort_keys=True)
+
+    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:
         filename = os.path.relpath(path, integration_dir)
 
         display.info('>>> Config File: %s\n%s' % (filename, config_file), verbosity=3)

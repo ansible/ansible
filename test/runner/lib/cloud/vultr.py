@@ -19,7 +19,7 @@ class VultrCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(VultrCloudProvider, self).__init__(args, config_extension='.ini')
+        super(VultrCloudProvider, self).__init__(args)
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.

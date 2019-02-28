@@ -8,7 +8,7 @@ from lib.cloud import (
 
 from lib.util import (
     display,
-    read_lines_without_comments,
+    ConfigParser,
 )
 
 
@@ -49,13 +49,15 @@ class OpenNebulaCloudEnvironment(CloudEnvironment):
         """
         :rtype: CloudEnvironmentConfig
         """
+        parser = ConfigParser()
+        parser.read(self.config_path)
+
         ansible_vars = dict(
             resource_prefix=self.resource_prefix,
         )
 
-        ansible_vars_yaml = read_lines_without_comments(self.config_path, remove_blank_lines=True)
+        ansible_vars.update(dict(parser.items('default')))
 
         return CloudEnvironmentConfig(
             ansible_vars=ansible_vars,
-            ansible_vars_yaml=ansible_vars_yaml,
         )

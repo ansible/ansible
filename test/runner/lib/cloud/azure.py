@@ -7,6 +7,7 @@ from lib.util import (
     ApplicationError,
     display,
     is_shippable,
+    ConfigParser,
 )
 
 from lib.cloud import (
@@ -168,9 +169,10 @@ def get_config(config_path):
     :type config_path: str
     :rtype: dict[str, str]
     """
-    with open(config_path, 'r') as config_fd:
-        lines = [line for line in config_fd.read().splitlines() if ':' in line and line.strip() and not line.strip().startswith('#')]
-        config = dict((kvp[0].strip(), kvp[1].strip()) for kvp in [line.split(':', 1) for line in lines])
+    parser = ConfigParser()
+    parser.read(config_path)
+
+    config = dict(parser.items('default'))
 
     rg_vars = (
         'RESOURCE_GROUP',

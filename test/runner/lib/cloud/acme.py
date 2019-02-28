@@ -38,7 +38,7 @@ class ACMEProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(ACMEProvider, self).__init__(args, config_extension='.ini')
+        super(ACMEProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):

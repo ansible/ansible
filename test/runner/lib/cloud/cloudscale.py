@@ -26,7 +26,7 @@ class CloudscaleCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(CloudscaleCloudProvider, self).__init__(args, config_extension='.ini')
+        super(CloudscaleCloudProvider, self).__init__(args)
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -69,7 +69,7 @@ class CloudscaleCloudEnvironment(CloudEnvironment):
             cloudscale_resource_prefix=self.resource_prefix,
         )
 
-        env_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
+        ansible_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
 
         return CloudEnvironmentConfig(
             env_vars=env_vars,

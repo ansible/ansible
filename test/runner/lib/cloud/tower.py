@@ -30,7 +30,7 @@ class TowerCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(TowerCloudProvider, self).__init__(args, config_extension='.cfg')
+        super(TowerCloudProvider, self).__init__(args)
 
         self.aci = None
         self.version = ''
@@ -220,7 +220,7 @@ class TowerConfig(object):
             'password',
         )
 
-        values = dict((k, parser.get('general', k)) for k in keys)
+        values = dict((k, parser.get('default', k)) for k in keys)
         config = TowerConfig(values)
 
         missing = [k for k in keys if not values.get(k)]

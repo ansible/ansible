@@ -107,36 +107,6 @@ def read_lines_without_comments(path, remove_blank_lines=False):
     return lines
 
 
-def format_yaml(data=None, raw=None, indent=4, have_key=True):
-    """
-    :type data: dict[str, any] | list[any] | str
-    :type raw: list[str]
-    :type indent: int
-    :type have_key: bool
-    :rtype: str
-    """
-    if not data and not raw:
-        return ''
-
-    result = ''
-
-    if raw:
-        result += '\n' + '\n'.join(['%s%s' % (' ' * indent, line) for line in raw])
-
-    if isinstance(data, dict):
-        if have_key:
-            result += '\n'
-
-        result += '\n'.join(['%s%s: %s' % (' ' * indent, key, format_yaml(data=data[key], indent=indent + 2, have_key=True)) for key in sorted(data)])
-    elif isinstance(data, list):
-        result += '\n'
-        result += '\n'.join(['%s- %s' % (' ' * indent, format_yaml(data=item, indent=indent + 2, have_key=False)) for item in data])
-    else:
-        result += '%s' % data
-
-    return result
-
-
 def find_executable(executable, cwd=None, path=None, required=True):
     """
     :type executable: str

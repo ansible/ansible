@@ -34,6 +34,7 @@ from lib.cloud import (
     cloud_init,
     get_cloud_environment,
     get_cloud_platforms,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -55,7 +56,6 @@ from lib.util import (
     find_python,
     get_docker_completion,
     named_temporary_file,
-    format_yaml,
 )
 
 from lib.docker_util import (
@@ -1213,28 +1213,33 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
         if cloud_environment:
             env_config = cloud_environment.get_environment_config()
 
-    playbook = '''
-- hosts: %s
-  gather_facts: %s
-  vars:%s
-  environment:%s
-  module_defaults:%s
-  roles:
-    - { role: %s }
-    ''' % (hosts,
-           gather_facts,
-           format_yaml(env_config.ansible_vars if env_config else None, env_config.ansible_vars_yaml if env_config else None),
-           format_yaml(env_config.env_vars if env_config else None),
-           format_yaml(env_config.module_defaults if env_config else None),
-           target.name)
-
     with integration_test_environment(args, target, inventory_path) as test_env:
+        play = dict(
+            hosts=hosts,
+            gather_facts=gather_facts,
+            vars_files=[
+                test_env.vars_file,
+            ],
+            roles=[
+                target.name,
+            ],
+        )
+
+        if env_config:
+            play.update(dict(
+                vars=env_config.ansible_vars,
+                environment=env_config.env_vars,
+                module_defaults=env_config.module_defaults,
+            ))
+
+        playbook = json.dumps([play], indent=4, sort_keys=True)
+
         with named_temporary_file(args=args, directory=test_env.integration_dir, prefix='%s-' % target.name, suffix='.yml', content=playbook) as playbook_path:
             filename = os.path.basename(playbook_path)
 
             display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
-            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path, '-e', '@%s' % test_env.vars_file]
+            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path]
 
             if start_at_task:
                 cmd += ['--start-at-task', start_at_task]

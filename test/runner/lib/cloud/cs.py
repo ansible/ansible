@@ -46,7 +46,7 @@ class CsCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(CsCloudProvider, self).__init__(args, config_extension='.ini')
+        super(CsCloudProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
@@ -270,11 +270,13 @@ class CsCloudEnvironment(CloudEnvironment):
         parser = ConfigParser()
         parser.read(self.config_path)
 
+        config = dict(parser.items('default'))
+
         env_vars = dict(
-            CLOUDSTACK_ENDPOINT=parser.get('cloudstack', 'endpoint'),
-            CLOUDSTACK_KEY=parser.get('cloudstack', 'key'),
-            CLOUDSTACK_SECRET=parser.get('cloudstack', 'secret'),
-            CLOUDSTACK_TIMEOUT=parser.get('cloudstack', 'timeout'),
+            CLOUDSTACK_ENDPOINT=config['endpoint'],
+            CLOUDSTACK_KEY=config['key'],
+            CLOUDSTACK_SECRET=config['secret'],
+            CLOUDSTACK_TIMEOUT=config['timeout'],
         )
 
         ansible_vars = dict(
