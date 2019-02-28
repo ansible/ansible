@@ -24,6 +24,7 @@ import pytest
 import ansible.errors
 
 from ansible.executor import module_common as amc
+from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.module_utils.six import PY2
 
 
@@ -105,7 +106,10 @@ def templar():
 class TestGetShebang(object):
     """Note: We may want to change the API of this function in the future.  It isn't a great API"""
     def test_no_interpreter_set(self, templar):
-        assert amc._get_shebang(u'/usr/bin/python', {}, templar) == (None, u'/usr/bin/python')
+        # normally this would return /usr/bin/python, but so long as we're defaulting to auto python discovery, we'll get
+        # an InterpreterDiscoveryRequiredError here instead
+        with pytest.raises(InterpreterDiscoveryRequiredError):
+            amc._get_shebang(u'/usr/bin/python', {}, templar)
 
     def test_non_python_interpreter(self, templar):
         assert amc._get_shebang(u'/usr/bin/ruby', {}, templar) == (None, u'/usr/bin/ruby')
