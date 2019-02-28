@@ -43,11 +43,14 @@
 
 - set_fact:
     new_value: "Centimeters"
-  when: apple_measure_value['value'] == 'Inches' or apple_measure_value['value'] == None
+    new_value_accented: "Centiméters"
+  when: apple_measure_value['value'] == 'Inches' or apple_measure_value['value'] == 'Inchés' or apple_measure_value['value'] == None
 
 - set_fact:
     new_value: "Inches"
-  when: apple_measure_value['value'] == 'Centimeters'
+    new_value_accented: "Inchés"
+  when: apple_measure_value['value'] == 'Centimeters' or apple_measure_value['value'] == 'Centiméters'
+
 
 - name: Change value of AppleMeasurementUnits to {{ new_value }}
   osx_defaults:
@@ -76,6 +79,37 @@
   assert:
     that:
     - not change_value.changed
+
+
+- name: Change value of AppleMeasurementUnits to {{ new_value_accented }}
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    value: "{{ new_value_accented }}"
+    state: present
+  register: change_value
+
+- name: Test if AppleMeasurementUnits value is changed to {{ new_value_accented }}
+  assert:
+    that:
+    - change_value.changed
+
+- name: Again change value of AppleMeasurementUnits to {{ new_value_accented }}
+  osx_defaults:
+    domain: NSGlobalDomain
+    key: AppleMeasurementUnits
+    type: string
+    value: "{{ new_value_accented }}"
+    state: present
+  register: change_value
+
+- name: Again test if AppleMeasurementUnits value is not changed to {{ new_value_accented }}
+  assert:
+    that:
+    - not change_value.changed
+
+
 
 - name: Check a fake setting for delete operation
   osx_defaults:

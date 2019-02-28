@@ -255,6 +255,8 @@ class OSXDefaults(object):
         # Now get the current value
         rc, out, err = self.module.run_command(self._base_command() + ["read", self.domain, self.key])
 
+        out = out.encode("ascii").decode('unicode-escape')
+
         # Strip output
         out = out.strip()
 
