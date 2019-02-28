@@ -223,6 +223,10 @@ A future release of Ansible will make these checks case sensitive.
 
 The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options would be ignored but are now not.
 
+The file module defaults to ``recurse=no`` but didn't respect that value when deleting directories, it would always
+complete a tree delete.  Tasks removing directories will need to explicitly add ``recurse=yes`` if they want to remove
+a directory tree.  When unspecified or no, ``state=absent`` will only remove an empty directory.
+
 Modules removed
 ---------------
 
