@@ -45,9 +45,11 @@ files:
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo tedder
   $modules/cloud/amazon/aws_api_gateway.py: willthames
-  $modules/cloud/amazon/aws_kms.py: willthames
+  $modules/cloud/amazon/aws_kms.py:
+    maintainers: willthames
     ignored: tedder
-  $modules/cloud/amazon/cloudformation.py: ryansb
+  $modules/cloud/amazon/cloudformation.py:
+    maintainers: ryansb
     ignored: tedder
   $modules/cloud/amazon/cloudfront_facts.py: willthames
   $modules/cloud/amazon/cloudtrail.py: $team_ansible
