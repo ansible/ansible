@@ -211,7 +211,6 @@ class PortMake(object):
                 # rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" % (package_without_digits))
         return occurrences
 
-    
     def remove_package(self, package):
         """
         removes a single package using system's pkg and cleans up all corresponding options in make.conf
