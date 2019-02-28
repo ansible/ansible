@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2016 Red Hat, Inc.
+# Copyright: (c) 2016, Red Hat, Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -30,7 +30,9 @@ options:
     default: "self-heal"
     choices: ["self-heal", "rebalance"]
     description:
-      - Determines which facts are to be returned. If the status_filter is
+      - Determines which facts are to be returned.
+      - If the C(status_filter) is C(self-heal), status of self-heal, along with the number of files still in process are returned.
+      - If the C(status_filter) is C(rebalance), rebalance status is returned.
         self-heal, status of self-heal, along with the number of files still
         in process are returned. If status_filter is rebalance,
         rebalance status is returned.
@@ -39,7 +41,13 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Gather facts about all gluster hosts in the cluster and return self-heal
+- name: Gather self-heal facts about all gluster hosts in the cluster
+  gluster_heal_facts:
+    name: test_volume
+    status_filter: self-heal
+  register: self_heal_status
+- debug:
+    var: self_heal_status
 # status along with the number of files still in process:
 - gluster_heal_facts:
     name: test_volume
@@ -93,7 +101,7 @@ def run_gluster(gargs, **kwargs):
 
 
 def get_self_heal_status(name):
-    out = run_gluster(['volume', 'heal', name, 'info'])
+    out = run_gluster(['volume', 'heal', name, 'info'], environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
     raw_out = out.split("\n")
     heal_info = []
     # return files that still need healing.
