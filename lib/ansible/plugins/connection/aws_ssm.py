@@ -139,9 +139,8 @@ class Connection(ConnectionBase):
 
         self._play_context.remote_user = getpass.getuser()
 
-        if not self._connected:
+        if not self._session_id:
             self.start_session()
-            self._connected = True
         return self
 
     def start_session(self):
@@ -316,7 +315,7 @@ class Connection(ConnectionBase):
 
     def close(self):
         ''' terminate the connection '''
-        if self.connected:
+        if self._session_id:
 
             display.vvv(u"CLOSING SSM CONNECTION TO: {0}".format(self.get_option('instance_id')), host=self.host)
             if self._timeout:
@@ -333,5 +332,4 @@ class Connection(ConnectionBase):
 
             display.vvvv(u"TERMINATE SSM SESSION: {0}".format(cmd), host=self.host)
             subprocess.check_output(cmd)
-
-            self._connected = False
+            self._session_id = ''
