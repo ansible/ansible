@@ -563,15 +563,6 @@ if there are. This recursively sorts the dicts and makes them hashable before co
 This method should be used any time policies are being compared so that a change in order
 doesn't result in unnecessary changes.
 
-#### sort_json_policy_dict
-
-Pass any JSON policy dict to this function in order to sort any list contained therein. This is
-useful because AWS rarely return lists in the same order that they were submitted so without this
-function, comparison of identical policies returns false.
-
-Note if your goal is to check if two policies are the same you're better to use the `compare_policies`
-helper which sorts recursively.
-
 #### compare_aws_tags
 
 Pass two dicts of tags and an optional purge parameter and this function will return a dict
