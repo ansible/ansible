@@ -1707,7 +1707,7 @@ def main():
                     message=dict(type='str', required=False),
                     send_to_groups=dict(type='list', required=False),
                     send_to_users=dict(type='list', required=False),
-                    # when type is remote_command or remove_from_host_group
+                    # when type is add_to_host_group or remove_from_host_group
                     host_groups=dict(type='list', required=False),
                     # when type is set_host_inventory_mode
                     inventory=dict(type='str', required=False),
@@ -1749,8 +1749,174 @@ def main():
                     ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
                 ]
             ),
-            recovery_operations=dict(type='list', required=False, default=[]),
-            acknowledge_operations=dict(type='list', required=False, default=[])
+            recovery_operations=dict(
+                type='list',
+                required=False,
+                default=[],
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'notify_all_involved'
+                        ]
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command',
+                        ['run_on_groups',
+                         'run_on_hosts'], True
+                    ],
+                    ['command_type', 'custom_script',
+                        ['command',
+                         'execute_on']
+                    ],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh',
+                        ['command',
+                         'password',
+                         'username',
+                         'port',
+                         'ssh_auth_type',
+                         'ssh_privatekey_file',
+                         'ssh_publickey_file']
+                    ],
+                    ['command_type', 'telnet',
+                        ['command',
+                         'password',
+                         'username',
+                         'port']
+                    ],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            ),
+            acknowledge_operations=dict(
+                type='list',
+                required=False,
+                default=[],
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'notify_all_involved'
+                        ]
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command',
+                        ['run_on_groups',
+                         'run_on_hosts'], True
+                    ],
+                    ['command_type', 'custom_script',
+                        ['command',
+                         'execute_on']
+                    ],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh',
+                        ['command',
+                         'password',
+                         'username',
+                         'port',
+                         'ssh_auth_type',
+                         'ssh_privatekey_file',
+                         'ssh_publickey_file']
+                    ],
+                    ['command_type', 'telnet',
+                        ['command',
+                         'password',
+                         'username',
+                         'port']
+                    ],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            )
         ),
         supports_check_mode=True
     )
