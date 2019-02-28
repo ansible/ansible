@@ -53,13 +53,16 @@ options:
       - buildkite
       - campfire
       - custom-issue-tracker
+      - discord
       - drone-ci
       - emails-on-push
       - external-wiki
       - flowdock
-      - gemnasium
-      - hipchat
+      - github
+      - hangouts-chat
       - irker
+      - jenkins
+      - jenkins-deprecated
       - jira
       - kubernetes
       - mattermost
@@ -74,6 +77,7 @@ options:
       - slack
       - slack-slash-commands
       - teamcity
+      - youtrack
   params:
     description:
       - The description of the service, see documentation U(https://docs.gitlab.com/ee/api/services.html)
