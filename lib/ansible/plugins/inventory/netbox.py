@@ -449,7 +449,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         self.api_endpoint = self.get_option("api_endpoint")
         # Handle extra "/" from api_endpoint configuration and trim if necessary, see PR#49943
         if self.api_endpoint.endswith("/"):
-            self.api_endpoint = self.get_option("api_endpoint")[:-1]
+            self.api_endpoint = self.get_option("api_endpoint").strip('/')
         else:
             self.api_endpoint = self.get_option("api_endpoint")
         self.timeout = self.get_option("timeout")
