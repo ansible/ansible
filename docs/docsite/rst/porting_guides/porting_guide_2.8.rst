@@ -128,6 +128,8 @@ PowerShell module options and option choices are currently case insensitive to w
 specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
 A future release of Ansible will make these checks case sensitive.
 
+The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options would be ignored but are now not.
+
 Modules removed
 ---------------
 
