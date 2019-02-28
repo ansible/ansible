@@ -336,6 +336,20 @@
     - get_custom_header.json.headers['Test-Header'] == 'hello'
     - get_custom_header.json.headers['Another-Header'] == 'world'
 
+- name: Validate invalid method
+  win_uri:
+    url: https://{{ httpbin_host }}/anything
+    method: UNKNOWN
+  register: invalid_method
+  ignore_errors: yes
+
+- name: Assert invalid method fails
+  assert:
+    that:
+    - invalid_method is failure
+    - invalid_method.status_code == 405
+    - invalid_method.status_description == 'METHOD NOT ALLOWED'
+
 # client cert auth tests
 
 - name: get request with timeout
