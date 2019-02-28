@@ -71,20 +71,20 @@ options:
     description:
       - Creates the account under the specified role name or id.
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   ldap_domain:
     description:
       - Name of the LDAP group or OU to bind.
       - If set, account will be linked to LDAP.
     type: str
-    version_added: 2.8
+    version_added: '2.8'
   ldap_type:
     description:
       - Type of the ldap name. GROUP or OU, defaults to GROUP.
     type: str
     choices: [ GROUP, OU ]
     default: GROUP
-    version_added: 2.8
+    version_added: '2.8'
   state:
     description:
       - State of the account.
