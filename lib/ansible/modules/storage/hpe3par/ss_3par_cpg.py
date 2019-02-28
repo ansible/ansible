@@ -91,7 +91,7 @@ options:
     type: bool
     default: no
 extends_documentation_fragment: hpe3par
-version_added: "2.8"
+version_added: '2.8'
 '''
 
 
