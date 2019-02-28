@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
@@ -29,93 +15,104 @@ module: cs_host
 short_description: Manages hosts on Apache CloudStack based clouds.
 description:
   - Create, update and remove hosts.
-version_added: "2.3"
-author: "René Moser (@resmo)"
+version_added: '2.3'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the host.
+    type: str
     required: true
-    aliases: [ 'ip_address' ]
+    aliases: [ ip_address ]
   url:
     description:
       - Url of the host used to create a host.
-      - If not provided, C(http://) and param C(name) is used as url.
-      - Only considered if C(state=present) and host does not yet exist.
+      - If not provided, C(http://) and param I(name) is used as url.
+      - Only considered if I(state=present) and host does not yet exist.
+    type: str
   username:
     description:
       - Username for the host.
-      - Required if C(state=present) and host does not yet exist.
+      - Required if I(state=present) and host does not yet exist.
+    type: str
   password:
     description:
       - Password for the host.
-      - Required if C(state=present) and host does not yet exist.
+      - Required if I(state=present) and host does not yet exist.
+    type: str
   pod:
     description:
       - Name of the pod.
-      - Required if C(state=present) and host does not yet exist.
+      - Required if I(state=present) and host does not yet exist.
+    type: str
   cluster:
     description:
       - Name of the cluster.
+    type: str
   hypervisor:
     description:
       - Name of the cluster.
-      - Required if C(state=present) and host does not yet exist.
-    choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator' ]
+      - Required if I(state=present) and host does not yet exist.
+    type: str
+    choices: [ KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator ]
   allocation_state:
     description:
       - Allocation state of the host.
-    choices: [ 'enabled', 'disabled' ]
+    type: str
+    choices: [ enabled, disabled, maintenance ]
   host_tags:
     description:
       - Tags of the host.
+    type: list
     aliases: [ host_tag ]
   state:
     description:
       - State of the host.
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, absent ]
   zone:
     description:
       - Name of the zone in which the host should be deployed.
       - If not set, default zone is used.
+    type: str
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Ensure a host is present but disabled
-  local_action:
-    module: cs_host
-    name: ix-pod01-esx01.example.com
-    cluster: vcenter.example.com/ch-zrh-ix/pod01-cluster01
+  cs_host:
+    name: pod01.zone01.example.com
+    cluster: vcenter.example.com/zone01/cluster01
     pod: pod01
-    zone: ch-zrh-ix-01
+    zone: zone01
     hypervisor: VMware
     allocation_state: disabled
     host_tags:
     - perf
     - gpu
+  delegate_to: localhost
 
 - name: Ensure an existing host is disabled
-  local_action:
-    module: cs_host
-    name: ix-pod01-esx01.example.com
-    zone: ch-zrh-ix-01
+  cs_host:
+    name: pod01.zone01.example.com
+    zone: zone01
     allocation_state: disabled
+  delegate_to: localhost
 
 - name: Ensure an existing host is enabled
-  local_action:
-    module: cs_host
-    name: ix-pod01-esx01.example.com
-    zone: ch-zrh-ix-01
+  cs_host:
+    name: pod01.zone01.example.com
+    zone: zone01
     allocation_state: enabled
+  delegate_to: localhost
 
 - name: Ensure a host is absent
-  local_action:
-    module: cs_host
-    name: ix-pod01-esx01.example.com
-    zone: ch-zrh-ix-01
+  cs_host:
+    name: pod01.zone01.example.com
+    zone: zone01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''

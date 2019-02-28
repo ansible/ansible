@@ -17,123 +17,138 @@ short_description: Manages firewall rules on Apache CloudStack based clouds.
 description:
     - Creates and removes firewall rules.
 version_added: '2.0'
-author: "René Moser (@resmo)"
+author: René Moser (@resmo)
 options:
   ip_address:
     description:
       - Public IP address the ingress rule is assigned to.
-      - Required if C(type=ingress).
+      - Required if I(type=ingress).
+    type: str
   network:
     description:
       - Network the egress rule is related to.
-      - Required if C(type=egress).
+      - Required if I(type=egress).
+    type: str
   state:
     description:
       - State of the firewall rule.
+    type: str
     default: present
     choices: [ present, absent ]
   type:
     description:
       - Type of the firewall rule.
+    type: str
     default: ingress
     choices: [ ingress, egress ]
   protocol:
     description:
       - Protocol of the firewall rule.
-      - C(all) is only available if C(type=egress).
+      - C(all) is only available if I(type=egress).
+    type: str
     default: tcp
     choices: [ tcp, udp, icmp, all ]
   cidrs:
     description:
       - List of CIDRs (full notation) to be used for firewall rule.
       - Since version 2.5, it is a list of CIDR.
+    type: list
     default: 0.0.0.0/0
     aliases: [ cidr ]
   start_port:
     description:
       - Start port for this rule.
-      - Considered if C(protocol=tcp) or C(protocol=udp).
+      - Considered if I(protocol=tcp) or I(protocol=udp).
+    type: int
     aliases: [ port ]
   end_port:
     description:
-      - End port for this rule. Considered if C(protocol=tcp) or C(protocol=udp).
-      - If not specified, equal C(start_port).
+      - End port for this rule. Considered if I(protocol=tcp) or I(protocol=udp).
+      - If not specified, equal I(start_port).
+    type: int
   icmp_type:
     description:
       - Type of the icmp message being sent.
-      - Considered if C(protocol=icmp).
+      - Considered if I(protocol=icmp).
+    type: int
   icmp_code:
     description:
       - Error code for this icmp message.
-      - Considered if C(protocol=icmp).
+      - Considered if I(protocol=icmp).
+    type: int
   domain:
     description:
       - Domain the firewall rule is related to.
+    type: str
   account:
     description:
       - Account the firewall rule is related to.
+    type: str
   project:
     description:
       - Name of the project the firewall rule is related to.
+    type: str
   zone:
     description:
       - Name of the zone in which the virtual machine is in.
       - If not set, default zone is used.
+    type: str
   poll_async:
     description:
       - Poll async jobs until job has finished.
-    default: true
     type: bool
+    default: yes
   tags:
     description:
-      - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
-      - "To delete all tags, set a empty list e.g. C(tags: [])."
+      - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
+      - "To delete all tags, set an empty list e.g. I(tags: [])."
+    type: list
     aliases: [ tag ]
-    version_added: "2.4"
+    version_added: '2.4'
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
 - name: Allow inbound port 80/tcp from 1.2.3.4 to 4.3.2.1
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     ip_address: 4.3.2.1
     port: 80
     cidr: 1.2.3.4/32
+  delegate_to: localhost
 
 - name: Allow inbound tcp/udp port 53 to 4.3.2.1
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     ip_address: 4.3.2.1
     port: 53
     protocol: '{{ item }}'
   with_items:
   - tcp
   - udp
+  delegate_to: localhost
 
 - name: Ensure firewall rule is removed
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     ip_address: 4.3.2.1
     start_port: 8000
     end_port: 8888
     cidr: 17.0.0.0/8
     state: absent
+  delegate_to: localhost
 
 - name: Allow all outbound traffic
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     network: my_network
     type: egress
     protocol: all
+  delegate_to: localhost
 
 - name: Allow only HTTP outbound traffic for an IP
-  local_action:
-    module: cs_firewall
+  cs_firewall:
     network: my_network
     type: egress
     port: 80
     cidr: 10.101.1.20
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -163,7 +178,7 @@ cidrs:
   returned: success
   type: list
   sample: [ '0.0.0.0/0' ]
-  version_added: "2.5"
+  version_added: '2.5'
 protocol:
   description: Protocol of the rule.
   returned: success
