@@ -1418,7 +1418,8 @@ class ModuleValidator(Validator):
                 version_added = StrictVersion(
                     str(details.get('version_added', '0.0'))
                 )
-            except ValueError:
+                version_added.version
+            except (ValueError, AttributeError):
                 version_added = details.get('version_added', '0.0')
                 self.reporter.error(
                     path=self.object_path,
