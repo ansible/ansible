@@ -81,7 +81,8 @@ options:
   modification_time:
     description:
     - This parameter indicates the time the file's modification time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, C(float) when using C(raw) time format, or C(now).
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, 
+      C(float) when using C(raw) time format, or C(now).
     - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
     type: str
     version_added: "2.7"
@@ -95,7 +96,8 @@ options:
   access_time:
     description:
     - This parameter indicates the time the file's access time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, C(float) when using C(raw) time format, or C(now).
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, 
+      C(float) when using C(raw) time format, or C(now).
     - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
     type: str
     version_added: '2.7'
