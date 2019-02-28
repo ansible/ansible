@@ -81,28 +81,28 @@ options:
   modification_time:
     description:
     - This parameter indicates the time the file's modification time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, C(float) when using C(raw) time format, or C(now).
     - Default is None meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
     type: str
     version_added: "2.7"
   modification_time_format:
     description:
     - When used with C(modification_time), indicates the time format that must be used.
-    - Based on default Python format (see time.strftime doc).
+    - Based on default Python format (see time.strftime doc) or C(raw) when you want to use time as a floating point number.
     type: str
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
   access_time:
     description:
     - This parameter indicates the time the file's access time should be set to.
-    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, or C(now).
+    - Should be C(preserve) when no modification is required, C(YYYYMMDDHHMM.SS) when using default time format, C(float) when using C(raw) time format, or C(now).
     - Default is C(None) meaning that C(preserve) is the default for C(state=[file,directory,link,hard]) and C(now) is default for C(state=touch).
     type: str
     version_added: '2.7'
   access_time_format:
     description:
     - When used with C(access_time), indicates the time format that must be used.
-    - Based on default Python format (see time.strftime doc).
+    - Based on default Python format (see time.strftime doc) or C(raw) when you want to use time as a floating point number.
     type: str
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
@@ -357,6 +357,14 @@ def get_timestamp_for_time(formatted_time, time_format):
     elif formatted_time == 'now':
         return Sentinel
     else:
+        if time_format == 'raw':
+            try:
+                return float(formatted_time)
+            except ValueError as e:
+                raise AnsibleModuleError(
+                    results={
+                        'msg': 'Bad format for the timestamp. It should be an integer or floating point number'
+                               ': %s' % to_native(e, nonstring='simplerepr')})
         try:
             struct = time.strptime(formatted_time, time_format)
             struct_time = time.mktime(struct)
