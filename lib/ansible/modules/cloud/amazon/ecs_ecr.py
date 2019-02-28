@@ -134,7 +134,8 @@ except ImportError:
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
-                                      get_aws_connection_info, sort_json_policy_dict)
+                                      get_aws_connection_info, compare_policies)
+from ansible.module_utils.six import string_types
 
 
 def build_kwargs(registry_id):
@@ -250,6 +251,15 @@ class EcsEcr:
             return None
 
 
+def sort_lists_of_strings(policy):
+    for statement_index in range(0, len(policy.get('Statement', []))):
+        for key in policy['Statement'][statement_index]:
+            value = policy['Statement'][statement_index][key]
+            if isinstance(value, list) and all(isinstance(item, string_types) for item in value):
+                policy['Statement'][statement_index][key] = sorted(value)
+    return policy
+
+
 def run(ecr, params, verbosity):
     # type: (EcsEcr, dict, int) -> Tuple[bool, dict]
     result = {}
@@ -292,19 +302,21 @@ def run(ecr, params, verbosity):
 
             elif policy_text is not None:
                 try:
-                    policy = sort_json_policy_dict(policy)
+                    # Sort any lists containing only string types
+                    policy = sort_lists_of_strings(policy)
+
                     if verbosity >= 2:
                         result['policy'] = policy
                     original_policy = ecr.get_repository_policy(
                         registry_id, name)
 
                     if original_policy:
-                        original_policy = sort_json_policy_dict(original_policy)
+                        original_policy = sort_lists_of_strings(original_policy)
 
                     if verbosity >= 3:
                         result['original_policy'] = original_policy
 
-                    if original_policy != policy:
+                    if compare_policies(original_policy, policy):
                         ecr.set_repository_policy(
                             registry_id, name, policy_text, force_set_policy)
                         result['changed'] = True
