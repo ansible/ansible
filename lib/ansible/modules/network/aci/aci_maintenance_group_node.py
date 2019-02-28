@@ -29,7 +29,7 @@ options:
         required: true
     node:
         description:
-            - node to be added to the maintenance group - the value equals the NodeID
+            - node to be added to the maintenance group - the value equals the nodeid
         required: true
     state:
         description:
