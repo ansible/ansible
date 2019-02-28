@@ -79,7 +79,7 @@ class ActionModule(ActionBase):
                 for module in jobs:
                     poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
                     res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
-                    if 'finished' in res:
+                    if res.get('finished', 0) == 1:
                         if res.get('failed', False):
                             failed[module] = res.get('msg')
                         elif res.get('skipped', False):
@@ -88,6 +88,8 @@ class ActionModule(ActionBase):
                             result = combine_vars(result, {'ansible_facts': res.get('ansible_facts', {})})
                         del jobs[module]
                         break
+                    else:
+                        time.sleep(0.1)
                 else:
                     time.sleep(0.5)
 
