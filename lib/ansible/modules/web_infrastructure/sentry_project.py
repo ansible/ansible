@@ -61,10 +61,15 @@ author: "Mikhail Naletov (@okgolove)"
 '''
 
 EXAMPLES = '''
-# Manage the state of program "httpd" to be in "started" state.
-- monit:
-    name: httpd
-    state: started
+# Create project "backend" in "example" organization and "senior" team
+- sentry_project:
+    api_token: 1234567890abcdwxyz
+    organization: example
+    project_name: backend
+    project_slug: backend
+    state: present
+    team: senior
+    url: https://sentry.example.com
 '''
 
 RETURN = ''' # '''
