@@ -1663,7 +1663,7 @@ PYTHON_MODULE_RLIMIT_NOFILE:
   version_added: '2.8'
 RETRY_FILES_ENABLED:
   name: Retry files
-  default: True
+  default: False
   description: This controls whether a failed Ansible playbook should create a .retry file.
   env: [{name: ANSIBLE_RETRY_FILES_ENABLED}]
   ini:
