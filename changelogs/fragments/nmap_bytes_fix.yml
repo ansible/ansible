@@ -1,0 +1,2 @@
+bugfixes:
+    - convert input into text to ensure valid comparisons in nmap inventory plugin
