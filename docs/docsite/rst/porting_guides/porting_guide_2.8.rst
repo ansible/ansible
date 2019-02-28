@@ -141,6 +141,12 @@ options:
   #. Use ``auto_legacy``. This setting lets Ansible find and use the workaround Python on hosts that have it, while also finding the correct default Python on newer hosts. But remember, the default will change in 4 releases.
 
 
+Retry File Creation default
+---------------------------
+
+In Ansible 2.8, ``retry_files_enabled`` now defaults to ``False`` instead of ``True``.  The behavior can be
+modified to previous version by editing the default ``ansible.cfg`` file and setting the value to ``True``.
+
 Command Line
 ============
 
