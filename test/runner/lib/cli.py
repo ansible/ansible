@@ -322,12 +322,12 @@ def parse_args():
     add_httptester_options(posix_integration, argparse)
 
     aws_ssm_integration = subparsers.add_parser('aws-ssm-integration',
-                                              parents=[integration],
-                                              help='aws ssm integration tests')
+                                                parents=[integration],
+                                                help='aws ssm integration tests')
 
     aws_ssm_integration.set_defaults(func=command_aws_ssm_integration,
-                                   targets=walk_aws_ssm_integration_targets,
-                                   config=AwsSsmIntegrationConfig)
+                                     targets=walk_aws_ssm_integration_targets,
+                                     config=AwsSsmIntegrationConfig)
 
     add_extra_docker_options(aws_ssm_integration)
     add_httptester_options(aws_ssm_integration, argparse)
