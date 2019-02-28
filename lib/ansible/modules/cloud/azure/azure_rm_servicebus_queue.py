@@ -229,10 +229,6 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
 
         changed = False
 
-        if not self.location:
-            resource_group = self.get_resource_group(self.resource_group)
-            self.location = resource_group.location
-
         original = self.get()
         if self.state == 'present':
             # Create the resource instance
