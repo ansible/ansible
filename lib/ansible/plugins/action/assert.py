@@ -21,13 +21,14 @@ from ansible.errors import AnsibleError
 from ansible.playbook.conditional import Conditional
 from ansible.plugins.action import ActionBase
 from ansible.module_utils.six import string_types
+from ansible.module_utils.parsing.convert_bool import boolean
 
 
 class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('fail_msg', 'msg', 'success_msg', 'that'))
+    _VALID_ARGS = frozenset(('fail_msg', 'msg', 'quiet', 'success_msg', 'that'))
 
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
@@ -54,6 +55,8 @@ class ActionModule(ActionBase):
         elif not isinstance(success_msg, string_types):
             raise AnsibleError('Incorrect type for success_msg, expected string and got %s' % type(success_msg))
 
+        quiet = boolean(self._task.args.get('quiet', False), strict=False)
+
         # make sure the 'that' items are a list
         thats = self._task.args['that']
         if not isinstance(thats, list):
@@ -65,7 +68,9 @@ class ActionModule(ActionBase):
         # by this point, and is not used again, so we don't care about mangling
         # that value now
         cond = Conditional(loader=self._loader)
-        result['_ansible_verbose_always'] = True
+        if not quiet:
+            result['_ansible_verbose_always'] = True
+
         for that in thats:
             cond.when = [that]
             test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
