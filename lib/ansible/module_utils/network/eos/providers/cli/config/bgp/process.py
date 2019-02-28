@@ -156,7 +156,7 @@ class Provider(CliProvider):
                 for item in address_family:
                     if item['networks']:
                         raise ValueError('operation is replace but provided both root level networks and networks under %s address family'
-                                             % item['afi'])
+                                         % item['afi'])
 
             if config and device_has_AF(config):
                 raise ValueError('operation is replace and device has one or more address family activated but root level network(s) provided')
