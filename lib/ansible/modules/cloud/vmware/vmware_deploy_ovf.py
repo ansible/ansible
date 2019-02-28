@@ -164,7 +164,8 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.urls import generic_urlparse, open_url, urlparse, urlunparse
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
                                          find_network_by_name, find_resource_pool_by_name, find_vm_by_name, find_cluster_by_name,
-                                         gather_vm_facts, vmware_argument_spec, wait_for_task, wait_for_vm_ip)
+                                         gather_vm_facts, vmware_argument_spec, wait_for_task, wait_for_vm_ip,
+                                         find_resource_pool_by_name_cluster_or_host)
 try:
     from ansible.module_utils.vmware import vim
     from pyVmomi import vmodl
@@ -308,26 +309,12 @@ class VMwareDeployOvf:
             self.module.fail_json(msg='%(datacenter)s could not be located' % self.params)
 
         if self.params['cluster']:
-            cluster = find_cluster_by_name(self.si, self.params['cluster'])
-            if cluster is None:
-                self.module.fail_json(msg="Unable to find cluster '%(cluster)s'" % self.params)
-            if self.params['resource_pool'] != 'Resources':
-                resource_pools = cluster.resourcePool.resourcePool
-                rp_exist = False
-                if len(resource_pools) != 0:
-                    for rp in resource_pools:
-                        if rp.name == self.params['resource_pool']:
-                            self.resource_pool = rp
-                            rp_exist = True
-                            break
-                if not rp_exist:
-                    self.module.fail_json(msg="Unable to find resource pool %(resource_pool)s in cluster '%(cluster)s'" % self.params)
-            else:
-                self.resource_pool = cluster.resourcePool
+            self.resource_pool = find_resource_pool_by_name_cluster_or_host(self.module, self.si, self.params['resource_pool'],
+                                                                            cluster_name=self.params['cluster'])
         else:
             self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
-            if not self.resource_pool:
-                self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
+        if not self.resource_pool:
+            self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
         for key, value in self.params['networks'].items():
             network = find_network_by_name(self.si, value)
