@@ -182,104 +182,101 @@ class LinuxHardware(Hardware):
             return cpu_facts
 
         cpu_facts['processor'] = []
-        cmd = self.module.get_bin_path('lscpu')
-        # cmd = cmd + " | egrep '^(Socket|Thread|Core|CPU|Model name)'"
-        rc, lscpu_out, err = self.module.run_command(cmd)
-        if lscpu_out:
-            for line in lscpu_out.splitlines():
-                data = line.split(' ')
-                if line.startswith('Socket(s)'):
-                    cpu_facts['processor_count'] = data[-1]
-                    continue
-                if line.startswith('Core(s) per socket'):
-                    cpu_facts['processor_cores'] = data[-1]
-                    continue
-                if line.startswith('Thread(s) per core'):
-                    cpu_facts['processor_threads_per_core'] = data[-1]
-                    continue
-                if line.startswith('Model name'):
-                    data = line.split(':')
-                    cpu_facts['processor'] = data[1].strip()
-                    continue
-            cpu_facts['processor_vcpus'] = int(cpu_facts['processor_count']) * int(cpu_facts['processor_cores']) * int(cpu_facts['processor_threads_per_core'])
+        try:
+            cmd = self.module.get_bin_path('lscpu', required=True)
+            rc, lscpu_out, err = self.module.run_command(cmd)
+            if lscpu_out:
+                for line in lscpu_out.splitlines():
+                    data = line.split(':', 1)
+                    data[1] = data[1].lstrip()
+                    if line.startswith('Socket(s)'):
+                        cpu_facts['processor_count'] = int(data[1])
+                        continue
+                    if line.startswith('Core(s) per socket'):
+                        cpu_facts['processor_cores'] = int(data[1])
+                        continue
+                    if line.startswith('Thread(s) per core'):
+                        cpu_facts['processor_threads_per_core'] = int(data[1])
+                        continue
+                    if line.startswith('Model name'):
+                        cpu_facts['processor'] = data[1]
+                        continue
+                cpu_facts['processor_vcpus'] = cpu_facts['processor_count'] * cpu_facts['processor_cores'] * cpu_facts['processor_threads_per_core']
+        except ValueError as e:
+            for line in get_file_lines('/proc/cpuinfo'):
+                data = line.split(":", 1)
+                key = data[0].strip()
 
-        if int(cpu_facts['processor_vcpus']) > 0:
-            return cpu_facts
+                if xen:
+                    if key == 'flags':
+                        # Check for vme cpu flag, Xen paravirt does not expose this.
+                        #   Need to detect Xen paravirt because it exposes cpuinfo
+                        #   differently than Xen HVM or KVM and causes reporting of
+                        #   only a single cpu core.
+                        if 'vme' not in data:
+                            xen_paravirt = True
 
-        for line in get_file_lines('/proc/cpuinfo'):
-            data = line.split(":", 1)
-            key = data[0].strip()
+                # model name is for Intel arch, Processor (mind the uppercase P)
+                # works for some ARM devices, like the Sheevaplug.
+                # 'ncpus active' is SPARC attribute
+                if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
+                    if 'processor' not in cpu_facts:
+                        cpu_facts['processor'] = []
+                    cpu_facts['processor'].append(data[1].strip())
+                    if key == 'vendor_id':
+                        vendor_id_occurrence += 1
+                    if key == 'model name':
+                        model_name_occurrence += 1
+                    i += 1
+                elif key == 'physical id':
+                    physid = data[1].strip()
+                    if physid not in sockets:
+                        sockets[physid] = 1
+                elif key == 'core id':
+                    coreid = data[1].strip()
+                    if coreid not in sockets:
+                        cores[coreid] = 1
+                elif key == 'cpu cores':
+                    sockets[physid] = int(data[1].strip())
+                elif key == 'siblings':
+                    cores[coreid] = int(data[1].strip())
+                elif key == '# processors':
+                    cpu_facts['processor_cores'] = int(data[1].strip())
+                elif key == 'ncpus active':
+                    i = int(data[1].strip())
 
-            if xen:
-                if key == 'flags':
-                    # Check for vme cpu flag, Xen paravirt does not expose this.
-                    #   Need to detect Xen paravirt because it exposes cpuinfo
-                    #   differently than Xen HVM or KVM and causes reporting of
-                    #   only a single cpu core.
-                    if 'vme' not in data:
-                        xen_paravirt = True
+            # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
+            if vendor_id_occurrence > 0:
+                if vendor_id_occurrence == model_name_occurrence:
+                    i = vendor_id_occurrence
 
-            # model name is for Intel arch, Processor (mind the uppercase P)
-            # works for some ARM devices, like the Sheevaplug.
-            # 'ncpus active' is SPARC attribute
-            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor', 'processor']:
-                if 'processor' not in cpu_facts:
-                    cpu_facts['processor'] = []
-                cpu_facts['processor'].append(data[1].strip())
-                if key == 'vendor_id':
-                    vendor_id_occurrence += 1
-                if key == 'model name':
-                    model_name_occurrence += 1
-                i += 1
-            elif key == 'physical id':
-                physid = data[1].strip()
-                if physid not in sockets:
-                    sockets[physid] = 1
-            elif key == 'core id':
-                coreid = data[1].strip()
-                if coreid not in sockets:
-                    cores[coreid] = 1
-            elif key == 'cpu cores':
-                sockets[physid] = int(data[1].strip())
-            elif key == 'siblings':
-                cores[coreid] = int(data[1].strip())
-            elif key == '# processors':
-                cpu_facts['processor_cores'] = int(data[1].strip())
-            elif key == 'ncpus active':
-                i = int(data[1].strip())
-
-        # Skip for platforms without vendor_id/model_name in cpuinfo (e.g ppc64le)
-        if vendor_id_occurrence > 0:
-            if vendor_id_occurrence == model_name_occurrence:
-                i = vendor_id_occurrence
-
-        # FIXME
-        if collected_facts.get('ansible_architecture') != 's390x':
-            if xen_paravirt:
-                cpu_facts['processor_count'] = i
-                cpu_facts['processor_cores'] = i
-                cpu_facts['processor_threads_per_core'] = 1
-                cpu_facts['processor_vcpus'] = i
-            else:
-                if sockets:
-                    cpu_facts['processor_count'] = len(sockets)
-                else:
+            # FIXME
+            if collected_facts.get('ansible_architecture') != 's390x':
+                if xen_paravirt:
                     cpu_facts['processor_count'] = i
-
-                socket_values = list(sockets.values())
-                if socket_values and socket_values[0]:
-                    cpu_facts['processor_cores'] = socket_values[0]
+                    cpu_facts['processor_cores'] = i
+                    cpu_facts['processor_threads_per_core'] = 1
+                    cpu_facts['processor_vcpus'] = i
                 else:
-                    cpu_facts['processor_cores'] = 1
+                    if sockets:
+                        cpu_facts['processor_count'] = len(sockets)
+                    else:
+                        cpu_facts['processor_count'] = i
 
-                core_values = list(cores.values())
-                if core_values:
-                    cpu_facts['processor_threads_per_core'] = core_values[0] // cpu_facts['processor_cores']
-                else:
-                    cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
+                    socket_values = list(sockets.values())
+                    if socket_values and socket_values[0]:
+                        cpu_facts['processor_cores'] = socket_values[0]
+                    else:
+                        cpu_facts['processor_cores'] = 1
 
-                cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
-                                                cpu_facts['processor_count'] * cpu_facts['processor_cores'])
+                    core_values = list(cores.values())
+                    if core_values:
+                        cpu_facts['processor_threads_per_core'] = core_values[0] // cpu_facts['processor_cores']
+                    else:
+                        cpu_facts['processor_threads_per_core'] = 1 // cpu_facts['processor_cores']
+
+                    cpu_facts['processor_vcpus'] = (cpu_facts['processor_threads_per_core'] *
+                                                    cpu_facts['processor_count'] * cpu_facts['processor_cores'])
 
         return cpu_facts
 
