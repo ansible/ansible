@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.collections import is_string
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -24,7 +25,7 @@ class TimedOutException(Exception):
 
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
-    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout'))
+    _VALID_ARGS = frozenset(('connect_timeout', 'msg', 'post_reboot_delay', 'pre_reboot_delay', 'test_command', 'reboot_timeout', 'search_paths'))
 
     DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
@@ -130,13 +131,32 @@ class ActionModule(ActionBase):
 
     def get_shutdown_command(self, task_vars, distribution):
         shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
+        default_search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+        search_paths = self._task.args.get('search_paths', default_search_paths)
 
-        display.debug('{action}: running find module to get path for "{command}"'.format(action=self._task.action, command=shutdown_bin))
+        # FIXME: switch all this to user arg spec validation methods when they are available
+        # Convert bare strings to a list
+        if is_string(search_paths):
+            search_paths = [search_paths]
+
+        # Error if we didn't get a list
+        err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
+        try:
+            incorrect_type = any(not is_string(x) for x in search_paths)
+        except TypeError as te:
+            raise AnsibleError(err_msg.format(search_paths))
+        if not isinstance(search_paths, list) or incorrect_type:
+            raise AnsibleError(err_msg.format(search_paths))
+
+        display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
+            action=self._task.action,
+            command=shutdown_bin,
+            paths=search_paths))
         find_result = self._execute_module(
             task_vars=task_vars,
             module_name='find',
             module_args={
-                'paths': ['/sbin', '/usr/sbin', '/usr/local/sbin'],
+                'paths': search_paths,
                 'patterns': [shutdown_bin],
                 'file_type': 'any'
             }
@@ -144,7 +164,7 @@ class ActionModule(ActionBase):
 
         full_path = [x['path'] for x in find_result['files']]
         if not full_path:
-            raise AnsibleError('Unable to find command "{0}" in system paths.'.format(shutdown_bin))
+            raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
         self._shutdown_command = full_path[0]
         return self._shutdown_command
 
