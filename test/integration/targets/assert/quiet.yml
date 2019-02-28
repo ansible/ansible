@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  gather_facts: False
+  vars:
+    item_A: yes
+  tasks:
+  - assert:
+      that: "{{ item }} is defined"
+      quiet: True
+    with_items:
+      - item_A
+  - assert:
+      that: "{{ item }} is defined"
+      quiet: False
+    with_items:
+      - item_A
