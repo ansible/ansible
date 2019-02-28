@@ -257,14 +257,14 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
 
         self._info = self._init_server_container()
 
-        uuid = self._module.params.get('uuid') or self._info.get('uuid')
+        uuid = self._info.get('uuid')
         if uuid is not None:
             server_info = self._get('servers/%s' % uuid)
             if server_info:
                 self._info = self._transform_state(server_info)
 
         else:
-            name = self._module.params.get('name')
+            name = self._info.get('name')
             if name is not None:
                 servers = self._get('servers') or []
                 matching_server = []
