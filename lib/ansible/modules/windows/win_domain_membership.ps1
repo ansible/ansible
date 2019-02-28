@@ -76,9 +76,10 @@ Function Get-DomainMembershipMatch {
     .Parameter passwordEncrypted
     Encrypted password of the user which will be used for join or unjoin the computer object
 #>
-function Save-Credential {
-    [CmdletBinding()] param([Parameter(Mandatory = $true)][string] $username, [Parameter(Mandatory = $true)][securestring] $passwordEncrypted)   
+function ConvertTo-Credential {
+    [CmdletBinding()] param([Parameter(Mandatory = $true)][string] $username, [Parameter(Mandatory = $true)][securestring] $password)   
     Write-DebugLog "Preparing credentials..."
+    $passwordEncrypted = ConvertTo-SecureString -String $password -AsPlainText -Force
     $credentials = New-Object System.Management.Automation.PSCredential($username, $passwordEncrypted)
     return $credentials
     Write-DebugLog "Prepared credentials"
