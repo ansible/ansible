@@ -1,0 +1,7 @@
+---
+instance_type: t2.micro
+linux_ami_id: ami-035be7bafff33b6b6
+windows_ami_id: ami-0bf148826ef491d16
+iam_role_name: integration_test_aws_ssm_role
+iam_policy_name: integration_test_aws_ssm_access_policy
+aws_region: us-east-1
