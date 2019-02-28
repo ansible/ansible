@@ -49,11 +49,6 @@ class Neighbors(CliProvider):
             commands.append('no %s' % item)
         return commands
 
-    def _render_local_as(self, item, config=None):
-        cmd = 'neighbor %s local-as %s' % (item['neighbor'], item['local_as'])
-        if not config or cmd not in config:
-            return cmd
-
     def _render_description(self, item, config=None):
         cmd = 'neighbor %s description %s' % (item['neighbor'], item['description'])
         if not config or cmd not in config:

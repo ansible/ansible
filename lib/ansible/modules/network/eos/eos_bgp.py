@@ -101,10 +101,6 @@ options:
           enabled:
             description:
               - Administratively shutdown or enable a neighbor.
-          local_as:
-            description:
-              - The local AS number for the neighbor.
-            type: int
           maximum_prefix:
             description:
               - Maximum number of prefixes to accept from this peer.
@@ -125,6 +121,7 @@ options:
         description:
           - Specify Networks to announce via BGP.
           - For operation replace, this option is mutually exclusive with networks option under address_family.
+          - For operation replace, if the device already has an address family activated, this option is not allowed.
         suboptions:
           prefix:
             description:
@@ -239,6 +236,55 @@ EXAMPLES = """
               route_map: RMAP_1
     operation: merge
 
+- name: Configure BGP neighbors
+  eos_bgp:
+    config:
+      bgp_as: 64496
+      neighbors:
+        - neighbor: 192.0.2.10
+          remote_as: 64496
+          description: IBGP_NBR_1
+          ebgp_multihop: 100
+          timers:
+            keepalive: 300
+            holdtime: 360
+
+        - neighbor: 192.0.2.15
+          remote_as: 64496
+          description: IBGP_NBR_2
+          ebgp_multihop: 150
+    operation: merge
+
+- name: Configure root-level networks for BGP
+  eos_bgp:
+    config:
+      bgp_as: 64496
+      networks:
+        - prefix: 203.0.113.0
+          masklen: 27
+          route_map: RMAP_1
+
+        - prefix: 203.0.113.32
+          masklen: 27
+          route_map: RMAP_2
+    operation: merge
+
+- name: Configure BGP neighbors under address family mode
+  eos_bgp:
+    config:
+      bgp_as: 64496
+      address_family:
+        - afi: ipv4
+          neighbors:
+            - neighbor: 203.0.113.10
+              activate: yes
+              default_originate: True
+
+            - neighbor: 192.0.2.15
+              activate: yes
+              graceful_restart: True
+    operation: merge
+
 - name: remove bgp as 64496 from config
   eos_bgp:
     config:
@@ -291,7 +337,6 @@ def main():
     neighbor_spec = {
         'neighbor': dict(required=True),
         'remote_as': dict(type='int', required=True),
-        'local_as': dict(type='int'),
         'update_source': dict(),
         'password': dict(no_log=True),
         'enabled': dict(type='bool'),
