@@ -48,7 +48,6 @@
       signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
       timeout: 120
     check_mode: yes
-    diff: yes
     register: output_1
 
   - name: signing_ca_cert and signing_ca_key
@@ -58,7 +57,6 @@
       signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
       signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
       timeout: 120
-    diff: yes
     register: output_2
 
   - name: Private key
@@ -74,7 +72,6 @@
   #    signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
   #    signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
   #    timeout: 120
-  #  diff: yes
   #  register: output_3
 
   #- name: signing_ca_cert and signing_ca_key (idempotent, check mode)
@@ -84,7 +81,6 @@
   #    signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
   #    timeout: 120
   #  check_mode: yes
-  #  diff: yes
   #  register: output_4
 
   - name: signing_ca_cert and signing_ca_key (change, check mode)
@@ -94,7 +90,6 @@
       signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.key') }}"
       timeout: 120
     check_mode: yes
-    diff: yes
     register: output_5
 
   - name: signing_ca_cert and signing_ca_key (change)
@@ -103,7 +98,6 @@
       signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.pem') }}"
       signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.key') }}"
       timeout: 120
-    diff: yes
     register: output_6
 
   - name: assert signing_ca_cert and signing_ca_key
@@ -111,28 +105,16 @@
       that:
          - 'output_1 is changed'
          - 'output_1.actions[0] | regex_search("New Swarm cluster created: ")'
-         - 'output_1.diff.before is defined'
-         - 'output_1.diff.after is defined'
          - 'output_2 is changed'
          - 'output_2.actions[0] | regex_search("New Swarm cluster created: ")'
-         - 'output_2.diff.before is defined'
-         - 'output_2.diff.after is defined'
          #- 'output_3 is not changed'
          #- 'output_3.actions[0] == "No modification"'
-         #- 'output_3.diff.before is defined'
-         #- 'output_3.diff.after is defined'
          #- 'output_4 is not changed'
          #- 'output_4.actions[0] == "No modification"'
-         #- 'output_4.diff.before is defined'
-         #- 'output_4.diff.after is defined'
          - 'output_5 is changed'
          - 'output_5.actions[0] == "Swarm cluster updated"'
-         - 'output_5.diff.before is defined'
-         - 'output_5.diff.after is defined'
          - 'output_6 is changed'
          - 'output_6.actions[0] == "Swarm cluster updated"'
-         - 'output_6.diff.before is defined'
-         - 'output_6.diff.after is defined'
 
   # https://github.com/ansible/ansible/issues/34054: openssl_certificate unusable on RHEL 7
   when: pyopenssl_version.stdout is version('0.15', '>=')

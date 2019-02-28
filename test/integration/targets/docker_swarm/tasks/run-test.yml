@@ -3,6 +3,5 @@
   docker_swarm:
     state: absent
     force: true
-  diff: no
 - name: "Loading tasks from {{ item }}"
   include_tasks: "{{ item }}"
