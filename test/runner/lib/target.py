@@ -240,7 +240,7 @@ def walk_aws_ssm_integration_targets(include_hidden=False):
     :rtype: collections.Iterable[IntegrationTarget]
     """
     for target in walk_integration_targets():
-        if 'aws_ssm/' in target.aliases or (include_hidden and 'hidden/aws_ssm/' in target.aliases):
+        if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
             yield target
 
 

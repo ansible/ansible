@@ -17,6 +17,7 @@ from lib.target import (
 from lib.config import (
     NetworkIntegrationConfig,
     PosixIntegrationConfig,
+    AwsSsmIntegrationConfig,
     WindowsIntegrationConfig,
 )
 
@@ -161,6 +162,7 @@ def integration_test_environment(args, target, inventory_path):
             PosixIntegrationConfig: 'inventory',
             WindowsIntegrationConfig: 'inventory.winrm',
             NetworkIntegrationConfig: 'inventory.networking',
+            AwsSsmIntegrationConfig: 'inventory.aws_ssm'
         }
 
         inventory_name = inventory_names[type(args)]

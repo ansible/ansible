@@ -104,6 +104,7 @@ from lib.config import (
     EnvironmentConfig,
     IntegrationConfig,
     NetworkIntegrationConfig,
+    AwsSsmIntegrationConfig,
     PosixIntegrationConfig,
     ShellConfig,
     UnitsConfig,
@@ -340,7 +341,7 @@ def command_posix_integration(args):
 
 def command_aws_ssm_integration(args):
     """
-    :type args: AWSSSMIntegrationConfig
+    :type args: AwsSsmIntegrationConfig
     """
     filename = 'test/integration/inventory.aws_ssm'
 
