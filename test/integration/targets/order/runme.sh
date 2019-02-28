@@ -11,7 +11,7 @@ cleanup () {
     done
 }
 
-for EXTRA in '{"inputlist": ["host", "hostA", "hostD", "hostC"]}' \
+for EXTRA in '{"inputlist": ["hostB", "hostA", "hostD", "hostC"]}' \
              '{"myorder": "inventory", "inputlist": ["hostB", "hostA", "hostD", "hostC"]}' \
              '{"myorder": "sorted", "inputlist": ["hostA", "hostB", "hostC", "hostD"]}'  \
              '{"myorder": "reverse_sorted", "inputlist": ["hostD", "hostC", "hostB", "hostA"]}' \
