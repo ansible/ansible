@@ -1716,30 +1716,27 @@ def main():
                 ),
                 required_if=[
                     ['type', 'remote_command', ['command_type']],
-                    ['type', 'remote_command',
-                        ['run_on_groups',
-                         'run_on_hosts'], True
-                    ],
-                    ['command_type', 'custom_script',
-                        ['command',
-                         'execute_on']
-                    ],
+                    ['type', 'remote_command', ['run_on_groups', 'run_on_hosts'], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
                     ['command_type', 'ipmi', ['command']],
-                    ['command_type', 'ssh',
-                        ['command',
-                         'password',
-                         'username',
-                         'port',
-                         'ssh_auth_type',
-                         'ssh_privatekey_file',
-                         'ssh_publickey_file']
-                    ],
-                    ['command_type', 'telnet',
-                        ['command',
-                         'password',
-                         'username',
-                         'port']
-                    ],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
                     ['command_type', 'global_script', ['script_name']],
                     ['type', 'add_to_host_group', ['host_groups']],
                     ['type', 'remove_from_host_group', ['host_groups']],
@@ -1805,30 +1802,30 @@ def main():
                 ),
                 required_if=[
                     ['type', 'remote_command', ['command_type']],
-                    ['type', 'remote_command',
-                        ['run_on_groups',
-                         'run_on_hosts'], True
-                    ],
-                    ['command_type', 'custom_script',
-                        ['command',
-                         'execute_on']
-                    ],
+                    ['type', 'remote_command', [
+                        'run_on_groups',
+                        'run_on_hosts'
+                    ], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
                     ['command_type', 'ipmi', ['command']],
-                    ['command_type', 'ssh',
-                        ['command',
-                         'password',
-                         'username',
-                         'port',
-                         'ssh_auth_type',
-                         'ssh_privatekey_file',
-                         'ssh_publickey_file']
-                    ],
-                    ['command_type', 'telnet',
-                        ['command',
-                         'password',
-                         'username',
-                         'port']
-                    ],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
                     ['command_type', 'global_script', ['script_name']],
                     ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
                 ]
@@ -1889,30 +1886,30 @@ def main():
                 ),
                 required_if=[
                     ['type', 'remote_command', ['command_type']],
-                    ['type', 'remote_command',
-                        ['run_on_groups',
-                         'run_on_hosts'], True
-                    ],
-                    ['command_type', 'custom_script',
-                        ['command',
-                         'execute_on']
-                    ],
+                    ['type', 'remote_command', [
+                        'run_on_groups',
+                        'run_on_hosts'
+                    ], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
                     ['command_type', 'ipmi', ['command']],
-                    ['command_type', 'ssh',
-                        ['command',
-                         'password',
-                         'username',
-                         'port',
-                         'ssh_auth_type',
-                         'ssh_privatekey_file',
-                         'ssh_publickey_file']
-                    ],
-                    ['command_type', 'telnet',
-                        ['command',
-                         'password',
-                         'username',
-                         'port']
-                    ],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
                     ['command_type', 'global_script', ['script_name']],
                     ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
                 ]
