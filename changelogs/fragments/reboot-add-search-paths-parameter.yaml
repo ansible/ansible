@@ -1,0 +1,2 @@
+minor_changes:
+  - 'reboot - add parameter for specifying paths to search for the ``shutdown`` command (https://github.com/ansible/ansible/issues/51190)'
