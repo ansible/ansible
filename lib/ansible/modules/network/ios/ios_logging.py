@@ -291,6 +291,7 @@ def map_config_to_obj(module):
                 obj.append({
                     'dest': dest,
                     'name': match.group(1),
+                    'size': parse_size(line, dest),
                     'facility': parse_facility(line, dest),
                     'level': parse_level(line, dest)
                 })
@@ -301,6 +302,7 @@ def map_config_to_obj(module):
                     obj.append({
                         'dest': dest,
                         'name': match.group(1),
+                        'size': parse_size(line, dest),
                         'facility': parse_facility(line, dest),
                         'level': parse_level(line, dest)
                     })
