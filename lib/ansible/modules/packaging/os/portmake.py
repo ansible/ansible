@@ -211,9 +211,10 @@ class PortMake(object):
                 # rc, out, err = self.module.run_command("make -C /usr/ports/ quicksearch name=%s" % (package_without_digits))
         return occurrences
 
+    
     def remove_package(self, package):
         """
-        removes a single package using system's pkg
+        removes a single package using system's pkg and cleans up all corresponding options in make.conf
         """
         rc, out, err = self.module.run_command("%s %s" % (
             self.pkg_delete_path, shlex_quote(package)), use_unsafe_shell=True)
@@ -270,8 +271,9 @@ class PortMake(object):
                     continue
                 else:
                     # some options differ
-                    # remove package to be built with proper options
-                    self.remove_package(package)
+                    # remove package leave options in makle.conf
+                    rc, out, err = self.module.run_command("%s %s" % (
+                        self.pkg_delete_path, shlex_quote(package)), use_unsafe_shell=True)
 
             # install package as it is not here yet or has just been uninstalled
             matches = self.matching_packages(package)
