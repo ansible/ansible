@@ -24,20 +24,26 @@ version_added: "1.5"
 options:
   that:
     description:
-      - "A string expression of the same form that can be passed to the 'when' statement"
-      - "Alternatively, a list of string expressions"
+      - "A string expression of the same form that can be passed to the 'when' statement."
+      - "Alternatively, a list of string expressions."
     required: true
   fail_msg:
     version_added: "2.7"
     description:
-      - "The customized message used for a failing assertion"
-      - "This argument was called 'msg' before version 2.7, now it's renamed to 'fail_msg' with alias 'msg'"
+      - "The customized message used for a failing assertion."
+      - "This argument was called 'msg' before version 2.7, now it's renamed to 'fail_msg' with alias 'msg'."
     aliases:
       - msg
   success_msg:
     version_added: "2.7"
     description:
-      - "The customized message used for a successful assertion"
+      - "The customized message used for a successful assertion."
+  quiet:
+    version_added: "2.8"
+    description:
+      - "Set this to C(true) to avoid verbose output."
+    type: bool
+    default: false
 notes:
      - This module is also supported for Windows targets.
 author:
@@ -67,4 +73,11 @@ EXAMPLES = '''
       - "my_param <= 100"
       - "my_param >= 0"
     msg: "'my_param' must be between 0 and 100"
+
+- name: use quiet to avoid verbose output
+  assert:
+    that:
+      - "my_param <= 100"
+      - "my_param >= 0"
+    quiet: true
 '''
