@@ -70,6 +70,13 @@ options:
         for the implicitly defined PUBLIC group.
       - 'Alias: I(role)'
     required: yes
+  fail_on_role:
+    version_added: "2.8"
+    description:
+      - If C(yes), fail when target role (for whom privs need to be granted) does not exist.
+        Otherwise just warn and continue.
+    default: yes
+    type: bool
   session_role:
     version_added: "2.8"
     description: |
@@ -295,6 +302,19 @@ class Error(Exception):
     pass
 
 
+def role_exists(module, cursor, rolname):
+    """Check user exists or not"""
+    query = "SELECT 1 FROM pg_roles WHERE rolname = '%s'" % rolname
+    try:
+        cursor.execute(query)
+        return cursor.rowcount > 0
+
+    except Exception as e:
+        module.fail_json(msg="Cannot execute SQL '%s': %s" % (query, to_native(e)))
+
+    return False
+
+
 # We don't have functools.partial in Python < 2.5
 def partial(f, *args, **kwargs):
     """Partial function application"""
@@ -313,8 +333,9 @@ def partial(f, *args, **kwargs):
 class Connection(object):
     """Wrapper around a psycopg2 connection with some convenience methods"""
 
-    def __init__(self, params):
+    def __init__(self, params, module):
         self.database = params.database
+        self.module = module
         # To use defaults values, keyword arguments must be absent, so
         # check which values are empty and don't include in the **kw
         # dictionary
@@ -466,7 +487,7 @@ class Connection(object):
     # Manipulating privileges
 
     def manipulate_privs(self, obj_type, privs, objs, roles,
-                         state, grant_option, schema_qualifier=None):
+                         state, grant_option, schema_qualifier=None, fail_on_role=True):
         """Manipulate database object privileges.
 
         :param obj_type: Type of database object to grant/revoke
@@ -545,7 +566,21 @@ class Connection(object):
         if roles == 'PUBLIC':
             for_whom = 'PUBLIC'
         else:
-            for_whom = ','.join(pg_quote_identifier(r, 'role') for r in roles)
+            for_whom = []
+            for r in roles:
+                if not role_exists(self.module, self.cursor, r):
+                    if fail_on_role:
+                        self.module.fail_json(msg="Role '%s' does not exist" % r.strip())
+
+                    else:
+                        self.module.warn("Role '%s' does not exist, pass it" % r.strip())
+                else:
+                    for_whom.append(pg_quote_identifier(r, 'role'))
+
+            if not for_whom:
+                return False
+
+            for_whom = ','.join(for_whom)
 
         status_before = get_status(objs)
 
@@ -685,10 +720,13 @@ def main():
             password=dict(default='', aliases=['login_password'], no_log=True),
             ssl_mode=dict(default="prefer",
                           choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
-            ssl_rootcert=dict(default=None)
+            ssl_rootcert=dict(default=None),
+            fail_on_role=dict(type='bool', default=True),
         ),
         supports_check_mode=True
     )
+
+    fail_on_role = module.params['fail_on_role']
 
     # Create type object as namespace for module params
     p = type('Params', (), module.params)
@@ -719,7 +757,7 @@ def main():
     if not psycopg2:
         module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
     try:
-        conn = Connection(p)
+        conn = Connection(p, module)
     except psycopg2.Error as e:
         module.fail_json(msg='Could not connect to database: %s' % to_native(e), exception=traceback.format_exc())
     except TypeError as e:
@@ -776,6 +814,15 @@ def main():
         else:
             roles = p.roles.split(',')
 
+            if len(roles) == 1 and not role_exists(module, conn.cursor, roles[0]):
+                module.exit_json(changed=False)
+
+                if fail_on_role:
+                    module.fail_json(msg="Role '%s' does not exist" % roles[0].strip())
+
+                else:
+                    module.warn("Role '%s' does not exist, nothing to do" % roles[0].strip())
+
         changed = conn.manipulate_privs(
             obj_type=p.type,
             privs=privs,
@@ -783,7 +830,8 @@ def main():
             roles=roles,
             state=p.state,
             grant_option=p.grant_option,
-            schema_qualifier=p.schema
+            schema_qualifier=p.schema,
+            fail_on_role=fail_on_role,
         )
 
     except Error as e:
