@@ -54,7 +54,7 @@ DOCUMENTATION = """
       chars:
         description:
            - Define comma separated list of names that compose a custom character set in the generated passwords.
-           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
+           - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and these punctuation characters (". , : - _").'
            - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
            - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
         type: string
