@@ -379,43 +379,64 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         return keys_changed
 
     def _update_server(self, server_info):
-        data = {
-            'name': self._module.params.get('name'),
+        data_requires_stop = {
             'flavor': self._module.params.get('flavor'),
         }
+        keys_changed_requires_stop = self._get_keys_changed(server_info, data_requires_stop)
+
+        data = {
+            'name': self._module.params.get('name'),
+        }
         keys_changed = self._get_keys_changed(server_info, data)
-        if not keys_changed:
+
+        if not (keys_changed or keys_changed_requires_stop):
             return server_info
 
-        # We have changed keys but we ignore them unless forced if server is running
-        if server_info.get('state') == "running":
-            if not self._module.params.get('force'):
-                self._module.warn("Changes won't be applied to running servers. "
-                                  "Use force=yes to allow the server '%s' to be stopped/started." % server_info['name'])
-                return server_info
+        # Keys changed don't require a stopped server
+        if keys_changed:
+            self._result['changed'] = True
+            if not self._module.check_mode:
+                # The API does not allow to change multiple attributes at the same time.
+                for key_changed in keys_changed:
+                    patch_data = {
+                        key_changed: data[key_changed],
+                    }
+                    # Response is 204: No Content
+                    self._patch('servers/%s' % server_info['uuid'], patch_data)
+                    # State changes to "changing" after update, waiting for stopped or running
+                    server_info = self._wait_for_state(('stopped', 'running'))
 
-        # Either the server is stopped or change is forced
-        self._result['changed'] = True
-        if not self._module.check_mode:
-            # Remember the state of the server before we ensure it is stopped
-            previous_state = server_info.get('state')
-            self._start_stop_server(server_info, target_state="stopped", ignore_diff=True)
+        # Keys changed require a stopped server
+        if keys_changed_requires_stop:
+            # We have changed keys but we ignore them unless forced if server is running
+            if server_info.get('state') == "running":
+                if not self._module.params.get('force'):
+                    self._module.warn("Some changes won't be applied to running servers. "
+                                      "Use force=yes to allow the server '%s' to be stopped/started." % server_info['name'])
+                    return server_info
 
-            # The API does not allow to change multiple attributes at the same time.
-            for key_changed in keys_changed:
-                patch_data = {
-                    key_changed: data[key_changed],
-                }
-                # Response is 204: No Content
-                self._patch('servers/%s' % server_info['uuid'], patch_data)
-                # State changes to "changing" after update, waiting for stopped
-                server_info = self._wait_for_state(('stopped', ))
+            # Either the server is stopped or change is forced
+            self._result['changed'] = True
+            if not self._module.check_mode:
+                # Remember the state of the server before we ensure it is stopped
+                previous_state = server_info.get('state')
+                self._start_stop_server(server_info, target_state="stopped", ignore_diff=True)
 
-            # Restore the state before we ensure stopped
-            if previous_state == "running":
-                self._start_stop_server(server_info, target_state="running", ignore_diff=True)
+                # The API does not allow to change multiple attributes at the same time.
+                for key_changed in keys_changed_requires_stop:
+                    patch_data = {
+                        key_changed: data_requires_stop[key_changed],
+                    }
+                    # Response is 204: No Content
+                    self._patch('servers/%s' % server_info['uuid'], patch_data)
+                    # State changes to "changing" after update, waiting for stopped
+                    server_info = self._wait_for_state(('stopped', ))
 
-            server_info = self._get_server_info(refresh=True)
+                # Restore the state before we ensure stopped
+                if previous_state == "running":
+                    self._start_stop_server(server_info, target_state="running", ignore_diff=True)
+
+                server_info = self._get_server_info(refresh=True)
 
         return server_info
 
