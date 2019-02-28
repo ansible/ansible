@@ -119,6 +119,7 @@ options:
         every task in a playbook.  The I(running_config) argument allows the
         implementer to pass in the configuration to use as the base
         config for this module.
+    type: str
     aliases: ['config']
     version_added: "2.4"
   defaults:
@@ -181,6 +182,7 @@ options:
         of the current device's configuration against.  When specifying this
         argument, the task should also modify the C(diff_against) value and
         set it to I(intended).
+    type: str
     version_added: "2.4"
   backup_options:
     description:
