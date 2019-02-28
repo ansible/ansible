@@ -25,7 +25,7 @@ options:
   members:
     description:
       - A list of members to ensure are present/absent from the group.
-      - Prefers users over groups
+      - The given names must be a SmaAccountName of a user, group, service account, or computer
     type: list
     required: yes
   state:
@@ -81,6 +81,13 @@ EXAMPLES = r'''
     members:
       - Bar
     state: pure
+
+- name: Add a computer to a domain group
+  win_domain_group_membership:
+    name: Foo
+    members:
+      - DESKTOP$
+    state: present
 '''
 
 RETURN = r'''

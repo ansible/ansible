@@ -53,25 +53,9 @@ $members_before = Get-AdGroupMember -Identity $name @extra_args
 $pure_members = @()
 
 foreach ($member in $members) {
-    # Use try/catch as Get-ADUser does not support `-ErrorAction SilentlyContinue`
-    # We do not want to fail but query for group if no user is found
-    try {
-        $group_member = Get-ADUser -Identity $member @extra_args
-    }
-    catch {
-        $group_member = $null
-    }
+    $group_member = Get-ADObject -Filter "SamAccountName -eq '$member' -and (ObjectClass -eq 'user' -or ObjectClass -eq 'group' -or ObjectClass -eq 'computer' -or ObjectClass -eq 'msDS-ManagedServiceAccount')"
     if (!$group_member) {
-        # Use try/catch as Get-ADGroup does not support `-ErrorAction SilentlyContinue`
-        try {
-            $group_member = Get-ADGroup -Identity $member @extra_args
-        }
-        catch {
-            $group_member = $null
-        }
-    }
-    if (!$group_member) {
-        Fail-Json -obj $result "Could not find domain user or group $member"
+        Fail-Json -obj $result "Could not find domain user, group, service account or computer named $member"
     }
 
     if ($state -eq "pure") {
