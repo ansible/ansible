@@ -1,0 +1,3 @@
+- hosts: localhost
+  roles:
+   - aws_ssm_integration_test_setup_teardown
