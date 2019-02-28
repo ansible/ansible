@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Security
 
 Set-StrictMode -Version 2
 
@@ -68,17 +69,6 @@ Function Get-DomainMembershipMatch {
     }
 }
 
-Function Create-Credential {
-    Param(
-        [string] $cred_user,
-        [string] $cred_pass
-    )
-
-    $cred = New-Object System.Management.Automation.PSCredential($cred_user, $($cred_pass | ConvertTo-SecureString -AsPlainText -Force))
-
-    return $cred
-}
-
 Function Get-HostnameMatch {
     Param(
         [string] $hostname
@@ -101,16 +91,15 @@ Function Join-Domain {
         [string] $dns_domain_name,
         [string] $new_hostname,
         [string] $domain_admin_user,
-        [string] $domain_admin_password,
+        [credential] $domainJoinCredential,
         [string] $domain_ou_path
     )
 
     Write-DebugLog ("Creating credential for user {0}" -f $domain_admin_user)
-    $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
 
     $add_args = @{
         ComputerName="."
-        Credential=$domain_cred
+        Credential=$domainJoinCredential
         DomainName=$dns_domain_name
         Force=$null
     }
@@ -123,11 +112,11 @@ Function Join-Domain {
 
     if($domain_ou_path){
         Write-DebugLog "adding OU destination arg to Add-Computer args"
-        if([System.DirectoryServices.DirectoryEntry]::Exists("LDPA://$domain_ou_path")){
+        if([System.DirectoryServices.DirectoryEntry]::Exists("LDAP://$domain_ou_path")){
             $add_args["OUPath"] = $domain_ou_path
         }
         else {
-            Throw "The specified OU $domain_ou_path was not found."
+            Fail-Json -obj $result -message "The OU $domain_ou_path object was not found."
         }
     }
     $argstr = $add_args | Out-String
@@ -166,16 +155,14 @@ Function Set-Workgroup {
 Function Join-Workgroup {
     Param(
         [string] $workgroup_name,
-        [string] $domain_admin_user,
-        [string] $domain_admin_password
+        [credential] $domainJoinCredential
     )
 
     If(Is-DomainJoined) { # if we're on a domain, unjoin it (which forces us to join a workgroup)
-        $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
 
         # 2012+ call the Workgroup arg WorkgroupName, but seem to accept
         try {
-            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domain_cred -Force
+            $rc_result = Remove-Computer -Workgroup $workgroup_name -Credential $domainJoinCredential -Force
         } catch {
             Fail-Json -obj $result -message "failed to remove computer from domain: $($_.Exception.Message)"
         }
@@ -203,6 +190,7 @@ $workgroup_name = Get-AnsibleParam $params "workgroup_name"
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domain_ou_path = Get-AnsibleParam $params "domain_ou_path"
+$domainJoinCredential = Create-Credential -username $domain_admin_user -password $domain_admin_password
 
 $log_path = Get-AnsibleParam $params "log_path"
 $_ansible_check_mode = Get-AnsibleParam $params "_ansible_check_mode" -default $false
@@ -268,8 +256,7 @@ Try {
                     $rename_args = @{NewName=$hostname}
 
                     If (Is-DomainJoined) {
-                        $domain_cred = Create-Credential $domain_admin_user $domain_admin_password
-                        $rename_args.DomainCredential = $domain_cred
+                        $rename_args.DomainCredential = $domainJoinCredential
                     }
 
                     $rename_result = Rename-Computer @rename_args
