@@ -40,7 +40,7 @@ options:
     description:
       - Not yet supported (U(https://gitlab.com/gitlab-org/gitlab-ce/issues/41113))
     type: bool
-    default: 'yes'
+    default: yes
   service:
     description:
       - The service
@@ -125,6 +125,17 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+diff:
+  description: The differences about the given arguments.
+  returned: success
+  type: complex
+  contains:
+    before:
+      description: The values before change
+      type: dict
+    after:
+      description: The values after change
+      type: dict
 service:
   description: A dict containing key/value pairs representing GitLab service
   returned: success
@@ -160,7 +171,6 @@ state:
   sample: created
 '''
 
-import json
 import traceback
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native
@@ -174,31 +184,39 @@ except ImportError:
     GITLAB_IMP_ERR = traceback.format_exc()
     HAS_GITLAB_PACKAGE = False
 
-# auto-generated 2018/05/12 from https://gitlab.com/gitlab-org/gitlab-ee/blob/f850b1bdb74de78875a49126e0401cc975fda32a/lib/api/services.rb
-RAW_SERVICES_DEFINITIONS = '''
-{"asana":{"api_key":{"required":true},"restrict_to_branch":{}},"assembla":{"token":{"required":true},"subdomain":{}},"bamboo":{"bamboo_url":{"required":true},"build_key":{"required":true},"username":{"required":true},"password":{"required":true}},"bugzilla":{"new_issue_url":{"required":true},"issues_url":{"required":true},"project_url":{"required":true},"description":{},"title":{}},"buildkite":{"token":{"required":true},"project_url":{"required":true},"enable_ssl_verification":{"type":"bool"}},"campfire":{"token":{"required":true},"subdomain":{},"room":{}},"custom-issue-tracker":{"new_issue_url":{"required":true},"issues_url":{"required":true},"project_url":{"required":true},"description":{},"title":{}},"drone-ci":{"token":{"required":true},"drone_url":{"required":true},"enable_ssl_verification":{"type":"bool"}},"emails-on-push":{"recipients":{"required":true},"disable_diffs":{"type":"bool"},"send_from_committer_email":{"type":"bool"}},"external-wiki":{"external_wiki_url":{"required":true}},"flowdock":{"token":{"required":true}},"gemnasium":{"api_key":{"required":true},"token":{"required":true}},"hipchat":{"token":{"required":true},"room":{},"color":{},"notify":{"type":"bool"},"api_version":{},"server":{}},"irker":{"recipients":{"required":true},"default_irc_uri":{},"server_host":{},"server_port":{"type":"Integer"},"colorize_messages":{"type":"bool"}},"jira":{"url":{"required":true},"api_url":{},"username":{"required":true},"password":{"required":true},"jira_issue_transition_id":{"type":"Integer"}},"kubernetes":{"namespace":{"required":true},"api_url":{"required":true},"token":{"required":true},"ca_pem":{}},"mattermost-slash-commands":{"token":{"required":true}},"slack-slash-commands":{"token":{"required":true}},"packagist":{"username":{"required":true},"token":{"required":true},"server":{}},"pipelines-email":{"recipients":{"required":true},"notify_only_broken_pipelines":{"type":"bool"}},"pivotaltracker":{"token":{"required":true},"restrict_to_branch":{}},"prometheus":{"api_url":{"required":true}},"pushover":{"api_key":{"required":true},"user_key":{"required":true},"priority":{"required":true},"device":{"required":true},"sound":{"required":true}},"redmine":{"new_issue_url":{"required":true},"project_url":{"required":true},"issues_url":{"required":true},"description":{}},"slack":{"webhook":{"required":true},"username":{},"channel":{},"notify_only_broken_pipelines":{"type":"bool"},"notify_only_default_branch":{"type":"bool"},"push_channel":{},"issue_channel":{},"confidential_issue_channel":{},"merge_request_channel":{},"note_channel":{},"tag_push_channel":{},"pipeline_channel":{},"wiki_page_channel":{},"push_events":{"type":"bool"},"issues_events":{"type":"bool"},"confidential_issues_events":{"type":"bool"},"merge_requests_events":{"type":"bool"},"note_events":{"type":"bool"},"tag_push_events":{"type":"bool"},"pipeline_events":{"type":"bool"},"wiki_page_events":{"type":"bool"}},"microsoft-teams":{"webhook":{"required":true}},"mattermost":{"webhook":{"required":true},"username":{},"channel":{},"notify_only_broken_pipelines":{"type":"bool"},"notify_only_default_branch":{"type":"bool"},"push_channel":{},"issue_channel":{},"confidential_issue_channel":{},"merge_request_channel":{},"note_channel":{},"tag_push_channel":{},"pipeline_channel":{},"wiki_page_channel":{},"push_events":{"type":"bool"},"issues_events":{"type":"bool"},"confidential_issues_events":{"type":"bool"},"merge_requests_events":{"type":"bool"},"note_events":{"type":"bool"},"tag_push_events":{"type":"bool"},"pipeline_events":{"type":"bool"},"wiki_page_events":{"type":"bool"}},"teamcity":{"teamcity_url":{"required":true},"build_type":{"required":true},"username":{"required":true},"password":{"required":true}}}
-'''
+# auto-generated 2019/02/28 from https://gitlab.com/gitlab-org/gitlab-ee/blob/2811250ba2c5637c328f77c318c995f7c0b59207/lib/api/services.rb
+RAW_SERVICES_DEFINITIONS = {"asana":{"api_key":{"required":1},"restrict_to_branch":{},"_events":["push"]},"assembla":{"token":{"required":1},"subdomain":{},"_events":["push"]},"bamboo":{"bamboo_url":{"required":1},"build_key":{"required":1},"username":{"required":1},"password":{"required":1}},"bugzilla":{"new_issue_url":{"required":1},"issues_url":{"required":1},"project_url":{"required":1},"description":{},"title":{}},"buildkite":{"token":{"required":1},"project_url":{"required":1},"enable_ssl_verification":{"type":"bool"}},"campfire":{"token":{"required":1},"subdomain":{},"room":{},"_events":["push"]},"custom-issue-tracker":{"new_issue_url":{"required":1},"issues_url":{"required":1},"project_url":{"required":1},"description":{},"title":{}},"discord":{"webhook":{"required":1}},"drone-ci":{"token":{"required":1},"drone_url":{"required":1},"enable_ssl_verification":{"type":"bool"},"_events":["push","merge_request","tag_push"]},"emails-on-push":{"recipients":{"required":1},"disable_diffs":{"type":"bool"},"send_from_committer_email":{"type":"bool"},"_events":["push","tag_push"]},"external-wiki":{"external_wiki_url":{"required":1},"_events":[]},"flowdock":{"token":{"required":1},"_events":["push"]},"hangouts-chat":{"webhook":{"required":1},"push_events":{"type":"bool"},"issues_events":{"type":"bool"},"confidential_issues_events":{"type":"bool"},"merge_requests_events":{"type":"bool"},"note_events":{"type":"bool"},"tag_push_events":{"type":"bool"},"pipeline_events":{"type":"bool"},"wiki_page_events":{"type":"bool"}},"irker":{"recipients":{"required":1},"default_irc_uri":{},"server_host":{},"server_port":{"type":"Integer"},"colorize_messages":{"type":"bool"},"_events":["push"]},"jira":{"url":{"required":1},"api_url":{},"username":{"required":1},"password":{"required":1},"jira_issue_transition_id":{},"_events":["commit","merge_request"]},"kubernetes":{"namespace":{"required":1},"api_url":{"required":1},"token":{"required":1},"ca_pem":{}},"mattermost-slash-commands":{"token":{"required":1}},"slack-slash-commands":{"token":{"required":1}},"packagist":{"username":{"required":1},"token":{"required":1},"server":{},"_events":["push","merge_request","tag_push"]},"pipelines-email":{"recipients":{"required":1},"notify_only_broken_pipelines":{"type":"bool"},"_events":["pipeline"]},"pivotaltracker":{"token":{"required":1},"restrict_to_branch":{},"_events":["push"]},"prometheus":{"api_url":{"required":1}},"pushover":{"api_key":{"required":1},"user_key":{"required":1},"priority":{"required":1},"device":{"required":1},"sound":{"required":1},"_events":["push"]},"redmine":{"new_issue_url":{"required":1},"project_url":{"required":1},"issues_url":{"required":1},"description":{}},"youtrack":{"project_url":{"required":1},"issues_url":{"required":1},"description":{}},"slack":{"webhook":{"required":1},"username":{},"channel":{},"notify_only_broken_pipelines":{"type":"bool"},"notify_only_default_branch":{"type":"bool"},"push_channel":{},"issue_channel":{},"confidential_issue_channel":{},"merge_request_channel":{},"note_channel":{},"tag_push_channel":{},"pipeline_channel":{},"wiki_page_channel":{},"push_events":{"type":"bool"},"issues_events":{"type":"bool"},"confidential_issues_events":{"type":"bool"},"merge_requests_events":{"type":"bool"},"note_events":{"type":"bool"},"tag_push_events":{"type":"bool"},"pipeline_events":{"type":"bool"},"wiki_page_events":{"type":"bool"}},"microsoft-teams":{"webhook":{"required":1}},"mattermost":{"webhook":{"required":1},"username":{},"channel":{},"notify_only_broken_pipelines":{"type":"bool"},"notify_only_default_branch":{"type":"bool"},"push_channel":{},"issue_channel":{},"confidential_issue_channel":{},"merge_request_channel":{},"note_channel":{},"tag_push_channel":{},"pipeline_channel":{},"wiki_page_channel":{},"push_events":{"type":"bool"},"issues_events":{"type":"bool"},"confidential_issues_events":{"type":"bool"},"merge_requests_events":{"type":"bool"},"note_events":{"type":"bool"},"tag_push_events":{"type":"bool"},"pipeline_events":{"type":"bool"},"wiki_page_events":{"type":"bool"}},"teamcity":{"teamcity_url":{"required":1},"build_type":{"required":1},"username":{"required":1},"password":{"required":1}},"github":{"token":{"required":1},"repository_url":{"required":1}},"jenkins":{"jenkins_url":{"required":1},"project_name":{"required":1},"username":{},"password":{}},"jenkins-deprecated":{"project_url":{"required":1},"pass_unstable":{"type":"bool"},"multiproject_enabled":{"type":"bool"}}}
 
 
 def init_definitions():
-    sd = json.loads(RAW_SERVICES_DEFINITIONS)
-    for service_slug, params in sd.items():
+    for service_slug, params in RAW_SERVICES_DEFINITIONS.items():
         for name, definition in params.items():
             if 'type' in definition:
                 definition['type'] = bool if definition['type'] == 'bool' else int if definition['type'] == 'int' else definition['type']
             if name in GitLabServices.credentialParams:
                 definition['no_log'] = True
-    return sd
+    return RAW_SERVICES_DEFINITIONS
 
 
 class GitLabServices(object):
     HOOK_EVENTS = ['push', 'issues', 'confidential_issues', 'merge_requests', 'tag_push', 'note', 'confidential_note', 'job', 'pipeline', 'wiki_page']
     credentialParams = ['password', 'token', 'api_key']
 
-    def __init__(self, module, git):
+    def __init__(self, module, git, name):
         self._module = module
+        self.name = name
 
-    def update(self, project, remote, active, params, events):
+    # "create" can only happen once for this service during the life of the project)
+    # merge new attributes in the object retrieved from the server
+    def create(self, remote_service, active, params, events):
+        local_service = self.asApiObject(active, params, events)
+        for k, v in local_service.items():
+            setattr(remote_service, k, v)
+        if not self._module.check_mode:
+            remote_service.save()
+        return {'before': {}, 'after': str(remote_service.attributes)}
+
+    def update(self, remote, active, params, events):
         diff = not self.equals(remote.attributes, active, params, events)
         if diff:
             # remote.active = active
@@ -208,9 +226,8 @@ class GitLabServices(object):
             # (remember they get retrieved under the "property" key of the remote dict())
             for k, v in params.items():
                 setattr(remote, k, v)
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-            remote.save()
+            if not self._module.check_mode:
+                remote.save()
             return remote
         else:
             return False
@@ -222,11 +239,13 @@ class GitLabServices(object):
         return obj
 
     def expandEvents(self, events):
-        # python >= 2.7: return {value + '_events': bool(value in events) for value in self.HOOK_EVENTS}
-        v = {}
-        for value in self.HOOK_EVENTS:
-            setattr(v, value + '_events', bool(value in events))
-        return v
+        try:
+            # See https://gitlab.com/gitlab-org/gitlab-ce/issues/58321 for why it's useful to
+            # discard unsupported events before comparing
+            supported_events = RAW_SERVICES_DEFINITIONS[self.name]['_events']
+        except KeyError:
+            supported_events = None
+        return {value + '_events': bool(value in events) for value in self.HOOK_EVENTS if supported_events is None or value in supported_events }
 
     def eventsEqual(self, obj, events):
         return all((k in obj and obj[k] == v) for k, v in events.items())
@@ -235,19 +254,20 @@ class GitLabServices(object):
         return ('password' in attr and attr['password']) or ('token' in attr and attr['token']) or ('api_key' in attr and attr['api_key'])
 
     def equals(self, prev_attr, active, params, events):
-        # python >= 2.7: filtered_params = {k: v for k, v in params.items() if k not in self.credentialParams}
-        filtered_params = {}
-        for k, v in params.items():
-            if k not in self.credentialParams:
-                setattr(filtered_params, k, v)
-        # ToDo: this is not (yet?) supported by GitLab
-        # if prev_attr['active'] != active:
-        # return False
+        filtered_params = {k: v for k, v in params.items() if k not in self.credentialParams}
+        if prev_attr['active'] != active:
+            self._module.debug("active status differs")
+            return False
         if self.hasCredentials(params):
+            self._module.debug("has credentials: assuming difference")
             return False
         if not self.eventsEqual(prev_attr, self.expandEvents(events)):
+            self._module.debug("events differs: %s != %s" % (prev_attr, events))
             return False
-        return prev_attr['properties'] == filtered_params
+        if prev_attr['properties'] != filtered_params:
+            self._module.debug("services attributes differs: %s != %s" % (prev_attr['properties'], filtered_params))
+            return False
+        return True
 
     def setattrs(self, obj, new_attr):
         for k, v in new_attr.items():
@@ -266,7 +286,7 @@ def main():
             api_token=dict(required=False, no_log=True),
             project=dict(required=True),
             service=dict(required=False, type='str', choices=list(definitions.keys())),
-            active=dict(required=False, default=True, type='bool'),
+            active=dict(required=False, default=True, type='bool', choices=[True]),
             params=dict(required=False, type='dict'),
             events=dict(required=False, type='list', elements='str', default=GitLabServices.HOOK_EVENTS, choices=GitLabServices.HOOK_EVENTS),
             state=dict(default='present', choices=['present', 'absent']),
@@ -292,7 +312,10 @@ def main():
     state = stub_init.params['state']
     if state == 'present':
         # since we know the service (which has been validated), recreate a module_specs to validate suboptions
-        base_specs['argument_spec']['params'] = dict(required=False, type='dict', options=definitions[service])
+        sub_arg_specs = {i: definitions[service][i] for i in definitions[service] if i != '_events'}
+        base_specs['argument_spec']['params'] = dict(required=False, type='dict', options=sub_arg_specs)
+        if '_events' in definitions[service]:
+            base_specs['argument_spec']['events'] = dict(required=True, type='list', elements='str', choices=definitions[service]['_events'])
         module = AnsibleModule(**base_specs)
     else:
         module = stub_init
@@ -315,62 +338,56 @@ def main():
         git = Gitlab(url=api_url, ssl_verify=validate_certs, email=api_username, password=api_password, private_token=api_token, api_version=4)
         # git.enable_debug() ?
         git.auth()
-        project = git.projects.get(project)
-    except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError, gitlab.GitlabGetError) as e:
+    except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError) as e:
         module.fail_json(msg='Failed to connect to GitLab server: %s' % to_native(e))
 
     try:
+        project = git.projects.get(project)
+    except gitlab.GitlabGetError as e:
+        module.fail_json(msg='No such a project %s' % project, exception=to_native(e))
+
+    try:
         remote_service = project.services.get(service)
+        original_attributes = remote_service.attributes.copy()
     except gitlab.GitlabGetError as e:
         module.fail_json(msg='No such a service %s' % service, exception=to_native(e))
 
-    ServicesHelper = GitLabServices(module, git)
+    ServicesHelper = GitLabServices(module, git, service)
     if state == 'absent':
         if not remote_service or not remote_service.created_at:
             module.exit_json(changed=False, service={}, msg='Service not found', details='Service %s not found' % service)
         else:
-            if module.check_mode:
-                module.exit_json(changed=True, service=remote_service.attributes)
             try:
-                remote_service.delete()
+                if not module.check_mode:
+                    remote_service.delete()
             except (gitlab.GitlabHttpError, gitlab.GitlabDeleteError) as e:
                 module.fail_json(msg='Failed to remove service %s' % service, exception=to_native(e))
             else:
-                module.exit_json(changed=True, service=remote_service.attributes, result='Successfully deleted service %s' % service)
+                module.exit_json(changed=True, service=remote_service.attributes, msg='Successfully deleted service %s' % service)
 
     else:
         if remote_service.created_at:
             # update
             try:
-                diff = {'before': str(remote_service.attributes)}
-                h = ServicesHelper.update(project, remote_service, active, params, events)
-                # if diff: fetch again
-                # diff['after'] = str(remote_service.attributes)
+                h = ServicesHelper.update(remote_service, active, params, events)
             except gitlab.GitlabUpdateError as e:
                 module.fail_json(changed=False, msg='Could not update service %s' % service, exception=to_native(e))
             else:
+                diff = {'before': original_attributes, 'after': remote_service.attributes if module.check_mode else project.services.get(service).attributes} if module._diff else None
                 if h:
                     module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='changed',
-                                     result='Successfully updated service %s' % service)
+                                     msg='Successfully updated service %s' % service)
                 else:
                     module.exit_json(changed=False)
 
         else:
-            # create (could only happen once for this service during the life of the project)
-            # merge new attributes in the object retrieved from the server
-            local_service = ServicesHelper.asApiObject(active, params, events)
-            for k, v in local_service.items():
-                setattr(remote_service, k, v)
-            if module.check_mode:
-                module.exit_json(changed=True)
             try:
-                remote_service.save()
-                diff = {'before': {}, 'after': str(remote_service.attributes)}
+                diff = ServicesHelper.create(remote_service, active, params, events)
             except (gitlab.GitlabCreateError, gitlab.GitlabUpdateError) as e:
                 module.fail_json(changed=False, msg='Could not create service %s' % service, exception=to_native(e))
             else:
                 module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='created',
-                                 result='Successfully created service %s' % service)
+                                 msg='Successfully created service %s' % service)
 
 
 if __name__ == '__main__':
