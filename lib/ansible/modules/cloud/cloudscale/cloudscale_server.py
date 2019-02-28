@@ -21,7 +21,9 @@ short_description: Manages servers on the cloudscale.ch IaaS service
 description:
   - Create, update, start, stop and delete servers on the cloudscale.ch IaaS service.
 notes:
-  - If more than one server with the name given by the I(name) option exists, execution is aborted.
+  - Since version 2.8, I(uuid) and I(name) or not mututally exclusive anymore.
+  - If I(uuid) option is provided, it takes precedence over I(name) for server selection. This allows to update the server's name.
+  - If no I(uuid) option is provided, I(name) is used for server selection. If more than one server with this name exists, execution is aborted.
   - Only the I(name) and I(flavor) are evaluated for the update.
   - The option I(force=true) must be given to allow the reboot of existing running servers for applying the changes.
 version_added: '2.3'
