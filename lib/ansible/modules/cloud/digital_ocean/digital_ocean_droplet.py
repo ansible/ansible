@@ -26,13 +26,13 @@ options:
      - Ensure droplet is C(present) or C(absent). If C(present) and exists and I(rebuild=True), then rebuild it.
     default: present
     type: str
-    choices: ['present', 'absent']
+    choices: [ present, absent ]
   id:
     description:
      - Numeric I(id) of the Droplet you want to check, delete or rebuild.
      - If both I(id) and I(name) are present and a droplet with that I(id) exists, I(name) will be ignored.
     type: int
-    aliases: ['droplet_id']
+    aliases: [ droplet_id ]
   name:
     description:
      - Droplet name, must be a valid hostname or a FQDN in your domain.
@@ -52,13 +52,13 @@ options:
      - If you forget to supply that, the module will build the cheapest droplet C(s-1vcpu-1gb).
      - If you need to grow your droplet you may do that later.
     type: str
-    aliases: ['size_id']
+    aliases: [ size_id ]
   image:
     description:
      - Image slug or ID for new or rebuilt droplet e.g. C(ubuntu-16-04-x64) or C(42251561).
      - Required when I(state=present) and the droplet does not yet exist.
     type: str
-    aliases: ['image_id']
+    aliases: [ image_id ]
   region:
     description:
      - Datacenter slug you would like your droplet to be created in, e.g. C(sfo2), C(sfo1), or C(sgp1).
@@ -66,7 +66,7 @@ options:
      - "New DigitalOcean users be aware: due to limited capacity, C(nyc2), C(ams2), and C(sfo1) are
       currently available only to resource owners in respective datacenters."
     type: str
-    aliases: ['region_id']
+    aliases: [ region_id ]
   ssh_keys:
     description:
      - 'List of DigitalOcean registered SSH key numeric IDs or fingerprints to put in ~root/authorized_keys on creation, e.g.
