@@ -107,7 +107,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             raise AnsibleParserError('this inventory plugin requires the gevent library. Try: yum install python-gevent')
 
         try:
-            # Using gevent to pallelize reverse dns lookups and adding entries to inventory
+            # Using gevent to parallelize reverse dns lookups and adding entries to inventory
             jobs = [gevent.spawn(self._add_device, self, device) for device in self._discovery()]
             gevent.joinall(jobs, timeout=20)
 
