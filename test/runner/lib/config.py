@@ -210,6 +210,16 @@ class PosixIntegrationConfig(IntegrationConfig):
         super(PosixIntegrationConfig, self).__init__(args, 'integration')
 
 
+class AwsSsmIntegrationConfig(IntegrationConfig):
+    """Configuration for the AWS SSM integration command."""
+
+    def __init__(self, args):
+        """
+        :type args: any
+        """
+        super(AwsSsmIntegrationConfig, self).__init__(args, 'integration')
+
+
 class WindowsIntegrationConfig(IntegrationConfig):
     """Configuration for the windows integration command."""
 

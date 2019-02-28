@@ -90,6 +90,7 @@ packaging/release/ansible_release
 /test/integration/inventory.remote
 /test/integration/inventory.networking
 /test/integration/inventory.winrm
+/test/integration/inventory.aws_ssm
 /test/integration/cloud-config-aws.yml
 /test/integration/cloud-config-cs.ini
 # python 'rope' stuff
