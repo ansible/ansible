@@ -334,22 +334,20 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         return server_info
 
     def _update_param(self, param_key, server_info, requires_stop=False):
+        param_value = self._module.params.get(param_key)
+        if param_value is None:
+            return server_info
+
         if 'slug' in server_info[param_key]:
             server_v = server_info[param_key]['slug']
         else:
             server_v = server_info[param_key]
 
-        param_value = self._module.params.get(param_key)
-
-        if param_value is not None and server_v != param_value:
-            changed = True
+        if server_v != param_value:
             # Set the diff output
             self._result['diff']['before'].update({param_key: server_v})
             self._result['diff']['after'].update({param_key: param_value})
-        else:
-            changed = False
 
-        if changed:
             if server_info.get('state') == "running":
                 if requires_stop and not self._module.params.get('force'):
                     self._module.warn("Some changes won't be applied to running servers. "
