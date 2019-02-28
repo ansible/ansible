@@ -29,6 +29,8 @@ like services, packages, or files (anything really), or handle executing system 
        How to write your own modules
    :doc:`../dev_guide/developing_api`
        Examples of using modules with the Python API
+   :doc:`../reference_appendices/interpreter_discovery`
+       Configuring the right Python interpreter on target hosts
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

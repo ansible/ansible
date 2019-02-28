@@ -75,6 +75,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    reference_appendices/config
    reference_appendices/YAMLSyntax
    reference_appendices/python_3_support
+   reference_appendices/interpreter_discovery
    reference_appendices/release_and_maintenance
    reference_appendices/test_strategies
    dev_guide/testing/sanity/index
