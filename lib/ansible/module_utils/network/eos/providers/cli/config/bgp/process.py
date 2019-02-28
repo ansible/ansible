@@ -151,11 +151,12 @@ class Provider(CliProvider):
         root_networks = self.get_value('config.networks')
         operation = self.params['operation']
 
-        if address_family and root_networks and operation == 'replace':
-            for item in address_family:
-                if item['networks']:
-                    raise ValueError('operation is replace but provided both root level networks and networks under %s address family'
-                                     % item['afi'])
+        if operation == 'replace' and root_networks:
+            if address_family:
+                for item in address_family:
+                    if item['networks']:
+                        raise ValueError('operation is replace but provided both root level networks and networks under %s address family'
+                                             % item['afi'])
 
-        if root_networks and config and device_has_AF(config):
-            raise ValueError('operation is replace and device has one or more address family activated but root level network(s) provided')
+            if config and device_has_AF(config):
+                raise ValueError('operation is replace and device has one or more address family activated but root level network(s) provided')
