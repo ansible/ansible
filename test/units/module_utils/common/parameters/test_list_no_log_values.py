@@ -27,7 +27,7 @@ def test_list_no_log_values(params):
         'state': {'type': 'str'},
         'value': {'type': 'int'},
     }
-    result = {'undercookwovennativity', 'cautious-slate-makeshift'}
+    result = set(('undercookwovennativity', 'cautious-slate-makeshift'))
     assert result == list_no_log_values(argument_spec, params)
 
 
