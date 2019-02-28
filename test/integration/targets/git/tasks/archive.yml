@@ -2,6 +2,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: ARCHIVE | Archive repo using various archival format
   git:
@@ -37,6 +38,7 @@
   file:                  
     state: absent        
     path: "{{ checkout_dir }}"                     
+    recurse: yes
                          
 - name: ARCHIVE | Clone clean repo                 
   git:                   

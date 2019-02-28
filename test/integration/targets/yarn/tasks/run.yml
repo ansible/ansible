@@ -25,6 +25,7 @@
   file:
     path: '{{output_dir}}/node_modules'
     state: absent
+    recurse: yes
 
 # Set vars for our test harness
 - vars:

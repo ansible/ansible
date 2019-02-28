@@ -121,7 +121,7 @@
   file: path={{remote_tmp_dir}}/test-unarchive-tar/foo-unarchive.txt state=file
 
 - name: remove our tar unarchive destination
-  file: path={{remote_tmp_dir}}/test-unarchive-tar state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-tar state=absent recurse=yes
 
 - name: create our tar.gz unarchive destination
   file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
@@ -141,7 +141,7 @@
   file: path={{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt state=file
 
 - name: remove our tar.gz unarchive destination
-  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=absent recurse=yes
 
 - name: create our tar.gz unarchive destination for creates
   file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
@@ -181,7 +181,7 @@
       - "unarchive02d.changed == false"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=absent recurse=yes
 
 - name: create our zip unarchive destination
   file: path={{remote_tmp_dir}}/test-unarchive-zip state=directory
@@ -253,7 +253,7 @@
     - "{{ unarchive00.results }}"
 
 - name: remove our zip unarchive destination
-  file: path={{remote_tmp_dir}}/test-unarchive-zip state=absent
+  file: path={{remote_tmp_dir}}/test-unarchive-zip state=absent recurse=yes
 
 - name: remove our test files for the archive
   file: path={{remote_tmp_dir}}/{{item}} state=absent
@@ -314,7 +314,7 @@
       - "'foo-unarchive.txt' in unarchive06['files']"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent recurse=yes
 
 - name: create our unarchive destination
   file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
@@ -358,7 +358,7 @@
       - "'foo-unarchive.txt' in unarchive07['files']"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent recurse=yes
 
 - name: create our unarchive destination
   file: path={{remote_tmp_dir}}/test-unarchive-zip state=directory
@@ -422,7 +422,7 @@
       - "'FOO-UNAR.TXT' in unarchive08['files']"
 
 - name: remove our zip unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-zip state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-zip state=absent recurse=yes
 
 - name: create our unarchive destination
   file: path={{remote_tmp_dir}}/test-unarchive-tar-gz state=directory
@@ -455,7 +455,7 @@
       - "unarchive09.changed == false"
 
 - name: remove quotable chars test
-  file: path="{{ remote_tmp_dir }}/test-quotes~root" state=absent
+  file: path="{{ remote_tmp_dir }}/test-quotes~root" state=absent recurse=yes
 
 - name: create our unarchive destination
   file:
@@ -484,7 +484,7 @@
       - "nonascii_stat0.stat.exists == true"
 
 - name: remove nonascii test
-  file: path="{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz" state=absent
+  file: path="{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz" state=absent recurse=yes
 
 # Test that unarchiving is performed if files are missing
 # https://github.com/ansible/ansible-modules-core/issues/1064
@@ -528,7 +528,7 @@
       - "unarchive10_1.changed == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent recurse=yes
 
 #
 # Symlink tests
@@ -565,7 +565,7 @@
       - "unarchive11_stat0.stat.exists == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent recurse=yes
 
 - name: Create a file
   file:
@@ -593,7 +593,7 @@
       - "unarchive_12.failed == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent recurse=yes
 
 # Test downloading a file before unarchiving it
 - name: create our unarchive destination
@@ -613,4 +613,4 @@
       - "unarchive13.changed == true"
 
 - name: remove our tar.gz unarchive destination
-  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent
+  file: path={{ remote_tmp_dir }}/test-unarchive-tar-gz state=absent recurse=yes

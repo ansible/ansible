@@ -589,6 +589,7 @@
   file:
     name: "{{ remote_subdir }}"
     state: absent
+    recurse: yes
 
 #
 # Recursive copy with local_follow=False, trailing slash
@@ -744,6 +745,7 @@
   file:
     name: "{{ remote_subdir }}"
     state: absent
+    recurse: yes
 
 #
 # test recursive copy local_follow=True, no trailing slash
@@ -909,6 +911,7 @@
   file:
     name: "{{ remote_subdir }}"
     state: absent
+    recurse: yes
 
 #
 # Recursive copy of tricky symlinks
@@ -1034,6 +1037,7 @@
   file:
     path: '{{ remote_dir }}/destination'
     state: absent
+    recurse: yes
 
 # Try again with no trailing slash
 
@@ -1115,6 +1119,7 @@
   file:
     path: 'destination'
     state: absent
+    recurse: yes
 
 # Try again with no trailing slash
 
@@ -1152,11 +1157,13 @@
   file:
     path: 'destination'
     state: absent
+    recurse: yes
 
 - name: Cleanup
   file:
     path: 'source_recursive'
     state: absent
+    recurse: yes
 
 #
 # issue 8394
@@ -1218,6 +1225,7 @@
     file:
       dest: /tmp/worldwritable
       state: absent
+      recurse: yes
 
   remote_user: root
 

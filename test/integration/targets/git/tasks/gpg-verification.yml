@@ -190,3 +190,4 @@
   file:
     path: "{{ git_gpg_workdir.path }}"
     state: absent
+    recurse: yes

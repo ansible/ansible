@@ -6,6 +6,7 @@
   file:
     state: absent
     path: '{{ checkout_dir }}'
+    recurse: yes
 
 - name: SEPARATE-GIT-DIR | make a pre-exist repo dir
   file:
@@ -28,6 +29,7 @@
   file:
     state: absent
     path: '{{ separate_git_dir }}'
+    recurse: yes
 
 - name: SEPARATE-GIT-DIR | clone again with a separate git dir
   git:
@@ -125,8 +127,10 @@
   file:
     state: absent
     path: "{{ separate_git_dir }}_new"
+    recurse: yes
 
 - name: SEPARATE-GIT-DIR | clear checkout_dir
   file:
     state: absent
     path: '{{ checkout_dir }}'
+    recurse: yes

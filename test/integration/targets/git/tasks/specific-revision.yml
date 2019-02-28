@@ -4,6 +4,7 @@
   file:
     state: absent
     path: '{{ checkout_dir }}'
+    recurse: yes
 
 - name: SPECIFIC-REVISION | clone to specific revision
   git:
@@ -91,6 +92,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: SPECIFIC-REVISION | update to revision by specifying the refspec with depth=1
   git:
@@ -128,6 +130,7 @@
   file:
     state: absent
     path: "{{ checkout_dir }}"
+    recurse: yes
 
 - name: SPECIFIC-REVISION | clone to revision by specifying the refspec
   git:
@@ -152,6 +155,7 @@
   file:
     state: absent
     path: "{{ item }}"
+    recurse: yes
   with_items:
     - "{{ checkout_dir }}"
     - "{{ checkout_dir }}.copy"

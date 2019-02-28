@@ -82,6 +82,7 @@
   file:
     path: '{{ subversion_test_dir }}/svn'
     state: absent
+    recurse: yes
 
 - name: checkout with quotes in username
   subversion:

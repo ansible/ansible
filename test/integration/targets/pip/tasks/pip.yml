@@ -103,6 +103,7 @@
   file:
     state: absent
     name: "{{ output_dir }}/pipenv"
+    recurse: yes
 
 - name: install a working version of setuptools in the virtualenv
   pip:
@@ -239,6 +240,7 @@
   file:
     state: absent
     name: "{{ output_dir }}/pipenv"
+    recurse: yes
 
 - name: install pip throught pip into fresh virtualenv
   pip:
@@ -298,6 +300,7 @@
   file:
     state: absent
     name: "{{ output_dir }}/pipenv"
+    recurse: yes
 
 - name: install requirements file into virtual + chdir
   pip:
@@ -507,6 +510,7 @@
     file:
       state: absent
       name: "{{ output_dir }}/pipenv"
+      recurse: yes
 
   - name: install distribute in the virtualenv
     pip:

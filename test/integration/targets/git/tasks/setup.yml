@@ -2,6 +2,7 @@
   file:
     path: "{{ output_dir }}"
     state: absent
+    recurse: yes
 
 - name: SETUP | create clean output_dir
   file:

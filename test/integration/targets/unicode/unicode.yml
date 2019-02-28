@@ -97,6 +97,7 @@
       file:
         path: /var/tmp/ansible_test_unicode_get_put
         state: absent
+        recurse: yes
 
     - name: Create a temp directory
       file:
@@ -123,6 +124,7 @@
       file:
         path: /var/tmp/ansible_test_unicode_get_put
         state: absent
+        recurse: yes
 
 - name: 'A play for hosts in group: ĪīĬĭ'
   hosts: 'ĪīĬĭ'
