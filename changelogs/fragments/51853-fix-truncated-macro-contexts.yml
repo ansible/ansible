@@ -1,0 +1,3 @@
+bugfixes:
+- "zabbix_hostmacro: fixes truncation of macro contexts that contain colons
+   (see https://github.com/ansible/ansible/pull/51853)"
