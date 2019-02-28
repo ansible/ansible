@@ -464,7 +464,7 @@ def main():
             repository_url=dict(default=None),
             username=dict(default=None, aliases=['aws_secret_key']),
             password=dict(default=None, no_log=True, aliases=['aws_secret_access_key']),
-            headers=dict(type='raw'),
+            headers=dict(type='dict'),
             state=dict(default="present", choices=["present", "absent"]),  # TODO - Implement a "latest" state
             timeout=dict(default=10, type='int'),
             dest=dict(type="path", required=True),
