@@ -60,7 +60,7 @@ options:
             access:
                 description:
                 - The privilege of the dashboard administrator on the network
-                - Valid options are C(full), C(read-only), or C(none)
+                - Valid options are C(full), C(read-only), or C(none).
                 type: str
     state:
         description:
