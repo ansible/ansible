@@ -1109,13 +1109,14 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, test_dir, inventory_path, ansible_config):
+def integration_environment(args, target, test_dir, inventory_path, ansible_config, env_config):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
     :type test_dir: str
     :type inventory_path: str
     :type ansible_config: str | None
+    :type env_config: CloudEnvironmentConfig | None
     :rtype: dict[str, str]
     """
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -1125,9 +1126,11 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
             HTTPTESTER='1',
         ))
 
+    callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
+
     integration = dict(
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
-        ANSIBLE_CALLBACK_WHITELIST='junit',
+        ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
@@ -1170,7 +1173,7 @@ def command_integration_script(args, target, test_dir, inventory_path):
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
         cwd = os.path.join(test_env.integration_dir, 'targets', target.name)
 
         if env_config and env_config.env_vars:
@@ -1252,7 +1255,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
             cwd = test_env.integration_dir
 
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))

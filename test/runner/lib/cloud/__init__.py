@@ -406,14 +406,16 @@ class CloudEnvironment(CloudBase):
 
 class CloudEnvironmentConfig(object):
     """Configuration for the environment."""
-    def __init__(self, env_vars=None, ansible_vars=None, ansible_vars_yaml=None, module_defaults=None):
+    def __init__(self, env_vars=None, ansible_vars=None, ansible_vars_yaml=None, module_defaults=None, callback_plugins=None):
         """
         :type env_vars: dict[str, str] | None
         :type ansible_vars: dict[str, any] | None
         :type ansible_vars_yaml: list[str] | None
         :type module_defaults: dict[str, dict[str, any]] | None
+        :type callback_plugins: list[str] | None
         """
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars
         self.ansible_vars_yaml = ansible_vars_yaml
         self.module_defaults = module_defaults
+        self.callback_plugins = callback_plugins
