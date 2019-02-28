@@ -208,11 +208,17 @@ EXAMPLES = '''
 '''
 
 import re
-import locale
 
 from ansible.module_utils.basic import AnsibleModule
 
-locale.setlocale(locale.LC_ALL, '')
+
+LVOL_ENV_VARS = dict(
+    # make sure we use the C locale when running lvol-related commands
+    LANG='C',
+    LC_ALL='C',
+    LC_MESSAGES='C',
+    LC_CTYPE='C',
+)
 
 
 def mkversion(major, minor, patch):
@@ -225,7 +231,7 @@ def parse_lvs(data):
         parts = line.strip().split(';')
         lvs.append({
             'name': parts[0].replace('[', '').replace(']', ''),
-            'size': locale.atof(parts[1]),
+            'size': float(parts[1]),
             'active': (parts[2][4] == 'a'),
             'thinpool': (parts[2][0] == 't'),
             'thinvol': (parts[2][0] == 'V'),
@@ -239,9 +245,9 @@ def parse_vgs(data):
         parts = line.strip().split(';')
         vgs.append({
             'name': parts[0],
-            'size': locale.atof(parts[1]),
-            'free': locale.atof(parts[2]),
-            'ext_size': locale.atof(parts[3])
+            'size': float(parts[1]),
+            'free': float(parts[2]),
+            'ext_size': float(parts[3])
         })
     return vgs
 
@@ -278,6 +284,8 @@ def main():
             ['lv', 'thinpool'],
         ),
     )
+
+    module.run_command_environ_update = LVOL_ENV_VARS
 
     # Determine if the "--yes" option should be used
     version_found = get_lvm_version(module)
@@ -340,7 +348,7 @@ def main():
                 size = size[0:-1]
 
             try:
-                locale.atof(size)
+                float(size)
                 if not size[0].isdigit():
                     raise ValueError()
             except ValueError:
@@ -508,10 +516,10 @@ def main():
         else:
             # resize LV based on absolute values
             tool = None
-            if locale.atof(size) > this_lv['size']:
+            if float(size) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif shrink and locale.atof(size) < this_lv['size']:
-                if locale.atof(size) == 0:
+            elif shrink and float(size) < this_lv['size']:
+                if float(size) == 0:
                     module.fail_json(msg="Sorry, no shrinking of %s to 0 permitted." % (this_lv['name']))
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
