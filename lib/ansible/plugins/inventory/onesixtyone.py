@@ -44,7 +44,7 @@ DOCUMENTATION = '''
           required: false
     notes:
       - Only discover devices running SNMPv2.
-      - TODO: Add caching support.
+      - 'TODO: Add caching support.'
 '''
 EXAMPLES = '''
     # onesixtyone.yaml or any other YAML file-extension
