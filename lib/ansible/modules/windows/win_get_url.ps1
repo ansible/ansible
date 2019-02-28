@@ -55,8 +55,6 @@ $checksum = $module.Params.checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
 $checksum_url = $module.Params.checksum_url
 
-$module.Diff = @{}
-
 Add-CSharpType -AnsibleModule $module -References @'
     using System.Net;
     public class ExtendedWebClient : WebClient {
@@ -255,43 +253,26 @@ Function Compare-ModifiedFile {
 
 Function Get-FileChecksum {
     param($path, $algorithm = 'sha1')
-<#
-    .SYNOPSIS
-    Helper function to calculate a hash of a file in a way which PowerShell 3
-    and above can handle
-#>
-    If (Test-Path -Path $path -PathType Leaf)
-    {
-        switch ($algorithm)
-        {
-            'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
-            'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
-            'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
-            'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
-            'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
-            default {
-                $module.FailJson("Unsupported hash algorithm supplied '$algorithm'")
-            }
-        }
 
-        if([bool](Get-Command 'Get-FileHash' -ea 0)) {
-            $raw_hash = Get-FileHash $path -Algorithm $algorithm
-            $hash = $raw_hash.Hash.ToLower()
-        } Else {
-            $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
-            $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
-            $fp.Dispose();
-            $module.Warn("Your host uses legacy powershell. Please update.")
+    switch ($algorithm)
+    {
+        'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
+        'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
+        'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
+        'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
+        'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
+        default {
+            $module.FailJson("Unsupported hash algorithm supplied '$algorithm'")
         }
     }
-    ElseIf (Test-Path -Path $path -PathType Container)
-    {
-        $hash = "3";
+
+    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+    try {
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
+    } finally {
+        $fp.Dispose()
     }
-    Else
-    {
-        $hash = "1";
-    }
+
     return $hash
 }
 
@@ -299,7 +280,6 @@ Function Invoke-DownloadFile {
     param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
 
     $module_start = Get-Date
-    $diff = ""
 
     # Check $dest parent folder exists before attempting download, which avoids unhelpful generic error message.
     $dest_parent = Split-Path -LiteralPath $dest
@@ -336,7 +316,6 @@ Function Invoke-DownloadFile {
     Try {
 
         $tmpDest = Join-Path -Path $module.Tmpdir -ChildPath ([System.IO.Path]::GetRandomFileName())
-        $diff += "+$tmpDest`n"
         $extWebClient.DownloadFile($url, $tmpDest)
 
         $tmpDestHash = Get-FileChecksum -path $tmpDest -algorithm $checksum_algorithm
@@ -350,15 +329,11 @@ Function Invoke-DownloadFile {
                 if(Test-Path -LiteralPath $dest) {
                     $destHash = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
                     if ($destHash -eq $checksum) {
-                        $module.Result.status_code = 200
-                        $module.Result.msg = 'file already exists'
-                        $module.Result.checksum_src = $tmpDestHash
-                        $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-                        return
+                        $module.Result.changed = $false
                     }
                 } else {
                     Copy-Item -Path $tmpDest -Destination $dest -Force -WhatIf:$module.CheckMode | Out-Null
-                    $diff += "+$dest`n"
+                    $module.Result.changed = $true
                 }
             }
         } else {
@@ -366,10 +341,10 @@ Function Invoke-DownloadFile {
                                                 -credentials $credentials -headers $headers -timeout $timeout `
                                                 -use_proxy $use_proxy -proxy $proxy 
             if ($is_modified) {
-                throw "Source and recieved files size mismatch."
+                throw "Source and recieved files size mismatch"
             }
             Copy-Item -Path $tmpDest -Destination $dest -Force -WhatIf:$module.CheckMode | Out-Null
-            $diff += "+$dest`n"
+            $module.Result.changed = $true
         }
 
     } Catch [System.Net.WebException] {
@@ -384,16 +359,11 @@ Function Invoke-DownloadFile {
     Finally {
         if (Test-Path -LiteralPath $tmpDest) {
             Remove-Item -Path $tmpDest | Out-Null
-            $diff += "-$tmpDest`n"
-
-            $module.Diff.prepared = $diff
         }
     }
 
     $module.Result.status_code = 200
-    $module.Result.changed = $true
     $module.Result.msg = 'OK'
-    $module.Result.dest = $dest
     $module.Result.checksum_src = $tmpDestHash
     $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
 }
@@ -410,7 +380,6 @@ if ($checksum_url) {
     $checksum_url = $checksum_url.Trim().toLower()
 }
 
-$module.Result.dest = $dest
 $module.Result.elapsed = 0
 $module.Result.url = $url
 
@@ -457,6 +426,7 @@ if (Test-Path -LiteralPath $dest -PathType Container) {
     # We have a trailing path separator
     $module.FailJson("The destination path '$dest' does not exist, or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
 }
+
 $module.Result.dest = $dest
 
 # Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
@@ -505,8 +475,6 @@ if ($force -or -not (Test-Path -LiteralPath $dest)) {
         Invoke-DownloadFile @common_args `
                             -url $url -dest $dest
 
-   } else {
-       $module.Result.msg = 'file already exists'
    }
 }
 
