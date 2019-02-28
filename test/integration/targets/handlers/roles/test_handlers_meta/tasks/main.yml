@@ -63,7 +63,7 @@
     - exec_count_out.stdout | int == 1
 
 - name: cleanup tempfile
-  file: path={{ handler_countpath }} state=absent
+  file: path={{ handler_countpath }} state=absent recurse=yes
 
 - name: reset handler1_called
   set_fact:

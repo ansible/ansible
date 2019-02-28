@@ -27,6 +27,7 @@
   file:
     path: "{{ output_dir_test }}"
     state: absent
+    recurse: yes
 
 - name: create our testing sub-directory
   file:

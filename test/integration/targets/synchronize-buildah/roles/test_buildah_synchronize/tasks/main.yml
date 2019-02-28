@@ -20,6 +20,7 @@
   file:
     path: '{{ output_dir }}'
     state: absent
+    recurse: yes
 
 - name: ensure the target directory exists
   file:
@@ -64,3 +65,4 @@
   file:
     path: '{{ output_dir }}'
     state: absent
+    recurse: yes

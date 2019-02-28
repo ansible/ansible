@@ -8,7 +8,7 @@
     gpg2_bin: '{{ "gpg2" if gpg2_check is successful else "gpg" }}'
 
 - name: "remove previous password files and directory"
-  file: dest={{item}} state=absent
+  file: dest={{item}} state=absent recurse=yes
   with_items:
   - "~/.gnupg"
   - "~/.password-store"

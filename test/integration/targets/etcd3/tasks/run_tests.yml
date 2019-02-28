@@ -71,6 +71,7 @@
   file:
     path: "{{ etcd3_download_location }}"
     state: absent
+    recurse: yes
   when:
     - _testetcd3ctl.rc != 0
     - _etcddownloadexists is not changed

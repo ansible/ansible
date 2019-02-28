@@ -43,5 +43,6 @@
       file:
         path: /usr/sbin/policy-rc.d
         state: absent
+        recurse: yes
       when:
         - "'backup_file' not in policy_rc_d"

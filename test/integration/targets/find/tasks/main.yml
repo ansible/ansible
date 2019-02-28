@@ -19,7 +19,7 @@
 - set_fact: output_dir_test={{output_dir}}/test_find
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file: path="{{ output_dir_test }}" state=absent recurse=yes
 
 - name: create our testing sub-directory
   file: path="{{ output_dir_test }}" state=directory

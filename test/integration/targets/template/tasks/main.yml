@@ -435,6 +435,7 @@
   file:
     path: '{{ output_dir | expanduser }}/hlink_dir'
     state: absent
+    recurse: yes
 
 - name: create test dir
   file:
