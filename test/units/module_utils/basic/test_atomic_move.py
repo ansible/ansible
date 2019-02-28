@@ -62,6 +62,7 @@ def fake_stat(mocker):
     stat1.st_mode = 0o0644
     stat1.st_uid = 0
     stat1.st_gid = 0
+    stat1.st_flags = 0
     yield stat1
 
 

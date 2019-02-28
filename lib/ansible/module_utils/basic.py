@@ -39,24 +39,6 @@ FILE_ATTRIBUTES = {
     'Z': 'compresseddirty',
 }
 
-PASS_VARS = {
-    'check_mode': 'check_mode',
-    'debug': '_debug',
-    'diff': '_diff',
-    'keep_remote_files': '_keep_remote_files',
-    'module_name': '_name',
-    'no_log': 'no_log',
-    'remote_tmp': '_remote_tmp',
-    'selinux_special_fs': '_selinux_special_fs',
-    'shell_executable': '_shell',
-    'socket': '_socket_path',
-    'syslog_facility': '_syslog_facility',
-    'string_conversion_action': '_string_conversion_action',
-    'tmpdir': '_tmpdir',
-    'verbosity': '_verbosity',
-    'version': 'ansible_version',
-}
-
 PASS_BOOLS = ('no_log', 'debug', 'diff')
 
 # Ansible modules can be written in any language.
@@ -171,6 +153,11 @@ from ansible.module_utils.common.sys_info import (
     get_platform_subclass,
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
+from ansible.module_utils.common.parameters import (
+    handle_aliases,
+    PASS_VARS,
+)
+
 from ansible.module_utils.six import (
     PY2,
     PY3,
@@ -186,11 +173,9 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
-
-# Note: When getting Sequence from collections, it matches with strings.  If
+# Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
 SEQUENCETYPE = frozenset, KeysView, Sequence
-
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
 
 _NUMBERTYPES = tuple(list(integer_types) + [float])
@@ -792,7 +777,7 @@ class AnsibleModule(object):
         self._string_conversion_action = ''
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_%s' % k for k in PASS_VARS]
+        self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
 
@@ -807,7 +792,7 @@ class AnsibleModule(object):
         # append to legal_inputs and then possibly check against them
         try:
             self.aliases = self._handle_aliases()
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             # Use exceptions here because it isn't safe to call fail_json until no_log is processed
             print('\n{"failed": true, "msg": "Module alias error: %s"}' % to_native(e))
             sys.exit(1)
@@ -1581,32 +1566,14 @@ class AnsibleModule(object):
                            to_native(e), exception=traceback.format_exc())
 
     def _handle_aliases(self, spec=None, param=None):
-        # this uses exceptions as it happens before we can safely call fail_json
-        aliases_results = {}  # alias:canon
+        if spec is None:
+            spec = self.argument_spec
         if param is None:
             param = self.params
 
-        if spec is None:
-            spec = self.argument_spec
-        for (k, v) in spec.items():
-            self._legal_inputs.append(k)
-            aliases = v.get('aliases', None)
-            default = v.get('default', None)
-            required = v.get('required', False)
-            if default is not None and required:
-                # not alias specific but this is a good place to check this
-                raise Exception("internal error: required and default are mutually exclusive for %s" % k)
-            if aliases is None:
-                continue
-            if not isinstance(aliases, SEQUENCETYPE) or isinstance(aliases, (binary_type, text_type)):
-                raise Exception('internal error: aliases must be a list or tuple')
-            for alias in aliases:
-                self._legal_inputs.append(alias)
-                aliases_results[alias] = k
-                if alias in param:
-                    param[k] = param[alias]
-
-        return aliases_results
+        # this uses exceptions as it happens before we can safely call fail_json
+        alias_results, self._legal_inputs = handle_aliases(spec, param)
+        return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
         if spec is None:
