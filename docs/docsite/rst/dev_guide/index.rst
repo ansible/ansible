@@ -20,7 +20,7 @@ Find the task that best describes what you want to do:
    * I want to :ref:`set up my Python development environment <environment_setup>`.
    * I want to :ref:`get started writing a module <developing_modules_general>`.
    * I want to :ref:`write a Windows module <developing_modules_general_windows>`.
-   * I want to `write an Amazon (AWS) module <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_.
+   * I want to `write an Amazon (AWS) module <https://github.com/ansible/ansible/blob/stable-2.7/lib/ansible/modules/cloud/amazon/GUIDELINES.md>`_.
    * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, etc.).
 
 * I want to refine my code:
