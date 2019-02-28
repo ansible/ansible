@@ -129,12 +129,10 @@ try:
     for attribute in ('available_algorithms', 'algorithms'):
         algorithms = getattr(hashlib, attribute, None)
         if algorithms:
-            # convert algorithms to list instead of immutable tuple so md5 can be removed if not available
-            algorithms = list(algorithms)
             break
     if algorithms is None:
         # python 2.5+
-        algorithms = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+        algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
     for algorithm in algorithms:
         AVAILABLE_HASH_ALGORITHMS[algorithm] = getattr(hashlib, algorithm)
 
@@ -142,7 +140,7 @@ try:
     try:
         hashlib.md5()
     except ValueError:
-        algorithms.remove('md5')
+        AVAILABLE_HASH_ALGORITHMS.pop('md5', None)
 except Exception:
     import sha
     AVAILABLE_HASH_ALGORITHMS = {'sha1': sha.sha}
