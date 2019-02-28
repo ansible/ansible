@@ -96,6 +96,7 @@ options:
                 choices:
                     - Tcp
                     - Http
+                default: Tcp
             interval:
                 description:
                     - The interval, in seconds, for how frequently to probe the endpoint for health status.
@@ -135,6 +136,7 @@ options:
                     - Tcp
                     - Udp
                     - All
+                default: Tcp
             frontend_port_range_start:
                 description:
                     - The first port in the range of external ports that will be used to provide inbound NAT to NICs associated with the load balancer.
@@ -172,6 +174,7 @@ options:
                     - Tcp
                     - Udp
                     - All
+                default: Tcp
             load_distribution:
                 description:
                     - The session persistence policy for this rule; C(Default) is no persistence.
@@ -221,6 +224,7 @@ options:
                     - Tcp
                     - Udp
                     - All
+                default: Tcp
             frontend_port:
                 description:
                     - The port for the external endpoint.
@@ -430,7 +434,8 @@ probes_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Http']
+        choices=['Tcp', 'Http'],
+        default='Tcp'
     ),
     interval=dict(
         type='int',
@@ -458,7 +463,8 @@ inbound_nat_pool_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All']
+        choices=['Tcp', 'Udp', 'All'],
+        default='Tcp'
     ),
     frontend_port_range_start=dict(
         type='int',
@@ -486,7 +492,8 @@ inbound_nat_rule_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All']
+        choices=['Tcp', 'Udp', 'All'],
+        default='Tcp'
     ),
     frontend_port=dict(
         type='int',
@@ -527,7 +534,8 @@ load_balancing_rule_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All']
+        choices=['Tcp', 'Udp', 'All'],
+        default='Tcp'
     ),
     load_distribution=dict(
         type='str',
