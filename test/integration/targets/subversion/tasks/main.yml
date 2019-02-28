@@ -26,4 +26,4 @@
     file:
       path: '{{ subversion_server_dir }}'
       state: absent
-      rrecurse: yes
+      recurse: yes
