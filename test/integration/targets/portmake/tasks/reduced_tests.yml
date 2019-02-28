@@ -15,27 +15,32 @@
 ###
 # test portmake absent
 
-- name: check absence of package screen
-  command: pkg info tmux
-  register: pkg_info_out
-  failed_when: pkg_info_out.rc == 0
-
 - name: test removal of package tmux  not installed
   portmake:
     name: "sysutils/tmux"
     state: "absent"
-    
+
+- name: check absence of package tmux
+  command: pkg info tmux
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc == 0
+
 - name: test removal of package tmux not installed with unneded options
   portmake:
     name: "sysutils/tmux"
     state: "absent"
     options_set: "BACKSPACE"
 
+- name: check absence of package tmux
+  command: pkg info tmux
+  register: pkg_info_out
+  failed_when: pkg_info_out.rc == 0
+
 
 ###
 # test portmake present
 
-- name: remove an possibly existing make.conf.
+- name: remove a possibly existing make.conf.
   file:
     path: /etc/make.conf
     state: absent
