@@ -126,7 +126,9 @@
       net_name: IntTestNetworkTags
       type: switch
       timezone: America/Chicago
-      tags: first_tag, second_tag
+      tags: 
+        - first_tag
+        - second_tag
     delegate_to: localhost
     register: create_net_tags
 
@@ -141,7 +143,10 @@
       net_name: IntTestNetworkTags
       type: switch
       timezone: America/Chicago
-      tags: first_tag, second_tag, third_tag
+      tags: 
+        - first_tag
+        - second_tag
+        - third_tag
     delegate_to: localhost
     register: create_net_modified
 
@@ -153,7 +158,10 @@
       net_name: IntTestNetworkTags
       type: switch
       timezone: America/Chicago
-      tags: first_tag, second_tag, third_tag
+      tags: 
+        - first_tag
+        - second_tag
+        - third_tag
     delegate_to: localhost
     register: create_net_modified_idempotent
 

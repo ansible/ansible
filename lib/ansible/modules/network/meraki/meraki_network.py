@@ -28,12 +28,12 @@ options:
     state:
         description:
         - Create or modify an organization.
-        choices: [absent, present, query]
+        choices: [ absent, present, query ]
         default: present
     net_name:
         description:
         - Name of a network.
-        aliases: [name, network]
+        aliases: [ name, network ]
     net_id:
         description:
         - ID number of a network.
@@ -50,13 +50,14 @@ options:
         - As of Ansible 2.8, C(combined) type is no longer accepted.
         - As of Ansible 2.8, changes to this parameter are no longer idempotent.
         choices: [ appliance, switch, wireless ]
-        aliases: [net_type]
+        aliases: [ net_type ]
         type: list
     tags:
         type: list
         description:
         - List of tags to assign to network.
         - C(tags) name conflicts with the tags parameter in Ansible. Indentation problems may cause unexpected behaviors.
+        - Ansible 2.8 converts this to a list from a comma separated list.
     timezone:
         description:
         - Timezone associated to network.
@@ -169,16 +170,8 @@ def is_net_valid(meraki, net_name, data):
 
 
 def construct_tags(tags):
-    ''' Assumes tags are a comma separated list '''
-    if tags is not None:
-        tags = tags.replace(' ', '')
-        tags = tags.split(',')
-        tag_list = str()
-        for t in tags:
-            tag_list = tag_list + " " + t
-        tag_list = tag_list + " "
-        return tag_list
-    return None
+    formatted_tags = ' '.join(tags)
+    return ' {0} '.format(formatted_tags)  # Meraki needs space padding
 
 
 def list_to_string(data):
@@ -200,7 +193,7 @@ def main():
     argument_spec.update(
         net_id=dict(type='str'),
         type=dict(type='list', choices=['wireless', 'switch', 'appliance'], aliases=['net_type']),
-        tags=dict(type='str'),
+        tags=dict(type='list'),
         timezone=dict(type='str'),
         net_name=dict(type='str', aliases=['name', 'network']),
         state=dict(type='str', choices=['present', 'query', 'absent'], default='present'),
@@ -302,6 +295,19 @@ def main():
                 if meraki.status == 200:
                     meraki.result['data'] = r
                     meraki.result['changed'] = True
+            else:
+                net = meraki.get_net(meraki.params['org_name'], meraki.params['net_name'], data=nets)
+                # meraki.fail_json(msg="HERE", net=net, payload=payload)
+                if meraki.is_update_required(net, payload):
+                    path = meraki.construct_path('update',
+                                                 net_id=meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+                                                 )
+                    r = meraki.request(path,
+                                       method='PUT',
+                                       payload=json.dumps(payload))
+                    if meraki.status == 200:
+                        meraki.result['data'] = r
+                        meraki.result['changed'] = True
     elif meraki.params['state'] == 'absent':
         if is_net_valid(meraki, meraki.params['net_name'], nets) is True:
             net_id = meraki.get_net_id(net_name=meraki.params['net_name'],
