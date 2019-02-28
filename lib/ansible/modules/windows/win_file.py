@@ -38,13 +38,11 @@ options:
     type: str
     choices: [ absent, directory, file, touch ]
 seealso:
-- module: assemble
-- module: copy
 - module: file
-- module: template
-- module: win_copy
+- module: win_acl
+- module: win_acl_inheritance
+- module: win_owner
 - module: win_stat
-- module: win_template
 author:
 - Jon Hawkesworth (@jhawkesworth)
 '''
