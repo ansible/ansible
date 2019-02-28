@@ -17,7 +17,7 @@
 #
 #   files
 #       Each key represents a specific file in the repository.
-#       If a module is not listed, it's maintainers default to the authors
+#       If a module is not listed, its maintainers default to the authors.
 #       If the file has no maintainers key, the value of the key is
 #       presumed to be the maintainers.
 #
@@ -43,10 +43,12 @@ files:
   changelogs/fragments/:
     support: community
   $modules/cloud/amazon/:
-    ignored: erydo seiffert simplesteph nadirollo
+    ignored: erydo seiffert simplesteph nadirollo tedder
   $modules/cloud/amazon/aws_api_gateway.py: willthames
   $modules/cloud/amazon/aws_kms.py: willthames
-  $modules/cloud/amazon/cloudformation.py: ryansb tedder
+    ignored: tedder
+  $modules/cloud/amazon/cloudformation.py: ryansb
+    ignored: tedder
   $modules/cloud/amazon/cloudfront_facts.py: willthames
   $modules/cloud/amazon/cloudtrail.py: $team_ansible
   $modules/cloud/amazon/ec2.py:
