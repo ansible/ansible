@@ -135,6 +135,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.ec2 import (HAS_BOTO3, boto3_conn, boto_exception, ec2_argument_spec,
                                       get_aws_connection_info, compare_policies)
+from ansible.module_utils.six import string_types
 
 
 def build_kwargs(registry_id):
@@ -292,6 +293,13 @@ def run(ecr, params, verbosity):
 
             elif policy_text is not None:
                 try:
+                    # Sort any lists containing only string types
+                    for statement_index in range(0, len(policy['Statement'])):
+                        for key in policy['Statement'][statement_index]:
+                            value = policy['Statement'][statement_index][key]
+                            if isinstance(value, list) and all(isinstance(item, string_types) for item in value):
+                                policy['Statement'][statement_index][key] = sorted(value)
+
                     if verbosity >= 2:
                         result['policy'] = policy
                     original_policy = ecr.get_repository_policy(
