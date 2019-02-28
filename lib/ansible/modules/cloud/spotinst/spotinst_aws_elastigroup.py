@@ -19,34 +19,58 @@ description:
     You will have to have a credentials file in this location - <home>/.spotinst/credentials
     The credentials file must contain a row that looks like this
     token = <YOUR TOKEN>
-    Full documentation available at https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
+    Full documentation available at U(https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-)
 requirements:
   - python >= 2.7
-  - spotinst_sdk >= 1.0.38
+  - spotinst_sdk2 >= 2.0.0
 options:
 
   credentials_path:
+    type: str
+    default: "/root/.spotinst/credentials"
     description:
-      - (String) Optional parameter that allows to set a non-default credentials path.
-       Default is ~/.spotinst/credentials
+      - Optional parameter that allows to set a non-default credentials path.
 
   account_id:
+    type: str
     description:
-      - (String) Optional parameter that allows to set an account-id inside the module configuration
-       By default this is retrieved from the credentials path
+      - Optional parameter that allows to set an account-id inside the module configuration. By default this is retrieved from the credentials path
+
+  token:
+    version_added: 2.8
+    type: str
+    description:
+      - Optional parameter that allows to set an token inside the module configuration. By default this is retrieved from the credentials path
+
+  state:
+    type: str
+    choices:
+      - present
+      - absent
+    default: present
+    description:
+      - create update or delete
+
+  auto_apply_tags:
+    type: bool
+    description:
+      - Weather or not to apply tags without rolling group
+    version_added: 2.8
 
   availability_vs_cost:
+    type: str
     choices:
       - availabilityOriented
       - costOriented
       - balanced
     description:
-      - (String) The strategy orientation.
+      - The strategy orientation.
     required: true
 
   availability_zones:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of Availability Zones that are configured in the elastigroup;
+      - a list of hash/dictionaries of Availability Zones that are configured in the elastigroup;
         '[{"key":"value", "key":"value"}]';
         keys allowed are
         name (String),
@@ -55,8 +79,9 @@ options:
     required: true
 
   block_device_mappings:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of Block Device Mappings for elastigroup instances;
+      - a list of hash/dictionaries of Block Device Mappings for elastigroup instances;
         You can specify virtual devices and EBS volumes.;
         '[{"key":"value", "key":"value"}]';
         keys allowed are
@@ -71,58 +96,139 @@ options:
         volume_type(String),
         volume_size(Integer))
 
-  chef:
+  code_deploy:
+    version_added: 2.8
+    type: dict
     description:
-      - (Object) The Chef integration configuration.;
-        Expects the following keys - chef_server (String),
+      - code deploy integration configuration
+    suboptions:
+      deployment_groups:
+        description: deployment groups configurations
+        type: list
+        suboptions:
+          application_name:
+            description: application name
+            type: str
+          deployment_group_name:
+            description: deployment group name
+            type: str
+      clean_up_on_failure:
+        description: clean up on failure
+        type: bool
+      terminate_instance_on_failure:
+        description: terminate instance on failure
+        type: bool
+
+  chef:
+    type: dict
+    description:
+      - The Chef integration configuration.;
+        Expects the following keys-
+        chef_server (String),
         organization (String),
         user (String),
         pem_key (String),
         chef_version (String)
 
-  draining_timeout:
+
+  docker_swarm:
+    type: dict
+    version_added: 2.8
     description:
-      - (Integer) Time for instance to be drained from incoming requests and deregistered from ELB before termination.
+      - The Docker Swarm integration configuration.;
+        Expects the following keys-
+        master_host (String),
+        master_port (Integer),
+        auto_scale (Object expects the following keys-
+        is_enabled (Boolean),
+        cooldown (Integer),
+        headroom (Object expects the following keys-
+        cpu_per_unit (Integer),
+        memory_per_unit (Integer),
+        num_of_units (Integer)),
+        key (String),
+        value (String)),
+        down (Object expecting the following key -
+        down_evaluation_periods (Integer)))
+
+  draining_timeout:
+    type: int
+    description:
+      - Time for instance to be drained from incoming requests and deregistered from ELB before termination.
 
   ebs_optimized:
-    description:
-      - (Boolean) Enable EBS optimization for supported instances which are not enabled by default.;
-        Note - additional charges will be applied.
     type: bool
+    description:
+      - Enable EBS optimization for supported instances which are not enabled by default.;
+        Note - additional charges will be applied.
 
   ebs_volume_pool:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available;
+      - a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available;
         '[{"key":"value", "key":"value"}]';
         keys allowed are -
         volume_ids (List of Strings),
         device_name (String)
 
   ecs:
+    type: dict
     description:
-      - (Object) The ECS integration configuration.;
-        Expects the following key -
-        cluster_name (String)
-
+      - The ECS integration configuration.;
+        Expects the following keys -
+        cluster_name (String),
+        auto_scale (Object expects the following keys -
+        is_enabled (Boolean),
+        is_auto_config (Boolean),
+        cooldown (Integer),
+        headroom (Object expects the following keys -
+        cpu_per_unit (Integer),
+        memory_per_unit (Integer),
+        num_of_units (Integer)),
+        attributes (List of Objects expecting the following keys -
+        key (String),
+        value (String)),
+        down (Object expecting the following key -
+        down_evaluation_periods (Integer)))
 
   elastic_ips:
+    type: list
     description:
-      - (List of Strings) List of ElasticIps Allocation Ids (Example C(eipalloc-9d4e16f8)) to associate to the group instances
+      - List of ElasticIps Allocation Ids (Example C(eipalloc-9d4e16f8)) to associate to the group instances
+
+  elastic_beanstalk:
+    version_added: 2.8
+    type: dict
+    description:
+      - The ElasticBeanstalk integration configuration.;
+        Expects the following keys -
+        environment_id (String)
+        deployment_preferences (Object expects the following keys -
+        automatic_roll (Boolean),
+        batch_size_percentage (Integer),
+        grace_period (Integer),
+        strategy (Object expects the following keys-
+        action (String),
+        should_drain_instances (Boolean)))
 
   fallback_to_od:
-    description:
-      - (Boolean) In case of no spots available, Elastigroup will launch an On-demand instance instead
     type: bool
-  health_check_grace_period:
     description:
-      - (Integer) The amount of time, in seconds, after the instance has launched to start and check its health.
+      - In case of no spots available, Elastigroup will launch an On-demand instance instead
+
+  health_check_grace_period:
+    type: int
+    description:
+      - The amount of time, in seconds, after the instance has launched to start and check its health.
     default: 300
 
   health_check_unhealthy_duration_before_replacement:
+    type: int
     description:
-      - (Integer) Minimal mount of time instance should be unhealthy for us to consider it unhealthy.
+      - Minimal mount of time instance should be unhealthy for us to consider it unhealthy.
 
   health_check_type:
+    type: str
     choices:
       - ELB
       - HCS
@@ -130,86 +236,136 @@ options:
       - MLB
       - EC2
     description:
-      - (String) The service to use for the health check.
+      - The service to use for the health check.
 
   iam_role_name:
+    type: str
     description:
-      - (String) The instance profile iamRole name
+      - The instance profile iamRole name
       - Only use iam_role_arn, or iam_role_name
 
   iam_role_arn:
+    type: str
     description:
-      - (String) The instance profile iamRole arn
+      - The instance profile iamRole arn
       - Only use iam_role_arn, or iam_role_name
 
   id:
+    type: str
     description:
-      - (String) The group id if it already exists and you want to update, or delete it.
+      - The group id if it already exists and you want to update, or delete it.
         This will not work unless the uniqueness_by field is set to id.
         When this is set, and the uniqueness_by field is set, the group will either be updated or deleted, but not created.
 
   ignore_changes:
+    type: list
     choices:
       - image_id
       - target
     description:
-      - (List of Strings) list of fields on which changes should be ignored when updating
+      - list of fields on which changes should be ignored when updating
 
   image_id:
+    type: str
     description:
-      - (String) The image Id used to launch the instance.;
+      - The image Id used to launch the instance.;
         In case of conflict between Instance type and image type, an error will be returned
     required: true
 
   key_pair:
+    type: str
     description:
-      - (String) Specify a Key Pair to attach to the instances
+      - Specify a Key Pair to attach to the instances
     required: true
 
   kubernetes:
+    type: dict
     description:
-      - (Object) The Kubernetes integration configuration.
+      - The Kubernetes integration configuration.;
         Expects the following keys -
         api_server (String),
-        token (String)
+        token (String),
+        integration_mode (String),
+        cluster_identifier (String),
+        auto_scale (Object expects the following keys -
+        is_enabled (Boolean),
+        is_auto_config (Boolean),
+        cooldown (Integer),
+        headroom (Object expects the following keys -
+        cpu_per_unit (Integer),
+        memory_per_unit (Integer),
+        num_of_units (Integer)),
+        labels (List of Objects expecting the following keys -
+        key (String),
+        value (String)),
+        down (Object expecting the following key -
+        down_evaluation_periods (Integer)))
 
   lifetime_period:
+    type: int
     description:
-      - (String) lifetime period
+      - lifetime period
 
   load_balancers:
+    type: list
     description:
-      - (List of Strings) List of classic ELB names
+      - List of classic ELB names
 
   max_size:
+    type: int
     description:
-      - (Integer) The upper limit number of instances that you can scale up to
+      - The upper limit number of instances that you can scale up to
     required: true
 
   mesosphere:
+    type: dict
     description:
       - (Object) The Mesosphere integration configuration.
         Expects the following key -
         api_server (String)
 
   min_size:
+    type: int
     description:
-      - (Integer) The lower limit number of instances that you can scale down to
+      - The lower limit number of instances that you can scale down to
     required: true
 
-  monitoring:
+  mlb_load_balancers:
+    version_added: 2.8
+    type: list
     description:
-      - (Boolean) Describes whether instance Enhanced Monitoring is enabled
+      - Objects representing mlb's.;
+        Expects the following keys-
+          target_set_id (String)
+          balancer_id (String)
+          auto_weight (String)
+          az_awareness (String)
+          type (String) MULTAI_TARGET_SET
+
+  mlb_runtime:
+    version_added: 2.8
+    type: dict
+    description:
+      - The Spotinst MLB Runtime integration configuration.;
+        Expects the following keys-
+          deployment_id (String) The runtime's deployment id
+
+  monitoring:
+    type: bool
+    description:
+      - Describes whether instance Enhanced Monitoring is enabled
     required: true
 
   name:
+    type: str
     description:
-      - (String) Unique name for elastigroup to be created, updated or deleted
+      - Unique name for elastigroup to be created, updated or deleted
     required: true
 
   network_interfaces:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of network interfaces to add to the elastigroup;
+      - a list of hash/dictionaries of network interfaces to add to the elastigroup;
         '[{"key":"value", "key":"value"}]';
         keys allowed are -
         description (String),
@@ -224,32 +380,71 @@ options:
         associate_ipv6_address (Boolean),
         private_ip_addresses (List of Objects, Keys are privateIpAddress (String, required) and primary (Boolean))
 
-  on_demand_count:
+  nomad:
+    version_added: 2.8
+    type: dict
     description:
-      - (Integer) Required if risk is not set
+      - The Nomad integration configuration.;
+        Expects the following keys-
+        master_host (String),
+        master_port (Integer),
+        acl_token (String),
+        auto_scale (Object expects the following keys-
+        is_enabled (Boolean),
+        cooldown (Integer),
+        headroom (Object expects the following keys-
+        cpu_per_unit (Integer),
+        memory_per_unit (Integer),
+        num_of_units (Integer)),
+        constraints (List of Objects expecting the following keys-
+        key (String),
+        value (String)),
+        down (Object expecting the following key -
+        down_evaluation_periods (Integer)))
+
+  on_demand_count:
+    type: int
+    description:
+      - Required if risk is not set
       - Number of on demand instances to launch. All other instances will be spot instances.;
         Either set this parameter or the risk parameter
 
   on_demand_instance_type:
+    type: str
     description:
-      - (String) On-demand instance type that will be provisioned
+      - On-demand instance type that will be provisioned
     required: true
 
   opsworks:
+    type: dict
     description:
-      - (Object) The elastigroup OpsWorks integration configration.;
+      - The elastigroup OpsWorks integration configration.;
         Expects the following key -
         layer_id (String)
 
   persistence:
+    type: dict
     description:
-      - (Object) The Stateful elastigroup configration.;
-        Accepts the following keys -
-        should_persist_root_device (Boolean),
-        should_persist_block_devices (Boolean),
-        should_persist_private_ip (Boolean)
+      - The Stateful elastigroup configration.;
+        Expects the following keys -
+          should_persist_root_device (Boolean),
+          should_persist_block_devices (Boolean),
+          should_persist_private_ip (Boolean)
+
+  preferred_spot_instance_types:
+    version_added: 2.8
+    type: list
+    description:
+      - The preferred spot instance types.;
+
+  private_ips:
+    version_added: 2.8
+    type: list
+    description:
+      - List of Private IPs to associate to the group instances.
 
   product:
+    type: str
     choices:
       - Linux/UNIX
       - SUSE Linux
@@ -258,41 +453,64 @@ options:
       - SUSE Linux (Amazon VPC)
       - Windows
     description:
-      - (String) Operation system type._
+      - Operation system type.
     required: true
 
   rancher:
+    type: dict
     description:
-      - (Object) The Rancher integration configuration.;
+      - The Rancher integration configuration.;
         Expects the following keys -
         version (String),
         access_key (String),
         secret_key (String),
         master_host (String)
 
-  right_scale:
+  revert_to_spot:
+    version_added: 2.8
+    type: dict
     description:
-      - (Object) The Rightscale integration configuration.;
+      - Contains parameters for revert to spot
+
+  right_scale:
+    type: dict
+    description:
+      - The Rightscale integration configuration.;
         Expects the following keys -
         account_id (String),
         refresh_token (String)
 
   risk:
+    type: int
     description:
-      - (Integer) required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
+      - required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
 
   roll_config:
+    type: dict
     description:
-      - (Object) Roll configuration.;
+      - Roll configuration.;
         If you would like the group to roll after updating, please use this feature.
         Accepts the following keys -
         batch_size_percentage(Integer, Required),
         grace_period - (Integer, Required),
         health_check_type(String, Optional)
 
-  scheduled_tasks:
+  route53:
+    version_added: 2.8
+    type: dict
     description:
-      - (List of Objects) a list of hash/dictionaries of scheduled tasks to configure in the elastigroup;
+      - The Route53 integration configuration.;
+        Expects the following key -
+        domains (List of Objects expecting the following keys -
+        hosted_zone_id (String),
+        record_sets (List of Objects expecting the following keys -
+        name (String)
+        use_public_ip (Boolean)))
+
+  scheduled_tasks:
+    type: list
+    description:
+      - a list of hash/dictionaries of scheduled tasks to configure in the elastigroup;
         '[{"key":"value", "key":"value"}]';
         keys allowed are -
         adjustment (Integer),
@@ -308,74 +526,103 @@ options:
         is_enabled (Boolean)
 
   security_group_ids:
+    type: list
     description:
-      - (List of Strings) One or more security group IDs. ;
+      - One or more security group IDs. ;
         In case of update it will override the existing Security Group with the new given array
     required: true
 
   shutdown_script:
+    type: str
     description:
-      - (String) The Base64-encoded shutdown script that executes prior to instance termination.
+      - The Base64-encoded shutdown script that executes prior to instance termination.
         Encode before setting.
 
   signals:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of signals to configure in the elastigroup;
+      - a list of hash/dictionaries of signals to configure in the elastigroup;
         keys allowed are -
         name (String, required),
         timeout (Integer)
 
   spin_up_time:
+    type: int
     description:
-      - (Integer) spin up time, in seconds, for the instance
+      - spin up time, in seconds, for the instance
 
   spot_instance_types:
+    type: list
     description:
-      - (List of Strings) Spot instance type that will be provisioned.
+      - Spot instance type that will be provisioned.
     required: true
 
-  state:
-    choices:
-      - present
-      - absent
+  stateful_deallocation_should_delete_network_interfaces:
+    version_added: 2.8
+    type: bool
     description:
-      - (String) create or delete the elastigroup
+      - Enable deletion of network interfaces on stateful group deletion
+
+  stateful_deallocation_should_delete_snapshots:
+    version_added: 2.8
+    type: bool
+    description:
+      - Enable deletion of snapshots on stateful group deletion
+
+  stateful_deallocation_should_delete_images:
+    version_added: 2.8
+    type: bool
+    description:
+      - Enable deletion of images on stateful group deletion
+
+  stateful_deallocation_should_delete_volumes:
+    version_added: 2.8
+    type: bool
+    description:
+      - Enable deletion of volumes on stateful group deletion
 
   tags:
+    type: list
     description:
-      - (List of tagKey:tagValue paris) a list of tags to configure in the elastigroup. Please specify list of keys and values (key colon value);
+      - a list of tags to configure in the elastigroup. Please specify list of keys and values (key colon value);
 
   target:
+    type: int
     description:
-      - (Integer) The number of instances to launch
+      - The number of instances to launch
     required: true
 
   target_group_arns:
+    type: list
     description:
-      - (List of Strings) List of target group arns instances should be registered to
+      - List of target group arns instances should be registered to
 
   tenancy:
+    type: str
     choices:
       - default
       - dedicated
     description:
-      - (String) dedicated vs shared tenancy
+      - dedicated vs shared tenancy
 
   terminate_at_end_of_billing_hour:
-    description:
-      - (Boolean) terminate at the end of billing hour
     type: bool
+    description:
+      - terminate at the end of billing hour
+
   unit:
+    type: str
     choices:
       - instance
       - weight
     description:
-      - (String) The capacity unit to launch instances by.
+      - The capacity unit to launch instances by.
     required: true
 
   up_scaling_policies:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup;
+      - a list of hash/dictionaries of scaling policies to configure in the elastigroup;
         '[{"key":"value", "key":"value"}]';
         keys allowed are -
         policy_name (String, required),
@@ -398,8 +645,9 @@ options:
 
 
   down_scaling_policies:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup;
+      - a list of hash/dictionaries of scaling policies to configure in the elastigroup;
         '[{"key":"value", "key":"value"}]';
         keys allowed are -
         policy_name (String, required),
@@ -421,8 +669,9 @@ options:
         minimum (String)
 
   target_tracking_policies:
+    type: list
     description:
-      - (List of Objects) a list of hash/dictionaries of target tracking policies to configure in the elastigroup;
+      - a list of hash/dictionaries of target tracking policies to configure in the elastigroup;
         '[{"key":"value", "key":"value"}]';
         keys allowed are -
         policy_name (String, required),
@@ -435,33 +684,34 @@ options:
         target (String, required)
 
   uniqueness_by:
+    type: str
     choices:
       - id
       - name
     description:
-      - (String) If your group names are not unique, you may use this feature to update or delete a specific group.
+      - If your group names are not unique, you may use this feature to update or delete a specific group.
         Whenever this property is set, you must set a group_id in order to update or delete a group, otherwise a group will be created.
 
-
   user_data:
+    type: str
     description:
-      - (String) Base64-encoded MIME user data. Encode before setting the value.
-
+      - Base64-encoded MIME user data. Encode before setting the value.
 
   utilize_reserved_instances:
-    description:
-      - (Boolean) In case of any available Reserved Instances,
-         Elastigroup will utilize your reservations before purchasing Spot instances.
     type: bool
+    description:
+      - In case of any available Reserved Instances,
+         Elastigroup will utilize your reservations before purchasing Spot instances.
 
   wait_for_instances:
-    description:
-      - (Boolean) Whether or not the elastigroup creation / update actions should wait for the instances to spin
     type: bool
+    description:
+      - Whether or not the elastigroup creation / update actions should wait for the instances to spin
 
   wait_timeout:
+    type: int
     description:
-      - (Integer) How long the module should wait for instances before failing the action.;
+      - How long the module should wait for instances before failing the action.;
         Only works if wait_for_instances is True.
 
 """
@@ -752,10 +1002,12 @@ __metaclass__ = type
 import os
 import time
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 
 try:
-    import spotinst_sdk as spotinst
-    from spotinst_sdk import SpotinstClientException
+    import spotinst_sdk2 as spotinst
+    from spotinst_sdk2 import SpotinstSession
+    from spotinst_sdk2.client import SpotinstClientException
 
     HAS_SPOTINST_SDK = True
 
@@ -856,6 +1108,15 @@ persistence_fields = ('should_persist_root_device',
                       'should_persist_block_devices',
                       'should_persist_private_ip')
 
+revert_to_spot_fields = ('perform_at',
+                         'time_windows')
+
+elastic_beanstalk_platform_update_fields = ('perform_at',
+                                            'time_window',
+                                            'update_level')
+
+elastic_beanstalk_managed_actions_fields = ('platform_update')
+
 strategy_fields = ('risk',
                    'utilize_reserved_instances',
                    'fallback_to_od',
@@ -863,7 +1124,8 @@ strategy_fields = ('risk',
                    'availability_vs_cost',
                    'draining_timeout',
                    'spin_up_time',
-                   'lifetime_period')
+                   'lifetime_period',
+                   'revert_to_spot')
 
 ebs_fields = ('delete_on_termination',
               'encrypted',
@@ -876,8 +1138,82 @@ bdm_fields = ('device_name',
               'virtual_name',
               'no_device')
 
+
 kubernetes_fields = ('api_server',
-                     'token')
+                     'token',
+                     'integration_mode',
+                     'cluster_identifier')
+
+kubernetes_auto_scale_fields = ('is_enabled', 'is_auto_config', 'cooldown')
+
+kubernetes_headroom_fields = (
+    'cpu_per_unit',
+    'memory_per_unit',
+    'num_of_units')
+
+kubernetes_labels_fields = ('key', 'value')
+
+kubernetes_down_fields = ('evaluation_periods')
+
+nomad_fields = ('master_host', 'master_port', 'acl_token')
+
+nomad_auto_scale_fields = ('is_enabled', 'is_auto_config', 'cooldown')
+
+nomad_headroom_fields = ('cpu_per_unit', 'memory_per_unit', 'num_of_units')
+
+nomad_constraints_fields = ('key', 'value')
+
+nomad_down_fields = ('evaluation_periods')
+
+docker_swarm_fields = ('master_host', 'master_port')
+
+docker_swarm_auto_scale_fields = ('is_enabled', 'cooldown')
+
+docker_swarm_headroom_fields = (
+    'cpu_per_unit',
+    'memory_per_unit',
+    'num_of_units')
+
+docker_swarm_down_fields = ('evaluation_periods')
+
+route53_domain_fields = ('hosted_zone_id',)
+
+route53_record_set_fields = ('name', 'use_public_ip')
+
+mlb_runtime_fields = ('deployment_id',)
+
+mlb_load_balancers_fields = (
+    'type',
+    'target_set_id',
+    'balancer_id',
+    'auto_weight',
+    'az_awareness')
+
+elastic_beanstalk_fields = ('environment_id',)
+
+elastic_beanstalk_deployment_fields = ('automatic_roll',
+                                       'batch_size_percentage',
+                                       'grace_period')
+
+elastic_beanstalk_strategy_fields = ('action', 'should_drain_instances')
+
+stateful_deallocation_fields = (
+    dict(
+        ansible_field_name='stateful_deallocation_should_delete_images',
+        spotinst_field_name='should_delete_images'),
+    dict(
+        ansible_field_name='stateful_deallocation_should_delete_snapshots',
+        spotinst_field_name='should_delete_snapshots'),
+    dict(
+        ansible_field_name='stateful_deallocation_should_delete_network_interfaces',
+        spotinst_field_name='should_delete_network_interfaces'),
+    dict(
+        ansible_field_name='stateful_deallocation_should_delete_volumes',
+        spotinst_field_name='should_delete_volumes'))
+
+code_deploy_fields = ('clean_up_on_failure', 'terminate_instance_on_failure')
+
+code_deploy_deployment_fields = ('application_name', 'deployment_group_name')
 
 right_scale_fields = ('account_id',
                       'refresh_token')
@@ -905,7 +1241,15 @@ mesosphere_fields = ('api_server',)
 
 ecs_fields = ('cluster_name',)
 
-multai_fields = ('multai_token',)
+ecs_auto_scale_fields = ('is_enabled', 'is_auto_config', 'cooldown')
+
+ecs_headroom_fields = ('cpu_per_unit', 'memory_per_unit', 'num_of_units')
+
+ecs_attributes_fields = ('key', 'value')
+
+ecs_down_fields = ('evaluation_periods')
+
+multai_fields = ('multai_token')
 
 
 def handle_elastigroup(client, module):
@@ -943,15 +1287,16 @@ def handle_elastigroup(client, module):
             has_changed = False
     else:
         eg = expand_elastigroup(module, is_update=True)
+        auto_apply_tags = module.params.get('auto_apply_tags')
 
         if state == 'present':
-            group = client.update_elastigroup(group_update=eg, group_id=group_id)
+            group = client.update_elastigroup(group_update=eg, group_id=group_id, auto_apply_tags=auto_apply_tags)
             message = 'Updated group successfully.'
 
             try:
                 roll_config = module.params.get('roll_config')
                 if roll_config:
-                    eg_roll = spotinst.aws_elastigroup.Roll(
+                    eg_roll = spotinst.models.elastigroup.aws.Roll(
                         batch_size_percentage=roll_config.get('batch_size_percentage'),
                         grace_period=roll_config.get('grace_period'),
                         health_check_type=roll_config.get('health_check_type')
@@ -965,12 +1310,26 @@ def handle_elastigroup(client, module):
 
         elif state == 'absent':
             try:
-                client.delete_elastigroup(group_id=group_id)
+                stfl_dealloc_request = expand_fields(
+                    stateful_deallocation_fields,
+                    module.params, 'StatefulDeallocation')
+                if stfl_dealloc_request. \
+                        should_delete_network_interfaces is True or \
+                        stfl_dealloc_request.should_delete_images is True or \
+                        stfl_dealloc_request.should_delete_volumes is True or \
+                        stfl_dealloc_request.should_delete_snapshots is True:
+                    client.delete_elastigroup_with_deallocation(
+                        group_id=group_id,
+                        stateful_deallocation=stfl_dealloc_request)
+                else:
+                    client.delete_elastigroup(group_id=group_id)
             except SpotinstClientException as exc:
                 if "GROUP_DOESNT_EXIST" in exc.message:
                     pass
                 else:
-                    module.fail_json(msg="Error while attempting to delete group : " + exc.message)
+                    module.fail_json(
+                        msg="Error while attempting to delete group :"
+                            " " + exc.message)
 
             message = 'Deleted group successfully.'
             has_changed = True
@@ -1032,10 +1391,10 @@ def find_group_with_same_name(groups, name):
 
 
 def expand_elastigroup(module, is_update):
-    do_not_update = module.params['do_not_update']
+    do_not_update = module.params.get('do_not_update') or []
     name = module.params.get('name')
 
-    eg = spotinst.aws_elastigroup.Elastigroup()
+    eg = spotinst.models.elastigroup.aws.Elastigroup()
     description = module.params.get('description')
 
     if name is not None:
@@ -1062,14 +1421,17 @@ def expand_elastigroup(module, is_update):
 
 
 def expand_compute(eg, module, is_update, do_not_update):
-    elastic_ips = module.params['elastic_ips']
+    elastic_ips = module.params.get('elastic_ips')
     on_demand_instance_type = module.params.get('on_demand_instance_type')
-    spot_instance_types = module.params['spot_instance_types']
-    ebs_volume_pool = module.params['ebs_volume_pool']
-    availability_zones_list = module.params['availability_zones']
+    spot_instance_types = module.params.get('spot_instance_types')
+    ebs_volume_pool = module.params.get('ebs_volume_pool')
+    availability_zones_list = module.params.get('availability_zones')
+    private_ips = module.params.get('private_ips')
     product = module.params.get('product')
+    preferred_spot_instance_types = module.params.get(
+        'preferred_spot_instance_types')
 
-    eg_compute = spotinst.aws_elastigroup.Compute()
+    eg_compute = spotinst.models.elastigroup.aws.Compute()
 
     if product is not None:
         # Only put product on group creation
@@ -1079,13 +1441,18 @@ def expand_compute(eg, module, is_update, do_not_update):
     if elastic_ips is not None:
         eg_compute.elastic_ips = elastic_ips
 
-    if on_demand_instance_type or spot_instance_types is not None:
-        eg_instance_types = spotinst.aws_elastigroup.InstanceTypes()
+    if private_ips:
+        eg_compute.private_ips = private_ips
+
+    if on_demand_instance_type is not None or spot_instance_types is not None or preferred_spot_instance_types is not None:
+        eg_instance_types = spotinst.models.elastigroup.aws.InstanceTypes()
 
         if on_demand_instance_type is not None:
             eg_instance_types.spot = spot_instance_types
         if spot_instance_types is not None:
             eg_instance_types.ondemand = on_demand_instance_type
+        if preferred_spot_instance_types is not None:
+            eg_instance_types.preferred_spot = preferred_spot_instance_types
 
         if eg_instance_types.spot is not None or eg_instance_types.ondemand is not None:
             eg_compute.instance_types = eg_instance_types
@@ -1104,7 +1471,7 @@ def expand_ebs_volume_pool(eg_compute, ebs_volumes_list):
         eg_volumes = []
 
         for volume in ebs_volumes_list:
-            eg_volume = spotinst.aws_elastigroup.EbsVolume()
+            eg_volume = spotinst.models.elastigroup.aws.EbsVolume()
 
             if volume.get('device_name') is not None:
                 eg_volume.device_name = volume.get('device_name')
@@ -1121,14 +1488,16 @@ def expand_ebs_volume_pool(eg_compute, ebs_volumes_list):
 def expand_launch_spec(eg_compute, module, is_update, do_not_update):
     eg_launch_spec = expand_fields(lspec_fields, module.params, 'LaunchSpecification')
 
-    if module.params['iam_role_arn'] is not None or module.params['iam_role_name'] is not None:
+    if module.params.get('iam_role_arn') is not None or module.params.get('iam_role_name') is not None:
         eg_launch_spec.iam_role = expand_fields(iam_fields, module.params, 'IamRole')
 
-    tags = module.params['tags']
-    load_balancers = module.params['load_balancers']
-    target_group_arns = module.params['target_group_arns']
-    block_device_mappings = module.params['block_device_mappings']
-    network_interfaces = module.params['network_interfaces']
+    tags = module.params.get('tags')
+    load_balancers = module.params.get('load_balancers')
+    mlb_load_balancers = module.params.get('mlb_load_balancers')
+    target_group_arns = module.params.get('target_group_arns')
+    block_device_mappings = module.params.get('block_device_mappings')
+    network_interfaces = module.params.get('network_interfaces')
+    credit_specification = module.params.get('credit_specification')
 
     if is_update is True:
         if 'image_id' in do_not_update:
@@ -1136,13 +1505,28 @@ def expand_launch_spec(eg_compute, module, is_update, do_not_update):
 
     expand_tags(eg_launch_spec, tags)
 
-    expand_load_balancers(eg_launch_spec, load_balancers, target_group_arns)
+    expand_load_balancers(eg_launch_spec, load_balancers, target_group_arns, mlb_load_balancers)
 
     expand_block_device_mappings(eg_launch_spec, block_device_mappings)
 
     expand_network_interfaces(eg_launch_spec, network_interfaces)
 
+    expand_credit_specification(eg_launch_spec, credit_specification)
+
     eg_compute.launch_specification = eg_launch_spec
+
+
+def expand_credit_specification(eg_launch_spec, credit_specification):
+    eg_credit_specification = None
+
+    if credit_specification is not None:
+        eg_credit_specification = spotinst.models.elastigroup.aws.CreditSpecification()
+        cpu_credits = credit_specification.get('cpu_credits')
+
+        if cpu_credits is not None:
+            eg_credit_specification.cpu_credits = cpu_credits
+
+    eg_launch_spec.credit_specification = eg_credit_specification
 
 
 def expand_integrations(eg, module):
@@ -1150,24 +1534,55 @@ def expand_integrations(eg, module):
     mesosphere = module.params.get('mesosphere')
     ecs = module.params.get('ecs')
     kubernetes = module.params.get('kubernetes')
+    nomad = module.params.get('nomad')
+    docker_swarm = module.params.get('docker_swarm')
+    route53 = module.params.get('route53')
     right_scale = module.params.get('right_scale')
     opsworks = module.params.get('opsworks')
     chef = module.params.get('chef')
+    mlb_runtime = module.params.get('mlb_runtime')
+    elastic_beanstalk = module.params.get('elastic_beanstalk')
+    code_deploy = module.params.get('code_deploy')
 
     integration_exists = False
 
-    eg_integrations = spotinst.aws_elastigroup.ThirdPartyIntegrations()
+    eg_integrations = spotinst.models.elastigroup.aws.ThirdPartyIntegrations()
 
     if mesosphere is not None:
         eg_integrations.mesosphere = expand_fields(mesosphere_fields, mesosphere, 'Mesosphere')
         integration_exists = True
 
     if ecs is not None:
-        eg_integrations.ecs = expand_fields(ecs_fields, ecs, 'EcsConfiguration')
+        expand_ecs(eg_integrations, ecs)
         integration_exists = True
 
     if kubernetes is not None:
-        eg_integrations.kubernetes = expand_fields(kubernetes_fields, kubernetes, 'KubernetesConfiguration')
+        expand_kubernetes(eg_integrations, kubernetes)
+        integration_exists = True
+
+    if nomad is not None:
+        expand_nomad(eg_integrations, nomad)
+        integration_exists = True
+
+    if docker_swarm is not None:
+        expand_docker_swarm(eg_integrations, docker_swarm)
+        integration_exists = True
+
+    if route53 is not None:
+        expand_route53(eg_integrations, route53)
+        integration_exists = True
+
+    if mlb_runtime is not None:
+        eg_integrations.mlb_runtime = expand_fields(
+            mlb_runtime_fields, mlb_runtime, 'MlbRuntimeConfiguration')
+        integration_exists = True
+
+    if elastic_beanstalk:
+        expand_elastic_beanstalk(eg_integrations, elastic_beanstalk)
+        integration_exists = True
+
+    if code_deploy is not None:
+        expand_code_deploy(eg_integrations, code_deploy)
         integration_exists = True
 
     if right_scale is not None:
@@ -1190,6 +1605,215 @@ def expand_integrations(eg, module):
         eg.third_parties_integration = eg_integrations
 
 
+def expand_ecs(eg_integrations, ecs_config):
+    ecs = expand_fields(ecs_fields, ecs_config, 'EcsConfiguration')
+    ecs_auto_scale_config = ecs_config.get('auto_scale', None)
+
+    if ecs_auto_scale_config:
+        ecs.auto_scale = expand_fields(
+            ecs_auto_scale_fields,
+            ecs_auto_scale_config,
+            'EcsAutoScaleConfiguration')
+
+        ecs_headroom_config = ecs_auto_scale_config.get('headroom', None)
+        if ecs_headroom_config:
+            ecs.auto_scale.headroom = expand_fields(
+                ecs_headroom_fields,
+                ecs_headroom_config,
+                'EcsAutoScalerHeadroomConfiguration')
+
+        ecs_attributes_config = ecs_auto_scale_config.get('attributes', None)
+        if ecs_attributes_config:
+            ecs.auto_scale.attributes = expand_list(
+                ecs_attributes_config,
+                ecs_attributes_fields,
+                'EcsAutoScalerAttributeConfiguration')
+
+        ecs_down_config = ecs_auto_scale_config.get('down', None)
+        if ecs_down_config:
+            ecs.auto_scale.down = expand_fields(
+                ecs_down_fields, ecs_down_config,
+                'EcsAutoScalerDownConfiguration')
+
+    eg_integrations.ecs = ecs
+
+
+def expand_nomad(eg_integrations, nomad_config):
+    nomad = expand_fields(nomad_fields, nomad_config, 'NomadConfiguration')
+    nomad_auto_scale_config = nomad_config.get('auto_scale', None)
+
+    if nomad_auto_scale_config:
+        nomad.auto_scale = expand_fields(
+            nomad_auto_scale_fields,
+            nomad_auto_scale_config,
+            'NomadAutoScalerConfiguration')
+
+        nomad_headroom_config = nomad_auto_scale_config.get('headroom', None)
+        if nomad_headroom_config:
+            nomad.auto_scale.headroom = expand_fields(
+                nomad_headroom_fields,
+                nomad_headroom_config,
+                'NomadAutoScalerHeadroomConfiguration')
+
+        nomad_constraints_config = nomad_auto_scale_config.get(
+            'constraints', None)
+        if nomad_constraints_config:
+            nomad.auto_scale.constraints = expand_list(
+                nomad_constraints_config,
+                nomad_constraints_fields,
+                'NomadAutoScalerConstraintsConfiguration')
+
+        nomad_down_config = nomad_auto_scale_config.get('down', None)
+        if nomad_down_config:
+            nomad.auto_scale.down = expand_fields(
+                nomad_down_fields,
+                nomad_down_config,
+                'NomadAutoScalerDownConfiguration')
+
+    eg_integrations.nomad = nomad
+
+
+def expand_code_deploy(eg_integrations, code_deploy_config):
+    code_deploy = expand_fields(
+        code_deploy_fields, code_deploy_config, 'CodeDeployConfiguration')
+
+    code_deploy_deployment_config = code_deploy_config.get(
+        'deployment_groups', None)
+
+    if code_deploy_deployment_config:
+        code_deploy.deployment_groups = expand_list(
+            code_deploy_deployment_config, code_deploy_deployment_fields,
+            'CodeDeployDeploymentGroupsConfiguration')
+
+    eg_integrations.code_deploy = code_deploy
+
+
+def expand_docker_swarm(eg_integrations, docker_swarm_config):
+    docker_swarm = expand_fields(
+        docker_swarm_fields,
+        docker_swarm_config,
+        'DockerSwarmConfiguration')
+    docker_swarm_auto_scale_config = docker_swarm_config.get(
+        'auto_scale', None)
+
+    if docker_swarm_auto_scale_config:
+        docker_swarm.auto_scale = expand_fields(
+            docker_swarm_auto_scale_fields,
+            docker_swarm_auto_scale_config,
+            'DockerSwarmAutoScalerConfiguration')
+
+        docker_swarm_headroom_config = docker_swarm_auto_scale_config.get(
+            'headroom', None)
+        if docker_swarm_headroom_config:
+            docker_swarm.auto_scale.headroom = expand_fields(
+                docker_swarm_headroom_fields,
+                docker_swarm_headroom_config,
+                'DockerSwarmAutoScalerHeadroomConfiguration')
+
+        docker_swarm_down_config = docker_swarm_auto_scale_config.get(
+            'down', None)
+        if docker_swarm_down_config:
+            docker_swarm.auto_scale.down = expand_fields(
+                docker_swarm_down_fields,
+                docker_swarm_down_config,
+                'DockerSwarmAutoScalerDownConfiguration')
+
+    eg_integrations.docker_swarm = docker_swarm
+
+
+def expand_route53(eg_integrations, route53_config):
+    route53 = spotinst.models.elastigroup.aws.Route53Configuration()
+    domains_configuration = route53_config.get('domains', None)
+
+    if domains_configuration:
+        route53.domains = expand_list(
+            domains_configuration,
+            route53_domain_fields,
+            'Route53DomainsConfiguration')
+
+        for i in range(len(route53.domains)):
+            expanded_domain = route53.domains[i]
+            raw_domain = domains_configuration[i]
+            expanded_domain.record_sets = expand_list(
+                raw_domain['record_sets'],
+                route53_record_set_fields,
+                'Route53RecordSetsConfiguration')
+
+    eg_integrations.route53 = route53
+
+
+def expand_elastic_beanstalk(eg_integrations, elastic_beanstalk_config):
+    elastic_beanstalk = expand_fields(
+        elastic_beanstalk_fields, elastic_beanstalk_config, 'ElasticBeanstalk')
+
+    elastic_beanstalk_deployment = elastic_beanstalk_config.get(
+        'deployment_preferences', None)
+
+    elastic_beanstalk_managed_actions = elastic_beanstalk_config.get(
+        'managed_actions', None)
+
+    if elastic_beanstalk_deployment:
+        elastic_beanstalk.deployment_preferences = expand_fields(
+            elastic_beanstalk_deployment_fields, elastic_beanstalk_deployment,
+            'DeploymentPreferences')
+        if elastic_beanstalk.deployment_preferences and elastic_beanstalk_deployment.get('strategy'):
+            elastic_beanstalk.deployment_preferences.strategy = \
+                expand_fields(elastic_beanstalk_strategy_fields,
+                              elastic_beanstalk_deployment['strategy'],
+                              'BeanstalkDeploymentStrategy')
+
+    if elastic_beanstalk_managed_actions:
+        elastic_beanstalk.managed_actions = expand_fields(
+            elastic_beanstalk_managed_actions_fields, elastic_beanstalk_managed_actions,
+            'ManagedActions')
+
+        if elastic_beanstalk.managed_actions:
+            elastic_beanstalk.managed_actions.platform_update = expand_fields(
+                elastic_beanstalk_platform_update_fields, elastic_beanstalk_managed_actions['platform_update'],
+                'PlatformUpdate')
+
+    eg_integrations.elastic_beanstalk = elastic_beanstalk
+
+
+def expand_kubernetes(eg_integrations, kubernetes_config):
+    kubernetes = expand_fields(
+        kubernetes_fields,
+        kubernetes_config,
+        'KubernetesConfiguration')
+    kubernetes_auto_scale_config = kubernetes_config.get('auto_scale', None)
+
+    if kubernetes_auto_scale_config:
+        kubernetes.auto_scale = expand_fields(
+            kubernetes_auto_scale_fields,
+            kubernetes_auto_scale_config,
+            'KubernetesAutoScalerConfiguration')
+
+        kubernetes_headroom_config = kubernetes_auto_scale_config.get(
+            'auto_scale', None)
+        if kubernetes_headroom_config:
+            kubernetes.auto_scale.headroom = expand_fields(
+                kubernetes_headroom_fields,
+                kubernetes_headroom_config,
+                'KubernetesAutoScalerHeadroomConfiguration')
+
+        kubernetes_labels_config = kubernetes_auto_scale_config.get(
+            'labels', None)
+        if kubernetes_labels_config:
+            kubernetes.auto_scale.labels = expand_list(
+                kubernetes_labels_config,
+                kubernetes_labels_fields,
+                'KubernetesAutoScalerLabelsConfiguration')
+
+        kubernetes_down_config = kubernetes_auto_scale_config.get('down', None)
+        if kubernetes_down_config:
+            kubernetes.auto_scale.down = expand_fields(
+                kubernetes_down_fields,
+                kubernetes_down_config,
+                'KubernetesAutoScalerDownConfiguration')
+
+    eg_integrations.kubernetes = kubernetes
+
+
 def expand_capacity(eg, module, is_update, do_not_update):
     eg_capacity = expand_fields(capacity_fields, module.params, 'Capacity')
 
@@ -1205,14 +1829,14 @@ def expand_capacity(eg, module, is_update, do_not_update):
 def expand_strategy(eg, module):
     persistence = module.params.get('persistence')
     signals = module.params.get('signals')
+    revert_to_spot = module.params.get('revert_to_spot')
 
     eg_strategy = expand_fields(strategy_fields, module.params, 'Strategy')
 
     terminate_at_end_of_billing_hour = module.params.get('terminate_at_end_of_billing_hour')
 
     if terminate_at_end_of_billing_hour is not None:
-        eg_strategy.eg_scaling_strategy = expand_fields(scaling_strategy_fields,
-                                                        module.params, 'ScalingStrategy')
+        eg_strategy.eg_scaling_strategy = expand_fields(scaling_strategy_fields, module.params, 'ScalingStrategy')
 
     if persistence is not None:
         eg_strategy.persistence = expand_fields(persistence_fields, persistence, 'Persistence')
@@ -1222,6 +1846,9 @@ def expand_strategy(eg, module):
 
         if len(eg_signals) > 0:
             eg_strategy.signals = eg_signals
+
+    if revert_to_spot is not None:
+        eg_strategy.revert_to_spot = expand_fields(revert_to_spot_fields, revert_to_spot, "RevertToSpot")
 
     eg.strategy = eg_strategy
 
@@ -1243,7 +1870,7 @@ def expand_scheduled_tasks(eg, module):
     scheduled_tasks = module.params.get('scheduled_tasks')
 
     if scheduled_tasks is not None:
-        eg_scheduling = spotinst.aws_elastigroup.Scheduling()
+        eg_scheduling = spotinst.models.elastigroup.aws.Scheduling()
 
         eg_tasks = expand_list(scheduled_tasks, scheduled_task_fields, 'ScheduledTask')
 
@@ -1252,14 +1879,14 @@ def expand_scheduled_tasks(eg, module):
             eg.scheduling = eg_scheduling
 
 
-def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns):
+def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns, mlb_load_balancers):
     if load_balancers is not None or target_group_arns is not None:
-        eg_load_balancers_config = spotinst.aws_elastigroup.LoadBalancersConfig()
+        eg_load_balancers_config = spotinst.models.elastigroup.aws.LoadBalancersConfig()
         eg_total_lbs = []
 
         if load_balancers is not None:
             for elb_name in load_balancers:
-                eg_elb = spotinst.aws_elastigroup.LoadBalancer()
+                eg_elb = spotinst.models.elastigroup.aws.LoadBalancer()
                 if elb_name is not None:
                     eg_elb.name = elb_name
                     eg_elb.type = 'CLASSIC'
@@ -1267,11 +1894,22 @@ def expand_load_balancers(eg_launchspec, load_balancers, target_group_arns):
 
         if target_group_arns is not None:
             for target_arn in target_group_arns:
-                eg_elb = spotinst.aws_elastigroup.LoadBalancer()
+                eg_elb = spotinst.models.elastigroup.aws.LoadBalancer()
                 if target_arn is not None:
                     eg_elb.arn = target_arn
                     eg_elb.type = 'TARGET_GROUP'
                     eg_total_lbs.append(eg_elb)
+
+        if mlb_load_balancers:
+            mlbs = expand_list(
+                mlb_load_balancers,
+                mlb_load_balancers_fields,
+                'LoadBalancer')
+
+            for mlb in mlbs:
+                mlb.type = "MULTAI_TARGET_SET"
+
+            eg_total_lbs.extend(mlbs)
 
         if len(eg_total_lbs) > 0:
             eg_load_balancers_config.load_balancers = eg_total_lbs
@@ -1283,11 +1921,12 @@ def expand_tags(eg_launchspec, tags):
         eg_tags = []
 
         for tag in tags:
-            eg_tag = spotinst.aws_elastigroup.Tag()
-            if tag.keys():
-                eg_tag.tag_key = tag.keys()[0]
-            if tag.values():
-                eg_tag.tag_value = tag.values()[0]
+            eg_tag = spotinst.models.elastigroup.aws.Tag()
+
+            if list(tag):
+                eg_tag.tag_key = list(tag)[0]
+            if tag[list(tag)[0]]:
+                eg_tag.tag_value = tag[list(tag)[0]]
 
             eg_tags.append(eg_tag)
 
@@ -1330,11 +1969,11 @@ def expand_network_interfaces(eg_launchspec, enis):
 
 
 def expand_scaling(eg, module):
-    up_scaling_policies = module.params['up_scaling_policies']
-    down_scaling_policies = module.params['down_scaling_policies']
-    target_tracking_policies = module.params['target_tracking_policies']
+    up_scaling_policies = module.params.get('up_scaling_policies')
+    down_scaling_policies = module.params.get('down_scaling_policies')
+    target_tracking_policies = module.params.get('target_tracking_policies')
 
-    eg_scaling = spotinst.aws_elastigroup.Scaling()
+    eg_scaling = spotinst.models.elastigroup.aws.Scaling()
 
     if up_scaling_policies is not None:
         eg_up_scaling_policies = expand_scaling_policies(up_scaling_policies)
@@ -1366,7 +2005,7 @@ def expand_list(items, fields, class_name):
 
 
 def expand_fields(fields, item, class_name):
-    class_ = getattr(spotinst.aws_elastigroup, class_name)
+    class_ = getattr(spotinst.models.elastigroup.aws, class_name)
     new_obj = class_()
 
     # Handle primitive fields
@@ -1405,15 +2044,55 @@ def expand_target_tracking_policies(tracking_policies):
     return eg_tracking_policies
 
 
+def get_client(module):
+    # Retrieve creds file variables
+    creds_file_loaded_vars = dict()
+
+    credentials_path = module.params.get('credentials_path')
+
+    if credentials_path is not None:
+        try:
+            with open(credentials_path, "r") as creds:
+                for line in creds:
+                    eq_index = line.find('=')
+                    var_name = line[:eq_index].strip()
+                    string_value = line[eq_index + 1:].strip()
+                    creds_file_loaded_vars[var_name] = string_value
+        except IOError:
+            pass
+    # End of creds file retrieval
+
+    token = module.params.get('token')
+    if not token:
+        token = creds_file_loaded_vars.get("token")
+
+    account = module.params.get('account_id')
+    if not account:
+        account = creds_file_loaded_vars.get("account")
+
+    if account is not None:
+        session = spotinst.SpotinstSession(auth_token=token, account_id=account)
+    else:
+        session = spotinst.SpotinstSession(auth_token=token)
+
+    client = session.client("elastigroup_aws")
+
+    return client
+
+
 def main():
     fields = dict(
-        account_id=dict(type='str'),
+        account_id=dict(type='str', fallback=(env_fallback, ['SPOTINST_ACCOUNT_ID', 'ACCOUNT'])),
+        auto_apply_tags=dict(type='bool'),
         availability_vs_cost=dict(type='str', required=True),
         availability_zones=dict(type='list', required=True),
         block_device_mappings=dict(type='list'),
         chef=dict(type='dict'),
-        credentials_path=dict(type='path', default="~/.spotinst/credentials"),
+        code_deploy=dict(type='dict'),
+        credentials_path=dict(type='str', default="~/.spotinst/credentials"),
+        credit_specification=dict(type='dict'),
         do_not_update=dict(default=[], type='list'),
+        docker_swarm=dict(type='dict'),
         down_scaling_policies=dict(type='list'),
         draining_timeout=dict(type='int'),
         ebs_optimized=dict(type='bool'),
@@ -1436,20 +2115,27 @@ def main():
         max_size=dict(type='int', required=True),
         mesosphere=dict(type='dict'),
         min_size=dict(type='int', required=True),
-        monitoring=dict(type='str'),
+        mlb_runtime=dict(type='dict'),
+        mlb_load_balancers=dict(type='list'),
+        monitoring=dict(type='bool'),
         multai_load_balancers=dict(type='list'),
         multai_token=dict(type='str'),
         name=dict(type='str', required=True),
         network_interfaces=dict(type='list'),
+        nomad=dict(type='dict'),
         on_demand_count=dict(type='int'),
         on_demand_instance_type=dict(type='str'),
         opsworks=dict(type='dict'),
         persistence=dict(type='dict'),
+        preferred_spot_instance_types=dict(type='list'),
+        private_ips=dict(type='list'),
         product=dict(type='str', required=True),
         rancher=dict(type='dict'),
+        revert_to_spot=dict(type='dict'),
         right_scale=dict(type='dict'),
         risk=dict(type='int'),
         roll_config=dict(type='dict'),
+        route53=dict(type='dict'),
         scheduled_tasks=dict(type='list'),
         security_group_ids=dict(type='list', required=True),
         shutdown_script=dict(type='str'),
@@ -1457,12 +2143,16 @@ def main():
         spin_up_time=dict(type='int'),
         spot_instance_types=dict(type='list', required=True),
         state=dict(default='present', choices=['present', 'absent']),
+        stateful_deallocation_should_delete_images=dict(type='bool'),
+        stateful_deallocation_should_delete_network_interfaces=dict(type='bool'),
+        stateful_deallocation_should_delete_snapshots=dict(type='bool'),
+        stateful_deallocation_should_delete_volumes=dict(type='bool'),
         tags=dict(type='list'),
         target=dict(type='int', required=True),
         target_group_arns=dict(type='list'),
         tenancy=dict(type='str'),
         terminate_at_end_of_billing_hour=dict(type='bool'),
-        token=dict(type='str'),
+        token=dict(type='str', fallback=(env_fallback, ['SPOTINST_TOKEN'])),
         unit=dict(type='str'),
         user_data=dict(type='str'),
         utilize_reserved_instances=dict(type='bool'),
@@ -1476,40 +2166,9 @@ def main():
     module = AnsibleModule(argument_spec=fields)
 
     if not HAS_SPOTINST_SDK:
-        module.fail_json(msg="the Spotinst SDK library is required. (pip install spotinst_sdk)")
+        module.fail_json(msg="the Spotinst SDK library is required. (pip install spotinst_sdk2)")
 
-    # Retrieve creds file variables
-    creds_file_loaded_vars = dict()
-
-    credentials_path = module.params.get('credentials_path')
-
-    try:
-        with open(credentials_path, "r") as creds:
-            for line in creds:
-                eq_index = line.find('=')
-                var_name = line[:eq_index].strip()
-                string_value = line[eq_index + 1:].strip()
-                creds_file_loaded_vars[var_name] = string_value
-    except IOError:
-        pass
-    # End of creds file retrieval
-
-    token = module.params.get('token')
-    if not token:
-        token = os.environ.get('SPOTINST_TOKEN')
-    if not token:
-        token = creds_file_loaded_vars.get("token")
-
-    account = module.params.get('account_id')
-    if not account:
-        account = os.environ.get('SPOTINST_ACCOUNT_ID') or os.environ.get('ACCOUNT')
-    if not account:
-        account = creds_file_loaded_vars.get("account")
-
-    client = spotinst.SpotinstClient(auth_token=token, print_output=False)
-
-    if account is not None:
-        client = spotinst.SpotinstClient(auth_token=token, print_output=False, account_id=account)
+    client = get_client(module=module)
 
     group_id, message, has_changed = handle_elastigroup(client=client, module=module)
 
