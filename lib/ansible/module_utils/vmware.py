@@ -147,16 +147,6 @@ def find_cluster_by_name(content, cluster_name, datacenter=None):
     return find_object_by_name(content, cluster_name, [vim.ClusterComputeResource], folder=folder)
 
 
-def find_compute_resource_by_name(content, compute_resource_name, datacenter=None):
-
-    if datacenter:
-        folder = datacenter.hostFolder
-    else:
-        folder = content.rootFolder
-
-    return find_object_by_name(content, compute_resource_name, [vim.ComputeResource], folder=folder)
-
-
 def find_datacenter_by_name(content, datacenter_name):
     return find_object_by_name(content, datacenter_name, [vim.Datacenter])
 
@@ -192,13 +182,10 @@ def find_resource_pool_by_name(content, resource_pool_name):
     return find_object_by_name(content, resource_pool_name, [vim.ResourcePool])
 
 
-def find_resource_pool_by_name_cluster_or_host(module, content, resource_pool_name, cluster_name=None, host_name=None, datacenter=None):
+def find_resource_pool_by_cluster(content, resource_pool_name, cluster_name=None, datacenter=None):
     resource_pool = None
     if cluster_name is not None:
         compute_resource = find_cluster_by_name(content, cluster_name, datacenter=datacenter)
-    elif host_name is not None:
-        compute_resource = find_compute_resource_by_name(content, host_name, datacenter=datacenter)
-    module.fail_json(msg="%s" % compute_resource)
     if compute_resource is not None:
         if resource_pool_name != 'Resources':
             resource_pools = compute_resource.resourcePool.resourcePool

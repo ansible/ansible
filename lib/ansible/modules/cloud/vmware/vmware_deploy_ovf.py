@@ -165,7 +165,7 @@ from ansible.module_utils.urls import generic_urlparse, open_url, urlparse, urlu
 from ansible.module_utils.vmware import (HAS_PYVMOMI, connect_to_api, find_datacenter_by_name, find_datastore_by_name,
                                          find_network_by_name, find_resource_pool_by_name, find_vm_by_name, find_cluster_by_name,
                                          gather_vm_facts, vmware_argument_spec, wait_for_task, wait_for_vm_ip,
-                                         find_resource_pool_by_name_cluster_or_host)
+                                         find_resource_pool_by_cluster)
 try:
     from ansible.module_utils.vmware import vim
     from pyVmomi import vmodl
@@ -309,10 +309,12 @@ class VMwareDeployOvf:
             self.module.fail_json(msg='%(datacenter)s could not be located' % self.params)
 
         if self.params['cluster']:
-            self.resource_pool = find_resource_pool_by_name_cluster_or_host(self.module, self.si, self.params['resource_pool'],
-                                                                            cluster_name=self.params['cluster'])
+            self.resource_pool = find_resource_pool_by_cluster(self.si, self.params['resource_pool'],
+                                                               cluster_name=self.params['cluster'],
+                                                               datacenter=self.datacenter)
         else:
             self.resource_pool = find_resource_pool_by_name(self.si, self.params['resource_pool'])
+        self.module.fail_json(msg="%s" % self.resource_pool)
         if not self.resource_pool:
             self.module.fail_json(msg='%(resource_pool)s could not be located' % self.params)
 
