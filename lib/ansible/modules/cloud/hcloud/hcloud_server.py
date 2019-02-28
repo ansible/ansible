@@ -245,12 +245,12 @@ class AnsibleHcloudServer(Hcloud):
             self.module.params.get("location") is not None
             and self.module.params.get("datacenter") is None
         ):
-            params["location"] = self.module.params.get("location")
+            params["location"] = self.client.locations.get_by_name(self.module.params.get("location"))
         elif (
             self.module.params.get("location") is None
             and self.module.params.get("datacenter") is not None
         ):
-            params["datacenter"] = self.module.params.get("datacenter")
+            params["datacenter"] = self.client.datacenters.get_by_name(self.module.params.get("datacenter"))
         else:
             self.module.fail_json(msg="Please specify a datacenter or location.")
 
