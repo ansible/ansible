@@ -666,7 +666,7 @@ def update_key(connection, module, key):
 
 def create_key(connection, module):
     params = dict(BypassPolicyLockoutSafetyCheck=False,
-                  Tags=ansible_dict_to_boto3_tag_list(module.params['tags']),
+                  Tags=ansible_dict_to_boto3_tag_list(module.params['tags'], tag_name_key_name='TagKey', tag_value_key_name='TagValue'),
                   KeyUsage='ENCRYPT_DECRYPT',
                   Origin='AWS_KMS')
     if module.params.get('description'):
