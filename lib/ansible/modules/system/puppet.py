@@ -82,6 +82,11 @@ options:
       - It has no effect with a puppetmaster.
     type: str
     version_added: "2.1"
+  no_use_srv_records:
+    description:
+      - Toggles no-use_srv_records flag
+    type: bool
+    version_added: ""
   summarize:
     description:
       - Whether to print a transaction summary.
@@ -192,6 +197,7 @@ def main():
             summarize=dict(type='bool', default=False),
             debug=dict(type='bool', default=False),
             verbose=dict(type='bool', default=False),
+            no_use_srv_records=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -260,6 +266,8 @@ def main():
             cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
             cmd += " --noop"
+        if p['no_use_srv_records']:
+            cmd += " --no-use_srv_records"
         elif 'noop' in p:
             if p['noop']:
                 cmd += " --noop"
