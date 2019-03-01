@@ -18,6 +18,45 @@ from ansible.plugins.loader import connection_loader, become_loader
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
+    def test_plugins_connection_aws_ssm_start_session(self, mock_opse):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('aws_ssm', pc, new_stdin)
+
+        conn._connect = MagicMock()
+        
+        conn.stdin = MagicMock()
+        conn.stdin.fileno.return_value = 1000
+        conn.stdout = MagicMock()
+        conn.stdout.fileno.return_value = 1001
+        conn.stderr = MagicMock()
+        conn.stderr.fileno.return_value = 1002
+
+
+
+    def test_plugins_connection_aws_ssm_exec_command(self):
+        pc = PlayContext()
+        new_stdin = StringIO()
+        conn = connection_loader.get('aws_ssm', pc, new_stdin)
+
+        conn._connect = MagicMock()
+        conn._build_command = MagicMock()
+        conn._build_command.return_value = 'aws_ssm something something'
+        conn._run = MagicMock()
+        conn._run.return_value = (0, 'stdout', 'stderr')
+        conn.get_option = MagicMock()
+        conn.get_option.return_value = True
+        conn._session = MagicMock()
+        conn._session.return_value = (0, 'stdout', 'stderr')
+        conn.host = MagicMock()
+        conn._flush_stderr = MagicMock()
+        conn._flush_stderr_value = (0, 'stdout', 'stderr')
+
+
+        # res, stdout, stderr = conn.exec_command('aws_ssm')
+        res, stdout, stderr = conn.exec_command('aws_ssm', 'this is some data')
+
+    @patch('os.path.exists')
     def test_plugins_connection_aws_ssm_put_file(self, mock_ospe):
         pc = PlayContext()
         new_stdin = StringIO()
@@ -45,7 +84,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        
+
 
     def test_plugins_connection_aws_ssm_close(self):
         pc = PlayContext()
