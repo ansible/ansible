@@ -612,15 +612,16 @@ class TaskExecutor:
                     # overwriting at the module/group level.
                     # Specifying a module/group as an empty dictionary can be used to overwrite
                     # previous values.
-                    if group in module_defaults and default[group]:
+                    clear_group = default[group].pop('__clear', False)
+                    if group in module_defaults and not clear_group:
                         module_defaults[group].update(default[group])
                     else:
                         module_defaults[group] = default[group]
             if not C.MODULE_DEFAULTS_MERGE:
                 if overwrite_groups:
                     module_defaults_warning = 'Overwriting module_defaults modules and groups by default is deprecated. Some keys in groups {0} would be' \
-                                              ' overwritten. Enable MODULE_DEFAULTS_MERGE to use merging or set the module/group to an empty dictionary' \
-                                              ' to clear the previous values. In 2.12 merging will be enabled by default'.format(overwrite_groups)
+                                              ' overwritten. Enable MODULE_DEFAULTS_MERGE to use merging or clear the module/group by setting "__clear"' \
+                                              ' to true to remove the previous values. In 2.12 merging will be enabled by default'.format(overwrite_groups)
                 module_defaults.update(default)
         if module_defaults:
             module_defaults = templar.template(module_defaults)

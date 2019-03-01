@@ -9,21 +9,18 @@
     block:
     - name: overwrite module_defaults - clear profile and region defined before
       module_defaults:
-        group/aws: {}
+        group/aws:
+          __clear: yes
+          region: us-east-1
+          aws_secret_key: foobar
+          aws_access_key: foobar
       block:
-        - name: set module_defaults with new values
-          module_defaults:
-            group/aws:
-              region: us-east-1
-              aws_secret_key: foobar
-              aws_access_key: foobar
-          block:
-          - aws_s3_bucket_facts:
-            ignore_errors: true
-            register: s3
-          - assert:
-              that:
-                - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
+        - aws_s3_bucket_facts:
+          ignore_errors: true
+          register: s3
+        - assert:
+            that:
+              - "'InvalidAccessKeyId' in s3.msg or 'boto3 required' in s3.msg"
 
 - name: test module_defaults overwrite-by default behavior
   hosts: localhost
