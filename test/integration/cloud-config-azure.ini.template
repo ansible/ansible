@@ -13,6 +13,7 @@
 #       1) ansible-core-ci API key in ~/.ansible-core-ci.key
 #       2) Sherlock URL (including API key) in ~/.ansible-sherlock-ci.cfg
 
+[default]
 # Provide either Service Principal or Active Directory credentials below.
 
 # Service Principal

@@ -6,7 +6,7 @@
 
 - assert:
     that:
-      - "result.tower_version == '{{ lookup('env', 'TOWER_VERSION') }}'"
+      - "result.tower_version == '{{ tower_version }}'"
 
 - name: Make sure the default Default organization exists
   tower_organization:

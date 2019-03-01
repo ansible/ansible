@@ -7,11 +7,13 @@ from lib.util import (
     ApplicationError,
     display,
     is_shippable,
+    ConfigParser,
 )
 
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.core_ci import (
@@ -84,16 +86,22 @@ class AwsCloudProvider(CloudProvider):
 
 class AwsCloudEnvironment(CloudEnvironment):
     """AWS cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        cmd.append('-e')
-        cmd.append('@%s' % self.config_path)
+        parser = ConfigParser()
+        parser.read(self.config_path)
 
-        cmd.append('-e')
-        cmd.append('resource_prefix=%s' % self.resource_prefix)
+        ansible_vars = dict(
+            resource_prefix=self.resource_prefix,
+        )
+
+        ansible_vars.update(dict(parser.items('default')))
+
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+        )
 
     def on_failure(self, target, tries):
         """

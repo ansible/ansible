@@ -11,11 +11,12 @@
 #
 # NOTE: Automatic provisioning of AWS credentials requires an ansible-core-ci API key.
 
+[default]
 aws_access_key: @ACCESS_KEY
 aws_secret_key: @SECRET_KEY
 security_token: @SECURITY_TOKEN
 aws_region: @REGION
 # aliases for backwards compatibility with older integration test playbooks
-ec2_access_key: '{{ aws_access_key }}'
-ec2_secret_key: '{{ aws_secret_key }}'
-ec2_region: '{{ aws_region }}'
+ec2_access_key: {{ aws_access_key }}
+ec2_secret_key: {{ aws_secret_key }}
+ec2_region: {{ aws_region }}

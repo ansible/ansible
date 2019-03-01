@@ -5,7 +5,8 @@ import os
 
 from lib.cloud import (
     CloudProvider,
-    CloudEnvironment
+    CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import ConfigParser
@@ -18,7 +19,7 @@ class VultrCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(VultrCloudProvider, self).__init__(args, config_extension='.ini')
+        super(VultrCloudProvider, self).__init__(args)
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -31,32 +32,34 @@ class VultrCloudProvider(CloudProvider):
         super(VultrCloudProvider, self).filter(targets, exclude)
 
     def setup(self):
+        """Setup the cloud resource before delegation and register a cleanup callback."""
         super(VultrCloudProvider, self).setup()
 
         if os.path.isfile(self.config_static_path):
             self.config_path = self.config_static_path
             self.managed = False
-            return True
-        return False
 
 
 class VultrCloudEnvironment(CloudEnvironment):
     """
     Updates integration test environment after delegation. Will setup the config file as parameter.
     """
-
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
         parser = ConfigParser()
         parser.read(self.config_path)
 
-        changes = dict(
+        env_vars = dict(
             VULTR_API_KEY=parser.get('default', 'key'),
         )
-        env.update(changes)
 
-        cmd.append('-e')
-        cmd.append('vultr_resource_prefix=%s' % self.resource_prefix)
+        ansible_vars = dict(
+            vultr_resource_prefix=self.resource_prefix,
+        )
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

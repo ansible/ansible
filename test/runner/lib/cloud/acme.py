@@ -7,6 +7,7 @@ import time
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -37,7 +38,7 @@ class ACMEProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(ACMEProvider, self).__init__(args, config_extension='.ini')
+        super(ACMEProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
@@ -175,12 +176,14 @@ class ACMEProvider(CloudProvider):
 
 class ACMEEnvironment(CloudEnvironment):
     """ACME environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
+        ansible_vars = dict(
+            acme_host=self._get_cloud_config('acme_host'),
+        )
 
-        # Send the container IP down to the integration test(s)
-        cmd.append('-e')
-        cmd.append('acme_host=%s' % self._get_cloud_config('acme_host'))
+        return CloudEnvironmentConfig(
+            ansible_vars=ansible_vars,
+        )

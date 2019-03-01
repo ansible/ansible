@@ -34,6 +34,7 @@ from lib.cloud import (
     cloud_init,
     get_cloud_environment,
     get_cloud_platforms,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -110,6 +111,7 @@ from lib.metadata import (
 
 from lib.integration import (
     integration_test_environment,
+    integration_test_config_file,
 )
 
 SUPPORTED_PYTHON_VERSIONS = (
@@ -1107,14 +1109,14 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, cmd, test_dir, inventory_path, ansible_config):
+def integration_environment(args, target, test_dir, inventory_path, ansible_config, env_config):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
-    :type cmd: list[str]
     :type test_dir: str
     :type inventory_path: str
     :type ansible_config: str | None
+    :type env_config: CloudEnvironmentConfig | None
     :rtype: dict[str, str]
     """
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -1124,9 +1126,11 @@ def integration_environment(args, target, cmd, test_dir, inventory_path, ansible
             HTTPTESTER='1',
         ))
 
+    callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
+
     integration = dict(
         JUNIT_OUTPUT_DIR=os.path.abspath('test/results/junit'),
-        ANSIBLE_CALLBACK_WHITELIST='junit',
+        ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider,
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
@@ -1143,11 +1147,6 @@ def integration_environment(args, target, cmd, test_dir, inventory_path, ansible
 
     env.update(integration)
 
-    cloud_environment = get_cloud_environment(args, target)
-
-    if cloud_environment:
-        cloud_environment.configure_environment(env, cmd)
-
     return env
 
 
@@ -1160,16 +1159,31 @@ def command_integration_script(args, target, test_dir, inventory_path):
     """
     display.info('Running %s integration test script' % target.name)
 
+    env_config = None
+
+    if isinstance(args, PosixIntegrationConfig):
+        cloud_environment = get_cloud_environment(args, target)
+
+        if cloud_environment:
+            env_config = cloud_environment.get_environment_config()
+
     with integration_test_environment(args, target, inventory_path) as test_env:
         cmd = ['./%s' % os.path.basename(target.script_path)]
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, cmd, test_dir, test_env.inventory_path, test_env.ansible_config)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
         cwd = os.path.join(test_env.integration_dir, 'targets', target.name)
 
-        intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+        if env_config and env_config.env_vars:
+            env.update(env_config.env_vars)
+
+        with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:
+            if config_path:
+                cmd += ['-e', '@%s' % config_path]
+
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
 
 
 def command_integration_role(args, target, start_at_task, test_dir, inventory_path):
@@ -1181,6 +1195,8 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
     :type inventory_path: str
     """
     display.info('Running %s integration test role' % target.name)
+
+    env_config = None
 
     if isinstance(args, WindowsIntegrationConfig):
         hosts = 'windows'
@@ -1195,22 +1211,35 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
         cloud_environment = get_cloud_environment(args, target)
 
         if cloud_environment:
-            hosts = cloud_environment.inventory_hosts or hosts
-
-    playbook = '''
-- hosts: %s
-  gather_facts: %s
-  roles:
-    - { role: %s }
-    ''' % (hosts, gather_facts, target.name)
+            env_config = cloud_environment.get_environment_config()
 
     with integration_test_environment(args, target, inventory_path) as test_env:
+        play = dict(
+            hosts=hosts,
+            gather_facts=gather_facts,
+            vars_files=[
+                test_env.vars_file,
+            ],
+            roles=[
+                target.name,
+            ],
+        )
+
+        if env_config:
+            play.update(dict(
+                vars=env_config.ansible_vars,
+                environment=env_config.env_vars,
+                module_defaults=env_config.module_defaults,
+            ))
+
+        playbook = json.dumps([play], indent=4, sort_keys=True)
+
         with named_temporary_file(args=args, directory=test_env.integration_dir, prefix='%s-' % target.name, suffix='.yml', content=playbook) as playbook_path:
             filename = os.path.basename(playbook_path)
 
             display.info('>>> Playbook: %s\n%s' % (filename, playbook.strip()), verbosity=3)
 
-            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path, '-e', '@%s' % test_env.vars_file]
+            cmd = ['ansible-playbook', filename, '-i', test_env.inventory_path]
 
             if start_at_task:
                 cmd += ['--start-at-task', start_at_task]
@@ -1231,7 +1260,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, cmd, test_dir, test_env.inventory_path, test_env.ansible_config)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
             cwd = test_env.integration_dir
 
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
