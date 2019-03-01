@@ -163,7 +163,6 @@ class MerakiModule(object):
         if self.status != 200:
             self.fail_json(msg='Organization lookup failed')
         self.orgs = response
-        # self.metrics['get_orgs'] = str(datetime.datetime.utcnow() - start)
         return self.orgs
 
     def is_org_valid(self, data, org_name=None, org_id=None):
@@ -211,7 +210,7 @@ class MerakiModule(object):
         r = self.request(path, method='GET', description="get_nets")
         if self.status != 200:
             self.fail_json(msg='Network lookup failed')
-        self.nets = self.request(path, method='GET', description="get_nets")
+        self.nets = r
         templates = self.get_config_templates(org_id)
         for t in templates:
             self.nets.append(t)
