@@ -197,6 +197,12 @@ options:
     type: bool
     default: "yes"
     version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
@@ -1384,6 +1390,9 @@ class YumModule(YumDnf):
 
         if self.download_only:
             self.yum_basecmd.extend(['--downloadonly'])
+
+            if self.download_dir:
+                self.yum_basecmd.extend(['--downloaddir=%s' % self.download_dir])
 
         if self.installroot != '/':
             # do not setup installroot by default, because of error

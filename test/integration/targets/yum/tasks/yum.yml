@@ -303,8 +303,7 @@
     state: removed
   register: yum_result
 
-# Test download_only
-- name: install sos
+- name: Test download_only
   yum:
     name: sos
     state: latest
@@ -328,6 +327,33 @@
     that:
         - "yum_result is success"
         - "not yum_result is changed"
+
+- name: uninstall sos for downloadonly/downloaddir test
+  yum:
+    name: sos
+    state: absent
+
+- name: Test download_only/download_dir
+  yum:
+    name: sos
+    state: latest
+    download_only: true
+    download_dir: "/var/tmp/packages"
+  register: yum_result
+
+- name: verify yum output
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is changed"
+
+- command: "ls /var/tmp/packages"
+  register: ls_out
+
+- name: Verify specified download_dir was used
+  assert:
+    that:
+      - "'sos' in ls_out.stdout"
 
 - name: install group
   yum:
