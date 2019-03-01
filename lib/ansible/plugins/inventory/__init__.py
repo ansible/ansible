@@ -316,6 +316,7 @@ class Constructable(object):
         ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
+            variables.update(self.inventory.get_host(host).vars)
             self.templar.set_available_variables(variables)
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
@@ -337,8 +338,9 @@ class Constructable(object):
         if keys and isinstance(keys, list):
             groups = []
             for keyed in keys:
-                if keyed and isinstance(keyed, dict):
 
+                if keyed and isinstance(keyed, dict):
+                    variables.update(self.inventory.get_host(host).vars)
                     try:
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:
