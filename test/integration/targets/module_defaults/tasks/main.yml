@@ -122,10 +122,9 @@
     register: bad_default
     ignore_errors: yes
 
-  #- assert:
-  #    that:
-  #      - bad_default is failed
-  #      - 'bad_default.msg == "Error in module_defaults; the value of stat (badvalue) is not a dictionary."'
+  - assert:
+      that:
+        bad_default.msg == "Error in module_defaults; the value of stat (badvalue) is not a dictionary."
 
 - name: Module group defaults block
   hosts: localhost

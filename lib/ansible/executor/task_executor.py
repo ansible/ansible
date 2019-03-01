@@ -603,8 +603,6 @@ class TaskExecutor:
             for key in default.keys():
                 if default[key] is None:
                     default[key] = {}
-                if not isinstance(default[key], MutableMapping):
-                    raise AnsibleError("Error in module_defaults; the value of {0} ({1}) is not a dictionary.".format(key, default[key]))
 
             if C.MODULE_DEFAULTS_MERGE:
                 # This block merges the parent and child defaults one level deeper in the structure
@@ -627,7 +625,10 @@ class TaskExecutor:
         if module_defaults:
             module_defaults = templar.template(module_defaults)
         if self._task.action in module_defaults:
-            tmp_args = module_defaults[self._task.action].copy()
+            try:
+                tmp_args = module_defaults[self._task.action].copy()
+            except AttributeError:
+                raise AnsibleError("Error in module_defaults; the value of {0} ({1}) is not a dictionary.".format(self._task.action, module_defaults[self._task.action]))
             tmp_args.update(self._task.args)
             self._task.args = tmp_args
         if self._task.action in C.config.module_defaults_groups:
