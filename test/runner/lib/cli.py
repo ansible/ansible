@@ -28,7 +28,6 @@ from lib.delegation import (
 
 from lib.executor import (
     command_posix_integration,
-    command_aws_ssm_integration,
     command_network_integration,
     command_windows_integration,
     command_units,
@@ -43,7 +42,6 @@ from lib.executor import (
 from lib.config import (
     IntegrationConfig,
     PosixIntegrationConfig,
-    AwsSsmIntegrationConfig,
     WindowsIntegrationConfig,
     NetworkIntegrationConfig,
     SanityConfig,
@@ -65,7 +63,6 @@ from lib.sanity import (
 from lib.target import (
     find_target_completion,
     walk_posix_integration_targets,
-    walk_aws_ssm_integration_targets,
     walk_network_integration_targets,
     walk_windows_integration_targets,
     walk_units_targets,
@@ -314,17 +311,6 @@ def parse_args():
 
     add_extra_docker_options(posix_integration)
     add_httptester_options(posix_integration, argparse)
-
-    aws_ssm_integration = subparsers.add_parser('aws-ssm-integration',
-                                                parents=[integration],
-                                                help='aws ssm integration tests')
-
-    aws_ssm_integration.set_defaults(func=command_aws_ssm_integration,
-                                     targets=walk_aws_ssm_integration_targets,
-                                     config=AwsSsmIntegrationConfig)
-
-    add_extra_docker_options(aws_ssm_integration)
-    add_httptester_options(aws_ssm_integration, argparse)
 
     network_integration = subparsers.add_parser('network-integration',
                                                 parents=[integration],

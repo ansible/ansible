@@ -234,16 +234,6 @@ def walk_posix_integration_targets(include_hidden=False):
             yield target
 
 
-def walk_aws_ssm_integration_targets(include_hidden=False):
-    """
-    :type include_hidden: bool
-    :rtype: collections.Iterable[IntegrationTarget]
-    """
-    for target in walk_integration_targets():
-        if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
-            yield target
-
-
 def walk_network_integration_targets(include_hidden=False):
     """
     :type include_hidden: bool
