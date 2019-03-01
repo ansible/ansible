@@ -229,7 +229,8 @@ options:
 
     has_expired:
         description:
-            - Checks if the certificate is expired/not expired at the time the module is executed.
+            - Checks if the certificate is expired/not expired at the time the module is executed. This only applies to
+              the C(assertonly) provider
         type: bool
         default: no
 
@@ -830,10 +831,20 @@ class AssertOnlyCertificate(Certificate):
                     )
 
         def _validate_has_expired():
-            if self.has_expired:
-                if self.has_expired != self.cert.has_expired():
+            time_string = to_native(self.cert.get_notAfter())
+            not_after = datetime.datetime.strptime(time_string, "%Y%m%d%H%M%SZ")
+            cert_expired = not_after < datetime.datetime.utcnow()
+
+            if self.has_expired is False:
+                if cert_expired:
                     self.message.append(
                         'Certificate expiration check failed (certificate expiration is %s, expected %s)' % (self.cert.has_expired(), self.has_expired)
+                    )
+            else:
+                if not cert_expired:
+                    self.message.append(
+                        'Certificate expiration check failed (certificate expiration is to %s, expected %s)' %
+                        (self.cert.has_expired(), self.has_expired)
                     )
 
         def _validate_version():
