@@ -33,7 +33,7 @@ The ``module_defaults`` attribute can be used at the play, block, and task level
         debug:
           msg: "a default message"
 
-It's also possible to remove any previously established defaults for a module by specifying an empty dict::
+It's also possible to remove any previously established defaults for a module by specifying an empty dict (if MODULE_DEFAULTS_MERGE is False)::
 
     - file:
         state: touch
@@ -43,6 +43,46 @@ It's also possible to remove any previously established defaults for a module by
 
 .. note::
     Any module defaults set at the play level (and block/task level when using ``include_role`` or ``import_role``) will apply to any roles used, which may cause unexpected behavior in the role.
+
+Ansible 2.8 adds a MODULE_DEFAULTS_MERGE configuration option to allow arguments for a module or group to be merged with arguments for the same module/group in an inner scope::
+
+    - hosts: localhost
+      module_defaults:
+        group/aws:
+          aws_access_key: "{{ access_key }}"
+          aws_secret_key: "{{ secret_key }}"
+      tasks:
+        - name: run tasks in us-east-1
+          module_defaults:
+            # without MODULE_DEFAULTS_MERGE enabled this would overwrite the previous keys in group/aws
+            group/aws:
+              region: us-east-1
+          block:
+            - elb_target_facts:
+
+If the MODULE_DEFAULTS_MERGE option is enabled use the special key __clear__ can be used to remove previous defaults. This allows clearing values and setting new ones within the same scope::
+
+    - hosts: localhost
+      module_defaults:
+        group/aws:
+          profile: dev
+      tasks:
+        - name: assume a role
+          sts_assume_role:
+            region: us-east-1
+            role_arn: "arn:aws:iam::123456789012:role/someRole"
+            role_session_name: "someRoleSession"
+          register: assumed_role
+        - name: remove the previous group/aws defaults and use new credentials for subsequent tasks
+          module_defaults:
+            group/aws:
+              __clear__: yes
+              region: us-east-1
+              aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+              aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+              security_token: "{{ assumed_role.sts_creds.session_token }}"
+          block:
+            ...
 
 Here are some more realistic use cases for this feature.
 
