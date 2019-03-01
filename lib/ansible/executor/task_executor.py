@@ -19,6 +19,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
@@ -602,7 +603,7 @@ class TaskExecutor:
             for key in default.keys():
                 if default[key] is None:
                     default[key] = {}
-                if not isinstance(default[key], dict):
+                if not isinstance(default[key], MutableMapping):
                     raise AnsibleError("Error in module_defaults; the value of {0} ({1}) is not a dictionary.".format(key, default[key]))
 
             if C.MODULE_DEFAULTS_MERGE:
