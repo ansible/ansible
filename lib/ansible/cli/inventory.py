@@ -14,6 +14,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import optparse_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.inventory.host import Host
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
@@ -86,6 +87,8 @@ class InventoryCLI(CLI):
         self.parser.add_option("--export", action="store_true", default=C.INVENTORY_EXPORT, dest='export',
                                help="When doing an --list, represent in a way that is optimized for export,"
                                     "not as an accurate representation of how Ansible has processed it")
+        self.parser.add_option('--output', default=None, dest='output_file',
+                               help="When doing an --list, send the inventory to a file instead of of to screen")
         # self.parser.add_option("--ignore-vars-plugins", action="store_true", default=False, dest='ignore_vars_plugins',
         #                       help="When doing an --list, skip vars data from vars plugins, by default, this would include group_vars/ and host_vars/")
 
@@ -146,7 +149,15 @@ class InventoryCLI(CLI):
 
         if results:
             # FIXME: pager?
-            display.display(results)
+            outfile = context.CLIARGS['output_file']
+            if outfile is None:
+                display.display(results)
+            else:
+                try:
+                    with open(to_bytes(outfile), 'w') as f:
+                        f.write(results)
+                except (OSError, IOError) as e:
+                    raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
             exit(0)
 
         exit(1)
