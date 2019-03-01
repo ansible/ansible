@@ -1,0 +1,2 @@
+bugfixes:
+  - profile_tasks callback - Fix the last task time when running multiple plays (https://github.com/ansible/ansible/issues/52760)
