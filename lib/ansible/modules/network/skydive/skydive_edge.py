@@ -91,17 +91,17 @@ EXAMPLES = """
     relation_type: ownership
     state: present
 
-- name: link tor and port 2
+- name: link node tor and port 2
   skydive_edge:
     parent_node: "{{ tor_result.UUID }}"
     child_node: "{{ port2_result.UUID }}"
     relation_type: ownership
     state: present
 
-- name: update link node tor and eth0
+- name: update link node tor and port 1 relation
   skydive_edge:
-    parent_node: "{{ port1_result.UUID }}"
-    child_node: G.V().Has('Name', 'tun0')
+    parent_node: "{{ tor_result.UUID }}"
+    child_node: "{{ port2_result.UUID }}"
     relation_type: layer2
     state: upadte
 
