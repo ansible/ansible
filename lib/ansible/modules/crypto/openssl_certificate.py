@@ -230,7 +230,7 @@ options:
     has_expired:
         description:
             - Checks if the certificate is expired/not expired at the time the module is executed. This only applies to
-              the C(assertonly) provider
+              the C(assertonly) provider.
         type: bool
         default: no
 
@@ -831,6 +831,10 @@ class AssertOnlyCertificate(Certificate):
                     )
 
         def _validate_has_expired():
+            # The following 3 lines are the same as the PyOpenSSL code.
+            # Older version of PyOpenSSL have a buggy implementation,
+            # to avoid issues with those we added the code from a more recent release here.
+
             time_string = to_native(self.cert.get_notAfter())
             not_after = datetime.datetime.strptime(time_string, "%Y%m%d%H%M%SZ")
             cert_expired = not_after < datetime.datetime.utcnow()

@@ -1,2 +1,2 @@
 bugfixes:
-  - openssl_certificate - has_expired correctly checks if the certificate is expired or not
+  - openssl_certificate - ``has_expired`` correctly checks if the certificate is expired or not
