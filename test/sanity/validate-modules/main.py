@@ -1370,7 +1370,8 @@ class ModuleValidator(Validator):
                 return
 
         try:
-            mod_version_added = StrictVersion(
+            mod_version_added = StrictVersion()
+            mod_version_added.parse(
                 str(existing_doc.get('version_added', '0.0'))
             )
         except ValueError:
@@ -1415,11 +1416,11 @@ class ModuleValidator(Validator):
                 continue
 
             try:
-                version_added = StrictVersion(
+                version_added = StrictVersion()
+                version_added.parse(
                     str(details.get('version_added', '0.0'))
                 )
-                version_added.version
-            except (ValueError, AttributeError):
+            except ValueError:
                 version_added = details.get('version_added', '0.0')
                 self.reporter.error(
                     path=self.object_path,
