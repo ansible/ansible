@@ -107,7 +107,7 @@ options:
         description:
             - SAN extension to attach to the certificate signing request.
             - This can either be a 'comma separated string' or a YAML list.
-            - Values should be prefixed by their options. (i.e., C(email), C(URI), C(DNS), C(RID), C(IP), C(dirName),
+            - Values must be prefixed by their options. (i.e., C(email), C(URI), C(DNS), C(RID), C(IP), C(dirName),
               C(otherName) and the ones specific to your CA)
             - Note that if no SAN is specified, but a common name, the common
               name will be added as a SAN except if C(useCommonNameForSAN) is
