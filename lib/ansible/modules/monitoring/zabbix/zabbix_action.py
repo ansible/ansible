@@ -235,6 +235,13 @@ options:
                     - Media type that will be used to send the message.
                     - Set to C(all) for all media types
                 default: 'all'
+            operation_condition:
+                type: 'str'
+                description:
+                    - The action operation condition object defines a condition that must be met to perform the current operation.
+                choices:
+                    - acknowledged
+                    - not_acknowledged
             host_groups:
                 type: list
                 description:
@@ -1059,6 +1066,28 @@ class Operations(object):
         """
         return {'inventory_mode': operation.get('inventory')}
 
+    def _construct_opconditions(self, operation):
+        """Construct operation conditions.
+
+        Args:
+            operation: operation to construct the conditions
+
+        Returns:
+            list: constructed operaration conditions
+        """
+        _opcond = operation.get('operation_condition')
+        if _opcond is not None:
+            if _opcond == 'acknowledged':
+                _value = '1'
+            elif _opcond == 'not_acknowledged':
+                _value = '0'
+            return [{
+                'conditiontype': '14',
+                'operator': '0',
+                'value': _value
+            }]
+        return []
+
     def construct_the_data(self, operations):
         """Construct the operation data using helper methods.
 
@@ -1082,12 +1111,14 @@ class Operations(object):
                 constructed_operation['opmessage'] = self._construct_opmessage(op)
                 constructed_operation['opmessage_usr'] = self._construct_opmessage_usr(op)
                 constructed_operation['opmessage_grp'] = self._construct_opmessage_grp(op)
+                constructed_operation['opconditions'] = self._construct_opconditions(op)
 
             # Send Command type
             if constructed_operation['operationtype'] == '1':
                 constructed_operation['opcommand'] = self._construct_opcommand(op)
                 constructed_operation['opcommand_hst'] = self._construct_opcommand_hst(op)
                 constructed_operation['opcommand_grp'] = self._construct_opcommand_grp(op)
+                constructed_operation['opconditions'] = self._construct_opconditions(op)
 
             # Add to/Remove from host group
             if constructed_operation['operationtype'] in ('4', '5'):
@@ -1673,6 +1704,12 @@ def main():
                     esc_period=dict(type='int', required=False),
                     esc_step_from=dict(type='int', required=False, default=1),
                     esc_step_to=dict(type='int', required=False, default=1),
+                    operation_condition=dict(
+                        type='str',
+                        required=False,
+                        default=None,
+                        choices=['acknowledged', 'not_acknowledged']
+                    ),
                     # when type is remote_command
                     command_type=dict(
                         type='str',
