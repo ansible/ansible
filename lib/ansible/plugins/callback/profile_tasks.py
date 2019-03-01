@@ -171,6 +171,7 @@ class CallbackModule(CallbackBase):
         self._display.display(filled("", fchar="="))
 
         timestamp(self)
+        self.current = None
 
         results = self.stats.items()
 
