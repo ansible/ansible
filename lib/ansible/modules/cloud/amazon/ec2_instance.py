@@ -1372,7 +1372,7 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('stopped',):
-        changed, failed, instances, failure_reason  = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='STOPPED')
 
@@ -1486,7 +1486,7 @@ def handle_existing(existing_matches, changed, ec2, state):
     if state in ('running', 'started') and [i for i in existing_matches if i['State']['Name'] != 'running']:
         ins_changed, failed, instances, failure_reason = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
         if failed:
-            module.fail_json(msg="Couldn't start instances: {1}".format(instances, failure_reason))
+            module.fail_json(msg="Couldn't start instances: {0}. Failure reason: {1}".format(instances, failure_reason))
         module.exit_json(
             changed=bool(len(ins_changed)) or changed,
             instances=[pretty_instance(i) for i in instances],
