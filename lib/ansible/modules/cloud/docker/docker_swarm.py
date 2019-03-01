@@ -464,10 +464,11 @@ class SwarmManager(DockerBaseClass):
                 self.results['actions'].append("No modification")
                 self.results['changed'] = False
                 return
-            self.parameters.update_parameters(self.client)
+            update_parameters = TaskParameters.from_ansible_params(self.client)
+            update_parameters.update_parameters(self.client)
             if not self.check_mode:
                 self.client.update_swarm(
-                    version=version, swarm_spec=self.parameters.spec,
+                    version=version, swarm_spec=update_parameters.spec,
                     rotate_worker_token=self.parameters.rotate_worker_token,
                     rotate_manager_token=self.parameters.rotate_manager_token)
         except APIError as exc:
