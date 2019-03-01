@@ -87,7 +87,7 @@ class CallbackModule(CallbackBase):
 
     def _preprocess_result(self, result):
         self.delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        self._handle_exception(result._result)
+        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
         self._handle_warnings(result._result)
 
     def _process_result_output(self, result, msg):
@@ -149,7 +149,7 @@ class CallbackModule(CallbackBase):
         msg = "failed"
 
         task_result = self._process_result_output(result, msg)
-        self._display.display("  " + task_result, display_color)
+        self._display.display("  " + task_result, display_color, stderr=self.display_failed_stderr)
 
     def v2_runner_on_ok(self, result, msg="ok", display_color=C.COLOR_OK):
         self._preprocess_result(result)
@@ -178,7 +178,7 @@ class CallbackModule(CallbackBase):
         display_color = C.COLOR_UNREACHABLE
         task_result = self._process_result_output(result, msg)
 
-        self._display.display("  " + task_result, display_color)
+        self._display.display("  " + task_result, display_color, stderr=self.display_failed_stderr)
 
     def v2_on_file_diff(self, result):
         if result._task.loop and 'results' in result._result:
@@ -221,6 +221,20 @@ class CallbackModule(CallbackBase):
                 colorize(u'ignored', t['ignored'], None)),
                 log_only=True
             )
+        if stats.custom and self.show_custom_stats:
+            self._display.banner("CUSTOM STATS: ")
+            # per host
+            # TODO: come up with 'pretty format'
+            for k in sorted(stats.custom.keys()):
+                if k == '_run':
+                    continue
+                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n', '')))
+
+            # print per run custom stats
+            if '_run' in stats.custom:
+                self._display.display("", screen_only=True)
+                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n', ''))
+            self._display.display("", screen_only=True)
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("  No hosts found!", color=C.COLOR_DEBUG)
