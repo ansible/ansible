@@ -118,7 +118,7 @@
   tasks:
   - name: test providing bad defaults
     stat:
-      file: "{{ test_file }}"
+      path: "{{ test_file }}"
     register: bad_default
     ignore_errors: yes
 
