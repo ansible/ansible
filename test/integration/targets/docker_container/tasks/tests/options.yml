@@ -1891,6 +1891,7 @@
     kernel_memory: 8M
     state: started
   register: kernel_memory_1
+  ignore_errors: yes
 
 - name: kernel_memory (idempotency)
   docker_container:
@@ -1900,6 +1901,7 @@
     kernel_memory: 8M
     state: started
   register: kernel_memory_2
+  ignore_errors: yes
 
 - name: kernel_memory (change)
   docker_container:
@@ -1910,6 +1912,7 @@
     state: started
     force_kill: yes
   register: kernel_memory_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_container:
@@ -1917,12 +1920,14 @@
     state: absent
     force_kill: yes
   diff: no
+  ignore_errors: yes
 
 - assert:
     that:
     - kernel_memory_1 is changed
     - kernel_memory_2 is not changed
     - kernel_memory_3 is changed
+  when: kernel_memory_1 is not failed or 'kernel memory accounting disabled in this runc build' not in kernel_memory_1.msg
 
 ####################################################################
 ## kill_signal #####################################################
