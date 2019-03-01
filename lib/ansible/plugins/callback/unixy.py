@@ -18,15 +18,6 @@ DOCUMENTATION = '''
       - default_callback
     requirements:
       - set as stdout in configuration
-    options:
-      show_only_changed:
-        description: If true, do not show output from 'ok' task results
-        default: False
-        env:
-          - name: UNIXY_SHOW_ONLY_CHANGED
-        ini:
-          - section: callback_unixy
-            key: show_only_changed
 '''
 
 from os.path import basename
@@ -37,6 +28,18 @@ from ansible.module_utils._text import to_text
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 
+# These values use ansible.constants for historical reasons, mostly to allow
+# unmodified derivative plugins to work. However, newer options added to the
+# plugin are not also added to ansible.constants, so authors of derivative
+# callback plugins will eventually need to add a reference to the common docs
+# fragment for the 'default' callback plugin
+
+# these are used to provide backwards compat with old plugins that subclass from default
+# but still don't use the new config system and/or fail to document the options
+COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
+                  ('display_ok_hosts', True),
+                  ('show_custom_stats', C.SHOW_CUSTOM_STATS),
+                  ('display_failed_stderr', False),)
 
 class CallbackModule(CallbackBase):
 
@@ -56,6 +59,18 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'unixy'
+
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        # for backwards compat with plugins subclassing default, fallback to constants
+        for option, constant in COMPAT_OPTIONS:
+            try:
+                value = self.get_option(option)
+            except (AttributeError, KeyError):
+                value = constant
+            setattr(self, option, value)
 
     def _run_is_verbose(self, result):
         return ((self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result)
@@ -118,12 +133,15 @@ class CallbackModule(CallbackBase):
         self._display.display(msg)
 
     def v2_runner_on_skipped(self, result, ignore_errors=False):
-        self._preprocess_result(result)
-        display_color = C.COLOR_SKIP
-        msg = "skipped"
+        if self.display_skipped_hosts:
+            self._preprocess_result(result)
+            display_color = C.COLOR_SKIP
+            msg = "skipped"
 
-        task_result = self._process_result_output(result, msg)
-        self._display.display("  " + task_result, display_color)
+            task_result = self._process_result_output(result, msg)
+            self._display.display("  " + task_result, display_color)
+        else:
+            return
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self._preprocess_result(result)
@@ -136,12 +154,11 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result, msg="ok", display_color=C.COLOR_OK):
         self._preprocess_result(result)
 
-        show_only_changed = self.get_option('show_only_changed')
         result_was_changed = ('changed' in result._result and result._result['changed'])
         if result_was_changed:
             msg = "done"
             display_color = C.COLOR_CHANGED
-        elif show_only_changed:
+        elif not self.display_ok_hosts:
             return
 
         task_result = self._process_result_output(result, msg)
