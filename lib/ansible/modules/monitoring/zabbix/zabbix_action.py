@@ -233,6 +233,8 @@ options:
             media_type:
                 description:
                     - Media type that will be used to send the message.
+                    - Set to C(all) for all media types
+                default: 'all'
             host_groups:
                 type: list
                 description:
@@ -664,6 +666,8 @@ class Zapi(object):
 
         """
         try:
+            if str(mediatype_name).lower() == 'all':
+                return '0'
             mediatype_list = self._zapi.mediatype.get({
                 'output': 'extend',
                 'selectInventory': 'extend',
@@ -672,7 +676,7 @@ class Zapi(object):
             if len(mediatype_list) < 1:
                 self._module.fail_json(msg="Media type not found: %s" % mediatype_name)
             else:
-                return mediatype_list[0]
+                return mediatype_list[0]['mediatypeid']
         except Exception as e:
             self._module.fail_json(msg="Failed to get mediatype '%s': %s" % (mediatype_name, e))
 
@@ -913,7 +917,7 @@ class Operations(object):
                 'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
                 'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
                     operation.get('media_type')
-                )['mediatypeid'] if operation.get('media_type') is not None else None,
+                ) if operation.get('media_type') is not None else '0',
                 'message': operation.get('message'),
                 'subject': operation.get('subject'),
             }
