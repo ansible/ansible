@@ -91,7 +91,7 @@ EXAMPLES = """
 """
 
 RETURN = """ # """
-import q
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.skydive.api import skydive_node
 
@@ -114,7 +114,6 @@ def main():
 
     argument_spec.update(ib_spec)
     argument_spec.update(skydive_node.provider_spec)
-    q(ib_spec)
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
