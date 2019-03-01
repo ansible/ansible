@@ -557,13 +557,38 @@
   register: output_6
   ignore_errors: yes
 
+- name: labels (not specifying, check mode)
+  docker_swarm:
+    state: present
+  check_mode: yes
+  diff: yes
+  register: output_7
+  ignore_errors: yes
+
+- name: labels (not specifying)
+  docker_swarm:
+    state: present
+  diff: yes
+  register: output_8
+  ignore_errors: yes
+
+- name: labels (idempotency, check that labels are still there)
+  docker_swarm:
+    state: present
+    labels:
+      a: v1
+      c: v3
+  diff: yes
+  register: output_9
+  ignore_errors: yes
+
 - name: labels (empty, check mode)
   docker_swarm:
     state: present
     labels: {}
   check_mode: yes
   diff: yes
-  register: output_7
+  register: output_10
   ignore_errors: yes
 
 - name: labels (empty)
@@ -571,7 +596,7 @@
     state: present
     labels: {}
   diff: yes
-  register: output_8
+  register: output_11
   ignore_errors: yes
 
 - name: labels (empty, idempotent, check mode)
@@ -580,7 +605,7 @@
     labels: {}
   check_mode: yes
   diff: yes
-  register: output_9
+  register: output_12
   ignore_errors: yes
 
 - name: labels (empty, idempotent)
@@ -588,7 +613,7 @@
     state: present
     labels: {}
   diff: yes
-  register: output_10
+  register: output_13
   ignore_errors: yes
 
 - name: assert labels changes
@@ -618,22 +643,34 @@
        - 'output_6.actions[0] == "Swarm cluster updated"'
        - 'output_6.diff.before is defined'
        - 'output_6.diff.after is defined'
-       - 'output_7 is changed'
-       - 'output_7.actions[0] == "Swarm cluster updated"'
+       - 'output_7 is not changed'
+       - 'output_7.actions[0] == "No modification"'
        - 'output_7.diff.before is defined'
        - 'output_7.diff.after is defined'
-       - 'output_8 is changed'
-       - 'output_8.actions[0] == "Swarm cluster updated"'
+       - 'output_8 is not changed'
+       - 'output_8.actions[0] == "No modification"'
        - 'output_8.diff.before is defined'
        - 'output_8.diff.after is defined'
        - 'output_9 is not changed'
        - 'output_9.actions[0] == "No modification"'
        - 'output_9.diff.before is defined'
        - 'output_9.diff.after is defined'
-       - 'output_10 is not changed'
-       - 'output_10.actions[0] == "No modification"'
+       - 'output_10 is changed'
+       - 'output_10.actions[0] == "Swarm cluster updated"'
        - 'output_10.diff.before is defined'
        - 'output_10.diff.after is defined'
+       - 'output_11 is changed'
+       - 'output_11.actions[0] == "Swarm cluster updated"'
+       - 'output_11.diff.before is defined'
+       - 'output_11.diff.after is defined'
+       - 'output_12 is not changed'
+       - 'output_12.actions[0] == "No modification"'
+       - 'output_12.diff.before is defined'
+       - 'output_12.diff.after is defined'
+       - 'output_13 is not changed'
+       - 'output_13.actions[0] == "No modification"'
+       - 'output_13.diff.before is defined'
+       - 'output_13.diff.after is defined'
   when: docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
