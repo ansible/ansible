@@ -852,10 +852,8 @@ version:
 
 from ansible.module_utils.basic import AnsibleModule
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -881,26 +879,11 @@ def filter_voip_profile_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
-
-    return data
-
-
 def voip_profile(data, fos):
     vdom = data['vdom']
     voip_profile_data = data['voip_profile']
-    flattened_data = flatten_multilists_attributes(voip_profile_data)
-    filtered_data = filter_voip_profile_data(flattened_data)
+    filtered_data = filter_voip_profile_data(voip_profile_data)
+
     if voip_profile_data['state'] == "present":
         return fos.set('voip',
                        'profile',
@@ -915,7 +898,7 @@ def voip_profile(data, fos):
 
 
 def fortios_voip(data, fos):
-    login(data)
+    login(data, fos)
 
     if data['voip_profile']:
         resp = voip_profile(data, fos)
@@ -1137,7 +1120,6 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_voip(module.params, fos)
