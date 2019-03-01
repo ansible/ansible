@@ -835,16 +835,10 @@ class AssertOnlyCertificate(Certificate):
             not_after = datetime.datetime.strptime(time_string, "%Y%m%d%H%M%SZ")
             cert_expired = not_after < datetime.datetime.utcnow()
 
-            if self.has_expired is False:
+            if self.has_expired != cert_expired:
                 if cert_expired:
                     self.message.append(
-                        'Certificate expiration check failed (certificate expiration is %s, expected %s)' % (self.cert.has_expired(), self.has_expired)
-                    )
-            else:
-                if not cert_expired:
-                    self.message.append(
-                        'Certificate expiration check failed (certificate expiration is to %s, expected %s)' %
-                        (self.cert.has_expired(), self.has_expired)
+                        'Certificate expiration check failed (certificate expiration is %s, expected %s)' % (cert_expired, self.has_expired)
                     )
 
         def _validate_version():
