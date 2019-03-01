@@ -600,23 +600,23 @@ class TaskExecutor:
         module_defaults = {}
         module_defaults_warning = None
         for default in self._task.module_defaults:
-            for key in default.keys():
-                if default[key] is None:
-                    default[key] = {}
-
-            if C.MODULE_DEFAULTS_MERGE:
-                # This block merges the parent and child defaults one level deeper in the structure
-                # for the purpose of merging arguments for individual modules/groups rather than
-                # overwriting at the module/group level.
-                # Specifying a module/group as an empty dictionary can be used to overwrite
-                # previous values.
-                for group in default:
+            overwrite_groups = []
+            for group in default:
+                if default[group] is None:
+                    default[group] = {}
+                if module_defaults.get(group) and default[group].keys() != module_defaults[group].keys():
+                    overwrite_groups.append(group)
+                if C.MODULE_DEFAULTS_MERGE:
+                    # This block merges the parent and child defaults one level deeper in the structure
+                    # for the purpose of merging arguments for individual modules/groups rather than
+                    # overwriting at the module/group level.
+                    # Specifying a module/group as an empty dictionary can be used to overwrite
+                    # previous values.
                     if group in module_defaults and default[group]:
                         module_defaults[group].update(default[group])
                     else:
                         module_defaults[group] = default[group]
-            else:
-                overwrite_groups = [group for group in default if module_defaults.get(group) and default[group].keys() != module_defaults[group].keys()]
+            if not C.MODULE_DEFAULTS_MERGE:
                 if overwrite_groups:
                     module_defaults_warning = 'Overwriting module_defaults modules and groups by default is deprecated. Some keys in groups {0} would be' \
                                               ' overwritten. Enable MODULE_DEFAULTS_MERGE to use merging or set the module/group to an empty dictionary' \
