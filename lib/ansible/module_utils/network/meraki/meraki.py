@@ -244,7 +244,7 @@ class MerakiModule(object):
 
     def get_config_templates(self, org_id):
         path = self.construct_path('get_all', function='configTemplates', org_id=org_id)
-        response = self.request(path, 'GET')
+        response = self.request(path, 'GET', description="get_templates")
         if self.status != 200:
             self.fail_json(msg='Unable to get configuration templates')
         return response
@@ -291,7 +291,7 @@ class MerakiModule(object):
                                )
         try:
             if description is not None:
-                self.metrics['request'] = {description: str(datetime.datetime.utcnow() - start)}
+                self.metrics['requests'].append({description: str(datetime.datetime.utcnow() - start)})
             else:
                 self.metrics['requests'].append(str(datetime.datetime.utcnow() - start))
         except KeyError:
@@ -335,6 +335,7 @@ class MerakiModule(object):
             if self.url is not None:
                 self.result['method'] = self.method
                 self.result['url'] = self.url
+            self.result['performance'] = self.metrics
         elif self.params['output_level'] == 'performance':
             self.result['performance'] = self.metrics
 
