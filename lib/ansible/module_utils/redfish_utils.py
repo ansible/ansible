@@ -280,7 +280,10 @@ class RedfishUtils(object):
         controller_list = []
         controller_results = []
         # Get these entries, but does not fail if not found
-        properties = ['Name', 'Status']
+        properties = ['CacheSummary', 'FirmwareVersion', 'Identifiers',
+                      'Location', 'Manufacturer', 'Model', 'Name',
+                      'PartNumber', 'SerialNumber', 'SpeedGbps', 'Status']
+        key = "StorageControllers"
 
         # Find Storage service
         response = self.get_request(self.root_uri + self.systems_uri)
@@ -288,41 +291,45 @@ class RedfishUtils(object):
             return response
         data = response['data']
 
-        if 'SimpleStorage' not in data:
-            return {'ret': False, 'msg': "SimpleStorage resource not found"}
+        if 'Storage' not in data:
+            return {'ret': False, 'msg': "Storage resource not found"}
 
         # Get a list of all storage controllers and build respective URIs
-        storage_uri = data["SimpleStorage"]["@odata.id"]
+        storage_uri = data['Storage']["@odata.id"]
         response = self.get_request(self.root_uri + storage_uri)
         if response['ret'] is False:
             return response
         result['ret'] = True
         data = response['data']
 
-        for controller in data[u'Members']:
-            controller_list.append(controller[u'@odata.id'])
+        # Loop through Members and their StorageControllers
+        # and gather properties from each StorageController
+        if data[u'Members']:
+            for storage_member in data[u'Members']:
+                storage_member_uri = storage_member[u'@odata.id']
+                response = self.get_request(self.root_uri + storage_member_uri)
+                data = response['data']
 
-        for c in controller_list:
-            controller = {}
-            uri = self.root_uri + c
-            response = self.get_request(uri)
-            if response['ret'] is False:
-                return response
-            data = response['data']
-
-            for property in properties:
-                if property in data:
-                    controller[property] = data[property]
-            controller_results.append(controller)
-        result["entries"] = controller_results
-        return result
+                if key in data:
+                    controller_list = data[key]
+                    for controller in controller_list:
+                        controller_result = {}
+                        for property in properties:
+                            if property in controller:
+                                controller_result[property] = controller[property]
+                        controller_results.append(controller_result)
+                result['entries'] = controller_results
+            return result
+        else:
+            return {'ret': False, 'msg': "Storage resource not found"}
 
     def get_disk_inventory(self):
         result = {}
         controller_list = []
         disk_results = []
         # Get these entries, but does not fail if not found
-        properties = ['Name', 'Manufacturer', 'Model', 'Status', 'CapacityBytes']
+        properties = ['Name', 'Manufacturer', 'Model', 'Status',
+                      'CapacityBytes']
 
         # Find Storage service
         response = self.get_request(self.root_uri + self.systems_uri)
