@@ -117,6 +117,8 @@ RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
 VAULT_VERSION_MAX = 1.0
+
+# This matches a string that cannot be used as a valid python variable name i.e 'not-valid', 'not!valid@either' '1_nor_This'
 INVALID_VARIABLE_NAMES = re.compile(r'^[^a-zA-Z_]|[^a-zA-Z0-9_]')
 
 # FIXME: remove once play_context mangling is removed
