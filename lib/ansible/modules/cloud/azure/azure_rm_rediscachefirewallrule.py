@@ -169,7 +169,6 @@ class AzureRMRedisCacheFirewallRule(AzureRMModuleBase):
 
         old_response = None
         response = None
-        to_be_updated = False
 
         # get management client
         self._client = self.get_mgmt_svc_client(RedisManagementClient,
@@ -220,7 +219,6 @@ class AzureRMRedisCacheFirewallRule(AzureRMModuleBase):
 
             response = self.create_or_update()
             self.results['id'] = response['id']
-
 
         if self.to_do == Actions.Delete:
             self.log('Delete Firewall rule of Azure Cache for Redis')
