@@ -566,12 +566,6 @@ def main():
             filename = url_filename(info['url'])
         dest = os.path.join(dest, filename)
 
-    # If the remote URL exists, we're done with check mode
-    if module.check_mode:
-        os.remove(tmpsrc)
-        result['changed'] = True
-        module.exit_json(msg=info.get('msg', ''), **result)
-
     # raise an error if there is no tmpsrc file
     if not os.path.exists(tmpsrc):
         os.remove(tmpsrc)
@@ -598,6 +592,13 @@ def main():
         if not os.access(os.path.dirname(dest), os.W_OK):
             os.remove(tmpsrc)
             module.fail_json(msg="Destination %s is not writable" % (os.path.dirname(dest)), **result)
+
+    if module.check_mode:
+        if os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
+        result['changed'] = ('checksum_dest' not in result or
+                             result['checksum_src'] != result['checksum_dest'])
+        module.exit_json(msg=info.get('msg', ''), **result)
 
     backup_file = None
     if result['checksum_src'] != result['checksum_dest']:
