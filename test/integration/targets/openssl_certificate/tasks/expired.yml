@@ -10,7 +10,7 @@
     subject:
       commonName: www.example.com
 
-- name: Generate selfsigned certificate
+- name: Generate expired selfsigned certificate
   openssl_certificate:
     path: '{{ output_dir }}/has_expired_cert.pem'
     csr_path: '{{ output_dir }}/has_expired_csr.csr'
