@@ -40,12 +40,16 @@ options:
     type: str
     default: present
     choices: [absent, join, leave, present]
-  join_options:
+  disabled_modules:
     description:
-      - List of options for the join command.
-      - Refer to the PBIS documentation for all possible options.
-    type: list
-    default: ['--notimesync', '--disable', 'hostname']
+      - List of PBIS configuration modules to disable during the join command.
+      - Refer to the pbis documentation for more information.
+    default: ['hostname']
+    choices: ['bash', 'firewall', 'gdm', 'hostname', 'krb5', 'lam-auth', 'pam', 'pam-mode', 'nsswitch', 'ssh']
+  timesync:
+    description: sync the system time with the domain?
+    type: bool
+    default: false
   ou:
     description:
       - AD Organizational Unit for the computer account.
@@ -63,8 +67,8 @@ options:
     required: true
 notes:
   - "The default join options are set to be minimaly intrusive on your system. The hostname
-    and time won't be touched. However, it's required to have a correct hostname and time
-    (sync) configured. If you want PBIS to handle this, define join_options: []"
+    and time won't be touched, hostname and time are supposed to be configured before
+    the join. If you want PBIS to handle this, set timesync: yes and disable_mdoules: []"
 """
 
 EXAMPLES = """
@@ -111,11 +115,12 @@ import os
 from ansible.module_utils.basic import AnsibleModule
 
 
-def join(join_options, ou, domain, user, password, module):
+def join(disabled_modules, timesync, ou, domain, user, password, module):
     """Join the domain"""
 
     changed, reboot_required = False, False
     result, errors = None, None
+
     if os.path.isfile("/opt/pbis/bin/domainjoin-cli"):
         # Test if system is already joined:
         rc, result, errors = module.run_command(
@@ -127,8 +132,11 @@ def join(join_options, ou, domain, user, password, module):
             cmd = ["/opt/pbis/bin/domainjoin-cli", "join"]
             if module.check_mode:
                 cmd.extend(["--preview"])
-            if join_options:
-                cmd.extend(join_options)
+            if not timesync:
+                cmd.extend(["--notimesync"])
+            if disabled_modules:
+                for mdl in disabled_modules:
+                    cmd.extend(["--disable", mdl])
             if ou:
                 cmd.extend(["--ou", ou])
             cmd.extend([domain, user, password])
@@ -249,9 +257,11 @@ def main():
             state=dict(
                 type='str', default="present", choices=["absent", "join", "leave", "present"]
             ),
-            join_options=dict(
-                type="list", default=["--notimesync", "--disable", "hostname"]
+            disabled_modules=dict(
+                type='list', default=["hostname"],
+                choices=["bash", "firewall", "gdm", "hostname", "krb5", "lam-auth", "pam", "pam-mode", "nsswitch", "ssh"]
             ),
+            timesync=dict(type='bool', default=False),
             ou=dict(type='str'),
             user=dict(type='str', required=True),
             password=dict(type='str', required=True, no_log=True),
@@ -261,7 +271,8 @@ def main():
 
     domain = module.params["name"]
     state = module.params["state"]
-    join_options = module.params["join_options"]
+    disabled_modules = module.params["disabled_modules"]
+    timesync = module.params["timesync"]
     ou = module.params["ou"]
     user = module.params["user"]
     password = module.params["password"]
@@ -270,7 +281,7 @@ def main():
     changed, reboot_required = False, False
     if state in ["join", "present"]:
         changed, result, errors, reboot_required = join(
-            join_options, ou, domain, user, password, module
+            disabled_modules, timesync, ou, domain, user, password, module
         )
     else:
         changed, result, errors, reboot_required = leave(domain, user, password, module)
