@@ -92,7 +92,8 @@
           - subs.changed
 
 - name: Retrive topic
-  azure_rm_servicebus_topic_facts:
+  azure_rm_servicebus_facts:
+      type: topic
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -116,7 +117,8 @@
       state: absent
 
 - name: Retrive topic
-  azure_rm_servicebus_topic_facts:
+  azure_rm_servicebus_facts:
+      type: topic
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
@@ -136,8 +138,9 @@
       state: absent
 
 - name: Retrive topic
-  azure_rm_servicebus_topic_facts:
+  azure_rm_servicebus_facts:
       name: "topic{{ rpfx }}"
+      type: topic
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
       show_sas_policies: yes
