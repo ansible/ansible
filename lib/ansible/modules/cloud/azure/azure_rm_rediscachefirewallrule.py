@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Yunge Zhu, <yungez@microsoft.com>
+# Copyright (c) 2019 Yunge Zhu, <yungez@microsoft.com>
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -19,7 +19,7 @@ module: azure_rm_rediscachefirewallrule
 version_added: "2.8"
 short_description: Manage Azure Cache for Redis Firewall rules.
 description:
-    - Create, update and delete instance of Azure Cache for Redis.
+    - Create, update and delete Azure Cache for Redis Firewall rules.
 
 options:
     resource_group:
@@ -36,10 +36,12 @@ options:
         required: True
     start_ip_address:
         description:
-            - The start IP address of the Azure Cache for Redis firewall rule. Must be IPv4 format.
+            - The start IP address of the Azure Cache for Redis Firewall rule. Must be IPv4 format.
+            - Required when creating Firewall rule.
     end_ip_address:
         description:
-            - The end IP address of the Azure Cache for Redis firewall rule. Must be IPv4 format.
+            - The end IP address of the Azure Cache for Redis Firewall rule. Must be IPv4 format.
+            - Required when creating Firewall rule.
     state:
       description:
         - Assert the state of the Firewall rule of Azure Cache for Redis.
@@ -208,7 +210,7 @@ class AzureRMRedisCacheFirewallRule(AzureRMModuleBase):
                 self.to_do = Actions.Delete
             else:
                 self.results['changed'] = False
-                self.log("Azure Cache for Redis {0} not exists.".format(self.name))
+                self.log("Azure Cache for Redis {0} doesn't exist.".format(self.name))
 
         if self.to_do == Actions.CreateUpdate:
             self.log('Need to Create/Update Firewall rule of Azure Cache for Redis')
