@@ -155,8 +155,7 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     handle_aliases,
-    return_values,
-    list_deprications,
+    list_deprecations,
     list_no_log_values,
     PASS_VARS,
 )
@@ -1558,11 +1557,6 @@ class AnsibleModule(object):
         deprecations = list_deprecations(spec, param)
 
         if no_log_values:
-        for arg_name, arg_opts in spec.items():
-            if arg_opts.get('no_log', False):
-                # Find the value for the no_log'd param
-                no_log_object = param.get(arg_name, None)
-                if no_log_object:
             self.no_log_values.update(no_log_values)
 
         if deprecations:
