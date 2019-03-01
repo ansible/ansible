@@ -831,7 +831,7 @@ class AssertOnlyCertificate(Certificate):
                     )
 
         def _validate_has_expired():
-            # The following 3 lines are the same as the PyOpenSSL code.
+            # The following 3 lines are the same as the current PyOpenSSL code for cert.has_expired().
             # Older version of PyOpenSSL have a buggy implementation,
             # to avoid issues with those we added the code from a more recent release here.
 
