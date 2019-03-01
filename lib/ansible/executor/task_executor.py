@@ -626,7 +626,9 @@ class TaskExecutor:
             try:
                 tmp_args = module_defaults[self._task.action].copy()
             except AttributeError:
-                raise AnsibleError("Error in module_defaults; the value of {0} ({1}) is not a dictionary.".format(self._task.action, module_defaults[self._task.action]))
+                raise AnsibleError(
+                    "Error in module_defaults; the value of {0} ({1}) is not a dictionary.".format(self._task.action, module_defaults[self._task.action])
+                )
             tmp_args.update(self._task.args)
             self._task.args = tmp_args
         if self._task.action in C.config.module_defaults_groups:
