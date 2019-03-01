@@ -37,9 +37,3 @@
     path: "{{ output_dir }}/has_expired_cert.pem"
     has_expired: true
   register: expired_cert_skip
-
-- name: Ensure previous task was OK
-  assert:
-    that: expired_cert_skip is success
-
-
