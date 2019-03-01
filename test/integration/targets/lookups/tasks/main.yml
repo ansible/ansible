@@ -302,3 +302,11 @@
     that:
       - 'var_host_info[0] == ansible_host'
       - 'var_host_info[1] == ansible_user'
+
+# Filament lookup
+- name: Test the filament lookup
+  vars:
+    - ps_lookup: "{{ lookup('filament', 'systemd') }}"
+- assert:
+    that:
+      - "ps_lookup == 1"  

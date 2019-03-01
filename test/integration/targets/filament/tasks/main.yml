@@ -1,0 +1,9 @@
+---
+- name: test my new module
+  hosts: localhost
+  tasks:
+  - name: run the new module
+    filament:
+      name: foo
+    register: output
+  - assert: { that: "output.foo == 'bar'" }
