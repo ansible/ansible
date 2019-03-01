@@ -3,6 +3,7 @@
     redis_name: "redis-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
     vnet_name: "vnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
     subnet_name: "subnet-{{ resource_group | hash('md5') | truncate(7, True, '') }}-{{ 1000 | random }}"
+    rule_name: "rule1"
   run_once: yes
 
 - name: Create a redis cache (Check Mode)
@@ -189,6 +190,76 @@
       - facts.rediscaches | length == 1
       - facts.rediscaches[0].subnet != None
       - facts.rediscaches[0].access_keys.primary != None
+
+- name: Create firewall rule (Check mode)
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  check_mode: yes
+  register: output
+
+- name: Assert check mode creation
+  assert:
+    that:
+      - output.changed
+
+- name: Create firewall rule
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  register: output
+
+- name: Assert creation
+  assert:
+    that:
+      - output.changed
+      - output.id
+
+- name: Update firewall rule idempotence
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    start_ip_address: 192.168.1.1
+    end_ip_address: 192.168.1.4
+  register: output
+
+- name: Assert idempotence
+  assert:
+    that:
+      - output.changed == False
+
+- name: Update firewall rule
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    end_ip_address: 192.168.1.5
+  register: output
+
+- name: Assert updating
+  assert:
+    that:
+      - output.changed
+
+- name: Delete firewall rule
+  azure_rm_rediscachefirewallrule:
+    resource_group: "{{ resource_group }}"
+    cache_name: "{{ redis_name }}2"
+    name: "{{ rule_name }}"
+    state: absent
+  register: output
+
+- name: Assert deletion
+  assert:
+    that:
+      - output.changed
 
 # - name: Delete the redis cache
 #   azure_rm_rediscache:
