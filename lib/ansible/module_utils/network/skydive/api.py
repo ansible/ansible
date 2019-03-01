@@ -58,7 +58,8 @@ SKYDIVE_PROVIDER_SPEC = {
 
 
 class skydive_client_check(object):
-    ''' Base class for implementing Skydive Rest API '''
+    """ Base class for implementing Skydive Rest API """
+
     provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
     def __init__(self, **kwargs):
@@ -83,8 +84,8 @@ class skydive_client_check(object):
                     kwargs[key] = os.environ.get(env)
 
 
-class skydive_inject_protocol(WSClientDefaultProtocol):
-    ''' Implements inject protocol for node and edge modules '''
+class skydive_inject_protocol(object):
+    """ Implements inject protocol for node and edge modules """
 
     def onOpen(self):
         module = self.factory.kwargs["module"]
@@ -136,7 +137,7 @@ class skydive_inject_protocol(WSClientDefaultProtocol):
                     edge = Edge(uid, host, node1, node2, metadata=metadata)
                     msg = WSMessage("Graph", EdgeDeletedMsgType, edge)
 
-            self.sendWSMessage(msg)
+            WSClientDefaultProtocol.sendWSMessage(msg)
             if uid:
                 result["UUID"] = uid
             result["changed"] = True
@@ -144,11 +145,11 @@ class skydive_inject_protocol(WSClientDefaultProtocol):
             module.fail_json(
                 msg='Error during topology update %s' % e, **result)
         finally:
-            self.stop()
+            WSClientDefaultProtocol.stop()
 
 
 class skydive_wsclient(skydive_client_check):
-    ''' Base class for implementing Skydive Websocket API '''
+    """ Base class for implementing Skydive Websocket API """
 
     def __init__(self, module, **kwargs):
         super(skydive_wsclient, self).__init__(**kwargs)
@@ -185,7 +186,7 @@ class skydive_wsclient(skydive_client_check):
 
 
 class skydive_restclient(skydive_client_check):
-    ''' Base class for implementing Skydive Rest API '''
+    """ Base class for implementing Skydive Rest API """
 
     def __init__(self, **kwargs):
         super(skydive_restclient, self).__init__(**kwargs)
@@ -203,6 +204,8 @@ class skydive_restclient(skydive_client_check):
 
 
 class skydive_lookup(skydive_restclient):
+    """ Implements Skydive Lookup queries """
+
     provider_spec = {'provider': dict(type='dict', options=SKYDIVE_PROVIDER_SPEC)}
 
     def __init__(self, provider):
@@ -222,7 +225,8 @@ class skydive_lookup(skydive_restclient):
 
 
 class skydive_flow_capture(skydive_restclient):
-    ''' Implements Skydive Flow capture modules '''
+    """ Implements Skydive Flow capture modules """
+
     def __init__(self, module):
         self.module = module
         provider = module.params['provider']
@@ -279,7 +283,7 @@ class skydive_flow_capture(skydive_restclient):
 
 
 class skydive_node(skydive_wsclient, skydive_restclient):
-    ''' Implements Skydive Node modules '''
+    """ Implements Skydive Node modules """
 
     def __init__(self, module):
         self.module = module
@@ -307,7 +311,7 @@ class skydive_node(skydive_wsclient, skydive_restclient):
 
 
 class skydive_edge(skydive_wsclient, skydive_restclient):
-    ''' Implements Skydive Node modules '''
+    """ Implements Skydive Node modules """
 
     def __init__(self, module):
         self.module = module
