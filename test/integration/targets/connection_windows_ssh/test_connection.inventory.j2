@@ -4,7 +4,7 @@
 {% endfor %}
 
 [windows-ssh:vars]
-ansible_shell_type=powershell
+ansible_shell_type={{ test_shell_type }}
 ansible_connection=ssh
 ansible_port=22
 # used to preserve the existing environment and not touch existing files

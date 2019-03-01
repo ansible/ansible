@@ -19,3 +19,7 @@ INVENTORY=~/ansible_testing/test_connection.inventory ./test.sh \
     "$@"
 
 cd ../connection_windows_ssh
+
+ansible-playbook -i ~/ansible_testing/test_connection.inventory tests_fetch.yml \
+    -e ansible_scp_extra_args=-T \
+    "$@"

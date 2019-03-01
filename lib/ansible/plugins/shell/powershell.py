@@ -5,60 +5,26 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    name: powershell
-    plugin_type: shell
-    version_added: ""
-    short_description: Windows Powershell
-    description:
-      - The only option when using 'winrm' as a connection plugin
-    options:
-      async_dir:
-        description:
-        - Directory in which ansible will keep async job information.
-        - Before Ansible 2.8, this was set to C(remote_tmp + "\\.ansible_async").
-        default: '%USERPROFILE%\\.ansible_async'
-        ini:
-        - section: powershell
-          key: async_dir
-        vars:
-        - name: ansible_async_dir
-        version_added: '2.8'
-      remote_tmp:
-        description:
-        - Temporary directory to use on targets when copying files to the host.
-        default: '%TEMP%'
-        ini:
-        - section: powershell
-          key: remote_tmp
-        vars:
-        - name: ansible_remote_tmp
-      set_module_language:
-        description:
-        - Controls if we set the locale for moduels when executing on the
-          target.
-        - Windows only supports C(no) as an option.
-        type: bool
-        default: 'no'
-        choices:
-        - 'no'
-      environment:
-        description:
-        - Dictionary of environment variables and their values to use when
-          executing commands.
-        type: dict
-        default: {}
+name: powershell
+plugin_type: shell
+version_added: historical
+short_description: Windows PowerShell
+description:
+- The only option when using 'winrm' or 'psrp' as a connection plugin.
+- Can also be used when using 'ssh' as a connection plugin and the C(DefaultShell) has been configured to PowerShell.
+extends_documentation_fragment:
+- shell_windows
 '''
-# FIXME: admin_users and set_module_language don't belong here but must be set
-# so they don't failk when someone get_option('admin_users') on this plugin
 
 import base64
 import os
 import re
 import shlex
 import pkgutil
+import xml.etree.ElementTree as ET
 
 from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
 
@@ -69,6 +35,21 @@ _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy
 _powershell_version = os.environ.get('POWERSHELL_VERSION', None)
 if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
+
+
+def _parse_clixml(data, stream="Error"):
+    """
+    Takes a byte string like '#< CLIXML\r\n<Objs...' and extracts the stream
+    message encoded in the XML data. CLIXML is used by PowerShell to encode
+    multiple objects in stderr.
+    """
+    clixml = ET.fromstring(data.split(b"\r\n", 1)[-1])
+    namespace_match = re.match(r'{(.*)}', clixml.tag)
+    namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
+
+    strings = clixml.findall("./%sS" % namespace)
+    lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream]
+    return to_bytes('\r\n'.join(lines))
 
 
 class ShellModule(ShellBase):
@@ -82,6 +63,9 @@ class ShellModule(ShellBase):
 
     _SHELL_REDIRECT_ALLNULL = '> $null'
     _SHELL_AND = ';'
+
+    # Used by various parts of Ansible to do Windows specific changes
+    _IS_WINDOWS = True
 
     env = dict()
 

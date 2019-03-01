@@ -86,7 +86,7 @@ class ActionModule(ActionBase):
                 pass
 
             # Use win_ping on winrm/powershell, else use ping
-            if self._connection._shell.SHELL_FAMILY == 'powershell':
+            if getattr(self._connection._shell, "_IS_WINDOWS", False):
                 ping_result = self._execute_module(module_name='win_ping', module_args=dict(), task_vars=task_vars)
             else:
                 ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)

@@ -19,6 +19,8 @@
 
   - name: test out async with Windows SSH
     win_shell: Write-Host café
+    async: 20
+    poll: 3
     register: win_ssh_async
 
   - name: assert test out async with Windows SSH

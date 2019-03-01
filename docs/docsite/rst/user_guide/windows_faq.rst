@@ -62,13 +62,17 @@ installed version and then clone the git repo.
 
 Can I use SSH keys to authenticate?
 ```````````````````````````````````
-Windows uses WinRM as the transport protocol. WinRM supports a wide range of
-authentication options. The closet option to SSH keys is to use the certificate
-authentication option which maps an X509 certificate to a local user.
+SSH keys are not supported when using the WinRM or PSRP connection plugins.
+These connection plugins support X509 certificates for authentication but they
+are not the same as an SSH key pair that SSH supports.
 
 The way that these certificates are generated and mapped to a user is different
 from the SSH implementation; consult the :doc:`windows_winrm` documentation for 
 more information.
+
+Ansible 2.8 has added experimental support for using the SSH connection plugin
+which supports authentication with SSH keys. See `this question <windows_faq_ssh>`
+for more information.
 
 .. _windows_faq_winrm:
 
@@ -155,16 +159,28 @@ modules will not work. A way to bypass this issue to use
 This is useful if during a playbook, an external service needs to be contacted
 and there is no equivalent Windows module available.
 
+.. _winrm_faq_ssh:
+
 Can I connect over SSH?
 ```````````````````````
-Microsoft has announced and is developing a fork of OpenSSH for Windows that
-allows remote manage of Windows servers through the SSH protocol instead of
-WinRM. While this can be installed and used right now for normal SSH clients,
-it is still in beta from Microsoft and the required functionality has not been
-developed within Ansible yet.
+Ansible 2.8 has added experimental support for using the SSH connection plugin
+to manage Windows hosts. This requires the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
+fork that is in development with Microsoft to be installed and configured on
+the Windows host. While most of the basics should work with SSH, the
+Win32-OpenSSH port is rapidly changing with every release to add new features
+and fix various bugs. It is highly recommend you install the latest release from
+the GitHub Releases page when using this with ansible.
 
-There are future plans on adding this feature and this page will be updated
-once more information can be shared.
+To use SSH as the connection to a Windows host, set the following variables in
+the inventory::
+
+    ansible_connection=ssh
+
+    # Works with Win32-OpenSSH out of the box that defaults to the cmd.exe shell
+    ansible_shell_type=cmd
+
+    # Required if Win32-OpenSSH has been configured to use PowerShell as the DefaultShell
+    ansible_shell_type=powershell
 
 Why is connecting to the host via ssh failing?
 ``````````````````````````````````````````````

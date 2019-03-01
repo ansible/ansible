@@ -104,7 +104,6 @@ import traceback
 import json
 import tempfile
 import subprocess
-import xml.etree.ElementTree as ET
 
 HAVE_KERBEROS = False
 try:
@@ -121,6 +120,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 from ansible.utils.display import Display
@@ -529,7 +529,7 @@ class Connection(ConnectionBase):
         # parse just stderr from CLIXML output
         if result.std_err.startswith(b"#< CLIXML"):
             try:
-                result.std_err = self._parse_clixml(result.std_err)
+                result.std_err = _parse_clixml(result.std_err)
             except Exception:
                 # unsure if we're guaranteed a valid xml doc- use raw output in case of error
                 pass

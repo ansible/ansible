@@ -7,9 +7,7 @@ __metaclass__ = type
 
 import fcntl
 import os
-import re
 import shlex
-import xml.etree.ElementTree as ET
 
 from abc import abstractmethod, abstractproperty
 from functools import wraps
@@ -122,21 +120,6 @@ class ConnectionBase(AnsiblePlugin):
         except AttributeError:
             # In Python3, shlex.split doesn't work on a byte string.
             return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
-
-    @staticmethod
-    def _parse_clixml(data, stream="Error"):
-        """
-        Takes a byte string like '#< CLIXML\r\n<Objs...' and extracts the
-        stream message encoded in the XML data. CLIXML is used by PowerShell
-        to encode multiple objects in stderr.
-        """
-        clixml = ET.fromstring(data.split(b"\r\n", 1)[-1])
-        namespace_match = re.match(r'{(.*)}', clixml.tag)
-        namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
-
-        strings = clixml.findall("./%sS" % namespace)
-        lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream]
-        return to_bytes('\r\n'.join(lines))
 
     @abstractproperty
     def transport(self):
