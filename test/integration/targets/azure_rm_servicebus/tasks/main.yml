@@ -5,9 +5,8 @@
 
 - name: Create a namespace
   azure_rm_servicebus:
-      name: "servicebus{{ rpfx }}"
+      name: "ns{{ rpfx }}"
       resource_group: "{{ resource_group }}"
-      type: namespace
       sku: basic
   register: namespace
 
@@ -19,9 +18,8 @@
 
 - name: Create a namespace (idempontent)
   azure_rm_servicebus:
-      name: "servicebus{{ rpfx }}"
+      name: "ns{{ rpfx }}"
       resource_group: "{{ resource_group }}"
-      type: namespace
       sku: basic
   register: namespace
 
@@ -30,11 +28,10 @@
       - not namespace.changed
 
 - name: Create a queue
-  azure_rm_servicebus:
+  azure_rm_servicebus_queue:
       name: "queue{{ rpfx }}"
-      namespace: "servicebus{{ rpfx }}"
+      namespace: "ns{{ rpfx }}"
       resource_group: "{{ resource_group }}"
-      type: queue
   register: queue
 
 - assert:
@@ -43,15 +40,11 @@
           - queue.changed
 
 - name: Create a topic (check mode)
-  azure_rm_servicebus:
+  azure_rm_servicebus_topic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
       duplicate_detection_time_in_seconds: 600
-      type: topic
-      sas_policies:
-        - name: testpolicy
-          rights: manage
   check_mode: yes
   register: output
 
@@ -60,15 +53,11 @@
           - output.changed
 
 - name: Create a topic
-  azure_rm_servicebus:
+  azure_rm_servicebus_topic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
       duplicate_detection_time_in_seconds: 600
-      type: topic
-      sas_policies:
-        - name: testpolicy
-          rights: manage
   register: output
 
 - assert:
@@ -78,15 +67,11 @@
           - "'subscription_count' not in output"
 
 - name: Create a topic (idempontent)
-  azure_rm_servicebus:
+  azure_rm_servicebus_topic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
       duplicate_detection_time_in_seconds: 600
-      type: topic
-      sas_policies:
-        - name: testpolicy
-          rights: manage
   register: output
 
 - assert:
@@ -94,12 +79,11 @@
           - not output.changed
 
 - name: Create a subscription
-  azure_rm_servicebus:
+  azure_rm_servicebus_topic_subscription:
       name: "subs{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: subscription
-      subscription_topic_name: "topic{{ rpfx }}"
+      topic: "topic{{ rpfx }}"
   register: subs
 
 - assert:
@@ -108,11 +92,10 @@
           - subs.changed
 
 - name: Retrive topic
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_topic_facts:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: topic
       show_sas_policies: yes
   register: facts
 
@@ -125,20 +108,18 @@
          - facts.servicebuses[0].sas_policies.testpolicy.rights == 'manage'
 
 - name: Delete subscription
-  azure_rm_servicebus:
+  azure_rm_servicebus_topic_subscription:
       name: "subs{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: subscription
-      subscription_topic_name: "topic{{ rpfx }}"
+      topic: "topic{{ rpfx }}"
       state: absent
 
 - name: Retrive topic
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_topic_facts:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: topic
       show_sas_policies: yes
   register: facts
 
@@ -148,19 +129,17 @@
          - "facts.servicebuses | length == 1"
 
 - name: Delete topic
-  azure_rm_servicebus:
+  azure_rm_servicebus_topic:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: topic
       state: absent
 
 - name: Retrive topic
-  azure_rm_servicebus_facts:
+  azure_rm_servicebus_topic_facts:
       name: "topic{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: topic
       show_sas_policies: yes
   register: facts
 
@@ -169,20 +148,14 @@
          - "facts.servicebuses | length == 0"
 
 - name: Delete queue
-  azure_rm_servicebus:
+  azure_rm_servicebus_queue:
       name: "queue{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
-      type: queue
       state: absent
 
 - name: Delete namespace
   azure_rm_servicebus:
-      name: "{{ item }}"
-      type: namespace
+      name: "ns{{ rpfx }}"
       resource_group: "{{ resource_group }}"
       state: absent
-  with_items:
-      - "servicebus{{ rpfx }}"
-      - "ns{{ rpfx }}"
-      - "nothing{{ rpfx }}"

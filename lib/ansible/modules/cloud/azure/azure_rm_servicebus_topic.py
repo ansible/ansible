@@ -27,7 +27,7 @@ options:
         required: true
     name:
         description:
-            - name of the route.
+            - name of the topic.
         required: true
     namespace:
         description:
@@ -37,7 +37,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
+            - Assert the state of the topic. Use 'present' to create or update and
               'absent' to delete.
         default: present
         choices:
@@ -73,10 +73,10 @@ options:
         type: bool
     forward_dead_lettered_messages_to:
         description:
-            - Topic name to forward the Dead Letter message for a Topic.
+            - Topic or queue name to forward the Dead Letter message for a Topic.
     forward_to:
         description:
-            - Topic name to forward the messages for a Topic.
+            - Topic or queue name to forward the messages for a Topic.
     lock_duration_in_seconds:
         description:
             - Timespan duration of a peek-lock.
@@ -133,7 +133,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Current state of the route.
+    description: Current state of the topic.
     returned: success
     type: str
 '''
@@ -268,7 +268,7 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
             client = self._get_client()
             return client.create_or_update(self.resource_group, self.namespace, self.name, param)
         except Exception as exc:
-            self.fail("Error creating or updating route {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error creating or updating topic {0} - {1}".format(self.name, str(exc)))
 
     def delete(self):
         try:
@@ -276,7 +276,7 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
             client.delete(self.resource_group, self.namespace, self.name)
             return True
         except Exception as exc:
-            self.fail("Error deleting route {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error deleting topic {0} - {1}".format(self.name, str(exc)))
 
     def _get_client(self):
         return self.servicebus_client.topics

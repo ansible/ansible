@@ -27,7 +27,7 @@ options:
         required: true
     name:
         description:
-            - name of the route.
+            - name of the queue.
         required: true
     namespace:
         description:
@@ -37,7 +37,7 @@ options:
         required: true
     state:
         description:
-            - Assert the state of the route. Use 'present' to create or update and
+            - Assert the state of the queue. Use 'present' to create or update and
               'absent' to delete.
         default: present
         choices:
@@ -133,7 +133,7 @@ EXAMPLES = '''
 '''
 RETURN = '''
 id:
-    description: Current state of the route.
+    description: Current state of the queue.
     returned: success
     type: str
 '''
@@ -284,7 +284,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             client = self._get_client()
             return client.create_or_update(self.resource_group, self.namespace, self.name, param)
         except Exception as exc:
-            self.fail("Error creating or updating route {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error creating or updating queue {0} - {1}".format(self.name, str(exc)))
 
     def delete(self):
         try:
@@ -292,7 +292,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             client.delete(self.resource_group, self.namespace, self.name)
             return True
         except Exception as exc:
-            self.fail("Error deleting route {0} - {1}".format(self.name, str(exc)))
+            self.fail("Error deleting queue {0} - {1}".format(self.name, str(exc)))
 
     def _get_client(self):
         return self.servicebus_client.queues
