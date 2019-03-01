@@ -734,11 +734,10 @@ class RedfishUtils(object):
         fan_results = []
         key = "Thermal"
         # Get these entries, but does not fail if not found
-        properties = ['FanName', 'Reading', 'Status']
+        properties = ['FanName', 'Reading', 'ReadingUnits', 'Status']
 
         # Go through list
         for chassis_uri in self.chassis_uri_list:
-            fan = {}
             response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
@@ -754,12 +753,12 @@ class RedfishUtils(object):
                 data = response['data']
 
                 for device in data[u'Fans']:
+                    fan = {}
                     for property in properties:
                         if property in device:
                             fan[property] = device[property]
-
                     fan_results.append(fan)
-                result["entries"] = fan_results
+        result["entries"] = fan_results
         return result
 
     def get_cpu_inventory(self):
