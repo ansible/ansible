@@ -255,11 +255,13 @@ class KubeVirtRawModule(KubernetesRawModule):
         if machine_type:
             template_spec['domain']['machine']['type'] = machine_type
 
-        # Define cloud init disk if defined:
-        self._define_cloud_init(cloud_init_nocloud, template_spec)
-
         # Define disks
         self._define_disks(disks, template_spec)
+
+        # Define cloud init disk if defined:
+        # Note, that this must be called after _define_disks, so the cloud_init
+        # is not first in order and it's not used as boot disk:
+        self._define_cloud_init(cloud_init_nocloud, template_spec)
 
         # Define interfaces:
         self._define_interfaces(interfaces, template_spec)
