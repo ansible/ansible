@@ -90,7 +90,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMConfigurations(AzureRMModuleBase):
+class AzureRMPostgreSqlConfigurations(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -125,9 +125,9 @@ class AzureRMConfigurations(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMConfigurations, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                    supports_check_mode=True,
-                                                    supports_tags=False)
+        super(AzureRMPostgreSqlConfigurations, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                              supports_check_mode=True,
+                                                              supports_tags=False)
 
     def exec_module(self, **kwargs):
 
@@ -234,7 +234,7 @@ class AzureRMConfigurations(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMConfigurations()
+    AzureRMPostgreSqlConfigurations()
 
 
 if __name__ == '__main__':
