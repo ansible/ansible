@@ -218,6 +218,10 @@ class AnsibleHcloudServer(Hcloud):
             self.module.fail_json(msg=e.message)
 
     def _create_server(self):
+
+        self.module.fail_on_missing_params(
+            required_params=["name", "server_type", "image"]
+        )
         params = {
             "name": self.module.params.get("name"),
             "server_type": self.client.server_types.get_by_name(
@@ -249,12 +253,16 @@ class AnsibleHcloudServer(Hcloud):
             self.module.params.get("location") is not None
             and self.module.params.get("datacenter") is None
         ):
-            params["location"] = self.client.locations.get_by_name(self.module.params.get("location"))
+            params["location"] = self.client.locations.get_by_name(
+                self.module.params.get("location")
+            )
         elif (
             self.module.params.get("location") is None
             and self.module.params.get("datacenter") is not None
         ):
-            params["datacenter"] = self.client.datacenters.get_by_name(self.module.params.get("datacenter"))
+            params["datacenter"] = self.client.datacenters.get_by_name(
+                self.module.params.get("datacenter")
+            )
         else:
             self.module.fail_json(msg="Please specify a datacenter or location.")
 
@@ -287,9 +295,10 @@ class AnsibleHcloudServer(Hcloud):
             server_type is not None
             and self.hcloud_server.server_type.name != server_type
         ):
+            state = self.module.params.get("state")
             if self.hcloud_server.status == Server.STATUS_RUNNING:
                 if not self.module.check_mode:
-                    if self.module.params.get("force_upgrade"):
+                    if self.module.params.get("force_upgrade") or state == "stopped":
                         self.stop_server()  # Only stopped server can be upgraded
                     else:
                         self.module.warn(
@@ -306,6 +315,9 @@ class AnsibleHcloudServer(Hcloud):
                     server_type=self.client.server_types.get_by_name(server_type),
                     upgrade_disk=self.module.params.get("upgrade_disk"),
                 ).wait_until_finished(timeout)
+                if state != "stopped":
+                    self.start_server()
+
             self._mark_as_changed()
         self._get_server()
 

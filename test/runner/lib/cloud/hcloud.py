@@ -3,7 +3,11 @@ from __future__ import absolute_import, print_function
 
 from os.path import isfile
 
-from lib.cloud import CloudProvider, CloudEnvironment
+from lib.cloud import (
+    CloudProvider,
+    CloudEnvironment,
+    CloudEnvironmentConfig,
+)
 
 from lib.util import ConfigParser, display
 
@@ -17,7 +21,7 @@ class HcloudCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(HcloudCloudProvider, self).__init__(args, config_extension=".ini")
+        super(HcloudCloudProvider, self).__init__(args)
 
     def filter(self, targets, exclude):
         """Filter out the cloud tests when the necessary config and resources are not available.
@@ -30,6 +34,7 @@ class HcloudCloudProvider(CloudProvider):
         super(HcloudCloudProvider, self).filter(targets, exclude)
 
     def setup(self):
+        """Setup the cloud resource before delegation and register a cleanup callback."""
         super(HcloudCloudProvider, self).setup()
 
         if isfile(self.config_static_path):
@@ -44,12 +49,21 @@ class HcloudCloudEnvironment(CloudEnvironment):
        after delegation.
     """
 
-    def configure_environment(self, env, cmd):
-
+    def get_environment_config(self):
         parser = ConfigParser()
         parser.read(self.config_path)
-        changes = dict(HCLOUD_TOKEN=parser.get("default", "hcloud_api_token"))
-        env.update(changes)
 
-        cmd.append("-e")
-        cmd.append("hcloud_prefix=%s" % self.resource_prefix)
+        env_vars = dict(
+            HCLOUD_TOKEN=parser.get('default', 'hcloud_api_token'),
+        )
+
+        ansible_vars = dict(
+            hcloud_prefix=self.resource_prefix,
+        )
+
+        ansible_vars.update(dict((key.lower(), value) for key, value in env_vars.items()))
+
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

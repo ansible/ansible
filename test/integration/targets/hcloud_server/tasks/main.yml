@@ -10,10 +10,22 @@
   assert:
     that:
     - result is success
+- name: test missing required parameters on create server
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+  register: result
+  ignore_errors: yes
+- name: verify fail test missing required parameters on create server
+  assert:
+    that:
+      - result is failed
+      - 'result.msg == "missing required arguments: server_type, image"'
 
 - name: test create server with check mode
   hcloud_server:
     name: "{{ hcloud_server_name }}"
+    server_type: cx11
+    image: ubuntu-18.04
     state: present
   register: result
   check_mode: yes
@@ -26,6 +38,7 @@
   hcloud_server:
     name: "{{ hcloud_server_name}}"
     server_type: cx11
+    image: ubuntu-18.04
     state: started
   register: main_server
 - name: verify create server
@@ -37,6 +50,15 @@
       - main_server.hcloud_server.status == "running"
       - main_server.root_password != ""
 
+- name: test create server idempotence
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: started
+  register: result
+- name: verify create server idempotence
+  assert:
+    that:
+      - result is not changed
 
 - name: test stop server with check mode
   hcloud_server:
@@ -67,7 +89,7 @@
     state: started
   register: result
   check_mode: true
-- name: verify start server idempotence
+- name: verify start server with check mode
   assert:
     that:
       - result is changed
@@ -142,13 +164,24 @@
       - result is changed
       - result.hcloud_server.server_type == "cx21"
 
-- name: test resize server back
+- name: test resize server idempotence
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    server_type: "cx21"
+    state: stopped
+  register: result
+- name: verify resize server idempotence
+  assert:
+    that:
+      - result is not changed
+
+- name: test resize server to smaller plan
   hcloud_server:
     name: "{{ hcloud_server_name }}"
     server_type: "cx11"
     state: stopped
   register: result
-- name: verify resize server back
+- name: verify resize server to smaller plan
   assert:
     that:
       - result is changed
@@ -178,7 +211,6 @@
   assert:
     that:
       - result is changed
-      - result.hcloud_server.backup_window == ""
 
 - name: test enable backups
   hcloud_server:
@@ -218,6 +250,7 @@
   hcloud_server:
     name: "{{ hcloud_server_name}}"
     server_type: cx11
+    image: "ubuntu-18.04"
     ssh_keys:
       - ci@ansible.hetzner.cloud
     state: started
