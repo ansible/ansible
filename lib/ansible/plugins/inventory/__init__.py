@@ -338,8 +338,8 @@ class Constructable(object):
         if keys and isinstance(keys, list):
             groups = []
             for keyed in keys:
-
                 if keyed and isinstance(keyed, dict):
+
                     variables.update(self.inventory.get_host(host).vars)
                     try:
                         key = self._compose(keyed.get('key'), variables)
