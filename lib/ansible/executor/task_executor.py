@@ -602,27 +602,24 @@ class TaskExecutor:
         for default in self._task.module_defaults:
             overwrite_groups = []
             for group in default:
+                # If MODULE_DEFAULTS_MERGE is enabled, this block merges the parent and child defaults
+                # one level deeper in the structure for the purpose of merging arguments for individual
+                # modules/groups rather than overwriting at the module/group level.
                 if default[group] is None:
                     default[group] = {}
-                if module_defaults.get(group) and default[group].keys() != module_defaults[group].keys():
-                    overwrite_groups.append(group)
-                if C.MODULE_DEFAULTS_MERGE:
-                    # This block merges the parent and child defaults one level deeper in the structure
-                    # for the purpose of merging arguments for individual modules/groups rather than
-                    # overwriting at the module/group level.
-                    # Specifying a module/group as an empty dictionary can be used to overwrite
-                    # previous values.
-                    clear_group = default[group].pop('__clear__', False)
-                    if group in module_defaults and not clear_group:
-                        module_defaults[group].update(default[group])
-                    else:
-                        module_defaults[group] = default[group]
-            if not C.MODULE_DEFAULTS_MERGE:
-                if overwrite_groups:
-                    module_defaults_warning = 'Overwriting module_defaults modules and groups by default is deprecated. Some keys in groups {0} would be' \
-                                              ' overwritten. Enable MODULE_DEFAULTS_MERGE to use merging or clear the module/group by setting "__clear__"' \
-                                              ' to true to remove the previous values. In 2.12 merging will be enabled by default'.format(overwrite_groups)
-                module_defaults.update(default)
+                if group in module_defaults and default[group]:
+                    if C.MODULE_DEFAULTS_MERGE:
+                        clear_group = default[group].pop('__clear__', False)
+                        if not clear_group:
+                            module_defaults[group].update(default[group])
+                            continue
+                    elif default[group].keys() != module_defaults[group].keys():
+                        overwrite_groups.append(group)
+                module_defaults[group] = default[group]
+            if overwrite_groups:
+                module_defaults_warning = 'Overwriting module_defaults modules and groups by default is deprecated. Some keys in groups {0} would be' \
+                                          ' overwritten. Enable MODULE_DEFAULTS_MERGE to use merging or clear the module/group by setting "__clear__"' \
+                                          ' to true to remove the previous values. In 2.12 merging will be enabled by default'.format(overwrite_groups)
         if module_defaults:
             module_defaults = templar.template(module_defaults)
         if self._task.action in module_defaults:
