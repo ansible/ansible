@@ -25,6 +25,7 @@ options:
     description: First name
   homedirectory:
     description: Home directory
+    version_added: "2.8"
   krbpasswordexpiration:
     description:
     - Date at which the user password will expire
