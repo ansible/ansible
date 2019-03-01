@@ -4,5 +4,6 @@
 #
 # 1) Running integration tests without using ansible-test.
 #
+
 [default]
 cloudscale_api_token = @API_TOKEN

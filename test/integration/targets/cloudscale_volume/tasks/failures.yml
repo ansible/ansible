@@ -4,7 +4,7 @@
     url: 'https://api.cloudscale.ch/v1/volumes'
     method: POST
     headers:
-      Authorization: 'Bearer {{ lookup("env", "CLOUDSCALE_API_TOKEN") }}'
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
     body:
       name: '{{ cloudscale_resource_prefix }}-duplicate'
       size_gb: 50

@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import contextlib
+import json
 import os
 import shutil
 import tempfile
@@ -22,10 +23,15 @@ from lib.util import (
     ApplicationError,
     display,
     make_dirs,
+    named_temporary_file,
 )
 
 from lib.cache import (
     CommonCache,
+)
+
+from lib.cloud import (
+    CloudEnvironmentConfig,
 )
 
 
@@ -186,6 +192,36 @@ def integration_test_environment(args, target, inventory_path):
     finally:
         if not args.explain:
             shutil.rmtree(temp_dir)
+
+
+@contextlib.contextmanager
+def integration_test_config_file(args, env_config, integration_dir):
+    """
+    :type args: IntegrationConfig
+    :type env_config: CloudEnvironmentConfig
+    :type integration_dir: str
+    """
+    if not env_config:
+        yield None
+        return
+
+    config_vars = (env_config.ansible_vars or {}).copy()
+
+    config_vars.update(dict(
+        ansible_test=dict(
+            environment=env_config.env_vars,
+            module_defaults=env_config.module_defaults,
+        )
+    ))
+
+    config_file = json.dumps(config_vars, indent=4, sort_keys=True)
+
+    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:
+        filename = os.path.relpath(path, integration_dir)
+
+        display.info('>>> Config File: %s\n%s' % (filename, config_file), verbosity=3)
+
+        yield path
 
 
 class IntegrationEnvironment(object):

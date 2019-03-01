@@ -12,7 +12,7 @@
 # If you run with @FIXTURES enabled (true) then you can decide if you want to
 # run in @REPLAY mode (true) or, record mode (false).
 
-
+[default]
 opennebula_url: @URL
 opennebula_username: @USERNAME
 opennebula_password: @PASSWORD

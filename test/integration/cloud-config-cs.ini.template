@@ -11,7 +11,7 @@
 #
 # It is recommended that you DO NOT use this template unless you cannot use the simulator.
 
-[cloudstack]
+[default]
 endpoint = http://@HOST:@PORT/client/api
 key = @KEY
 secret = @SECRET
