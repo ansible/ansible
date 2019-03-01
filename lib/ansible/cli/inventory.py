@@ -148,13 +148,13 @@ class InventoryCLI(CLI):
             results = self.dump(results)
 
         if results:
-            # FIXME: pager?
             outfile = context.CLIARGS['output_file']
             if outfile is None:
+                # FIXME: pager?
                 display.display(results)
             else:
                 try:
-                    with open(to_bytes(outfile), 'w') as f:
+                    with open(to_bytes(outfile), 'wt') as f:
                         f.write(results)
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
