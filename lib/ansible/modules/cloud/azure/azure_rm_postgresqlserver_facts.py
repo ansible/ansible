@@ -160,7 +160,7 @@ except ImportError:
     pass
 
 
-class AzureRMServersFacts(AzureRMModuleBase):
+class AzureRMPostgreSqlServersFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -182,7 +182,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMServersFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMPostgreSqlServersFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -247,7 +247,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMServersFacts()
+    AzureRMPostgreSqlServersFacts()
 
 
 if __name__ == '__main__':

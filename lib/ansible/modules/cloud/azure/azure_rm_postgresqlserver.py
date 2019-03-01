@@ -148,7 +148,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMPostgreSqlServers(AzureRMModuleBase):
     """Configuration class for an Azure RM PostgreSQL Server resource"""
 
     def __init__(self):
@@ -205,9 +205,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMPostgreSqlServers, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                       supports_check_mode=True,
+                                                       supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -373,7 +373,7 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMPostgreSqlServers()
 
 
 if __name__ == '__main__':
