@@ -80,7 +80,6 @@ from lib.target import (
     walk_external_targets,
     walk_internal_targets,
     walk_posix_integration_targets,
-    walk_aws_ssm_integration_targets,
     walk_network_integration_targets,
     walk_windows_integration_targets,
     walk_units_targets,
@@ -104,7 +103,6 @@ from lib.config import (
     EnvironmentConfig,
     IntegrationConfig,
     NetworkIntegrationConfig,
-    AwsSsmIntegrationConfig,
     PosixIntegrationConfig,
     ShellConfig,
     UnitsConfig,
@@ -335,17 +333,6 @@ def command_posix_integration(args):
     filename = 'test/integration/inventory'
 
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
-    internal_targets = command_integration_filter(args, all_targets)
-    command_integration_filtered(args, internal_targets, all_targets, filename)
-
-
-def command_aws_ssm_integration(args):
-    """
-    :type args: AwsSsmIntegrationConfig
-    """
-    filename = 'test/integration/inventory.aws_ssm'
-
-    all_targets = tuple(walk_aws_ssm_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
     command_integration_filtered(args, internal_targets, all_targets, filename)
 
