@@ -137,7 +137,7 @@ class InventoryModule(BaseInventoryPlugin):
         hostname_preference = self.get_option('hostname')
         for server in _retrieve_servers(api_key):
             server = Vultr.normalize_result(server, SCHEMA)
-            for group in ['region', 'os']:
+            for group in ['region', 'os', 'tag']:
                 self.inventory.add_group(group=server[group])
                 self.inventory.add_host(group=server[group], host=server['name'])
 
