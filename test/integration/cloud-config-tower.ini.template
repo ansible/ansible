@@ -11,7 +11,7 @@
 #
 # NOTE: Automatic provisioning of Tower credentials requires an ansible-core-ci API key.
 
-[general]
+[default]
 version=@VERSION
 host=@HOST
 username=@USERNAME

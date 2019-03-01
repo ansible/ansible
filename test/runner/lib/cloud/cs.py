@@ -9,6 +9,7 @@ import time
 from lib.cloud import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from lib.util import (
@@ -45,7 +46,7 @@ class CsCloudProvider(CloudProvider):
         """
         :type args: TestConfig
         """
-        super(CsCloudProvider, self).__init__(args, config_extension='.ini')
+        super(CsCloudProvider, self).__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
@@ -262,16 +263,27 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
-        changes = dict(
-            CLOUDSTACK_CONFIG=self.config_path,
+        parser = ConfigParser()
+        parser.read(self.config_path)
+
+        config = dict(parser.items('default'))
+
+        env_vars = dict(
+            CLOUDSTACK_ENDPOINT=config['endpoint'],
+            CLOUDSTACK_KEY=config['key'],
+            CLOUDSTACK_SECRET=config['secret'],
+            CLOUDSTACK_TIMEOUT=config['timeout'],
         )
 
-        env.update(changes)
+        ansible_vars = dict(
+            cs_resource_prefix=self.resource_prefix,
+        )
 
-        cmd.append('-e')
-        cmd.append('cs_resource_prefix=%s' % self.resource_prefix)
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+            ansible_vars=ansible_vars,
+        )

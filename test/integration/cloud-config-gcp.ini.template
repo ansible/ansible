@@ -11,6 +11,7 @@
 #
 # It is recommended that you DO NOT use this template unless you cannot use the simulator.
 
+[default]
 gcp_project: @PROJECT
 gcp_cred_file: @CRED_FILE
 gcp_cred_kind: @CRED_KIND

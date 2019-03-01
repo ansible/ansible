@@ -11,6 +11,7 @@
 #
 # It is recommended that you DO NOT use this template unless you cannot use the simulator.
 
+[default]
 gitlab_host: http://@HOST:@PORT
 gitlab_login_token: @TOKEN
 gitlab_runner_registration_token: @RUNNER_TOKEN

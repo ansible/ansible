@@ -7,6 +7,7 @@ import os
 from . import (
     CloudProvider,
     CloudEnvironment,
+    CloudEnvironmentConfig,
 )
 
 from ..util import (
@@ -175,13 +176,15 @@ class ForemanEnvironment(CloudEnvironment):
 
     Updates integration test environment after delegation.
     """
-
-    def configure_environment(self, env, cmd):
+    def get_environment_config(self):
         """
-        :type env: dict[str, str]
-        :type cmd: list[str]
+        :rtype: CloudEnvironmentConfig
         """
+        env_vars = dict(
+            FOREMAN_HOST=self._get_cloud_config('FOREMAN_HOST'),
+            FOREMAN_PORT=self._get_cloud_config('FOREMAN_PORT'),
+        )
 
-        # Send the container IP down to the integration test(s)
-        env['FOREMAN_HOST'] = self._get_cloud_config('FOREMAN_HOST')
-        env['FOREMAN_PORT'] = self._get_cloud_config('FOREMAN_PORT')
+        return CloudEnvironmentConfig(
+            env_vars=env_vars,
+        )
