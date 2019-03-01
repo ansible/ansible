@@ -130,9 +130,9 @@ EXAMPLES = r'''
     net_name: YourNet
     route_id: d6fa4821-1234-4dfa-af6b-ae8b16c20c39
     fixed_ip_assignments:
-      - aa:bb:cc:dd:ee:ff:
-          ip: 192.0.1.11
-          comment: Server
+      - mac: aa:bb:cc:dd:ee:ff
+        ip: 192.0.1.11
+        comment: Server
   delegate_to: localhost
 
 - name: Query static routes
@@ -280,8 +280,8 @@ def main():
         subnet=dict(type='str'),
         gateway_ip=dict(type='str'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        fixed_ip_assignments=dict(type='list', default=None, elements='dict', options=fixed_ip_arg_spec),
-        reserved_ip_ranges=dict(type='list', default=None, elements='dict', options=reserved_ip_arg_spec),
+        fixed_ip_assignments=dict(type='list', elements='dict', options=fixed_ip_arg_spec),
+        reserved_ip_ranges=dict(type='list', elements='dict', options=reserved_ip_arg_spec),
         route_id=dict(type='str'),
         enabled=dict(type='bool'),
     )
