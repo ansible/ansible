@@ -76,7 +76,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_1_documentation
 requirements:
-  - "docker-py >= 1.10.0"
+  - "docker-py >= 2.4.0"
   - Docker API >= 1.25
 author:
   - Piotr Wojciechowski (@WojciechowskiPiotr)
@@ -273,7 +273,7 @@ def main():
     client = AnsibleDockerSwarmClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
-        min_docker_version='1.10.0',
+        min_docker_version='2.4.0',
         min_docker_api_version='1.25',
     )
 
