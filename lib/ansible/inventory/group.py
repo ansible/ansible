@@ -34,7 +34,7 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
     if name:  # when deserializing we might not have name yet
         invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
-            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(invalid_chars), to_text(name))
+            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
             if C.TRANSFORM_INVALID_GROUP_CHARS or force:
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not silent:
