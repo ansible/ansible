@@ -117,11 +117,11 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
                 # FIXME: support comments in sivel's deprecation scanner so we can get reminded on this
                 if not is_silent:
                     action._discovery_deprecation_warnings.append(dict(
-                        msg="Distribution {0} {1} should use {2}, but is using "
+                        msg="Distribution {0} {1} on host {2} should use {3}, but is using "
                             "/usr/bin/python for backward compatibility with prior Ansible releases. "
                             "A future Ansible release will default to using the discovered platform "
-                            "python for this host. See {3} for more information"
-                            .format(distro, version, platform_interpreter,
+                            "python for this host. See {4} for more information"
+                            .format(distro, version, host, platform_interpreter,
                                     get_versioned_doclink('reference_appendices/interpreter_discovery.html')),
                         version='2.12'))
                 return '/usr/bin/python'
@@ -131,15 +131,15 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
                 # sanity check to make sure we looked for it
                 if not is_silent:
                     action._discovery_warnings \
-                        .append("Platform interpreter {0} is missing from bootstrap list"
-                                .format(platform_interpreter))
+                        .append("Platform interpreter {0} on host {1} is missing from bootstrap list"
+                                .format(platform_interpreter, host))
 
             if not is_silent:
                 action._discovery_warnings \
-                    .append("Distribution {0} {1} should use {2}, but is using {3}, since the "
-                            "discovered platform python interpreter was not present. See {4} "
+                    .append("Distribution {0} {1} on host {2} should use {3}, but is using {4}, since the "
+                            "discovered platform python interpreter was not present. See {5} "
                             "for more information."
-                            .format(distro, version, platform_interpreter, found_interpreters[0],
+                            .format(distro, version, host, platform_interpreter, found_interpreters[0],
                                     get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
             return found_interpreters[0]
 
@@ -155,10 +155,10 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
     if not is_silent:
         action._discovery_warnings \
-            .append("Platform {0} is using the discovered Python interpreter at {1}, but future installation of "
-                    "another Python interpreter could change this. See {2} "
+            .append("Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
+                    "another Python interpreter could change this. See {3} "
                     "for more information."
-                    .format(platform_type, found_interpreters[0],
+                    .format(platform_type, host, found_interpreters[0],
                             get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
     return found_interpreters[0]
 
