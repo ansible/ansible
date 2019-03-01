@@ -1612,6 +1612,7 @@ def cleanup_data(obj):
 def main():
     """Main ansible module function
     """
+
     module = AnsibleModule(
         argument_spec=dict(
             server_url=dict(type='str', required=True, aliases=['url']),
@@ -1633,12 +1634,290 @@ def main():
             recovery_default_subject=dict(type='str', required=False, default=None),
             acknowledge_default_message=dict(type='str', required=False, default=None),
             acknowledge_default_subject=dict(type='str', required=False, default=None),
-            conditions=dict(type='list', required=False, default=None),
+            conditions=dict(
+                type='list',
+                required=False,
+                elements='dict',
+                options=dict(
+                    formulaid=dict(type='str', required=False),
+                    operator=dict(type='str', required=True),
+                    type=dict(type='str', required=True),
+                    value=dict(type='str', required=True),
+                    value2=dict(type='str', required=False)
+                )
+            ),
             formula=dict(type='str', required=False, default=None),
             eval_type=dict(type='str', required=False, default=None, choices=['andor', 'and', 'or', 'custom_expression']),
-            operations=dict(type='list', required=False, default=None),
-            recovery_operations=dict(type='list', required=False, default=[]),
-            acknowledge_operations=dict(type='list', required=False, default=[])
+            operations=dict(
+                type='list',
+                required=False,
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'add_host',
+                            'remove_host',
+                            'add_to_host_group',
+                            'remove_from_host_group',
+                            'link_to_template',
+                            'unlink_from_template',
+                            'enable_host',
+                            'disable_host',
+                            'set_host_inventory_mode',
+                        ]
+                    ),
+                    esc_period=dict(type='int', required=False),
+                    esc_step_from=dict(type='int', required=False, default=1),
+                    esc_step_to=dict(type='int', required=False, default=1),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                    # when type is add_to_host_group or remove_from_host_group
+                    host_groups=dict(type='list', required=False),
+                    # when type is set_host_inventory_mode
+                    inventory=dict(type='str', required=False),
+                    # when type is link_to_template or unlink_from_template
+                    templates=dict(type='list', required=False)
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command', ['run_on_groups', 'run_on_hosts'], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'add_to_host_group', ['host_groups']],
+                    ['type', 'remove_from_host_group', ['host_groups']],
+                    ['type', 'link_to_template', ['templates']],
+                    ['type', 'unlink_from_template', ['templates']],
+                    ['type', 'set_host_inventory_mode', ['inventory']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            ),
+            recovery_operations=dict(
+                type='list',
+                required=False,
+                default=[],
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'notify_all_involved'
+                        ]
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command', [
+                        'run_on_groups',
+                        'run_on_hosts'
+                    ], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            ),
+            acknowledge_operations=dict(
+                type='list',
+                required=False,
+                default=[],
+                elements='dict',
+                options=dict(
+                    type=dict(
+                        type='str',
+                        required=True,
+                        choices=[
+                            'send_message',
+                            'remote_command',
+                            'notify_all_involved'
+                        ]
+                    ),
+                    # when type is remote_command
+                    command_type=dict(
+                        type='str',
+                        required=False,
+                        choices=[
+                            'custom_script',
+                            'ipmi',
+                            'ssh',
+                            'telnet',
+                            'global_script'
+                        ]
+                    ),
+                    command=dict(type='str', required=False),
+                    execute_on=dict(
+                        type='str',
+                        required=False,
+                        choices=['agent', 'server', 'proxy']
+                    ),
+                    password=dict(type='str', required=False),
+                    port=dict(type='int', required=False),
+                    run_on_groups=dict(type='list', required=False),
+                    run_on_hosts=dict(type='list', required=False),
+                    script_name=dict(type='str', required=False),
+                    ssh_auth_type=dict(
+                        type='str',
+                        required=False,
+                        default='password',
+                        choices=['password', 'public_key']
+                    ),
+                    ssh_privatekey_file=dict(type='str', required=False),
+                    ssh_publickey_file=dict(type='str', required=False),
+                    username=dict(type='str', required=False),
+                    # when type is send_message
+                    media_type=dict(type='str', required=False),
+                    subject=dict(type='str', required=False),
+                    message=dict(type='str', required=False),
+                    send_to_groups=dict(type='list', required=False),
+                    send_to_users=dict(type='list', required=False),
+                ),
+                required_if=[
+                    ['type', 'remote_command', ['command_type']],
+                    ['type', 'remote_command', [
+                        'run_on_groups',
+                        'run_on_hosts'
+                    ], True],
+                    ['command_type', 'custom_script', [
+                        'command',
+                        'execute_on'
+                    ]],
+                    ['command_type', 'ipmi', ['command']],
+                    ['command_type', 'ssh', [
+                        'command',
+                        'password',
+                        'username',
+                        'port',
+                        'ssh_auth_type',
+                        'ssh_privatekey_file',
+                        'ssh_publickey_file'
+                    ]],
+                    ['command_type', 'telnet', [
+                        'command',
+                        'password',
+                        'username',
+                        'port'
+                    ]],
+                    ['command_type', 'global_script', ['script_name']],
+                    ['type', 'send_message', ['send_to_users', 'send_to_groups'], True]
+                ]
+            )
         ),
         supports_check_mode=True
     )
