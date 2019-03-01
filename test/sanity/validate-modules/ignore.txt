@@ -161,7 +161,6 @@ lib/ansible/modules/cloud/google/gcpubsub_facts.py E322
 lib/ansible/modules/cloud/google/gcpubsub_facts.py E324
 lib/ansible/modules/cloud/google/gcpubsub_facts.py E326
 lib/ansible/modules/cloud/google/gcspanner.py E322
-lib/ansible/modules/cloud/kubevirt/kubevirt_cdi_upload.py E203
 lib/ansible/modules/cloud/linode/linode.py E322
 lib/ansible/modules/cloud/linode/linode.py E324
 lib/ansible/modules/cloud/lxc/lxc_container.py E210
