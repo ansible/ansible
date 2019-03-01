@@ -41,6 +41,7 @@ COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),)
 
+
 class CallbackModule(CallbackBase):
 
     '''
