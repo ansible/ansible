@@ -11,14 +11,17 @@ options:
     storage_system_ip:
       description:
         - The storage system IP address.
+      type: str
       required: true
     storage_system_password:
       description:
         - The storage system password.
+      type: str
       required: true
     storage_system_username:
       description:
         - The storage system user name.
+      type: str
       required: true
 
 requirements:
