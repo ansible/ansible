@@ -128,11 +128,18 @@ def get_versioned_doclink(path):
         if path.startswith('/'):
             path = path[1:]
         split_ver = ansible_version.split('.')
-        if len(split_ver) < 2:
+        if len(split_ver) < 3:
             raise RuntimeError('invalid version ({0})'.format(ansible_version))
 
-        major_minor = '{0}.{1}'.format(split_ver[0], split_ver[1])
+        doc_version = '{0}.{1}'.format(split_ver[0], split_ver[1])
 
-        return '{0}{1}/{2}'.format(base_url, major_minor, path)
+        # check to see if it's a X.Y.0 non-rc prerelease or dev release, if so, assume devel (since the X.Y doctree
+        # isn't published until beta-ish)
+        if split_ver[2].startswith('0'):
+            # exclude rc; we should have the X.Y doctree live by rc1
+            if any((pre in split_ver[2]) for pre in ['a', 'b']) or len(split_ver) > 3 and 'dev' in split_ver[3]:
+                doc_version = 'devel'
+
+        return '{0}{1}/{2}'.format(base_url, doc_version, path)
     except Exception as ex:
         return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))
