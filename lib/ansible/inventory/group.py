@@ -17,8 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import re
-
 from itertools import chain
 
 from ansible import constants as C
@@ -28,18 +26,17 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.utils.display import Display
 
 display = Display()
-_UNSAFE_GROUP = re.compile(C.INVALID_VARIABLE_NAMES)
 
 
 def to_safe_group_name(name, replacer="_", force=False, silent=False):
     # Converts 'bad' characters in a string to underscores (or provided replacer) so they can be used as Ansible hosts or groups
 
     if name:  # when deserializing we might not have name yet
-        invalid_chars = _UNSAFE_GROUP.findall(name)
+        invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
             msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(invalid_chars), to_text(name))
             if C.TRANSFORM_INVALID_GROUP_CHARS or force:
-                name = _UNSAFE_GROUP.sub(replacer, name)
+                name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not silent:
                     display.warning('Replacing ' + msg)
             else:
