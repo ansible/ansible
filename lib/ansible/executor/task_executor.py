@@ -599,6 +599,12 @@ class TaskExecutor:
         module_defaults = {}
         module_defaults_warning = None
         for default in self._task.module_defaults:
+            for key in default.keys():
+                if default[key] is None:
+                    default[key] = {}
+                if not isinstance(default[key], dict):
+                    raise AnsibleError("Error in module_defaults; the value of {0} ({1}) is not a dictionary.".format(key, default[key]))
+
             if C.MODULE_DEFAULTS_MERGE:
                 # This block merges the parent and child defaults one level deeper in the structure
                 # for the purpose of merging arguments for individual modules/groups rather than

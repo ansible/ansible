@@ -8,7 +8,12 @@
         msg: test default
       file:
         path: '{{ test_file }}'
+      ping:
     block:
+
+    - name: test without providing defaults
+      ping:
+
     - debug:
       register: foo
 
@@ -102,6 +107,25 @@
       - assert:
           that:
             foo.msg == "Hello world!"
+
+- name: Test invalid defaults
+  hosts: localhost
+  gather_facts: no
+  vars:
+    test_file: /tmp/ansible-test.module_defaults.foo
+  module_defaults:
+    stat: badvalue
+  tasks:
+  - name: test providing bad defaults
+    stat:
+      file: "{{ test_file }}"
+    register: bad_default
+    ignore_errors: yes
+
+  #- assert:
+  #    that:
+  #      - bad_default is failed
+  #      - 'bad_default.msg == "Error in module_defaults; the value of stat (badvalue) is not a dictionary."'
 
 - name: Module group defaults block
   hosts: localhost

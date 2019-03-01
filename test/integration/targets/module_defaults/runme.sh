@@ -2,14 +2,14 @@
 
 set -ux
 
-ansible-playbook -i inventory -e @../../integration_config.yml "$@" tasks/main.yml | tee out.txt
+ansible-playbook -i inventory -e @../../integration_config.yml "$@" tasks/main.yml | tee out.txt | grep 'failed=0'
 res=$?
 cat out.txt
 if [ "${res}" -ne 0 ] ; then
     exit 1
 fi
 
-ansible-playbook -i inventory -e @../../integration_config.yml "$@" tasks/merge_module_defaults_false.yml | tee out.txt
+ansible-playbook -i inventory -e @../../integration_config.yml "$@" tasks/merge_module_defaults_false.yml | tee out.txt | grep 'failed=0'
 res=$?
 cat out.txt
 if [ "${res}" -ne 0 ] ; then
