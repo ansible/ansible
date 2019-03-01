@@ -26,6 +26,7 @@ options:
   cpg_name:
     description:
       - Name of the CPG.
+    type: str
     required: true
   disk_type:
     choices:
@@ -34,21 +35,26 @@ options:
       - SSD
     description:
       - Specifies that physical disks must have the specified device type.
+    type: str
   domain:
     description:
       - Specifies the name of the domain in which the object will reside.
+    type: str
   growth_increment:
     description:
       - Specifies the growth increment(in MiB, GiB or TiB) the amount of logical disk storage
        created on each auto-grow operation.
+    type: str
   growth_limit:
     description:
       - Specifies that the autogrow operation is limited to the specified
        storage amount that sets the growth limit(in MiB, GiB or TiB).
+    type: str
   growth_warning:
     description:
       - Specifies that the threshold(in MiB, GiB or TiB) of used logical disk space when exceeded
        results in a warning alert.
+    type: str
   high_availability:
     choices:
       - PORT
@@ -57,6 +63,7 @@ options:
     description:
       - Specifies that the layout must support the failure of one port pair,
        one cage, or one magazine.
+    type: str
   raid_type:
     choices:
       - R0
@@ -65,9 +72,11 @@ options:
       - R6
     description:
       - Specifies the RAID type for the logical disk.
+    type: str
   set_size:
     description:
       - Specifies the set size in the number of chunklets.
+    type: int
   state:
     choices:
       - present
@@ -75,13 +84,14 @@ options:
     description:
       - Whether the specified CPG should exist or not.
     required: true
+    type: str
   secure:
     description:
       - Specifies whether the certificate needs to be validated while communicating.
     type: bool
     default: no
 extends_documentation_fragment: hpe3par
-version_added: 2.8
+version_added: '2.8'
 '''
 
 
