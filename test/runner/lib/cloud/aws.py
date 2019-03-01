@@ -99,8 +99,16 @@ class AwsCloudEnvironment(CloudEnvironment):
 
         ansible_vars.update(dict(parser.items('default')))
 
+        module_defaults = {
+            'group/aws': dict(
+                debug_botocore_endpoint_logs=True,
+            ),
+        }
+
         return CloudEnvironmentConfig(
             ansible_vars=ansible_vars,
+            callback_plugins=['aws_resource_actions'],
+            module_defaults=module_defaults,
         )
 
     def on_failure(self, target, tries):
@@ -111,6 +119,3 @@ class AwsCloudEnvironment(CloudEnvironment):
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '
                            'For help, consult @mattclay or @gundalow on GitHub or #ansible-devel on IRC.' % target.name)
-
-    def get_play_level_module_defaults(self):
-        return {'group/aws': {'debug_botocore_endpoint_logs': True}}
