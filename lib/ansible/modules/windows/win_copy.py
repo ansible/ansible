@@ -154,6 +154,17 @@ EXAMPLES = r'''
   win_copy:
     content: abc123
     dest: C:\Temp\foo.txt
+
+- name: Copy a single file as another user
+  win_copy:
+    src: NuGet.config
+    dest: '%AppData%\NuGet\NuGet.config'
+  vars:
+    ansible_become_user: user
+    ansible_become_password: pass
+    # The tmp dir must be set when using win_copy as another user
+    # This ensures the become user will have permissions for the operation
+    ansible_remote_tmp: '%temp%'
 '''
 
 RETURN = r'''
