@@ -31,7 +31,7 @@
 - name: Get Deployment Facts
   azure_rm_deployment_facts:
     resource_group: "{{ resource_group }}"
-    deployment_name: "{{ dns_label }}"
+    name: "{{ dns_label }}"
   register: output
 - debug:
     var: output

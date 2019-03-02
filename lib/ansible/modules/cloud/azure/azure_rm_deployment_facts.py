@@ -142,17 +142,17 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
     def format_response(self, item):
         d = item.as_dict()
         d = {
-            #'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
-            #'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
-            #'artifact_source_name': self.parse_resource_to_dict(d.get('id')).get('child_name_1'),
-            #'id': d.get('id'),
-            #'description': d.get('description'),
-            #'file_path': d.get('file_path'),
-            #'name': d.get('name'),
-            #'parameters': d.get('parameters'),
-            #'publisher': d.get('publisher'),
-            #'target_os_type': d.get('target_os_type'),
-            #'title': d.get('title')
+            # 'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
+            # 'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
+            # 'artifact_source_name': self.parse_resource_to_dict(d.get('id')).get('child_name_1'),
+            # 'id': d.get('id'),
+            # 'description': d.get('description'),
+            # 'file_path': d.get('file_path'),
+            # 'name': d.get('name'),
+            # 'parameters': d.get('parameters'),
+            # 'publisher': d.get('publisher'),
+            # 'target_os_type': d.get('target_os_type'),
+            # 'title': d.get('title')
             'all': d
         }
         return d
