@@ -38,6 +38,7 @@ import six.moves.urllib.parse as urllib
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 
@@ -72,12 +73,12 @@ class SFOSModule(AnsibleModule):
                  mutually_exclusive=None, required_together=None, required_one_of=None, add_file_common_args=False,
                  supports_check_mode=False, required_if=None):
         default_specs = dict(
-            sfos_host=dict(type='str', required=True),
-            sfos_port=dict(type='int', default=4444),
-            sfos_username=dict(type='str', required=True, no_log=True),
-            sfos_password=dict(type='str', required=True, no_log=True),
-            sfos_protocol=dict(type='str', required=False, default="https", choices=["https", "http"]),
-            validate_certs=dict(type='bool', required=False, default=True),
+            sfos_host=dict(type='str', required=True, fallback=(env_fallback, ['SFOS_HOST'])),
+            sfos_port=dict(type='int', default=4444, fallback=(env_fallback, ['SFOS_PORT'])),
+            sfos_username=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['SFOS_USERNAME'])),
+            sfos_password=dict(type='str', required=True, no_log=True, fallback=(env_fallback, ['SFOS_PASSWORD'])),
+            sfos_protocol=dict(type='str', required=False, default="https", choices=["https", "http"], fallback=(env_fallback, ['SFOS_PROTOCOL'])),
+            validate_certs=dict(type='bool', required=False, default=True, fallback=(env_fallback, ['SFOS_VALIDATECERTS'])),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent'])
         )
         super(SFOSModule, self).__init__(self._merge_specs(default_specs, argument_spec), bypass_checks, no_log,

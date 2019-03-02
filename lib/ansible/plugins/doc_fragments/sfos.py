@@ -9,17 +9,17 @@ class ModuleDocFragment(object):
 options:
     sfos_host:
         description:
-          - The Sophos XG endpoint IP address or FQDN.
+          - The Sophos XG endpoint IP address or FQDN. If not set then the value of the SFOS_HOST environment variable is used.
         type: str
         required: true
     sfos_port:
         description:
-          - Port you mention in above URL should be same as the port you have configured as Admin Console HTTPS Port from System > Administration > Settings.
+          - Port you mention in above URL should be same as the port you have configured as Admin Console HTTPS Port from System > Administration > Settings. If not set then the value of the SFOS_PORT environment variable is used.
         type: int
         default: 4444
     sfos_protocol:
         description:
-          - The protocol used to communicate with the API endpoint.
+          - The protocol used to communicate with the API endpoint. If not set then the value of the SFOS_PROTOCOL environment variable is used.
         choices: [ http, https ]
         type: str
         default: https
@@ -37,7 +37,7 @@ options:
         required: true
     validate_certs:
         description:
-          - Whether the API interface's ssl certificate should be verified or not.
+          - Whether the API interface's ssl certificate should be verified or not. If not set then the value of the SFOS_VALIDATECERTS environment variable is used.
         type: bool
         default: yes
     state:
