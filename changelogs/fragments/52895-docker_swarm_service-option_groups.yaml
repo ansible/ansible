@@ -1,0 +1,4 @@
+minor_changes:
+  - "docker_swarm_service - Add option ``logging`` as a grouper for logging options."
+deprecated_features:
+  - "docker_swarm_service - Deprecate ``log_driver`` and ``log_driver_options`` in favour of ``logging``."

@@ -184,15 +184,33 @@ options:
       - If variable also present in I(env), then I(env) value will override.
     type: list
     version_added: "2.8"
+  logging:
+    description:
+      - "Logging configuration for the service."
+    suboptions:
+      driver:
+        description:
+          - Configure the logging driver for a service.
+          - Corresponds to the C(--log-driver) option of C(docker service create).
+        type: str
+      options:
+        description:
+          - Options for service logging driver.
+          - Corresponds to the C(--log-opt) option of C(docker service create).
+        type: dict
+    type: dict
+    version_added: "2.8"
   log_driver:
     description:
       - Configure the logging driver for a service.
       - Corresponds to the C(--log-driver) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging) instead.
     type: str
   log_driver_options:
     description:
       - Options for service logging driver.
       - Corresponds to the C(--log-opt) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging) instead.
     type: dict
   limit_cpu:
     description:
@@ -850,7 +868,24 @@ class DockerService(DockerBaseClass):
         }
 
     @staticmethod
-    def from_ansible_params(ap, old_service, image_digest, can_update_networks):
+    @staticmethod
+    def get_logging_from_ansible_params(params):
+        logging = params['logging'] or {}
+        driver = logging.get(
+            'driver',
+            params['log_driver']
+        )
+        options = logging.get(
+            'options',
+            params['log_driver_options']
+        )
+        return {
+            'log_driver': driver,
+            'log_driver_options': options,
+        }
+
+    @classmethod
+    def from_ansible_params(cls, ap, old_service, image_digest, can_update_networks):
         s = DockerService()
         s.image = image_digest
         s.can_update_networks = can_update_networks
@@ -864,8 +899,6 @@ class DockerService(DockerBaseClass):
         s.healthcheck, s.healthcheck_disabled = parse_healthcheck(ap['healthcheck'])
         s.hostname = ap['hostname']
         s.tty = ap['tty']
-        s.log_driver = ap['log_driver']
-        s.log_driver_options = ap['log_driver_options']
         s.labels = ap['labels']
         s.container_labels = ap['container_labels']
         s.limit_cpu = ap['limit_cpu']
@@ -921,6 +954,10 @@ class DockerService(DockerBaseClass):
             'restart_policy_window',
             ap['restart_policy_window']
         )
+        logging_config = cls.get_logging_from_ansible_params(ap)
+        for key, value in logging_config.items():
+            setattr(s, key, value)
+
         if ap['stop_grace_period'] is not None:
             s.stop_grace_period = convert_duration_to_nanosecond(ap['stop_grace_period'])
         s.update_delay = get_nanoseconds_from_raw_option(
@@ -1750,6 +1787,10 @@ def main():
         env_files=dict(type='list', elements='path'),
         force_update=dict(type='bool', default=False),
         groups=dict(type='list', elements='str'),
+        logging=dict(type='dict', options=dict(
+            driver=dict(type='str'),
+            options=dict(type='dict'),
+        )),
         log_driver=dict(type='str'),
         log_driver_options=dict(type='dict'),
         publish=dict(type='list', elements='dict', options=dict(
