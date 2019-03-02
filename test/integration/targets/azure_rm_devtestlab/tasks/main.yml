@@ -400,7 +400,6 @@
       - output.artifactsources[0]['source_type'] != None
       - output.artifactsources[0]['is_enabled'] != None
       - output.artifactsources[0]['uri'] != None
-      - output.artifactsources[0]['arm_template_folder_path'] != None
       - output.artifactsources[0]['folder_path'] != None
       - output.artifactsources[0]['provisioning_state'] != None
       - output.artifactsources | length >= 2
