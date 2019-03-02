@@ -160,8 +160,8 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
         results = []
         try:
             response = self.mgmt_client.artifacts.list(resource_group_name=self.resource_group,
-                                                      lab_name=self.lab_name,
-                                                      artifact_source_name=self.artifact_source_name)
+                                                       lab_name=self.lab_name,
+                                                       artifact_source_name=self.artifact_source_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Artifact.')
