@@ -170,7 +170,7 @@ class SFOS:
         Method = ET.SubElement(Request, method, operation=operation)
         Endpoint = ET.SubElement(Method, self.endpoint)
 
-        if method is "Get":
+        if method == "Get":
             if self.info_only:
                 if self.module.params.get('name'):
                     Filter = ET.SubElement(Endpoint, "Filter")
