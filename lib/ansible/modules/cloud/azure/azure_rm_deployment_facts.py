@@ -141,6 +141,10 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
     def format_response(self, item):
         d = item.as_dict()
         d = {
+            'id': d.get('id'),
+            'name': d.get('name'),
+            'provisioning_state': d.get('parameters', {}).get('provisioning_state'),
+            # 'template_link'
             # 'resource_group': self.parse_resource_to_dict(d.get('id')).get('resource_group'),
             # 'lab_name': self.parse_resource_to_dict(d.get('id')).get('name'),
             # 'artifact_source_name': self.parse_resource_to_dict(d.get('id')).get('child_name_1'),
