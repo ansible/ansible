@@ -559,7 +559,7 @@ def main():
             path = meraki.construct_path('1:1', net_id=net_id)
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, one_to_one_payload):
-                r = meraki.request(path, method='PUT')
+                r = meraki.request(path, method='PUT', payload=one_to_one_payload)
                 if meraki.status == 200:
                     meraki.result['data'] = {'one_to_one': r}
                     meraki.result['changed'] = True
@@ -567,7 +567,7 @@ def main():
             path = meraki.construct_path('1:many', net_id=net_id)
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, one_to_many_payload):
-                r = meraki.request(path, method='PUT')
+                r = meraki.request(path, method='PUT', payload=one_to_many_payload)
                 if meraki.status == 200:
                     meraki.result['data'] = {'one_to_many': r}
                     meraki.result['changed'] = True
@@ -575,7 +575,7 @@ def main():
             path = meraki.construct_path('port_forwarding', net_id=net_id)
             current = meraki.request(path, method='GET')
             if meraki.is_update_required(current, port_forwarding_payload):
-                r = meraki.request(path, method='PUT')
+                r = meraki.request(path, method='PUT', payload=port_forwarding_payload)
                 if meraki.status == 200:
                     meraki.result['data'] = {'port_forwarding': r}
                     meraki.result['changed'] = True
