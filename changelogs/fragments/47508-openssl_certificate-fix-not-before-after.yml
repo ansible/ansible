@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_certificate - fix Python 3 string/bytes problems for `notBefore`/`notAfter` for self-signed and ownCA providers."
