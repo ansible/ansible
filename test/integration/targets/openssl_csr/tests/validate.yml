@@ -95,3 +95,10 @@
   assert:
     that:
       - csr3_cn.stdout.split('=')[-1] == 'This is for Ansible'
+
+- name: Validate country name idempotency
+  assert:
+    that:
+      - country_idempotent_1 is changed
+      - country_idempotent_2 is not changed
+      - country_idempotent_3 is not changed

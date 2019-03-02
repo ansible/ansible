@@ -197,3 +197,28 @@
       commonName: This is for Ansible
     useCommonNameForSAN: no
     select_crypto_backend: '{{ select_crypto_backend }}'
+
+- name: Generate CSR with country name
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    country_name: de
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_idempotent_1
+
+- name: Generate CSR with country name (idempotent)
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    country_name: de
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_idempotent_2
+
+- name: Generate CSR with country name (idempotent 2)
+  openssl_csr:
+    path: '{{ output_dir }}/csr4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      C: de
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: country_idempotent_3
