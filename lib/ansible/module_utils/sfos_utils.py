@@ -39,7 +39,6 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.urls import fetch_url
-from ansible.errors import AnsibleError, AnsibleConnectionFailure
 
 try:
     import xmltodict
