@@ -310,6 +310,11 @@ files:
   $modules/network/panos/: ivanbojer jtschichold shinmog
   $modules/network/protocol/: $team_networking
   $modules/network/routeros/: heuels
+  $modules/network/sfos/:
+    maintainers: rdelcampog
+    keywords:
+      - sophos
+      - xg
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
   $modules/network/sros/: privateip
@@ -778,6 +783,8 @@ files:
       - cloud
   $module_utils/utm_utils.py:
     maintainers: $team_e_spirit
+  $module_utils/sfos_utils.py:
+    maintainers: rdelcampog
   $module_utils/vmware: *vmware
   $module_utils/vultr.py: *vultr
   $module_utils/xenserver.py:
