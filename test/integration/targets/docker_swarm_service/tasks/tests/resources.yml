@@ -1,0 +1,95 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-options' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names }} + [service_name]"
+
+####################################################################
+## limits.cpus #####################################################
+####################################################################
+
+- name: limits.cpus
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limits:
+      cpus: 1
+  register: limit_cpu_1
+
+- name: limits.cpus (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limits:
+      cpus: 1
+  register: limit_cpu_2
+
+- name: limits.cpus (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limits:
+      cpus: 2
+  register: limit_cpu_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - limit_cpu_1 is changed
+      - limit_cpu_2 is not changed
+      - limit_cpu_3 is changed
+
+###################################################################
+## limits.memory ##################################################
+###################################################################
+
+- name: limits.memory
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limits:
+      memory: 64MB
+  register: limit_memory_1
+
+- name: limits.memory (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limits:
+      memory: 64MB
+  register: limit_memory_2
+
+- name: limits.memory (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limit_memory: 32MB
+  register: limit_memory_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - limit_memory_1 is changed
+      - limit_memory_2 is not changed
+      - limit_memory_3 is changed
+

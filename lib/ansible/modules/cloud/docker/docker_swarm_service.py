@@ -212,10 +212,31 @@ options:
       - Corresponds to the C(--log-opt) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging) instead.
     type: dict
+  limits:
+    description:
+      - Configures service resource limits.
+    suboptions:
+      cpus:
+        description:
+          - Service CPU limit. C(0) equals no limit.
+          - Corresponds to the C(--limit-cpu) option of C(docker service create).
+        type: float
+      memory:
+        description:
+          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+            C(T) (tebibyte), or C(P) (pebibyte)."
+          - C(0) equals no reservation.
+          - Omitting the unit defaults to bytes.
+          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+        type: str
+    type: dict
+    version_added: "2.8"
   limit_cpu:
     description:
       - Service CPU limit. C(0) equals no limit.
       - Corresponds to the C(--limit-cpu) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits) instead.
     type: float
   reserve_cpu:
     description:
@@ -230,6 +251,7 @@ options:
       - C(0) equals no limit.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--limit-memory) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits) instead.
     type: str
   reserve_memory:
     description:
@@ -884,6 +906,26 @@ class DockerService(DockerBaseClass):
             'log_driver_options': options,
         }
 
+    @staticmethod
+    def get_limits_from_ansible_params(params):
+        limits = params['limits'] or {}
+        cpus = limits.get(
+            'cpus',
+            params['limit_cpu']
+        )
+        memory = limits.get(
+            'memory',
+            params['limit_memory']
+        )
+        if memory is not None:
+            try:
+                memory = human_to_bytes(memory)
+            except ValueError as exc:
+                raise Exception('Failed to convert limit_memory to bytes: %s' % exc)
+        return {
+            'limit_cpu': cpus,
+            'limit_memory': memory,
+        }
     @classmethod
     def from_ansible_params(cls, ap, old_service, image_digest, can_update_networks):
         s = DockerService()
@@ -901,7 +943,6 @@ class DockerService(DockerBaseClass):
         s.tty = ap['tty']
         s.labels = ap['labels']
         s.container_labels = ap['container_labels']
-        s.limit_cpu = ap['limit_cpu']
         s.reserve_cpu = ap['reserve_cpu']
         s.mode = ap['mode']
         s.networks = ap['networks']
@@ -958,6 +999,10 @@ class DockerService(DockerBaseClass):
         for key, value in logging_config.items():
             setattr(s, key, value)
 
+        limits = cls.get_limits_from_ansible_params(ap)
+        for key, value in limits.items():
+            setattr(s, key, value)
+
         if ap['stop_grace_period'] is not None:
             s.stop_grace_period = convert_duration_to_nanosecond(ap['stop_grace_period'])
         s.update_delay = get_nanoseconds_from_raw_option(
@@ -985,7 +1030,7 @@ class DockerService(DockerBaseClass):
         else:
             s.replicas = ap['replicas']
 
-        for param_name in ['reserve_memory', 'limit_memory']:
+        for param_name in ['reserve_memory']:
             if ap.get(param_name):
                 try:
                     setattr(s, param_name, human_to_bytes(ap[param_name]))
@@ -1820,6 +1865,10 @@ def main():
         endpoint_mode=dict(type='str', choices=['vip', 'dnsrr']),
         stop_grace_period=dict(type='str'),
         stop_signal=dict(type='str'),
+        limits=dict(type='dict', options=dict(
+            cpus=dict(type='float'),
+            memory=dict(type='str'),
+        )),
         limit_cpu=dict(type='float'),
         limit_memory=dict(type='str'),
         reserve_cpu=dict(type='float'),
