@@ -444,7 +444,7 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     artifact_source_name: "public environment repo"
-  register: output 
+  register: output
 - name: Assert that facts are returned
   assert:
     that:
@@ -464,7 +464,7 @@
     lab_name: "{{ lab_name }}"
     artifact_source_name: "public environment repo"
     name: ServiceFabric-LabCluster
-  register: output 
+  register: output
 - name: Assert that facts are returned
   assert:
     that:
