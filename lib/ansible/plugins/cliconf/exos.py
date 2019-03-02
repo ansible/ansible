@@ -37,16 +37,46 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.plugins.cliconf import CliconfBase
 
 
 class Cliconf(CliconfBase):
 
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        diff = {}
+        device_operations = self.get_device_operations()
+        option_values = self.get_option_values()
+
+        if candidate is None and device_operations['supports_generate_diff']:
+            raise ValueError("candidate configuration is required to generate diff")
+
+        if diff_match not in option_values['diff_match']:
+            raise ValueError("'match' value %s in invalid, valid values are %s" % (diff_match, ', '.join(option_values['diff_match'])))
+
+        if diff_replace not in option_values['diff_replace']:
+            raise ValueError("'replace' value %s in invalid, valid values are %s" % (diff_replace, ', '.join(option_values['diff_replace'])))
+
+        # prepare candidate configuration
+        candidate_obj = NetworkConfig(indent=1)
+        candidate_obj.load(candidate)
+
+        if running and diff_match != 'none' and diff_replace != 'config':
+            # running configuration
+            running_obj = NetworkConfig(indent=1, contents=running, ignore_lines=diff_ignore_lines)
+            configdiffobjs = candidate_obj.difference(running_obj, path=path, match=diff_match, replace=diff_replace)
+
+        else:
+            configdiffobjs = candidate_obj.items
+
+        diff['config_diff'] = dumps(configdiffobjs, 'commands') if configdiffobjs else ''
+        return diff
+
     def get_device_info(self):
         device_info = {}
         device_info['network_os'] = 'exos'
 
-        reply = self.run_commands({'command': 'show switch detail', 'output':'text'})
+        reply = self.run_commands({'command': 'show switch detail', 'output': 'text'})
         data = to_text(reply, errors='surrogate_or_strict').strip()
 
         match = re.search(r'ExtremeXOS version  (\S+)', data)
@@ -63,6 +93,10 @@ class Cliconf(CliconfBase):
 
         return device_info
 
+    def get_default_flag(self):
+        # The flag to modify the command to collect configuration with defaults
+        return 'detail'
+
     def get_config(self, source='running', format='text', flags=None):
         options_values = self.get_option_values()
         if format not in options_values['format']:
@@ -72,7 +106,7 @@ class Cliconf(CliconfBase):
         if source not in lookup:
             raise ValueError("fetching configuration from %s is not supported" % source)
 
-        cmd = {'command' : lookup[source], 'output': 'text'}
+        cmd = {'command': lookup[source], 'output': 'text'}
 
         if source == 'startup':
             reply = self.run_commands({'command': 'show switch', 'format': 'text'})
@@ -153,20 +187,20 @@ class Cliconf(CliconfBase):
 
     def get_device_operations(self):
         return {
-                    'supports_diff_replace': False,        # identify if config should be merged or replaced is supported
-                    'supports_commit': False,              # identify if commit is supported by device or not
-                    'supports_rollback': False,            # identify if rollback is supported or not
-                    'supports_defaults': True,             # identify if fetching running config with default is supported
-                    'supports_commit_comment': False,      # identify if adding comment to commit is supported of not
-                    'supports_onbox_diff': True,           # identify if on box diff capability is supported or not
-                    'supports_generate_diff': True,        # identify if diff capability is supported within plugin
-                    'supports_multiline_delimiter': False, # identify if multiline delimiter is supported within config
-                    'supports_diff_match': True,           # identify if match is supported
-                    'supports_diff_ignore_lines': True,    # identify if ignore line in diff is supported
-                    'supports_config_replace': False,      # identify if running config replace with candidate config is supported
-                    'supports_admin': False,               # identify if admin configure mode is supported or not
-                    'supports_commit_label': False,        # identify if commit label is supported or not
-                    'supports_replace': False
+            'supports_diff_replace': False,         # identify if config should be merged or replaced is supported
+            'supports_commit': False,               # identify if commit is supported by device or not
+            'supports_rollback': False,             # identify if rollback is supported or not
+            'supports_defaults': True,              # identify if fetching running config with default is supported
+            'supports_commit_comment': False,       # identify if adding comment to commit is supported of not
+            'supports_onbox_diff': False,           # identify if on box diff capability is supported or not
+            'supports_generate_diff': True,         # identify if diff capability is supported within plugin
+            'supports_multiline_delimiter': False,  # identify if multiline delimiter is supported within config
+            'supports_diff_match': True,            # identify if match is supported
+            'supports_diff_ignore_lines': True,     # identify if ignore line in diff is supported
+            'supports_config_replace': False,       # identify if running config replace with candidate config is supported
+            'supports_admin': False,                # identify if admin configure mode is supported or not
+            'supports_commit_label': False,         # identify if commit label is supported or not
+            'supports_replace': False
         }
 
     def get_option_values(self):
@@ -179,7 +213,7 @@ class Cliconf(CliconfBase):
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
-        result['rpc'] += ['run_commmands']
+        result['rpc'] += ['run_commmands', 'get_default_flag', 'get_diff']
         result['device_operations'] = self.get_device_operations()
         result['device_info'] = self.get_device_info()
         result.update(self.get_option_values())

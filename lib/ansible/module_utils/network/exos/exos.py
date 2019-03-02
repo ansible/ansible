@@ -27,12 +27,13 @@
 #
 import json
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONNECTION = None
+
 
 class Cli:
     def __init__(self, module):
@@ -76,6 +77,16 @@ class Cli:
         except ConnectionError as exc:
             self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
         return response
+
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        conn = self._get_connection()
+        try:
+            diff = conn.get_diff(candidate=candidate, running=running, diff_match=diff_match,
+                                 diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return diff
+
 
 class HttpApi:
     def __init__(self, module):
@@ -138,10 +149,19 @@ class HttpApi:
             responses.append(response)
         return responses
 
+    def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+        try:
+            diff = self._connection.get_diff(candidate=candidate, running=running, diff_match=diff_match,
+                                             diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
+        except ConnectionError as exc:
+            self._module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
+        return diff
+
 
 def get_capabilities(module):
     conn = get_connection(module)
     return conn.get_capabilities()
+
 
 def get_connection(module):
     global _DEVICE_CONNECTION
@@ -157,18 +177,22 @@ def get_connection(module):
         _DEVICE_CONNECTION = conn
     return _DEVICE_CONNECTION
 
+
 def get_config(module, flags=None):
     flags = None if flags is None else flags
     conn = get_connection(module)
     return conn.get_config(flags)
 
+
 def load_config(module, commands):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands))
 
+
 def run_commands(module, commands, check_rc=True):
     conn = get_connection(module)
     return conn.run_commands(to_command(module, commands), check_rc=check_rc)
+
 
 def to_command(module, commands):
     transform = ComplexList(dict(
@@ -181,9 +205,11 @@ def to_command(module, commands):
     ), module)
     return transform(to_list(commands))
 
+
 def send_requests(module, requests):
     conn = get_connection(module)
     return conn.send_requests(to_request(module, requests))
+
 
 def to_request(module, requests):
     transform = ComplexList(dict(
@@ -192,3 +218,8 @@ def to_request(module, requests):
         data=dict(),
     ), module)
     return transform(to_list(requests))
+
+
+def get_diff(module, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
+    conn = get_connection(module)
+    return conn.get_diff(candidate=candidate, running=running, diff_match=diff_match, diff_ignore_lines=diff_ignore_lines, path=path, diff_replace=diff_replace)
