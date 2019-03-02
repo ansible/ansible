@@ -107,7 +107,7 @@ options:
 """
 
 EXAMPLES = r"""
-- name: "Test Netbox prefix module"
+- name: "Test Netbox interface module"
   connection: local
   hosts: localhost
   gather_facts: False
