@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_deployment_facts
 version_added: "2.8"
-short_description: Get Azure Artifact facts.
+short_description: Get Azure Deployment facts.
 description:
-    - Get facts of Azure Artifact.
+    - Get facts of Azure Deployment.
 
 options:
     resource_group:
@@ -41,14 +41,12 @@ author:
 EXAMPLES = '''
   - name: Get instance of Deployment
     azure_rm_deployment_facts:
-      resource_group: resource_group_name
-      lab_name: lab_name
-      artifact_source_name: artifact_source_name
-      name: name
+      resource_group: myResourceGroup
+      name: myDeployment
 '''
 
 RETURN = '''
-artifacts:
+deployments:
     description: A list of dictionaries containing facts for Artifact.
     returned: always
     type: complex
@@ -89,18 +87,10 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            lab_name=dict(
-                type='str'
-            ),
-            artifact_source_name=dict(
-                type='str',
-                required=True
-            ),
             name=dict(
                 type='str'
             )
         )
-        # store the results of the module operation
         self.results = dict(
             changed=False
         )
@@ -124,8 +114,6 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         results = []
         try:
             response = self.rm_client.deployments.get(resource_group_name=self.resource_group,
-                                                      lab_name=self.lab_name,
-                                                      artifact_source_name=self.artifact_source_name,
                                                       name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
@@ -140,9 +128,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.rm_client.deployments.list(resource_group_name=self.resource_group,
-                                                       lab_name=self.lab_name,
-                                                       artifact_source_name=self.artifact_source_name)
+            response = self.rm_client.deployments.list(resource_group_name=self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Deployment.')
