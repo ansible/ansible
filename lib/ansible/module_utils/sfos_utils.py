@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # This code is part of Ansible, but is an independent component.
@@ -34,7 +33,7 @@ __metaclass__ = type
 
 import json
 import xml.etree.cElementTree as ET
-import six.moves.urllib.parse as urllib
+import ansible.module_utils.six.moves.urllib.parse as urllib
 
 from ansible.module_utils._text import to_native
 from ansible.module_utils.basic import AnsibleModule
@@ -229,7 +228,7 @@ class SFOS:
             is_changed = True
 
         if is_changed:
-            response, _ = fetch_url(self.module, self.request_url + reqxml, method="GET")
+            response, dummy = fetch_url(self.module, self.request_url + reqxml, method="GET")
             status, msg = self._construct_response(response)
             if status >= 500:
                 self.module.fail_json(msg=msg)
@@ -242,12 +241,12 @@ class SFOS:
         Removes an object from sfos
         """
         is_changed = False
-        exists, _ = self._lookup_entry(self.module, self.request_url)
+        exists, dummy = self._lookup_entry(self.module, self.request_url)
 
         if exists:
             is_changed = True
             reqxml = self._construct_xml_request("Remove")
-            response, _ = fetch_url(self.module, self.request_url + reqxml, method="GET")
+            response, dummy = fetch_url(self.module, self.request_url + reqxml, method="GET")
             status, msg = self._construct_response(response)
             if status >= 500:
                 self.module.fail_json(msg=msg)
@@ -308,7 +307,9 @@ class SFOS:
         :param result: The result from the query
         :return: True or False if object has changed or not
         """
-        result = {k.lower(): v for k, v in result.items()}
+        for k, v in list(result.items()):
+            result[k.lower()] = v
+
         for key in keys:
             # Format booleans returned as strings into correct boolean values
             if key in matchs:

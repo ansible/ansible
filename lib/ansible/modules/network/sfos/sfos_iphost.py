@@ -31,18 +31,21 @@ options:
   name:
     description:
       - Enter a descriptive name for the IP Host. Will be used to identify the entry.
-    type: string
+    type: str
     required: true
   ipfamily:
     description:
-      - IP Family to which the IP Host belongs: IPv4 or IPv6.
-    type: string
+      - IP Family to which the IP Host belongs - IPv4 or IPv6.
+    type: str
+    choices:
+      - IPv4
+      - IPv6
     required: false
     default: IPv4
   hosttype:
     description:
-      - Select the type of Host: IP, Network, IP Range or IP List. Required if state is 'present'.
-    type: string
+      - Select the type of Host - IP, Network, IP Range or IP List. Required if state is 'present'.
+    type: str
     choices:
       - IP
       - Network
@@ -51,22 +54,22 @@ options:
   ipaddress:
     description:
       - Specify IP Address. Required if the host type selected is 'IP' or 'Network'.
-    type: string
+    type: str
     required: false
   subnet:
     description:
       - Specify Subnet address. Required if the host type selected is 'Network'.
-    type: string
+    type: str
     required: false
   startipaddress:
     description:
       - Specify the starting IP address of the IP Range. Required if host type selected is 'IPRange'.
-    type: string
+    type: str
     required: false
   endipaddress:
     description:
       - Specify the end IP address of the IP Range. Required if host type selected is 'IPRange'.
-    type: string
+    type: str
     required: false
   listofipaddresses:
     description:
@@ -118,7 +121,7 @@ result:
       description: Descriptive name for the IP Host. Will be used to identify the entry.
       type: string
     ipfamily:
-      description: IP Family to which the IP Host belongs: IPv4 or IPv6.
+      description: IP Family to which the IP Host belongs - IPv4 or IPv6.
       type: string
     hosttype:
       description: The type of IP Host, can be IP, Network, IPRange or IPList.
