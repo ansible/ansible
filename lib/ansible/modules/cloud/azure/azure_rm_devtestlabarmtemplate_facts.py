@@ -154,9 +154,9 @@ class AzureRMArmTemplateFacts(AzureRMModuleBase):
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         if self.name:
-            self.results['arm_templates'] = self.get()
+            self.results['armtemplates'] = self.get()
         else:
-            self.results['arm_templates'] = self.list()
+            self.results['armtemplates'] = self.list()
 
         return self.results
 
@@ -204,7 +204,7 @@ class AzureRMArmTemplateFacts(AzureRMModuleBase):
             'name': d.get('name'),
             'display_name': d.get('display_name'),
             'description': d.get('description'),
-            'publisher': d.get('publisher') 
+            'publisher': d.get('publisher')
         }
         return d
 
