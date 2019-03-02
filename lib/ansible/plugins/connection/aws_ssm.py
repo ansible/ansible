@@ -38,6 +38,11 @@ options:
     vars:
     - name: aws_executable
     default: '/usr/local/bin/aws'
+  plugin:
+    description: This defines the location of the session-manager-plugin binary.
+    vars:
+    - name: session_manager_plugin
+    default: '/usr/local/bin/session-manager-plugin'
   retries:
     description: Number of attempts to connect.
     default: 3
@@ -53,7 +58,9 @@ options:
 """
 
 import os
+import boto3
 import getpass
+import json
 import random
 import select
 import string
@@ -123,6 +130,7 @@ class Connection(ConnectionBase):
 
     transport = 'aws_ssm'
     has_pipelining = False
+    _client = None
     _session = None
     _session_id = ''
     _timeout = False
@@ -148,15 +156,28 @@ class Connection(ConnectionBase):
 
         display.vvv(u"ESTABLISH SSM CONNECTION TO: {0}".format(self.get_option('instance_id')), host=self.host)
 
-        executable = self.get_option('executable')
+        executable = self.get_option('plugin')
         if not os.path.exists(to_bytes(executable, errors='surrogate_or_strict')):
             raise AnsibleError("failed to find the executable specified %s."
                                " Please verify if the executable exists and re-try." % executable)
 
+        profile_name = ''
+        region_name = self.get_option('region')
+        ssm_parameters = dict()
+
+        client = boto3.client('ssm', region_name=region_name)
+        self._client = client
+        response = client.start_session(Target=self.get_option('instance_id'), Parameters=ssm_parameters)
+        self._session_id = response['SessionId']
+
         cmd = [
-            executable, 'ssm', 'start-session',
-            '--target', self.get_option('instance_id'),
-            '--region', self.get_option('region')
+            executable,
+            json.dumps(response),
+            region_name,
+            "StartSession",
+            profile_name,
+            json.dumps(ssm_parameters),
+            client.meta.endpoint_url
         ]
 
         display.vvv(u"SSM COMMAND: {0}".format(to_text(cmd)), host=self.host)
@@ -175,13 +196,6 @@ class Connection(ConnectionBase):
         self._session = session
         self._poll_stdout = select.poll()
         self._poll_stdout.register(session.stdout, select.POLLIN)
-
-        # Get session ID e.g.: Starting session with SessionId: i-0581917898742e40f-0112e9036923cb673
-        while session.poll() is None:
-            line = self._stdin_readline()
-            if self.SESSION_START in line:
-                self._session_id = line.split(self.SESSION_START)[1].strip()
-                break
 
         display.vvv(u"SSM CONNECTION ID: {0}".format(self._session_id), host=self.host)
 
@@ -323,13 +337,6 @@ class Connection(ConnectionBase):
             else:
                 self._session.communicate("exit\n")
 
-            # Ensure session is terminated
-            cmd = [
-                self.get_option('executable'), 'ssm', 'terminate-session',
-                '--session-id', self._session_id,
-                '--region', self.get_option('region')
-            ]
-
-            display.vvvv(u"TERMINATE SSM SESSION: {0}".format(cmd), host=self.host)
-            subprocess.check_output(cmd)
+            display.vvvv(u"TERMINATE SSM SESSION: {0}".format(self._session_id), host=self.host)
+            self._client.terminate_session(SessionId=self._session_id)
             self._session_id = ''
