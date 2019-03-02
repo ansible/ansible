@@ -378,7 +378,8 @@ def main():
             except gitlab.GitlabUpdateError as e:
                 module.fail_json(changed=False, msg='Could not update service %s' % service, exception=to_native(e))
             else:
-                diff = {'before': original_attributes, 'after': remote_service.attributes if module.check_mode else project.services.get(service).attributes} if module._diff else None
+                diff = {'before': original_attributes,
+                        'after': remote_service.attributes if module.check_mode else project.services.get(service).attributes} if module._diff else None
                 if h:
                     module.exit_json(changed=True, service=remote_service.attributes, diff=diff, state='changed',
                                      msg='Successfully updated service %s' % service)
