@@ -17,7 +17,7 @@
     privatekey_path: '{{ output_dir }}/has_expired_privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
-    selfsigned_not_after: "-1s"
+    selfsigned_not_after: "20181231000000Z"
 
 - name: "Check task fails because cert is expired (has_expired: false)"
   openssl_certificate:
