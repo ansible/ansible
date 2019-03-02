@@ -27,3 +27,11 @@
     ansible_ssh_pass: password123!
     groupname: azure_vms
   with_items: "{{ output.deployment.instances }}"
+
+- name: Get Deployment Facts
+  azure_rm_deployment_facts:
+    resource_group: "{{ resource_group }}"
+    deployment_name: "{{ dns_label }}"
+  register: output
+- debug:
+    var: output
