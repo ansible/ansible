@@ -314,6 +314,7 @@ files:
     maintainers: rdelcampog
     keywords:
       - sophos
+      - sfos
       - xg
   $modules/network/routing/: $team_networking
   $modules/network/slxos/: $team_extreme
