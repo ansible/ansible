@@ -1094,12 +1094,12 @@ class DnfModule(YumDnf):
 
                 installed = self.base.sack.query().installed()
                 for pkg_spec in pkg_specs:
-                #pkg_spec = '%{name}'
+                # pkg_spec = '%{name}'
                 installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
                 if installed_pkg:
                     candidate_pkg = self._packagename_dict(installed_pkg[0])
                 else:
-                    #pkg_spec = '%{name}-%{version}-%{release}.%{arch}'
+                    # pkg_spec = '%{name}-%{version}-%{release}.%{arch}'
                     candidate_pkg = self._packagename_dict(pkg_spec)
                 installed_pkg = installed.filter(name=candidate_pkg['name']).run()
                 if installed_pkg:
@@ -1109,7 +1109,7 @@ class DnfModule(YumDnf):
                         candidate_pkg['epoch'], candidate_pkg['version'], candidate_pkg['release'],
                     )
                     if evr_cmp == 0:
-                            self.base.remove(pkg_spec)
+                        self.base.remove(pkg_spec)
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
