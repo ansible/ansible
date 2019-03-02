@@ -1,0 +1,273 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-options' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names }} + [service_name]"
+
+###################################################################
+## update_config.delay ############################################
+###################################################################
+
+- name: update_config.delay
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      delay: 5s
+  register: update_delay_1
+
+- name: update_config.delay (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      delay: 5s
+  register: update_delay_2
+
+- name: update_config.delay (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      delay: 12s
+  register: update_delay_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_delay_1 is changed
+      - update_delay_2 is not changed
+      - update_delay_3 is changed
+
+###################################################################
+## update_config.failure_action ###################################
+###################################################################
+
+- name: update_config.failure_action
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      failure_action: "pause"
+  register: update_failure_action_1
+
+- name: update_config.failure_action (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      failure_action: "pause"
+  register: update_failure_action_2
+
+- name: update_config.failure_action (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      failure_action: "continue"
+  register: update_failure_action_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_failure_action_1 is changed
+      - update_failure_action_2 is not changed
+      - update_failure_action_3 is changed
+
+###################################################################
+## update_config.max_failure_ratio ################################
+###################################################################
+
+- name: update_config.max_failure_ratio
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      max_failure_ratio: 0.25
+  register: update_max_failure_ratio_1
+
+- name: update_config.max_failure_ratio (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      max_failure_ratio: 0.25
+  register: update_max_failure_ratio_2
+
+- name: update_config.max_failure_ratio (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      max_failure_ratio: 0.50
+  register: update_max_failure_ratio_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_max_failure_ratio_1 is changed
+      - update_max_failure_ratio_2 is not changed
+      - update_max_failure_ratio_3 is changed
+
+###################################################################
+# update_config.monitor ###########################################
+###################################################################
+
+- name: update_config.monitor
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      monitor: 10s
+  register: update_monitor_1
+
+- name: update_config.monitor (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      monitor: 10s
+  register: update_monitor_2
+
+- name: update_config.monitor (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      monitor: 60s
+  register: update_monitor_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_monitor_1 is changed
+      - update_monitor_2 is not changed
+      - update_monitor_3 is changed
+
+###################################################################
+# update_config.order #############################################
+###################################################################
+
+- name: update_config.order
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      order: "start-first"
+  register: update_order_1
+
+- name: update_config.order (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      order: "start-first"
+  register: update_order_2
+
+- name: update_config.order (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      order: "stop-first"
+  register: update_order_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_order_1 is changed
+      - update_order_2 is not changed
+      - update_order_3 is changed
+  when: docker_api_version is version('1.29', '>=')
+- assert:
+    that:
+    - secrets_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.29') in update_order_1.msg"
+  when: docker_api_version is version('1.29', '<')
+
+###################################################################
+## update_config.parallelism ######################################
+###################################################################
+
+- name: update_config.parallelism
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      parallelism: 2
+  register: update_parallelism_1
+
+- name: update_config.parallelism (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      parallelism: 2
+  register: update_parallelism_2
+
+- name: update_config.parallelism (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      parallelism: 1
+  register: update_parallelism_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - update_parallelism_1 is changed
+      - update_parallelism_2 is not changed
+      - update_parallelism_3 is changed

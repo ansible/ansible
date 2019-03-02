@@ -522,6 +522,55 @@ options:
       - Corresponds to the C(--restart-window) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config) instead.
     type: raw
+  update_config:
+    description:
+      - Configures how the service should be updated. Useful for configuring rolling updates.
+    suboptions:
+      parallelism:
+        description:
+          - Rolling update parallelism.
+          - Corresponds to the C(--update-parallelism) option of C(docker service create).
+        type: int
+      delay:
+        description:
+          - Rolling update delay.
+          - "Accepts a string in a format that look like:
+            C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+          - Corresponds to the C(--update-delay) option of C(docker service create).
+        type: str
+      failure_action:
+        description:
+          - Action to take in case of container failure.
+          - Corresponds to the C(--update-failure-action) option of C(docker service create).
+        type: str
+        choices:
+          - continue
+          - pause
+      monitor:
+        description:
+          - Time to monitor updated tasks for failures.
+          - "Accepts a string in a format that look like:
+            C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+          - Corresponds to the C(--update-monitor) option of C(docker service create).
+          - Requires API version >= 1.25.
+        type: str
+      max_failure_ratio:
+        description:
+          - Fraction of tasks that may fail during an update before the failure action is invoked.
+          - Corresponds to the C(--update-max-failure-ratio) option of C(docker service create).
+          - Requires API version >= 1.25.
+        type: float
+      order:
+        description:
+          - Specifies the order of operations when rolling out an updated task.
+          - Corresponds to the C(--update-order) option of C(docker service create).
+          - Requires API version >= 1.29.
+        type: str
+        choices:
+          - stop-first
+          - start-first
+    type: dict
+    version_added: "2.8"
   update_delay:
     description:
       - Rolling update delay.
@@ -529,17 +578,20 @@ options:
         C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-delay) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(10).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: raw
   update_parallelism:
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(1).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: int
   update_failure_action:
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: str
     choices:
       - continue
@@ -551,18 +603,21 @@ options:
         C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-monitor) option of C(docker service create).
       - Requires API version >= 1.25.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: raw
   update_max_failure_ratio:
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Corresponds to the C(--update-max-failure-ratio) option of C(docker service create).
       - Requires API version >= 1.25.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: float
   update_order:
     description:
       - Specifies the order of operations when rolling out an updated task.
       - Corresponds to the C(--update-order) option of C(docker service create).
       - Requires API version >= 1.29.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: str
     choices:
         - stop-first
@@ -983,6 +1038,51 @@ class DockerService(DockerBaseClass):
             'restart_policy_attempts': max_attempts,
             'restart_policy_window': window
         }
+
+    @staticmethod
+    def get_update_config_from_ansible_params(params):
+        update_config = params['update_config'] or {}
+        parallelism = update_config.get(
+            'parallelism',
+            params['update_parallelism']
+        )
+        delay = update_config.get(
+            'delay',
+            params['update_delay']
+        )
+        delay = get_nanoseconds_from_raw_option(
+            'update_delay',
+            delay
+        )
+        failure_action = update_config.get(
+            'failure_action',
+            params['update_failure_action']
+        )
+        monitor = update_config.get(
+            'monitor',
+            params['update_monitor']
+        )
+        monitor = get_nanoseconds_from_raw_option(
+            'update_delay',
+            monitor
+        )
+        max_failure_ratio = update_config.get(
+            'max_failure_ratio',
+            params['update_max_failure_ratio']
+        )
+        order = update_config.get(
+            'order',
+            params['update_order']
+        )
+        return {
+            'update_parallelism': parallelism,
+            'update_delay': delay,
+            'update_failure_action': failure_action,
+            'update_monitor': monitor,
+            'update_max_failure_ratio': max_failure_ratio,
+            'update_order': order
+        }
+
     @staticmethod
     def get_logging_from_ansible_params(params):
         logging = params['logging'] or {}
@@ -1061,10 +1161,6 @@ class DockerService(DockerBaseClass):
         s.mode = ap['mode']
         s.networks = ap['networks']
         s.stop_signal = ap['stop_signal']
-        s.update_parallelism = ap['update_parallelism']
-        s.update_failure_action = ap['update_failure_action']
-        s.update_max_failure_ratio = ap['update_max_failure_ratio']
-        s.update_order = ap['update_order']
         s.user = ap['user']
         s.working_dir = ap['working_dir']
 
@@ -1099,6 +1195,10 @@ class DockerService(DockerBaseClass):
 
         s.env = get_docker_environment(ap['env'], ap['env_files'])
 
+        update_config = cls.get_update_config_from_ansible_params(ap)
+        for key, value in update_config.items():
+            setattr(s, key, value)
+
         restart_config = cls.get_restart_config_from_ansible_params(ap)
         for key, value in restart_config.items():
             setattr(s, key, value)
@@ -1117,14 +1217,6 @@ class DockerService(DockerBaseClass):
 
         if ap['stop_grace_period'] is not None:
             s.stop_grace_period = convert_duration_to_nanosecond(ap['stop_grace_period'])
-        s.update_delay = get_nanoseconds_from_raw_option(
-            'update_delay',
-            ap['update_delay']
-        )
-        s.update_monitor = get_nanoseconds_from_raw_option(
-            'update_monitor',
-            ap['update_monitor']
-        )
 
         if ap['force_update']:
             s.force_update = int(str(time.time()).replace('.', ''))
@@ -1993,6 +2085,14 @@ def main():
         restart_policy_delay=dict(type='raw'),
         restart_policy_attempts=dict(type='int'),
         restart_policy_window=dict(type='raw'),
+        update_config=dict(type='dict', options=dict(
+            parallelism=dict(type='int'),
+            delay=dict(type='str'),
+            failure_action=dict(type='str', choices=['continue', 'pause']),
+            monitor=dict(type='str'),
+            max_failure_ratio=dict(type='float'),
+            order=dict(type='str'),
+        )),
         update_delay=dict(type='raw'),
         update_parallelism=dict(type='int'),
         update_failure_action=dict(type='str', choices=['continue', 'pause']),
@@ -2033,7 +2133,25 @@ def main():
             docker_api_version='1.25',
             detect_usage=_detect_healthcheck_start_period,
             usage_msg='set healthcheck.start_period'
-        )
+        ),
+        update_config_max_failure_ratio=dict(
+            docker_py_version='2.1.0',
+            docker_api_version='1.25',
+            detect_usage=lambda c: c.module.params['update_config']['max_failure_ratio'] is not None,
+            usage_msg='set update_config.max_failure_ratio'
+        ),
+        update_config_monitor=dict(
+            docker_py_version='2.1.0',
+            docker_api_version='1.25',
+            detect_usage=lambda c: c.module.params['update_config']['monitor'] is not None,
+            usage_msg='set update_config.monitor'
+        ),
+        update_config_order=dict(
+            docker_py_version='2.7.0',
+            docker_api_version='1.29',
+            detect_usage=lambda c: c.module.params['update_config']['order'] is not None,
+            usage_msg='set update_config.order'
+        ),
     )
 
     required_if = [
