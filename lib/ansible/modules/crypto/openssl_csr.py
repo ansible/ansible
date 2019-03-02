@@ -484,7 +484,11 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             if entry[1] is not None:
                 # Workaround for https://github.com/pyca/pyopenssl/issues/165
                 nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(entry[0]))
-                OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
+                if nid == 0:
+                    raise CertificateSigningRequestError('Unknown subject field identifier "{0}"'.format(entry[0]))
+                res = OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
+                if res == 0:
+                    raise CertificateSigningRequestError('Invalid value for subject field identifier "{0}": {1}'.format(entry[0], entry[1]))
 
         extensions = []
         if self.subjectAltName:
@@ -759,9 +763,12 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
-        csr = csr.subject_name(cryptography.x509.Name([
-            cryptography.x509.NameAttribute(self._get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
-        ]))
+        try:
+            csr = csr.subject_name(cryptography.x509.Name([
+                cryptography.x509.NameAttribute(self._get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
+            ]))
+        except ValueError as e:
+            raise CertificateSigningRequestError(str(e))
 
         if self.subjectAltName:
             csr = csr.add_extension(cryptography.x509.SubjectAlternativeName([
