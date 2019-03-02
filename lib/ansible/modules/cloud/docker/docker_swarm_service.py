@@ -413,10 +413,10 @@ options:
     type: list
   stop_grace_period:
     description:
-        - Time to wait before force killing a container.
-        - "Accepts a duration as a string in a format that look like:
-          C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
-        - Corresponds to the C(--stop-grace-period) option of C(docker service create).
+      - Time to wait before force killing a container.
+      - "Accepts a duration as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+      - Corresponds to the C(--stop-grace-period) option of C(docker service create).
     type: str
     version_added: "2.8"
   stop_signal:
@@ -631,8 +631,8 @@ options:
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
     type: str
     choices:
-        - stop-first
-        - start-first
+      - stop-first
+      - start-first
   user:
     description:
       - Sets the username or UID used for the specified command.
