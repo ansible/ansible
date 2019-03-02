@@ -212,6 +212,26 @@ options:
       - Corresponds to the C(--log-opt) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging) instead.
     type: dict
+  reservations:
+    description:
+      - Configures service resource reservations.
+    suboptions:
+      cpus:
+        description:
+          - Service CPU reservation. C(0) equals no reservation.
+          - Corresponds to the C(--reserve-cpu) option of C(docker service create).
+        type: float
+      memory:
+        description:
+          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+            C(T) (tebibyte), or C(P) (pebibyte)."
+          - C(0) equals no reservation.
+          - Omitting the unit defaults to bytes.
+          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+        type: str
+    type: dict
+    version_added: "2.8"
   limits:
     description:
       - Configures service resource limits.
@@ -242,6 +262,7 @@ options:
     description:
       - Service CPU reservation. C(0) equals no reservation.
       - Corresponds to the C(--reserve-cpu) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations) instead.
     type: float
   limit_memory:
     description:
@@ -261,6 +282,7 @@ options:
       - C(0) equals no reservation.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--reserve-memory) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations) instead.
     type: str
   mode:
     description:
@@ -926,6 +948,28 @@ class DockerService(DockerBaseClass):
             'limit_cpu': cpus,
             'limit_memory': memory,
         }
+
+    @staticmethod
+    def get_reservations_from_ansible_params(params):
+        reservations = params['reservations'] or {}
+        cpus = reservations.get(
+            'cpus',
+            params['reserve_cpu']
+        )
+        memory = reservations.get(
+            'memory',
+            params['reserve_memory']
+        )
+        if memory is not None:
+            try:
+                memory = human_to_bytes(memory)
+            except ValueError as exc:
+                raise Exception('Failed to convert reserve_memory to bytes: %s' % exc)
+        return {
+            'reserve_cpu': cpus,
+            'reserve_memory': memory,
+        }
+
     @classmethod
     def from_ansible_params(cls, ap, old_service, image_digest, can_update_networks):
         s = DockerService()
@@ -943,7 +987,6 @@ class DockerService(DockerBaseClass):
         s.tty = ap['tty']
         s.labels = ap['labels']
         s.container_labels = ap['container_labels']
-        s.reserve_cpu = ap['reserve_cpu']
         s.mode = ap['mode']
         s.networks = ap['networks']
         s.stop_signal = ap['stop_signal']
@@ -1003,6 +1046,10 @@ class DockerService(DockerBaseClass):
         for key, value in limits.items():
             setattr(s, key, value)
 
+        reservations = cls.get_reservations_from_ansible_params(ap)
+        for key, value in reservations.items():
+            setattr(s, key, value)
+
         if ap['stop_grace_period'] is not None:
             s.stop_grace_period = convert_duration_to_nanosecond(ap['stop_grace_period'])
         s.update_delay = get_nanoseconds_from_raw_option(
@@ -1029,13 +1076,6 @@ class DockerService(DockerBaseClass):
                 s.replicas = 1
         else:
             s.replicas = ap['replicas']
-
-        for param_name in ['reserve_memory']:
-            if ap.get(param_name):
-                try:
-                    setattr(s, param_name, human_to_bytes(ap[param_name]))
-                except ValueError as exc:
-                    raise Exception('Failed to convert %s to bytes: %s' % (param_name, exc))
 
         if ap['publish'] is not None:
             s.publish = []
@@ -1871,6 +1911,10 @@ def main():
         )),
         limit_cpu=dict(type='float'),
         limit_memory=dict(type='str'),
+        reservations=dict(type='dict', options=dict(
+            cpus=dict(type='float'),
+            memory=dict(type='str'),
+        )),
         reserve_cpu=dict(type='float'),
         reserve_memory=dict(type='str'),
         resolve_image=dict(type='bool', default=True),

@@ -93,3 +93,86 @@
       - limit_memory_2 is not changed
       - limit_memory_3 is changed
 
+###################################################################
+## reservations.cpus ##############################################
+###################################################################
+
+- name: reserve_cpu
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reservations:
+      cpus: 1
+  register: reserve_cpu_1
+
+- name: reserve_cpu (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reservations:
+      cpus: 1
+  register: reserve_cpu_2
+
+- name: reserve_cpu (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reservations:
+      cpus: 2
+  register: reserve_cpu_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - reserve_cpu_1 is changed
+      - reserve_cpu_2 is not changed
+      - reserve_cpu_3 is changed
+
+###################################################################
+## reservations.memory ############################################
+###################################################################
+
+- name: reservations.memory
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reservations:
+      memory: 64MB
+  register: reserve_memory_1
+
+- name: reservations.memory (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reserve_memory: 64MB
+  register: reserve_memory_2
+
+- name: reservations.memory (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reserve_memory: 32000000
+  register: reserve_memory_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - reserve_memory_1 is changed
+      - reserve_memory_2 is not changed
+      - reserve_memory_3 is changed
