@@ -113,8 +113,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.rm_client.deployments.get(resource_group_name=self.resource_group,
-                                                      name=self.name)
+            response = self.rm_client.deployments.get(self.resource_group, deployment_name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Deployment.')
@@ -128,7 +127,7 @@ class AzureRMDeploymentFacts(AzureRMModuleBase):
         response = None
         results = []
         try:
-            response = self.rm_client.deployments.list(resource_group_name=self.resource_group)
+            response = self.rm_client.deployments.list(self.resource_group)
             self.log("Response : {0}".format(response))
         except CloudError as e:
             self.log('Could not get facts for Deployment.')
