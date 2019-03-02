@@ -158,6 +158,15 @@
     commonName: www.ansible.com
     select_crypto_backend: '{{ select_crypto_backend }}'
 
+- name: Generate CSR with invalid SAN
+  openssl_csr:
+    path: '{{ output_dir }}/csrinvsan.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject_alt_name: invalid-san.example.com
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: generate_csr_invalid_san
+  ignore_errors: yes
+
 - name: Generate CSR with OCSP Must Staple
   openssl_csr:
     path: '{{ output_dir }}/csr_ocsp.csr'
