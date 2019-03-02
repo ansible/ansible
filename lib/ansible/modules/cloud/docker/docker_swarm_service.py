@@ -60,18 +60,29 @@ options:
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
     type: raw
     version_added: 2.8
+  placement:
+    description:
+      - Configures service placement preferences and constraints.
+    suboptions:
+      constraints:
+        description:
+          - List of the service constraints.
+          - Corresponds to the C(--constraint) option of C(docker service create).
+        type: list
+      preferences:
+        description:
+          - List of the placement preferences as key value pairs.
+          - Corresponds to the C(--placement-pref) option of C(docker service create).
+          - Requires API version >= 1.27.
+        type: list
+    type: dict
+    version_added: "2.8"
   constraints:
     description:
       - List of the service constraints.
       - Corresponds to the C(--constraint) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement) instead.
     type: list
-  placement_preferences:
-    description:
-      - List of the placement preferences as key value pairs.
-      - Corresponds to the C(--placement-pref) option of C(docker service create).
-      - Requires API version >= 1.27.
-    type: list
-    version_added: 2.8
   healthcheck:
     description:
       - Configure a check that is run to determine whether or not containers for this service are "healthy".
@@ -763,8 +774,9 @@ EXAMPLES = '''
   docker_swarm_service:
     name: myservice
     image: alpine:edge
-    placement_preferences:
-      - spread: "node.labels.mylabel"
+    placement:
+      preferences:
+        - spread: "node.labels.mylabel"
 
 - name: Set configs
   docker_swarm_service:
@@ -1141,13 +1153,24 @@ class DockerService(DockerBaseClass):
             'reserve_memory': memory,
         }
 
+    @staticmethod
+    def get_placement_from_ansible_params(params):
+        placement = params['placement'] or {}
+        constraints = placement.get(
+            'constraints',
+            params['constraints']
+        )
+        preferences = placement.get('preferences')
+        return {
+            'constraints': constraints,
+            'placement_preferences': preferences,
+        }
+
     @classmethod
     def from_ansible_params(cls, ap, old_service, image_digest, can_update_networks):
         s = DockerService()
         s.image = image_digest
         s.can_update_networks = can_update_networks
-        s.constraints = ap['constraints']
-        s.placement_preferences = ap['placement_preferences']
         s.args = ap['args']
         s.endpoint_mode = ap['endpoint_mode']
         s.dns = ap['dns']
@@ -1213,6 +1236,10 @@ class DockerService(DockerBaseClass):
 
         reservations = cls.get_reservations_from_ansible_params(ap)
         for key, value in reservations.items():
+            setattr(s, key, value)
+
+        placement = cls.get_placement_from_ansible_params(ap)
+        for key, value in placement.items():
             setattr(s, key, value)
 
         if ap['stop_grace_period'] is not None:
@@ -2041,8 +2068,11 @@ def main():
             protocol=dict(type='str', default='tcp', choices=('tcp', 'udp')),
             mode=dict(type='str', choices=('ingress', 'host')),
         )),
+        placement=dict(type='dict', options=dict(
+            constraints=dict(type='list'),
+            preferences=dict(type='list'),
+        )),
         constraints=dict(type='list'),
-        placement_preferences=dict(type='list'),
         tty=dict(type='bool'),
         dns=dict(type='list'),
         dns_search=dict(type='list'),
@@ -2119,7 +2149,6 @@ def main():
         update_monitor=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
         stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
-        placement_preferences=dict(docker_py_version='2.4.0', docker_api_version='1.27'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         # specials
         publish_mode=dict(
@@ -2151,6 +2180,12 @@ def main():
             docker_api_version='1.29',
             detect_usage=lambda c: c.module.params['update_config']['order'] is not None,
             usage_msg='set update_config.order'
+        ),
+        placement_config_preferences=dict(
+            docker_py_version='2.4.0',
+            docker_api_version='1.27',
+            detect_usage=lambda c: c.module.params['placement']['preferences'] is not None,
+            usage_msg='set placement.preferences'
         ),
     )
 
