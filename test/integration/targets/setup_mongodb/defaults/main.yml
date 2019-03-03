@@ -1,9 +1,14 @@
-mongodb_version: "3.6"
+mongodb_version: "4.0"
 
-apt:
+apt_xenial:
   keyserver: "keyserver.ubuntu.com"
   keyserver_id: "2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5"
   repo: "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu {{ansible_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
+
+apt_bionic:
+  keyserver: "keyserver.ubuntu.com"
+  keyserver_id: "9DA31620334BD75D9DCB49F368818C72E52529D4"
+  repo: "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu {{ansible_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
 
 mongodb_packages:
   mongod: mongodb-org-server
