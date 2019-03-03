@@ -19,6 +19,7 @@
 # ============================================================
 # create mysql user and verify user is added to mysql database
 #
+- include: ssl_connection.yml  
 - include: create_user.yml user_name={{user_name_1}} user_password={{ user_password_1 }}
 
 - include: assert_user.yml user_name={{user_name_1}}
@@ -191,6 +192,8 @@
 # ============================================================
 # Assert create user with SELECT privileges, attempt to create database and update privileges to create database
 #
+
+
 - include: test_privs.yml current_privilege=SELECT current_append_privs=no
 
 # ============================================================

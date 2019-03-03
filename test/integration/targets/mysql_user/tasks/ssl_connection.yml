@@ -1,20 +1,3 @@
-# test code for privileges for mysql_user module
-# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ============================================================
 - name: create user with basic ssl privileges
@@ -34,21 +17,21 @@
   command: mysql "-e select ssl_type from mysql.user where User='ssluser';"
   register: result
 
-- name: assert user doesnt have SSL privileges
+- name: check that user doesnt have SSL privileges
   assert: { that: "'ANY' not in result.stdout" }
 
 - name: delete user
   command: mysql "-e drop user ssluser@'localhost';"
 #============================================================
-- name: create user with  privileges
-  mysql_user: name="ssluser" password=somepass priv=*.*:REQUIRENONE login_unix_socket='{{ mysql_socket }}' state=present 
+- name: create user without ssl privileges
+  mysql_user: name="without_ssluser" password=somepass priv=*.*:REQUIRENONE login_unix_socket='{{ mysql_socket }}' state=present 
 
 - name: run command to show privileges for user (expect privileges in stdout)
-  command: mysql "-e select ssl_type from mysql.user where User='ssluser';"
+  command: mysql "-e select ssl_type from mysql.user where User='without_ssluser';"
   register: result
 
 - name: assert user doesnt have SSL privileges
   assert: { that: "'ANY' not in result.stdout" }
 
-- name: delete user
-  command: mysql "-e drop user ssluser@'localhost';"
+- name: delete user 
+  command: mysql "-e drop user without_ssluser@'localhost';"
