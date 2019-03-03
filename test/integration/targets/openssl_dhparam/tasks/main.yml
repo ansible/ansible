@@ -1,3 +1,4 @@
+---
 - block:
     # This module generates unsafe parameters for testing purposes
     # otherwise tests would be too slow
@@ -40,5 +41,16 @@
         size: 512
         force: yes
       register: dhparam_changed_force
+
+    - name: Create broken params
+      copy:
+        dest: "{{ role_path ~ '/' ~ output_dir }}/dhbroken.pem"
+        content: ""
+    - name: Regenerate broken params
+      openssl_dhparam:
+        path: '{{ output_dir }}/dhbroken.pem'
+        size: 512
+        force: yes
+      register: output_broken
 
     - import_tasks: ../tests/validate.yml

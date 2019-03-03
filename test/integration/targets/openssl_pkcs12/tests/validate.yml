@@ -1,3 +1,4 @@
+---
 - name: 'Install pexpect'
   pip:
     name: 'pexpect'
@@ -30,3 +31,8 @@
       - "'assphrase' in passphrase_error_2.msg or 'assword' in passphrase_error_2.msg or 'serializ' in passphrase_error_2.msg"
       - passphrase_error_3 is failed
       - "'assphrase' in passphrase_error_3.msg or 'assword' in passphrase_error_3.msg or 'serializ' in passphrase_error_3.msg"
+
+- name: "Verify that broken PKCS#12 will be regenerated"
+  assert:
+    that:
+      - output_broken is changed

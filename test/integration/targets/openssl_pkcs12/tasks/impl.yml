@@ -100,6 +100,21 @@
       state: present
     register: p12_no_pkey
 
+  - name: 'Create broken PKCS#12'
+    copy:
+      dest: "{{ role_path ~ '/' ~ output_dir }}/broken.p12"
+      content: ""
+  - name: 'Regenerate broken PKCS#12'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/broken.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+      force: True
+      mode: 0644
+    register: output_broken
+
   - import_tasks: ../tests/validate.yml
 
   always:

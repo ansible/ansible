@@ -101,3 +101,8 @@
       - "'assphrase' in passphrase_error_2.msg or 'assword' in passphrase_error_2.msg or 'serializ' in passphrase_error_2.msg"
       - passphrase_error_3 is failed
       - "'assphrase' in passphrase_error_3.msg or 'assword' in passphrase_error_3.msg or 'serializ' in passphrase_error_3.msg"
+
+- name: Verify that broken certificate will be regenerated
+  assert:
+    that:
+      - ownca_broken is changed

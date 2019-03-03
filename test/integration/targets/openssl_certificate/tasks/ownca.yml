@@ -202,4 +202,19 @@
   ignore_errors: yes
   register: passphrase_error_3
 
+- name: Create broken certificate
+  copy:
+    dest: "{{ role_path ~ '/' ~ output_dir }}/ownca_broken.pem"
+    content: ""
+- name: Regenerate broken cert
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_broken.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    provider: ownca
+    ownca_digest: sha256
+  register: ownca_broken
+
 - import_tasks: ../tests/validate_ownca.yml

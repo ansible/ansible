@@ -211,4 +211,17 @@
   ignore_errors: yes
   register: passphrase_error_3
 
+- name: Create broken certificate
+  copy:
+    dest: "{{ role_path ~ '/' ~ output_dir }}/cert_broken.pem"
+    content: ""
+- name: Regenerate broken cert
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_broken.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey_ecc.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+  register: selfsigned_broken
+
 - import_tasks: ../tests/validate_selfsigned.yml

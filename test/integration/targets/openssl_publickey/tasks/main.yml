@@ -108,6 +108,16 @@
       ignore_errors: yes
       register: passphrase_error_3
 
+    - name: Create broken key
+      copy:
+        dest: "{{ role_path ~ '/' ~ output_dir }}/publickeybroken.pub"
+        content: ""
+    - name: Regenerate broken key
+      openssl_publickey:
+        path: '{{ output_dir }}/publickeybroken.pub'
+        privatekey_path: '{{ output_dir }}/privatekey5.pem'
+      register: output_broken
+
     - import_tasks: ../tests/validate.yml
 
   when: pyopenssl_version.stdout is version('16.0.0', '>=')

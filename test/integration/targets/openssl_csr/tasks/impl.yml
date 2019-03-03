@@ -274,3 +274,17 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   ignore_errors: yes
   register: passphrase_error_3
+
+- name: Create broken CSR
+  copy:
+    dest: "{{ role_path ~ '/' ~ output_dir }}/csrbroken.csr"
+    content: ""
+- name: Regenerate broken CSR
+  openssl_csr:
+    path: '{{ output_dir }}/csrbroken.csr'
+    privatekey_path: '{{ output_dir }}/privatekey2.pem'
+    subject:
+      commonName: This is for Ansible
+    useCommonNameForSAN: no
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: output_broken
