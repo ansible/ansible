@@ -2202,25 +2202,33 @@ def main():
         update_config_max_failure_ratio=dict(
             docker_py_version='2.1.0',
             docker_api_version='1.25',
-            detect_usage=lambda c: c.module.params['update_config']['max_failure_ratio'] is not None,
+            detect_usage=lambda c: (c.module.params['update_config'] or {}).get(
+                'max_failure_ratio'
+            ) is not None,
             usage_msg='set update_config.max_failure_ratio'
         ),
         update_config_monitor=dict(
             docker_py_version='2.1.0',
             docker_api_version='1.25',
-            detect_usage=lambda c: c.module.params['update_config']['monitor'] is not None,
+            detect_usage=lambda c: (c.module.params['update_config'] or {}).get(
+                'monitor'
+            ) is not None,
             usage_msg='set update_config.monitor'
         ),
         update_config_order=dict(
             docker_py_version='2.7.0',
             docker_api_version='1.29',
-            detect_usage=lambda c: c.module.params['update_config']['order'] is not None,
+            detect_usage=lambda c: (c.module.params['update_config'] or {}).get(
+                'order'
+            ) is not None,
             usage_msg='set update_config.order'
         ),
         placement_config_preferences=dict(
             docker_py_version='2.4.0',
             docker_api_version='1.27',
-            detect_usage=lambda c: c.module.params['placement']['preferences'] is not None,
+            detect_usage=lambda c: (c.module.params['placement'] or {}).get(
+                'preferences'
+            ) is not None,
             usage_msg='set placement.preferences'
         ),
     )
