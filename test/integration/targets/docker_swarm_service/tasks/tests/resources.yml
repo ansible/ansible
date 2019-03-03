@@ -30,6 +30,14 @@
       cpus: 1
   register: limit_cpu_2
 
+- name: limit_cpu (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limit_cpu: 1
+  register: limit_cpu_2b
+
 - name: limits.cpus (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -49,6 +57,7 @@
     that:
       - limit_cpu_1 is changed
       - limit_cpu_2 is not changed
+      - limit_cpu_2b is not changed
       - limit_cpu_3 is changed
 
 ###################################################################
@@ -73,6 +82,14 @@
       memory: 64MB
   register: limit_memory_2
 
+- name: limit_memory (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    limit_memory: 64000000
+  register: limit_memory_2b
+
 - name: limits.memory (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -91,6 +108,7 @@
     that:
       - limit_memory_1 is changed
       - limit_memory_2 is not changed
+      - limit_memory_2b is not changed
       - limit_memory_3 is changed
 
 ###################################################################
@@ -115,6 +133,14 @@
       cpus: 1
   register: reserve_cpu_2
 
+- name: reserve_cpu (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reserve_cpu: 1
+  register: reserve_cpu_2b
+
 - name: reserve_cpu (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -134,6 +160,7 @@
     that:
       - reserve_cpu_1 is changed
       - reserve_cpu_2 is not changed
+      - reserve_cpu_2b is not changed
       - reserve_cpu_3 is changed
 
 ###################################################################
@@ -157,6 +184,14 @@
     reserve_memory: 64MB
   register: reserve_memory_2
 
+- name: reserve_memory (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    reserve_memory: 64000000
+  register: reserve_memory_2b
+
 - name: reservations.memory (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -175,4 +210,5 @@
     that:
       - reserve_memory_1 is changed
       - reserve_memory_2 is not changed
+      - reserve_memory_2b is not changed
       - reserve_memory_3 is changed

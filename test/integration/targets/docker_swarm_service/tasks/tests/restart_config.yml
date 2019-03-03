@@ -30,6 +30,14 @@
       condition: "on-failure"
   register: restart_policy_2
 
+- name: restart_policy (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    restart_policy: "on-failure"
+  register: restart_policy_2b
+
 - name: restart_config.condition (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -49,6 +57,7 @@
     that:
       - restart_policy_1 is changed
       - restart_policy_2 is not changed
+      - restart_policy_2b is not changed
       - restart_policy_3 is changed
 
 ###################################################################
@@ -73,6 +82,14 @@
       max_attempts: 1
   register: restart_policy_attempts_2
 
+- name: restart_policy_attempts (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    restart_policy_attempts: 1
+  register: restart_policy_attempts_2b
+
 - name: restart_config.max_attempts (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -92,6 +109,7 @@
     that:
       - restart_policy_attempts_1 is changed
       - restart_policy_attempts_2 is not changed
+      - restart_policy_attempts_2b is not changed
       - restart_policy_attempts_3 is changed
 
 ###################################################################
@@ -116,6 +134,14 @@
       delay: 5s
   register: restart_policy_delay_2
 
+- name: restart_policy_delay (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    restart_policy_delay: 5000000000
+  register: restart_policy_delay_2b
+
 - name: restart_config.delay (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -135,6 +161,7 @@
     that:
       - restart_policy_delay_1 is changed
       - restart_policy_delay_2 is not changed
+      - restart_policy_delay_2b is not changed
       - restart_policy_delay_3 is changed
 
 ###################################################################
@@ -159,6 +186,14 @@
       window: 10s
   register: restart_policy_window_2
 
+- name: restart_policy_window (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    restart_policy_window: 10000000000
+  register: restart_policy_window_2b
+
 - name: restart_config.window (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -178,4 +213,5 @@
     that:
       - restart_policy_window_1 is changed
       - restart_policy_window_2 is not changed
+      - restart_policy_window_2b is not changed
       - restart_policy_window_3 is changed

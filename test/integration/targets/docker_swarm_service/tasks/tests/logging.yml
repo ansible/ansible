@@ -30,6 +30,14 @@
       driver: json-file
   register: logging_driver_2
 
+- name: log_driver (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    log_driver: json-file
+  register: logging_driver_2b
+
 - name: logging.driver (change)
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -49,6 +57,7 @@
     that:
       - logging_driver_1 is changed
       - logging_driver_2 is not changed
+      - logging_driver_2b is not changed
       - logging_driver_3 is changed
 
 ####################################################################
@@ -78,6 +87,17 @@
         env: os,customer
         labels: production_status
   register: logging_options_2
+
+- name: log_driver_options (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    log_driver: json-file
+    log_driver_options:
+      env: os,customer
+      labels: production_status
+  register: logging_options_2b
 
 - name: logging_options (change)
   docker_swarm_service:
@@ -122,6 +142,7 @@
     that:
       - logging_options_1 is changed
       - logging_options_2 is not changed
+      - logging_options_2b is not changed
       - logging_options_3 is changed
       - logging_options_4 is changed
       - logging_options_5 is not changed
