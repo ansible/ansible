@@ -152,31 +152,27 @@ class ElasticLoadBalancerV2(object):
         :return: bool True if they match otherwise False
         """
 
-        subnet_mapping_id_list = []
-        subnet_mappings = []
+        subnet_id_list = []
+        subnets = []
 
         # Check if we're dealing with subnets or subnet_mappings
         if self.subnets is not None:
-            # Convert subnets to subnet_mappings format for comparison
-            for subnet in self.subnets:
-                subnet_mappings.append({'SubnetId': subnet})
+            # We need to first get the subnet ID from the list
+            subnets = self.subnets
 
         if self.subnet_mappings is not None:
-            # Use this directly since we're comparing as a mapping
-            subnet_mappings = self.subnet_mappings
+            # Make a list from the subnet_mappings dict
+            subnets_from_mappings = []
+            for subnet_mapping in self.subnet_mappings:
+                subnets.append(subnet_mapping['SubnetId'])
 
-        # Build a subnet_mapping style struture of what's currently
-        # on the load balancer
         for subnet in self.elb['AvailabilityZones']:
-            this_mapping = {'SubnetId': subnet['SubnetId']}
-            for address in subnet.get('LoadBalancerAddresses', []):
-                if 'AllocationId' in address:
-                    this_mapping['AllocationId'] = address['AllocationId']
-                    break
+            subnet_id_list.append(subnet['SubnetId'])
 
-            subnet_mapping_id_list.append(this_mapping)
-
-        return set(frozenset(mapping.items()) for mapping in subnet_mapping_id_list) == set(frozenset(mapping.items()) for mapping in subnet_mappings)
+        if set(subnet_id_list) != set(subnets):
+            return False
+        else:
+            return True
 
     def modify_subnets(self):
         """
@@ -232,7 +228,6 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         self.access_logs_s3_bucket = module.params.get("access_logs_s3_bucket")
         self.access_logs_s3_prefix = module.params.get("access_logs_s3_prefix")
         self.idle_timeout = module.params.get("idle_timeout")
-        self.http2 = module.params.get("http2")
 
         if self.elb is not None and self.elb['Type'] != 'application':
             self.module.fail_json(msg="The load balancer type you are trying to manage is not application. Try elb_network_lb module instead.")
@@ -251,8 +246,6 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
-        if self.subnet_mappings is not None:
-            params['SubnetMappings'] = self.subnet_mappings
         if self.security_groups is not None:
             params['SecurityGroups'] = self.security_groups
         params['Scheme'] = self.scheme
@@ -278,18 +271,20 @@ class ApplicationLoadBalancer(ElasticLoadBalancerV2):
 
         update_attributes = []
 
-        if self.access_logs_enabled is not None and str(self.access_logs_enabled).lower() != self.elb_attributes['access_logs_s3_enabled']:
-            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': str(self.access_logs_enabled).lower()})
+        if self.access_logs_enabled and self.elb_attributes['access_logs_s3_enabled'] != "true":
+            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': "true"})
+        if not self.access_logs_enabled and self.elb_attributes['access_logs_s3_enabled'] != "false":
+            update_attributes.append({'Key': 'access_logs.s3.enabled', 'Value': 'false'})
         if self.access_logs_s3_bucket is not None and self.access_logs_s3_bucket != self.elb_attributes['access_logs_s3_bucket']:
             update_attributes.append({'Key': 'access_logs.s3.bucket', 'Value': self.access_logs_s3_bucket})
         if self.access_logs_s3_prefix is not None and self.access_logs_s3_prefix != self.elb_attributes['access_logs_s3_prefix']:
             update_attributes.append({'Key': 'access_logs.s3.prefix', 'Value': self.access_logs_s3_prefix})
-        if self.deletion_protection is not None and str(self.deletion_protection).lower() != self.elb_attributes['deletion_protection_enabled']:
-            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': str(self.deletion_protection).lower()})
+        if self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "true":
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "true"})
+        if self.deletion_protection is not None and not self.deletion_protection and self.elb_attributes['deletion_protection_enabled'] != "false":
+            update_attributes.append({'Key': 'deletion_protection.enabled', 'Value': "false"})
         if self.idle_timeout is not None and str(self.idle_timeout) != self.elb_attributes['idle_timeout_timeout_seconds']:
             update_attributes.append({'Key': 'idle_timeout.timeout_seconds', 'Value': str(self.idle_timeout)})
-        if self.http2 is not None and str(self.http2).lower() != self.elb_attributes['routing_http2_enabled']:
-            update_attributes.append({'Key': 'routing.http2.enabled', 'Value': str(self.http2).lower()})
 
         if update_attributes:
             try:
@@ -365,8 +360,6 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
         # Other parameters
         if self.subnets is not None:
             params['Subnets'] = self.subnets
-        if self.subnet_mappings is not None:
-            params['SubnetMappings'] = self.subnet_mappings
         params['Scheme'] = self.scheme
         if self.tags:
             params['Tags'] = self.tags
@@ -407,14 +400,6 @@ class NetworkLoadBalancer(ElasticLoadBalancerV2):
                 if self.new_load_balancer:
                     AWSRetry.jittered_backoff()(self.connection.delete_load_balancer)(LoadBalancerArn=self.elb['LoadBalancerArn'])
                 self.module.fail_json_aws(e)
-
-    def modify_subnets(self):
-        """
-        Modify elb subnets to match module parameters (unsupported for NLB)
-        :return:
-        """
-
-        self.module.fail_json(msg='Modifying subnets and elastic IPs is not supported for Network Load Balancer')
 
 
 class ELBListeners(object):
@@ -515,6 +500,7 @@ class ELBListeners(object):
         """
 
         modified_listener = {}
+        action_utils = ELBActionUtils()
 
         # Port
         if current_listener['Port'] != new_listener['Port']:
@@ -539,58 +525,14 @@ class ELBListeners(object):
             modified_listener['Certificates'].append({})
             modified_listener['Certificates'][0]['CertificateArn'] = new_listener['Certificates'][0]['CertificateArn']
 
-        modified_actions = self._compare_default_action(current_listener['DefaultActions'], new_listener['DefaultActions'])
-        if modified_actions:
-            modified_listener['DefaultActions'] = modified_actions
+        is_equal = action_utils.is_equal(current_listener['DefaultActions'], new_listener['DefaultActions'])
+        if not is_equal:
+            modified_listener['DefaultActions'] = new_listener['DefaultActions']
 
         if modified_listener:
             return modified_listener
         else:
             return None
-
-    def _compare_default_action(self, current_actions, new_actions):
-        """
-        Compare two default actions.
-
-        :param current_actions:
-        :param new_actions:
-        :return:
-        """
-        if current_actions[0]['Type'] != new_actions[0]['Type']:
-            return new_actions
-
-        if current_actions[0]['Type'] == 'forward':
-            if current_actions[0]['TargetGroupArn'] != new_actions[0]['TargetGroupArn']:
-                return new_actions
-
-        if current_actions[0]['Type'] == 'redirect':
-            if not self._is_config_equals(current_actions[0]['RedirectConfig'], new_actions[0]['RedirectConfig']):
-                return new_actions
-
-        if current_actions[0]['Type'] == 'authenticate-oidc':
-            current_authentication_params = current_actions[0]['AuthenticateOidcConfig'].get('AuthenticationRequestExtraParams', None)
-            new_authentication_params = new_actions[0]['AuthenticateOidcConfig'].get('AuthenticationRequestExtraParams', None)
-            if not self._is_config_equals(current_authentication_params, new_authentication_params):
-                return new_actions
-            if not self._is_config_equals(current_actions[0]['AuthenticateOidcConfig'], new_actions[0]['AuthenticateOidcConfig']):
-                return new_actions
-
-        if current_actions[0]['Type'] == 'authenticate-cognito':
-            current_authentication_params = current_actions[0]['AuthenticateCognitoConfig'].get('AuthenticationRequestExtraParams', None)
-            new_authentication_params = new_actions[0]['AuthenticateCognitoConfig'].get('AuthenticationRequestExtraParams', None)
-            if not self._is_config_equals(current_authentication_params, new_authentication_params):
-                return new_actions
-            if not self._is_config_equals(current_actions[0]['AuthenticateCognitoConfig'], new_actions[0]['AuthenticateCognitoConfig']):
-                return new_actions
-        return None
-
-    def _is_config_equals(self, first, second):
-        if len(first) != len(second):
-            return False
-        for config in first.keys():
-            if first.get(config) != second.get(config):
-                return False
-        return True
 
 
 class ELBListener(object):
@@ -705,20 +647,19 @@ class ELBListenerRules(object):
 
         :return:
         """
-
+        action_utils = ELBActionUtils()
         modified_rule = {}
 
         # Priority
-        if current_rule['Priority'] != new_rule['Priority']:
+        if current_rule['Priority'] != str(new_rule['Priority']):
             modified_rule['Priority'] = new_rule['Priority']
 
-        # Actions
-        #   We wont worry about the Action Type because it is always 'forward'
-        if current_rule['Actions'][0]['TargetGroupArn'] != new_rule['Actions'][0]['TargetGroupArn']:
+        equal = action_utils.is_equal(current_rule['Actions'], new_rule['Actions'])
+
+        if not equal:
             modified_rule['Actions'] = []
             modified_rule['Actions'].append({})
-            modified_rule['Actions'][0]['TargetGroupArn'] = new_rule['Actions'][0]['TargetGroupArn']
-            modified_rule['Actions'][0]['Type'] = 'forward'
+            modified_rule['Actions'][0] = new_rule['Actions'][0]
 
         # Conditions
         modified_conditions = []
@@ -818,3 +759,58 @@ class ELBListenerRule(object):
             self.module.fail_json_aws(e)
 
         self.changed = True
+
+
+class ELBActionUtils:
+
+    def __init__(self):
+        pass
+
+    def is_equal(self, first_action, second_action):
+        """
+        Compare two actions.
+
+        :param first_action:
+        :param second_action:
+        :return:
+        """
+        if first_action[0]['Type'] != second_action[0]['Type']:
+            return False
+
+        if first_action[0]['Type'] == 'forward':
+            if first_action[0]['TargetGroupArn'] != second_action[0]['TargetGroupArn']:
+                return False
+
+        if first_action[0]['Type'] == 'redirect':
+            if not self._is_config_equals(first_action[0]['RedirectConfig'], second_action[0]['RedirectConfig']):
+                return False
+
+        if first_action[0]['Type'] == 'authenticate-oidc':
+            current_authentication_params = first_action[0]['AuthenticateOidcConfig'].get('AuthenticationRequestExtraParams', None)
+            new_authentication_params = second_action[0]['AuthenticateOidcConfig'].get('AuthenticationRequestExtraParams', None)
+            if not self._is_config_equals(current_authentication_params, new_authentication_params):
+                return False
+            if not self._is_config_equals(first_action[0]['AuthenticateOidcConfig'], second_action[0]['AuthenticateOidcConfig']):
+                return False
+
+        if first_action[0]['Type'] == 'authenticate-cognito':
+            current_authentication_params = first_action[0]['AuthenticateCognitoConfig'].get('AuthenticationRequestExtraParams', None)
+            new_authentication_params = second_action[0]['AuthenticateCognitoConfig'].get('AuthenticationRequestExtraParams', None)
+            if not self._is_config_equals(current_authentication_params, new_authentication_params):
+                return False
+            if not self._is_config_equals(first_action[0]['AuthenticateCognitoConfig'], second_action[0]['AuthenticateCognitoConfig']):
+                return False
+        if first_action[0]['Type'] == 'fixed-response':
+            current_response_params = first_action[0]['FixedResponseConfig']
+            new_response_params = second_action[0]['FixedResponseConfig']
+            if not self._is_config_equals(current_response_params, new_response_params):
+                return False
+        return True
+
+    def _is_config_equals(self, first, second):
+        if len(first) != len(second):
+            return False
+        for config in first.keys():
+            if first.get(config) != second.get(config):
+                return False
+        return True
