@@ -245,7 +245,7 @@
     - { "port": 3001, "rs": "{{ mongodb_replicaset1 }}" }
     - { "port": 3004, "rs": "{{ mongodb_replicaset2 }}" }
     - { "port": 4000, "rs": "{{ configsrv_replicaset }}" }
-  when: mongodb_version != "3.2" and test_mongo_auth == True
+  when: mongodb_version != "3.2" and test_mongo_auth == True and not ansible_distribution_version == "18.04"
 
 - name: Add mongodb admin user to each shard 3.2
   mongodb_user:
@@ -261,19 +261,19 @@
   with_items:
     - { "port": 3001, "rs": "{{ mongodb_replicaset1 }}" }
     - { "port": 3004, "rs": "{{ mongodb_replicaset2 }}" }
-  when: mongodb_version == "3.2" and test_mongo_auth == True
+  when: mongodb_version == "3.2" and test_mongo_auth == True or ansible_distribution_version == "18.04"
 
-# mongodb_user throws an error when creating a user on 3.2
+# mongodb_user throws an error when creating a user on 3.2 (also on 4.0 with Ubuntu 18.04)
 # 'majority' is the only valid write concern when writing to config server replica sets
 - name: Copy create_user_root_3.2.js.j2 template to host
   template:
     src: create_user_root_3.2.js.j2
     dest: /root/create_user_root_3.2.js
-  when: mongodb_version == "3.2"
+  when: mongodb_version == "3.2" or (mongodb_version == "4.0" and ansible_distribution_version == "18.04")
 
 - name: Create admin user on 3.2 config replset
   shell: mongo admin --port 4000 /root/create_user_root_3.2.js
-  when: mongodb_version == "3.2"
+  when: mongodb_version == "3.2" or (mongodb_version == "4.0" and ansible_distribution_version == "18.04")
 
 - name: Murder all mongod processes
   shell: pkill mongod && sleep 10 || sleep 10;
