@@ -4,6 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
+#Requires -Module Ansible.ModuleUtils.Security
 
 Set-StrictMode -Version 2
 
@@ -198,7 +199,7 @@ $state = Get-AnsibleParam $params "state" -validateset @("domain","workgroup") -
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
 $domainAdminPasswordEncrypted = $domain_admin_password | ConvertTo-SecureString -AsPlainText -Force
-$domainAdminCredentials = Save-Credential -username $domain_admin_user -passwordEncrypted $domainAdminPasswordEncrypted
+$domainAdminCredentials = ConvertTo-Credential -username $domain_admin_user -passwordEncrypted $domainAdminPasswordEncrypted
 
 $dns_domain_name = Get-AnsibleParam $params "dns_domain_name"
 $hostname = Get-AnsibleParam $params "hostname"
