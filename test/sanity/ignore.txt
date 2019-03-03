@@ -6423,8 +6423,6 @@ lib/ansible/modules/storage/netapp/netapp_e_storage_system.py validate-modules:E
 lib/ansible/modules/storage/netapp/netapp_e_storage_system.py validate-modules:E324
 lib/ansible/modules/storage/netapp/netapp_e_storage_system.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_storage_system.py validate-modules:E338
-lib/ansible/modules/storage/netapp/netapp_e_storagepool.py validate-modules:E322
-lib/ansible/modules/storage/netapp/netapp_e_storagepool.py validate-modules:E326
 lib/ansible/modules/storage/netapp/netapp_e_storagepool.py validate-modules:E337
 lib/ansible/modules/storage/netapp/netapp_e_storagepool.py validate-modules:E338
 lib/ansible/modules/storage/netapp/netapp_e_syslog.py validate-modules:E337
