@@ -41,7 +41,7 @@ QUERY_TYPES = dict(
     region="slug",
     role="slug",
     site="slug",
-    tenant="slug",
+    tenant="name",
     tenant_group="slug",
     time_zone="timezone",
     vlan="name",
@@ -92,6 +92,7 @@ NO_DEFAULT_ID = set(
         "region",
         "untagged_vlan",
         "tagged_vlans",
+        "tenant",
     ]
 )
 
