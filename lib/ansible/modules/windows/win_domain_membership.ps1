@@ -91,7 +91,7 @@ Function Join-Domain {
         [string] $dns_domain_name,
         [string] $new_hostname,
         [string] $domain_admin_user,
-        [credential] $domainJoinCredential,
+        [PSCredential] $domainJoinCredential,
         [string] $domain_ou_path
     )
 
@@ -155,7 +155,7 @@ Function Set-Workgroup {
 Function Join-Workgroup {
     Param(
         [string] $workgroup_name,
-        [credential] $domainJoinCredential
+        [PSCredential] $domainJoinCredential
     )
 
     If(Is-DomainJoined) { # if we're on a domain, unjoin it (which forces us to join a workgroup)
