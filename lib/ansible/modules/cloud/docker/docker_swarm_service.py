@@ -81,7 +81,7 @@ options:
     description:
       - List of the service constraints.
       - Corresponds to the C(--constraint) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement.constraints) instead.
     type: list
   healthcheck:
     description:
@@ -215,13 +215,13 @@ options:
     description:
       - Configure the logging driver for a service.
       - Corresponds to the C(--log-driver) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging.driver) instead.
     type: str
   log_driver_options:
     description:
       - Options for service logging driver.
       - Corresponds to the C(--log-opt) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging.options) instead.
     type: dict
   reservations:
     description:
@@ -267,13 +267,13 @@ options:
     description:
       - Service CPU limit. C(0) equals no limit.
       - Corresponds to the C(--limit-cpu) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits.cpus) instead.
     type: float
   reserve_cpu:
     description:
       - Service CPU reservation. C(0) equals no reservation.
       - Corresponds to the C(--reserve-cpu) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations.cpus) instead.
     type: float
   limit_memory:
     description:
@@ -283,7 +283,7 @@ options:
       - C(0) equals no limit.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--limit-memory) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits.memory) instead.
     type: str
   reserve_memory:
     description:
@@ -293,7 +293,7 @@ options:
       - C(0) equals no reservation.
       - Omitting the unit defaults to bytes.
       - Corresponds to the C(--reserve-memory) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations.memory) instead.
     type: str
   mode:
     description:
@@ -505,7 +505,7 @@ options:
     description:
       - Restart condition of the service.
       - Corresponds to the C(--restart-condition) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.condition) instead.
     type: str
     choices:
       - none
@@ -515,7 +515,7 @@ options:
     description:
       - Maximum number of service restarts.
       - Corresponds to the C(--restart-condition) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.max_attempts) instead.
     type: int
   restart_policy_delay:
     description:
@@ -523,7 +523,7 @@ options:
       - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
         C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--restart-delay) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.delay) instead.
     type: raw
   restart_policy_window:
     description:
@@ -531,7 +531,7 @@ options:
       - "Accepts a duration as an integer in nanoseconds or as a string in a format that look like:
         C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--restart-window) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.window) instead.
     type: raw
   update_config:
     description:
@@ -589,20 +589,20 @@ options:
         C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-delay) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(10).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.delay) instead.
     type: raw
   update_parallelism:
     description:
       - Rolling update parallelism.
       - Corresponds to the C(--update-parallelism) option of C(docker service create).
       - Before Ansible 2.8, the default value for this option was C(1).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.parallelism) instead.
     type: int
   update_failure_action:
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.failure_action) instead.
     type: str
     choices:
       - continue
@@ -614,21 +614,21 @@ options:
         C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
       - Corresponds to the C(--update-monitor) option of C(docker service create).
       - Requires API version >= 1.25.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.monitor) instead.
     type: raw
   update_max_failure_ratio:
     description:
       - Fraction of tasks that may fail during an update before the failure action is invoked.
       - Corresponds to the C(--update-max-failure-ratio) option of C(docker service create).
       - Requires API version >= 1.25.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.max_failure_ratio) instead.
     type: float
   update_order:
     description:
       - Specifies the order of operations when rolling out an updated task.
       - Corresponds to the C(--update-order) option of C(docker service create).
       - Requires API version >= 1.29.
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config) instead.
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.order) instead.
     type: str
     choices:
       - stop-first
