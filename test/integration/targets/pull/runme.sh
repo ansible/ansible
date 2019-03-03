@@ -20,30 +20,142 @@ trap 'ansible-playbook "${cleanup}"' EXIT
 cp -av "pull-integration-test" "${repo_dir}"
 cd "${repo_dir}"
 (
-    git init
-    git config user.email "ansible@ansible.com"
-    git config user.name  "Ansible Test Runner"
-    git add .
-    git commit -m "Initial commit."
+  git init
+  git config user.email "ansible@ansible.com"
+  git config user.name  "Ansible Test Runner"
+  git add .
+  git commit -m "Initial commit."
 )
 
-function pass_tests {
-	# test for https://github.com/ansible/ansible/issues/13688
-	if ! grep MAGICKEYWORD "${temp_log}"; then
-	    echo "Missing MAGICKEYWORD in output."
-	    exit 1
-	fi
+function main_repo_at_tag
+{
+  local current_tag=''
+  local tag=''
 
-	# test for https://github.com/ansible/ansible/issues/13681
-	if egrep '127\.0\.0\.1.*ok' "${temp_log}"; then
-	    echo "Found host 127.0.0.1 in output. Only localhost should be present."
-	    exit 1
-	fi
-	# make sure one host was run
-	if ! egrep 'localhost.*ok' "${temp_log}"; then
-	    echo "Did not find host localhost in output."
-	    exit 1
-	fi
+  if [[ $# -ne 1 ]]; then
+    echo 'Usage: main_repo_at_tag <tag>'
+
+    return 1
+  fi
+
+  tag="$1"
+
+  cd "${pull_dir}"
+
+  set +x
+
+  current_tag="$(git describe --tags)"
+
+  set -x
+
+  if [[ "${current_tag}" != "${tag}" ]]; then
+    echo "Main ansible-pull repo was not checked out to tag ${tag}"
+
+    return 1
+  fi
+
+  cd -
+}
+
+function main_repo_full_cloned()
+{
+  cd "${pull_dir}"
+
+  if [[ "$(git log --oneline | wc -l)" -eq 1 ]]; then
+    echo "Main ansible-pull repo was not full cloned by git"
+
+    return 1
+  fi
+
+  cd -
+}
+
+function main_repo_shallow_cloned()
+{
+  cd "${pull_dir}"
+
+  if [[ "$(git log --oneline | wc -l)" -gt 1 ]]; then
+    echo "Main ansible-pull repo was not shallow cloned by git"
+
+    return 1
+  fi
+
+  cd -
+}
+
+function pass_tests()
+{
+  # test for https://github.com/ansible/ansible/issues/13688
+  if ! grep MAGICKEYWORD "${temp_log}"; then
+    echo "Missing MAGICKEYWORD in output."
+
+    return 1
+  fi
+
+  # test for https://github.com/ansible/ansible/issues/13681
+  if egrep '127\.0\.0\.1.*ok' "${temp_log}"; then
+    echo "Found host 127.0.0.1 in output. Only localhost should be present."
+
+    return 1
+  fi
+  # make sure one host was run
+  if ! egrep 'localhost.*ok' "${temp_log}"; then
+    echo "Did not find host localhost in output."
+
+    return 1
+  fi
+}
+
+function submodule_initialized()
+{
+  cd "${pull_dir}"
+
+  if [[ -z "$(ls roles/test_submodules/)" ]]; then
+    echo "Primary submodule for role test_submodules was not initialized"
+
+    return 1
+  fi
+
+  cd -
+}
+
+function submodule_recursively_initialized()
+{
+  cd "${pull_dir}"
+
+  if ! [[ -d "roles/test_submodules/submodule1/submodule2" ]]; then
+    echo "Recursive submodules for role test_submodules were not initialized"
+
+    return 1
+  fi
+
+  cd -
+}
+
+function submodule_full_cloned()
+{
+  cd "${pull_dir}/roles/test_submodules"
+
+  if [[ "$(git log --oneline | wc -l)" -eq 1 ]]; then
+    echo "Primary submodule for role test_submodules was not full cloned by git"
+
+    return 1
+  fi
+
+  cd -
+}
+
+function submodule_shallow_cloned()
+{
+  cd "${pull_dir}/roles/test_submodules"
+
+  if [[ "$(git log --oneline | wc -l)" -gt 1 ]]; then
+    echo "Primary submodule for role test_submodules was not shallow cloned by git"
+
+    return 1
+  fi
+
+  cd -
 }
 
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" | tee "${temp_log}"
@@ -58,3 +170,68 @@ JSON_EXTRA_ARGS='{"docker_registries_login": [{ "docker_password": "'"${PASSWORD
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" -e "${JSON_EXTRA_ARGS}" "$@" --tags untagged,test_ev | tee "${temp_log}"
 
 pass_tests
+
+# Remote repository for running ansible-pull against localhost only with fake role that has recursive submodules
+remote_repo='https://github.com/ju2wheels/test_ansible_pull.git'
+
+rm -rf "${pull_dir}"
+
+# Run ansible-pull with defaults (which is shallow clone on main repository and recursive full clone on submodules) and accept GH host key
+ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key | tee "${temp_log}"
+
+main_repo_shallow_cloned
+submodule_initialized
+submodule_recursively_initialized
+submodule_full_cloned
+
+rm -rf "${pull_dir}"
+
+# Run ansible-pull with --full for full clone and accept GH host key
+ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --full | tee "${temp_log}"
+
+main_repo_full_cloned
+submodule_initialized
+submodule_recursively_initialized
+submodule_full_cloned
+
+rm -rf "${pull_dir}"
+
+# Run ansible-pull with --checkout at tag 1.0.0 and accept GH host key
+ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.0.0' | tee "${temp_log}"
+
+main_repo_at_tag '1.0.0'
+main_repo_shallow_cloned
+submodule_initialized
+submodule_recursively_initialized
+submodule_full_cloned
+
+rm -rf "${pull_dir}"
+
+# Run ansible-pull with depth of 1 and accept GH host key using --module-args
+ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1' | tee "${temp_log}"
+
+main_repo_shallow_cloned
+submodule_initialized
+submodule_recursively_initialized
+submodule_full_cloned
+
+# Run ansbible-pull with --module-args and no depth to emulate --full and accept GH host key using --module-args
+ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes' | tee "${temp_log}"
+
+main_repo_full_cloned
+submodule_initialized
+submodule_recursively_initialized
+submodule_full_cloned
+
+rm -rf "${pull_dir}"
+
+# Run ansible-pull with checkout at tag 1.0.0 and accept GH host key using --module-args
+ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.0.0' | tee "${temp_log}"
+
+main_repo_at_tag '1.0.0'
+main_repo_shallow_cloned
+submodule_initialized
+submodule_recursively_initialized
+submodule_full_cloned
+
+rm -rf "${pull_dir}"
