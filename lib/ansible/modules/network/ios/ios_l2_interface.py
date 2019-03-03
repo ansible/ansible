@@ -23,6 +23,7 @@ description:
     Cisco IOS devices.
 author:
   - Nathaniel Case (@qalthos)
+  - Chris Smolen (@smolz)
 options:
   name:
     description:
