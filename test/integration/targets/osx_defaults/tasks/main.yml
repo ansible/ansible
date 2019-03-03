@@ -6,208 +6,358 @@
 - debug:
     msg: "Ansible Python Version: {{ ansible_python_version }}"
 
-- name: Check if name is required for present
+# TEST: Required 'value' argument When 'state' is present
+
+- name: Define state present without providing value argument
   osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
+    domain: com.ansible.fake
+    key: StatePresentRequiredValueTest
     type: string
     state: present
-  register: missing_value
+  register: state_present_required_value_test_result
   ignore_errors: yes
 
-- name: Test if state and value are required together
+- name: Should fail with appropriate error message When value arguments is NOT provided while state argument is present
   assert:
     that:
-    - "'following are missing: value' in '{{ missing_value['msg'] }}'"
+    - "'following are missing: value' in '{{ state_present_required_value_test_result['msg'] }}'"
 
-- name: Change value of AppleMeasurementUnits to centimeter in check_mode
+# TEST: Verify ansible check_mode behaving correctly When creating a new value (non existing initialy)
+
+- name: Ensure that fake setting expected for check_mode test is NOT already defined
   osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
+    domain: com.ansible.fake
+    key: CheckModeTest
+    state: absent
+
+- name: Define value for CheckModeTest key in check_mode
+  osx_defaults:
+    domain: com.ansible.fake
+    key: CheckModeTest
     type: string
-    value: Centimeter
+    value: Hello World
     state: present
-  register: measure_task_check_mode
+  register: check_mode_test_result
   check_mode: yes
 
-- name: Test if AppleMeasurementUnits value is changed to Centimeters in check_mode
+- name: Should return CHANGED status When CheckModeTest key does NOT already exist
   assert:
     that:
-    - measure_task_check_mode.changed
+    - check_mode_test_result.changed
 
-- name: Find the current value of AppleMeasurementUnits
+- name: Find the current value of CheckModeTest
   osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
+    domain: com.ansible.fake
+    key: CheckModeTest
     state: list
-  register: apple_measure_value
+  register: check_mode_test_result
 
-- debug:
-    msg: "{{ apple_measure_value['value'] }}"
-
-- set_fact:
-    new_value: "Centimeters"
-    new_value_accented: "Centiméters"
-  when: apple_measure_value['value'] == 'Inches' or apple_measure_value['value'] == 'Inchés' or apple_measure_value['value'] == None
-
-- set_fact:
-    new_value: "Inches"
-    new_value_accented: "Inchés"
-  when: apple_measure_value['value'] == 'Centimeters' or apple_measure_value['value'] == 'Centiméters'
+- name: Should be none When value previously inserted in check_mode
+  assert:
+    that:
+    - check_mode_test_result.value is none
 
 
-- name: Change value of AppleMeasurementUnits to {{ new_value }}
+# TEST: Verify ansible check_mode behaving correctly When modifying an existing value
+
+- name: Ensure that fake setting expected for check_mode test is initialized with "Hello World" value
   osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
+    domain: com.ansible.fake
+    key: CheckModeTest
+    value: Hello World
+    state: present
+
+- name: Define value for CheckModeTest key in check_mode
+  osx_defaults:
+    domain: com.ansible.fake
+    key: CheckModeTest
     type: string
-    value: "{{ new_value }}"
+    value: Hello World
     state: present
-  register: change_value
-
-- name: Test if AppleMeasurementUnits value is changed to {{ new_value }}
-  assert:
-    that:
-    - change_value.changed
-
-- name: Again change value of AppleMeasurementUnits to {{ new_value }}
-  osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
-    type: string
-    value: "{{ new_value }}"
-    state: present
-  register: change_value
-
-- name: Again test if AppleMeasurementUnits value is not changed to {{ new_value }}
-  assert:
-    that:
-    - not change_value.changed
-
-
-- name: Change value of AppleMeasurementUnits to {{ new_value_accented }}
-  osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
-    type: string
-    value: "{{ new_value_accented }}"
-    state: present
-  register: change_value
-
-- name: Test if AppleMeasurementUnits value is changed to {{ new_value_accented }}
-  assert:
-    that:
-    - change_value.changed
-
-- name: Again change value of AppleMeasurementUnits to {{ new_value_accented }}
-  osx_defaults:
-    domain: NSGlobalDomain
-    key: AppleMeasurementUnits
-    type: string
-    value: "{{ new_value_accented }}"
-    state: present
-  register: change_value
-
-- name: Again test if AppleMeasurementUnits value is not changed to {{ new_value_accented }}
-  assert:
-    that:
-    - not change_value.changed
-
-
-
-- name: Check a fake setting for delete operation
-  osx_defaults:
-    domain: com.ansible.fake_value
-    key: ExampleKeyToRemove
-    state: list
-  register: list_fake_value
-
-- debug:
-    msg: "{{ list_fake_value }}"
-
-- name: Check if fake value is listed
-  assert:
-    that:
-      - not list_fake_value.changed
-
-- name: Create a fake setting for delete operation
-  osx_defaults:
-    domain: com.ansible.fake_value
-    key: ExampleKeyToRemove
-    state: present
-    value: sample
-  register: present_fake_value
-
-- debug:
-    msg: "{{ present_fake_value }}"
-
-- name: Check if fake is created
-  assert:
-    that:
-      - present_fake_value.changed
-  when: present_fake_value.changed
-
-- name: List a fake setting
-  osx_defaults:
-    domain: com.ansible.fake_value
-    key: ExampleKeyToRemove
-    state: list
-  register: list_fake
-
-- debug:
-    msg: "{{ list_fake }}"
-
-- name: Delete a fake setting
-  osx_defaults:
-    domain: com.ansible.fake_value
-    key: ExampleKeyToRemove
-    state: absent
-  register: absent_task
-
-- debug:
-    msg: "{{ absent_task }}"
-
-- name: Check if fake setting is deleted
-  assert:
-    that:
-      - absent_task.changed
-  when: present_fake_value.changed
-
-- name: Try deleting a fake setting again
-  osx_defaults:
-    domain: com.ansible.fake_value
-    key: ExampleKeyToRemove
-    state: absent
-  register: absent_task
-
-- debug:
-    msg: "{{ absent_task }}"
-
-- name: Check if fake setting is not deleted
-  assert:
-    that:
-      - not absent_task.changed
-
-- name: Delete operation in check_mode
-  osx_defaults:
-    domain: com.ansible.fake_value
-    key: ExampleKeyToRemove
-    state: absent
-  register: absent_check_mode_task
+  register: check_mode_test_result
   check_mode: yes
 
-- debug:
-    msg: "{{ absent_check_mode_task }}"
-
-- name: Check delete operation with check mode
+- name: Should return OK status When CheckModeTest key already exists
   assert:
     that:
-      - not absent_check_mode_task.changed
+    - not check_mode_test_result.changed
 
+# TEST: Verify ansible check_mode behaving correctly When deleting an existing value
 
-- name: Use different data types and check if it works with them
+- name: Ensure that fake setting expected for check_mode test is initialized with "Hello World" value
   osx_defaults:
-    domain: com.ansible.fake_values
+    domain: com.ansible.fake
+    key: CheckModeTest
+    value: Hello World
+    state: present
+
+- name: Delete value for CheckModeTest key in check_mode
+  osx_defaults:
+    domain: com.ansible.fake
+    key: CheckModeTest
+    type: string
+    state: absent
+  register: check_mode_test_result
+  check_mode: yes
+
+- name: Should return CHANGED status When CheckModeTest key already exists
+  assert:
+    that:
+    - check_mode_test_result.changed
+
+# TEST: Verify ansible check_mode behaving correctly When deleting a value that does NOT exist
+
+- name: Ensure that fake setting expected for check_mode test does NOT already exist
+  osx_defaults:
+    domain: com.ansible.fake
+    key: CheckModeTest
+    state: absent
+
+- name: Delete value for CheckModeTest key in check_mode
+  osx_defaults:
+    domain: com.ansible.fake
+    key: CheckModeTest
+    type: string
+    state: absent
+  register: check_mode_test_result
+  check_mode: yes
+
+- name: Should return OK status When CheckModeTest key already exists
+  assert:
+    that:
+    - not check_mode_test_result.changed
+
+- name: Clean fake setting after test
+  osx_defaults:
+    domain: com.ansible.fake
+    key: CheckModeTest
+    state: absent
+
+# TEST: Module 'state' list return none When trying to find an unexisting key
+
+- name: Ensure that fake setting expected for state list test is NOT already defined
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListTest
+    state: absent
+
+- name: Find the current value of StateListTest
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListTest
+    state: list
+  register: state_list_test_result
+
+- name: Should return none When StateListTest key does NOT exists
+  assert:
+    that:
+    - state_list_test_result.value is none
+
+# TEST: Module 'state' list return STRING value When trying to find a properly defined key
+
+- name: Ensure that fake setting expected for state list test is initialized with "Hello World" STRING value
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListStringTest
+    type: string
+    value: Hello World
+    state: present
+
+- name: Find the current value of StateListStringTest
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListStringTest
+    state: list
+  register: state_list_string_test_result
+
+- name: Should return "Hello World" When STRING value previously defined
+  assert:
+    that:
+    - state_list_string_test_result.value == 'Hello World'
+
+- name: Clean fake setting after test
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListStringTest
+    state: absent
+
+# TEST: Module 'state' list return ARRAY value When trying to find a properly defined key
+
+- name: Ensure that fake setting expected for state list test is initialized with "Hello World" ARRAY value
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListArrayTest
+    type: array
+    value:
+      - Hello
+      - World
+    state: present
+
+- name: Find the current value of StateListArrayTest
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListArrayTest
+    state: list
+  register: state_list_array_test_result
+
+- name: Should return "Hello World" When ARRAY value previously defined
+  assert:
+    that:
+    - state_list_array_test_result.value == ['Hello','World']
+
+- name: Clean fake setting after test
+  osx_defaults:
+    domain: com.ansible.fake
+    key: StateListArrayTest
+    state: absent
+
+# TEST: Result status should be changed When value does not already exist
+
+- name: Ensure that fake setting expected for module status test is NOT already defined
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    state: absent
+
+- name: Define value for ModuleStatusTest key
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    type: string
+    value: Hello World
+    state: present
+  register: module_status_test_result
+
+- name: Should return CHANGED status When ModuleStatusTest key does NOT already exist
+  assert:
+    that:
+    - module_status_test_result.changed
+
+- name: Find the current value of ModuleStatusTest
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    state: list
+  register: module_status_query_result
+
+- name: Should return "Hello World" previously defined
+  assert:
+    that:
+    - module_status_query_result.value == 'Hello World'
+
+# TEST: Result status should be ok When creating value that already exists
+
+- name: Define AGAIN the same value for ModuleStatusTest key
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    type: string
+    value: Hello World
+    state: present
+  register: module_status_test_result
+
+- name: Should return OK status When ModuleStatusTest key already exists
+  assert:
+    that:
+    - not module_status_test_result.changed
+
+# TEST: Result status should be changed When modifying value with an accented value
+
+- name: Define accented value "Hellô Wôrld" for ModuleStatusTest key
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    type: string
+    value: Hellô Wôrld
+    state: present
+  register: module_status_test_result
+
+- name: Should return CHANGED status When ModuleStatusTest has different value already in it
+  assert:
+    that:
+    - module_status_test_result.changed
+
+- name: Find the current value of ModuleStatusTest
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    state: list
+  register: module_status_query_result
+
+- name: Should return "Hellô Wôrld" modified value
+  assert:
+    that:
+    - module_status_query_result.value == 'Hellô Wôrld'
+
+# TEST: Result status should be ok When accented value already exists
+
+- name: Define AGAIN the same accented value "Hellô Wôrld" for ModuleStatusTest key
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    type: string
+    value: Hellô Wôrld
+    state: present
+  register: module_status_test_result
+
+- name: Should return OK status When ModuleStatusTest has already accented value in it
+  assert:
+    that:
+    - not module_status_test_result.changed
+
+# TEST: Result status should be changed When deleting value for a key that already exists
+
+- name: Delete value for ModuleStatusTest key
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    type: string
+    state: absent
+  register: module_status_test_result
+
+- name: Should return CHANGED status When ModuleStatusTest key already exists
+  assert:
+    that:
+    - module_status_test_result.changed
+
+- name: Find the current value of ModuleStatusTest
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    state: list
+  register: module_status_query_result
+
+- name: Should return undefined When ModuleStatusTest key already deleted
+  assert:
+    that:
+    - module_status_query_result.value is none
+
+# TEST: Result status should be ok When deleting value for a key that does NOT already exist
+
+- name: Delete value for ModuleStatusTest key
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    type: string
+    state: absent
+  register: module_status_test_result
+
+- name: Should return OK status When ModuleStatusTest key does NOT already exist
+  assert:
+    that:
+    - not module_status_test_result.changed
+
+- name: Clean fake setting after test
+  osx_defaults:
+    domain: com.ansible.fake
+    key: ModuleStatusTest
+    state: absent
+
+# TEST: Validate usage exhaustively for all data types supported by osx_defaults
+
+- name: Define all supported type of data
+  osx_defaults:
+    domain: com.ansible.fake
     key: "{{ item.key }}"
     type: "{{ item.type }}"
     value: "{{ item.value }}"
@@ -221,22 +371,24 @@
     - { type: 'float', value: 1.2, key: 'sample_float'}
     - { type: 'string', value: 'sample', key: 'sample_string'}
     - { type: 'array', value: ['1', '2'], key: 'sample_array'}
-  register: test_data_types
+  register: all_supported_data_types_test_result
 
-- assert:
+- name: Should return CHANGED status for each of them
+  assert:
     that: "{{ item.changed }}"
-  with_items: "{{ test_data_types.results }}"
+  with_items: "{{ all_supported_data_types_test_result.results }}"
 
-- name: Use different data types and delete them
+- name: Define all previously defined data
   osx_defaults:
-    domain: com.ansible.fake_values
+    domain: com.ansible.fake
     key: "{{ item.key }}"
     value: "{{ item.value }}"
     type: "{{ item.type }}"
     state: absent
   with_items: *data_type
-  register: test_data_types
+  register: all_supported_data_types_test_result
 
-- assert:
+- name: Should return CHANGED status for each of them
+  assert:
     that: "{{ item.changed }}"
-  with_items: "{{ test_data_types.results }}"
+  with_items: "{{ all_supported_data_types_test_result.results }}"
