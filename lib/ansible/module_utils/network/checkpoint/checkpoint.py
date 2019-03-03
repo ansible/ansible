@@ -26,6 +26,10 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+from __future__ import (absolute_import, division, print_function)
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+
 
 checkpoint_argument_spec = dict(auto_publish_session=dict(type='bool', default=True),
                                 policy_package=dict(type='str', default='standard'),
@@ -57,7 +61,6 @@ def install_policy(connection, policy_package, targets):
                'targets': targets}
 
     connection.send_request('/web_api/install-policy', payload)
-<<<<<<< HEAD
 
 
 def get_api_call_object(connection, api_call_object, unique_payload_for_get):
@@ -159,5 +162,3 @@ def api_call(module, api_call_object, payload, unique_payload_for_get):
 
     result['checkpoint_session_uid'] = connection.get_session_uid()
     module.exit_json(**result)
-=======
->>>>>>> parent of c703ca1384... checkpoint module utols and service tcp module for example
