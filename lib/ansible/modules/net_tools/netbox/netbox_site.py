@@ -48,10 +48,10 @@ options:
         choices:
           - Active
           - Planned
-          - Retired 
+          - Retired
       region:
         description:
-          - The region that the site should be associated with 
+          - The region that the site should be associated with
       tenant:
         description:
           - The tenant the site will be assigned to
@@ -63,7 +63,7 @@ options:
       asn:
         description:
           - The ASN associated with the site
-        type: integer
+        type: int
       time_zone:
         description:
           - |
@@ -74,7 +74,7 @@ options:
           - The description of the prefix
       physical_address:
         description:
-          - Physical address of site 
+          - Physical address of site
       shipping_address:
         description:
           - Shipping address of site
@@ -136,7 +136,7 @@ EXAMPLES = r"""
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test - Colorado 
+          name: Test - Colorado
         state: absent
 
     - name: Create site with all parameters
@@ -144,7 +144,7 @@ EXAMPLES = r"""
         netbox_url: http://netbox.local
         netbox_token: thisIsMyToken
         data:
-          name: Test - California 
+          name: Test - California
           status: Planned
           region: Test Region
           tenant: Test Tenant
@@ -178,7 +178,7 @@ import json
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, SITE_STATUS 
+from ansible.module_utils.net_tools.netbox.netbox_utils import find_ids, normalize_data, SITE_STATUS
 from ansible.module_utils.compat import ipaddress
 from ansible.module_utils._text import to_text
 
