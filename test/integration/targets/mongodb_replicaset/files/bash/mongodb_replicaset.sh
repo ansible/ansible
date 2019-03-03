@@ -15,14 +15,14 @@ fi;
 cd /home/tests
 for i in $(seq 1 "$NUM")
 do
-  mkdir -p mongodb$((START_PORT + $i));
+  mkdir -p mongodb$((START_PORT + i));
 done;
 
 for i in $(seq 1 "$NUM")
 do
   if [ "$AUTH" == "0" ]; then
-    mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongodb$((START_PORT + $i)) --port $((START_PORT + $i)) --replSet "$REPLSET" --logpath mongodb$((START_PORT + $i))/log.log --fork;
+    mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongodb$((START_PORT + i)) --port $((START_PORT + i)) --replSet "$REPLSET" --logpath mongodb$((START_PORT + i))/log.log --fork;
   else
-    mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongodb$((START_PORT + $i)) --port $((START_PORT + $i)) --replSet "$REPLSET" --logpath mongodb$((START_PORT + $i))/log.log --fork --auth --keyFile /root/my.key;
+    mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongodb$((START_PORT + i)) --port $((START_PORT + i)) --replSet "$REPLSET" --logpath mongodb$((START_PORT + i))/log.log --fork --auth --keyFile /root/my.key;
   fi;
 done;
