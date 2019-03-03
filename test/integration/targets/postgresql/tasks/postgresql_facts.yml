@@ -15,8 +15,9 @@
     that:
       - result.version != {}
       - result.databases.{{ db_default }}.collate
-      - result.languages
-      - result.namespaces.information_schema
+      - result.databases.{{ db_default }}.languages
+      - result.databases.{{ db_default }}.namespaces
+      - result.databases.{{ db_default }}.extensions
       - result.settings
       - result.tablespaces
       - result.roles
@@ -38,9 +39,6 @@
       - result.version != {}
       - result.roles
       - result.databases == {}
-      - result.extensions == {}
-      - result.namespaces == {}
-      - result.languages == {}
       - result.repl_slots == {}
       - result.replications == {}
       - result.settings == {}
@@ -61,9 +59,6 @@
       - result.version != {}
       - result.roles
       - result.databases == {}
-      - result.extensions == {}
-      - result.namespaces == {}
-      - result.languages == {}
       - result.repl_slots == {}
       - result.replications == {}
       - result.settings == {}

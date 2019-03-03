@@ -16,9 +16,9 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = r'''
 ---
 module: postgresql_facts
-short_description: Gather facts about remote PostgreSQL servers
+short_description: Gather facts about PostgreSQL servers
 description:
-- Gathers facts about remote PostgreSQL servers.
+- Gathers facts about PostgreSQL servers.
 version_added: "2.8"
 options:
   filter:
@@ -37,11 +37,15 @@ options:
     description:
     - Name of database to connect.
     type: str
+    aliases:
+    - login_db
   port:
     description:
     - Database port to connect.
     type: int
     default: 5432
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -165,7 +169,7 @@ databases:
       description: Database name.
       returned: always
       type: dict
-      sample: template0
+      sample: template1
       contains:
         access_priv:
           description: Database access privileges.
@@ -201,78 +205,78 @@ databases:
           returned: always
           type: str
           sample: 8189415
-extensions:
-  description:
-  - Extensions U(https://www.postgresql.org/docs/current/sql-createextension.html).
-  returned: always
-  type: dict
-  sample:
-  - { "plpgsql": { "description": "PL/pgSQL procedural language",
-    "extversion": { "major": 1, "minor": 0 } } }
-  contains:
-    extdescription:
-      description: Extension description.
-      returned: if existent
-      type: str
-      sample: PL/pgSQL procedural language
-    extversion:
-      description: Extension description.
-      returned: always
-      type: dict
-      contains:
-        major:
-          description: Extension major version.
+        extensions:
+          description:
+          - Extensions U(https://www.postgresql.org/docs/current/sql-createextension.html).
           returned: always
-          type: int
-          sample: 1
-        minor:
-          description: Extension minor version.
+          type: dict
+          sample:
+          - { "plpgsql": { "description": "PL/pgSQL procedural language",
+            "extversion": { "major": 1, "minor": 0 } } }
+          contains:
+            extdescription:
+              description: Extension description.
+              returned: if existent
+              type: str
+              sample: PL/pgSQL procedural language
+            extversion:
+              description: Extension description.
+              returned: always
+              type: dict
+              contains:
+              major:
+                description: Extension major version.
+                returned: always
+                type: int
+                sample: 1
+              minor:
+                description: Extension minor version.
+                returned: always
+                type: int
+                sample: 0
+            nspname:
+              description: Namecpase where the extension is.
+              returned: always
+              type: str
+              sample: pg_catalog
+        languages:
+          description: Procedural languages U(https://www.postgresql.org/docs/current/xplang.html).
           returned: always
-          type: int
-          sample: 0
-    nspname:
-      description: Namecpase where the extension is.
-      returned: always
-      type: str
-      sample: pg_catalog
-languages:
-  description: Procedural languages U(https://www.postgresql.org/docs/current/xplang.html).
-  returned: always
-  type: dict
-  sample: { "sql": { "lanacl": "", "lanowner": "postgres" } }
-  contains:
-    lanacl:
-      description:
-      - Language access privileges
-        U(https://www.postgresql.org/docs/current/catalog-pg-language.html).
-      returned: always
-      type: str
-      sample: "{postgres=UC/postgres,=U/postgres}"
-    lanowner:
-      description:
-      - Language owner U(https://www.postgresql.org/docs/current/catalog-pg-language.html).
-      returned: always
-      type: str
-      sample: postgres
-namespaces:
-  description:
-  - Namespaces (schema) U(https://www.postgresql.org/docs/current/sql-createschema.html).
-  returned: always
-  type: dict
-  sample: { "pg_catalog": { "nspacl": "{postgres=UC/postgres,=U/postgres}", "nspowner": "postgres" } }
-  contains:
-    nspacl:
-      description:
-      - Assess privileges U(https://www.postgresql.org/docs/current/catalog-pg-namespace.html).
-      returned: always
-      type: str
-      sample: "{postgres=UC/postgres,=U/postgres}"
-    nspowner:
-      description:
-      - Schema owner U(https://www.postgresql.org/docs/current/catalog-pg-namespace.html).
-      returned: always
-      type: str
-      sample: postgres
+          type: dict
+          sample: { "sql": { "lanacl": "", "lanowner": "postgres" } }
+          contains:
+            lanacl:
+              description:
+              - Language access privileges
+                U(https://www.postgresql.org/docs/current/catalog-pg-language.html).
+              returned: always
+              type: str
+              sample: "{postgres=UC/postgres,=U/postgres}"
+            lanowner:
+              description:
+              - Language owner U(https://www.postgresql.org/docs/current/catalog-pg-language.html).
+              returned: always
+              type: str
+              sample: postgres
+        namespaces:
+          description:
+          - Namespaces (schema) U(https://www.postgresql.org/docs/current/sql-createschema.html).
+          returned: always
+          type: dict
+          sample: { "pg_catalog": { "nspacl": "{postgres=UC/postgres,=U/postgres}", "nspowner": "postgres" } }
+          contains:
+            nspacl:
+              description:
+              - Access privileges U(https://www.postgresql.org/docs/current/catalog-pg-namespace.html).
+              returned: always
+              type: str
+              sample: "{postgres=UC/postgres,=U/postgres}"
+            nspowner:
+              description:
+              - Schema owner U(https://www.postgresql.org/docs/current/catalog-pg-namespace.html).
+              returned: always
+              type: str
+              sample: postgres
 repl_slots:
   description:
   - Replication slots (available in 9.4 and later)
@@ -282,7 +286,8 @@ repl_slots:
   sample: { "slot0": { "active": false, "database": null, "plugin": null, "slot_type": "physical" } }
   contains:
     active:
-      description: True if this slot is currently actively being used.
+      description:
+      - True means that a receiver has connected to it, and it is currently reserving archives.
       returned: always
       type: bool
       sample: true
@@ -314,7 +319,8 @@ replications:
     "client_addr": "10.10.10.2", "client_hostname": "", "state": "streaming", "usename": "postgres" } }
   contains:
     usename:
-      description: Name of the user logged into this WAL sender process.
+      description:
+      - Name of the user logged into this WAL sender process ('usename' is a column name in pg_stat_replication view).
       returned: always
       type: str
       sample: replication_user
@@ -491,22 +497,46 @@ from ansible.module_utils.six import iteritems
 # PostgreSQL module specific support methods.
 #
 
+class PgDbConn(object):
+    def __init__(self, module, params_dict):
+        self.params_dict = params_dict
+        self.module = module
+        self.db_conn = None
+
+    def connect(self):
+        try:
+            self.db_conn = psycopg2.connect(**self.params_dict)
+            return self.db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        except TypeError as e:
+            if 'sslrootcert' in e.args[0]:
+                self.module.fail_json(msg='PostgreSQL server must be at least version 8.4 '
+                                          'to support sslrootcert')
+            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+
+        except Exception as e:
+            self.module.fail_json(msg="Unable to connect to database: %s" % to_native(e))
+
+    def reconnect(self, dbname):
+        self.db_conn.close()
+
+        self.params_dict['database'] = dbname
+        return self.connect()
+
 
 class PgClusterFacts(object):
-    def __init__(self, module, cursor):
+    def __init__(self, module, db_conn_obj):
         self.module = module
-        self.cursor = cursor
+        self.db_obj = db_conn_obj
+        self.cursor = db_conn_obj.connect()
         self.pg_facts = {
             "version": {},
             "tablespaces": {},
             "databases": {},
-            "languages": {},
-            "namespaces": {},
             "replications": {},
             "repl_slots": {},
             "settings": {},
             "roles": {},
-            "extensions": {},
         }
 
     def collect(self, val_list=False):
@@ -514,13 +544,10 @@ class PgClusterFacts(object):
             "version": self.get_pg_version,
             "tablespaces": self.get_tablespaces,
             "databases": self.get_db_info,
-            "languages": self.get_lang_info,
-            "namespaces": self.get_namespaces,
             "replications": self.get_repl_info,
             "repl_slots": self.get_rslot_info,
             "settings": self.get_settings,
             "roles": self.get_role_info,
-            "extensions": self.get_ext_info,
         }
 
         incl_list = []
@@ -628,7 +655,7 @@ class PgClusterFacts(object):
                 description=i[3],
             )
 
-        self.pg_facts["extensions"] = ext_dict
+        return ext_dict
 
     def get_role_info(self):
         """
@@ -779,7 +806,7 @@ class PgClusterFacts(object):
                 lanacl=i[2] if i[2] else '',
             )
 
-        self.pg_facts["languages"] = lang_dict
+        return lang_dict
 
     def get_namespaces(self):
         """
@@ -797,7 +824,7 @@ class PgClusterFacts(object):
                 nspacl=i[2] if i[2] else '',
             )
 
-        self.pg_facts["namespaces"] = nsp_dict
+        return nsp_dict
 
     def get_pg_version(self):
         query = "SELECT version()"
@@ -836,6 +863,15 @@ class PgClusterFacts(object):
                 size=i[6],
             )
 
+        for datname in db_dict:
+            if datname == 'template0':
+                continue
+
+            self.cursor = self.db_obj.reconnect(datname)
+            db_dict[datname]['namespaces'] = self.get_namespaces()
+            db_dict[datname]['extensions'] = self.get_ext_info()
+            db_dict[datname]['languages'] = self.get_lang_info()
+
         self.pg_facts["databases"] = db_dict
 
     def __exec_sql(self, query):
@@ -860,7 +896,8 @@ class PgClusterFacts(object):
 def main():
     argument_spec = postgres_common_argument_spec()
     argument_spec.update(
-        db=dict(type='str'),
+        db=dict(type='str', aliases=['login_db']),
+        port=dict(type='int', default=5432, aliases=['login_port']),
         filter=dict(type='list'),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
@@ -900,19 +937,10 @@ def main():
         module.fail_json(msg='psycopg2 must be at least 2.4.3 in order '
                              'to user the ssl_rootcert parameter')
 
-    try:
-        db_connection = psycopg2.connect(**kw)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 '
-                                 'to support sslrootcert')
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e))
+    db_conn_obj = PgDbConn(module, kw)
 
     # Do job:
-    pg_facts = PgClusterFacts(module, cursor)
+    pg_facts = PgClusterFacts(module, db_conn_obj)
 
     module.exit_json(**pg_facts.collect(filter_))
 
