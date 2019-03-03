@@ -110,7 +110,7 @@ class ManifoldApiClient(object):
             display.vvvv('manifold lookup connecting to {0}'.format(url))
             response = open_url(url, headers=headers, http_agent=self.http_agent, *args, **kwargs)
             data = response.read()
-            if response.headers.getheader('content-type') == 'application/json':
+            if response.headers.get('content-type') == 'application/json':
                 data = json.loads(data)
             return data
         except ValueError:

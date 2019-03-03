@@ -194,7 +194,7 @@ def mock_fixture(open_url_mock, fixture=None, data=None, headers=None):
             headers['content-type'] = 'application/json'
 
     open_url_mock.return_value.read.return_value = data
-    open_url_mock.return_value.headers.getheader.side_effect = headers.get
+    open_url_mock.return_value.headers = headers
 
 
 class TestManifoldApiClient(unittest.TestCase):
