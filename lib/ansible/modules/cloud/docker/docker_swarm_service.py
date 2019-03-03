@@ -918,6 +918,11 @@ def get_nanoseconds_from_raw_option(name, value):
         )
 
 
+def get_value(key, values, default=None):
+    value = values.get(key)
+    return value if value is not None else default
+
+
 class DockerService(DockerBaseClass):
     def __init__(self):
         super(DockerService, self).__init__()
@@ -1020,25 +1025,29 @@ class DockerService(DockerBaseClass):
     @staticmethod
     def get_restart_config_from_ansible_params(params):
         restart_config = params['restart_config'] or {}
-        condition = restart_config.get(
+        condition = get_value(
             'condition',
-            params['restart_policy']
+            restart_config,
+            default=params['restart_policy']
         )
-        delay = restart_config.get(
+        delay = get_value(
             'delay',
-            params['restart_policy_delay']
+            restart_config,
+            default=params['restart_policy_delay']
         )
         delay = get_nanoseconds_from_raw_option(
             'restart_policy_delay',
             delay
         )
-        max_attempts = restart_config.get(
+        max_attempts = get_value(
             'max_attempts',
-            params['restart_policy_attempts']
+            restart_config,
+            default=params['restart_policy_attempts']
         )
-        window = restart_config.get(
+        window = get_value(
             'window',
-            params['restart_policy_window']
+            restart_config,
+            default=params['restart_policy_window']
         )
         window = get_nanoseconds_from_raw_option(
             'restart_policy_window',
@@ -1054,37 +1063,43 @@ class DockerService(DockerBaseClass):
     @staticmethod
     def get_update_config_from_ansible_params(params):
         update_config = params['update_config'] or {}
-        parallelism = update_config.get(
+        parallelism = get_value(
             'parallelism',
-            params['update_parallelism']
+            update_config,
+            default=params['update_parallelism']
         )
-        delay = update_config.get(
+        delay = get_value(
             'delay',
-            params['update_delay']
+            update_config,
+            default=params['update_delay']
         )
         delay = get_nanoseconds_from_raw_option(
             'update_delay',
             delay
         )
-        failure_action = update_config.get(
+        failure_action = get_value(
             'failure_action',
-            params['update_failure_action']
+            update_config,
+            default=params['update_failure_action']
         )
-        monitor = update_config.get(
+        monitor = get_value(
             'monitor',
-            params['update_monitor']
+            update_config,
+            default=params['update_monitor']
         )
         monitor = get_nanoseconds_from_raw_option(
-            'update_delay',
+            'update_monitor',
             monitor
         )
-        max_failure_ratio = update_config.get(
+        max_failure_ratio = get_value(
             'max_failure_ratio',
-            params['update_max_failure_ratio']
+            update_config,
+            default=params['update_max_failure_ratio']
         )
-        order = update_config.get(
+        order = get_value(
             'order',
-            params['update_order']
+            update_config,
+            default=params['update_order']
         )
         return {
             'update_parallelism': parallelism,
@@ -1097,14 +1112,16 @@ class DockerService(DockerBaseClass):
 
     @staticmethod
     def get_logging_from_ansible_params(params):
-        logging = params['logging'] or {}
-        driver = logging.get(
+        logging_config = params['logging'] or {}
+        driver = get_value(
             'driver',
-            params['log_driver']
+            logging_config,
+            default=params['log_driver']
         )
-        options = logging.get(
+        options = get_value(
             'options',
-            params['log_driver_options']
+            logging_config,
+            default=params['log_driver_options']
         )
         return {
             'log_driver': driver,
@@ -1114,13 +1131,15 @@ class DockerService(DockerBaseClass):
     @staticmethod
     def get_limits_from_ansible_params(params):
         limits = params['limits'] or {}
-        cpus = limits.get(
+        cpus = get_value(
             'cpus',
-            params['limit_cpu']
+            limits,
+            default=params['limit_cpu']
         )
-        memory = limits.get(
+        memory = get_value(
             'memory',
-            params['limit_memory']
+            limits,
+            default=params['limit_memory']
         )
         if memory is not None:
             try:
@@ -1135,14 +1154,17 @@ class DockerService(DockerBaseClass):
     @staticmethod
     def get_reservations_from_ansible_params(params):
         reservations = params['reservations'] or {}
-        cpus = reservations.get(
+        cpus = get_value(
             'cpus',
-            params['reserve_cpu']
+            reservations,
+            default=params['reserve_cpu']
         )
-        memory = reservations.get(
+        memory = get_value(
             'memory',
-            params['reserve_memory']
+            reservations,
+            default=params['reserve_memory']
         )
+
         if memory is not None:
             try:
                 memory = human_to_bytes(memory)
@@ -1156,10 +1178,12 @@ class DockerService(DockerBaseClass):
     @staticmethod
     def get_placement_from_ansible_params(params):
         placement = params['placement'] or {}
-        constraints = placement.get(
+        constraints = get_value(
             'constraints',
-            params['constraints']
+            placement,
+            default=params['constraints']
         )
+
         preferences = placement.get('preferences')
         return {
             'constraints': constraints,
