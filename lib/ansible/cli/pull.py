@@ -238,7 +238,7 @@ class PullCLI(CLI):
 
                 repo_opts['accept_hostkey'] = 'yes'
 
-            if not context.CLIARGS['fullclone'] and 'depth' not in repo_opts:
+            if not context.CLIARGS['module_args'] and not context.CLIARGS['fullclone'] and 'depth' not in repo_opts:
                 repo_opts['depth'] = '1'
             elif context.CLIARGS['fullclone'] and 'depth' in repo_opts:
                 display.warning("--module-args 'depth' argument was provided but is being ignored because of --full")
