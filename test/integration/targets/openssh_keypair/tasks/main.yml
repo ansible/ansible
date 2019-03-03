@@ -1,3 +1,4 @@
+---
 - name: Generate privatekey1 - standard
   connection: local
   openssh_keypair:
@@ -26,5 +27,19 @@
   openssh_keypair:
     path: '{{ output_dir }}/privatekey5'
   register: publickey_gen
+
+- name: Create broken key
+  copy:
+    dest: "{{ item }}"
+    content: ""
+    mode: "0700"
+  loop:
+    - "{{ output_dir }}/privatekeybroken"
+    - "{{ output_dir }}/privatekeybroken.pub"
+- name: Regenerate broken key
+  openssh_keypair:
+    path: '{{ output_dir }}/privatekeybroken'
+    type: rsa
+  register: output_broken
 
 - import_tasks: ../tests/validate.yml

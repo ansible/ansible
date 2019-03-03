@@ -1,3 +1,4 @@
+---
 - name: openssh_cert integration tests
   when: not (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6")
   block:
@@ -388,6 +389,48 @@
       #valid_from: "2001-01-21"
       #valid_to: "2019-01-21"
     check_mode: yes
+
+  - name: Create broken key
+    copy:
+      dest: "{{ item }}"
+      content: ""
+      mode: "0700"
+    loop:
+      - "{{ output_dir }}/id_key_broken"
+      - "{{ output_dir }}/id_key_broken.pub"
+  - name: Cannot load broken key
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key_broken'
+      public_key: '{{ output_dir }}/id_key_broken.pub'
+      path: '{{ output_dir }}/id_cert_broken'
+      valid_from: always
+      valid_to: forever
+    ignore_errors: yes
+    register: output
+  - name: Verify that broken key won't be loaded
+    assert:
+      that:
+        - output is failed
+
+  - name: Create broken cert
+    copy:
+      dest: "{{ output_dir }}/id_cert_broken"
+      content: ""
+  - name: Regenerate broken cert
+    openssh_cert:
+      type: user
+      signing_key: '{{ output_dir }}/id_key'
+      public_key: '{{ output_dir }}/id_key.pub'
+      path: '{{ output_dir }}/id_cert_broken'
+      valid_from: always
+      valid_to: forever
+    register: output
+  - name: Verify that broken cert will be regenerated
+    assert:
+      that:
+        - output is changed
+
   - name: Remove keypair (check mode)
     openssh_keypair:
       path: '{{ output_dir }}/id_key'
