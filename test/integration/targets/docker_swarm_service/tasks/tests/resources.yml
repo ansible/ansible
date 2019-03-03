@@ -70,7 +70,7 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
-      memory: 64MB
+      memory: 64M
   register: limit_memory_1
 
 - name: limits.memory (idempotency)
@@ -79,7 +79,7 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
-      memory: 64MB
+      memory: 64M
   register: limit_memory_2
 
 - name: limit_memory (idempotency, old name)
@@ -87,7 +87,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    limit_memory: 64000000
+    limit_memory: 67108864
   register: limit_memory_2b
 
 - name: limits.memory (change)
@@ -95,7 +95,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    limit_memory: 32MB
+    limit_memory: 32M
   register: limit_memory_3
 
 - name: cleanup
@@ -173,7 +173,7 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
-      memory: 64MB
+      memory: 64M
   register: reserve_memory_1
 
 - name: reservations.memory (idempotency)
@@ -181,7 +181,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    reserve_memory: 64MB
+    reserve_memory: 64M
   register: reserve_memory_2
 
 - name: reserve_memory (idempotency, old name)
@@ -189,7 +189,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    reserve_memory: 64000000
+    reserve_memory: 67108864
   register: reserve_memory_2b
 
 - name: reservations.memory (change)
@@ -197,7 +197,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    reserve_memory: 32000000
+    reserve_memory: 32M
   register: reserve_memory_3
 
 - name: cleanup
