@@ -1,0 +1,2 @@
+bugfixes:
+- zypper - Fix Python 3 compatibility issues
