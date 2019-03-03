@@ -13,12 +13,12 @@ if [ "$AUTH" == "1" ]; then
 fi;
 
 cd /home/tests
-for i in $(seq 1 $NUM)
+for i in $(seq 1 "$NUM")
 do
   mkdir -p mongodb$((START_PORT + $i));
 done;
 
-for i in $(seq 1 $NUM)
+for i in $(seq 1 "$NUM")
 do
   if [ "$AUTH" == "0" ]; then
     mongod --shardsvr --smallfiles --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M" --dbpath mongodb$((START_PORT + $i)) --port $((START_PORT + $i)) --replSet "$REPLSET" --logpath mongodb$((START_PORT + $i))/log.log --fork;
