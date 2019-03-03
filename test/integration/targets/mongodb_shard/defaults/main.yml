@@ -1,0 +1,9 @@
+---
+# defaults file for test_mongodb_shard
+mongodb_replicaset1: rs1
+mongodb_replicaset2: rs2
+configsrv_replicaset: cfg
+test_mongo_auth: yes
+mongodb_admin_user: test_root
+mongodb_admin_password: saE_Rr9!gE6gh#e~R#nZ
+debug: yes
