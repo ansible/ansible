@@ -87,6 +87,11 @@ class TestIosLoggingModule(TestIosModule):
         commands = ['no logging host 2.3.4.5']
         self.execute_module(changed=True, commands=commands)
 
+    def test_ios_logging_configure_disabled_monitor_destination(self):
+        set_module_args(dict(dest='monitor', level='debugging'))
+        commands = ['logging monitor debugging']
+        self.execute_module(changed=True, commands=commands)
+
 
 class TestIosLoggingModuleIOS12(TestIosModule):
 
