@@ -71,23 +71,6 @@ Function Get-DomainMembershipMatch {
 
 <#
     .SYNOPSIS
-    Save the username and the encrypted password as PSCredential object
-    .Parameter username
-    Username of the user which will join or unjoin the computer object
-    .Parameter passwordEncrypted
-    Encrypted password of the user which will be used for join or unjoin the computer object
-#>
-function ConvertTo-Credential {
-    [CmdletBinding()] param([Parameter(Mandatory = $true)][string] $username, [Parameter(Mandatory = $true)][securestring] $password)   
-    Write-DebugLog "Preparing credentials..."
-    $passwordEncrypted = ConvertTo-SecureString -String $password -AsPlainText -Force
-    $credentials = New-Object System.Management.Automation.PSCredential($username, $passwordEncrypted)
-    return $credentials
-    Write-DebugLog "Prepared credentials"
-}
-
-<#
-    .SYNOPSIS
     Add-Computer will validate the "shape" of the hostname- we just care if it matches...
 
 #>
@@ -198,8 +181,7 @@ $state = Get-AnsibleParam $params "state" -validateset @("domain","workgroup") -
 
 $domain_admin_user = Get-AnsibleParam $params "domain_admin_user" -failifempty $result
 $domain_admin_password = Get-AnsibleParam $params "domain_admin_password" -failifempty $result
-$domainAdminPasswordEncrypted = $domain_admin_password | ConvertTo-SecureString -AsPlainText -Force
-$domainAdminCredentials = ConvertTo-Credential -username $domain_admin_user -passwordEncrypted $domainAdminPasswordEncrypted
+$domainAdminCredentials = ConvertTo-Credential -username $domain_admin_user -password $domain_admin_password
 
 $dns_domain_name = Get-AnsibleParam $params "dns_domain_name"
 $hostname = Get-AnsibleParam $params "hostname"
