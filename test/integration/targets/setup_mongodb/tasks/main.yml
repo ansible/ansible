@@ -18,15 +18,29 @@
 
 # ============================================================
 
-- name: Import MongoDB public GPG Key
+- name: Import MongoDB public GPG Key xenial
   apt_key:
-    keyserver: "{{ apt.keyserver }}"
-    id: "{{ apt.keyserver_id }}"
+    keyserver: "{{ apt_xenial.keyserver }}"
+    id: "{{ apt_xenial.keyserver_id }}"
+  when: ansible_distribution_version == "16.04"
 
-- name: Add MongoDB repository into sources list
+- name: Add MongoDB repository into sources list xenial
   apt_repository:
-    repo: "{{ apt.repo }}"
+    repo: "{{ apt_xenial.repo }}"
     state: present
+  when: ansible_distribution_version == "16.04"
+
+- name: Import MongoDB public GPG Key bionic
+  apt_key:
+    keyserver: "{{ apt_bionic.keyserver }}"
+    id: "{{ apt_bionic.keyserver_id }}"
+  when: ansible_distribution_version == "18.04"
+
+- name: Add MongoDB repository into sources list bionic
+  apt_repository:
+    repo: "{{ apt_bionic.repo }}"
+    state: present
+  when: ansible_distribution_version == "18.04"
 
 - name: Update apt keys
   shell: apt-key update && apt-get update
