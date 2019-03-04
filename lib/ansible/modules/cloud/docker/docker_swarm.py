@@ -125,20 +125,26 @@ options:
       - User-defined key/value metadata.
       - Label operations in this module apply to the docker swarm cluster.
         Use M(docker_node) module to add/modify/remove swarm node labels.
+      - Requires API version >= 1.32.
     type: dict
   signing_ca_cert:
     description:
       - The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
-    type: path
+      - This must not be a path to a certificate, but the contents of the certificate.
+      - Requires API version >= 1.30.
+    type: str
   signing_ca_key:
     description:
       - The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
-    type: path
+      - This must not be a path to a key, but the contents of the key.
+      - Requires API version >= 1.30.
+    type: str
   ca_force_rotate:
     description:
       - An integer whose purpose is to force swarm to generate a new signing CA certificate and key,
           if none have been specified.
       - Docker default value is C(0).
+      - Requires API version >= 1.30.
     type: int
   autolock_managers:
     description:
@@ -157,11 +163,15 @@ extends_documentation_fragment:
     - docker
 requirements:
     - python >= 2.7
-    - "docker-py >= 2.6.0"
+    - "docker-py >= 1.10.0"
     - "Please note that the L(docker-py,https://pypi.org/project/docker-py/) Python
        module has been superseded by L(docker,https://pypi.org/project/docker/)
        (see L(here,https://github.com/docker/docker-py/issues/1310) for details).
-       Version 2.1.0 or newer is only available with the C(docker) module."
+       For Python 2.6, C(docker-py) must be used. Otherwise, it is recommended to
+       install the C(docker) Python module. Note that both modules should I(not)
+       be installed at the same time. Also note that when both modules are installed
+       and one of them is uninstalled, the other might no longer function and a
+       reinstall of it is required."
     - Docker API >= 1.25
 author:
   - Thierry Bouvet (@tbouvet)
@@ -268,7 +278,6 @@ class TaskParameters(DockerBaseClass):
         self.election_tick = None
         self.dispatcher_heartbeat_period = None
         self.node_cert_expiry = None
-        self.external_cas = None
         self.name = None
         self.labels = None
         self.log_driver = None
@@ -285,8 +294,6 @@ class TaskParameters(DockerBaseClass):
         for key, value in client.module.params.items():
             if key in result.__dict__:
                 setattr(result, key, value)
-
-        result.labels = result.labels or {}
 
         result.update_parameters(client)
         return result
@@ -334,34 +341,43 @@ class TaskParameters(DockerBaseClass):
             self.log_driver = spec['TaskDefaults']['LogDriver']
 
     def update_parameters(self, client):
-        params = dict(
-            snapshot_interval=self.snapshot_interval,
-            task_history_retention_limit=self.task_history_retention_limit,
-            keep_old_snapshots=self.keep_old_snapshots,
-            log_entries_for_slow_followers=self.log_entries_for_slow_followers,
-            heartbeat_tick=self.heartbeat_tick,
-            election_tick=self.election_tick,
-            dispatcher_heartbeat_period=self.dispatcher_heartbeat_period,
-            node_cert_expiry=self.node_cert_expiry,
-            name=self.name,
-            signing_ca_cert=self.signing_ca_cert,
-            signing_ca_key=self.signing_ca_key,
-            ca_force_rotate=self.ca_force_rotate,
-            autolock_managers=self.autolock_managers,
-            log_driver=self.log_driver,
+        assign = dict(
+            snapshot_interval='snapshot_interval',
+            task_history_retention_limit='task_history_retention_limit',
+            keep_old_snapshots='keep_old_snapshots',
+            log_entries_for_slow_followers='log_entries_for_slow_followers',
+            heartbeat_tick='heartbeat_tick',
+            election_tick='election_tick',
+            dispatcher_heartbeat_period='dispatcher_heartbeat_period',
+            node_cert_expiry='node_cert_expiry',
+            name='name',
+            labels='labels',
+            signing_ca_cert='signing_ca_cert',
+            signing_ca_key='signing_ca_key',
+            ca_force_rotate='ca_force_rotate',
+            autolock_managers='autolock_managers',
+            log_driver='log_driver',
         )
-        if self.labels:
-            params['labels'] = self.labels
+        params = dict()
+        for dest, source in assign.items():
+            if not client.option_minimal_versions[source]['supported']:
+                continue
+            value = getattr(self, source)
+            if value is not None:
+                params[dest] = value
         self.spec = client.create_swarm_spec(**params)
 
-    def compare_to_active(self, other):
+    def compare_to_active(self, other, client):
         for k in self.__dict__:
             if k in ('advertise_addr', 'listen_addr', 'remote_addrs', 'join_token',
                      'rotate_worker_token', 'rotate_manager_token', 'spec'):
                 continue
-            if self.__dict__[k] is None:
+            if not client.option_minimal_versions[k]['supported']:
                 continue
-            if self.__dict__[k] != other.__dict__[k]:
+            value = getattr(self, k)
+            if value is None:
+                continue
+            if value != getattr(other, k):
                 return False
         if self.rotate_worker_token:
             return False
@@ -441,14 +457,15 @@ class SwarmManager(DockerBaseClass):
             self.parameters.update_from_swarm_info(self.swarm_info)
             old_parameters = TaskParameters()
             old_parameters.update_from_swarm_info(self.swarm_info)
-            if self.parameters.compare_to_active(old_parameters):
+            if self.parameters.compare_to_active(old_parameters, self.client):
                 self.results['actions'].append("No modification")
                 self.results['changed'] = False
                 return
-            self.parameters.update_parameters(self.client)
+            update_parameters = TaskParameters.from_ansible_params(self.client)
+            update_parameters.update_parameters(self.client)
             if not self.check_mode:
                 self.client.update_swarm(
-                    version=version, swarm_spec=self.parameters.spec,
+                    version=version, swarm_spec=update_parameters.spec,
                     rotate_worker_token=self.parameters.rotate_worker_token,
                     rotate_manager_token=self.parameters.rotate_manager_token)
         except APIError as exc:
@@ -567,17 +584,19 @@ def main():
     ]
 
     option_minimal_versions = dict(
-        labels=dict(docker_api_version='1.32'),
-        signing_ca_cert=dict(docker_api_version='1.30'),
-        signing_ca_key=dict(docker_api_version='1.30'),
-        ca_force_rotate=dict(docker_api_version='1.30'),
+        labels=dict(docker_py_version='2.6.0', docker_api_version='1.32'),
+        signing_ca_cert=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        signing_ca_key=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        ca_force_rotate=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
+        autolock_managers=dict(docker_py_version='2.6.0'),
+        log_driver=dict(docker_py_version='2.6.0'),
     )
 
     client = AnsibleDockerClient(
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=required_if,
-        min_docker_version='2.6.0',
+        min_docker_version='1.10.0',
         min_docker_api_version='1.25',
         option_minimal_versions=option_minimal_versions,
     )
