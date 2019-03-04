@@ -1,6 +1,9 @@
 minor_changes:
-  - module_defaults - Deprecate module_defaults overwriting modules/groups defined in an outer scope by adding
-    a new MODULE_DEFAULTS_MERGE config option. When the option is set to True, module_defaults defined in an
-    inner scope are merged with those in the outer scope. module_defaults for a module/group may be emptied
-    by providing an empty dictionary. In 2.12 the default of MODULE_DEFAULTS_MERGE will be changed from
-    False to True.
+  - module_defaults - Add a new MODULE_DEFAULTS_MERGE configuration option.
+deprecated_features:
+  - module_defaults - Overwriting module_defaults set in an outer scope by default is deprecated. In 2.12
+    the default behavior will be to merge module_defaults set in an inner scope with those set in the outer
+    scope. Set MODULE_DEFAULTS_MERGE to true to enable merging before 2.12.
+  - module_defaults - Using an empty dictionary to clear previous module defaults for a module/group is
+    deprecated and will be removed in 2.12. Instead, set the special '__clear__' key to true for the
+    group/module.
