@@ -658,7 +658,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
 requirements:
-  - "docker >= 2.0"
+  - "docker >= 2.0.2"
   - "Docker API >= 1.24"
 notes:
   - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
@@ -2269,7 +2269,7 @@ def main():
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True,
-        min_docker_version='2.0.0',
+        min_docker_version='2.0.2',
         min_docker_api_version='1.24',
         option_minimal_versions=option_minimal_versions,
     )
