@@ -122,6 +122,9 @@ options:
   others:
      description:
        - All arguments accepted by the M(file) module also work here.
+extends_documentation_fragment:
+    - files
+    - validate
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 seealso:
