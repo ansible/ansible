@@ -1,8 +1,8 @@
-# Guidelines for AWS modules
+# Guidelines for Ansible Amazon AWS module development
 
 The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
 further information see
-[the AWS working group community page](https://github.com/ansible/community/tree/master/group-aws).
+[the AWS working group community page](https://github.com/ansible/community/wiki/aws).
 If you are planning to contribute AWS modules to Ansible then getting in touch with the working
 group will be a good way to start, especially because a similar module may already be under
 development.
@@ -25,7 +25,7 @@ the amount of boilerplate code.
 
 Change
 
-```
+```python
 from ansible.module_utils.basic import AnsibleModule
 ...
 module = AnsibleModule(...)
@@ -33,7 +33,7 @@ module = AnsibleModule(...)
 
 to
 
-```
+```python
 from ansible.module_utils.aws.core import AnsibleAWSModule
 ...
 module = AnsibleAWSModule(...)
@@ -47,7 +47,7 @@ When porting, keep in mind that AnsibleAWSModule also will add the default ec2
 argument spec by default. In pre-port modules, you should see common arguments
 specified with:
 
-```
+```python
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -323,7 +323,7 @@ except botocore.exceptions.BotoCoreError as e:
     module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 ```
 
-### API throttling and pagination
+### API throttling (rate limiting) and pagination
 
 For methods that return a lot of results, boto3 often provides
 [paginators](http://boto3.readthedocs.io/en/latest/guide/paginators.html). If the method
@@ -343,9 +343,9 @@ the [cloud module_utils](/lib/ansible/module_utils/cloud.py)
 and [AWS Architecture blog](https://www.awsarchitectureblog.com/2015/03/backoff.html)
 for more details.
 
-The combination of these two approaches is then
+The combination of these two approaches is then:
 
-```
+```python
 @AWSRetry.exponential_backoff(retries=5, delay=5)
 def describe_some_resource_with_backoff(client, **kwargs):
      paginator = client.get_paginator('describe_some_resource')
@@ -368,7 +368,7 @@ To handle authorization failures or parameter validation errors in
 `describe_some_resource_with_backoff`, where we just want to return `None` if
 the resource doesn't exist and not retry, we need:
 
-```
+```python
 @AWSRetry.exponential_backoff(retries=5, delay=5)
 def describe_some_resource_with_backoff(client, **kwargs):
      try:
@@ -394,7 +394,7 @@ To make use of AWSRetry easier, it can now be wrapped around a client returned
 by `AnsibleAWSModule`. any call from a client. To add retries to a client,
 create a client:
 
-```
+```python
 module.client('ec2', retry_decorator=AWSRetry.jittered_backoff(retries=10))
 ```
 
