@@ -235,7 +235,7 @@ tablespace:
   type: str
   sample: 'ssd'
 query:
-  description: Query that was tried to be execute.
+  description: Query that was tried to be executed.
   returned: always
   type: str
   sample: 'CREATE INDEX CONCURRENTLY foo_idx ON test_table USING BTREE (id)'
@@ -569,7 +569,7 @@ def main():
 
     if not module.check_mode and not kw['valid'] and concurrent:
         db_connection.rollback()
-        module.warn(msg="Index %s is invalid! ROLLBACK" % idxname)
+        module.warn("Index %s is invalid! ROLLBACK" % idxname)
 
     if not concurrent:
         if module.check_mode:
