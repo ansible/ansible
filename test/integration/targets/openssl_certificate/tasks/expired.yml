@@ -1,0 +1,39 @@
+---
+- name: Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/has_expired_privatekey.pem'
+
+- name: Generate CSR
+  openssl_csr:
+    path: '{{ output_dir }}/has_expired_csr.csr'
+    privatekey_path: '{{ output_dir }}/has_expired_privatekey.pem'
+    subject:
+      commonName: www.example.com
+
+- name: Generate expired selfsigned certificate
+  openssl_certificate:
+    path: '{{ output_dir }}/has_expired_cert.pem'
+    csr_path: '{{ output_dir }}/has_expired_csr.csr'
+    privatekey_path: '{{ output_dir }}/has_expired_privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+    selfsigned_not_after: "20181231000000Z"
+
+- name: "Check task fails because cert is expired (has_expired: false)"
+  openssl_certificate:
+    provider: assertonly
+    path: "{{ output_dir }}/has_expired_cert.pem"
+    has_expired: false
+  ignore_errors: true
+  register: expired_cert_check
+
+- name: Ensure previous task failed
+  assert:
+    that: expired_cert_check is failed
+
+- name: "Check expired cert check is ignored (has_expired: true)"
+  openssl_certificate:
+    provider: assertonly
+    path: "{{ output_dir }}/has_expired_cert.pem"
+    has_expired: true
+  register: expired_cert_skip

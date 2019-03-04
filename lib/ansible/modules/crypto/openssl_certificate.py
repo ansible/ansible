@@ -179,10 +179,11 @@ options:
         version_added: "2.5"
 
     has_expired:
-        default: False
-        type: bool
         description:
-            - Checks if the certificate is expired/not expired at the time the module is executed.
+            - Checks if the certificate is expired/not expired at the time the module is executed. This only applies to
+              the C(assertonly) provider.
+        type: bool
+        default: no
 
     version:
         description:
@@ -521,11 +522,11 @@ class SelfSignedCertificate(Certificate):
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
             if self.notBefore:
-                cert.set_notBefore(self.notBefore)
+                cert.set_notBefore(to_bytes(self.notBefore))
             else:
                 cert.gmtime_adj_notBefore(0)
             if self.notAfter:
-                cert.set_notAfter(self.notAfter)
+                cert.set_notAfter(to_bytes(self.notAfter))
             else:
                 # If no NotAfter specified, expire in
                 # 10 years. 315360000 is 10 years in seconds.
@@ -618,11 +619,11 @@ class OwnCACertificate(Certificate):
             cert = crypto.X509()
             cert.set_serial_number(self.serial_number)
             if self.notBefore:
-                cert.set_notBefore(self.notBefore.encode())
+                cert.set_notBefore(to_bytes(self.notBefore))
             else:
                 cert.gmtime_adj_notBefore(0)
             if self.notAfter:
-                cert.set_notAfter(self.notAfter.encode())
+                cert.set_notAfter(to_bytes(self.notAfter))
             else:
                 # If no NotAfter specified, expire in
                 # 10 years. 315360000 is 10 years in seconds.
@@ -763,11 +764,18 @@ class AssertOnlyCertificate(Certificate):
                     )
 
         def _validate_has_expired():
-            if self.has_expired:
-                if self.has_expired != self.cert.has_expired():
-                    self.message.append(
-                        'Certificate expiration check failed (certificate expiration is %s, expected %s)' % (self.cert.has_expired(), self.has_expired)
-                    )
+            # The following 3 lines are the same as the current PyOpenSSL code for cert.has_expired().
+            # Older version of PyOpenSSL have a buggy implementation,
+            # to avoid issues with those we added the code from a more recent release here.
+
+            time_string = to_native(self.cert.get_notAfter())
+            not_after = datetime.datetime.strptime(time_string, "%Y%m%d%H%M%SZ")
+            cert_expired = not_after < datetime.datetime.utcnow()
+
+            if self.has_expired != cert_expired:
+                self.message.append(
+                    'Certificate expiration check failed (certificate expiration is %s, expected %s)' % (cert_expired, self.has_expired)
+                )
 
         def _validate_version():
             if self.version:
