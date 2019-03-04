@@ -39,12 +39,16 @@ try:
 except ImportError:
     HAS_PYFMGR = False
 
-# check for debug lib
-try:
-    from ansible.module_utils.network.fortimanager.fortimanager_debug import debug_dump
-    HAS_FMGR_DEBUG = True
-except ImportError:
-    HAS_FMGR_DEBUG = False
+# ACTIVE BUG WITH OUR DEBUG IMPORT CALL -- BECAUSE IT'S UNDER MODULE_UTILITIES
+# WHEN module_common.recursive_finder() runs under the module loader, it looks for this namespace debug import
+# and because it's not there, it always fails, regardless of it being under a try/catch here.
+# we're going to move it to a different namespace.
+# # check for debug lib
+# try:
+#     from ansible.module_utils.network.fortimanager.fortimanager_debug import debug_dump
+#     HAS_FMGR_DEBUG = True
+# except:
+#     HAS_FMGR_DEBUG = False
 
 
 # BEGIN HANDLER CLASSES
@@ -71,11 +75,11 @@ class FortiManagerHandler(object):
         data = self._tools.format_request(method, url, **datagram)
         response = self._conn.send_request(method, data)
 
-        if HAS_FMGR_DEBUG:
-            try:
-                debug_dump(response, datagram, self._module.paramgram, url, method)
-            except BaseException:
-                pass
+        # if HAS_FMGR_DEBUG:
+        #     try:
+        #         debug_dump(response, datagram, self._module.paramgram, url, method)
+        #     except BaseException:
+        #         pass
 
         return response
 
@@ -86,7 +90,7 @@ class FortiManagerHandler(object):
         """
         This function will attempt to apply default values to canned responses from FortiManager we know of.
         This saves time, and turns the response in the module into a "one-liner", while still giving us...
-        the flexibility to directly use return_response in modules if we have too.
+        the flexibility to directly use return_response in modules if we have too. This function saves repeated code.
 
         :param module: The Ansible Module CLASS object, used to run fail/exit json
         :type module: object
