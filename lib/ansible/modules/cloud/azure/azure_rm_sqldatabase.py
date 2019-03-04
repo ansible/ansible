@@ -211,7 +211,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMDatabases(AzureRMModuleBase):
+class AzureRMSqlDatabase(AzureRMModuleBase):
     """Configuration class for an Azure RM SQL Database resource"""
 
     def __init__(self):
@@ -308,7 +308,7 @@ class AzureRMDatabases(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMDatabases, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMSqlDatabase, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                supports_check_mode=True,
                                                supports_tags=True)
 
@@ -495,7 +495,7 @@ def _snake_to_camel(snake, capitalize_first=False):
 
 def main():
     """Main execution"""
-    AzureRMDatabases()
+    AzureRMSqlDatabase()
 
 
 if __name__ == '__main__':

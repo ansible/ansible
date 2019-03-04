@@ -94,7 +94,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMFirewallRules(AzureRMModuleBase):
+class AzureRMSqlFirewallRule(AzureRMModuleBase):
     """Configuration class for an Azure RM Firewall Rule resource"""
 
     def __init__(self):
@@ -134,7 +134,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMFirewallRules, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMSqlFirewallRule, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                    supports_check_mode=True,
                                                    supports_tags=False)
 
@@ -265,7 +265,7 @@ class AzureRMFirewallRules(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMFirewallRules()
+    AzureRMSqlFirewallRule()
 
 
 if __name__ == '__main__':
