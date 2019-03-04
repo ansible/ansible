@@ -15,22 +15,33 @@ from ansible.plugins.loader import connection_loader, become_loader
 
 
 
+
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
-    def test_plugins_connection_aws_ssm_start_session(self, mock_opse):
+    @patch('subprocess.Popen')
+    @patch('select.poll')
+    def test_plugins_connection_aws_ssm_start_session(self, s_poll, s_popen, mock_ospe):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        conn._connect = MagicMock()
-        conn._session = MagicMock()
-        conn._poll_stdout = MagicMock()
-        conn._session_id = MagicMock()
+        conn.get_option = MagicMock()
+        conn.get_option.side_effect = ['i1234', 'executable', 'i1234', 'abcd']
+        conn.host = 'abc'
+        mock_ospe.return_value = True
+        s_popen.return_value.stdin.write = MagicMock()
+        s_poll.return_value = MagicMock()
+        s_poll.return_value.register = MagicMock()
+        s_popen.return_value.poll = MagicMock()
+        s_popen.return_value.poll.return_value = None
+        conn._stdin_readline = MagicMock()
+        conn._stdin_readline.return_value = 'abc123'
+        conn.SESSION_START = 'abc'
 
-        conn._stdin_readline()
-        self.assertTrue(conn.SESSION_START)
+        conn.start_session()
 
+        
     @patch('random.choice')
     def test_plugins_connection_aws_ssm_exec_command(self, r_choice):
         pc = PlayContext()
@@ -54,6 +65,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._session.stdout.readline.side_effect = iter(['aaaaa\n', 'Hi\n', '0\n', 'bbbbb\n'])
         conn.get_option = MagicMock()
         conn.get_option.return_value = 1
+
         res, stdout, stderr = conn.exec_command('aws_ssm')
 
     @patch('os.path.exists')
@@ -79,12 +91,21 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         res, stdout, stderr = conn.fetch_file('/in/file', '/out/file')
 
-    def test_plugins_connection_aws_transport_command(self):
+    
+    @patch('subprocess.check_output')
+    def test_plugins_connection_aws_transport_command(self, s_check_output):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        conn._connect = MagicMock()
+        conn.get_option = MagicMock()
+        conn.get_option.return_value = 1
+        
+        conn.exec_command = MagicMock()
+        conn.exec_command.return_value = (0, 'stdout', 'stderr')
+
+        res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'abc')
+
 
     @patch('subprocess.check_output')
     def test_plugins_connection_aws_ssm_close(self, s_check_output):
