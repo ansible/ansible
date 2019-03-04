@@ -107,6 +107,7 @@ options:
     description:
     - TCP Maximum Transfer Size (bytes). The default value is 65536.
     version_added: '2.8'
+    type: int
 
 """
 
