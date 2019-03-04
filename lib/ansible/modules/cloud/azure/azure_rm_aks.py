@@ -96,6 +96,99 @@ options:
         type: bool
         default: no
         version_added: 2.8
+    network_profile:
+        description:
+            - Profile of network configuration.
+        suboptions:
+            network_plugin:
+                description:
+                    - Network plugin used for building Kubernetes network.
+                    - This property cannot been changed.
+                    - With C(kubenet), nodes get an IP address from the Azure virtual network subnet.
+                    - AKS features such as Virtual Nodes or network policies aren't supported with C(kubenet).
+                    - C(azure) enables Azure Container Networking Interface(CNI), every pod gets an IP address from the subnet and can be accessed directly.
+                choices:
+                    - azure
+                    - kubenet
+            network_policy:
+                description: Network policy used for building Kubernetes network.
+            pod_cidr:
+                description:
+                    - A CIDR notation IP range from which to assign pod IPs when kubenet is used.
+                    - It should be a large address space that isn't in use elsewhere in your network environment.
+                    - This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
+            service_cidr:
+                description:
+                    - A CIDR notation IP range from which to assign service cluster IPs.
+                    - It must not overlap with any Subnet IP ranges.
+                    - It should be the *.10 address of your service IP address range.
+            dns_service_ip:
+                description:
+                    - An IP address assigned to the Kubernetes DNS service.
+                    - It must be within the Kubernetes service address range specified in serviceCidr.
+            docker_bridge_cidr:
+                description:
+                    - A CIDR notation IP range assigned to the Docker bridge network.
+                    - It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
+        version_added: 2.8
+    aad_profile:
+        description:
+            - Profile of Azure Active Directory configuration.
+        suboptions:
+            client_app_id:
+                description: The client AAD application ID.
+            server_app_id:
+                description: The server AAD application ID.
+            server_app_secret:
+                description: The server AAD application secret.
+            tenant_id:
+                description:
+                    - The AAD tenant ID to use for authentication.
+                    - If not specified, will use the tenant of the deployment subscription.
+        version_added: 2.8
+    addon:
+        description:
+            - Profile of managed cluster add-on.
+            - Key can be C(http_application_routing), C(monitoring), C(virtual_node).
+            - Value must be a dict contains a bool variable C(enabled).
+        type: dict
+        suboptions:
+            http_application_routing:
+                description:
+                    - The HTTP application routing solution makes it easy to access applications that are deployed to your cluster.
+                type: dict
+                suboptions:
+                    enabled:
+                        description:
+                            - Whether the solution enabled.
+                        type: bool
+            monitoring:
+                description:
+                    - It gives you performance visibility by collecting memory and processor metrics from controllers, nodes,
+                      and containers that are available in Kubernetes through the Metrics API.
+                type: dict
+                suboptions:
+                    enabled:
+                        description:
+                            - Whether the solution enabled.
+                        type: bool
+                    log_analytics_workspace_resource_id:
+                        description:
+                            - Where to store the container metrics.
+            virtual_node:
+                description:
+                    - With virtual nodes, you have quick provisioning of pods, and only pay per second for their execution time.
+                    - You don't need to wait for Kubernetes cluster autoscaler to deploy VM compute nodes to run the additional pods.
+                type: dict
+                suboptions:
+                    enabled:
+                        description:
+                            - Whether the solution enabled.
+                        type: bool
+                    subnet_resource_id:
+                        description:
+                            - Subnet associdated to the cluster.
+        version_added: 2.8
 
 extends_documentation_fragment:
     - azure
@@ -153,7 +246,7 @@ state:
         dns_prefix: aks9860bdcd89
         id: "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourcegroups/yuwzhoaks/providers/Microsoft.ContainerService/managedClusters/aks9860bdc"
         kube_config: "......"
-        kubernetes_version: 1.7.7
+        kubernetes_version: 1.11.4
         linux_profile:
            admin_username: azureuser
            ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADA.....
@@ -166,72 +259,12 @@ state:
         type: Microsoft.ContainerService/ManagedClusters
 '''
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
-import base64
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from azure.mgmt.containerservice.models import (
-        ManagedCluster, ContainerServiceServicePrincipalProfile,
-        ContainerServiceAgentPoolProfile, ContainerServiceLinuxProfile,
-        ContainerServiceSshConfiguration, ContainerServiceSshPublicKey
-    )
 except ImportError:
     # This is handled in azure_rm_common
     pass
-
-
-def create_agent_pool_profile_instance(agentpoolprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceAgentPoolProfile
-    :param: agentpoolprofile: dict with the parameters to setup the ContainerServiceAgentPoolProfile
-    :return: ContainerServiceAgentPoolProfile
-    '''
-    return ContainerServiceAgentPoolProfile(
-        name=agentpoolprofile['name'],
-        count=agentpoolprofile['count'],
-        vm_size=agentpoolprofile['vm_size'],
-        os_disk_size_gb=agentpoolprofile['os_disk_size_gb'],
-        dns_prefix=agentpoolprofile.get('dns_prefix'),
-        ports=agentpoolprofile.get('ports'),
-        storage_profile=agentpoolprofile.get('storage_profile'),
-        vnet_subnet_id=agentpoolprofile.get('vnet_subnet_id'),
-        os_type=agentpoolprofile.get('os_type')
-    )
-
-
-def create_service_principal_profile_instance(spnprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceServicePrincipalProfile
-    :param: spnprofile: dict with the parameters to setup the ContainerServiceServicePrincipalProfile
-    :return: ContainerServiceServicePrincipalProfile
-    '''
-    return ContainerServiceServicePrincipalProfile(
-        client_id=spnprofile['client_id'],
-        secret=spnprofile['client_secret']
-    )
-
-
-def create_linux_profile_instance(linuxprofile):
-    '''
-    Helper method to serialize a dict to a ContainerServiceLinuxProfile
-    :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
-    :return: ContainerServiceLinuxProfile
-    '''
-    return ContainerServiceLinuxProfile(
-        admin_username=linuxprofile['admin_username'],
-        ssh=create_ssh_configuration_instance(linuxprofile['ssh_key'])
-    )
-
-
-def create_ssh_configuration_instance(sshconf):
-    '''
-    Helper method to serialize a dict to a ContainerServiceSshConfiguration
-    :param: sshconf: dict with the parameters to setup the ContainerServiceSshConfiguration
-    :return: ContainerServiceSshConfiguration
-    '''
-    return ContainerServiceSshConfiguration(
-        public_keys=[ContainerServiceSshPublicKey(key_data=str(sshconf))]
-    )
 
 
 def create_aks_dict(aks):
@@ -256,8 +289,37 @@ def create_aks_dict(aks):
             aks.agent_pool_profiles),
         type=aks.type,
         kube_config=aks.kube_config,
-        enable_rbac=aks.enable_rbac
+        enable_rbac=aks.enable_rbac,
+        network_profile=create_network_profiles_dict(aks.network_profile),
+        aad_profile=create_aad_profiles_dict(aks.aad_profile),
+        addon=create_addon_dict(aks.addon_profiles),
+        fqdn=aks.fqdn,
+        node_resource_group=aks.node_resource_group
     )
+
+
+def create_network_profiles_dict(network):
+    return dict(
+        network_plugin=network.network_plugin,
+        network_policy=network.network_policy,
+        pod_cidr=network.pod_cidr,
+        service_cidr=network.service_cidr,
+        dns_service_ip=network.dns_service_ip,
+        docker_bridge_cidr=network.docker_bridge_cidr
+    ) if network else dict()
+
+
+def create_aad_profiles_dict(aad):
+    return aad.as_dict() if aad else dict()
+
+
+def create_addon_dict(addon):
+    result = dict()
+    addon = addon or dict()
+    for key in addon.keys():
+        result[key] = addon[key].config
+        result[key]['enabled'] = addon[key].enabled
+    return result
 
 
 def create_linux_profile_dict(linuxprofile):
@@ -295,12 +357,34 @@ def create_agent_pool_profiles_dict(agentpoolprofiles):
         vm_size=profile.vm_size,
         name=profile.name,
         os_disk_size_gb=profile.os_disk_size_gb,
-        dns_prefix=profile.dns_prefix,
-        ports=profile.ports,
         storage_profile=profile.storage_profile,
         vnet_subnet_id=profile.vnet_subnet_id,
         os_type=profile.os_type
     ) for profile in agentpoolprofiles] if agentpoolprofiles else None
+
+
+def create_addon_profiles_spec():
+    '''
+    Helper method to parse the ADDONS dictionary and generate the addon spec
+    '''
+    spec = dict()
+    for key in ADDONS.keys():
+        values = ADDONS[key]
+        addon_spec = dict(
+            enabled=dict(type='bool', default=True)
+        )
+        configs = values.get('config') or {}
+        for item in configs.keys():
+            addon_spec[item] = dict(type='str', aliases=[configs[item]], required=True)
+        spec[key] = dict(type='dict', options=addon_spec, aliases=[values['name']])
+    return spec
+
+
+ADDONS = {
+    'http_application_routing': dict(name='httpApplicationRouting'),
+    'monitoring': dict(name='omsagent', config={'log_analytics_workspace_resource_id': 'logAnalyticsWorkspaceResourceID'}),
+    'virtual_node': dict(name='aciConnector', config={'subnet_resource_id': 'SubnetName'})
+}
 
 
 linux_profile_spec = dict(
@@ -311,7 +395,7 @@ linux_profile_spec = dict(
 
 service_principal_spec = dict(
     client_id=dict(type='str', required=True),
-    client_secret=dict(type='str')
+    client_secret=dict(type='str', no_log=True)
 )
 
 
@@ -326,6 +410,24 @@ agent_pool_profile_spec = dict(
                           'StorageAccount', 'ManagedDisks']),
     vnet_subnet_id=dict(type='str'),
     os_type=dict(type='str', choices=['Linux', 'Windows'])
+)
+
+
+network_profile_spec = dict(
+    network_plugin=dict(type='str', choices=['azure', 'kubenet']),
+    network_policy=dict(type='str'),
+    pod_cidr=dict(type='str'),
+    service_cidr=dict(type='str'),
+    dns_service_ip=dict(type='str'),
+    docker_bridge_cidr=dict(type='str')
+)
+
+
+aad_profile_spec = dict(
+    client_app_id=dict(type='str'),
+    server_app_id=dict(type='str'),
+    server_app_secret=dict(type='str', no_log=True),
+    tenant_id=dict(type='str')
 )
 
 
@@ -372,6 +474,18 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             enable_rbac=dict(
                 type='bool',
                 default=False
+            ),
+            network_profile=dict(
+                type='dict',
+                options=network_profile_spec
+            ),
+            aad_profile=dict(
+                type='dict',
+                options=aad_profile_spec
+            ),
+            addon=dict(
+                type='dict',
+                options=create_addon_profiles_spec()
             )
         )
 
@@ -386,6 +500,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         self.agent_pool_profiles = None
         self.service_principal = None
         self.enable_rbac = False
+        self.network_profile = None
+        self.aad_profile = None
+        self.addon = None
 
         required_if = [
             ('state', 'present', [
@@ -407,6 +524,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         resource_group = None
         to_be_updated = False
+        update_tags = False
 
         resource_group = self.get_resource_group(self.resource_group)
         if not self.location:
@@ -419,22 +537,20 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             # For now Agent Pool cannot be more than 1, just remove this part in the future if it change
             agentpoolcount = len(self.agent_pool_profiles)
             if agentpoolcount > 1:
-                self.fail(
-                    'You cannot specify more than one agent_pool_profiles currently')
+                self.fail('You cannot specify more than one agent_pool_profiles currently')
 
-            if response:
-                self.results = response
+            available_versions = self.get_all_versions()
+            if self.kubernetes_version not in available_versions.keys():
+                self.fail("Unsupported kubernetes version. Excepted one of {0} but get {1}".format(available_versions.keys(), self.kubernetes_version))
             if not response:
                 to_be_updated = True
-
             else:
+                self.results = response
+                self.results['changed'] = False
                 self.log('Results : {0}'.format(response))
-                update_tags, response['tags'] = self.update_tags(
-                    response['tags'])
+                update_tags, response['tags'] = self.update_tags(response['tags'])
 
                 if response['provisioning_state'] == "Succeeded":
-                    if update_tags:
-                        to_be_updated = True
 
                     def is_property_changed(profile, property, ignore_case=False):
                         base = response[profile].get(property)
@@ -466,24 +582,50 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                         to_be_updated = True
 
                     if response['kubernetes_version'] != self.kubernetes_version:
+                        upgrade_versions = available_versions.get(response['kubernetes_version'])
+                        if upgrade_versions and self.kubernetes_version not in upgrade_versions:
+                            self.fail('Cannot upgrade kubernetes version to {0}, supported value are {1}'.format(self.kubernetes_version, upgrade_versions))
                         to_be_updated = True
 
                     if response['enable_rbac'] != self.enable_rbac:
                         to_be_updated = True
+
+                    if self.network_profile:
+                        for key in self.network_profile.keys():
+                            original = response['network_profile'].get(key) or ''
+                            if self.network_profile[key] and self.network_profile[key].lower() != original.lower():
+                                to_be_updated = True
+
+                    def compare_addon(origin, patch, config):
+                        if not patch:
+                            return True
+                        if not origin:
+                            return False
+                        if origin['enabled'] != patch['enabled']:
+                            return False
+                        config = config or dict()
+                        for key in config.keys():
+                            if origin.get(config[key]) != patch.get(key):
+                                return False
+                        return True
+
+                    if self.addon:
+                        for key in ADDONS.keys():
+                            addon_name = ADDONS[key]['name']
+                            if not compare_addon(response['addon'].get(addon_name), self.addon.get(key), ADDONS[key].get('config')):
+                                to_be_updated = True
 
                     for profile_result in response['agent_pool_profiles']:
                         matched = False
                         for profile_self in self.agent_pool_profiles:
                             if profile_result['name'] == profile_self['name']:
                                 matched = True
+                                os_disk_size_gb = profile_self.get('os_disk_size_gb') or profile_result['os_disk_size_gb']
                                 if profile_result['count'] != profile_self['count'] \
                                         or profile_result['vm_size'] != profile_self['vm_size'] \
-                                        or profile_result['os_disk_size_gb'] != profile_self['os_disk_size_gb'] \
-                                        or profile_result['dns_prefix'] != profile_self['dns_prefix'] \
-                                        or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id') \
-                                        or set(profile_result['ports'] or []) != set(profile_self.get('ports') or []):
-                                    self.log(
-                                        ("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
+                                        or profile_result['os_disk_size_gb'] != os_disk_size_gb \
+                                        or profile_result['vnet_subnet_id'] != profile_self.get('vnet_subnet_id', profile_result['vnet_subnet_id']):
+                                    self.log(("Agent Profile Diff - Origin {0} / Update {1}".format(str(profile_result), str(profile_self))))
                                     to_be_updated = True
                         if not matched:
                             self.log("Agent Pool not found")
@@ -497,7 +639,13 @@ class AzureRMManagedCluster(AzureRMModuleBase):
                     self.log("Creation / Update done")
 
                 self.results['changed'] = True
-                return self.results
+            elif update_tags:
+                self.log("Need to Update the AKS tags")
+
+                if not self.check_mode:
+                    self.results['tags'] = self.update_aks_tags()
+                self.results['changed'] = True
+            return self.results
 
         elif self.state == 'absent' and response:
             self.log("Need to Delete the AKS instance")
@@ -523,21 +671,22 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         agentpools = []
 
         if self.agent_pool_profiles:
-            agentpools = [create_agent_pool_profile_instance(
-                profile) for profile in self.agent_pool_profiles]
+            agentpools = [self.create_agent_pool_profile_instance(profile) for profile in self.agent_pool_profiles]
 
-        service_principal_profile = create_service_principal_profile_instance(
-            self.service_principal)
+        service_principal_profile = self.create_service_principal_profile_instance(self.service_principal)
 
-        parameters = ManagedCluster(
+        parameters = self.managedcluster_models.ManagedCluster(
             location=self.location,
             dns_prefix=self.dns_prefix,
             kubernetes_version=self.kubernetes_version,
             tags=self.tags,
             service_principal_profile=service_principal_profile,
             agent_pool_profiles=agentpools,
-            linux_profile=create_linux_profile_instance(self.linux_profile),
-            enable_rbac=self.enable_rbac
+            linux_profile=self.create_linux_profile_instance(self.linux_profile),
+            enable_rbac=self.enable_rbac,
+            network_profile=self.create_network_profile_instance(self.network_profile),
+            aad_profile=self.create_aad_profile_instance(self.aad_profile),
+            addon_profiles=self.create_addon_profile_instance(self.addon)
         )
 
         # self.log("service_principal_profile : {0}".format(parameters.service_principal_profile))
@@ -547,13 +696,21 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         # self.log("agent_pool_profiles : {0}".format(parameters.agent_pool_profiles))
 
         try:
-            poller = self.containerservice_client.managed_clusters.create_or_update(self.resource_group, self.name, parameters)
+            poller = self.managedcluster_client.managed_clusters.create_or_update(self.resource_group, self.name, parameters)
             response = self.get_poller_result(poller)
             response.kube_config = self.get_aks_kubeconfig()
             return create_aks_dict(response)
         except CloudError as exc:
             self.log('Error attempting to create the AKS instance.')
             self.fail("Error creating the AKS instance: {0}".format(exc.message))
+
+    def update_aks_tags(self):
+        try:
+            poller = self.managedcluster_client.managed_clusters.update_tags(self.resource_group, self.name, self.tags)
+            response = self.get_poller_result(poller)
+            return response.tags
+        except CloudError as exc:
+            self.fail("Error attempting to update AKS tags: {0}".format(exc.message))
 
     def delete_aks(self):
         '''
@@ -563,8 +720,7 @@ class AzureRMManagedCluster(AzureRMModuleBase):
         '''
         self.log("Deleting the AKS instance {0}".format(self.name))
         try:
-            poller = self.containerservice_client.managed_clusters.delete(
-                self.resource_group, self.name)
+            poller = self.managedcluster_client.managed_clusters.delete(self.resource_group, self.name)
             self.get_poller_result(poller)
             return True
         except CloudError as e:
@@ -578,11 +734,9 @@ class AzureRMManagedCluster(AzureRMModuleBase):
 
         :return: deserialized AKS instance state dictionary
         '''
-        self.log(
-            "Checking if the AKS instance {0} is present".format(self.name))
+        self.log("Checking if the AKS instance {0} is present".format(self.name))
         try:
-            response = self.containerservice_client.managed_clusters.get(
-                self.resource_group, self.name)
+            response = self.managedcluster_client.managed_clusters.get(self.resource_group, self.name)
             self.log("Response : {0}".format(response))
             self.log("AKS instance : {0} found".format(response.name))
             response.kube_config = self.get_aks_kubeconfig()
@@ -591,15 +745,79 @@ class AzureRMManagedCluster(AzureRMModuleBase):
             self.log('Did not find the AKS instance.')
             return False
 
+    def get_all_versions(self):
+        try:
+            result = dict()
+            response = self.containerservice_client.container_services.list_orchestrators(self.location, resource_type='managedClusters')
+            orchestrators = response.orchestrators
+            for item in orchestrators:
+                result[item.orchestrator_version] = [x.orchestrator_version for x in item.upgrades] if item.upgrades else []
+            return result
+        except Exception as exc:
+            self.fail('Error when getting AKS supported kubernetes version list for location {0} - {1}'.format(self.location, exc.message or str(exc)))
+
     def get_aks_kubeconfig(self):
         '''
         Gets kubeconfig for the specified AKS instance.
 
         :return: AKS instance kubeconfig
         '''
-        access_profile = self.containerservice_client.managed_clusters.get_access_profiles(
-            self.resource_group, self.name, "clusterUser")
-        return base64.b64decode(access_profile.kube_config)
+        access_profile = self.managedcluster_client.managed_clusters.get_access_profile(resource_group_name=self.resource_group,
+                                                                                        resource_name=self.name,
+                                                                                        role_name="clusterUser")
+        return access_profile.kube_config.decode('utf-8')
+
+    def create_agent_pool_profile_instance(self, agentpoolprofile):
+        '''
+        Helper method to serialize a dict to a ManagedClusterAgentPoolProfile
+        :param: agentpoolprofile: dict with the parameters to setup the ManagedClusterAgentPoolProfile
+        :return: ManagedClusterAgentPoolProfile
+        '''
+        return self.managedcluster_models.ManagedClusterAgentPoolProfile(**agentpoolprofile)
+
+    def create_service_principal_profile_instance(self, spnprofile):
+        '''
+        Helper method to serialize a dict to a ManagedClusterServicePrincipalProfile
+        :param: spnprofile: dict with the parameters to setup the ManagedClusterServicePrincipalProfile
+        :return: ManagedClusterServicePrincipalProfile
+        '''
+        return self.managedcluster_models.ManagedClusterServicePrincipalProfile(
+            client_id=spnprofile['client_id'],
+            secret=spnprofile['client_secret']
+        )
+
+    def create_linux_profile_instance(self, linuxprofile):
+        '''
+        Helper method to serialize a dict to a ContainerServiceLinuxProfile
+        :param: linuxprofile: dict with the parameters to setup the ContainerServiceLinuxProfile
+        :return: ContainerServiceLinuxProfile
+        '''
+        return self.managedcluster_models.ContainerServiceLinuxProfile(
+            admin_username=linuxprofile['admin_username'],
+            ssh=self.managedcluster_models.ContainerServiceSshConfiguration(public_keys=[
+                self.managedcluster_models.ContainerServiceSshPublicKey(key_data=str(linuxprofile['ssh_key']))])
+        )
+
+    def create_network_profile_instance(self, network):
+        return self.managedcluster_models.ContainerServiceNetworkProfile(**network) if network else None
+
+    def create_aad_profile_instance(self, aad):
+        return self.managedcluster_models.ManagedClusterAADProfile(**aad) if aad else None
+
+    def create_addon_profile_instance(self, addon):
+        result = dict()
+        addon = addon or {}
+        for key in addon.keys():
+            if not ADDONS.get(key):
+                self.fail('Unsupported addon {0}'.format(key))
+            if addon.get(key):
+                name = ADDONS[key]['name']
+                config_spec = ADDONS[key].get('config') or dict()
+                config = addon[key]
+                for v in config_spec.keys():
+                    config[config_spec[v]] = config[v]
+                result[name] = self.managedcluster_models.ManagedClusterAddonProfile(config=config, enabled=config['enabled'])
+        return result
 
 
 def main():
