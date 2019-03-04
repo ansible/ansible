@@ -90,7 +90,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMConfigurations(AzureRMModuleBase):
+class AzureRMMySqlConfiguration(AzureRMModuleBase):
 
     def __init__(self):
         self.module_arg_spec = dict(
@@ -125,7 +125,7 @@ class AzureRMConfigurations(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMConfigurations, self).__init__(derived_arg_spec=self.module_arg_spec,
+        super(AzureRMMySqlConfiguration, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True,
                                                     supports_tags=False)
 
@@ -234,7 +234,7 @@ class AzureRMConfigurations(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMConfigurations()
+    AzureRMMySqlConfiguration()
 
 
 if __name__ == '__main__':
