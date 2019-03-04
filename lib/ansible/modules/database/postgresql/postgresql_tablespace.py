@@ -57,6 +57,8 @@ options:
     description:
     - Dict of tablespace options to set. Supported from PostgreSQL 9.0.
     - For more information see U(https://www.postgresql.org/docs/current/sql-createtablespace.html).
+    - When reset is passed as an option's value, if the option was set previously, it will be removed
+      U(https://www.postgresql.org/docs/current/sql-altertablespace.html).
     type: dict
   rename_to:
     description:
@@ -146,6 +148,12 @@ EXAMPLES = r'''
     set:
       random_page_cost: 1
       seq_page_cost: 1
+
+- name: Reset random_page_cost option
+  postgresql_tablespace:
+    name: bar
+    set:
+      random_page_cost: reset
 
 - name: Rename the tablespace from bar to pcie_ssd
   postgresql_tablespace:
@@ -315,7 +323,7 @@ class PgTablespace(object):
         self.new_name = newname
         return self.__exec_sql(query, ddl=True)
 
-    def set_settings(self, new_settings=False):
+    def set_settings(self, new_settings={}):
         # settings must be a dict {'key': 'value'}
         if self.opt_not_supported:
             return False
@@ -324,13 +332,22 @@ class PgTablespace(object):
 
         # Apply new settings:
         for i in new_settings:
-            if i not in self.settings:
+            if new_settings[i] == 'reset':
+                if i in self.settings:
+                    changed = self.__reset_setting(i)
+                    self.settings[i] = None
+
+            elif i not in self.settings:
                 changed = self.__set_setting("%s = '%s'" % (i, new_settings[i]))
 
             elif str(new_settings[i]) != self.settings[i]:
                 changed = self.__set_setting("%s = '%s'" % (i, new_settings[i]))
 
         return changed
+
+    def __reset_setting(self, setting):
+        query = "ALTER TABLESPACE %s RESET (%s)" % (self.name, setting)
+        return self.__exec_sql(query, ddl=True)
 
     def __set_setting(self, setting):
         query = "ALTER TABLESPACE %s SET (%s)" % (self.name, setting)
@@ -430,7 +447,7 @@ def main():
         except Exception as e:
             module.fail_json(msg="Could not switch role: %s" % to_native(e))
 
-    # Change autocommit to Fasle if check_mode:
+    # Change autocommit to False if check_mode:
     if module.check_mode:
         if psycopg2.__version__ >= '2.4.2':
             db_connection.set_session(autocommit=False)
