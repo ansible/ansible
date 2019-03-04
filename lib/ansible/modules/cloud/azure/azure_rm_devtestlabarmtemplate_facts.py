@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabarmtemplate_facts
 version_added: "2.8"
-short_description: Get Azure Arm Template facts.
+short_description: Get Azure DevTest Lab ARM Template facts.
 description:
-    - Get facts of Azure Arm Template.
+    - Get facts of Azure DevTest Lab ARM Template.
 
 options:
     resource_group:
@@ -36,7 +36,7 @@ options:
         required: True
     name:
         description:
-            - The name of the azure Resource Manager template.
+            - The name of the ARM template.
 
 extends_documentation_fragment:
     - azure
@@ -47,17 +47,17 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Arm Template
+  - name: Get information on DevTest Lab ARM Template
     azure_rm_devtestlabarmtemplate_facts:
-      resource_group: resource_group_name
-      lab_name: lab_name
-      artifact_source_name: artifact_source_name
-      name: name
+      resource_group: myResourceGroup
+      lab_name: myLab
+      artifact_source_name: public environment repo
+      name: WebApp
 '''
 
 RETURN = '''
 arm_templates:
-    description: A list of dictionaries containing facts for Arm Template.
+    description: A list of dictionaries containing facts for DevTest Lab ARM Template.
     returned: always
     type: complex
     contains:
@@ -116,7 +116,7 @@ except ImportError:
     pass
 
 
-class AzureRMArmTemplateFacts(AzureRMModuleBase):
+class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -145,7 +145,7 @@ class AzureRMArmTemplateFacts(AzureRMModuleBase):
         self.lab_name = None
         self.artifact_source_name = None
         self.name = None
-        super(AzureRMArmTemplateFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlArmTemplateFacts, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -169,7 +169,7 @@ class AzureRMArmTemplateFacts(AzureRMModuleBase):
                                                            artifact_source_name=self.artifact_source_name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Arm Template.')
+            self.fail('Could not get facts for DTL ARM Template.')
 
         if response is not None:
             for item in response:
@@ -187,7 +187,7 @@ class AzureRMArmTemplateFacts(AzureRMModuleBase):
                                                           name=self.name)
             self.log("Response : {0}".format(response))
         except CloudError as e:
-            self.log('Could not get facts for Arm Template.')
+            self.fail('Could not get facts for DTL ARM Template.')
 
         if response:
             results.append(self.format_response(response))
@@ -210,7 +210,7 @@ class AzureRMArmTemplateFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMArmTemplateFacts()
+    AzureRMDtlArmTemplateFacts()
 
 
 if __name__ == '__main__':
