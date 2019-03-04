@@ -295,8 +295,9 @@ class AnsibleHcloudServer(Hcloud):
             server_type is not None
             and self.hcloud_server.server_type.name != server_type
         ):
+            previous_server_status = self.hcloud_server.status
             state = self.module.params.get("state")
-            if self.hcloud_server.status == Server.STATUS_RUNNING:
+            if previous_server_status == Server.STATUS_RUNNING:
                 if not self.module.check_mode:
                     if self.module.params.get("force_upgrade") or state == "stopped":
                         self.stop_server()  # Only stopped server can be upgraded
@@ -315,7 +316,10 @@ class AnsibleHcloudServer(Hcloud):
                     server_type=self.client.server_types.get_by_name(server_type),
                     upgrade_disk=self.module.params.get("upgrade_disk"),
                 ).wait_until_finished(timeout)
-                if state != "stopped":
+                if (
+                    state == "present"
+                    and previous_server_status == Server.STATUS_RUNNING
+                ) or state == "started":
                     self.start_server()
 
             self._mark_as_changed()
