@@ -477,6 +477,7 @@ from ansible.module_utils.docker_common import docker_version
 from ansible.module_utils.basic import human_to_bytes
 from ansible.module_utils._text import to_text
 
+from ansible.module_utils.common._collections_compat import Mapping
 
 try:
     from distutils.version import LooseVersion
@@ -1054,7 +1055,7 @@ class DockerServiceManager():
                          % (pv['param'], pv['min_version'])))
 
         for publish_def in params['publish'] or []:
-            if not isinstance(publish_def, dict):
+            if not isinstance(publish_def, Mapping):
                 self.client.module.fail_json(msg='The publish option must be provided with a list of dicts!')
             if 'mode' in publish_def.keys():
                 if LooseVersion(self.client.version()['ApiVersion']) < LooseVersion('1.25'):
