@@ -363,9 +363,12 @@ class AzureRMClusters(AzureRMModuleBase):
                                                             parameters=self.parameters)
             else:
                 response = self.mgmt_client.clusters.update(resource_group_name=self.resource_group,
-                                                            cluster_name=self.name)
+                                                            cluster_name=self.name,
+                                                            tags=self.parameters.get('tags'))
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
+
+            # need to resize cluster?
 
         except CloudError as exc:
             self.log('Error attempting to create the Cluster instance.')
