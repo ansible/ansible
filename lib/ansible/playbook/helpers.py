@@ -385,7 +385,7 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager, loader=loader)
+        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager, loader=loader, collection_list=play.collections)
         roles.append(i)
 
     return roles

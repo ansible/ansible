@@ -28,9 +28,11 @@ from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
+from ansible.playbook.collection import Collection
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+from ansible.utils.collection_loader import get_collection_role_path
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -39,11 +41,11 @@ __all__ = ['RoleDefinition']
 display = Display()
 
 
-class RoleDefinition(Base, Become, Conditional, Taggable):
+class RoleDefinition(Base, Become, Conditional, Taggable, Collection):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=[]):
 
         super(RoleDefinition, self).__init__()
 
@@ -54,6 +56,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         self._role_path = None
         self._role_basedir = role_basedir
         self._role_params = dict()
+        self._collection_list = collection_list
 
     # def __repr__(self):
     #     return 'ROLEDEF: ' + self._attributes.get('role', '<no name set>')
@@ -139,6 +142,30 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         append it to the default role path
         '''
 
+        # create a templar class to template the dependency names, in
+        # case they contain variables
+        if self._variable_manager is not None:
+            all_vars = self._variable_manager.get_vars(play=self._play)
+        else:
+            all_vars = dict()
+
+        templar = Templar(loader=self._loader, variables=all_vars)
+        role_name = templar.template(role_name)
+
+
+        # FIXME: sanity check the name first; don't try this with path-ish role names, etc
+        # try to load as a collection-based role first
+        role_tuple = get_collection_role_path(role_name, self._collection_list)
+
+        if role_tuple:
+            # we found it, just return what we got
+            return role_tuple
+
+        # FIXME: refactor this to be callable from internal so we can properly order ansible.legacy searches with the
+        # collections keyword
+        if self._collection_list and not 'ansible.legacy' in self._collection_list:
+            raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
+
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
             os.path.join(self._loader.get_basedir(), u'roles'),
@@ -157,16 +184,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # in the loader (which should be the playbook dir itself) but without
         # the roles/ dir appended
         role_search_paths.append(self._loader.get_basedir())
-
-        # create a templar class to template the dependency names, in
-        # case they contain variables
-        if self._variable_manager is not None:
-            all_vars = self._variable_manager.get_vars(play=self._play)
-        else:
-            all_vars = dict()
-
-        templar = Templar(loader=self._loader, variables=all_vars)
-        role_name = templar.template(role_name)
 
         # now iterate through the possible paths and return the first one we find
         for path in role_search_paths:

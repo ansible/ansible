@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os.path
+import pkgutil
 import re
 import sys
 
@@ -22,6 +23,9 @@ _SYNTHETIC_PACKAGES = {
     'ansible_collections.ansible.core.plugins.module_utils': dict(type='map', map='ansible.module_utils', graft=True),
     'ansible_collections.ansible.core.plugins.modules': dict(type='flatmap', flatmap='ansible.modules', graft=True),
 }
+
+# TODO: tighten this up to subset Python identifier requirements
+_collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
 
 # FIXME: exception handling/error logging
 class AnsibleCollectionLoader(object):
@@ -238,6 +242,52 @@ class AnsibleFlatMapLoader(object):
 #    def get_source(self, fullname):
 #    def get_code(self, fullname):
 #    def is_package(self, fullname):
+
+
+def is_collection_qualified_role_name(candidate_name):
+    """
+    Returns true if a name looks like a collection-qualified name (eg, ns.collection.rolename)
+    """
+    if _collection_role_name_re.match(candidate_name):
+        return True
+
+    return False
+
+
+def get_collection_role_path(role_name, collection_list=[]):
+    match = _collection_role_name_re.match(role_name)
+
+    if match:
+        grps = match.groups()
+        collection_list = ['.'.join([grps[0], grps[1]])]
+        role = grps[2]
+    elif not collection_list:
+        return None  # not a FQ role and no collection search list spec'd, nothing to do
+    else:
+        role = role_name
+
+    for c in collection_list:
+        try:
+            role_package = 'ansible_collections.{0}.roles.{1}'.format(c, role)
+
+            # FIXME: we need to be able to enumerate/query collections here without the risk of loading arbitrary module init code along the way
+            # should we just ask the collections loader directly now?
+            # FIXME: roles don't have to have tasks/main.y?ml anymore, just load the package itself?
+            # FIXME: error handling; need to catch any import failures and move along
+            tasks_file = pkgutil.get_data(role_package + '.tasks', 'main.yml')
+
+            if tasks_file is not None:
+                # the package is now loaded, get the collection's package and ask where it lives
+                path = os.path.dirname(sys.modules[role_package].__file__)
+                return role, path
+
+        except IOError:
+            continue
+        except Exception as ex:
+            # FIXME: pick out typical import errors first, then error logging
+            continue
+
+    return None
 
 
 def set_collection_playbook_paths(playbook_paths):

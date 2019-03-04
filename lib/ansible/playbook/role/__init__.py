@@ -27,6 +27,7 @@ from ansible.module_utils.common._collections_compat import Container, Mapping, 
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
+from ansible.playbook.collection import Collection
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
@@ -91,7 +92,7 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Become, Conditional, Taggable):
+class Role(Base, Become, Conditional, Taggable, Collection):
 
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
@@ -166,6 +167,7 @@ class Role(Base, Become, Conditional, Taggable):
             if role_include.role not in play.ROLE_CACHE:
                 play.ROLE_CACHE[role_include.role] = dict()
 
+            # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
             play.ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
@@ -194,6 +196,7 @@ class Role(Base, Become, Conditional, Taggable):
             else:
                 self._attributes[attr_name] = role_include._attributes[attr_name]
 
+        # FIXME: disable this for collection-hosted roles (no legacy plugin loading allowed)
         # ensure all plugins dirs for this role are added to plugin search path
         add_all_plugin_dirs(self._role_path)
 

@@ -43,11 +43,11 @@ class RoleInclude(RoleDefinition):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
-        super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager, loader=loader)
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=[]):
+        super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager, loader=loader, collection_list=collection_list)
 
     @staticmethod
-    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None):
+    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None, collection_list=[]):
 
         if not (isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)):
             raise AnsibleParserError("Invalid role definition: %s" % to_native(data))
@@ -55,5 +55,5 @@ class RoleInclude(RoleDefinition):
         if isinstance(data, string_types) and ',' in data:
             raise AnsibleError("Invalid old style role requirement: %s" % data)
 
-        ri = RoleInclude(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader)
+        ri = RoleInclude(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader, collection_list=collection_list)
         return ri.load_data(data, variable_manager=variable_manager, loader=loader)
