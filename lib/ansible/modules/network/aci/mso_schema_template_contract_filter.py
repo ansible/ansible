@@ -73,6 +73,11 @@ options:
     choices: [ both-way, consumer-to-provider, provider-to-consumer ]
     default: both-way
     aliases: [ type ]
+  filter_directives:
+    description:
+    - A list of filter directives.
+    type: list
+    choices: [ log, none ]
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
@@ -163,6 +168,7 @@ def main():
         contract_scope=dict(type='str', choices=['application-profile', 'global', 'tenant', 'vrf']),
         contract_filter_type=dict(type='str', choices=['both-way', 'one-way']),
         filter=dict(type='str', aliases=['name']),  # This parameter is not required for querying all objects
+        filter_directives=dict(type='list', choices=['log', 'none']),
         filter_template=dict(type='str'),
         filter_schema=dict(type='str'),
         filter_type=dict(type='str', default='both-way', choices=FILTER_KEYS.keys(), aliases=['type']),
@@ -185,6 +191,7 @@ def main():
     contract_filter_type = module.params['contract_filter_type']
     contract_scope = module.params['contract_scope']
     filter_name = module.params['filter']
+    filter_directives = module.params['filter_directives']
     filter_template = module.params['filter_template']
     filter_schema = module.params['filter_schema']
     filter_type = module.params['filter_type']
@@ -275,6 +282,8 @@ def main():
             ops.append(dict(op='remove', path=filter_path))
 
     elif state == 'present':
+        if filter_directives is None:
+            filter_directives = ['none']
 
         payload = dict(
             filterRef=dict(
@@ -282,21 +291,20 @@ def main():
                 templateName=filter_template,
                 schemaId=filter_schema_id,
             ),
-            directives=[],
+            directives=filter_directives,
         )
 
         mso.sanitize(payload, collate=True)
         mso.existing = mso.sent
 
         if contract_idx is None:
-            if not mso.existing:
-                # Contract does not exist, so we have to create it
-                if contract_display_name is None:
-                    contract_display_name = contract
-                if contract_filter_type is None:
-                    contract_ftype = 'bothWay'
-                if contract_scope is None:
-                    contract_scope = 'context'
+            # Contract does not exist, so we have to create it
+            if contract_display_name is None:
+                contract_display_name = contract
+            if contract_filter_type is None:
+                contract_ftype = 'bothWay'
+            if contract_scope is None:
+                contract_scope = 'context'
 
             payload = {
                 'name': contract,
