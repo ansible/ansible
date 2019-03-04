@@ -141,7 +141,7 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_tablespace:
-    db: postgres
+    login_db: postgres
     login_user: "{{ pg_user }}"
     name: acme
     set:

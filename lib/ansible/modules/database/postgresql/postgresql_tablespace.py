@@ -52,6 +52,7 @@ options:
   owner:
     description:
     - Name of the role to set as an owner of the tablespace.
+    - If this option is not specified, the tablespace owner is a role that creates the tablespace.
     type: str
   set:
     description:
@@ -75,11 +76,15 @@ options:
     description:
     - Name of database to connect to and run queries against.
     type: str
+    aliases:
+    - login_db
   port:
     description:
     - Database port to connect.
     type: int
     default: 5432
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -385,7 +390,8 @@ def main():
         owner=dict(type='str'),
         set=dict(type='dict'),
         rename_to=dict(type='str'),
-        db=dict(type='str'),
+        db=dict(type='str', aliases=['login_db']),
+        port=dict(type='int', default=5432, aliases=['login_port']),
         ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
         session_role=dict(type='str'),
