@@ -155,6 +155,8 @@ from ansible.module_utils.common.sys_info import (
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
     handle_aliases,
+    list_deprecations,
+    list_no_log_values,
     PASS_VARS,
 )
 
@@ -173,17 +175,12 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
 
+
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
 SEQUENCETYPE = frozenset, KeysView, Sequence
+
 PASSWORD_MATCH = re.compile(r'^(?:.+[-_\s])?pass(?:[-_\s]?(?:word|phrase|wrd|wd)?)(?:[-_\s].+)?$', re.I)
-
-_NUMBERTYPES = tuple(list(integer_types) + [float])
-
-# Deprecated compat.  Only kept in case another module used these names  Using
-# ansible.module_utils.six is preferred
-
-NUMBERTYPES = _NUMBERTYPES
 
 imap = map
 
@@ -336,31 +333,6 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8', errors='surrogate_or_strict'
         return d
 
 
-def return_values(obj):
-    """ Return native stringified values from datastructures.
-
-    For use with removing sensitive values pre-jsonification."""
-    if isinstance(obj, (text_type, binary_type)):
-        if obj:
-            yield to_native(obj, errors='surrogate_or_strict')
-        return
-    elif isinstance(obj, SEQUENCETYPE):
-        for element in obj:
-            for subelement in return_values(element):
-                yield subelement
-    elif isinstance(obj, Mapping):
-        for element in obj.items():
-            for subelement in return_values(element[1]):
-                yield subelement
-    elif isinstance(obj, (bool, NoneType)):
-        # This must come before int because bools are also ints
-        return
-    elif isinstance(obj, NUMBERTYPES):
-        yield to_native(obj, nonstring='simplerepr')
-    else:
-        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
-
-
 def _remove_values_conditions(value, no_log_strings, deferred_removals):
     """
     Helper function for :meth:`remove_values`.
@@ -436,7 +408,7 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
         deferred_removals.append((value, new_value))
         value = new_value
 
-    elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
+    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
         stringy_value = to_native(value, encoding='utf-8', errors='surrogate_or_strict')
         if stringy_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
@@ -1581,19 +1553,8 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        # Use the argspec to determine which args are no_log
-        for arg_name, arg_opts in spec.items():
-            if arg_opts.get('no_log', False):
-                # Find the value for the no_log'd param
-                no_log_object = param.get(arg_name, None)
-                if no_log_object:
-                    self.no_log_values.update(return_values(no_log_object))
-
-            if arg_opts.get('removed_in_version') is not None and arg_name in param:
-                self._deprecations.append({
-                    'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
-                    'version': arg_opts.get('removed_in_version')
-                })
+        self.no_log_values.update(list_no_log_values(spec, param))
+        self._deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
