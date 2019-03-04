@@ -65,7 +65,7 @@
     that:
     - result.changed == true
     - result.owner == 'bob'
-    - result.queries == ["CREATE TABLESPACE acme LOCATION '/ssd'", "ALTER TABLESPACE acme OWNER TO bob"]
+    - result.queries == ["CREATE TABLESPACE \"acme\" LOCATION '/ssd'", "ALTER TABLESPACE \"acme\" OWNER TO bob"]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
@@ -87,7 +87,7 @@
     that:
     - result.changed == true
     - result.owner == 'alice'
-    - result.queries == ["ALTER TABLESPACE acme OWNER TO alice"]
+    - result.queries == ["ALTER TABLESPACE \"acme\" OWNER TO alice"]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options == {}
@@ -130,7 +130,7 @@
     that:
     - result.changed == true
     - result.owner == 'alice'
-    - result.queries == ["ALTER TABLESPACE acme SET (seq_page_cost = '4')"]
+    - result.queries == ["ALTER TABLESPACE \"acme\" SET (seq_page_cost = '4')"]
     - result.state == 'present'
     - result.tablespace == 'acme'
     - result.options.seq_page_cost == '4'
@@ -152,7 +152,7 @@
 - assert:
     that:
     - result.changed == true
-    - result.queries == ["ALTER TABLESPACE acme RESET (seq_page_cost)"]
+    - result.queries == ["ALTER TABLESPACE \"acme\" RESET (seq_page_cost)"]
   when: postgres_version_resp.stdout is version('9.0', '>=')
 
 # Try to reset option again to be sure that nothing changes:
@@ -190,7 +190,7 @@
     that:
     - result.changed == true
     - result.newname == 'foo'
-    - result.queries == ["ALTER TABLESPACE acme RENAME TO foo"]
+    - result.queries == ["ALTER TABLESPACE \"acme\" RENAME TO foo"]
 
 # Drop tablespace:
 - name: postgresql_tablespace - drop tablespace
@@ -208,7 +208,7 @@
     that:
     - result.changed == true
     - result.state == 'absent'
-    - result.queries == ["DROP TABLESPACE foo"]
+    - result.queries == ["DROP TABLESPACE \"foo\""]
 
 # Try to drop nonexistent tablespace to be sure that nothing changes:
 - name: postgresql_tablespace - try to drop nonexistent tablespace

@@ -217,7 +217,7 @@ except ImportError:
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
@@ -310,21 +310,21 @@ class PgTablespace(object):
                 self.location = res[0][2]
 
     def create(self, location):
-        query = ("CREATE TABLESPACE %s LOCATION '%s'" % (self.name, location))
+        query = ("CREATE TABLESPACE %s LOCATION '%s'" % (pg_quote_identifier(self.name, 'database'), location))
         return self.__exec_sql(query, ddl=True)
 
     def drop(self):
-        return self.__exec_sql("DROP TABLESPACE %s" % self.name, ddl=True)
+        return self.__exec_sql("DROP TABLESPACE %s" % pg_quote_identifier(self.name, 'database'), ddl=True)
 
     def set_owner(self, new_owner):
         if new_owner == self.owner:
             return False
 
-        query = "ALTER TABLESPACE %s OWNER TO %s" % (self.name, new_owner)
+        query = "ALTER TABLESPACE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'database'), new_owner)
         return self.__exec_sql(query, ddl=True)
 
     def rename(self, newname):
-        query = "ALTER TABLESPACE %s RENAME TO %s" % (self.name, newname)
+        query = "ALTER TABLESPACE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'database'), newname)
         self.new_name = newname
         return self.__exec_sql(query, ddl=True)
 
@@ -351,11 +351,11 @@ class PgTablespace(object):
         return changed
 
     def __reset_setting(self, setting):
-        query = "ALTER TABLESPACE %s RESET (%s)" % (self.name, setting)
+        query = "ALTER TABLESPACE %s RESET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
         return self.__exec_sql(query, ddl=True)
 
     def __set_setting(self, setting):
-        query = "ALTER TABLESPACE %s SET (%s)" % (self.name, setting)
+        query = "ALTER TABLESPACE %s SET (%s)" % (pg_quote_identifier(self.name, 'database'), setting)
         return self.__exec_sql(query, ddl=True)
 
     def __exec_sql(self, query, ddl=False, add_to_executed=True):
