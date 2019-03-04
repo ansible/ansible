@@ -215,9 +215,11 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
             self.fail('Could not get facts for Artifact Source.')
 
         if response is not None:
-            for item in response:
+            item = response.next()
+            while item:
                 if self.has_tags(item.tags, self.tags):
                     results.append(self.format_response(item))
+                item = response.next()
 
         return results
 
