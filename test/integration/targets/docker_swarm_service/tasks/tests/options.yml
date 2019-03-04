@@ -191,12 +191,13 @@
     - configs_3 is changed
     - configs_4 is changed
     - configs_5 is not changed
-  when: docker_api_version is version('1.30', '>=')
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.5.0', '>=')
+
 - assert:
     that:
     - configs_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.30') in configs_1.msg"
-  when: docker_api_version is version('1.30', '<')
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.5.0', '<')
 
 ####################################################################
 ## command #########################################################
@@ -420,12 +421,12 @@
       - dns_4 is changed
       - dns_5 is changed
       - dns_6 is not changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
     - dns_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in dns_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## dns_options #####################################################
@@ -495,12 +496,12 @@
       - dns_options_3 is changed
       - dns_options_4 is changed
       - dns_options_5 is not changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
     - dns_options_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in dns_options_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## dns_search ######################################################
@@ -576,12 +577,12 @@
       - dns_search_4 is changed
       - dns_search_5 is changed
       - dns_search_6 is not changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
     - dns_search_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in dns_search_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## endpoint_mode ###################################################
@@ -622,6 +623,12 @@
       - endpoint_mode_1 is changed
       - endpoint_mode_2 is not changed
       - endpoint_mode_3 is changed
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('3.0.0', '>=')
+- assert:
+    that:
+    - endpoint_mode_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in endpoint_mode_1.msg"
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('3.0.0', '<')
 
 ####################################################################
 ## env #############################################################
@@ -821,12 +828,12 @@
     that:
       - force_update_1 is changed
       - force_update_2 is changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
 - assert:
     that:
     - force_update_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in force_update_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
 
 ####################################################################
 ## groups ##########################################################
@@ -890,6 +897,12 @@
     - groups_3 is changed
     - groups_4 is changed
     - groups_5 is not changed
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - groups_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in groups_1.msg"
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## healthcheck #####################################################
@@ -1011,12 +1024,12 @@
     - healthcheck_7 is not changed
     - healthcheck_8 is changed
     - healthcheck_9 is not changed
-  when: docker_py_version is version('2.4.0', '>=')
+  when: docker_api_version is version('1.25', '>=')
 - assert:
     that:
     - healthcheck_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.4.0') in healthcheck_1.msg"
-  when: docker_py_version is version('2.4.0', '<')
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in healthcheck_1.msg"
+  when: docker_api_version is version('1.25', '<')
 
 ###################################################################
 ## hostname #######################################################
@@ -1057,12 +1070,12 @@
       - hostname_1 is changed
       - hostname_2 is not changed
       - hostname_3 is changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.2.0', '>=')
 - assert:
     that:
     - hostname_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in hostname_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.2.0', '<')
 
 ###################################################################
 ## hosts ##########################################################
@@ -1514,6 +1527,12 @@
     - stop_signal_1 is changed
     - stop_signal_2 is not changed
     - stop_signal_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - stop_signal_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.28') in stop_signal_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## publish #########################################################
@@ -1623,12 +1642,12 @@
       - publish_5 is not changed
       - publish_6 is changed
       - publish_7 is not changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('3.0.0', '>=')
 - assert:
     that:
     - publish_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in publish_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('3.0.0', '<')
 
 ###################################################################
 ## replicas #######################################################
@@ -1779,12 +1798,12 @@
       - secrets_3 is changed
       - secrets_4 is changed
       - secrets_5 is not changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
 - assert:
     that:
     - secrets_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in secrets_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
 
 ###################################################################
 # tty #############################################################
@@ -1825,12 +1844,12 @@
       - tty_1 is changed
       - tty_2 is not changed
       - tty_3 is changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.4.0', '>=')
 - assert:
     that:
     - tty_1 is failed
     - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in tty_1.msg"
-  when: docker_api_version is version('1.25', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.4.0', '<')
 
 ###################################################################
 ## user ###########################################################
