@@ -27,7 +27,6 @@ class PhpIpamWrapper(urls.Request):
             authenticate = json.load(self.post(url, headers=self.auth_header))
             token = authenticate['data']['token']
             self.headers.update({'token': '%s' % token})
-            print(token)
 
     # Retrieves subnet information in json
     def get_subnet(self, subnet, section):
