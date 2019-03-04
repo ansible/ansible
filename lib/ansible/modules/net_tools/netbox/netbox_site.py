@@ -215,7 +215,12 @@ def main():
     argument_spec = dict(
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
-        data=dict(type="dict", required=True),
+        data=dict(
+            type="dict",
+            required=True,
+            options=dict(
+                name=(dict(required=True),
+        ),
         state=dict(required=False, default="present", choices=["present", "absent"]),
         validate_certs=dict(type="bool", default=True)
     )
