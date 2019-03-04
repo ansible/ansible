@@ -312,7 +312,9 @@ class AzureRMClusters(AzureRMModuleBase):
                 if old_response['properties']['cluster_version'].startswith(self.parameters['properties'].get('cluster_version', '')):
                     self.parameters['properties']['cluster_version'] = old_response['properties']['cluster_version']
 
-                if (not default_compare(self.parameters, old_response, '', self.results)):
+                compare_result = {}
+                if (not default_compare(self.parameters, old_response, '', compare_result)):
+                    self.results['compare'] = compare_result
                     self.results['old_response'] = old_response
                     self.to_do = Actions.Update
 
@@ -425,7 +427,7 @@ def default_compare(new, old, path, result):
     elif isinstance(new, dict):
         match = True
         if not isinstance(old, dict):
-            result['compare'] = 'changed [' + path + '] old dict is null'
+            result[path] = 'old dict is null'
             match = False
         else:
             for k in new.keys():
@@ -433,7 +435,7 @@ def default_compare(new, old, path, result):
                     match = False
     elif isinstance(new, list):
         if not isinstance(old, list) or len(new) != len(old):
-            result['compare'] = 'changed [' + path + '] length is different or null'
+            result[path] = 'length is different or null'
             match = False
         elif len(old) == 0:
             match = True
@@ -466,7 +468,7 @@ def default_compare(new, old, path, result):
             if new == old:
                 match = True
             else:
-                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+                result[path] = str(new) + ' != ' + str(old)
                 match = False
     return match
 
