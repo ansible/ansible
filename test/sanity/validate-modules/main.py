@@ -1312,6 +1312,14 @@ class ModuleValidator(Validator):
                 args_from_docs.add(arg)
                 args_from_docs.update(data.get('aliases', []))
 
+            for arg in args_from_argspec:
+                if not str(arg).isidentifier():
+                    self.reporter.error(
+                        path=self.object_path,
+                        code=336,
+                        msg="Argument '%s' is not a valid python identifier" % arg
+                    )
+
             args_missing_from_docs = args_from_argspec.difference(args_from_docs)
             docs_missing_from_args = args_from_docs.difference(args_from_argspec | deprecated_args_from_argspec)
             for arg in args_missing_from_docs:
