@@ -11,6 +11,10 @@ from lib.util import (
     ABC,
 )
 
+from lib.constants import (
+    TIMEOUT_PATH,
+)
+
 # improve performance by disabling uid/gid lookups
 tarfile.pwd = None
 tarfile.grp = None
@@ -45,6 +49,7 @@ class DefaultTarFilter(TarFilter):
         self.ignore_files = (
             '.gitignore',
             '.gitdir',
+            TIMEOUT_PATH,
         )
 
         self.ignore_extensions = (
