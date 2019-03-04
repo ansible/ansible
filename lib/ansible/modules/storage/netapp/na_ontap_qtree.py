@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -55,7 +55,7 @@ options:
 '''
 
 EXAMPLES = """
-- name: Create QTree
+- name: Create Qtrees
   na_ontap_qtree:
     state: present
     name: ansibleQTree
@@ -65,9 +65,10 @@ EXAMPLES = """
     username: "{{ netapp_username }}"
     password: "{{ netapp_password }}"
 
-- name: Rename QTree
+- name: Rename Qtrees
   na_ontap_qtree:
     state: present
+    from_name: ansibleQTree_rename
     name: ansibleQTree
     flexvol_name: ansibleVolume
     vserver: ansibleVServer
@@ -197,12 +198,10 @@ class NetAppOntapQTree(object):
 
     def apply(self):
         changed = False
-        qtree_exists = False
         rename_qtree = False
         netapp_utils.ems_log_event("na_ontap_qtree", self.server)
         qtree_detail = self.get_qtree()
         if qtree_detail:
-            qtree_exists = True
             if self.state == 'absent':  # delete
                 changed = True
         elif self.state == 'present':
