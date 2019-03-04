@@ -4,7 +4,7 @@
 
 from ansible.module_utils import urls
 import json
-import urllib
+from urllib.parse import urlencode
 
 
 class PhpIpamWrapper(urls.Request):
@@ -86,17 +86,17 @@ class PhpIpamWrapper(urls.Request):
             return None
 
     def create(self, session, url, **kwargs):
-        payload = urllib.urlencode(dict(**kwargs))
+        payload = urlencode(dict(**kwargs))
         result = json.load(session.post(url, data=payload))
         return result
 
     def modify(self, session, url, **kwargs):
-        payload = urllib.urlencode(dict(**kwargs))
+        payload = urlencode(dict(**kwargs))
         result = json.load(session.patch(url, data=payload))
         return result
 
     def remove(self, session, url, id):
-        payload = urllib.urlencode({'id': id})
+        payload = urlencode({'id': id})
         result = json.load(session.delete(url, data=payload))
         return result
 
