@@ -439,6 +439,51 @@
       - output.changed
   when: "github_token | length > 0"
 
+- name: Get Artifact facts
+  azure_rm_devtestlabartifact_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public repo"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifacts[0]['id'] != None
+      - output.artifacts[0]['resource_group'] != None
+      - output.artifacts[0]['lab_name'] != None
+      - output.artifacts[0]['artifact_source_name'] != None
+      - output.artifacts[0]['name'] != None
+      - output.artifacts[0]['description'] != None
+      - output.artifacts[0]['file_path'] != None
+      - output.artifacts[0]['publisher'] != None
+      - output.artifacts[0]['target_os_type'] != None
+      - output.artifacts[0]['publisher'] != None
+      - "output.artifacts | length > 1"
+
+- name: Get Artifact facts
+  azure_rm_devtestlabartifact_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public repo"
+    name: windows-webdeploy
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifacts[0]['id'] != None
+      - output.artifacts[0]['resource_group'] != None
+      - output.artifacts[0]['lab_name'] != None
+      - output.artifacts[0]['artifact_source_name'] != None
+      - output.artifacts[0]['name'] != None
+      - output.artifacts[0]['description'] != None
+      - output.artifacts[0]['file_path'] != None
+      - output.artifacts[0]['publisher'] != None
+      - output.artifacts[0]['target_os_type'] != None
+      - output.artifacts[0]['publisher'] != None
+      - "output.artifacts | length == 1"
+
 - name: Delete instance of Lab -- check mode
   azure_rm_devtestlab:
     resource_group: "{{ resource_group }}"
