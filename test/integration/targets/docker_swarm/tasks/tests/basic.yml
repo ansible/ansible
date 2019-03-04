@@ -64,7 +64,7 @@
 - name: Create a Swarm cluster (force re-create)
   docker_swarm:
     state: present
-    advertise_addr: "{{ansible_default_ipv4.address}}"
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
     force: yes
   diff: yes
   register: output_5
@@ -72,7 +72,7 @@
 - name: Create a Swarm cluster (force re-create, check mode)
   docker_swarm:
     state: present
-    advertise_addr: "{{ansible_default_ipv4.address}}"
+    advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
     force: yes
   check_mode: yes
   diff: yes
