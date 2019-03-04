@@ -57,7 +57,7 @@ from subprocess import Popen, PIPE
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
 
@@ -126,7 +126,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             host = None
             ip = None
             ports = []
-            for line in stdout.splitlines():
+
+            try:
+                t_stdout = to_text(stdout, errors='surrogate_or_strict')
+            except UnicodeError as e:
+                raise AnsibleParserError('Invalid (non unicode) input returned: %s' % to_native(e))
+
+            for line in t_stdout.splitlines():
                 hits = self.find_host.match(line)
                 if hits:
                     if host is not None:
