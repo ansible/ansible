@@ -142,7 +142,7 @@ def test_fetch_url_cookies(mocker, fake_ansible_module):
 
 
 def test_fetch_url_nossl(open_url_mock, fake_ansible_module, mocker):
-    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='notredhat')
+    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='notrhel')
 
     open_url_mock.side_effect = NoSSLError
     with pytest.raises(FailJson) as excinfo:
@@ -150,7 +150,7 @@ def test_fetch_url_nossl(open_url_mock, fake_ansible_module, mocker):
 
     assert 'python-ssl' not in excinfo.value.kwargs['msg']
 
-    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='redhat')
+    mocker.patch('ansible.module_utils.urls.get_distribution', return_value='rhel')
 
     open_url_mock.side_effect = NoSSLError
     with pytest.raises(FailJson) as excinfo:
