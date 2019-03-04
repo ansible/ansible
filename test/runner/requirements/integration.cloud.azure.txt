@@ -8,7 +8,7 @@ azure-mgmt-cdn==3.0.0
 azure-mgmt-compute==4.4.0
 azure-mgmt-containerinstance==0.4.0
 azure-mgmt-containerregistry==2.0.0
-azure-mgmt-containerservice==4.2.2
+azure-mgmt-containerservice==4.4.0
 azure-mgmt-dns==2.1.0
 azure-mgmt-keyvault==0.40.0
 azure-mgmt-marketplaceordering==0.1.0
