@@ -46,7 +46,7 @@
     - name: Windows - Get client cert/key
       win_get_url:
         url: http://ansible.http.tests/{{ item }}
-        dest: '{{ win_output_dir }}\{{ item }}'
+        dest: '{{ remote_tmp_dir }}\{{ item }}'
       register: win_download
       # Server 2008 R2 is slightly slower, we attempt 5 retries
       retries: 5
@@ -71,7 +71,7 @@
     - name: Windows - Retrieve test cacert
       win_get_url:
         url: http://ansible.http.tests/cacert.pem
-        dest: '{{ win_output_dir }}\cacert.pem'
+        dest: '{{ remote_tmp_dir }}\cacert.pem'
       when: ansible_os_family == 'Windows'
 
     - name: Redhat - Update ca trust
@@ -84,7 +84,7 @@
 
     - name: Windows - Update ca trust
       win_certificate_store:
-        path: '{{ win_output_dir }}\cacert.pem'
+        path: '{{ remote_tmp_dir }}\cacert.pem'
         state: present
         store_location: LocalMachine
         store_name: Root
