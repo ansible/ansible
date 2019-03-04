@@ -151,6 +151,14 @@ EXAMPLES = r'''
     priv: '*.*:REQUIRESSL'
     state: present
 
+# Modify user to reset SSL connections to unencrypted
+- name: Modify user to switch from SSL connections to unencrypted.
+  mysql_user:
+    name: bob
+    append_privs: yes
+    priv: '*.*:REQUIRENONE'
+    state: present 
+
 - name: Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
   mysql_user:
     login_user: root
