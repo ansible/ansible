@@ -216,10 +216,8 @@ Function Compare-ModifiedFile {
 }
 
 Function Get-Checksum {
-    [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true, ParameterSetName="Path")][String]$Path,
-        [Parameter(Mandatory=$true, ParameterSetName="Stream")][System.IO.Stream]$Stream,
+        [Parameter(Mandatory=$true)][String]$Path,
         [String]$Algorithm = "sha1"
     )
 
@@ -231,18 +229,12 @@ Function Get-Checksum {
         'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
     }
 
-    if ($PSCmdlet.ParameterSetName -eq "Path") {
-        $Stream = [System.IO.File]::Open($Path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read,
-            [System.IO.FileShare]::ReadWrite)
-    }
-
+    $fs = [System.IO.File]::Open($Path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read,
+        [System.IO.FileShare]::ReadWrite)
     try {
-        $hash = [System.BitConverter]::ToString($sp.ComputeHash($Stream)).Replace("-", "").ToLower()
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fs)).Replace("-", "").ToLower()
     } finally {
-        # Only close the stream if we opened it in this cmdlet
-        if ($PSCmdlet.ParameterSetName -eq "Path") {
-            $Stream.Dispose()
-        }
+        $fs.Dispose()
     }
     return $hash
 }
@@ -266,54 +258,40 @@ Function Invoke-DownloadFile {
     $download_script = {
         param($Response, $Stream)
 
-        # ConnectStream from a WebResponse can only be read once, we need to write it to our own MemoryStream so we
-        # can perform multiple operations without touching a file
-        $ms = New-Object -TypeName System.IO.MemoryStream
+        # Download the file to a temporary directory so we can compare it
+        $tmp_dest = Join-Path -Path $Module.Tmpdir -ChildPath ([System.IO.Path]::GetRandomFileName())
+        $fs = [System.IO.File]::Create($tmp_dest)
         try {
-            $Stream.CopyTo($ms)
-            $ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
-
-            $remote_checksum = Get-Checksum -Stream $ms -Algorithm $ChecksumAlgorithm
-            $Module.Result.checksum_src = $remote_checksum
-            $ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
-
-            # If the checksum has been set, verify the checksum of the remote against the input checksum.
-            if ($Checksum) {
-                if ($remote_checksum -ne $Checksum) {
-                    $Module.FailJson(("The checksum for {0} did not match '{1}', it was '{2}'" -f $Uri, $Checksum, $remote_checksum))
-                }
-            }
-
-            $download = $true
-            if (Test-Path -LiteralPath $Dest) {
-                # Validate the remote checksum against the existing downloaded file
-                $dest_checksum = Get-Checksum -Path $Dest -Algorithm $ChecksumAlgorithm
-
-                # If we don't need to download anything, save the dest checksum so we don't waste time calculating it
-                # again at the end of the script
-                if ($dest_checksum -eq $remote_checksum) {
-                    $download = $false
-                    $module.Result.checksum_dest = $dest_checksum
-                    $module.Result.size = (Get-AnsibleItem -Path $Dest).Length
-                }
-            }
-
-            if ($download -and -not $Module.CheckMode) {
-                if (Test-Path -LiteralPath $Dest) {
-                    Remove-Item -LiteralPath $Dest -Force
-                }
-
-                $file_stream = [System.IO.File]::Create($Dest)
-                try {
-                    $ms.CopyTo($file_stream)
-                    $file_stream.Flush()
-                } finally {
-                    $file_stream.Close()
-                }
-            }
-            $Module.result.changed = $download
+            $Stream.CopyTo($fs)
+            $fs.Flush()
         } finally {
-            $ms.Dispose()
+            $fs.Dispose()
+        }
+        $tmp_checksum = Get-Checksum -Path $tmp_dest -Algorithm $ChecksumAlgorithm
+        $Module.Result.checksum_src = $tmp_checksum
+
+        # If the checksum has been set, verify the checksum of the remote against the input checksum.
+        if ($Checksum -and $Checksum -ne $tmp_checksum) {
+            $Module.FailJson(("The checksum for {0} did not match '{1}', it was '{2}'" -f $Uri, $Checksum, $tmp_checksum))
+        }
+
+        $download = $true
+        if (Test-Path -LiteralPath $Dest) {
+            # Validate the remote checksum against the existing downloaded file
+            $dest_checksum = Get-Checksum -Path $Dest -Algorithm $ChecksumAlgorithm
+
+            # If we don't need to download anything, save the dest checksum so we don't waste time calculating it
+            # again at the end of the script
+            if ($dest_checksum -eq $tmp_checksum) {
+                $download = $false
+                $Module.Result.checksum_dest = $dest_checksum
+                $Module.Result.size = (Get-AnsibleItem -Path $Dest).Length
+            }
+        }
+
+        if ($download) {
+            Copy-Item -Path $tmp_dest -Destination $Dest -Force -WhatIf:$Module.CheckMode > $null
+            $Module.Result.changed = $true
         }
     }
 
