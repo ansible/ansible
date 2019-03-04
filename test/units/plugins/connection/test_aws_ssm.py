@@ -23,16 +23,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        conn._connect = MagicMock()
-        
-        conn.stdin = MagicMock()
-        conn.stdin.fileno.return_value = 1000
-        conn.stdout = MagicMock()
-        conn.stdout.fileno.return_value = 1001
-        conn.stderr = MagicMock()
-        conn.stderr.fileno.return_value = 1002
-        conn.stdin.write = MagicMock()
-        
+        conn._connect = MagicMock()      
         conn._session = MagicMock()
         conn._poll_stdout = MagicMock()
         conn._session_id = MagicMock()
@@ -40,8 +31,8 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._stdin_readline()
         self.assertTrue(conn.SESSION_START)
 
-
-    def test_plugins_connection_aws_ssm_exec_command(self):
+    @patch('random.choice')
+    def test_plugins_connection_aws_ssm_exec_command(self, r_choice):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
@@ -58,9 +49,17 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.host = MagicMock()
         conn._flush_stderr = MagicMock()
         conn._flush_stderr_value = (0, 'stdout', 'stderr')
+        conn._session.stdin.write = MagicMock()
+        conn._session.poll = MagicMock()
+        conn._session.poll.return_value = 'True'
+        # conn.random.choice = MagicMock()
+        r_choice.return_value = "a"
+        conn._session.stdout = MagicMock()
+        conn._session.stdout.return_value = "aaaaa\nHiii\n0\naaaaa"
+        conn.MARK_LENGHT = 5
 
-        # res, stdout, stderr = conn.exec_command('aws_ssm')
-        # res, stdout, stderr = conn.exec_command('aws_ssm', 'this is some data')
+        res, stdout, stderr = conn.exec_command('aws_ssm')
+        res, stdout, stderr = conn.exec_command('aws_ssm', 'this is some data')
 
     @patch('os.path.exists')
     def test_plugins_connection_aws_ssm_put_file(self, mock_ospe):
