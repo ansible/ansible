@@ -4,13 +4,7 @@
     fail_on_missing: false
 
 - block:
-   - name: check if feature is availble
-     win_shell: if (Get-Command -Name Add-WindowsFeature -ErrorAction SilentlyContinue) { $true } else { $false }
-     changed_when: False
-     register: module_available
-
    - name: install DNS features
-     when: module_available.stdout | trim | bool
      block:
 
        - name: ensure DNS services are installed
