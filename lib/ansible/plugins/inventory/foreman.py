@@ -191,7 +191,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 self.inventory.add_host(host['name'])
 
                 # create directly mapped groups
-                group_name = host.get('hostgroup_title', host.get('hostgroup_name')
+                group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
                     group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
                     group_name = self.inventory.add_group(group_name)
@@ -214,7 +214,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         try:
                             self.inventory.set_variable(host['name'], p['name'], p['value'])
                         except ValueError as e:
-                            self.display.warning("Could not set parameter hostvar for %s, skipping %s: %s" % (host, p['name'], to_native(p['value'])))
+                            self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
+                                                 (p['name'], to_native(p['value']), host, to_native(e)))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
