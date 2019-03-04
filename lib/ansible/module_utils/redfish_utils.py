@@ -397,10 +397,10 @@ class RedfishUtils(object):
                 data = response['data']
 
                 for device in data[u'Devices']:
-                    disk_resuilt = {}
+                    disk_result = {}
                     for property in properties:
                         if property in device:
-                            disk_resuilt[property] = device[property]
+                            disk_result[property] = device[property]
                     disk_results.append(disk_result)
             result["entries"].append(disk_results)
 
