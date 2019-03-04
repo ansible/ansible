@@ -29,6 +29,7 @@ yumdnf_argument_spec = dict(
         disable_plugin=dict(type='list', default=[]),
         disablerepo=dict(type='list', default=[]),
         download_only=dict(type='bool', default=False),
+        download_dir=dict(type='str', default=None),
         enable_plugin=dict(type='list', default=[]),
         enablerepo=dict(type='list', default=[]),
         exclude=dict(type='list', default=[]),
@@ -73,6 +74,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.disable_plugin = self.module.params['disable_plugin']
         self.disablerepo = self.module.params.get('disablerepo', [])
         self.download_only = self.module.params['download_only']
+        self.download_dir = self.module.params['download_dir']
         self.enable_plugin = self.module.params['enable_plugin']
         self.enablerepo = self.module.params.get('enablerepo', [])
         self.exclude = self.module.params['exclude']

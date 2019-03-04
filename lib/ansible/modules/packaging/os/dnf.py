@@ -190,6 +190,12 @@ options:
     type: bool
     default: "yes"
     version_added: "2.8"
+  download_dir:
+    description:
+      - Specifies an alternate directory to store packages.
+      - Has an effect only if I(download_only) is specified.
+    type: str
+    version_added: "2.8"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -564,6 +570,8 @@ class DnfModule(YumDnf):
 
         if self.download_only:
             conf.downloadonly = True
+            if self.download_dir:
+                conf.destdir = self.download_dir
 
         # Default in dnf upstream is true
         conf.clean_requirements_on_remove = self.autoremove
@@ -1122,6 +1130,10 @@ class DnfModule(YumDnf):
                     self.module.exit_json(**response)
 
                 try:
+                    if self.download_only and self.download_dir and self.base.conf.destdir:
+                        dnf.util.ensure_dir(self.base.conf.destdir)
+                        self.base.repos.all().pkgdir = self.base.conf.destdir
+
                     self.base.download_packages(self.base.transaction.install_set)
                 except dnf.exceptions.DownloadError as e:
                     self.module.fail_json(
@@ -1168,6 +1180,14 @@ class DnfModule(YumDnf):
             if LooseVersion(dnf.__version__) < LooseVersion('2.0.1'):
                 self.module.fail_json(
                     msg="Autoremove requires dnf>=2.0.1. Current dnf version is %s" % dnf.__version__,
+                    results=[],
+                )
+
+        # Check if download_dir is called correctly
+        if self.download_dir:
+            if LooseVersion(dnf.__version__) < LooseVersion('2.6.2'):
+                self.module.fail_json(
+                    msg="download_dir requires dnf>=2.6.2. Current dnf version is %s" % dnf.__version__,
                     results=[],
                 )
 
