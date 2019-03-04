@@ -502,6 +502,7 @@ swarm_service:
   - Note that before Ansible 2.7.9, the return variable was documented as C(ansible_swarm_service),
     while the module actually returned a variable called C(ansible_docker_service). The variable
     was renamed to C(swarm_service) in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0.
+    In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
   sample: '{
     "args": [
       "sleep",
