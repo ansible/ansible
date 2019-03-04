@@ -30,10 +30,12 @@ options:
     description:
       - URL of the Netbox instance resolvable by Ansible control host
     required: true
+    type: str
   netbox_token:
     description:
       - The token created within Netbox to authorize API access
     required: true
+    type: str
   data:
     description:
       - Defines the prefix configuration
@@ -42,16 +44,19 @@ options:
         description:
           - Name of the device the interface will be associated with (case-sensitive)
         required: true
+        type: str
       name:
         description:
           - Name of the interface to be created
         required: true
+        type: str
       form_factor:
         description:
           - |
             Form factor of the interface:
             ex. 1000Base-T (1GE), Virtual, 10GBASE-T (10GE)
             This has to be specified exactly as what is found within UI
+        type: str
       enabled:
         description:
           - Sets whether interface shows enabled or disabled
@@ -59,12 +64,15 @@ options:
       lag:
         description:
           - Parent LAG interface will be a member of
+        type: dict
       mtu:
         description:
           - The MTU of the interface
+        type: str
       mac_address:
         description:
           - The MAC address of the interface
+        type: str
       mgmt_only:
         description:
           - This interface is used only for out-of-band management
@@ -72,7 +80,7 @@ options:
       description:
         description:
           - The description of the prefix
-        type: bool
+        type: str
       mode:
         description:
           - The mode of the interface
@@ -80,23 +88,26 @@ options:
           - Access
           - Tagged
           - Tagged All
+        type: str
       untagged_vlan:
         description:
           - The untagged VLAN to be assigned to interface
+        type: dict
       tagged_vlans:
         description:
-          - |
-            A list of tagged VLANS to be assigned to interface
-            Mode must be set to either C(Tagged) or C(Tagged All)
+          - A list of tagged VLANS to be assigned to interface. Mode must be set to either C(Tagged) or C(Tagged All)
+        type: list
       tags:
         description:
           - Any tags that the prefix may need to be associated with
+        type: list
     required: true
   state:
     description:
       - Use C(present) or C(absent) for adding or removing.
     choices: [ absent, present ]
     default: present
+    type: str
   validate_certs:
     description:
       - |
@@ -214,7 +225,14 @@ def main():
     argument_spec = dict(
         netbox_url=dict(type="str", required=True),
         netbox_token=dict(type="str", required=True, no_log=True),
-        data=dict(type="dict", required=True),
+        data=dict(
+            type="dict",
+            required=True,
+            options=dict(
+                device=dict(required=True),
+                name=dict(required=True),
+            ),
+        ),
         state=dict(required=False, default="present", choices=["present", "absent"]),
         validate_certs=dict(type="bool", default=True)
     )
