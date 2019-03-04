@@ -228,7 +228,7 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
 
         response = None
         try:
-            response = list(self._client.role_assignments.list_for_scope(scope=scope, filter='atScope()'))
+            response = list(self._client.role_assignments.list_for_scope(scope=self.scope, filter='atScope()'))
 
             if response and len(response) > 0:
                 return [roleassignment_to_dict(a) for a in response]
