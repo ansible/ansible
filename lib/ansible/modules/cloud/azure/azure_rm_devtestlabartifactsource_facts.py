@@ -210,16 +210,14 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.artifact_sources.list(resource_group_name=self.resource_group,
                                                               lab_name=self.lab_name)
-            self.fail("Response : {0}".format(response))
+            self.log("Response : {0}".format(response))
         except CloudError as e:
             self.fail('Could not get facts for Artifact Source.')
 
         if response is not None:
-            item = response.next()
-            while item:
+            for item in response:
                 if self.has_tags(item.tags, self.tags):
                     results.append(self.format_response(item))
-                item = response.next()
 
         return results
 
