@@ -810,11 +810,7 @@ lib/ansible/modules/storage/netapp/netapp_e_snapshot_volume.py E324
 lib/ansible/modules/storage/netapp/netapp_e_snapshot_volume.py E326
 lib/ansible/modules/storage/netapp/netapp_e_storage_system.py E322
 lib/ansible/modules/storage/netapp/netapp_e_storage_system.py E324
-lib/ansible/modules/storage/netapp/netapp_e_storagepool.py E322
-lib/ansible/modules/storage/netapp/netapp_e_storagepool.py E326
-lib/ansible/modules/storage/netapp/netapp_e_volume.py E322
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E324
-lib/ansible/modules/storage/netapp/netapp_e_volume.py E326
 lib/ansible/modules/storage/netapp/netapp_e_volume.py E327
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E322
 lib/ansible/modules/storage/netapp/netapp_e_volume_copy.py E323
