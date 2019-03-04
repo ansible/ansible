@@ -1112,7 +1112,7 @@ def create_instances(module, ec2, vpc, override_count=None):
 
             # check to see if we're using spot pricing first before starting instances
             if not spot_price:
-                if assign_public_ip and private_ip:
+                if assign_public_ip is not None and private_ip:
                     params.update(
                         dict(
                             min_count=count_remaining,
