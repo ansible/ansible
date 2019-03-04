@@ -1054,6 +1054,8 @@ class DockerServiceManager():
                          % (pv['param'], pv['min_version'])))
 
         for publish_def in params['publish'] or []:
+            if not isinstance(publish_def, dict):
+                self.client.module.fail_json(msg='The publish option must be provided with a list of dicts!')
             if 'mode' in publish_def.keys():
                 if LooseVersion(self.client.version()['ApiVersion']) < LooseVersion('1.25'):
                     self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
