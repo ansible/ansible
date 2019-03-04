@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function)
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY, without even the implied warranty of
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
@@ -356,10 +356,8 @@ version:
 
 from ansible.module_utils.basic import AnsibleModule
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -392,26 +390,11 @@ def filter_web_proxy_explicit_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
-
-    return data
-
-
 def web_proxy_explicit(data, fos):
     vdom = data['vdom']
     web_proxy_explicit_data = data['web_proxy_explicit']
-    flattened_data = flatten_multilists_attributes(web_proxy_explicit_data)
-    filtered_data = filter_web_proxy_explicit_data(flattened_data)
+    filtered_data = filter_web_proxy_explicit_data(web_proxy_explicit_data)
+
     return fos.set('web-proxy',
                    'explicit',
                    data=filtered_data,
@@ -419,7 +402,7 @@ def web_proxy_explicit(data, fos):
 
 
 def fortios_web_proxy(data, fos):
-    login(data)
+    login(data, fos)
 
     if data['web_proxy_explicit']:
         resp = web_proxy_explicit(data, fos)
@@ -510,7 +493,6 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_web_proxy(module.params, fos)
