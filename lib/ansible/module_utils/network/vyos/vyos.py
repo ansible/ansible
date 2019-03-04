@@ -28,7 +28,7 @@
 import json
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.connection import Connection, ConnectionError
 
 _DEVICE_CONFIGS = {}
