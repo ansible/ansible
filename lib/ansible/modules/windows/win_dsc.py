@@ -162,7 +162,7 @@ reboot_required:
 verbose_test:
     description: The verbose output as a list from executing the DSC test
       method.
-    returned: Ansible verbosity if -vvv or greater
+    returned: Ansible verbosity is -vvv or greater
     type: list
     sample: [
       "Perform operation 'Invoke CimMethod' with the following parameters, ",

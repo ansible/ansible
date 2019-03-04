@@ -97,12 +97,12 @@ This is what the Ansible task version of the above DSC Registry resource would l
         Ensure: Present
         Key: HKEY_LOCAL_MACHINE\SOFTWARE\ExampleKey
         ValueName: TestValue
-        ValueData: TestDatai
+        ValueData: TestData
 
-In Ansible 2.8, the ``win_dsc`` module will now automatically validate the
+Starting in Ansible 2.8, the ``win_dsc`` module automatically validates the
 input options from Ansible with the DSC definition. This means Ansible will
 fail if the option name is incorrect, a mandatory option is not set, or the
-value is not a valid choice. When running Ansible with a verbosity level or 3
+value is not a valid choice. When running Ansible with a verbosity level of 3
 or more (``-vvv``), the return value will contain the possible invocation
 options based on the ``resource_name`` specified. Here is an example of the
 invocation output for the above ``Registry`` task::
@@ -154,10 +154,10 @@ invocation output for the above ``Registry`` task::
 
 The ``invocation.module_args`` key shows the actual values that were set as
 well as other possible values that were not set. Unfortunately this will not
-show the default value for a DSC property just what was set from the Ansible
+show the default value for a DSC property, only what was set from the Ansible
 task. Any ``*_password`` option will be masked in the output for security
-reasons, if there are any other sensitive module options set ``no_log: True``
-on the task to stop it from being logged.
+reasons, if there are any other sensitive module options, set ``no_log: True``
+on the task to stop all task output from being logged.
 
 
 Property Types
