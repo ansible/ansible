@@ -78,12 +78,7 @@ Function Invoke-AnsibleWebRequest {
     )
 
     $web_request = [System.Net.WebRequest]::Create($Uri)
-    $m = $Method.($web_request.GetType().Name)
-    try {
-        $web_request.Method = $Method.($web_request.GetType().Name)
-    } catch [System.ArgumentException] {
-        $Module.FailJson("Failed to set method $m, $($m.GetType().FullName)", $_)
-    }
+    $web_request.Method = $Method.($web_request.GetType().Name)
 
     foreach ($header in $headers.GetEnumerator()) {
         $web_request.Headers.Add($header.Key, $header.Value)
@@ -299,6 +294,7 @@ Function Invoke-DownloadFile {
                 if ($dest_checksum -eq $remote_checksum) {
                     $download = $false
                     $module.Result.checksum_dest = $dest_checksum
+                    $module.Result.size = (Get-AnsibleItem -Path $Dest).Length
                 }
             }
 
