@@ -134,7 +134,7 @@ class Connection(ConnectionBase):
     _session = None
     _session_id = ''
     _timeout = False
-    MARK_LENGTH = 52
+    MARK_LENGTH = 26
     SESSION_START = 'Starting session with SessionId:'
 
     def __init__(self, *args, **kwargs):
@@ -187,6 +187,8 @@ class Connection(ConnectionBase):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            close_fds=True,
+            bufsize=0,
         )
 
         # Disable command echo and prompt.
@@ -233,6 +235,7 @@ class Connection(ConnectionBase):
             remaining = stop_time - int(round(time.time()))
             if remaining < 1:
                 self._timeout = True
+                display.vvvv(u"EXEC timeout stdout: {0}".format(to_text(stdout)), host=self.host)
                 raise AnsibleConnectionFailure("SSM exec_command timeout on host: %s"
                                                % self.get_option('instance_id'))
             if self._poll_stdout.poll(1000):
@@ -246,29 +249,18 @@ class Connection(ConnectionBase):
                 begin = True
                 continue
             if begin:
-                if line.startswith(mark_end):
+                if mark_end in line:
                     # Get command return code and throw away ending lines
                     returncode = stdout.splitlines()[-1]
                     for x in range(0, 3):
                         stdout = stdout[:stdout.rfind('\n')]
                     break
-                elif begin:
+                else:
                     stdout = stdout + line
 
         stderr = self._flush_stderr(session)
 
         return (int(returncode), stdout, stderr)
-
-    def _stdin_readline(self):
-        poll_timeout = self.get_option('timeout') * 1000
-        if self._poll_stdout.poll(poll_timeout):
-            line = self._session.stdout.readline()
-            display.vvvv(u"stdout line: {0}".format(to_text(line)), host=self.host)
-            return line
-        else:
-            self._timeout = True
-            raise AnsibleConnectionFailure("SSM connection failure on host: %s"
-                                           % self.get_option('instance_id'))
 
     def _flush_stderr(self, subprocess):
         ''' read and return stderr with minimal blocking '''
