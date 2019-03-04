@@ -1,0 +1,56 @@
+---
+- name: Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey.pem'
+
+- name: Generate CSR (no extensions)
+  openssl_csr:
+    path: '{{ output_dir }}/csr_noext.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+    useCommonNameForSAN: no
+
+- name: Generate selfsigned certificate (no extensions)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    csr_path: '{{ output_dir }}/csr_noext.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+
+- name: Assert that subject_alt_name is there (should fail)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    provider: assertonly
+    subject_alt_name:
+      - "DNS:example.com"
+  ignore_errors: yes
+  register: extension_missing_san
+
+- name: Assert that key_usage is there (should fail)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    provider: assertonly
+    key_usage:
+      - digitalSignature
+  ignore_errors: yes
+  register: extension_missing_ku
+
+- name: Assert that extended_key_usage is there (should fail)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_noext.pem'
+    provider: assertonly
+    extended_key_usage:
+      - biometricInfo
+  ignore_errors: yes
+  register: extension_missing_eku
+
+- assert:
+    that:
+      - extension_missing_san is failed
+      - "'Found no subjectAltName extension' in extension_missing_san.msg"
+      - extension_missing_ku is failed
+      - "'Found no keyUsage extension' in extension_missing_ku.msg"
+      - extension_missing_eku is failed
+      - "'Found no extendedKeyUsage extension' in extension_missing_eku.msg"
