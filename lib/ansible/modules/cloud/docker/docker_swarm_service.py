@@ -1702,14 +1702,16 @@ class DockerServiceManager(object):
 
 
 def _detect_publish_mode_usage(client):
-    for publish_def in client.module.params['publish']:
+    for publish_def in client.module.params['publish'] or []:
         if publish_def.get('mode'):
             return True
     return False
 
 
 def _detect_healthcheck_start_period(client):
-    return client.module.params['healthcheck']['start_period'] is not None
+    if client.module.params['healthcheck']:
+        return client.module.params['healthcheck']['start_period'] is not None
+    return False
 
 
 def main():

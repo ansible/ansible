@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm - now supports docker-py 1.10.0 and newer, instead only docker 2.6.0 and newer."
