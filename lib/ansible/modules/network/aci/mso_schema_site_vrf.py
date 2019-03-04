@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mso_schema_site_vrf
-short_description: Manage site VRFs in schema template
+short_description: Manage site-local VRFs in schema template
 description:
-- Manage site VRFs in schema template on Cisco ACI Multi-Site.
+- Manage site-local VRFs in schema template on Cisco ACI Multi-Site.
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'

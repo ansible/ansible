@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mso_schema_site_anp
-short_description: Manage site Application Network Profiles (ANPs) in schema template
+short_description: Manage site-local Application Network Profiles (ANPs) in schema template
 description:
-- Manage site ANPs in schema template on Cisco ACI Multi-Site.
+- Manage site-local ANPs in schema template on Cisco ACI Multi-Site.
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
