@@ -279,6 +279,8 @@ submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
 
+rm -rf "${pull_dir}"
+
 # Run ansbible-pull with --module-args and no depth to emulate --full and accept GH host key using --module-args
 ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes' "$@" | tee "${temp_log}"
 
