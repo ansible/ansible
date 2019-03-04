@@ -2,7 +2,7 @@
 
 - name: Registering service name
   set_fact:
-    service_name: "{{ name_prefix ~ '-options' }}"
+    service_name: "{{ name_prefix ~ '-resources' }}"
 
 - name: Registering service name
   set_fact:
