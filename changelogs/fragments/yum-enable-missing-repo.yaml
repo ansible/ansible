@@ -1,0 +1,3 @@
+---
+bugfix:
+  - "yum - gracefully handle failure case of enabling a non existent repo, as the yum cli does"

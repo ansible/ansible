@@ -332,7 +332,7 @@ EXAMPLES = '''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import fetch_url
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
@@ -1439,7 +1439,12 @@ class YumModule(YumDnf):
                 if self.enablerepo:
                     try:
                         for rid in self.enablerepo:
-                            my.repos.enableRepo(rid)
+                            try:
+                                my.repos.enableRepo(rid)
+                            except yum.Errors.YumBaseError as e:
+                                if to_text('repository not found') in to_text(e):
+                                    self.module.warn("Repository %s not found." % rid)
+                                continue
                         new_repos = my.repos.repos.keys()
                         for i in new_repos:
                             if i not in current_repos:
