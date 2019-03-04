@@ -83,6 +83,7 @@ options:
         description:
             - Version of the C(selfsigned) certificate.
             - Nowadays it should almost always be C(3).
+            - This is only used by the C(selfsigned) provider.
         type: int
         default: 3
         version_added: "2.5"
@@ -90,6 +91,7 @@ options:
     selfsigned_digest:
         description:
             - Digest algorithm to be used when self-signing the certificate.
+            - This is only used by the C(selfsigned) provider.
         type: str
         default: sha256
 
@@ -102,6 +104,7 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent.
             - If this value is not specified, the certificate will start being valid from now.
+            - This is only used by the C(selfsigned) provider.
         type: str
         default: +0s
         aliases: [ selfsigned_notBefore ]
@@ -115,6 +118,7 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent.
             - If this value is not specified, the certificate will stop being valid 10 years from now.
+            - This is only used by the C(selfsigned) provider.
         type: str
         default: +3650d
         aliases: [ selfsigned_notAfter ]
@@ -122,24 +126,28 @@ options:
     ownca_path:
         description:
             - Remote absolute path of the CA (Certificate Authority) certificate.
+            - This is only used by the C(ownca) provider.
         type: path
         version_added: "2.7"
 
     ownca_privatekey_path:
         description:
             - Path to the CA (Certificate Authority) private key to use when signing the certificate.
+            - This is only used by the C(ownca) provider.
         type: path
         version_added: "2.7"
 
     ownca_privatekey_passphrase:
         description:
             - The passphrase for the I(ownca_privatekey_path).
+            - This is only used by the C(ownca) provider.
         type: str
         version_added: "2.7"
 
     ownca_digest:
         description:
             - The digest algorithm to be used for the C(ownca) certificate.
+            - This is only used by the C(ownca) provider.
         type: str
         default: sha256
         version_added: "2.7"
@@ -148,6 +156,7 @@ options:
         description:
             - The version of the C(ownca) certificate.
             - Nowadays it should almost always be C(3).
+            - This is only used by the C(ownca) provider.
         type: int
         default: 3
         version_added: "2.7"
@@ -161,6 +170,7 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent.
             - If this value is not specified, the certificate will start being valid from now.
+            - This is only used by the C(ownca) provider.
         type: str
         default: +0s
         version_added: "2.7"
@@ -174,6 +184,7 @@ options:
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using relative time this module is NOT idempotent.
             - If this value is not specified, the certificate will stop being valid 10 years from now.
+            - This is only used by the C(ownca) provider.
         type: str
         default: +3650d
         version_added: "2.7"
@@ -181,16 +192,19 @@ options:
     acme_accountkey_path:
         description:
             - The path to the accountkey for the C(acme) provider.
+            - This is only used by the C(acme) provider.
         type: path
 
     acme_challenge_path:
         description:
             - The path to the ACME challenge directory that is served on U(http://<HOST>:80/.well-known/acme-challenge/)
+            - This is only used by the C(acme) provider.
         type: path
 
     acme_chain:
         description:
             - Include the intermediate certificate to the generated certificate
+            - This is only used by the C(acme) provider.
         type: bool
         default: yes
         version_added: "2.5"
@@ -199,17 +213,20 @@ options:
         description:
             - A list of algorithms that you would accept the certificate to be signed with
               (e.g. ['sha256WithRSAEncryption', 'sha512WithRSAEncryption']).
+            - This is only used by the C(assertonly) provider.
         type: list
 
     issuer:
         description:
             - The key/value pairs that must be present in the issuer name field of the certificate.
             - If you need to specify more than one value with the same key, use a list as value.
+            - This is only used by the C(assertonly) provider.
         type: dict
 
     issuer_strict:
         description:
             - If set to C(yes), the I(issuer) field must contain only these values.
+            - This is only used by the C(assertonly) provider.
         type: bool
         default: no
         version_added: "2.5"
@@ -218,19 +235,21 @@ options:
         description:
             - The key/value pairs that must be present in the subject name field of the certificate.
             - If you need to specify more than one value with the same key, use a list as value.
+            - This is only used by the C(assertonly) provider.
         type: dict
 
     subject_strict:
         description:
             - If set to C(yes), the I(subject) field must contain only these values.
+            - This is only used by the C(assertonly) provider.
         type: bool
         default: no
         version_added: "2.5"
 
     has_expired:
         description:
-            - Checks if the certificate is expired/not expired at the time the module is executed. This only applies to
-              the C(assertonly) provider.
+            - Checks if the certificate is expired/not expired at the time the module is executed.
+            - This is only used by the C(assertonly) provider.
         type: bool
         default: no
 
@@ -238,24 +257,28 @@ options:
         description:
             - The version of the certificate.
             - Nowadays it should almost always be 3.
+            - This is only used by the C(assertonly) provider.
         type: int
 
     valid_at:
         description:
             - The certificate must be valid at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
+            - This is only used by the C(assertonly) provider.
         type: str
 
     invalid_at:
         description:
             - The certificate must be invalid at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
+            - This is only used by the C(assertonly) provider.
         type: str
 
     not_before:
         description:
             - The certificate must start to become valid at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
+            - This is only used by the C(assertonly) provider.
         type: str
         aliases: [ notBefore ]
 
@@ -263,6 +286,7 @@ options:
         description:
             - The certificate must expire at this point in time.
             - The timestamp is formatted as an ASN.1 TIME.
+            - This is only used by the C(assertonly) provider.
         type: str
         aliases: [ notAfter ]
 
@@ -273,17 +297,20 @@ options:
             - Valid format is C([+-]timespec | number_of_seconds) where timespec can be an integer
               + C([w | d | h | m | s]) (e.g. C(+32w1d2h).
             - Note that if using this parameter, this module is NOT idempotent.
+            - This is only used by the C(assertonly) provider.
         type: str
 
     key_usage:
         description:
             - The I(key_usage) extension field must contain all these values.
+            - This is only used by the C(assertonly) provider.
         type: list
         aliases: [ keyUsage ]
 
     key_usage_strict:
         description:
             - If set to C(yes), the I(key_usage) extension field must contain only these values.
+            - This is only used by the C(assertonly) provider.
         type: bool
         default: no
         aliases: [ keyUsage_strict ]
@@ -291,12 +318,14 @@ options:
     extended_key_usage:
         description:
             - The I(extended_key_usage) extension field must contain all these values.
+            - This is only used by the C(assertonly) provider.
         type: list
         aliases: [ extendedKeyUsage ]
 
     extended_key_usage_strict:
         description:
             - If set to C(yes), the I(extended_key_usage) extension field must contain only these values.
+            - This is only used by the C(assertonly) provider.
         type: bool
         default: no
         aliases: [ extendedKeyUsage_strict ]
@@ -304,12 +333,14 @@ options:
     subject_alt_name:
         description:
             - The I(subject_alt_name) extension field must contain these values.
+            - This is only used by the C(assertonly) provider.
         type: list
         aliases: [ subjectAltName ]
 
     subject_alt_name_strict:
         description:
             - If set to C(yes), the I(subject_alt_name) extension field must contain only these values.
+            - This is only used by the C(assertonly) provider.
         type: bool
         default: no
         aliases: [ subjectAltName_strict ]
@@ -1069,6 +1100,8 @@ def main():
             # General properties of a certificate
             privatekey_path=dict(type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
+
+            # provider: assertonly
             signature_algorithms=dict(type='list', elements='str'),
             subject=dict(type='dict'),
             subject_strict=dict(type='bool', default=False),
