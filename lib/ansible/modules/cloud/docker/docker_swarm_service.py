@@ -110,6 +110,14 @@ options:
       - Corresponds to the C(--hostname) option of C(docker service create).
       - Requires API version >= 1.25.
     type: str
+  hosts:
+    description:
+      - Dict of host-to-IP mappings, where each host name is a key in the dictionary.
+        Each host name will be added to the container's /etc/hosts file.
+      - Corresponds to the C(--host) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: dict
+    version_added: "2.8"
   tty:
     description:
       - Allocate a pseudo-TTY.
@@ -761,6 +769,7 @@ class DockerService(DockerBaseClass):
         self.healthcheck = None
         self.healthcheck_disabled = None
         self.hostname = None
+        self.hosts = None
         self.tty = None
         self.dns_search = None
         self.dns_options = None
@@ -817,6 +826,7 @@ class DockerService(DockerBaseClass):
             'healthcheck': self.healthcheck,
             'healthcheck_disabled': self.healthcheck_disabled,
             'hostname': self.hostname,
+            'hosts': self.hosts,
             'env': self.env,
             'force_update': self.force_update,
             'groups': self.groups,
@@ -863,6 +873,7 @@ class DockerService(DockerBaseClass):
         s.dns_options = ap['dns_options']
         s.healthcheck, s.healthcheck_disabled = parse_healthcheck(ap['healthcheck'])
         s.hostname = ap['hostname']
+        s.hosts = ap['hosts']
         s.tty = ap['tty']
         s.log_driver = ap['log_driver']
         s.log_driver_options = ap['log_driver_options']
@@ -1090,6 +1101,8 @@ class DockerService(DockerBaseClass):
             differences.add('healthcheck', parameter=self.healthcheck, active=os.healthcheck)
         if self.hostname is not None and self.hostname != os.hostname:
             differences.add('hostname', parameter=self.hostname, active=os.hostname)
+        if self.hosts is not None and self.hosts != (os.hosts or {}):
+            differences.add('hosts', parameter=self.hosts, active=os.hosts)
         if self.tty is not None and self.tty != os.tty:
             differences.add('tty', parameter=self.tty, active=os.tty)
         if self.working_dir is not None and self.working_dir != os.working_dir:
@@ -1214,6 +1227,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['healthcheck'] = types.Healthcheck(**self.healthcheck)
         if self.hostname is not None:
             container_spec_args['hostname'] = self.hostname
+        if self.hosts is not None:
+            container_spec_args['hosts'] = self.hosts
         if self.stop_grace_period is not None:
             container_spec_args['stop_grace_period'] = self.stop_grace_period
         if self.stop_signal is not None:
@@ -1432,6 +1447,11 @@ class DockerServiceManager(object):
             ds.dns_options = dns_config.get('Options')
 
         ds.hostname = task_template_data['ContainerSpec'].get('Hostname')
+
+        hosts = task_template_data['ContainerSpec'].get('Hosts')
+        if hosts:
+            hosts = [host.split(' ', 1) for host in hosts]
+            ds.hosts = dict((hostname, ip) for ip, hostname in hosts)
         ds.tty = task_template_data['ContainerSpec'].get('TTY')
 
         placement = task_template_data.get('Placement')
@@ -1774,6 +1794,7 @@ def main():
             retries=dict(type='int'),
         )),
         hostname=dict(type='str'),
+        hosts=dict(type='dict'),
         labels=dict(type='dict'),
         container_labels=dict(type='dict'),
         mode=dict(type='str', default='replicated'),
@@ -1808,6 +1829,7 @@ def main():
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
+        hosts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         groups=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
