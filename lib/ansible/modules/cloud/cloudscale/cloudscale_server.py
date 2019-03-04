@@ -357,7 +357,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             # Either the server is stopped or change is forced
             self._result['changed'] = True
             if not self._module.check_mode:
-                # Remember the state of the server before we ensure it is stopped
+
                 if requires_stop:
                     self._start_stop_server(server_info, target_state="stopped", ignore_diff=True)
 
