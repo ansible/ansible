@@ -439,6 +439,47 @@
       - output.changed
   when: "github_token | length > 0"
 
+- name: List ARM Template facts
+  azure_rm_devtestlabarmtemplate_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public environment repo"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.armtemplates[0]['id'] != None
+      - output.armtemplates[0]['resource_group'] != None
+      - output.armtemplates[0]['lab_name'] != None
+      - output.armtemplates[0]['artifact_source_name'] != None
+      - output.armtemplates[0]['name'] != None
+      - output.armtemplates[0]['display_name'] != None
+      - output.armtemplates[0]['description'] != None
+      - output.armtemplates[0]['publisher'] != None
+      - "output.armtemplates | length > 1"
+
+- name: Get ARM Template facts
+  azure_rm_devtestlabarmtemplate_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    artifact_source_name: "public environment repo"
+    name: ServiceFabric-LabCluster
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.armtemplates[0]['id'] != None
+      - output.armtemplates[0]['resource_group'] != None
+      - output.armtemplates[0]['lab_name'] != None
+      - output.armtemplates[0]['artifact_source_name'] != None
+      - output.armtemplates[0]['name'] != None
+      - output.armtemplates[0]['display_name'] != None
+      - output.armtemplates[0]['description'] != None
+      - output.armtemplates[0]['publisher'] != None
+      - "output.armtemplates | length == 1"
+
+
+
 - name: Get Artifact facts
   azure_rm_devtestlabartifact_facts:
     resource_group: "{{ resource_group }}"
