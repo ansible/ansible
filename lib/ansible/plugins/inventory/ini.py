@@ -77,7 +77,8 @@ EXAMPLES = '''
 import ast
 import re
 
-from ansible.plugins.inventory import BaseFileInventoryPlugin, to_safe_group_name
+from ansible.inventory.group import to_safe_group_name
+from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_text

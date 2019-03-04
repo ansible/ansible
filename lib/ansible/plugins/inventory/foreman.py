@@ -65,7 +65,7 @@ from distutils.version import LooseVersion
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
 
 # 3rd party imports
 try:
@@ -191,9 +191,10 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 self.inventory.add_host(host['name'])
 
                 # create directly mapped groups
-                group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
+                group_name = host.get('hostgroup_title', host.get('hostgroup_name')
                 if group_name:
-                    group_name = self.inventory.add_group('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
+                    group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
+                    group_name = self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, host['name'])
 
                 # set host vars from host info
