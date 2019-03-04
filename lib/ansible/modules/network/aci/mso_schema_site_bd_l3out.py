@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mso_schema_site_bd_l3out
-short_description: Manage site BD l3out's in schema template
+short_description: Manage site-local BD l3out's in schema template
 description:
-- Manage site BDs l3out's in schema template on Cisco ACI Multi-Site.
+- Manage site-local BDs l3out's in schema template on Cisco ACI Multi-Site.
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'

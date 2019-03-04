@@ -14,9 +14,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = r'''
 ---
 module: mso_schema_site_anp_epg_staticport
-short_description: Manage site EPG static ports in schema template
+short_description: Manage site-local EPG static ports in schema template
 description:
-- Manage site EPG static ports in schema template on Cisco ACI Multi-Site.
+- Manage site-local EPG static ports in schema template on Cisco ACI Multi-Site.
 author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
@@ -66,7 +66,7 @@ options:
     description:
     - The port encap VLAN id of the static port.
     type: int
-  immediacy:
+  deployment_immediacy:
     description:
     - The deployment immediacy of the static port.
     - C(immediate) means B(Deploy immediate).
@@ -110,7 +110,7 @@ EXAMPLES = r'''
     leaf: 101
     path: eth1/1
     vlan: 126
-    immediacy: immediate
+    deployment_immediacy: immediate
     state: present
   delegate_to: localhost
 
@@ -183,7 +183,7 @@ def main():
         leaf=dict(type='str'),  # This parameter is not required for querying all objects
         path=dict(type='str'),  # This parameter is not required for querying all objects
         vlan=dict(type='int'),  # This parameter is not required for querying all objects
-        immediacy=dict(type='str', choices=['immediate', 'lazy']),
+        deployment_immediacy=dict(type='str', choices=['immediate', 'lazy']),
         mode=dict(type='str', choices=['native', 'regular', 'untagged']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -207,7 +207,7 @@ def main():
     leaf = module.params['leaf']
     path = module.params['path']
     vlan = module.params['vlan']
-    immediacy = module.params['immediacy']
+    deployment_immediacy = module.params['deployment_immediacy']
     mode = module.params['mode']
     state = module.params['state']
 
@@ -266,7 +266,7 @@ def main():
             mso.fail_json(msg="Static port '{portpath}' not found".format(portpath=portpath))
         mso.exit_json()
 
-    ports_path = '/sites/{0}/anps/{1}/epgs/{2}/staticports'.format(site_template, anp_idx, epg_idx)
+    ports_path = '/sites/{0}/anps/{1}/epgs/{2}/staticPorts'.format(site_template, anp_idx, epg_idx)
     ops = []
 
     mso.previous = mso.existing
@@ -277,13 +277,13 @@ def main():
 
     elif state == 'present':
         if not mso.existing:
-            if immediacy is None:
-                immediacy = 'lazy'
+            if deployment_immediacy is None:
+                deployment_immediacy = 'lazy'
             if mode is None:
                 mode = 'untagged'
 
         payload = dict(
-            deploymentImmediacy=immediacy,
+            deploymentImmediacy=deployment_immediacy,
             mode=mode,
             path=portpath,
             portEncapVlan=vlan,
