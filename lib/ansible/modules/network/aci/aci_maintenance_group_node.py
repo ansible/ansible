@@ -11,62 +11,58 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: aci_maintenance_group_node
-
-short_description: adds a node to the maintenance group
-
-version_added: "2.8"
-
+short_description: Manage maintenance group nodes
+version_added: '2.8'
 description:
-    - adds and removes a node from the maintenance group
-
+- Manage maintenance group nodes
 options:
-    group:
-        description:
-            - maintenance group name that you want to add the node to
-        required: true
-    node:
-        description:
-            - node to be added to the maintenance group - the value equals the nodeid
-        required: true
-    state:
-        description:
-            - Use C(present) or C(absent) for adding or removing.
-            - Use C(query) for listing an object or multiple objects.
-        default: present
-        choices: [ absent, present, query ]
-
+  group:
+    description:
+    - The maintenance group name that you want to add the node to.
+    required: true
+  node:
+    description:
+    - The node to be added to the maintenance group.
+    - The value equals the nodeid.
+    required: true
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    default: present
+    choices: [ absent, present, query ]
 extends_documentation_fragment:
-    - ACI
-
+- aci
 author:
-    - Steven Gerhart (@sgerhart)
+- Steven Gerhart (@sgerhart)
 '''
 
-EXAMPLES = '''
-  - name: maintenance group
-    aci_maintenance_group_node:
-        host: "{{ inventory_hostname }}"
-        username: "{{ user }}"
-        password: "{{ pass }}"
-        validate_certs: no
-        group: maintenancegrp1
-        node: 1001
-        state: present
-  - name: maintenance group
-    aci_maintenance_group_node:
-        host: "{{ inventory_hostname }}"
-        username: "{{ user }}"
-        password: "{{ pass }}"
-        validate_certs: no
-        group: maintenancegrp1
-        node: 1002
-        state: absent
+EXAMPLES = r'''
+- name: maintenance group
+  aci_maintenance_group_node:
+    host: "{{ inventory_hostname }}"
+    username: "{{ user }}"
+    password: "{{ pass }}"
+    validate_certs: no
+    group: maintenancegrp1
+    node: 1001
+    state: present
+
+- name: maintenance group
+  aci_maintenance_group_node:
+    host: "{{ inventory_hostname }}"
+    username: "{{ user }}"
+    password: "{{ pass }}"
+    validate_certs: no
+    group: maintenancegrp1
+    node: 1002
+    state: absent
 '''
 
-RETURN = '''
+RETURN = r'''
 current:
   description: The existing configuration from the APIC after the module has finished
   returned: success
@@ -98,7 +94,7 @@ error:
 raw:
   description: The raw output returned by the APIC REST API (xml or json)
   returned: parse error
-  type: string
+  type: str
   sample: '<?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>'
 sent:
   description: The actual/minimal configuration pushed to the APIC
@@ -147,17 +143,17 @@ proposed:
 filter_string:
   description: The filter string used for the request
   returned: failure or debug
-  type: string
+  type: str
   sample: ?rsp-prop-include=config-only
 method:
   description: The HTTP method used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: POST
 response:
   description: The HTTP response from the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: OK (30 bytes)
 status:
   description: The HTTP status from the APIC
@@ -167,14 +163,13 @@ status:
 url:
   description: The HTTP url used for the request to the APIC
   returned: failure or debug
-  type: string
+  type: str
   sample: https://10.11.12.13/api/mo/uni/tn-production.json
 
 '''
 
-import json
-from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
 def main():
@@ -212,7 +207,6 @@ def main():
             filter_target='eq(fabricNodeBlk.name, "blk{0}-{0}")'.format(node),
             module_object=node,
         ),
-
     )
 
     aci.get_existing()
@@ -224,8 +218,6 @@ def main():
                 from_=node,
                 to_=node,
             ),
-
-
         )
 
         aci.get_diff(aci_class='fabricNodeBlk')
