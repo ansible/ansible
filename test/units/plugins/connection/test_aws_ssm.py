@@ -23,7 +23,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        conn._connect = MagicMock()      
+        conn._connect = MagicMock()
         conn._session = MagicMock()
         conn._poll_stdout = MagicMock()
         conn._session_id = MagicMock()
@@ -37,29 +37,24 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        conn._connect = MagicMock()
-        conn._build_command = MagicMock()
-        conn._build_command.return_value = 'aws_ssm something something'
-        conn._run = MagicMock()
-        conn._run.return_value = (0, 'stdout', 'stderr')
-        conn.get_option = MagicMock()
-        conn.get_option.return_value = True
-        conn._session = MagicMock()
-        conn._session.return_value = (0, 'stdout', 'stderr')
-        conn.host = MagicMock()
-        conn._flush_stderr = MagicMock()
-        conn._flush_stderr_value = (0, 'stdout', 'stderr')
-        conn._session.stdin.write = MagicMock()
-        conn._session.poll = MagicMock()
-        conn._session.poll.return_value = 'True'
-        # conn.random.choice = MagicMock()
-        r_choice.return_value = "a"
-        conn._session.stdout = MagicMock()
-        conn._session.stdout.return_value = "aaaaa\nHiii\n0\naaaaa"
-        conn.MARK_LENGHT = 5
+        r_choice.side_effect = ['a','a','a','a','a','b','b','b','b','b']
 
+        conn._connected = True
+        conn.MARK_LENGTH = 5
+        conn._session = MagicMock()
+        conn._session.stdin.write = MagicMock()
+        conn._flush_stderr = MagicMock()
+        conn._session.poll = MagicMock()
+        conn._session.poll.return_value = None
+        conn._poll_stdout = MagicMock()
+        conn._poll_stdout.poll = MagicMock()
+        conn._poll_stdout.poll.return_value = True
+        conn._session.stdout = MagicMock()
+        conn._session.stdout.readline = MagicMock()
+        conn._session.stdout.readline.side_effect = iter(['aaaaa\n', 'Hi\n', '0\n', 'bbbbb\n'])
+        conn.get_option = MagicMock()
+        conn.get_option.return_value = 1
         res, stdout, stderr = conn.exec_command('aws_ssm')
-        res, stdout, stderr = conn.exec_command('aws_ssm', 'this is some data')
 
     @patch('os.path.exists')
     def test_plugins_connection_aws_ssm_put_file(self, mock_ospe):
@@ -91,18 +86,19 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn._connect = MagicMock()
 
-
-
-
-    def test_plugins_connection_aws_ssm_close(self):
+    @patch('subprocess.check_output')
+    def test_plugins_connection_aws_ssm_close(self, s_check_output):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        conn._session_id = MagicMock()
+        conn._session_id = True
+
         conn.get_option = MagicMock()
-        conn._connect = MagicMock()
+        conn.get_option.side_effect = ["i-12345","/abc", "pqr"]
+
+        conn._session = MagicMock()
+        conn._session.terminate = MagicMock()
+        conn._session.communicate = MagicMock()
 
         conn.close()
-        self.assertFalse(conn._connected)
-        
