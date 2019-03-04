@@ -421,49 +421,53 @@ class AzureRMClusters(AzureRMModuleBase):
 
 def default_compare(new, old, path, result):
     if new is None:
-        return True
+        match = True
     elif isinstance(new, dict):
+        match = True
         if not isinstance(old, dict):
             result['compare'] = 'changed [' + path + '] old dict is null'
-            return False
+            match = False
         for k in new.keys():
             if not default_compare(new.get(k), old.get(k, None), path + '/' + k, result):
-                return False
-        return True
+                match = False
     elif isinstance(new, list):
         if not isinstance(old, list) or len(new) != len(old):
             result['compare'] = 'changed [' + path + '] length is different or null'
-            return False
+            match = False
         elif len(old) == 0:
-            return True
-        elif isinstance(old[0], dict):
-            key = None
-            if 'id' in old[0] and 'id' in new[0]:
-                key = 'id'
-            elif 'name' in old[0] and 'name' in new[0]:
-                key = 'name'
-            else:
-                key = list(old[0])[0]
-            new = sorted(new, key=lambda x: x.get(key, ''))
-            old = sorted(old, key=lambda x: x.get(key, ''))
+            match = True
         else:
-            new = sorted(new)
-            old = sorted(old)
-        for i in range(len(new)):
-            if not default_compare(new[i], old[i], path + '/*', result):
-                return False
-        return True
+            match = True
+            if isinstance(old[0], dict):
+                key = None
+                if 'id' in old[0] and 'id' in new[0]:
+                    key = 'id'
+                elif 'name' in old[0] and 'name' in new[0]:
+                    key = 'name'
+                else:
+                    key = list(old[0])[0]
+                new = sorted(new, key=lambda x: x.get(key, ''))
+                old = sorted(old, key=lambda x: x.get(key, ''))
+            else:
+                new = sorted(new)
+                old = sorted(old)
+            for i in range(len(new)):
+                if not default_compare(new[i], old[i], path + '/*', result):
+                    match = False
+        return match
     else:
         if path.endswith('password'):
-            return True
-        if path == '/location' or path.endswith('location_name'):
-            new = new.replace(' ', '').lower()
-            old = new.replace(' ', '').lower()
-        if new == old:
-            return True
+            match = True
         else:
-            result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
-            return False
+            if path == '/location' or path.endswith('location_name'):
+                new = new.replace(' ', '').lower()
+                old = new.replace(' ', '').lower()
+            if new == old:
+                match = True
+            else:
+                result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
+                match = False
+    return match
 
 
 def dict_camelize(d, path, camelize_first):
