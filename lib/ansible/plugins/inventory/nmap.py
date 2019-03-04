@@ -126,8 +126,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             host = None
             ip = None
             ports = []
-            for line in stdout.splitlines():
-                line = to_text(line)
+
+            try:
+                t_stdout = to_text(stdout, errors='surrogate_or_strict')
+            except UnicodeError as e:
+                raise AnsibleParserError('Invalid (non unicode) input returned: %s' % to_native(e))
+
+            for line in t_stdout.splitlines():
                 hits = self.find_host.match(line)
                 if hits:
                     if host is not None:
