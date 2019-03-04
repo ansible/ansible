@@ -479,10 +479,8 @@ version:
 
 from ansible.module_utils.basic import AnsibleModule
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -509,26 +507,11 @@ def filter_wanopt_profile_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
-
-    return data
-
-
 def wanopt_profile(data, fos):
     vdom = data['vdom']
     wanopt_profile_data = data['wanopt_profile']
-    flattened_data = flatten_multilists_attributes(wanopt_profile_data)
-    filtered_data = filter_wanopt_profile_data(flattened_data)
+    filtered_data = filter_wanopt_profile_data(wanopt_profile_data)
+
     if wanopt_profile_data['state'] == "present":
         return fos.set('wanopt',
                        'profile',
@@ -543,7 +526,7 @@ def wanopt_profile(data, fos):
 
 
 def fortios_wanopt(data, fos):
-    login(data)
+    login(data, fos)
 
     if data['wanopt_profile']:
         resp = wanopt_profile(data, fos)
@@ -669,7 +652,6 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_wanopt(module.params, fos)
