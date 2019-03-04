@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     become: sesu
-    short_description: CA Privilged Access Manager
+    short_description: CA Privileged Access Manager
     description:
         - This become plugins allows your remote/login user to execute commands as another user via the sesu utility.
     author: ansible (@nekonyuu)
