@@ -48,7 +48,6 @@ options:
         description:
             - List of SSH Keys Names
         type: list
-        aliases: [ ssh_key ]
     volumes:
         description:
             - List of Volumes IDs that should be attached to the server on server creation.
@@ -337,7 +336,7 @@ class AnsibleHcloudServer(Hcloud):
                 location={"type": "str"},
                 datacenter={"type": "str"},
                 user_data={"type": "str"},
-                ssh_keys={"type": "list", "aliases": ["ssh_key"]},
+                ssh_keys={"type": "list"},
                 volumes={"type": "list"},
                 backups={"type": "bool", "default": False},
                 upgrade_disk={"type": "bool", "default": False},
