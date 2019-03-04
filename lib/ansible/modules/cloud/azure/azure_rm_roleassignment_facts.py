@@ -206,7 +206,7 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
         self.log("Gets role assignment {0} by name".format(self.name))
 
         response = None
-        filter = "principalId eq '{}'".format(self.assignee)
+        filter = "principalId eq '{0}'".format(self.assignee)
         try:
             response = list(self._client.role_assignments.list(filter=filter))
 
