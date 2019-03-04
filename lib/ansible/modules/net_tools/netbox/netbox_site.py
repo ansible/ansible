@@ -220,6 +220,7 @@ def main():
             required=True,
             options=dict(
                 name=(dict(required=True),
+            ),
         ),
         state=dict(required=False, default="present", choices=["present", "absent"]),
         validate_certs=dict(type="bool", default=True)
