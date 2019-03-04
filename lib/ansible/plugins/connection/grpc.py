@@ -257,6 +257,8 @@ class Connection(NetworkConnectionBase):
             channel = secure_channel(self._target, creds, options=self._channel_options)
         else:
             channel = insecure_channel(self._target, options=self._channel_options)
+        self.queue_message('vvv', "ESTABLISH GRPC CONNECTION FOR USER: %s on PORT %s TO %s" %
+                                 (self.get_option('remote_user'), port, host))
         self._channel = implementations.Channel(channel)
         self.queue_message('vvvv', 'grpc connection has completed successfully')
         self._connected = True
