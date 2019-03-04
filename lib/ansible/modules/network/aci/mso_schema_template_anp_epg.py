@@ -28,7 +28,7 @@ options:
     required: yes
   template:
     description:
-    - The name of the template to change.
+    - The name of the template.
     type: str
     required: yes
   anp:
@@ -285,7 +285,7 @@ def main():
             proxyArp=intersite_multicaste_source,
             # FIXME: Missing functionality
             # uSegAttrs=[],
-            # contractRelationships=[],
+            contractRelationships=[],
             subnets=subnets,
             bdRef=bd_ref,
         )
