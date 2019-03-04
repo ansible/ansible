@@ -219,7 +219,7 @@ def main():
             type="dict",
             required=True,
             options=dict(
-                name=(dict(required=True),
+                name=dict(required=True),
             ),
         ),
         state=dict(required=False, default="present", choices=["present", "absent"]),
