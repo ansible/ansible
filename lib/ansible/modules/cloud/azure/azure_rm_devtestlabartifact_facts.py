@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifact_facts
 version_added: "2.8"
-short_description: Get Azure Artifact facts.
+short_description: Get Azure DevTest Lab Artifact facts.
 description:
-    - Get facts of Azure Artifact.
+    - Get facts of Azure DevTest Lab Artifact.
 
 options:
     resource_group:
@@ -47,41 +47,87 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Artifact
+  - name: Get instance of DevTest Lab Artifact
     azure_rm_devtestlabartifact_facts:
-      resource_group: resource_group_name
-      lab_name: lab_name
-      artifact_source_name: artifact_source_name
-      name: name
+      resource_group: myResourceGroup
+      lab_name: myLab
+      artifact_source_name: myArtifactSource
+      name: myArtifact
 '''
 
 RETURN = '''
 artifacts:
-    description: A list of dictionaries containing facts for Artifact.
+    description: A list of dictionaries containing facts for DevTest Lab Artifact.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the artifact.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/ar
+                     tifactSources/myArtifactSource/artifacts/myArtifact"
         resource_group:
             description:
-                - Resource group name.
+                - Name of the resource group.
             returned: always
+            type: str
             sample: myResourceGroup
         lab_name:
             description:
-                - DevTest Lab name.
+                - Name of the lab.
             returned: always
+            type: str
             sample: myLab
         artifact_source_name:
             description:
-                - Artifact source name.
+                - The name of the artifact source.
             returned: always
-            sample: public environment repo
+            type: str
+            sample: myArtifactSource
+        name:
+            description:
+                - The name of the artifact.
+            returned: always
+            type: str
+            sample: myArtifact
+        description:
+            description:
+                - Description of the artifact.
+            returned: always
+            type: str
+            sample: Installs My Software
+        file_path:
+            description:
+                - "Artifact's path in the repo."
+            returned: always
+            type: str
+            sample: Artifacts/myArtifact
+        publisher:
+            description:
+                - Publisher name.
+            returned: always
+            type: str
+            sample: MyPublisher
+        target_os_type:
+            description:
+                - Target OS type.
+            returned: always
+            type: str
+            sample: Linux
+        title:
+            description:
+                - Title of the artifact.
+            returned: always
+            type: str
+            sample: My Software
+        parameters:
+            description:
+                - A dictionary containing parameters definition of the artifact.
+            returned: always
+            type: complex
+            sample: {}
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
