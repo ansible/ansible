@@ -37,6 +37,77 @@ PASS_VARS = {
 }
 
 
+def _return_datastructure_name(obj):
+    """ Return native stringified values from datastructures.
+
+    For use with removing sensitive values pre-jsonification."""
+    if isinstance(obj, (text_type, binary_type)):
+        if obj:
+            yield to_native(obj, errors='surrogate_or_strict')
+        return
+    elif isinstance(obj, Mapping):
+        for element in obj.items():
+            for subelement in _return_datastructure_name(element[1]):
+                yield subelement
+    elif is_iterable(obj):
+        for element in obj:
+            for subelement in _return_datastructure_name(element):
+                yield subelement
+    elif isinstance(obj, (bool, NoneType)):
+        # This must come before int because bools are also ints
+        return
+    elif isinstance(obj, tuple(list(integer_types) + [float])):
+        yield to_native(obj, nonstring='simplerepr')
+    else:
+        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
+
+
+def list_no_log_values(argument_spec, params):
+    """Return set of no log values
+
+    :arg argument_spec: An argument spec dictionary from a module
+    :arg params: Dictionary of all module parameters
+
+    :returns: Set of strings that should be hidden from output::
+
+        {'secret_dict_value', 'secret_list_item_one', 'secret_list_item_two', 'secret_string'}
+    """
+
+    no_log_values = set()
+    for arg_name, arg_opts in argument_spec.items():
+        if arg_opts.get('no_log', False):
+            # Find the value for the no_log'd param
+            no_log_object = params.get(arg_name, None)
+
+            if no_log_object:
+                no_log_values.update(_return_datastructure_name(no_log_object))
+
+    return no_log_values
+
+
+def list_deprecations(argument_spec, params):
+    """Return a list of deprecations
+
+    :arg argument_spec: An argument spec dictionary from a module
+    :arg params: Dictionary of all module parameters
+
+    :returns: List of dictionaries containing a message and version in which
+        the deprecated parameter will be removed, or an empty list::
+
+            [{'msg': "Param 'deptest' is deprecated. See the module docs for more information", 'version': '2.9'}]
+    """
+
+    deprecations = []
+    for arg_name, arg_opts in argument_spec.items():
+        if arg_opts.get('removed_in_version') is not None and arg_name in params:
+            deprecations.append({
+                'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
+                'version': arg_opts.get('removed_in_version')
+            })
+
+    return deprecations
+
+
 def handle_aliases(argument_spec, params):
     """Return a two item tuple. The first is a dictionary of aliases, the second is
     a list of legal inputs."""
