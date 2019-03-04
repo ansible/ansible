@@ -264,7 +264,9 @@ def dict_diff(base, comparable):
         if isinstance(value, dict):
             item = comparable.get(key)
             if item is not None:
-                updates[key] = dict_diff(value, comparable[key])
+                sub_diff = dict_diff(value, comparable[key])
+                if sub_diff:
+                    updates[key] = sub_diff
         else:
             comparable_value = comparable.get(key)
             if comparable_value is not None:
