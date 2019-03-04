@@ -314,9 +314,12 @@ class AzureRMClusters(AzureRMModuleBase):
 
                 compare_result = {}
                 if (not default_compare(self.parameters, old_response, '', compare_result)):
-                    self.results['compare'] = compare_result
-                    self.results['old_response'] = old_response
-                    self.to_do = Actions.Update
+                    if compare_result.pop('/properties/compute_profile/roles/*/target_instance_count', False):
+                        self.to_do = Actions.Update
+                    if compare_result.pop('/tags', False):
+                        self.to_do = Actions.Update
+                    if compare_result:
+                        self.module.warn("only tags and target_instance_count can be updated")
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Cluster instance")
