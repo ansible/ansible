@@ -32,6 +32,7 @@ DOCUMENTATION = """
           - name: ANSIBLE_EXECUTABLE
         vars:
           - name: ansible_executable
+        default: /bin/sh
       chroot_exe:
         version_added: '2.8'
         description:
