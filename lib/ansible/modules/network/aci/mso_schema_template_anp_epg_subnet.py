@@ -41,11 +41,12 @@ options:
     - The name of the EPG to manage.
     type: str
     required: yes
-  ip:
+  subnet:
     description:
     - The IP range in CIDR notation.
     type: str
     required: true
+    aliases: [ ip ]
   description:
     description:
     - The description of this subnet.
@@ -77,7 +78,7 @@ extends_documentation_fragment: mso
 
 EXAMPLES = r'''
 - name: Add a new subnet to an EPG
-  mso_schema_template_anp_subnet:
+  mso_schema_template_anp_epg_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -85,12 +86,12 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
-    ip: 10.0.0.0/24
+    subnet: 10.0.0.0/24
     state: present
   delegate_to: localhost
 
-- name: Remove an EPG
-  mso_schema_template_anp_epg:
+- name: Remove a subnet from an EPG
+  mso_schema_template_anp_epg_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -98,12 +99,12 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
-    ip: 10.0.0.0/24
+    subnet: 10.0.0.0/24
     state: absent
   delegate_to: localhost
 
-- name: Query a specific EPG
-  mso_schema_template_anp_epg:
+- name: Query a specific EPG subnet
+  mso_schema_template_anp_epg_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -111,13 +112,13 @@ EXAMPLES = r'''
     template: Template 1
     anp: ANP 1
     epg: EPG 1
-    ip: 10.0.0.0/24
+    subnet: 10.0.0.0/24
     state: query
   delegate_to: localhost
   register: query_result
 
-- name: Query all EPGs
-  mso_schema_template_anp_epg:
+- name: Query all EPGs subnets
+  mso_schema_template_anp_epg_subnet:
     host: mso_host
     username: admin
     password: SomeSecretPassword
@@ -151,8 +152,8 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
         required_if=[
-            ['state', 'absent', ['ip']],
-            ['state', 'present', ['ip']],
+            ['state', 'absent', ['subnet']],
+            ['state', 'present', ['subnet']],
         ],
     )
 
@@ -160,7 +161,7 @@ def main():
     template = module.params['template']
     anp = module.params['anp']
     epg = module.params['epg']
-    ip = module.params['ip']
+    subnet = module.params['subnet']
     description = module.params['description']
     scope = module.params['scope']
     shared = module.params['shared']
@@ -197,17 +198,17 @@ def main():
 
     # Get Subnet
     subnets = [s['ip'] for s in schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']]
-    if ip in subnets:
-        ip_idx = subnets.index(ip)
+    if subnet in subnets:
+        subnet_idx = subnets.index(subnet)
         # FIXME: Changes based on index are DANGEROUS
-        subnet_path = '/templates/{0}/anps/{1}/epgs/{2}/subnets/{3}'.format(template, anp, epg, ip_idx)
-        mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets'][ip_idx]
+        subnet_path = '/templates/{0}/anps/{1}/epgs/{2}/subnets/{3}'.format(template, anp, epg, subnet_idx)
+        mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets'][subnet_idx]
 
     if state == 'query':
-        if ip is None:
+        if subnet is None:
             mso.existing = schema_obj['templates'][template_idx]['anps'][anp_idx]['epgs'][epg_idx]['subnets']
         elif not mso.existing:
-            mso.fail_json(msg="Subnet '{ip}' not found".format(ip=ip))
+            mso.fail_json(msg="Subnet '{subnet}' not found".format(subnet=subnet))
         mso.exit_json()
 
     subnets_path = '/templates/{0}/anps/{1}/epgs/{2}/subnets'.format(template, anp, epg)
@@ -220,17 +221,18 @@ def main():
             ops.append(dict(op='remove', path=subnet_path))
 
     elif state == 'present':
-        if description is None and not mso.existing:
-            description = ip
-        if scope is None and not mso.existing:
-            scope = 'private'
-        if shared is None and not mso.existing:
-            shared = False
-        if no_default_gateway is None and not mso.existing:
-            no_default_gateway = False
+        if not mso.existing:
+            if description is None:
+                description = subnet
+            if scope is None:
+                scope = 'private'
+            if shared is None:
+                shared = False
+            if no_default_gateway is None:
+                no_default_gateway = False
 
         payload = dict(
-            ip=ip,
+            ip=subnet,
             description=description,
             scope=scope,
             shared=shared,
