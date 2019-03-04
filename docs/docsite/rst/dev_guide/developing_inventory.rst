@@ -185,7 +185,7 @@ To facilitate this there are a few of helper functions used in the example below
             for colo in mydata:
                 for server in mydata[colo]['servers']:
                     self.inventory.add_host(server['name'])
-                    self.inventory.set_variable('ansible_host', server['external_ip'])
+                    self.inventory.set_variable(server['name'], 'ansible_host', server['external_ip'])
 
 The specifics will vary depending on API and structure returned. But one thing to keep in mind, if the inventory source or any other issue crops up you should ``raise AnsibleParserError`` to let Ansible know that the source was invalid or the process failed.
 
