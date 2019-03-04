@@ -24,6 +24,8 @@ MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 VALID_SPECS = (
     # Simple type=int
     ({'arg': {'type': 'int'}}, {'arg': 42}, 42),
+    # Simple type=int with a large value (will be of type long under Python 2)
+    ({'arg': {'type': 'int'}}, {'arg': 18765432109876543210}, 18765432109876543210),
     # Simple type=list, elements=int
     ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42, 32]}, [42, 32]),
     # Type=int with conversion from string
