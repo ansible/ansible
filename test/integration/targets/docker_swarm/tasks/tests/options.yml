@@ -15,18 +15,21 @@
     autolock_managers: yes
   check_mode: yes
   register: output_1
+  ignore_errors: yes
 
 - name: autolock_managers
   docker_swarm:
     state: present
     autolock_managers: yes
   register: output_2
+  ignore_errors: yes
 
 - name: autolock_managers (idempotent)
   docker_swarm:
     state: present
     autolock_managers: yes
   register: output_3
+  ignore_errors: yes
 
 - name: autolock_managers (idempotent, check mode)
   docker_swarm:
@@ -34,6 +37,7 @@
     autolock_managers: yes
   check_mode: yes
   register: output_4
+  ignore_errors: yes
 
 - name: autolock_managers (change, check mode)
   docker_swarm:
@@ -41,14 +45,16 @@
     autolock_managers: no
   check_mode: yes
   register: output_5
+  ignore_errors: yes
 
 - name: autolock_managers (change)
   docker_swarm:
     state: present
     autolock_managers: no
   register: output_6
+  ignore_errors: yes
 
-- name: assert changed when remove a swarm cluster
+- name: assert autolock_managers changes
   assert:
     that:
        - 'output_1 is changed'
@@ -63,6 +69,12 @@
        - 'output_5.actions[0] == "Swarm cluster updated"'
        - 'output_6 is changed'
        - 'output_6.actions[0] == "Swarm cluster updated"'
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - output_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## ca_force_rotate #################################################
@@ -74,18 +86,21 @@
     ca_force_rotate: 1
   check_mode: yes
   register: output_1
+  ignore_errors: yes
 
 - name: ca_force_rotate
   docker_swarm:
     state: present
     ca_force_rotate: 1
   register: output_2
+  ignore_errors: yes
 
 - name: ca_force_rotate (idempotent)
   docker_swarm:
     state: present
     ca_force_rotate: 1
   register: output_3
+  ignore_errors: yes
 
 - name: ca_force_rotate (idempotent, check mode)
   docker_swarm:
@@ -93,6 +108,7 @@
     ca_force_rotate: 1
   check_mode: yes
   register: output_4
+  ignore_errors: yes
 
 - name: ca_force_rotate (change, check mode)
   docker_swarm:
@@ -100,14 +116,16 @@
     ca_force_rotate: 0
   check_mode: yes
   register: output_5
+  ignore_errors: yes
 
 - name: ca_force_rotate (change)
   docker_swarm:
     state: present
     ca_force_rotate: 0
   register: output_6
+  ignore_errors: yes
 
-- name: assert changed when remove a swarm cluster
+- name: assert ca_force_rotate changes
   assert:
     that:
        - 'output_1 is changed'
@@ -122,6 +140,12 @@
        - 'output_5.actions[0] == "Swarm cluster updated"'
        - 'output_6 is changed'
        - 'output_6.actions[0] == "Swarm cluster updated"'
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - output_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## dispatcher_heartbeat_period #####################################
@@ -166,7 +190,7 @@
     dispatcher_heartbeat_period: 23
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert dispatcher_heartbeat_period changes
   assert:
     that:
        - 'output_1 is changed'
@@ -225,7 +249,7 @@
     election_tick: 5
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert election_tick changes
   assert:
     that:
        - 'output_1 is changed'
@@ -284,7 +308,7 @@
     heartbeat_tick: 3
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert heartbeat_tick changes
   assert:
     that:
        - 'output_1 is changed'
@@ -342,7 +366,7 @@
     keep_old_snapshots: 2
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert keep_old_snapshots changes
   assert:
     that:
        - 'output_1 is changed'
@@ -369,6 +393,7 @@
       b: v2
   check_mode: yes
   register: output_1
+  ignore_errors: yes
 
 - name: labels
   docker_swarm:
@@ -377,6 +402,7 @@
       a: v1
       b: v2
   register: output_2
+  ignore_errors: yes
 
 - name: labels (idempotent)
   docker_swarm:
@@ -385,6 +411,7 @@
       a: v1
       b: v2
   register: output_3
+  ignore_errors: yes
 
 - name: labels (idempotent, check mode)
   docker_swarm:
@@ -394,6 +421,7 @@
       b: v2
   check_mode: yes
   register: output_4
+  ignore_errors: yes
 
 - name: labels (change, check mode)
   docker_swarm:
@@ -403,6 +431,7 @@
       c: v3
   check_mode: yes
   register: output_5
+  ignore_errors: yes
 
 - name: labels (change)
   docker_swarm:
@@ -411,8 +440,68 @@
       a: v1
       c: v3
   register: output_6
+  ignore_errors: yes
 
-- name: assert changed when remove a swarm cluster
+- name: labels (not specifying, check mode)
+  docker_swarm:
+    state: present
+  check_mode: yes
+  diff: yes
+  register: output_7
+  ignore_errors: yes
+
+- name: labels (not specifying)
+  docker_swarm:
+    state: present
+  diff: yes
+  register: output_8
+  ignore_errors: yes
+
+- name: labels (idempotency, check that labels are still there)
+  docker_swarm:
+    state: present
+    labels:
+      a: v1
+      c: v3
+  diff: yes
+  register: output_9
+  ignore_errors: yes
+
+- name: labels (empty, check mode)
+  docker_swarm:
+    state: present
+    labels: {}
+  check_mode: yes
+  diff: yes
+  register: output_10
+  ignore_errors: yes
+
+- name: labels (empty)
+  docker_swarm:
+    state: present
+    labels: {}
+  diff: yes
+  register: output_11
+  ignore_errors: yes
+
+- name: labels (empty, idempotent, check mode)
+  docker_swarm:
+    state: present
+    labels: {}
+  check_mode: yes
+  diff: yes
+  register: output_12
+  ignore_errors: yes
+
+- name: labels (empty, idempotent)
+  docker_swarm:
+    state: present
+    labels: {}
+  diff: yes
+  register: output_13
+  ignore_errors: yes
+
+- name: assert labels changes
   assert:
     that:
        - 'output_1 is changed'
@@ -427,6 +516,26 @@
        - 'output_5.actions[0] == "Swarm cluster updated"'
        - 'output_6 is changed'
        - 'output_6.actions[0] == "Swarm cluster updated"'
+       - 'output_7 is not changed'
+       - 'output_7.actions[0] == "No modification"'
+       - 'output_8 is not changed'
+       - 'output_8.actions[0] == "No modification"'
+       - 'output_9 is not changed'
+       - 'output_9.actions[0] == "No modification"'
+       - 'output_10 is changed'
+       - 'output_10.actions[0] == "Swarm cluster updated"'
+       - 'output_11 is changed'
+       - 'output_11.actions[0] == "Swarm cluster updated"'
+       - 'output_12 is not changed'
+       - 'output_12.actions[0] == "No modification"'
+       - 'output_13 is not changed'
+       - 'output_13.actions[0] == "No modification"'
+  when: docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - output_1 is failed
+    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.6.0') in output_1.msg"
+  when: docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## log_entries_for_slow_followers ##################################
@@ -470,7 +579,7 @@
     log_entries_for_slow_followers: 23
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert log_entries_for_slow_followers changes
   assert:
     that:
        - 'output_1 is changed'
@@ -512,7 +621,7 @@
   register: output_3
   ignore_errors: yes
 
-- name: assert changed when remove a swarm cluster
+- name: assert name changes
   assert:
     that:
        - 'output_1 is not changed'
@@ -563,7 +672,7 @@
     node_cert_expiry: 8766000000000000
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert node_cert_expiry changes
   assert:
     that:
        - 'output_1 is changed'
@@ -608,7 +717,7 @@
   check_mode: yes
   register: output_4
 
-- name: assert changed when remove a swarm cluster
+- name: assert rotate_manager_token changes
   assert:
     that:
        - 'output_1 is changed'
@@ -649,7 +758,7 @@
   check_mode: yes
   register: output_4
 
-- name: assert changed when remove a swarm cluster
+- name: assert rotate_worker_token changes
   assert:
     that:
        - 'output_1 is changed'
@@ -703,7 +812,7 @@
     snapshot_interval: 54321
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert snapshot_interval changes
   assert:
     that:
        - 'output_1 is changed'
@@ -761,7 +870,7 @@
     task_history_retention_limit: 7
   register: output_6
 
-- name: assert changed when remove a swarm cluster
+- name: assert task_history_retention_limit changes
   assert:
     that:
        - 'output_1 is changed'
