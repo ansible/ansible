@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright: (c) 2018, Derek Rushing <derek.rushing@geekops.com>
+# Copyright: (c) 2018, VMware, Inc.
+# SPDX-License-Identifier: GPL-3.0-or-later
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -22,12 +24,13 @@ description: This module can be used to manage object permissions on the given h
 version_added: 2.8
 author:
 - Derek Rushing (@kryptsi)
+- Joseph Andreatta (@vmwjoseph)
 notes:
-  - Tested on ESXi 6.5
-   - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
+    - Tested on ESXi 6.5, vSphere 6.7
+    - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
 requirements:
-  - "python >= 2.7"
-  - PyVmomi
+    - "python >= 2.7"
+    - PyVmomi
 options:
   role:
     description:
@@ -70,7 +73,7 @@ extends_documentation_fragment: vmware.documentation
 EXAMPLES = '''
 - name: Assign user to VM folder
   vmware_object_role_permission:
-    role: administrator
+    role: Admin
     principal: user_bob
     object_name: services
     state: present
@@ -78,7 +81,7 @@ EXAMPLES = '''
 
 - name: Remove user from VM folder
   vmware_object_role_permission:
-    role: administrator
+    role: Admin
     principal: user_bob
     object_name: services
     state: absent
@@ -89,6 +92,14 @@ EXAMPLES = '''
     role: Limited Users
     group: finance
     object_name: Accounts
+    state: present
+  delegate_to: localhost
+
+- name: Assign view_user Read Only permission at root folder
+  vmware_object_role_permission:
+    role: ReadOnly
+    principal: view_user
+    object_name: rootFolder
     state: present
   delegate_to: localhost
 '''
@@ -106,6 +117,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_native
 from ansible.module_utils.vmware import PyVmomi, vmware_argument_spec, find_obj
 
 
@@ -114,6 +126,7 @@ class VMwareObjectRolePermission(PyVmomi):
         super(VMwareObjectRolePermission, self).__init__(module)
         self.module = module
         self.params = module.params
+        self.is_group = False
 
         if self.params.get('principal', None) is not None:
             self.applied_to = self.params['principal']
@@ -141,7 +154,7 @@ class VMwareObjectRolePermission(PyVmomi):
         return 'absent'
 
     def process_state(self):
-        local_role_manager_states = {
+        local_permission_states = {
             'absent': {
                 'present': self.remove_permission,
                 'absent': self.state_exit_unchanged,
@@ -152,13 +165,13 @@ class VMwareObjectRolePermission(PyVmomi):
             }
         }
         try:
-            local_role_manager_states[self.state][self.get_state()]()
+            local_permission_states[self.state][self.get_state()]()
         except vmodl.RuntimeFault as runtime_fault:
-            self.module.fail_json(msg=runtime_fault.msg)
+            self.module.fail_json(msg=to_native(runtime_fault.msg))
         except vmodl.MethodFault as method_fault:
-            self.module.fail_json(msg=method_fault.msg)
+            self.module.fail_json(msg=to_native(method_fault.msg))
         except Exception as e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg=to_native(e))
 
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
@@ -173,11 +186,13 @@ class VMwareObjectRolePermission(PyVmomi):
         return perm
 
     def add_permission(self):
-        self.content.authorizationManager.SetEntityPermissions(self.current_obj, [self.perm])
+        if not self.module.check_mode:
+            self.content.authorizationManager.SetEntityPermissions(self.current_obj, [self.perm])
         self.module.exit_json(changed=True)
 
     def remove_permission(self):
-        self.content.authorizationManager.RemoveEntityPermission(self.current_obj, self.applied_to, self.is_group)
+        if not self.module.check_mode:
+            self.content.authorizationManager.RemoveEntityPermission(self.current_obj, self.applied_to, self.is_group)
         self.module.exit_json(changed=True)
 
     def get_role(self):
@@ -188,46 +203,59 @@ class VMwareObjectRolePermission(PyVmomi):
         self.module.fail_json(msg="Specified role (%s) was not found" % self.params['role'])
 
     def get_object(self):
+        # find_obj doesn't include rootFolder
+        if self.params['object_type'] == 'Folder' and self.params['object_name'] == 'rootFolder':
+            self.current_obj = self.content.rootFolder
+            return
         try:
             object_type = getattr(vim, self.params['object_type'])
         except AttributeError:
             self.module.fail_json(msg="Object type %s is not valid." % self.params['object_type'])
-
         self.current_obj = find_obj(content=self.content,
                                     vimtype=[getattr(vim, self.params['object_type'])],
                                     name=self.params['object_name'])
 
         if self.current_obj is None:
-            self.module.fail_json(msg="Specified object %s of type %s was not found." % (self.params['object_name'],
-                                                                                         self.params['object_type']))
+            self.module.fail_json(
+                msg="Specified object %s of type %s was not found."
+                % (self.params['object_name'], self.params['object_type'])
+            )
 
 
 def main():
     argument_spec = vmware_argument_spec()
-    argument_spec.update(dict(
-        role=dict(required=True, type='str'),
-        object_name=dict(required=True, type='str'),
-        object_type=dict(type='str', default='Folder',
-                         choices=['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
-                                  'Datastore', 'Network', 'HostSystem', 'ComputeResource',
-                                  'ClusterComputeResource', 'DistributedVirtualSwitch']
-                         ),
-        principal=dict(type='str'),
-        group=dict(type='str'),
-        recursive=dict(type='bool', default=True),
-        state=dict(default='present', choices=['present', 'absent'], type='str')
-    )
+    argument_spec.update(
+        dict(
+            role=dict(required=True, type='str'),
+            object_name=dict(required=True, type='str'),
+            object_type=dict(
+                type='str',
+                default='Folder',
+                choices=[
+                    'Folder',
+                    'VirtualMachine',
+                    'Datacenter',
+                    'ResourcePool',
+                    'Datastore',
+                    'Network',
+                    'HostSystem',
+                    'ComputeResource',
+                    'ClusterComputeResource',
+                    'DistributedVirtualSwitch',
+                ],
+            ),
+            principal=dict(type='str'),
+            group=dict(type='str'),
+            recursive=dict(type='bool', default=True),
+            state=dict(default='present', choices=['present', 'absent'], type='str'),
+        )
     )
 
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False,
-        mutually_exclusive=[
-            ['principal', 'group'],
-        ],
-        required_one_of=[
-            ['principal', 'group'],
-        ]
+        supports_check_mode=True,
+        mutually_exclusive=[['principal', 'group']],
+        required_one_of=[['principal', 'group']],
     )
 
     vmware_object_permission = VMwareObjectRolePermission(module)
