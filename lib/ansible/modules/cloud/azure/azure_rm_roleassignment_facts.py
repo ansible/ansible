@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Yunge Zhu, (@yungezz)
+# Copyright (c) 2019 Yunge Zhu, (@yungezz)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -24,7 +24,7 @@ description:
 options:
     scope:
         description:
-            - The scope of role assignment applies to.
+            - The scope that the role assignment applies to.
             - For example, use /subscriptions/{subscription-id}/ for a subscription,
             - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group,
             - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource
@@ -35,7 +35,7 @@ options:
     assignee:
         description:
             - Object id of a user, group or service principal.
-            - Mutual exclusive with I(name).
+            - Mutually exclusive with I(name).
 
 extends_documentation_fragment:
     - azure
@@ -174,6 +174,8 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
             self.results['roleassignments'] = self.list_by_resource_group()
         elif self.scope:
             self.results['roleassignments'] = self.list_by_scope()
+        else:
+            self.fail("Please specify name or assignee")
 
         return self.results
 
