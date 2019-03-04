@@ -51,7 +51,7 @@ run the task asynchronously by specifying a poll value of 0::
         poll: 0
 
 .. note::
-   You shouldn't attempt run a task asynchronously by specifying a poll value of 0:: to with operations that require
+   You shouldn't attempt run a task asynchronously by specifying a poll value of 0 with operations that require
    exclusive locks (such as yum transactions) if you expect to run other
    commands later in the playbook against those same resources.
 
