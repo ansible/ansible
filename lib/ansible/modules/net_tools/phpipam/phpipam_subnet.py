@@ -135,7 +135,7 @@ def main():
     )
     module = AnsibleModule(
         argument_spec=argument_spec,
-        supports_check_mode=False
+        supports_check_mode=True
     )
 
     result = dict(
@@ -185,6 +185,10 @@ def main():
     if state == 'present' and found_subnet is None:
         # Create subnet if it doesn't exist
 
+        if module.check_mode:
+            result['changed'] = True
+            module.exit_json(**result)
+
         subnet_split = subnet.rsplit('/', 1)
         creation = session.create(session,
                                   subnet_url,
@@ -208,6 +212,13 @@ def main():
             if optional_args[k] != found_subnet[k]:
                 value_changed = True
                 payload[k] = optional_args[k]
+
+        if module.check_mode:
+            if value_changed:
+                result['changed'] = True
+                module.exit_json(**result)
+            module.exit_json(**result)
+
         if value_changed:
             patch_response = session.modify(session,
                                             subnet_url,
@@ -222,6 +233,11 @@ def main():
             module.exit_json(**result)
     else:
         # Delete subnet if present
+        if module.check_mode:
+            if found_subnet:
+                result['changed'] = True
+                module.exit_json(**result)
+            module.exit_json(**result)
         try:
             deletion = session.remove(session, subnet_url, found_subnet['id'])
             if deletion['code'] == 200:
