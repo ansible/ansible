@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,11 +15,11 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabsenvironment
+module: azure_rm_devtestlabenvironment
 version_added: "2.8"
-short_description: Manage Azure Environment instance.
+short_description: Manage Azure DevTest Lab Environment instance.
 description:
-    - Create, update and delete instance of Azure Environment.
+    - Create, update and delete instance of Azure DevTest Lab Environment.
 
 options:
     resource_group:
@@ -41,27 +41,20 @@ options:
     location:
         description:
             - The location of the resource.
-    deployment_properties:
+    deployment_template:
         description:
-            - The deployment properties of the environment.
+            - "The Azure Resource Manager template's identifier."
+    deployment_parameters:
+        description:
+            - The parameters of the Azure Resource Manager template.
+        type: list
         suboptions:
-            arm_template_id:
+            name:
                 description:
-                    - "The Azure Resource Manager template's identifier."
-            parameters:
+                    - The name of the template parameter.
+            value:
                 description:
-                    - The parameters of the Azure Resource Manager template.
-                type: list
-                suboptions:
-                    name:
-                        description:
-                            - The name of the template parameter.
-                    value:
-                        description:
-                            - The value of the template parameter.
-    arm_template_display_name:
-        description:
-            - The display name of the Azure Resource Manager template that produced the environment.
+                    - The value of the template parameter.
     state:
       description:
         - Assert the state of the Environment.
@@ -82,7 +75,7 @@ author:
 
 EXAMPLES = '''
   - name: Create (or update) Environment
-    azure_rm_devtestlabsenvironment:
+    azure_rm_devtestlabenvironment:
       resource_group: NOT FOUND
       lab_name: NOT FOUND
       user_name: NOT FOUND
@@ -117,7 +110,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMEnvironment(AzureRMModuleBase):
+class AzureRMDtlEnvironment(AzureRMModuleBase):
     """Configuration class for an Azure RM Environment resource"""
 
     def __init__(self):
@@ -141,27 +134,19 @@ class AzureRMEnvironment(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
-            deployment_properties=dict(
-                type='dict',
+            deployment_template=dict(
+                type='raw'
+            ),
+            deployment_parameters=dict(
+                type='list',
                 options=dict(
-                    arm_template_id=dict(
+                    name=dict(
                         type='str'
                     ),
-                    parameters=dict(
-                        type='list',
-                        options=dict(
-                            name=dict(
-                                type='str'
-                            ),
-                            value=dict(
-                                type='str'
-                            )
-                        )
+                    value=dict(
+                        type='str'
                     )
                 )
-            ),
-            arm_template_display_name=dict(
-                type='str'
             ),
             state=dict(
                 type='str',
@@ -181,9 +166,9 @@ class AzureRMEnvironment(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMEnvironment, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                 supports_check_mode=True,
-                                                 supports_tags=True)
+        super(AzureRMDtlEnvironment, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                    supports_check_mode=True,
+                                                    supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -194,13 +179,27 @@ class AzureRMEnvironment(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.dtl_environment[key] = kwargs[key]
 
-
         response = None
 
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
 
         resource_group = self.get_resource_group(self.resource_group)
+        deployment_template = self.dtl_environment.pop('deployment_template', None)
+        if deployment_template:
+            if isinstance(deployment_template, dict):
+                if all(key in deployment_template for key in ('artifact_source_name', 'name')):
+                    tmp = '/subscriptions/{0}/resourcegroups/{1}/providers/microsoft.devtestlab/labs/{2}/artifactSources/{3}/armTemplates/{4}'
+                    deployment_template = tmp.format(self.subscription_id,
+                                                     self.resource_group,
+                                                     self.lab_name,
+                                                     deployment_template['artifact_source_name'],
+                                                     deployment_template['name'])
+            if not isinstance(deployment_template, str):
+                self.fail("parameter error: expecting deployment_template to contain [artifact_source, name]")
+            self.dtl_environment['deployment_properties'] = {}
+            self.dtl_environment['deployment_properties']['arm_template_id'] = deployment_template
+            self.dtl_environment['deployment_properties']['parameters'] = self.dtl_environment.pop('deployment_parameters', None)
 
         old_response = self.get_environment()
 
@@ -248,7 +247,7 @@ class AzureRMEnvironment(AzureRMModuleBase):
         if self.state == 'present':
             self.results.update({
                 'id': response.get('id', None)
-                })
+            })
         return self.results
 
     def create_update_environment(self):
@@ -260,11 +259,18 @@ class AzureRMEnvironment(AzureRMModuleBase):
         self.log("Creating / Updating the Environment instance {0}".format(self.name))
 
         try:
-            response = self.mgmt_client.environments.create_or_update(resource_group_name=self.resource_group,
-                                                                      lab_name=self.lab_name,
-                                                                      user_name=self.user_name,
-                                                                      name=self.name,
-                                                                      dtl_environment=self.dtl_environment)
+            if self.to_do == Actions.Create:
+                response = self.mgmt_client.environments.create_or_update(resource_group_name=self.resource_group,
+                                                                          lab_name=self.lab_name,
+                                                                          user_name=self.user_name,
+                                                                          name=self.name,
+                                                                          dtl_environment=self.dtl_environment)
+            else:
+                response = self.mgmt_client.environments.update(resource_group_name=self.resource_group,
+                                                                lab_name=self.lab_name,
+                                                                user_name=self.user_name,
+                                                                name=self.name,
+                                                                dtl_environment=self.dtl_environment)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
@@ -360,7 +366,7 @@ def default_compare(new, old, path, result):
 
 def main():
     """Main execution"""
-    AzureRMEnvironment()
+    AzureRMDtlEnvironment()
 
 
 if __name__ == '__main__':

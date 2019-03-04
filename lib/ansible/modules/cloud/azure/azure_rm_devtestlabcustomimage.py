@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabscustomimage
+module: azure_rm_devtestlabcustomimage
 version_added: "2.8"
 short_description: Manage Azure Custom Image instance.
 description:
@@ -113,7 +113,7 @@ author:
 
 EXAMPLES = '''
   - name: Create (or update) Custom Image
-    azure_rm_devtestlabscustomimage:
+    azure_rm_devtestlabcustomimage:
       resource_group: NOT FOUND
       lab_name: NOT FOUND
       name: NOT FOUND
@@ -147,7 +147,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMCustomImage(AzureRMModuleBase):
+class AzureRMDtlCustomImage(AzureRMModuleBase):
     """Configuration class for an Azure RM Custom Image resource"""
 
     def __init__(self):
@@ -240,9 +240,9 @@ class AzureRMCustomImage(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMCustomImage, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                  supports_check_mode=True,
-                                                  supports_tags=True)
+        super(AzureRMDtlCustomImage, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                    supports_check_mode=True,
+                                                    supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -310,7 +310,7 @@ class AzureRMCustomImage(AzureRMModuleBase):
         if self.state == 'present':
             self.results.update({
                 'id': response.get('id', None)
-                })
+            })
         return self.results
 
     def create_update_customimage(self):
@@ -434,7 +434,7 @@ def dict_camelize(d, path, camelize_first):
 
 def main():
     """Main execution"""
-    AzureRMCustomImage()
+    AzureRMDtlCustomImage()
 
 
 if __name__ == '__main__':

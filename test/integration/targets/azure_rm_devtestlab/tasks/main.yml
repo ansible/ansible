@@ -28,7 +28,7 @@
     location: eastus
     storage_type: standard
     premium_data_disks: no
-  register: output
+  register: output_lab
 - name: Check if the change was correctly reported
   assert:
     that:
@@ -64,40 +64,40 @@
   azure_rm_devtestlab_facts:
     resource_group: "{{ resource_group }}"
     name: "{{ lab_name }}"
-  register: output
+  register: output_lab
 - name: Assert that facts are returned
   assert:
     that:
-      - output.changed == False
-      - output.labs[0]['id'] != None
-      - output.labs[0]['resource_group'] != None
-      - output.labs[0]['name'] != None
-      - output.labs[0]['location'] != None
-      - output.labs[0]['storage_type'] != None
-      - output.labs[0]['premium_data_disks'] != None
-      - output.labs[0]['provisioning_state'] != None
-      - output.labs[0]['artifacts_storage_account'] != None
-      - output.labs[0]['default_premium_storage_account'] != None
-      - output.labs[0]['default_storage_account'] != None
-      - output.labs[0]['premium_data_disk_storage_account'] != None
-      - output.labs[0]['vault_name'] != None
+      - output_lab.changed == False
+      - output_lab.labs[0]['id'] != None
+      - output_lab.labs[0]['resource_group'] != None
+      - output_lab.labs[0]['name'] != None
+      - output_lab.labs[0]['location'] != None
+      - output_lab.labs[0]['storage_type'] != None
+      - output_lab.labs[0]['premium_data_disks'] != None
+      - output_lab.labs[0]['provisioning_state'] != None
+      - output_lab.labs[0]['artifacts_storage_account'] != None
+      - output_lab.labs[0]['default_premium_storage_account'] != None
+      - output_lab.labs[0]['default_storage_account'] != None
+      - output_lab.labs[0]['premium_data_disk_storage_account'] != None
+      - output_lab.labs[0]['vault_name'] != None
 
 - name: List DevTest Lab in a resource group
   azure_rm_devtestlab_facts:
     resource_group: "{{ resource_group }}"
-  register: output
+  register: output_lab
 - name: Assert that facts are returned
   assert:
     that:
-      - output.changed == False
-      - output.labs[0]['id'] != None
-      - output.labs[0]['resource_group'] != None
-      - output.labs[0]['name'] != None
-      - output.labs[0]['location'] != None
-      - output.labs[0]['storage_type'] != None
-      - output.labs[0]['premium_data_disks'] != None
-      - output.labs[0]['provisioning_state'] != None
-      - output.labs[0]['vault_name'] != None
+      - output_lab.changed == False
+      - output_lab.labs[0]['id'] != None
+      - output_lab.labs[0]['resource_group'] != None
+      - output_lab.labs[0]['name'] != None
+      - output_lab.labs[0]['location'] != None
+      - output_lab.labs[0]['storage_type'] != None
+      - output_lab.labs[0]['premium_data_disks'] != None
+      - output_lab.labs[0]['provisioning_state'] != None
+      - output_lab.labs[0]['vault_name'] != None
 
 - name: Create instance of DevTest Labs virtual network
   azure_rm_devtestlabvirtualnetwork:
@@ -332,55 +332,55 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: "{{ vm_name }}"
-  register: output
+  register: output_vm
 - name: Assert that facts are returned
   assert:
     that:
-      - output.changed == False
-      - output.virtualmachines[0]['id'] != None
-      - output.virtualmachines[0]['resource_group'] != None
-      - output.virtualmachines[0]['lab_name'] != None
-      - output.virtualmachines[0]['name'] != None
-      - output.virtualmachines[0]['compute_vm_id'] != None
-      - output.virtualmachines[0]['compute_vm_resource_group'] != None
-      - output.virtualmachines[0]['compute_vm_name'] != None
-      - output.virtualmachines[0]['disallow_public_ip_address'] != None
-      - output.virtualmachines[0]['expiration_date'] != None
-      - output.virtualmachines[0]['fqdn'] != None
-      - output.virtualmachines[0]['id'] != None
-      - output.virtualmachines[0]['image'] != None
-      - output.virtualmachines[0]['notes'] != None
-      - output.virtualmachines[0]['os_type'] != None
-      - output.virtualmachines[0]['provisioning_state'] != None
-      - output.virtualmachines[0]['storage_type'] != None
-      - output.virtualmachines[0]['user_name'] != None
-      - output.virtualmachines[0]['vm_size'] != None
+      - output_vm.changed == False
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['resource_group'] != None
+      - output_vm.virtualmachines[0]['lab_name'] != None
+      - output_vm.virtualmachines[0]['name'] != None
+      - output_vm.virtualmachines[0]['compute_vm_id'] != None
+      - output_vm.virtualmachines[0]['compute_vm_resource_group'] != None
+      - output_vm.virtualmachines[0]['compute_vm_name'] != None
+      - output_vm.virtualmachines[0]['disallow_public_ip_address'] != None
+      - output_vm.virtualmachines[0]['expiration_date'] != None
+      - output_vm.virtualmachines[0]['fqdn'] != None
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['image'] != None
+      - output_vm.virtualmachines[0]['notes'] != None
+      - output_vm.virtualmachines[0]['os_type'] != None
+      - output_vm.virtualmachines[0]['provisioning_state'] != None
+      - output_vm.virtualmachines[0]['storage_type'] != None
+      - output_vm.virtualmachines[0]['user_name'] != None
+      - output_vm.virtualmachines[0]['vm_size'] != None
 
 - name: List Facts of DTL Virtual Machine
   azure_rm_devtestlabvirtualmachine_facts:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-  register: output
+  register: output_vm
 - name: Assert that facts are returned
   assert:
     that:
-      - output.changed == False
-      - output.virtualmachines[0]['id'] != None
-      - output.virtualmachines[0]['resource_group'] != None
-      - output.virtualmachines[0]['lab_name'] != None
-      - output.virtualmachines[0]['name'] != None
-      - output.virtualmachines[0]['compute_vm_id'] != None
-      - output.virtualmachines[0]['disallow_public_ip_address'] != None
-      - output.virtualmachines[0]['expiration_date'] != None
-      - output.virtualmachines[0]['fqdn'] != None
-      - output.virtualmachines[0]['id'] != None
-      - output.virtualmachines[0]['image'] != None
-      - output.virtualmachines[0]['notes'] != None
-      - output.virtualmachines[0]['os_type'] != None
-      - output.virtualmachines[0]['provisioning_state'] != None
-      - output.virtualmachines[0]['storage_type'] != None
-      - output.virtualmachines[0]['user_name'] != None
-      - output.virtualmachines[0]['vm_size'] != None
+      - output_vm.changed == False
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['resource_group'] != None
+      - output_vm.virtualmachines[0]['lab_name'] != None
+      - output_vm.virtualmachines[0]['name'] != None
+      - output_vm.virtualmachines[0]['compute_vm_id'] != None
+      - output_vm.virtualmachines[0]['disallow_public_ip_address'] != None
+      - output_vm.virtualmachines[0]['expiration_date'] != None
+      - output_vm.virtualmachines[0]['fqdn'] != None
+      - output_vm.virtualmachines[0]['id'] != None
+      - output_vm.virtualmachines[0]['image'] != None
+      - output_vm.virtualmachines[0]['notes'] != None
+      - output_vm.virtualmachines[0]['os_type'] != None
+      - output_vm.virtualmachines[0]['provisioning_state'] != None
+      - output_vm.virtualmachines[0]['storage_type'] != None
+      - output_vm.virtualmachines[0]['user_name'] != None
+      - output_vm.virtualmachines[0]['vm_size'] != None
 
 
 - name: List all artifact sources
@@ -524,6 +524,132 @@
       - output.artifacts[0]['target_os_type'] != None
       - output.artifacts[0]['publisher'] != None
       - "output.artifacts | length == 1"
+
+# azure_rm_devtestlabpolicy
+- name: Create instance of DevTest Lab Policy
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    status: yes
+    fact_name: user_owned_lab_vm_count
+    #fact_data: 5
+    evaluator_type: max_value_policy
+    threshold: 5
+  register: output
+- debug:
+    var: output
+
+# azure_rm_devtestlabglobalschedule
+- name: Create instance of DevTest Lab Global Schedule
+  azure_rm_devtestlabvirtualmachineschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: LabVmsShutdown
+    virtual_machine_name: "{{ vm_name }}"
+    location: eastus
+    status: yes
+    task_type: ComputeVmShutdownTask # LabVmsShutdownTask
+    #hourly_recurrence:
+    #  minute: 10
+    daily_recurrence:
+      time: "10:30"
+    time_zone_id: "UTC+12"
+    #target_resource_id: "{{ output_vm.virtualmachines[0]['compute_vm_id'] }}"
+  register: output
+- debug:
+    var: output
+
+- name: Create instance of DevTest Lab Environment
+  azure_rm_devtestlabenvironment:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    user_name: zim
+    name: myEnvironment
+    location: eastus
+    deployment_template: "{{ output_lab.labs[0].id }}/artifactSources/public environment repo/armTemplates/WebApp"
+  register: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Create instance of DevTest Lab Environment - idempotent
+  azure_rm_devtestlabenvironment:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    user_name: zim
+    name: myEnvironment
+    location: eastus
+    deployment_template:
+      artifact_source_name: public environment repo
+      name: WebApp
+  register: output
+- name: Assert if the change was not detected
+  assert:
+    that:
+      - not output.changed
+
+- name: Delete instance of DevTest Lab Environment
+  azure_rm_devtestlabenvironment:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    user_name: zim
+    name: myEnvironment
+    state: absent
+  register: output
+- name: Assert that change was detected
+  assert:
+    that:
+      - output.changed
+
+#- name: Generalize VM
+#  azure_rm_virtualmachine:
+#    resource_group: "{{ output_vm.virtualmachines[0]['compute_vm_resource_group'] }}"
+#    name: "{{ output_vm.virtualmachines[0]['compute_vm_name'] }}"
+#    generalized: yes
+#- name: Create image from VM
+#  azure_rm_image:
+#    resource_group: "{{ resource_group }}"
+#    name: testimage
+#    source:
+#      name: "{{ output_vm.virtualmachines[0]['compute_vm_name'] }}"
+#      resource_group: "{{ output_vm.virtualmachines[0]['compute_vm_resource_group'] }}"
+#    os_type: Linux
+#  register: image_output
+
+- name: Create instance of DevTest Lab Image
+  azure_rm_devtestlabcustomimage:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: myImage
+    #managed_image_id: "{{ image_output['id']}}"
+    vm:
+      source_vm_id: "{{ output_vm.virtualmachines[0]['id'] }}"
+      linux_os_info:
+        linux_os_state: non_deprovisioned
+  register: output
+- name: Assert that change was detected
+  assert:
+    that:
+      - output.changed
+  
+- name: Create instance of DevTest Lab Image -- idempotent
+  azure_rm_devtestlabcustomimage:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: myImage
+    #managed_image_id: "{{ image_output['id']}}"
+    vm:
+      source_vm_id: "{{ output_vm.virtualmachines[0]['id'] }}"
+      linux_os_info:
+        linux_os_state: non_deprovisioned
+  register: output
+- name: Assert that change was detected
+  assert:
+    that:
+      - not output.changed
 
 - name: Delete instance of Lab -- check mode
   azure_rm_devtestlab:

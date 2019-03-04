@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabspolicy
+module: azure_rm_devtestlabpolicy
 version_added: "2.8"
 short_description: Manage Azure Policy instance.
 description:
@@ -92,7 +92,7 @@ author:
 
 EXAMPLES = '''
   - name: Create (or update) Policy
-    azure_rm_devtestlabspolicy:
+    azure_rm_devtestlabpolicy:
       resource_group: NOT FOUND
       lab_name: NOT FOUND
       policy_set_name: NOT FOUND
@@ -134,7 +134,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMPolicy(AzureRMModuleBase):
+class AzureRMDtlPolicy(AzureRMModuleBase):
     """Configuration class for an Azure RM Policy resource"""
 
     def __init__(self):
@@ -204,9 +204,9 @@ class AzureRMPolicy(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMPolicy, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                            supports_check_mode=True,
-                                            supports_tags=True)
+        super(AzureRMDtlPolicy, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                               supports_check_mode=True,
+                                               supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -275,7 +275,7 @@ class AzureRMPolicy(AzureRMModuleBase):
             self.results.update({
                 'id': response.get('id', None),
                 'status': response.get('status', None)
-                })
+            })
         return self.results
 
     def create_update_policy(self):
@@ -417,7 +417,7 @@ def dict_map(d, path, map):
 
 def main():
     """Main execution"""
-    AzureRMPolicy()
+    AzureRMDtlPolicy()
 
 
 if __name__ == '__main__':

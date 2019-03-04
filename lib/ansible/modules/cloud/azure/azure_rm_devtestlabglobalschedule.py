@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_devtestlabsglobalschedule
+module: azure_rm_devtestlabglobalschedule
 version_added: "2.8"
 short_description: Manage Azure Global Schedule instance.
 description:
@@ -105,7 +105,7 @@ author:
 
 EXAMPLES = '''
   - name: Create (or update) Global Schedule
-    azure_rm_devtestlabsglobalschedule:
+    azure_rm_devtestlabglobalschedule:
       resource_group: NOT FOUND
       name: NOT FOUND
       status: status
@@ -147,7 +147,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMGlobalSchedule(AzureRMModuleBase):
+class AzureRMDtlGlobalSchedule(AzureRMModuleBase):
     """Configuration class for an Azure RM Global Schedule resource"""
 
     def __init__(self):
@@ -232,9 +232,9 @@ class AzureRMGlobalSchedule(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMGlobalSchedule, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                     supports_check_mode=True,
-                                                     supports_tags=True)
+        super(AzureRMDtlGlobalSchedule, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                       supports_check_mode=True,
+                                                       supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -302,7 +302,7 @@ class AzureRMGlobalSchedule(AzureRMModuleBase):
             self.results.update({
                 'id': response.get('id', None),
                 'status': response.get('status', None)
-                })
+            })
         return self.results
 
     def create_update_globalschedule(self):
@@ -423,7 +423,7 @@ def dict_map(d, path, map):
 
 def main():
     """Main execution"""
-    AzureRMGlobalSchedule()
+    AzureRMDtlGlobalSchedule()
 
 
 if __name__ == '__main__':
