@@ -19,23 +19,29 @@ REDISTRIBUTE_PROTOCOLS = frozenset(['ospf', 'ospf6', 'eigrp', 'isis', 'table',
 class Provider(CliProvider):
 
     def render(self, config=None):
-        self._validate_input()
-
         commands = list()
 
+        existing_as = None
+        if config:
+            match = re.search(r'router bgp (\d+)', config, re.M)
+            if match:
+                existing_as = match.group(1)
+
         operation = self.params['operation']
-        context = 'router bgp %s' % self.get_value('config.bgp_as')
+
+        context = None
+
+        if self.params['config']:
+            context = 'router bgp %s' % self.get_value('config.bgp_as')
 
         if operation == 'delete':
-            if not config or context in config:
+            if existing_as:
+                commands.append('no router bgp %s' % existing_as)
+            elif context:
                 commands.append('no %s' % context)
 
         else:
-            existing_as = None
-            if config:
-                match = re.search(r'router bgp (\d+)', config, re.M)
-                existing_as = match.group(1)
-
+            self._validate_input(config)
             if operation == 'replace':
                 if existing_as and int(existing_as) != self.get_value('config.bgp_as'):
                     commands.append('no router bgp %s' % existing_as)
@@ -56,7 +62,7 @@ class Provider(CliProvider):
                         if resp:
                             context_commands.extend(to_list(resp))
 
-            if context_commands:
+            if context and context_commands:
                 commands.append(context)
                 commands.extend(context_commands)
                 commands.append('exit')
@@ -113,13 +119,19 @@ class Provider(CliProvider):
         """
         return AddressFamily(self.params).render(config)
 
-    def _validate_input(self):
+    def _validate_input(self, config):
+        def device_has_AF(config):
+            return re.search(r'address-family (?:.*)', config)
+
         address_family = self.get_value('config.address_family')
         root_networks = self.get_value('config.networks')
         operation = self.params['operation']
 
-        if address_family and root_networks and operation == 'replace':
-            for item in address_family:
-                if item['networks']:
-                    raise ValueError('operation is replace but provided both root level networks and networks under %s %s address family'
-                                     % (item['afi'], item['safi']))
+        if root_networks and operation == 'replace':
+            if address_family:
+                for item in address_family:
+                    if item['networks']:
+                        raise ValueError('operation is replace but provided both root level networks and networks under %s %s address family'
+                                         % (item['afi'], item['safi']))
+            if config and device_has_AF(config):
+                raise ValueError('operation is replace and device has one or more address family activated but root level network(s) provided')

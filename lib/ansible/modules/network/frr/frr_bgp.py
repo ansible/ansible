@@ -110,6 +110,7 @@ options:
         description:
           - Specify networks to announce via BGP.
           - For operation replace, this option is mutually exclusive with networks option under address_family.
+          - For operation replace, if the device already has an address family activated, this option is not allowed.
         suboptions:
           prefix:
             description:
@@ -250,6 +251,55 @@ EXAMPLES = """
               id: 223
               metric: 10
     operation: merge
+
+- name: Configure BGP neighbors
+  frr_bgp:
+    config:
+      bgp_as: 64496
+      neighbors:
+        - neighbor: 192.0.2.10
+          remote_as: 64496
+          password: ansible
+          description: IBGP_NBR_1
+          timers:
+            keepalive: 120
+            holdtime: 360
+        - neighbor: 192.0.2.15
+          remote_as: 64496
+          description: IBGP_NBR_2
+          advertisement_interval: 120
+    operation: merge
+
+- name: Configure BGP neighbors under address family mode
+  frr_bgp:
+    config:
+      bgp_as: 64496
+      address_family:
+        - afi: ipv4
+          safi: multicast
+          neighbors:
+            - neighbor: 203.0.113.10
+              activate: yes
+              maximum_prefix: 250
+
+            - neighbor: 192.0.2.15
+              activate: yes
+              route_reflector_client: True
+    operation: merge
+
+- name: Configure root-level networks for BGP
+  frr_bgp:
+    config:
+      bgp_as: 64496
+      networks:
+        - prefix: 203.0.113.0
+          masklen: 27
+          route_map: RMAP_1
+        - prefix: 203.0.113.32
+          masklen: 27
+          route_map: RMAP_2
+    operation: merge
+
 - name: remove bgp as 64496 from config
   frr_bgp:
     config:
