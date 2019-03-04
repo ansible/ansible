@@ -382,6 +382,49 @@
       - output.virtualmachines[0]['user_name'] != None
       - output.virtualmachines[0]['vm_size'] != None
 
+
+- name: List all artifact sources
+  azure_rm_devtestlabartifactsource_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifactsources[0]['id'] != None
+      - output.artifactsources[0]['resource_group'] != None
+      - output.artifactsources[0]['lab_name'] != None
+      - output.artifactsources[0]['name'] != None
+      - output.artifactsources[0]['display_name'] != None
+      - output.artifactsources[0]['source_type'] != None
+      - output.artifactsources[0]['is_enabled'] != None
+      - output.artifactsources[0]['uri'] != None
+      - output.artifactsources[0]['folder_path'] != None
+      - output.artifactsources[0]['provisioning_state'] != None
+      - output.artifactsources | length >= 2
+
+- name: Get artifacts source facts
+  azure_rm_devtestlabartifactsource_facts:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: public repo
+  register: output
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output.changed == False
+      - output.artifactsources[0]['id'] != None
+      - output.artifactsources[0]['resource_group'] != None
+      - output.artifactsources[0]['lab_name'] != None
+      - output.artifactsources[0]['name'] != None
+      - output.artifactsources[0]['display_name'] != None
+      - output.artifactsources[0]['source_type'] != None
+      - output.artifactsources[0]['is_enabled'] != None
+      - output.artifactsources[0]['uri'] != None
+      - output.artifactsources[0]['folder_path'] != None
+      - output.artifactsources[0]['provisioning_state'] != None
+
 - name: Delete instance of DevTest Labs artifacts source
   azure_rm_devtestlabartifactsource:
     resource_group: "{{ resource_group }}"
