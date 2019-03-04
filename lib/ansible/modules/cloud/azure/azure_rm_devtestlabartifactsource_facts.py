@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifactsource_facts
 version_added: "2.8"
-short_description: Get Azure Artifact Source facts.
+short_description: Get Azure DevTest Lab Artifact Source facts.
 description:
-    - Get facts of Azure Artifact Source.
+    - Get facts of Azure DevTest Lab Artifact Source.
 
 options:
     resource_group:
@@ -28,11 +28,11 @@ options:
         required: True
     lab_name:
         description:
-            - The name of the lab.
+            - The name of DevTest Lab.
         required: True
     name:
         description:
-            - The name of the artifact source.
+            - The name of DevTest Lab Artifact Source.
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
@@ -46,37 +46,92 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Get instance of Artifact Source
+  - name: Get instance of DevTest Lab Artifact Source
     azure_rm_devtestlabartifactsource_facts:
-      resource_group: resource_group_name
-      lab_name: lab_name
-      name: name
+      resource_group: myResourceGroup
+      lab_name: myLab
+      name: myArtifactSource
 '''
 
 RETURN = '''
 artifactsources:
-    description: A list of dictionaries containing facts for Artifact Source.
+    description: A list of dictionaries containing facts for DevTest Lab Artifact Source.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - The identifier of the resource.
+                - The identifier of the artifact source.
             returned: always
             type: str
-            sample: id
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DevTestLab/labs/myLab/ar
+                     tifactSources/myArtifactSource"
+        resource_group:
+            description:
+                - Name of the resource group.
+            returned: always
+            type: str
+            sample: myResourceGroup
+        lab_name:
+            description:
+                - Name of the lab.
+            returned: always
+            type: str
+            sample: myLab
+        name:
+            description:
+                - The name of the artifact source.
+            returned: always
+            type: str
+            sample: myArtifactSource
+        display_name:
+            description:
+                - "The artifact source's display name."
+            returned: always
+            type: str
+            sample: Public Artifact Repo
+        source_type:
+            description:
+                - "The artifact source's type."
+            returned: always
+            type: str
+            sample: github
+        is_enabled:
+            description:
+                - Is the artifact source enabled.
+            returned: always
+            type: str
+            sample: True
+        uri:
+            description:
+                - URI of the artifact source.
+            returned: always
+            type: str
+            sample: https://github.com/Azure/azure-devtestlab.git
+        folder_path:
+            description:
+                - The folder containing artifacts.
+            returned: always
+            type: str
+            sample: /Artifacts
+        arm_template_folder_path:
+            description:
+                - The folder containing Azure Resource Manager templates.
+            returned: always
+            type: str
+            sample: /Environments
+        provisioning_state:
+            description:
+                - Provisioning state of artifact source.
+            returned: always
+            type: str
+            sample: Succeeded
         tags:
             description:
                 - The tags of the resource.
             returned: always
             type: complex
-            sample: tags
-        status:
-            description:
-                - "Indicates if the artifact source is enabled (values: Enabled, Disabled). Possible values include: 'Enabled', 'Disabled'"
-            returned: always
-            type: str
-            sample: status
+            sample: "{ 'MyTag': 'MyValue' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -155,7 +210,7 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
         try:
             response = self.mgmt_client.artifact_sources.list(resource_group_name=self.resource_group,
                                                               lab_name=self.lab_name)
-            self.log("Response : {0}".format(response))
+            self.fail("Response : {0}".format(response))
         except CloudError as e:
             self.fail('Could not get facts for Artifact Source.')
 
