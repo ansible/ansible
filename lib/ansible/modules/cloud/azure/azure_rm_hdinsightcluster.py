@@ -304,14 +304,6 @@ class AzureRMClusters(AzureRMModuleBase):
             if self.state == 'absent':
                 self.to_do = Actions.Delete
             elif self.state == 'present':
-                # get doesn't return storage profile, so can't be compared
-                #old_response['properties']['storage_profile'] = self.parameters['properties']['storage_profile']
-                #old_response['properties']['cluster_definition'] = self.parameters['properties']['cluster_definition']
-
-                # cluster version returned by get may be longer, for instance "3.6.1000.67"
-                #if old_response['properties']['cluster_version'].startswith(self.parameters['properties'].get('cluster_version', '')):
-                #    self.parameters['properties']['cluster_version'] = old_response['properties']['cluster_version']
-
                 compare_result = {}
                 if (not default_compare(self.parameters, old_response, '', compare_result)):
                     if compare_result.pop('/properties/compute_profile/roles/*/target_instance_count', False):
@@ -319,6 +311,8 @@ class AzureRMClusters(AzureRMModuleBase):
                     if compare_result.pop('/tags', False):
                         self.to_do = Actions.Update
                     if compare_result:
+                        for k in compare_result.keys():
+                            self.module.warn("property '" + k "' cannot be updated (" + compare_results[k] + ")")
                         self.module.warn("only tags and target_instance_count can be updated")
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
