@@ -2,52 +2,26 @@
 #
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-import mock
-import libvirt
+try:
+    import mock
+except ImportError:
+    from unittest import mock
 
 
-from ansible.modules.cloud.misc.virt_net import VirtNetwork
+def test_virt_net_recreate(virt_net_obj, dummy_libvirt):
+    virt_net_obj.conn.create = mock.Mock()
+    dummy_libvirt.libvirtError.error_code = 'VIR_ERR_NETWORK_EXIST'
+    virt_net_obj.conn.create.side_effect = dummy_libvirt.libvirtError
+    assert virt_net_obj.create("active_net") is None
 
 
-NET_XML = """
-<network>
-  <name>foo</name>
-</network>
-"""
+def test_virt_stop_ignore_inactive(virt_net_obj):
+    virt_net_obj.conn.destroy = mock.Mock()
+    virt_net_obj.stop('inactive_net')
+    virt_net_obj.conn.destroy.assert_not_called()
 
 
-class mocked_exception(libvirt.libvirtError):
-    def __init__(self, code):
-        self.err = [code]
-
-
-def raise_network_exist(a):
-    raise mocked_exception(libvirt.VIR_ERR_NETWORK_EXIST)
-
-
-def test_virt_net_recreate():
-    uri = 'test:///default'
-    module = mock.MagicMock()
-    virt_net = VirtNetwork(uri, module)
-    virt_net.conn.create = raise_network_exist
-    assert virt_net.create("default") is None
-
-
-def test_virt_stop_ignore_inactive():
-    uri = 'test:///default'
-    module = mock.MagicMock()
-    virt_net = VirtNetwork(uri, module)
-    virt_net.conn.get_status = mock.Mock(return_value="inactive")
-    virt_net.conn.destroy = mock.Mock()
-    virt_net.stop("default")
-    virt_net.conn.destroy.assert_not_called()
-
-
-def test_virt_stop_active():
-    uri = 'test:///default'
-    module = mock.MagicMock()
-    virt_net = VirtNetwork(uri, module)
-    virt_net.conn.get_status = mock.Mock(return_value="active")
-    virt_net.conn.destroy = mock.Mock()
-    virt_net.stop("default")
-    virt_net.conn.destroy.assert_called()
+def test_virt_stop_active(virt_net_obj, monkeypatch):
+    virt_net_obj.conn.destroy = mock.Mock()
+    virt_net_obj.stop('active_net')
+    virt_net_obj.conn.destroy.assert_called()
