@@ -120,7 +120,7 @@ class LockTimeout(Exception):
 #       to not open or close the same file within the existing context.
 #       It is essential to reuse the returned file descriptor only.
 @contextmanager
-def open_locked(path, check_mode=False, lock_timeout=15):
+def open_locked(path, lock_timeout=15):
     '''
     Context managed for opening files with lock acquisition
 
@@ -132,16 +132,12 @@ def open_locked(path, check_mode=False, lock_timeout=15):
         Default is wait 15s.
     :returns: file descriptor
     '''
-    if check_mode:
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        fd = open(b_path, 'rb+')
-    else:
-        fd = lock(path, check_mode, lock_timeout)
+    fd = lock(path, lock_timeout)
     yield fd
     fd.close()
 
 
-def lock(path, check_mode=False, lock_timeout=15):
+def lock(path, lock_timeout=15):
     '''
     Set lock on given path via fcntl.flock(), note that using
     locks does not guarantee exclusiveness unless all accessing
