@@ -55,15 +55,14 @@ options:
   '''
 EXAMPLES = """
 - name: Copy LUN
-  na_ontap_lun:
-    na_ontap_lun_copy:
-        destination_vserver: ansible
-        destination_path: /vol/test/test_copy_dest_dest_new
-        source_path: /vol/test/test_copy_1
-        source_vserver: ansible
-        hostname: "{{ netapp_hostname }}"
-        username: "{{ netapp_username }}"
-        password: "{{ netapp_password }}"
+  na_ontap_lun_copy:
+    destination_vserver: ansible
+    destination_path: /vol/test/test_copy_dest_dest_new
+    source_path: /vol/test/test_copy_1
+    source_vserver: ansible
+    hostname: "{{ netapp_hostname }}"
+    username: "{{ netapp_username }}"
+    password: "{{ netapp_password }}"
 """
 
 RETURN = """
@@ -108,7 +107,7 @@ class NetAppOntapLUNCopy(object):
 
     def get_lun(self):
         """
-           Check if the LUN exis
+           Check if the LUN exists
 
         :return: true is it exists, false otherwise
         :rtype: bool
