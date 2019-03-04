@@ -427,9 +427,10 @@ def default_compare(new, old, path, result):
         if not isinstance(old, dict):
             result['compare'] = 'changed [' + path + '] old dict is null'
             match = False
-        for k in new.keys():
-            if not default_compare(new.get(k), old.get(k, None), path + '/' + k, result):
-                match = False
+        else:
+            for k in new.keys():
+                if not default_compare(new.get(k), old.get(k, None), path + '/' + k, result):
+                    match = False
     elif isinstance(new, list):
         if not isinstance(old, list) or len(new) != len(old):
             result['compare'] = 'changed [' + path + '] length is different or null'
