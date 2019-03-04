@@ -39,11 +39,11 @@ Here's an example of a valid inventory file:
 
 Executing ``ansible-inventory --list -i <filename>.vmware.yml`` will create a list of VMware instances that are ready to be configured using Ansible.
 
-Using vaulted configuration file
-================================
+Using vaulted configuration files
+=================================
 
-Since the inventory configuration file contains vCenter password in plain text which can be a security risk, you may want to
-encrypt the inventory configuration file.
+Since the inventory configuration file contains vCenter password in plain text, a security risk, you may want to
+encrypt your entire inventory configuration file.
 
 You can encrypt a valid inventory configuration file as follows:
 
