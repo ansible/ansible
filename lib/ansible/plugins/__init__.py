@@ -75,10 +75,10 @@ class AnsiblePlugin(with_metaclass(ABCMeta, object)):
         self._options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
         # allow extras/wildcards from vars that are not directly consumed in configuration
-        # this is needed to support things like winrm that can have extended protocol options we don't direclty handle
+        # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
 
     def _check_required(self):
-        # FIXME: standarize required check based on config
+        # FIXME: standardize required check based on config
         pass
