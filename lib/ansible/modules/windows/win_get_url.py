@@ -78,32 +78,29 @@ options:
       - If a I(checksum) is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-      - Additionally, if a I(checksum) is passed to this parameter, and the file exist under
-        the C(dest) location, the I(destination_checksum) would be calculated, and if
-        checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is C(yes)).
+      - This option cannot be set with I(checksum_url).
     type: str
     version_added: "2.8"
   checksum_algorithm:
     description:
-      - If a I(checksum_algorithm) is passed to this parameter, the digest of the
-        destination file will be calculated after it is downloaded to ensure
-        its integrity and verify that the transfer completed successfully.
-      - A list of available options include C(md5), C(sha1), C(sha256)...
-        For a full list of algorithms please look in
-        [the documentation for your version of PowerShell](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/get-filehash).
+      - Specifies the hashing algorithm used when calculating the checksum of
+        the remote and destination file.
     type: str
+    choices:
+      - md5
+      - sha1
+      - sha256
+      - sha385
+      - sha512
     default: sha1
     version_added: "2.8"
   checksum_url:
     description:
-      - If a I(checksum_url) is passed to this parameter, the digest of the
-        destination file will be calculated after it is downloaded to ensure
-        its integrity and verify that the transfer completed successfully.
-      - Additionally, if a I(checksum_url) is passed to this parameter, and the file exist under
-        the C(dest) location, the I(destination_checksum) would be calculated, and if
-        checksum equals I(destination_checksum), the file download would be skipped
-        (unless C(force) is C(yes)).
+      - Specifies a URL that contains the checksum values for the resource at
+        I(url).
+      - Like C(checksum), this is used to verify the integrity of the remote
+        transfer.
+      - This option cannot be set with I(checksum).
     type: str
     version_added: "2.8"
   proxy_url:
@@ -138,6 +135,9 @@ notes:
 - If your URL includes an escaped slash character (%2F) this module will convert it to a real slash.
   This is a result of the behaviour of the System.Uri class as described in
   L(the documentation,https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/network/schemesettings-element-uri-settings#remarks).
+- Since Ansible 2.8, the module will skip reporting a change if the remote
+  checksum is the same as the local local even when C(force=yes). This is to
+  better align with M(get_url).
 seealso:
 - module: get_url
 - module: uri
@@ -198,13 +198,13 @@ dest:
     type: str
     sample: C:\Users\RandomUser\earthrise.jpg
 checksum_dest:
-    description: <algorithm> checksum of the file after copy
-    returned: success and if checksum is defined
+    description: <algorithm> checksum of the file after the download
+    returned: success and dest has been downloaded
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 checksum_src:
-    description: <algorithm> checksum of the file
-    returned: success
+    description: <algorithm> checksum of the remote resource
+    returned: force=yes or dest did not exist
     type: str
     sample: 6e642bb8dd5c2e027bf21dd923337cbb4214f827
 elapsed:
@@ -213,7 +213,7 @@ elapsed:
     type: float
     sample: 2.1406487
 size:
-    description: size of the target
+    description: size of the dest file
     returned: success
     type: int
     sample: 1220

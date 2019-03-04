@@ -27,7 +27,7 @@ $spec = @{
         proxy_password = @{ type='str'; no_log=$true }
         force = @{ type='bool'; default=$true }
         checksum = @{ type='str' }
-        checksum_algorithm = @{ type='str'; default='sha1'}
+        checksum_algorithm = @{ type='str'; default='sha1'; choices = @("md5", "sha1", "sha256", "sha384", "sha512") }
         checksum_url = @{ type='str' }
     }
     mutually_exclusive = @(
@@ -55,333 +55,292 @@ $checksum = $module.Params.checksum
 $checksum_algorithm = $module.Params.checksum_algorithm
 $checksum_url = $module.Params.checksum_url
 
-Add-CSharpType -AnsibleModule $module -References @'
-    using System.Net;
-    public class ExtendedWebClient : WebClient {
-        public int Timeout;
+$module.Result.elapsed = 0
+$module.Result.url = $url
 
-        public ExtendedWebClient() {
-            Timeout = 600000; // Default timeout value
-        }
+Function Invoke-AnsibleWebRequest {
+    <#
+    .SYNOPSIS
+    Creates a WebRequest and invokes a ScriptBlock with the response passed in.
+    It handles the common module options like credential, timeout, proxy options
+    in a single location to reduce code duplication.
+    #>
+    param(
+        [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
+        [Parameter(Mandatory=$true)][Uri]$Uri,
+        [Parameter(Mandatory=$true)][Hashtable]$Method,
+        [Parameter(Mandatory=$true)][ScriptBlock]$Script, # Invoked in this cmdlet
+        [System.Collections.IDictionary]$Headers,
+        [Int32]$Timeout,
+        [Switch]$UseProxy,
+        [System.Net.WebProxy]$Proxy,
+        $Credential  # Either a String (force_basic_auth) or NetCredentials
+    )
 
-        protected override WebRequest GetWebRequest(System.Uri address) {
-            WebRequest request = base.GetWebRequest(address);
-            request.Timeout = Timeout;
-            return request;
-        }
+    $web_request = [System.Net.WebRequest]::Create($Uri)
+    $m = $Method.($web_request.GetType().Name)
+    try {
+        $web_request.Method = $Method.($web_request.GetType().Name)
+    } catch [System.ArgumentException] {
+        $Module.FailJson("Failed to set method $m, $($m.GetType().FullName)", $_)
     }
-'@
-
-Function GetWebRequest{
-    param($url, $headers, $credentials, $timeout, $use_proxy, $proxy)
-
-    $webRequest = [System.Net.WebRequest]::Create($url)
 
     foreach ($header in $headers.GetEnumerator()) {
-        $webRequest.Headers.Add($header.Name, $header.Value)
+        $web_request.Headers.Add($header.Key, $header.Value)
     }
 
     if ($timeout) {
-        $webRequest.Timeout = $timeout * 1000
+        $web_request.Timeout = $timeout * 1000
     }
 
-    if (-not $use_proxy) {
-        # Ignore the system proxy settings
-        $webRequest.Proxy = $null
-    } elseif ($proxy) {
-        $webRequest.Proxy = $proxy
+    if (-not $UseProxy) {
+        $web_request.Proxy = $null
+    } elseif ($ProxyUri) {
+        $web_request.Proxy = $Proxy
     }
 
-    if ($credentials) {
-        if ($force_basic_auth) {
-            $webRequest.Headers.Add("Authorization", "Basic $credentials")
+    if ($Credential) {
+        if ($Credential -is [String]) {
+            # force_basic_auth=yes is set
+            $web_request.Headers.Add("Authorization", "Basic $Credential")
         } else {
-            $webRequest.Credentials = $credentials
+            $web_request.Credentials = $Credential
         }
     }
 
-    return $webRequest
+    try {
+        $web_response = $web_request.GetResponse()
+        $response_stream = $web_response.GetResponseStream()
+        try {
+            # Invoke the ScriptBlock and pass in the WebResponse and ResponseStream
+            &$Script -Response $web_response -Stream $response_stream
+        } finally {
+            $response_stream.Dispose()
+        }
+
+        if ($Uri.IsFile) {
+            # A FileWebResponse won't have these properties set
+            $module.Result.msg = "OK"
+            $module.Result.status_code = 200
+        } else {
+            $module.Result.msg = [string]$web_response.StatusDescription
+            $module.Result.status_code = [int]$web_response.StatusCode
+        }
+    } catch [System.Net.WebException] {
+        $module.Result.status_code = [int]$_.Exception.Response.StatusCode
+        $module.FailJson("Error requesting '$Uri'. $($_.Exception.Message)", $_)
+    } finally {
+        if ($web_response) {
+            $web_response.Close()
+        }
+    }
 }
 
-Function Get-ChecksumFromUrl {
-    param($module, $url, $headers, $credentials, $timeout, $use_proxy, $proxy, $src_file_url)
+Function Get-ChecksumFromUri {
+    param(
+        [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
+        [Parameter(Mandatory=$true)][Uri]$Uri,
+        [Uri]$SourceUri,
+        [Hashtable]$RequestParams
+    )
 
-    $webRequest = GetWebRequest -url $url -headers $headers -credentials $credentials -timeout $timeout -use_proxy $use_proxy -proxy $proxy
+    $script = {
+        param($Response, $Stream)
 
-    if ($webRequest -is [System.Net.FtpWebRequest]) {
-        $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::DownloadFile
-    } else {
-        $webRequest.Method = [System.Net.WebRequestMethods+Http]::Get
-    }
-
-    # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
-    Try {
-         $webResponse = $webRequest.GetResponse()
-         $responseStream = $webResponse.GetResponseStream()
-         $readStream = New-Object System.IO.StreamReader $responseStream
-         $web_checksum=$readStream.ReadToEnd()
-
-         $basename = (Split-Path -Path $([System.Uri]$src_file_url).LocalPath -Leaf)
-         $basename = [regex]::Escape($basename)
-         $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+\.?\/?\\?" + $basename + "\s*$")
-         if (-not $web_checksum_str) {
-             throw "Checksum record not found for file name '$basename' in file from url: '$url'"
-         }
+        $read_stream = New-Object -TypeName System.IO.StreamReader -ArgumentList $Stream
+        $web_checksum = $read_stream.ReadToEnd()
+        $basename = (Split-Path -Path $SourceUri.LocalPath -Leaf)
+        $basename = [regex]::Escape($basename)
+        $web_checksum_str = $web_checksum -split '\r?\n' | Select-String -Pattern $("\s+\.?\/?\\?" + $basename + "\s*$")
+        if (-not $web_checksum_str) {
+            $Module.FailJson("Checksum record not found for file name '$basename' in file from url: '$Uri'")
+        }
 
         $web_checksum_str_splitted = $web_checksum_str[0].ToString().split(" ", 2)
         $hash_from_file = $web_checksum_str_splitted[0].Trim()
         # Remove any non-alphanumeric characters
         $hash_from_file = $hash_from_file -replace '\W+', ''
-    } Catch [System.Net.WebException] {
-        $module.Result.status_code = [int] $_.Exception.Response.StatusCode
-        $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
-    } Catch {
-        $module.FailJson("Error get HASH data file from '$url'. $($_.Exception.Message)", $_)
+
+        Write-Output -InputObject $hash_from_file
     }
-    Finally {
-        if($webResponse) {
-           $webResponse.Close()
+    $invoke_args = @{
+        Module = $Module
+        Uri = $Uri
+        Method = @{
+            FileWebRequest = [System.Net.WebRequestMethods+File]::DownloadFile
+            FtpWebRequest = [System.Net.WebRequestMethods+Ftp]::DownloadFile
+            HttpWebRequest = [System.Net.WebRequestMethods+Http]::Get
         }
+        Script = $script
     }
-    if ( [bool]([System.Uri]$url).isFile ) {
-        $module.Result.msg = 'OK'
-    } else {
-        $module.Result.status_code = [int] $webResponse.StatusCode
-        $module.Result.msg = [string] $webResponse.StatusDescription
+    try {
+        Invoke-AnsibleWebRequest @invoke_args @RequestParams
+    } catch {
+        $Module.FailJson("Error when getting the remote checksum from '$Uri'. $($_.Exception.Message)", $_)
     }
-    return $hash_from_file
 }
 
 Function Compare-ModifiedFile {
-    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy, $check_length)
-    if ($checksum) {
-        Try {
-            $normaliseHashDest = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
+    <#
+    .SYNOPSIS
+    Compares the remote URI resource against the local Dest resource. Will
+    return true if the LastWriteTime/LastModificationDate of the remote is
+    newer than the local resource date.
+    #>
+    param(
+        [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
+        [Parameter(Mandatory=$true)][Uri]$Uri,
+        [Parameter(Mandatory=$true)][String]$Dest,
+        [Hashtable]$RequestParams
+    )
 
-            return [bool]($normaliseHashDest -ne $checksum)
-        } Catch {
-            $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
-        }
-    }
+    $dest_last_mod = (Get-AnsibleItem -Path $Dest).LastWriteTimeUtc
 
-    $fileLastMod = (Get-AnsibleItem -Path $dest).LastWriteTimeUtc
-    $webLastMod = $null
-
-    $fileLength = (Get-AnsibleItem -Path $dest).Length
-    $webFileLength = $null
-
-    $srcUri = [System.Uri]$url
-
-    if([bool]$srcUri.isFile) {
-        $webLastMod = (Get-AnsibleItem -Path $srcUri.AbsolutePath).LastWriteTimeUtc
-        $webFileLength = (Get-AnsibleItem -Path $srcUri.AbsolutePath).Length
-
-        $module.Result.msg = 'OK'
+    # If the URI is a file we don't need to go through the whole WebRequest
+    if ($Uri.IsFile) {
+        $src_last_mod = (Get-AnsibleItem -Path $Uri.AbsolutePath).LastWriteTimeUtc
     } else {
-
-        $common_args = @{
-            url = $url
-            headers = $headers
-            credentials = $credentials
-            timeout = $timeout
-            use_proxy = $use_proxy
-            proxy = $proxy
-        }
-
-        $webRequest = GetWebRequest @common_args
-        $webRequestPaired = GetWebRequest @common_args
-
-        if ($webRequest -is [System.Net.FtpWebRequest]) {
-            $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
-        } else {
-            $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
-        }
-
-        # FIXME: Split both try-statements and single-out catched exceptions with more specific error messages
-        Try {
-            if ($webRequest -is [System.Net.FtpWebRequest]) {
-                $webRequest.Method = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
-                $webResponse = $webRequest.GetResponse()
-                $webLastMod = $webResponse.LastModified
-
-                $webRequestPaired.Method = [System.Net.WebRequestMethods+Ftp]::GetFileSize
-                $webResponsePaired = $webRequestPaired.GetResponse()
-                $webFileLength = $webResponsePaired.ContentLength
-            } else {
-                $webRequest.Method = [System.Net.WebRequestMethods+Http]::Head
-                $webResponse = $webRequest.GetResponse()
-                $webLastMod = $webResponse.LastModified
-                $webFileLength = $webResponse.ContentLength
+        $invoke_args = @{
+            Module = $Module
+            Uri = $Uri
+            Method = @{
+                FtpWebRequest = [System.Net.WebRequestMethods+Ftp]::GetDateTimestamp
+                HttpWebRequest = [System.Net.WebRequestMethods+Http]::Head
             }
-        } Catch [System.Net.WebException] {
-            $module.Result.status_code = [int] $_.Exception.Response.StatusCode
-            $module.FailJson("Error requesting '$url'. $($_.Exception.Message)", $_)
-        } Catch {
-            $module.FailJson("Error when requesting 'Last-Modified' date from '$url'. $($_.Exception.Message)", $_)
+            Script = { param($Response, $Stream); $Response.LastModified }
         }
-        Finally {
-            # in case GetResponse timeout, $webResponse == $null
-            if($webResponse) {
-               $webResponse.Close()
-            }
-            if($webResponsePaired) {
-                $webResponsePaired.Close()
-             }
+        try {
+            $src_last_mod = Invoke-AnsibleWebRequest @invoke_args @RequestParams
+        } catch {
+            $Module.FailJson("Error when requesting 'Last-Modified' date from '$Uri'. $($_.Exception.Message)", $_)
         }
-        $module.Result.status_code = [int] $webResponse.StatusCode
-        $module.Result.msg = [string] $webResponse.StatusDescription
     }
 
-    if ($check_length) {
-        if ($webFileLength) {
-            if($webFileLength -eq -1){
-                return $false
-            }
-            if($webFileLength -ne $fileLength) {
-                return $true
-            }
-        }
-        return $false
-    } else {
-        if ($webLastMod -and ((Get-Date -Date $webLastMod).ToUniversalTime() -le $fileLastMod)) {
-            return $false
-        } else {
-            return $true
-        }
-    }
+    # Return $true if the Uri LastModification date is newer than the Dest LastModification date
+    ((Get-Date -Date $src_last_mod).ToUniversalTime() -gt $dest_last_mod)
 }
 
-Function Get-FileChecksum {
-    param($path, $algorithm = 'sha1')
+Function Get-Checksum {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, ParameterSetName="Path")][String]$Path,
+        [Parameter(Mandatory=$true, ParameterSetName="Stream")][System.IO.Stream]$Stream,
+        [String]$Algorithm = "sha1"
+    )
 
-    switch ($algorithm)
-    {
+    switch ($Algorithm) {
         'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
         'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
         'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
         'sha384' { $sp = New-Object -TypeName System.Security.Cryptography.SHA384CryptoServiceProvider }
         'sha512' { $sp = New-Object -TypeName System.Security.Cryptography.SHA512CryptoServiceProvider }
-        default {
-            $module.FailJson("Unsupported hash algorithm supplied '$algorithm'")
+    }
+
+    if ($PSCmdlet.ParameterSetName -eq "Path") {
+        $Stream = [System.IO.File]::Open($Path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read,
+            [System.IO.FileShare]::ReadWrite)
+    }
+
+    try {
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($Stream)).Replace("-", "").ToLower()
+    } finally {
+        # Only close the stream if we opened it in this cmdlet
+        if ($PSCmdlet.ParameterSetName -eq "Path") {
+            $Stream.Dispose()
         }
     }
-
-    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
-    try {
-        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower()
-    } finally {
-        $fp.Dispose()
-    }
-
     return $hash
 }
 
 Function Invoke-DownloadFile {
-    param($module, $url, $dest, $headers, $credentials, $timeout, $use_proxy, $proxy)
-
-    $module_start = Get-Date
+    param(
+        [Parameter(Mandatory=$true)][Ansible.Basic.AnsibleModule]$Module,
+        [Parameter(Mandatory=$true)][Uri]$Uri,
+        [Parameter(Mandatory=$true)][String]$Dest,
+        [String]$Checksum,
+        [String]$ChecksumAlgorithm,
+        [Hashtable]$RequestParams
+    )
 
     # Check $dest parent folder exists before attempting download, which avoids unhelpful generic error message.
-    $dest_parent = Split-Path -LiteralPath $dest
+    $dest_parent = Split-Path -LiteralPath $Dest
     if (-not (Test-Path -LiteralPath $dest_parent -PathType Container)) {
-        $module.FailJson("The path '$dest_parent' does not exist for destination '$dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
+        $module.FailJson("The path '$dest_parent' does not exist for destination '$Dest', or is not visible to the current user.  Ensure download destination folder exists (perhaps using win_file state=directory) before win_get_url runs.")
     }
 
-    # TODO: Replace this with WebRequest
-    $extWebClient = New-Object ExtendedWebClient
+    $download_script = {
+        param($Response, $Stream)
 
-    foreach ($header in $headers.GetEnumerator()) {
-        $extWebClient.Headers.Add($header.Name, $header.Value)
-    }
+        # ConnectStream from a WebResponse can only be read once, we need to write it to our own MemoryStream so we
+        # can perform multiple operations without touching a file
+        $ms = New-Object -TypeName System.IO.MemoryStream
+        try {
+            $Stream.CopyTo($ms)
+            $ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
 
-    if ($timeout) {
-        $extWebClient.Timeout = $timeout * 1000
-    }
+            $remote_checksum = Get-Checksum -Stream $ms -Algorithm $ChecksumAlgorithm
+            $Module.Result.checksum_src = $remote_checksum
+            $ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
 
-    if (-not $use_proxy) {
-        # Ignore the system proxy settings
-        $extWebClient.Proxy = $null
-    } elseif ($proxy) {
-        $extWebClient.Proxy = $proxy
-    }
-
-    if ($credentials) {
-        if ($force_basic_auth) {
-            $extWebClient.Headers.Add("Authorization","Basic $credentials")
-        } else {
-            $extWebClient.Credentials = $credentials
-        }
-    }
-
-    Try {
-
-        $tmpDest = Join-Path -Path $module.Tmpdir -ChildPath ([System.IO.Path]::GetRandomFileName())
-        $extWebClient.DownloadFile($url, $tmpDest)
-
-        $tmpDestHash = Get-FileChecksum -path $tmpDest -algorithm $checksum_algorithm
-
-        # Checksum verification for downloaded file
-        if ($checksum) {
-            # Check both hashes are the same
-            if ($tmpDestHash -ne $checksum) {
-                throw [string]("The checksum for {0} did not match '{1}', it was '{2}'" -f $dest, $checksum, $tmpDestHash)
-            } else {
-                if(Test-Path -LiteralPath $dest) {
-                    $destHash = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
-                    if ($destHash -eq $checksum) {
-                        $module.Result.changed = $false
-                    }
-                } else {
-                    Copy-Item -Path $tmpDest -Destination $dest -Force -WhatIf:$module.CheckMode | Out-Null
-                    $module.Result.changed = $true
+            # If the checksum has been set, verify the checksum of the remote against the input checksum.
+            if ($Checksum) {
+                if ($remote_checksum -ne $Checksum) {
+                    $Module.FailJson(("The checksum for {0} did not match '{1}', it was '{2}'" -f $Uri, $Checksum, $remote_checksum))
                 }
             }
-        } else {
-            $is_modified = Compare-ModifiedFile -module $module -url $url -dest $tmpDest -check_length $true `
-                                                -credentials $credentials -headers $headers -timeout $timeout `
-                                                -use_proxy $use_proxy -proxy $proxy 
-            if ($is_modified) {
-                throw "Source and recieved files size mismatch"
+
+            $download = $true
+            if (Test-Path -LiteralPath $Dest) {
+                # Validate the remote checksum against the existing downloaded file
+                $dest_checksum = Get-Checksum -Path $Dest -Algorithm $ChecksumAlgorithm
+
+                # If we don't need to download anything, save the dest checksum so we don't waste time calculating it
+                # again at the end of the script
+                if ($dest_checksum -eq $remote_checksum) {
+                    $download = $false
+                    $module.Result.checksum_dest = $dest_checksum
+                }
             }
-            Copy-Item -Path $tmpDest -Destination $dest -Force -WhatIf:$module.CheckMode | Out-Null
-            $module.Result.changed = $true
+
+            if ($download -and -not $Module.CheckMode) {
+                if (Test-Path -LiteralPath $Dest) {
+                    Remove-Item -LiteralPath $Dest -Force
+                }
+
+                $file_stream = [System.IO.File]::Create($Dest)
+                try {
+                    $ms.CopyTo($file_stream)
+                    $file_stream.Flush()
+                } finally {
+                    $file_stream.Close()
+                }
+            }
+            $Module.result.changed = $download
+        } finally {
+            $ms.Dispose()
         }
-
-    } Catch [System.Net.WebException] {
-        $module.Result.status_code = [int] $_.Exception.Response.StatusCode
-        $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-        $module.FailJson("Error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
-    } Catch {
-        $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
-        $module.Result.checksum_dest = $destHash
-        $module.FailJson("Unknown error downloading '$url' to '$dest': $($_.Exception.Message)", $_)
     }
-    Finally {
-        if (Test-Path -LiteralPath $tmpDest) {
-            Remove-Item -Path $tmpDest | Out-Null
+
+    $invoke_args = @{
+        Module = $Module
+        Uri = $Uri
+        Method = @{
+            FileWebRequest = [System.Net.WebRequestMethods+File]::DownloadFile
+            FtpWebRequest = [System.Net.WebRequestMethods+Ftp]::DownloadFile
+            HttpWebRequest = [System.Net.WebRequestMethods+Http]::Get
         }
+        Script = $download_script
     }
 
-    $module.Result.status_code = 200
-    $module.Result.msg = 'OK'
-    $module.Result.checksum_src = $tmpDestHash
-    $module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+    $module_start = Get-Date
+    try {
+        Invoke-AnsibleWebRequest @invoke_args @RequestParams
+    } catch {
+        $Module.FailJson("Unknown error downloading '$Uri' to '$Dest': $($_.Exception.Message)", $_)
+    } finally {
+        $Module.Result.elapsed = ((Get-Date) - $module_start).TotalSeconds
+    }
 }
-
-# normalise values
-if ($checksum) {
-    $checksum = $checksum.Trim().toLower()
-}
-if ($checksum_algorithm) {
-    $checksum_algorithm = $checksum_algorithm.Trim().toLower()
-}
-
-if ($checksum_url) {
-    $checksum_url = $checksum_url.Trim().toLower()
-}
-
-$module.Result.elapsed = 0
-$module.Result.url = $url
 
 if (-not $use_proxy -and ($proxy_url -or $proxy_username -or $proxy_password)) {
     $module.Warn("Not using a proxy on request, however a 'proxy_url', 'proxy_username' or 'proxy_password' was defined.")
@@ -439,53 +398,53 @@ if ([Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
 }
 [Net.ServicePointManager]::SecurityProtocol = $security_protocols
 
-$common_args = @{
-    module = $module
-    credentials = $credentials
-    headers = $headers
-    timeout = $timeout
-    use_proxy = $use_proxy
-    proxy = $proxy
+$request_params = @{
+    Credential = $credentials
+    Headers = $headers
+    Timeout = $timeout
+    UseProxy = $use_proxy
+    Proxy = $proxy
+}
+
+if ($checksum) {
+    $checksum = $checksum.Trim().toLower()
+}
+if ($checksum_algorithm) {
+    $checksum_algorithm = $checksum_algorithm.Trim().toLower()
+}
+if ($checksum_url) {
+    $checksum_url = $checksum_url.Trim().toLower()
 }
 
 # Check for case $checksum variable contain url. If yes, get file data from url and replace original value in $checksum
 if ($checksum_url) {
-
-    if ($checksum_url.startswith('http://', 'InvariantCultureIgnoreCase') -or $checksum_url.startswith('https://', 'InvariantCultureIgnoreCase') -or `
-        $checksum_url.startswith('ftp://', 'InvariantCultureIgnoreCase') -or [bool]([System.Uri]$checksum_url).isFile) {
-
-        $checksum = Get-ChecksumFromUrl @common_args -url $checksum_url -src_file_url $url
-    } else {
-        $module.FailJson("Unsupported `checksum_url` value for '$dest': '$checksum_url'")
+    $checksum_uri = [System.Uri]$checksum_url
+    if ($checksum_uri.Scheme -notin @("file", "ftp", "http", "https")) {
+        $module.FailJson("Unsupported 'checksum_url' value for '$dest': '$checksum_url'")
     }
+
+    $checksum = Get-ChecksumFromUri -Module $Module -Uri $checksum_uri -SourceUri $url -RequestParams $request_params
 }
 
 if ($force -or -not (Test-Path -LiteralPath $dest)) {
-
-    Invoke-DownloadFile @common_args `
-                        -url $url -dest $dest
-
+    # force=yes or dest does not exist, download the file
+    # Note: Invoke-DownloadFile will compare the checksums internally if dest exists
+    Invoke-DownloadFile -Module $module -Uri $url -Dest $dest -Checksum $checksum `
+        -ChecksumAlgorithm $checksum_algorithm -RequestParams $request_params
 } else {
-
-    $is_modified = Compare-ModifiedFile @common_args `
-                                        -url $url -dest $dest -check_length $false
-
+    # force=no, we want to check the last modified dates and only download if they don't match
+    $is_modified = Compare-ModifiedFile -Module $module -Uri $url -Dest $dest -RequestParams $request_params
     if ($is_modified) {
-
-        Invoke-DownloadFile @common_args `
-                            -url $url -dest $dest
-
+        Invoke-DownloadFile -Module $module -Uri $url -Dest $dest -Checksum $checksum `
+            -ChecksumAlgorithm $checksum_algorithm -RequestParams $request_params
    }
 }
 
-if(Test-Path -LiteralPath $dest) {
+if ((-not $module.Result.ContainsKey("checksum_dest")) -and (Test-Path -LiteralPath $dest)) {
+    # Calculate the dest file checksum if it hasn't already been done
+    $module.Result.checksum_dest = Get-Checksum -Path $dest -Algorithm $checksum_algorithm
     $module.Result.size = (Get-AnsibleItem -Path $dest).Length
-    Try {
-        if(-not $module.Result.checksum_dest) {
-            $module.Result.checksum_dest = Get-FileChecksum -path $dest -algorithm $checksum_algorithm
-        }
-    } Catch {
-        $module.FailJson("Unknown checksum error for '$dest': $($_.Exception.Message)", $_)
-    }
 }
+
 $module.ExitJson()
+
