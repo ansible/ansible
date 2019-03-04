@@ -42,7 +42,7 @@ function localhost_only
   ansible_output="$1"
 
   # test for https://github.com/ansible/ansible/issues/13681
-  if egrep '127\.0\.0\.1.*ok' <<< "${ansible_output}"; then
+  if egrep '127\.0\.0\.1.*ok=' <<< "${ansible_output}"; then
     echo "Found host 127.0.0.1 in output. Only localhost should be present." 1>&2
 
     return 1
@@ -64,7 +64,7 @@ function localhost_ran
   ansible_output="$1"
 
   # make sure one host was run
-  if ! egrep 'localhost.*ok' <<< "${ansible_output}"; then
+  if ! egrep 'localhost.*ok=' <<< "${ansible_output}"; then
     echo "Did not find host localhost in output." 1>&2
 
     return 1
@@ -215,9 +215,13 @@ function submodule_shallow_cloned()
   return 0
 }
 
+set +x
+
 output="$(ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" | tee "${temp_log}")"
 
 echo -n "${output}"
+
+set -x
 
 localhost_only "${output}"
 localhost_ran "${output}"
@@ -230,9 +234,13 @@ PASSWORD='test'
 USER=${USER:-'broken_docker'}
 JSON_EXTRA_ARGS='{"docker_registries_login": [{ "docker_password": "'"${PASSWORD}"'", "docker_username": "'"${USER}"'", "docker_registry_url":"repository-manager.company.com:5001"}], "docker_registries_logout": [{ "docker_password": "'"${PASSWORD}"'", "docker_username": "'"${USER}"'", "docker_registry_url":"repository-manager.company.com:5001"}] }'
 
+set +x
+
 output="$(ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" -e "${JSON_EXTRA_ARGS}" "$@" --tags untagged,test_ev | tee "${temp_log}")"
 
 echo -n "${output}"
+
+set -x
 
 localhost_only "${output}"
 localhost_ran "${output}"
