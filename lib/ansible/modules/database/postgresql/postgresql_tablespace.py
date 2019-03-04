@@ -323,7 +323,7 @@ class PgTablespace(object):
         self.new_name = newname
         return self.__exec_sql(query, ddl=True)
 
-    def set_settings(self, new_settings={}):
+    def set_settings(self, new_settings):
         # settings must be a dict {'key': 'value'}
         if self.opt_not_supported:
             return False
