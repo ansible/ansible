@@ -1,4 +1,3 @@
-
 # ============================================================
 - name: create user with basic ssl privileges
   mysql_user: name="ssluser" password=somepass priv=*.*:REQUIRESSL login_unix_socket='{{ mysql_socket }}' state=present
