@@ -27,14 +27,14 @@ options:
             - The scope of role assignment applies to.
             - For example, use /subscriptions/{subscription-id}/ for a subscription,
             - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group,
-            - "/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource."
+            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource
     name:
         description:
             - Name of role assignment.
             - Mutual exclusive with I(assignee).
     assignee:
         description:
-            - Object id a user, group or service principal.
+            - Object id of a user, group or service principal.
             - Mutual exclusive with I(name).
 
 extends_documentation_fragment:
