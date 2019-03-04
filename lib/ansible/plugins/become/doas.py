@@ -95,7 +95,7 @@ class BecomeModule(BecomeBase):
     missing = ('Authorization required',)
 
     def check_password_prompt(self, b_output):
-        ''' checks if the expected passwod prompt exists in b_output '''
+        ''' checks if the expected password prompt exists in b_output '''
 
         # FIXME: more accurate would be: 'doas (%s@' % remote_user
         # however become plugins don't have that information currently
