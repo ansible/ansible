@@ -46,9 +46,8 @@ class AnsibleDocTest(SanityMultipleVersion):
             # not supported by ansible-doc
             'action',
             'doc_fragments',
-            'cliconf',
             'filter',
-            'httpapi',
+            'grpc',
             'netconf',
             'terminal',
             'test',

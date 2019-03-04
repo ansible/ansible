@@ -104,7 +104,7 @@ DEFAULT_REMOTE_PASS = None
 DEFAULT_SUBSET = None
 DEFAULT_SU_PASS = None
 # FIXME: expand to other plugins, but never doc fragments
-CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'shell', 'grpc')
+CONFIGURABLE_PLUGINS = ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'shell')
 # NOTE: always update the docs/docsite/Makefile to match
 DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy', 'vars')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
