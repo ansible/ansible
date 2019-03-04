@@ -1,0 +1,24 @@
+!
+router bgp 64496
+ bgp router-id 192.0.2.1
+ bgp log-neighbor-changes
+ neighbor 192.51.100.1 remote-as 64496
+ neighbor 192.51.100.1 timers 120 360
+ neighbor 198.51.100.3 remote-as 64498
+ neighbor 2.2.2.2 remote-as 500
+ neighbor 2.2.2.2 description EBGP_PEER
+ !
+ address-family ipv4 unicast
+  network 192.0.1.0/24 route-map RMAP_1
+  network 198.51.100.0/24 route-map RMAP_2
+  redistribute static metric 100
+  redistribute eigrp metric 10 route-map RMAP_3
+  neighbor 2.2.2.2 remove-private-AS
+  neighbor 2.2.2.2 maximum-prefix 100
+ exit-address-family
+ !
+ address-family ipv4 multicast
+  network 10.0.0.0/8 route-map RMAP_1
+  network 20.0.0.0/8 route-map RMAP_2
+ exit-address-family
+!
