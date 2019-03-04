@@ -1,0 +1,745 @@
+{
+    "fmgr_fwobj_service_custom": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom/ansible_custom_service"
+            },
+            "datagram_sent": {
+                "name": "ansible_custom_service"
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_service",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "protocol-number": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_icmp",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "datagram_sent": {
+                "name": "ansible_custom_icmp"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom/ansible_custom_icmp"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom/ansible_custom_icmp6"
+            },
+            "datagram_sent": {
+                "name": "ansible_custom_icmp6"
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_icmp6",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "protocol-number": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_ip",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "datagram_sent": {
+                "name": "ansible_custom_ip"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom/ansible_custom_ip"
+            },
+            "post_method": "delete"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom/ansible_custom_serviceWithSource"
+            },
+            "datagram_sent": {
+                "name": "ansible_custom_serviceWithSource"
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_serviceWithSource",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "protocol-number": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_proxy_all",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "datagram_sent": {
+                "name": "ansible_custom_proxy_all"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom/ansible_custom_proxy_all"
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "protocol-number": null,
+                "protocol": null,
+                "custom_type": "tcp_udp_sctp",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": "ansibleCategoryTest",
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": "443",
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_service",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": "51",
+                "sctp-portrange": "100"
+            },
+            "datagram_sent": {
+                "category": "ansibleCategoryTest",
+                "protocol": "TCP/UDP/SCTP",
+                "name": "ansible_custom_service",
+                "color": 22,
+                "visibility": "enable",
+                "proxy": "disable",
+                "sctp-portrange": [
+                    "100"
+                ],
+                "udp-portrange": [
+                    "51"
+                ],
+                "tcp-portrange": [
+                    "443"
+                ]
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom"
+            },
+            "datagram_sent": {
+                "protocol": "TCP/UDP/SCTP",
+                "name": "ansible_custom_serviceWithSource",
+                "color": 22,
+                "visibility": "enable",
+                "proxy": "disable",
+                "tcp-portrange": [
+                    "443:1000-2000",
+                    "80-82:10000-20000"
+                ],
+                "udp-portrange": [
+                    "51:100-200",
+                    "162:200-400"
+                ],
+                "sctp-portrange": [
+                    "100:2000-2500"
+                ]
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "tcp_udp_sctp",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": "443:1000-2000,80-82:10000-20000",
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_serviceWithSource",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": "51:100-200,162:200-400",
+                "sctp-portrange": "100:2000-2500"
+            },
+            "post_method": "add"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "protocol-number": null,
+                "protocol": null,
+                "custom_type": "icmp",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": 8,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": 3,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_icmp",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "datagram_sent": {
+                "protocol": "ICMP",
+                "name": "ansible_custom_icmp",
+                "color": 22,
+                "visibility": "enable",
+                "icmptype": 8,
+                "proxy": "disable",
+                "icmpcode": 3
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom"
+            },
+            "datagram_sent": {
+                "protocol": "ICMP6",
+                "name": "ansible_custom_icmp6",
+                "color": 22,
+                "visibility": "enable",
+                "icmptype": 5,
+                "proxy": "disable",
+                "icmpcode": 1
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "icmp6",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": 5,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": 1,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_icmp6",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "post_method": "add"
+        },
+        {
+            "paramgram_used": {
+                "comment": null,
+                "protocol-number": 12,
+                "protocol": null,
+                "custom_type": "ip",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_ip",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "datagram_sent": {
+                "protocol-number": 12,
+                "protocol": "IP",
+                "name": "ansible_custom_ip",
+                "color": 22,
+                "visibility": "enable",
+                "proxy": "disable"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom"
+            },
+            "post_method": "add"
+        },
+        {
+            "raw_response": {
+                "status": {
+                    "message": "OK",
+                    "code": 0
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/custom"
+            },
+            "datagram_sent": {
+                "protocol": "ALL",
+                "name": "ansible_custom_proxy_all",
+                "color": 22,
+                "visibility": "enable",
+                "proxy": "enable",
+                "iprange": "www.ansible.com",
+                "tcp-portrange": [
+                    "443:1000-2000",
+                    "80-82:10000-20000"
+                ]
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "www.ansible.com",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "enable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": "443:1000-2000,80-82:10000-20000",
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_proxy_all",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "post_method": "add"
+        }
+    ],
+    "fmgr_fwobj_service_group": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "Object does not exist",
+                    "code": -3
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/group/ansibleTestGroup"
+            },
+            "datagram_sent": {},
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 22,
+                "object_type": "group",
+                "group-name": "ansibleTestGroup",
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": null,
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "delete",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "post_method": "delete"
+        },
+        {
+            "paramgram_used": {
+                "comment": "created by ansible",
+                "protocol-number": null,
+                "protocol": null,
+                "custom_type": "all",
+                "color": 10,
+                "object_type": "group",
+                "group-name": "ansibleTestGroup",
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": null,
+                "explicit-proxy": "disable",
+                "udp-idle-timer": 0,
+                "group-member": "ansible_custom_ip, ansible_custom_icmp, ansible_custom_service",
+                "application": null,
+                "tcp-portrange": null,
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": null,
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": null,
+                "sctp-portrange": null
+            },
+            "datagram_sent": {
+                "comment": "created by ansible",
+                "color": 10,
+                "member": [
+                    "ansible_custom_ip",
+                    "ansible_custom_icmp",
+                    "ansible_custom_service"
+                ],
+                "name": "ansibleTestGroup",
+                "proxy": "disable"
+            },
+            "raw_response": {
+                "status": {
+                    "message": "datasrc invalid. object: firewall service group member ansibleTestGroup. detail: ansible_custom_ip. solution: data not exist",
+                    "code": -10131
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/group"
+            },
+            "post_method": "add"
+        }
+    ],
+    "fmgr_fwobj_service_category": [
+        {
+            "raw_response": {
+                "status": {
+                    "message": "Object already exists",
+                    "code": -2
+                },
+                "url": "/pm/config/adom/ansible/obj/firewall/service/category"
+            },
+            "datagram_sent": {
+                "comment": "Created by Ansible",
+                "name": "ansibleCategoryTest"
+            },
+            "paramgram_used": {
+                "comment": null,
+                "protocol": null,
+                "custom_type": "tcp_udp_sctp",
+                "color": 22,
+                "object_type": "custom",
+                "group-name": null,
+                "tcp-halfclose-timer": 0,
+                "icmp_type": null,
+                "iprange": "0.0.0.0",
+                "category": "ansibleCategoryTest",
+                "protocol-number": null,
+                "udp-idle-timer": 0,
+                "explicit-proxy": "disable",
+                "group-member": null,
+                "application": null,
+                "tcp-portrange": "443",
+                "icmp_code": null,
+                "session-ttl": 0,
+                "adom": "ansible",
+                "visibility": "enable",
+                "tcp-timewait-timer": 0,
+                "name": "ansible_custom_service",
+                "app-service-type": null,
+                "fqdn": "",
+                "app-category": null,
+                "check-reset-range": null,
+                "mode": "add",
+                "tcp-halfopen-timer": 0,
+                "udp-portrange": "51",
+                "sctp-portrange": "100"
+            },
+            "post_method": "add"
+        }
+    ]
+}
