@@ -74,9 +74,7 @@ def list_no_log_values(argument_spec, params):
     """
 
     no_log_values = set()
-
     for arg_name, arg_opts in argument_spec.items():
-
         if arg_opts.get('no_log', False):
             # Find the value for the no_log'd param
             no_log_object = params.get(arg_name, None)

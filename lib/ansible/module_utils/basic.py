@@ -1553,14 +1553,8 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
 
-        no_log_values = list_no_log_values(spec, param)
-        deprecations = list_deprecations(spec, param)
-
-        if no_log_values:
-            self.no_log_values.update(no_log_values)
-
-        if deprecations:
-            self._deprecations.extend(deprecations)
+        self.no_log_values.update(list_no_log_values(spec, param))
+        self._deprecations.extend(list_deprecations(spec, param))
 
     def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
