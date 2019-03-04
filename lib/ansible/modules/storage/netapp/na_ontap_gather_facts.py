@@ -188,6 +188,30 @@ class NetAppONTAPGatherFacts(object):
             field='interface-name',
             query={'max-records': '1024'}
         )
+        self.netapp_info['nvme_info'] = self.get_generic_get_iter(
+            'nvme-get-iter',
+            attribute='nvme-target-service-info',
+            field='vserver',
+            query={'max-records': '1024'}
+        )
+        self.netapp_info['nvme_interface_info'] = self.get_generic_get_iter(
+            'nvme-interface-get-iter',
+            attribute='nvme-interface-info',
+            field='vserver',
+            query={'max-records': '1024'}
+        )
+        self.netapp_info['nvme_subsystem_info'] = self.get_generic_get_iter(
+            'nvme-subsystem-get-iter',
+            attribute='nvme-subsystem-info',
+            field='subsystem',
+            query={'max-records': '1024'}
+        )
+        self.netapp_info['nvme_namespace_info'] = self.get_generic_get_iter(
+            'nvme-namespace-get-iter',
+            attribute='nvme-namespace-info',
+            field='path',
+            query={'max-records': '1024'}
+        )
         self.netapp_info['net_port_info'] = self.get_generic_get_iter(
             'net-port-get-iter',
             attribute='net-port-info',
