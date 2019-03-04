@@ -96,7 +96,7 @@ class BecomeModule(BecomeBase):
     missing = ('No password given',)
 
     def check_password_prompt(self, b_output):
-        ''' checks if the expected passwod prompt exists in b_output '''
+        ''' checks if the expected password prompt exists in b_output '''
 
         prompts = self.get_option('prompt_l10n') or ["Kerberos password for .*@.*:"]
         b_prompt = b"|".join(to_bytes(p) for p in prompts)
