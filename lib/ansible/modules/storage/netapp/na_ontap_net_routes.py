@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+
 # (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -47,6 +47,7 @@ options:
   from_destination:
     description:
     - Specify the route destination that should be changed.
+    - new_destination was removed to fix idempotency issues. To rename destination the original goes to from_destination and the new goes to destination.
     version_added: '2.8'
   from_gateway:
     description:
