@@ -128,7 +128,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             ports = []
 
             try:
-                t_stdout = to_text(stdout,  errors='surrogate_or_strict')
+                t_stdout = to_text(stdout, errors='surrogate_or_strict')
             except UnicodeError as e:
                 raise AnsibleParserError('Invalid (non unicode) input returned: %s' % to_native(e))
 
