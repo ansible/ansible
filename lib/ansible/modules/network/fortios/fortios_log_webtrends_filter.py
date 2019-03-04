@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -120,9 +117,11 @@ options:
             netscan-discovery:
                 description:
                     - Enable/disable netscan discovery event logging.
+                choices:
             netscan-vulnerability:
                 description:
                     - Enable/disable netscan vulnerability event logging.
+                choices:
             severity:
                 description:
                     - Lowest severity level to log to WebTrends.
@@ -248,10 +247,8 @@ version:
 
 from ansible.module_utils.basic import AnsibleModule
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
@@ -280,26 +277,11 @@ def filter_log_webtrends_filter_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
-
-    return data
-
-
 def log_webtrends_filter(data, fos):
     vdom = data['vdom']
     log_webtrends_filter_data = data['log_webtrends_filter']
-    flattened_data = flatten_multilists_attributes(log_webtrends_filter_data)
-    filtered_data = filter_log_webtrends_filter_data(flattened_data)
+    filtered_data = filter_log_webtrends_filter_data(log_webtrends_filter_data)
+
     return fos.set('log.webtrends',
                    'filter',
                    data=filtered_data,
@@ -307,7 +289,7 @@ def log_webtrends_filter(data, fos):
 
 
 def fortios_log_webtrends(data, fos):
-    login(data)
+    login(data, fos)
 
     if data['log_webtrends_filter']:
         resp = log_webtrends_filter(data, fos)
@@ -341,8 +323,10 @@ def main():
                                   "choices": ["enable", "disable"]},
                 "multicast-traffic": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "netscan-discovery": {"required": False, "type": "str"},
-                "netscan-vulnerability": {"required": False, "type": "str"},
+                "netscan-discovery": {"required": False, "type": "str",
+                                      "choices": []},
+                "netscan-vulnerability": {"required": False, "type": "str",
+                                          "choices": []},
                 "severity": {"required": False, "type": "str",
                              "choices": ["emergency", "alert", "critical",
                                          "error", "warning", "notification",
@@ -365,7 +349,6 @@ def main():
     except ImportError:
         module.fail_json(msg="fortiosapi module is required")
 
-    global fos
     fos = FortiOSAPI()
 
     is_error, has_changed, result = fortios_log_webtrends(module.params, fos)
