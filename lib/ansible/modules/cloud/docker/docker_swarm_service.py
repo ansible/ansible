@@ -1053,7 +1053,7 @@ class DockerServiceManager():
                     msg=('%s parameter supported only with api_version>=%s'
                          % (pv['param'], pv['min_version'])))
 
-        for publish_def in self.client.module.params.get('publish', []):
+        for publish_def in params['publish'] or []:
             if 'mode' in publish_def.keys():
                 if LooseVersion(self.client.version()['ApiVersion']) < LooseVersion('1.25'):
                     self.client.module.fail_json(msg='publish.mode parameter supported only with api_version>=1.25')
