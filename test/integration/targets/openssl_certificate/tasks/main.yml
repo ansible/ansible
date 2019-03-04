@@ -1,6 +1,8 @@
 ---
 - block:
 
+    - import_tasks: assertonly.yml
+
     - import_tasks: expired.yml
 
     - import_tasks: selfsigned.yml
