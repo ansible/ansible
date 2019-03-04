@@ -269,7 +269,7 @@ class NetAppONTAPSnapmirror(object):
         if self.parameters.get('source_password'):
             self.module.params['password'] = self.parameters['source_password']
         self.module.params['hostname'] = self.parameters['source_hostname']
-        self.source_server = netapp_utils.setup_ontap_zapi(module=self.module)
+        self.source_server = netapp_utils.setup_na_ontap_zapi(module=self.module)
 
     def delete_snapmirror(self):
         """
