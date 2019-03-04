@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 # Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
@@ -11,9 +13,9 @@ from ansible.module_utils.basic import env_fallback, missing_required_lib
 try:
     import hcloud
 
-    HCLOUD_AVAILABLE = True
+    HAS_HCLOUD = True
 except ImportError:
-    HCLOUD_AVAILABLE = False
+    HAS_HCLOUD = False
 
 
 class Hcloud(object):
@@ -21,7 +23,7 @@ class Hcloud(object):
         self.module = module
         self.represent = represent
         self.result = {"changed": False, self.represent: None}
-        if not HCLOUD_AVAILABLE:
+        if not HAS_HCLOUD:
             module.fail_json(msg=missing_required_lib("hcloud-python"))
         self._build_client()
 

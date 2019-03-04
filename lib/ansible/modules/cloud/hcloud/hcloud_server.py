@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,12 +18,12 @@ DOCUMENTATION = """
 ---
 module: hcloud_server
 
-short_description: Create and manage cloud servers on the Hetzner Cloud
+short_description: Create and manage cloud servers on the Hetzner Cloud.
 
 version_added: "2.8"
 
 description:
-    - "Create, update and manage cloud servers on the Hetzner Cloud."
+    - Create, update and manage cloud servers on the Hetzner Cloud.
 
 author:
     - Lukas Kaemmerling (@lkaemmerling)
@@ -30,18 +31,18 @@ author:
 options:
     id:
         description:
-            - The Server ID
-            - Only required if no server name is given
+            - The ID of the Hetzner Cloud server to manage.
+            - Only required if no server I(name) is given
         type: int
     name:
         description:
-            - The Server Name
-            - Only required if no server id is given or a server does not exists
+            - The Name of the Hetzner Cloud server to manage.
+            - Only required if no server I(id) is given or a server does not exists.
         type: str
     server_type:
         description:
-            - The Server Type
-            - Required if server does not exists
+            - The Server Type of the Hetzner Cloud server to manage.
+            - Required if server does not exists.
         type: str
     ssh_keys:
         description:
@@ -50,26 +51,26 @@ options:
         aliases: [ ssh_key ]
     volumes:
         description:
-            - List of Volumes IDs that should be attached to the server on server creation
+            - List of Volumes IDs that should be attached to the server on server creation.
         type: list
     image:
         description:
-            - Image the server should be created from
-            - Required if server does not exists
+            - Image the server should be created from.
+            - Required if server does not exists.
         type: str
     location:
         description:
-            - Location of Server
-            - Required if no I(datacenter) is given and server does not exists
+            - Location of Server.
+            - Required if no I(datacenter) is given and server does not exists.
         type: str
     datacenter:
         description:
-            - Datacenter of Server
-            - Required of no I(location) is given and server does not exists
+            - Datacenter of Server.
+            - Required of no I(location) is given and server does not exists.
         type: str
     backups:
         description:
-            - Enable or disable Backups for the given Server
+            - Enable or disable Backups for the given Server.
         type: bool
         default: False
     upgrade_disk:
@@ -80,25 +81,25 @@ options:
         default: no
     force_upgrade:
         description:
-            - Force the upgrade of the server. Power off the server if it is running on upgrade
+            - Force the upgrade of the server.
+            - Power off the server if it is running on upgrade.
         type: bool
         default: no
     user_data:
         description:
             - User Data to be passed to the server on creation.
-            - Only used if server does not exists
+            - Only used if server does not exists.
         type: str
     state:
         description:
             - State of the server.
         default: present
-        choices: [ present, absent, restarted, started, stopped ]
+        choices: [ absent, present, restarted, started, stopped ]
         type: str
 extends_documentation_fragment: hcloud
 """
 
 EXAMPLES = """
-# Create a basic server
 - name: Create a basic server
   hcloud_server:
     name: my-server
@@ -106,7 +107,6 @@ EXAMPLES = """
     image: ubuntu-18.04
     state: present
 
-# Create a server in an specific location and with ssh keys
 - name: Create a basic server with ssh key
   hcloud_server:
     name: my-server
@@ -116,34 +116,29 @@ EXAMPLES = """
     ssh-key: my-ssh-key
     state: present
 
-# Resize an existing server
 - name: Resize an existing server
   hcloud_server:
     name: my-server
     server_type: cx21
-    keep_disk: true
+    keep_disk: yes
     state: present
 
-# Remove a server
-- name: server should be absent
+- name: Ensure the server is absent (remove if needed)
   hcloud_server:
     name: my-server
     state: absent
 
-# Start a server
-- name: server should be started
+- name: Ensure the server is started
   hcloud_server:
     name: my-server
     state: started
 
-# Stop a server
-- name: server should be stopped
+- name: Ensure the server is stopped
   hcloud_server:
     name: my-server
     state: stopped
 
-# Restart a server
-- name: server should be restarted
+- name: Ensure the server is restarted
   hcloud_server:
     name: my-server
     state: restarted
@@ -198,9 +193,9 @@ class AnsibleHcloudServer(Hcloud):
             "server_type": to_native(self.hcloud_server.server_type.name),
             "datacenter": to_native(self.hcloud_server.datacenter.name),
             "location": to_native(self.hcloud_server.datacenter.location.name),
-            "rescue_enabled": to_native(self.hcloud_server.rescue_enabled),
+            "rescue_enabled": self.hcloud_server.rescue_enabled,
             "backup_window": to_native(self.hcloud_server.backup_window),
-            "labels": to_native(self.hcloud_server.labels),
+            "labels": self.hcloud_server.labels,
             "status": to_native(self.hcloud_server.status),
         }
 
@@ -243,28 +238,26 @@ class AnsibleHcloudServer(Hcloud):
             ]
 
         if (
-            self.module.params.get("location") is None
-            and self.module.params.get("datacenter") is None
+                self.module.params.get("location") is None
+                and self.module.params.get("datacenter") is None
         ):
             # When not given, the API will choose the location.
             params["location"] = None
             params["datacenter"] = None
         elif (
-            self.module.params.get("location") is not None
-            and self.module.params.get("datacenter") is None
+                self.module.params.get("location") is not None
+                and self.module.params.get("datacenter") is None
         ):
             params["location"] = self.client.locations.get_by_name(
                 self.module.params.get("location")
             )
         elif (
-            self.module.params.get("location") is None
-            and self.module.params.get("datacenter") is not None
+                self.module.params.get("location") is None
+                and self.module.params.get("datacenter") is not None
         ):
             params["datacenter"] = self.client.datacenters.get_by_name(
                 self.module.params.get("datacenter")
             )
-        else:
-            self.module.fail_json(msg="Please specify a datacenter or location.")
 
         if not self.module.check_mode:
             resp = self.client.servers.create(**params)
@@ -276,15 +269,15 @@ class AnsibleHcloudServer(Hcloud):
 
     def _update_server(self):
         if (
-            self.module.params.get("backups")
-            and self.hcloud_server.backup_window is None
+                self.module.params.get("backups")
+                and self.hcloud_server.backup_window is None
         ):
             if not self.module.check_mode:
                 self.hcloud_server.enable_backup().wait_until_finished()
             self._mark_as_changed()
         elif (
-            not self.module.params.get("backups")
-            and self.hcloud_server.backup_window is not None
+                not self.module.params.get("backups")
+                and self.hcloud_server.backup_window is not None
         ):
             if not self.module.check_mode:
                 self.hcloud_server.disable_backup().wait_until_finished()
@@ -292,8 +285,8 @@ class AnsibleHcloudServer(Hcloud):
 
         server_type = self.module.params.get("server_type")
         if (
-            server_type is not None
-            and self.hcloud_server.server_type.name != server_type
+                server_type is not None
+                and self.hcloud_server.server_type.name != server_type
         ):
             previous_server_status = self.hcloud_server.status
             state = self.module.params.get("state")
@@ -317,8 +310,8 @@ class AnsibleHcloudServer(Hcloud):
                     upgrade_disk=self.module.params.get("upgrade_disk"),
                 ).wait_until_finished(timeout)
                 if (
-                    state == "present"
-                    and previous_server_status == Server.STATUS_RUNNING
+                        state == "present"
+                        and previous_server_status == Server.STATUS_RUNNING
                 ) or state == "started":
                     self.start_server()
 
@@ -371,11 +364,12 @@ class AnsibleHcloudServer(Hcloud):
                 upgrade_disk={"type": "bool", "default": False},
                 force_upgrade={"type": "bool", "default": False},
                 state={
-                    "choices": ["present", "absent", "restarted", "started", "stopped"],
+                    "choices": ["absent", "present", "restarted", "started", "stopped"],
                     "default": "present",
                 },
                 **Hcloud.base_module_arguments()
             ),
+            mutually_exclusive=[["location", "datacenter"]],
             supports_check_mode=True,
         )
 
@@ -387,19 +381,18 @@ def main():
     state = module.params.get("state")
     if state == "absent":
         hcloud.delete_server()
-    else:
-        if state == "present":
-            hcloud.present_server()
-        elif state == "started":
-            hcloud.present_server()
-            hcloud.start_server()
-        elif state == "stopped":
-            hcloud.present_server()
-            hcloud.stop_server()
-        elif state == "restarted":
-            hcloud.present_server()
-            hcloud.stop_server()
-            hcloud.start_server()
+    elif state == "present":
+        hcloud.present_server()
+    elif state == "started":
+        hcloud.present_server()
+        hcloud.start_server()
+    elif state == "stopped":
+        hcloud.present_server()
+        hcloud.stop_server()
+    elif state == "restarted":
+        hcloud.present_server()
+        hcloud.stop_server()
+        hcloud.start_server()
 
     module.exit_json(**hcloud.get_result())
 
