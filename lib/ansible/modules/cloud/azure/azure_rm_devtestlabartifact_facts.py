@@ -150,7 +150,8 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
                 required=True
             ),
             lab_name=dict(
-                type='str'
+                type='str',
+                required=True
             ),
             artifact_source_name=dict(
                 type='str',
