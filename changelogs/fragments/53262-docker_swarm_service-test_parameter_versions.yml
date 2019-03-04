@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_swarm_service - don't crash when ``publish`` is not specified."
+- "docker_swarm_service - do basic validation of ``publish`` option if specified (must be list of dicts)."
