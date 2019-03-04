@@ -282,7 +282,7 @@ def gsa_tcam_check(module):
     This method checks the current TCAM allocation.
     Note that changing tcam_size requires a switch reboot to take effect.
     '''
-    cmds = [{'command': 'show hardware access-list tcam region', 'output': 'json' }]
+    cmds = [{'command': 'show hardware access-list tcam region', 'output': 'json'}]
     body = run_commands(module, cmds)
     if body:
         tcam_region = body[0]['TCAM_Region']['TABLE_Sizes']['ROW_Sizes']
