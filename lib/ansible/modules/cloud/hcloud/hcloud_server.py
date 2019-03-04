@@ -72,7 +72,7 @@ options:
         description:
             - Enable or disable Backups for the given Server.
         type: bool
-        default: False
+        default: no
     upgrade_disk:
         description:
             - Resize the disk size, when resizing a server.
@@ -237,24 +237,15 @@ class AnsibleHcloudServer(Hcloud):
                 Volume(id=volume_id) for volume_id in self.module.params.get("volumes")
             ]
 
-        if (
-                self.module.params.get("location") is None
-                and self.module.params.get("datacenter") is None
-        ):
+        if self.module.params.get("location") is None and self.module.params.get("datacenter") is None:
             # When not given, the API will choose the location.
             params["location"] = None
             params["datacenter"] = None
-        elif (
-                self.module.params.get("location") is not None
-                and self.module.params.get("datacenter") is None
-        ):
+        elif self.module.params.get("location") is not None and self.module.params.get("datacenter") is None:
             params["location"] = self.client.locations.get_by_name(
                 self.module.params.get("location")
             )
-        elif (
-                self.module.params.get("location") is None
-                and self.module.params.get("datacenter") is not None
-        ):
+        elif self.module.params.get("location") is None and self.module.params.get("datacenter") is not None:
             params["datacenter"] = self.client.datacenters.get_by_name(
                 self.module.params.get("datacenter")
             )
@@ -268,26 +259,17 @@ class AnsibleHcloudServer(Hcloud):
         self._get_server()
 
     def _update_server(self):
-        if (
-                self.module.params.get("backups")
-                and self.hcloud_server.backup_window is None
-        ):
+        if self.module.params.get("backups") and self.hcloud_server.backup_window is None:
             if not self.module.check_mode:
                 self.hcloud_server.enable_backup().wait_until_finished()
             self._mark_as_changed()
-        elif (
-                not self.module.params.get("backups")
-                and self.hcloud_server.backup_window is not None
-        ):
+        elif not self.module.params.get("backups") and self.hcloud_server.backup_window is not None:
             if not self.module.check_mode:
                 self.hcloud_server.disable_backup().wait_until_finished()
             self._mark_as_changed()
 
         server_type = self.module.params.get("server_type")
-        if (
-                server_type is not None
-                and self.hcloud_server.server_type.name != server_type
-        ):
+        if server_type is not None and self.hcloud_server.server_type.name != server_type:
             previous_server_status = self.hcloud_server.status
             state = self.module.params.get("state")
             if previous_server_status == Server.STATUS_RUNNING:
@@ -309,10 +291,7 @@ class AnsibleHcloudServer(Hcloud):
                     server_type=self.client.server_types.get_by_name(server_type),
                     upgrade_disk=self.module.params.get("upgrade_disk"),
                 ).wait_until_finished(timeout)
-                if (
-                        state == "present"
-                        and previous_server_status == Server.STATUS_RUNNING
-                ) or state == "started":
+                if state == "present" and previous_server_status == Server.STATUS_RUNNING or state == "started":
                     self.start_server()
 
             self._mark_as_changed()
