@@ -3,3 +3,6 @@ skip/osx
 skip/freebsd
 destructive
 skip/rhel8.0
+skip/docker  # The tests sometimes make docker daemon unstable; hence,
+             # we skip all docker-based CI runs to avoid disrupting
+             # the whole CI system.
