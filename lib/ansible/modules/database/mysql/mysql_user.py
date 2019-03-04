@@ -157,7 +157,7 @@ EXAMPLES = r'''
     name: bob
     append_privs: yes
     priv: '*.*:REQUIRENONE'
-    state: present 
+    state: present
 
 - name: Ensure no user named 'sally'@'localhost' exists, also passing in the auth credentials.
   mysql_user:
