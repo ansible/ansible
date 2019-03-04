@@ -886,7 +886,7 @@ class RedfishUtils(object):
             if 'Power' in data:
                 power_uri = data[u'Power'][u'@odata.id']
             else:
-                return {'ret': False, 'msg': "Key Power not found"}
+                continue
 
             response = self.get_request(self.root_uri + power_uri)
             data = response['data']
@@ -911,6 +911,8 @@ class RedfishUtils(object):
                 psu_results.append(psu_data)
 
         result["entries"] = psu_results
+        if not result["entries"]:
+            return {'ret': False, 'msg': "No PowerSupply objects found"}
         return result
 
     def get_system_inventory(self):
