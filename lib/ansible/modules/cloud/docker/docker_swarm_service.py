@@ -897,18 +897,20 @@ class DockerServiceManager():
         ds = DockerService()
 
         task_template_data = raw_data['Spec']['TaskTemplate']
-        update_config_data = raw_data['Spec']['UpdateConfig']
 
         ds.image = task_template_data['ContainerSpec']['Image']
         ds.user = task_template_data['ContainerSpec'].get('User', 'root')
         ds.env = task_template_data['ContainerSpec'].get('Env', [])
         ds.args = task_template_data['ContainerSpec'].get('Args', [])
-        ds.update_delay = update_config_data['Delay']
-        ds.update_parallelism = update_config_data['Parallelism']
-        ds.update_failure_action = update_config_data['FailureAction']
-        ds.update_monitor = update_config_data['Monitor']
-        ds.update_max_failure_ratio = update_config_data['MaxFailureRatio']
-        ds.update_order = update_config_data['Order']
+
+        update_config_data = raw_data['Spec'].get('UpdateConfig')
+        if update_config_data:
+            ds.update_delay = update_config_data['Delay']
+            ds.update_parallelism = update_config_data['Parallelism']
+            ds.update_failure_action = update_config_data['FailureAction']
+            ds.update_monitor = update_config_data['Monitor']
+            ds.update_max_failure_ratio = update_config_data['MaxFailureRatio']
+            ds.update_order = update_config_data['Order']
 
         dns_config = task_template_data['ContainerSpec'].get('DNSConfig', None)
         if dns_config:

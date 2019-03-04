@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_swarm_service - fix problem with docker daemons which do not return ``UpdateConfig`` in the swarm service spec."
