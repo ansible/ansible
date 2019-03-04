@@ -32,7 +32,7 @@
 import re
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import env_fallback, return_values
+from ansible.module_utils.basic import env_fallback
 from ansible.module_utils.network.common.utils import to_list, ComplexList
 from ansible.module_utils.connection import exec_command
 from ansible.module_utils.network.common.config import NetworkConfig, ConfigLine, ignore_line

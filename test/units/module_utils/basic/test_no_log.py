@@ -8,7 +8,8 @@ __metaclass__ = type
 
 from units.compat import unittest
 
-from ansible.module_utils.basic import return_values, remove_values
+from ansible.module_utils.basic import remove_values
+from ansible.module_utils.common.parameters import _return_datastructure_name
 
 
 class TestReturnValues(unittest.TestCase):
@@ -40,12 +41,12 @@ class TestReturnValues(unittest.TestCase):
         ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
     )
 
-    def test_return_values(self):
+    def test_return_datastructure_name(self):
         for data, expected in self.dataset:
-            self.assertEquals(frozenset(return_values(data)), expected)
+            self.assertEquals(frozenset(_return_datastructure_name(data)), expected)
 
     def test_unknown_type(self):
-        self.assertRaises(TypeError, frozenset, return_values(object()))
+        self.assertRaises(TypeError, frozenset, _return_datastructure_name(object()))
 
 
 class TestRemoveValues(unittest.TestCase):
