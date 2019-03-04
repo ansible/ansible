@@ -25,9 +25,9 @@ options:
     scope:
         description:
             - The scope of role assignment applies to.
-            - "For example, use /subscriptions/{subscription-id}/ for a subscription,
-              /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for a resource group,
-              and /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource."
+            - For example, use /subscriptions/{subscription-id}/ for a subscription,
+            - /subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name} for a resource group,
+            - "/subscriptions/{subscription-id}/resourceGroups/{resourcegroup-name}/providers/{resource-provider}/{resource-type}/{resource-name} for a resource."
     name:
         description:
             - Name of role assignment.
@@ -117,7 +117,7 @@ def roleassignment_to_dict(assignment):
         id=assignment.id,
         name=assignment.name,
         type=assignment.type,
-        principal_id=assignment.principal_id
+        principal_id=assignment.principal_id,
         role_definition_id=assignment.role_definition_id,
         scope=assignment.scope
     )
@@ -206,11 +206,11 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
         self.log("Gets role assignment {0} by name".format(self.name))
 
         response = None
-        filter = "principalId eq '{}'".format(assignee)
+        filter = "principalId eq '{}'".format(self.assignee)
         try:
             response = list(self._client.role_assignments.list(filter=filter))
 
-            if response and len(response) > 0: 
+            if response and len(response) > 0:
                 return [roleassignment_to_dict(a) for a in response]
 
         except CloudError as ex:
@@ -230,13 +230,14 @@ class AzureRMRoleAssignmentFacts(AzureRMModuleBase):
         try:
             response = list(self._client.role_assignments.list_for_scope(scope=scope, filter='atScope()'))
 
-            if response and len(response) > 0: 
+            if response and len(response) > 0:
                 return [roleassignment_to_dict(a) for a in response]
 
         except CloudError as ex:
             self.log("Didn't find role assignments to scope {0}".format(self.scope))
 
-        return []    
+        return []
+
 
 def main():
     """Main execution"""
