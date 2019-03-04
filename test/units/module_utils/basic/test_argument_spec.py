@@ -14,7 +14,7 @@ import pytest
 
 from units.compat.mock import MagicMock, patch
 from ansible.module_utils import basic
-from ansible.module_utils.six import string_types, integer_types, PY2
+from ansible.module_utils.six import string_types, integer_types
 from ansible.module_utils.six.moves import builtins
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
@@ -185,7 +185,7 @@ def test_validator_basic_types(argspec, expected, stdin):
     am = basic.AnsibleModule(argspec)
 
     if 'type' in argspec['arg']:
-        if PY2 and argspec['arg']['type'] == 'int':
+        if argspec['arg']['type'] == 'int':
             type_ = integer_types
         else:
             type_ = getattr(builtins, argspec['arg']['type'])
