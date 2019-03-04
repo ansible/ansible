@@ -826,9 +826,11 @@ class AssertOnlyCertificate(Certificate):
 
         def _validate_keyUsage():
             if self.keyUsage:
+                found = False
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == b'keyUsage':
+                        found = True
                         keyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.keyUsage]
                         current_ku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
                                       to_bytes(extension, errors='surrogate_or_strict').split(b',')]
@@ -837,12 +839,16 @@ class AssertOnlyCertificate(Certificate):
                             self.message.append(
                                 'Invalid keyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '), self.keyUsage)
                             )
+                if not found:
+                    self.message.append('Found no keyUsage extension')
 
         def _validate_extendedKeyUsage():
             if self.extendedKeyUsage:
+                found = False
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == b'extendedKeyUsage':
+                        found = True
                         extKeyUsage = [OpenSSL._util.lib.OBJ_txt2nid(keyUsage) for keyUsage in self.extendedKeyUsage]
                         current_xku = [OpenSSL._util.lib.OBJ_txt2nid(usage.strip()) for usage in
                                        to_bytes(extension, errors='surrogate_or_strict').split(b',')]
@@ -852,12 +858,16 @@ class AssertOnlyCertificate(Certificate):
                                 'Invalid extendedKeyUsage component (got %s, expected all of %s to be present)' % (str(extension).split(', '),
                                                                                                                    self.extendedKeyUsage)
                             )
+                if not found:
+                    self.message.append('Found no extendedKeyUsage extension')
 
         def _validate_subjectAltName():
             if self.subjectAltName:
+                found = False
                 for extension_idx in range(0, self.cert.get_extension_count()):
                     extension = self.cert.get_extension(extension_idx)
                     if extension.get_short_name() == b'subjectAltName':
+                        found = True
                         l_altnames = [altname.replace(b'IP Address', b'IP') for altname in
                                       to_bytes(extension, errors='surrogate_or_strict').split(b', ')]
                         if (not self.subjectAltName_strict and not all(x in l_altnames for x in self.subjectAltName)) or \
@@ -865,6 +875,8 @@ class AssertOnlyCertificate(Certificate):
                             self.message.append(
                                 'Invalid subjectAltName component (got %s, expected all of %s to be present)' % (l_altnames, self.subjectAltName)
                             )
+                if not found:
+                    self.message.append('Found no subjectAltName extension')
 
         def _validate_notBefore():
             if self.notBefore:
