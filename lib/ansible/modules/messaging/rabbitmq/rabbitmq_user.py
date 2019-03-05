@@ -91,7 +91,8 @@ options:
     choices: [ absent, present ]
   update_password:
     description:
-    - C(on_create) will only set the password for newly created users.  C(always) will update passwords if they differ.
+    - C(on_create) will only set the password for newly created users.
+    - C(always) will update passwords if they differ.
     type: str
     choices: [ always, on_create ]
     default: on_create
@@ -137,7 +138,7 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         self.node = node
-        if tags is None:
+        if not tags:
             self.tags = list()
 
         self.permissions = permissions
