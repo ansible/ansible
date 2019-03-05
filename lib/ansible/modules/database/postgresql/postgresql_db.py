@@ -497,7 +497,7 @@ def main():
                     module.fail_json(msg='Dump of database %s failed' % db,
                                      stdout=stdout, stderr=stderr, rc=rc, cmd=cmd)
 
-                elif stderr:
+                elif stderr and 'warning' not in str(stderr):
                     module.fail_json(msg='Dump of database %s failed' % db,
                                      stdout=stdout, stderr=stderr, rc=1, cmd=cmd)
 
