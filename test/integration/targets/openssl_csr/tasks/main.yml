@@ -133,6 +133,14 @@
         privatekey_path: '{{ output_dir }}/privatekey.pem'
         commonName: www.ansible.com
 
+    - name: Generate CSR with invalid SAN
+      openssl_csr:
+        path: '{{ output_dir }}/csrinvsan.csr'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        subject_alt_name: invalid-san.example.com
+      register: generate_csr_invalid_san
+      ignore_errors: yes
+
     - name: Generate CSR with OCSP Must Staple
       openssl_csr:
         path: '{{ output_dir }}/csr_ocsp.csr'
