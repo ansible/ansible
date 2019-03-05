@@ -59,6 +59,7 @@ _EXEC_PERM_BITS = 0o0111     # execute permission bits
 _DEFAULT_PERM = 0o0666       # default file permission bits
 filelock = fcntl.flock
 
+
 def is_executable(path):
     # This function's signature needs to be repeated
     # as the first line of its docstring.
