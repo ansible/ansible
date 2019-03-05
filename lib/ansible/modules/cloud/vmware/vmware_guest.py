@@ -343,6 +343,23 @@ options:
     - ' - C(type) (string): Value type, string type by default.'
     - ' - C(operation): C(remove): This attribute is required only when removing properties.'
     version_added: '2.6'
+  vapp_product:
+    description:
+	- Set Product information properties
+	- ' Basic attributes are:'
+	- ' - C(name) (string): Product name - required.'
+    - ' - C(vendor) (string): Vendor name.'
+	- ' - C(vendorUrl) (string): Vendor URL.'
+	- ' - C(productUrl) (string): Product URL.'
+	- ' - C(version) (string): Product short version.'
+	- ' - C(fullVersion) (string): Product full version.'
+    version_added: '2.7.8'
+  vapp_ovf_environment_transport:
+    description
+	- Set OVF Transport mode
+	- 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
+	default: com.vmware.guestInfo
+    version_added: '2.7.8'
   customization_spec:
     description:
     - Unique name identifying the requested customization specification.
@@ -1496,6 +1513,82 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
 
+    # March 2019, Added by chaitra kurdekar
+    # to Set vApp ovfEnvironmentTransport mode in VM.
+    def configure_vapp_ovfEnvironmentTransport(self, vm_obj):
+        if 'vapp_ovf_environment_transport' in self.params:
+             new_vmconfig_spec = vim.vApp.VmConfigSpec()
+             #orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+             vmconfig_spec =  self.configspec.vAppConfig if self.configspec.vAppConfig else new_vmconfig_spec
+             vmconfig_spec.ovfEnvironmentTransport = [self.params['vapp_ovf_environment_transport']]
+             self.configspec.vAppConfig = vmconfig_spec
+             self.change_detected = True
+
+    # March 2019, Added by chaitra kurdekar
+    # To Set vApp Product Information in VM.
+    def configure_vapp_product(self, vm_obj):
+        if 'vapp_product' not in self.params:   
+            return
+
+        new_vmconfig_spec = vim.vApp.VmConfigSpec()
+
+        # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
+        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+        vmconfig_spec =  self.configspec.vAppConfig if self.configspec.vAppConfig else orig_spec
+
+        vapp_products_current = dict((x.name, x) for x in orig_spec.product)
+        product_spec = self.params['vapp_product']
+        product_name = product_spec.get('name')
+
+        is_product_changed = False
+        new_vapp_product_spec = vim.vApp.ProductSpec()
+
+        if product_name in vapp_products_current:
+            if product_spec.get('operation') == 'remove':
+                new_vapp_product_spec.operation = 'remove'
+                new_vapp_product_spec.removeKey = vapp_products_current[product_name].key
+                is_product_changed = True
+            else:
+                # this is 'edit' branch
+                new_vapp_product_spec.operation = 'edit'
+                #new_vapp_product_spec.info = vapp_products_current[product_name]
+                new_vapp_product_spec.info = vapp_products_current.values()[0]
+
+                try:
+                    for objectKey, objectValue in product_spec.items():
+                        if objectKey == 'operation':
+                           # operation is not an info object property
+                           # if set to anything other than 'remove' we don't fail
+                           continue
+                        # Updating attributes only if needed
+                        if getattr(new_vapp_product_spec.info, objectKey) != objectValue:
+                            setattr(new_vapp_product_spec.info, objectKey, objectValue)
+                            is_property_changed = True
+                except Exception as e:
+                    self.module.fail_json(msg="Failed to set vApp product field='%s' and value='%s'. Error: %s"
+                                         % (objectKey, product_spec, to_text(e)))
+        else:
+            # this is add new product branch
+            new_vapp_product_spec.operation = 'add'
+            product_info = vim.vApp.ProductInfo()
+            product_info.classId = product_spec.get('classId')
+            product_info.instanceId = product_spec.get('instanceId')
+            product_info.name = product_name
+            product_info.vendor = product_spec.get('vendor')
+            product_info.version = product_spec.get('version')
+            product_info.fullVersion = product_spec.get('fullVersion')
+            product_info.vendorUrl = product_spec.get('vendorUrl')
+            product_info.productUrl = product_spec.get('productUrl')
+            product_info.appUrl = product_spec.get('appUrl')
+            new_vapp_product_spec.info = product_info
+            new_vapp_product_spec.info.key = 0
+            vmconfig_spec.product.append(new_vapp_product_spec)
+            is_product_changed = True
+
+        if is_product_changed:
+            self.configspec.vAppConfig = vmconfig_spec
+            self.change_detected = True
+
     def customize_customvalues(self, vm_obj, config_spec):
         if len(self.params['customvalues']) == 0:
             return
@@ -2324,6 +2417,8 @@ class PyVmomiHelper(PyVmomi):
         self.customize_customvalues(vm_obj=self.current_vm_obj, config_spec=self.configspec)
         self.configure_resource_alloc_info(vm_obj=self.current_vm_obj)
         self.configure_vapp_properties(vm_obj=self.current_vm_obj)
+        self.configure_vapp_product(vm_obj=self.current_vm_obj)
+        self.configure_vapp_ovfEnvironmentTransport(vm_obj=self.current_vm_obj)
 
         if self.params['annotation'] and self.current_vm_obj.config.annotation != self.params['annotation']:
             self.configspec.annotation = str(self.params['annotation'])
@@ -2549,6 +2644,8 @@ def main():
         customization_spec=dict(type='str', default=None),
         wait_for_customization=dict(type='bool', default=False),
         vapp_properties=dict(type='list', default=[]),
+        vapp_product=dict(type='dict', default={}),
+        vapp_ovf_environment_transport=dict(type='str', default='com.vmware.guestInfo'),
         datastore=dict(type='str'),
         convert=dict(type='str', choices=['thin', 'thick', 'eagerzeroedthick']),
     )
