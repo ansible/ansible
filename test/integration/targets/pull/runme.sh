@@ -12,6 +12,7 @@ pull_dir="${temp_dir}/pull"
 remote_repo='https://github.com/ju2wheels/test_ansible_pull.git'
 repo_dir="${temp_dir}/repo"
 temp_log="${temp_dir}/pull.log"
+temp_stderr_log="${temp_dir}/pull_stderr.log"
 
 ansible-playbook setup.yml
 
@@ -145,16 +146,18 @@ function main_repo_full_cloned()
 function main_repo_shallow_cloned
 {
   local ansible_output_log=''
+  local ansible_stderr_output_log=''
 
-  if [[ $# -ne 1 ]]; then
-    echo 'Usage: main_repo_shallow_cloned <ansible_output_log>' 1>&2
+  if [[ $# -ne 2 ]]; then
+    echo 'Usage: main_repo_shallow_cloned <ansible_output_log> <ansible_stderr_output_log>' 1>&2
 
     return 1
   fi
 
   ansible_output_log="$1"
+  ansible_stderr_output_log="$2"
 
-  if grep '\[WARNING]: Your git version is too old to fully support the depth argument.' < "${ansible_output_log}"; then
+  if grep '\[WARNING]: Your git version is too old to fully support the depth argument.' < "${ansible_stderr_output_log}"; then
     main_repo_full_cloned
 
     return $?
@@ -219,16 +222,18 @@ function submodule_full_cloned()
 function submodule_shallow_cloned
 {
   local ansible_output_log=''
+  local ansible_stderr_output_log=''
 
-  if [[ $# -ne 1 ]]; then
-    echo 'Usage: main_repo_shallow_cloned <ansible_output_log>' 1>&2
+  if [[ $# -ne 2 ]]; then
+    echo 'Usage: main_repo_shallow_cloned <ansible_output_log> <ansible_stderr_output_log>' 1>&2
 
     return 1
   fi
 
   ansible_output_log="$1"
+  ansible_stderr_output_log="$2"
 
-  if grep '\[WARNING]: Your git version is too old to fully support the depth argument.' < "${ansible_output_log}"; then
+  if grep '\[WARNING]: Your git version is too old to fully support the depth argument.' < "${ansible_stderr_output_log}"; then
     submodule_full_cloned
 
     return $?
@@ -247,7 +252,7 @@ function submodule_shallow_cloned
   return 0
 }
 
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" | tee "${temp_log}"
 
 localhost_only "${temp_log}"
 localhost_ran "${temp_log}"
@@ -260,7 +265,7 @@ PASSWORD='test'
 USER=${USER:-'broken_docker'}
 JSON_EXTRA_ARGS='{"docker_registries_login": [{ "docker_password": "'"${PASSWORD}"'", "docker_username": "'"${USER}"'", "docker_registry_url":"repository-manager.company.com:5001"}], "docker_registries_logout": [{ "docker_password": "'"${PASSWORD}"'", "docker_username": "'"${USER}"'", "docker_registry_url":"repository-manager.company.com:5001"}] }'
 
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" -e "${JSON_EXTRA_ARGS}" "$@" --tags untagged,test_ev 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" -e "${JSON_EXTRA_ARGS}" "$@" --tags untagged,test_ev | tee "${temp_log}"
 
 localhost_only "${temp_log}"
 localhost_ran "${temp_log}"
@@ -269,9 +274,11 @@ magickeyword_in_output "${temp_log}"
 rm -rf "${pull_dir}"
 
 # Run ansible-pull with defaults (which is shallow clone on main repository and recursive full clone on submodules) and accept GH host key
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key "$@" 2>"${temp_stderr_log}" | tee "${temp_log}"
 
-main_repo_shallow_cloned "${temp_log}"
+cat "${temp_stderr_log}"
+
+main_repo_shallow_cloned "${temp_log}" "${temp_stderr_log}"
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
@@ -279,7 +286,7 @@ submodule_full_cloned
 rm -rf "${pull_dir}"
 
 # Run ansible-pull with --full for full clone and accept GH host key
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --full "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --full "$@" | tee "${temp_log}"
 
 main_repo_full_cloned
 submodule_initialized
@@ -289,10 +296,12 @@ submodule_full_cloned
 rm -rf "${pull_dir}"
 
 # Run ansible-pull with --checkout at tag 1.0.0 and accept GH host key
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.0.0' "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.0.0' "$@" 2>"${temp_stderr_log}" | tee "${temp_log}"
+
+cat "${temp_stderr_log}"
 
 main_repo_at_tag '1.0.0'
-main_repo_shallow_cloned "${temp_log}"
+main_repo_shallow_cloned "${temp_log}" "${temp_stderr_log}"
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
@@ -300,9 +309,11 @@ submodule_full_cloned
 rm -rf "${pull_dir}"
 
 # Run ansible-pull with depth of 1 and accept GH host key using --module-args
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1' "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1' "$@" 2>"${temp_stderr_log}" | tee "${temp_log}"
 
-main_repo_shallow_cloned "${temp_log}"
+cat "${temp_stderr_log}"
+
+main_repo_shallow_cloned "${temp_log}" "${temp_stderr_log}"
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
@@ -310,7 +321,7 @@ submodule_full_cloned
 rm -rf "${pull_dir}"
 
 # Run ansbible-pull with --module-args and no depth to emulate --full and accept GH host key using --module-args
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes' "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes' "$@" | tee "${temp_log}"
 
 main_repo_full_cloned
 submodule_initialized
@@ -320,10 +331,12 @@ submodule_full_cloned
 rm -rf "${pull_dir}"
 
 # Run ansible-pull with checkout at tag 1.0.0 and accept GH host key using --module-args
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.0.0' "$@" 2>&1 | tee "${temp_log}"
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.0.0' "$@" 2>"${temp_stderr_log}" | tee "${temp_log}"
+
+cat "${temp_stderr_log}"
 
 main_repo_at_tag '1.0.0'
-main_repo_shallow_cloned "${temp_log}"
+main_repo_shallow_cloned "${temp_log}" "${temp_stderr_log}"
 submodule_initialized
 submodule_recursively_initialized
 submodule_full_cloned
