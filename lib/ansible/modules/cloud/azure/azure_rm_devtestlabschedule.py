@@ -168,10 +168,10 @@ class AzureRMSchedule(AzureRMModuleBase):
 
         self.schedule['status'] = "Enabled"
         
-        if self.name == 'labs_vms_startup':
+        if self.name == 'lab_vms_startup':
             self.name = 'LabVmsStartup'
             self.schedule['task_type'] = 'LabVmsStartupTask'
-        elif self.name == 'labs_vms_shutdown':
+        elif self.name == 'lab_vms_shutdown':
             self.name = 'LabVmsShutdown'
             self.schedule['task_type'] = 'LabVmsShutdownTask'
 
