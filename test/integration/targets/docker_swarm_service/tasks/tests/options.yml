@@ -1065,6 +1065,58 @@
   when: docker_api_version is version('1.25', '<')
 
 ###################################################################
+## hosts ##########################################################
+###################################################################
+
+- name: hosts
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    hosts:
+      example.com: 1.2.3.4
+      example.org: 4.3.2.1
+  register: hosts_1
+
+- name: hosts (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    hosts:
+      example.com: 1.2.3.4
+      example.org: 4.3.2.1
+  register: hosts_2
+
+- name: hosts (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    hosts:
+      example.com: 1.2.3.4
+  register: hosts_3
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - hosts_1 is changed
+      - hosts_2 is not changed
+      - hosts_3 is changed
+  when: docker_api_version is version('1.25', '>=')
+- assert:
+    that:
+    - hosts_1 is failed
+    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in hosts_1.msg"
+  when: docker_api_version is version('1.25', '<')
+
+
+###################################################################
 ## image ##########################################################
 ###################################################################
 
