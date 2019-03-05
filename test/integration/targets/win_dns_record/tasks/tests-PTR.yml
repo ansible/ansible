@@ -174,12 +174,12 @@
   win_dns_record: {zone: '{{ win_dns_record_revzone }}', name: 7, type: PTR, state: absent}
   register: cmd_result
 
-- name: 'TYPE=PTR - update address get results (idempotent)'
+- name: 'TYPE=PTR - remove record get results (idempotent)'
   win_command: powershell.exe "If (Get-DnsServerResourceRecord -ZoneName '{{ win_dns_record_revzone }}' -Name '7' -RRType PTR -Node -ErrorAction:Ignore) { 'exists' } else { 'absent' }"
   register: cmd_result_actual
   changed_when: false
 
-- name: 'TYPE=PTR - update address check results (idempotent)'
+- name: 'TYPE=PTR - remove record check results (idempotent)'
   assert:
     that:
       - cmd_result is not changed
