@@ -14,17 +14,20 @@ import pytest
 
 from ansible.compat.tests.mock import MagicMock, patch
 from ansible.module_utils import basic
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import string_types, integer_types
 from ansible.module_utils.six.moves import builtins
 
 from units.mock.procenv import ModuleTestCase, swap_stdin_and_argv
-
 
 MOCK_VALIDATOR_FAIL = MagicMock(side_effect=TypeError("bad conversion"))
 # Data is argspec, argument, expected
 VALID_SPECS = (
     # Simple type=int
     ({'arg': {'type': 'int'}}, {'arg': 42}, 42),
+    # Simple type=int with a large value (will be of type long under Python 2)
+    ({'arg': {'type': 'int'}}, {'arg': 18765432109876543210}, 18765432109876543210),
+    # Simple type=list, elements=int
+    ({'arg': {'type': 'list', 'elements': 'int'}}, {'arg': [42, 32]}, [42, 32]),
     # Type=int with conversion from string
     ({'arg': {'type': 'int'}}, {'arg': '42'}, 42),
     # Simple type=float
@@ -149,7 +152,10 @@ def test_validator_basic_types(argspec, expected, stdin):
     am = basic.AnsibleModule(argspec)
 
     if 'type' in argspec['arg']:
-        type_ = getattr(builtins, argspec['arg']['type'])
+        if argspec['arg']['type'] == 'int':
+            type_ = integer_types
+        else:
+            type_ = getattr(builtins, argspec['arg']['type'])
     else:
         type_ = str
 
@@ -157,14 +163,14 @@ def test_validator_basic_types(argspec, expected, stdin):
     assert am.params['arg'] == expected
 
 
-@pytest.mark.parametrize('stdin', [{'arg': 42}], indirect=['stdin'])
+@pytest.mark.parametrize('stdin', [{'arg': 42}, {'arg': 18765432109876543210}], indirect=['stdin'])
 def test_validator_function(mocker, stdin):
     # Type is a callable
     MOCK_VALIDATOR_SUCCESS = mocker.MagicMock(return_value=27)
     argspec = {'arg': {'type': MOCK_VALIDATOR_SUCCESS}}
     am = basic.AnsibleModule(argspec)
 
-    assert isinstance(am.params['arg'], int)
+    assert isinstance(am.params['arg'], integer_types)
     assert am.params['arg'] == 27
 
 
