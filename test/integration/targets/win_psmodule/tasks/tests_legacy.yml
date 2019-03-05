@@ -1,4 +1,14 @@
+# This file is part of Ansible
+
+# test code for the win_psmodule module when using winrm connection
+# Copyright: (c) 2017, Daniele Lazzari <lazzari@mailup.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
 ---
+
+# The file contains tests for backward compatibility only - for Ansible < 2.8.
+# They should be removed under a deprecation of the functionalities for adding/removing
+# repositories.
 
 - name: install module from Powershell Gallery
   win_psmodule:
@@ -46,7 +56,7 @@
       - "ok_allow_clobber is changed"
 
 - name: check wrong module install attempt
-  win_psmodule: 
+  win_psmodule:
     name: "{{ wrong_module }}"
     state: present
   ignore_errors: yes
@@ -146,35 +156,35 @@
 - name: Copy some module to custom repo
   win_shell: |
     # Need PSGet 1.6.0 for publishing and named repo usage
-    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"};
-    Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
-    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -EV missingProvider -Force | Out-Null;
+    $psg = [PSCustomObject]@{ n="PowerShellGet"; v="1.6.0"}
+    Remove-Module -Name $psg.n -Force -ErrorAction SilentlyContinue
+    Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -ErrorVariable missingProvider -Force | Out-Null
 
     if($missingProvider){
-      Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null;
-      
+      Install-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Confirm:$false -Force | Out-Null
+
       # Unload previous version
-      Remove-Module -Name $psg.n -Force -EA SilentlyContinue;
-      Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null;
+      Remove-Module -Name $psg.n -Force -ErrorAction SilentlyContinue;
+      Import-PackageProvider -Name $psg.n -RequiredVersion $psg.v -Force | Out-Null
     }
 
-    $modName = "{{powershell_module}}";
-    $temp = $env:Temp;
+    $modName = "{{powershell_module}}"
+    $temp = $env:Temp
 
-    Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null;
+    Save-Module -Name $modName -Repository PSGallery -Path $temp | Out-Null
 
-    $repoName = "{{custom_repo_name}}";
-    $repoPath = "{{custom_repo_path}}";
+    $repoName = "{{custom_repo_name}}"
+    $repoPath = "{{custom_repo_path}}"
 
     if(!(Test-Path $repoPath)){
-      New-Item -Type Directory $repoPath -Force | Out-Null;
+      New-Item -Type Directory $repoPath -Force | Out-Null
     }
 
-    Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null;
-    
-    Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null;
-    Get-ChildItem "$repoPath\\*" | ? Name -match "$modName.*.nupkg" | % Name;
-    
+    Register-PSRepository -Name $repoName -SourceLocation $repoPath -InstallationPolicy Trusted | Out-Null
+
+    Publish-Module -Path "$temp\\$modName" -Repository $repoName -Force -Confirm:$false | Out-Null
+    Get-ChildItem -Path "$repoPath\\*" | Where-Object { $_.Name -match "$modName.*.nupkg" } | ForEach-Object { $_.Name }
+
   register: saved_package
 
 - name: Validate sample module in custom repo
