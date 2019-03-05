@@ -114,6 +114,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
+from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -453,7 +454,9 @@ class Connection(ConnectionBase):
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
 
             except Exception as ex:
-                display.warning("FATAL ERROR DURING FILE TRANSFER: %s" % to_text(ex))
+                display.warning("ERROR DURING WINRM SEND INPUT - attempting to recover: %s %s"
+                                % (type(ex).__name__, to_text(ex)))
+                display.debug(traceback.format_exc())
                 stdin_push_failed = True
 
             # NB: this can hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
@@ -473,11 +476,19 @@ class Connection(ConnectionBase):
             display.vvvvvv('WINRM STDERR %s' % to_text(response.std_err), host=self._winrm_host)
 
             if stdin_push_failed:
-                stderr = to_bytes(response.std_err, encoding='utf-8')
-                if self.is_clixml(stderr):
-                    stderr = self.parse_clixml_stream(stderr)
+                # There are cases where the stdin input failed but the WinRM service still processed it. We attempt to
+                # see if stdout contains a valid json return value so we can ignore this error
+                try:
+                    filtered_output, dummy = _filter_non_json_lines(response.std_out)
+                    json.loads(filtered_output)
+                except ValueError:
+                    # stdout does not contain a return response, stdin input was a fatal error
+                    stderr = to_bytes(response.std_err, encoding='utf-8')
+                    if self.is_clixml(stderr):
+                        stderr = self.parse_clixml_stream(stderr)
 
-                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (to_native(response.std_out), to_native(stderr)))
+                    raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s'
+                                       % (to_native(response.std_out), to_native(stderr)))
 
             return response
         except requests.exceptions.ConnectionError as exc:
