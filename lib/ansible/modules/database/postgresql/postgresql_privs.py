@@ -428,12 +428,12 @@ class Connection(object):
     def get_all_functions_in_schema(self, schema):
         if not self.schema_exists(schema):
             raise Error('Schema "%s" does not exist.' % schema)
-        query = """SELECT format('%I(%s)', p.proname, oidvectortypes(p.proargtypes))
+        query = """SELECT p.proname, oidvectortypes(p.proargtypes)
                     FROM pg_catalog.pg_proc p
                     JOIN pg_namespace n ON n.oid = p.pronamespace
                     WHERE nspname = %s"""
         self.cursor.execute(query, (schema,))
-        return [t[0] for t in self.cursor.fetchall()]
+        return ["%s(%s)" % (t[0], t[1]) for t in self.cursor.fetchall()]
 
     # Methods for getting access control lists and group membership info
 
