@@ -36,12 +36,12 @@
   - name: assert reading docker swarm node facts
     assert:
       that:
-         - 'output.nodes_facts | length > 0'
-         - 'output.nodes_facts[0].ID is string'
+         - 'output.nodes | length > 0'
+         - 'output.nodes[0].ID is string'
 
   - name: Register node ID
     set_fact:
-      nodeid: "{{ output.nodes_facts[0].ID }}"
+      nodeid: "{{ output.nodes[0].ID }}"
 
 ####################################################################
 ## Set node as swarm manager #######################################
