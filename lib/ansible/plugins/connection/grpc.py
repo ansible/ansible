@@ -134,7 +134,7 @@ options:
     description:
       - Configures, in seconds,  the default timeout
         value when awaiting a response after issuing a call to a RPC. If the RPC
-        does not return in timeout seconds, an error is generated and connection is
+        does not return in timeout seconds, an error is generated and the connection is
         closed.
     default: 30
     ini:
