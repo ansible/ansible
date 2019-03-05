@@ -203,5 +203,3 @@
       - logger_level_error_node_count_again.count == 0
       - logger_level_error_node_count_again.changed == false
       - logger_level_error_node_count_again.msg == 'The supplied xpath did not match any nodes.  If this is unexpected, check your xpath is valid for the xml file at supplied path.'
-
-

@@ -17,7 +17,8 @@ module: win_xml
 version_added: "2.7"
 short_description: Manages XML file content on Windows hosts
 description:
-    - Manages XML file contents, using xpath to select which xml nodes need to be managed, fragments formatted as strings to modify existing XML on remote Windows servers.
+    - Manages XML file contents, using xpath to select which xml nodes need to be managed.
+    - XML fragments, formatted as strings, are used to modify existing XML on remote Windows servers.
     - For non-Windows targets, use the M(xml) module instead.
 options:
     attribute:
