@@ -1,0 +1,152 @@
+---
+
+- name: Registering service name
+  set_fact:
+    service_name: "{{ name_prefix ~ '-placement' }}"
+
+- name: Registering service name
+  set_fact:
+    service_names: "{{ service_names }} + [service_name]"
+
+
+####################################################################
+## placement.preferences ###########################################
+####################################################################
+
+- name: placement.preferences
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      preferences:
+        - spread: "node.labels.test"
+  register: placement_preferences_1
+
+- name: placement.preferences (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      preferences:
+        - spread: "node.labels.test"
+  register: placement_preferences_2
+
+- name: placement.preferences (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      preferences:
+        - spread: "node.labels.test2"
+  register: placement_preferences_3
+
+- name: placement.preferences (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      preferences: []
+  register: placement_preferences_4
+
+- name: placement.preferences (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      preferences: []
+  register: placement_preferences_5
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - placement_preferences_1 is changed
+      - placement_preferences_2 is not changed
+      - placement_preferences_3 is changed
+      - placement_preferences_4 is changed
+      - placement_preferences_5 is not changed
+
+####################################################################
+## placement.constraints #####################################################
+####################################################################
+
+- name: placement.constraints
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints:
+        - "node.role == manager"
+  register: constraints_1
+
+- name: placement.constraints (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints:
+        - "node.role == manager"
+  register: constraints_2
+
+- name: constraints (idempotency, old name)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    constraints:
+      - "node.role == manager"
+  register: constraints_2b
+
+- name: placement.constraints (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints:
+        - "node.role == worker"
+  register: constraints_3
+
+- name: placement.constraints (empty)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints: []
+  register: constraints_4
+
+- name: placement.constraints (empty idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    command: '/bin/sh -v -c "sleep 10m"'
+    placement:
+      constraints: []
+  register: constraints_5
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - constraints_1 is changed
+      - constraints_2 is not changed
+      - constraints_2b is not changed
+      - constraints_3 is changed
+      - constraints_4 is changed
+      - constraints_5 is not changed
