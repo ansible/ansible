@@ -87,6 +87,7 @@ EXAMPLES = r'''
     name: tzdata
 '''
 
+from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -151,8 +152,17 @@ def main():
         if vtype is None or value is None:
             module.fail_json(msg="when supplying a question you must supply a valid vtype and value")
 
-        if question not in prev or prev[question] != value:
+        # if question doesn't exist, value cannot match
+        if question not in prev:
             changed = True
+        else:
+            # ensure we compare booleans supplied to the way debconf sees them (true/false strings)
+            if vtype == 'boolean':
+                value = to_text(value).lower()
+                existing = to_text(prev[question]).lower()
+
+            if value != existing:
+                changed = True
 
     if changed:
         if not module.check_mode:
