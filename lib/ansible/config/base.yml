@@ -1776,4 +1776,15 @@ STRING_CONVERSION_ACTION:
     - section: defaults
       key: string_conversion_action
   type: string
+VERBOSE_TO_STDERR:
+  version_added: '2.8'
+  description:
+    - Force 'verbose' option to use stderr instead of stdout
+  default: False
+  env:
+    - name: ANSIBLE_VERBOSE_TO_STDERR
+  ini:
+    - section: defaults
+      key: verbose_to_stderr
+  type: bool
 ...
