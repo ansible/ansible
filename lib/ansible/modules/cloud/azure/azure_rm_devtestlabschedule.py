@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2018 Zim Kalinowski, <zikalino@microsoft.com>
+# Copyright (c) 2019 Zim Kalinowski, (@zikalino)
 #
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabschedule
 version_added: "2.8"
-short_description: Manage Azure Schedule instance.
+short_description: Manage Azure DevTest Lab Schedule instance.
 description:
-    - Create, update and delete instance of Azure Schedule.
+    - Create, update and delete instance of Azure DecTest Lab Schedule.
 
 options:
     resource_group:
@@ -34,65 +34,19 @@ options:
         description:
             - The name of the schedule.
         required: True
-    location:
+        choices:
+            - labs_vms_start
+            - labs_vms_shutdown
+    time:
         description:
-            - The location of the resource.
-    status:
-        description:
-            - "The status of the schedule (i.e. Enabled, Disabled). Possible values include: 'Enabled', 'Disabled'"
-        type: bool
-    task_type:
-        description:
-            - The task type of the schedule (e.g. LabVmsShutdownTask, LabVmAutoStart).
-    weekly_recurrence:
-        description:
-            - If the schedule will occur only some days of the week, specify the weekly recurrence.
-        suboptions:
-            weekdays:
-                description:
-                    - The days of the week for which the schedule is set (e.g. Sunday, Monday, Tuesday, etc.).
-                type: list
-            time:
-                description:
-                    - The time of the day the schedule will occur.
-    daily_recurrence:
-        description:
-            - If the schedule will occur once each day of the week, specify the daily recurrence.
-        suboptions:
-            time:
-                description:
-                    - The time of day the schedule will occur.
-    hourly_recurrence:
-        description:
-            - If the schedule will occur multiple times a day, specify the hourly recurrence.
-        suboptions:
-            minute:
-                description:
-                    - Minutes of the hour the schedule will run.
+            - The time of day the schedule will occur.
     time_zone_id:
         description:
-            - The time zone ID (e.g. Pacific Standard time).
-    notification_settings:
-        description:
-            - Notification settings.
-        suboptions:
-            status:
-                description:
-                    - "If notifications are enabled for this schedule (i.e. Enabled, Disabled). Possible values include: 'Disabled', 'Enabled'"
-                type: bool
-            time_in_minutes:
-                description:
-                    - Time in minutes before event at which notification will be sent.
-            webhook_url:
-                description:
-                    - The webhook URL to which the notification will be sent.
-    target_resource_id:
-        description:
-            - The resource ID to which the schedule belongs
+            - The time zone ID.
     state:
       description:
         - Assert the state of the Schedule.
-        - Use 'present' to create or update an Schedule and 'absent' to delete it.
+        - Use C(present) to create or update an Schedule and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -114,8 +68,6 @@ EXAMPLES = '''
       lab_name: NOT FOUND
       name: NOT FOUND
       status: status
-      notification_settings:
-        status: status
 '''
 
 RETURN = '''
@@ -172,57 +124,10 @@ class AzureRMSchedule(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
-            status=dict(
-                type='bool'
-            ),
-            task_type=dict(
+            time=dict(
                 type='str'
-            ),
-            weekly_recurrence=dict(
-                type='dict',
-                options=dict(
-                    weekdays=dict(
-                        type='list'
-                    ),
-                    time=dict(
-                        type='str'
-                    )
-                )
-            ),
-            daily_recurrence=dict(
-                type='dict',
-                options=dict(
-                    time=dict(
-                        type='str'
-                    )
-                )
-            ),
-            hourly_recurrence=dict(
-                type='dict',
-                options=dict(
-                    minute=dict(
-                        type='int'
-                    )
-                )
             ),
             time_zone_id=dict(
-                type='str'
-            ),
-            notification_settings=dict(
-                type='dict',
-                options=dict(
-                    status=dict(
-                        type='bool'
-                    ),
-                    time_in_minutes=dict(
-                        type='int'
-                    ),
-                    webhook_url=dict(
-                        type='str'
-                    )
-                )
-            ),
-            target_resource_id=dict(
                 type='str'
             ),
             state=dict(
@@ -242,9 +147,14 @@ class AzureRMSchedule(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
+        required_if = [
+            ('state', 'present', ['time', 'time_zone_id'])
+        ]
+
         super(AzureRMSchedule, self).__init__(derived_arg_spec=self.module_arg_spec,
                                               supports_check_mode=True,
-                                              supports_tags=True)
+                                              supports_tags=True,
+                                              required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -255,8 +165,17 @@ class AzureRMSchedule(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.schedule[key] = kwargs[key]
 
-        dict_map(self.schedule, ['status'], {True: 'Enabled', False: 'Disabled'})
-        dict_map(self.schedule, ['notification_settings', 'status'], {True: 'Enabled', False: 'Disabled'})
+        self.schedule['status'] = "Enabled"
+        
+        if self.name == 'labs_vms_start':
+            self.name = 'LabVmsStart'
+            self.schedule['task_type'] = 'ComputeVmStartTask'
+        elif self.name == 'labs_vms_shutdown':
+            self.name = 'LabVmsShutdown'
+            self.schedule['task_type'] = 'ComputeVmShutdownTask'
+
+        self.schedule['daily_recurrence']['time'] = self.schedule.pop('time')
+        self.schedule['time_zone_id'] = self.schedule['time_zone_id'].upper()
 
         response = None
 
@@ -417,21 +336,6 @@ def default_compare(new, old, path, result):
         else:
             result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)
             return False
-
-
-def dict_map(d, path, map):
-    if isinstance(d, list):
-        for i in range(len(d)):
-            dict_map(d[i], path, map)
-    elif isinstance(d, dict):
-        if len(path) == 1:
-            old_value = d.get(path[0], None)
-            if old_value is not None:
-                d[path[0]] = map.get(old_value, old_value)
-        else:
-            sd = d.get(path[0], None)
-            if sd is not None:
-                dict_map(sd, path[1:], map)
 
 
 def main():

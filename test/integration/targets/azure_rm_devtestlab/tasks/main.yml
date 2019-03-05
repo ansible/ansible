@@ -541,44 +541,65 @@
 - debug:
     var: output
 
-# azure_rm_devtestlabglobalschedule
-- name: Create instance of DevTest Lab Global Schedule
-  azure_rm_devtestlabvirtualmachineschedule:
-    resource_group: "{{ resource_group }}"
-    lab_name: "{{ lab_name }}"
-    name: LabVmsShutdown
-    virtual_machine_name: "{{ vm_name }}"
-    location: eastus
-    status: yes
-    task_type: ComputeVmShutdownTask # LabVmsShutdownTask
-    #hourly_recurrence:
-    #  minute: 10
-    daily_recurrence:
-      time: "10:30"
-    time_zone_id: "UTC+12"
-    #target_resource_id: "{{ output_vm.virtualmachines[0]['compute_vm_id'] }}"
-  register: output
-- debug:
-    var: output
-
-    # azure_rm_devtestlabglobalschedule
+# azure_rm_devtestlabschedule
 - name: Create instance of DevTest Lab Global Schedule
   azure_rm_devtestlabschedule:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: LabVmsShutdown
-    location: eastus
-    status: yes
-    task_type: ComputeVmShutdownTask # LabVmsShutdownTask
-    #hourly_recurrence:
-    #  minute: 10
-    daily_recurrence:
-      time: "10:30"
+    time: "10:30"
     time_zone_id: "UTC+12"
-    #target_resource_id: "{{ output_vm.virtualmachines[0]['compute_vm_id'] }}"
   register: output
 - debug:
     var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Update instance of DevTest Lab Schedule -- idempotent
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: LabVmsShutdown
+    time: "10:30"
+    time_zone_id: "UTC+12"
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - not output.changed
+
+- name: Update instance of DevTest Lab Schedule -- change time
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: LabVmsShutdown
+    time: "11:30"
+    time_zone_id: "UTC+12"
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of DevTest Lab Schedule
+  azure_rm_devtestlabschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: LabVmsShutdown
+    state: absent
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
 
 - name: Create instance of DevTest Lab Environment
   azure_rm_devtestlabenvironment:
