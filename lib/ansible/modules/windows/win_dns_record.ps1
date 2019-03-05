@@ -98,8 +98,8 @@ if ($records -ne $null) {
                 $new_record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $new_record -WhatIf:$module.CheckMode @extra_args
 
-                $changes.before += "[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $record_value`n"
-                $changes.after += "[$zone] $($record.HostName) $($ttl.TotalSeconds) $type $record_value`n"
+                $changes.before += "[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) IN $type $record_value`n"
+                $changes.after += "[$zone] $($record.HostName) $($ttl.TotalSeconds) IN $type $record_value`n"
                 $module.Result.changed = $true
             }
 
@@ -109,7 +109,7 @@ if ($records -ne $null) {
             # This record doesn't match any of the values, and must be removed
             $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$module.CheckMode @extra_args
 
-            $changes.before += "[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) $type $record_value`n"
+            $changes.before += "[$zone] $($record.HostName) $($record.TimeToLive.TotalSeconds) IN $type $record_value`n"
             $module.Result.changed = $true
         }
     }
@@ -128,7 +128,7 @@ if ($values -ne $null -and $values.Count -gt 0) {
         } catch {
             $module.FailJson("Error adding DNS $type resource $name in zone $zone with value $value", $_)
         }
-        $changes.after += "[$zone] $name $($ttl.TotalSeconds) $type $value`n"
+        $changes.after += "[$zone] $name $($ttl.TotalSeconds) IN $type $value`n"
     }
 
     $module.Result.changed = $true
@@ -142,8 +142,8 @@ if ($module.CheckMode) {
     # Real changes
     $records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 
-    $module.Diff.before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
-    $module.Diff.after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+    $module.Diff.before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) IN $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+    $module.Diff.after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) IN $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
 }
 
 $module.ExitJson()
