@@ -25,24 +25,28 @@
     data: "hello"
     state: present
   register: "config_result_1"
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
 
 - docker_config:
     name: "{{ config_name_2 }}"
     data: "test"
     state: present
   register: "config_result_2"
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
 
 - docker_secret:
     name: "{{ secret_name_1 }}"
     data: "secret1"
     state: "present"
   register: "secret_result_1"
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
 
 - docker_secret:
     name: "{{ secret_name_2 }}"
     data: "secret2"
     state: "present"
   register: "secret_result_2"
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
 
 - docker_network:
     name: "{{ network_name }}"
@@ -132,10 +136,11 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     configs:
-      - config_id: "{{ config_result_1.config_id }}"
+      - config_id: "{{ config_result_1.config_id|default('') }}"
         config_name: "{{ config_name_1 }}"
         filename: "/tmp/{{ config_name_1 }}.txt"
   register: configs_1
+  ignore_errors: yes
 
 - name: configs (idempotency)
   docker_swarm_service:
@@ -143,10 +148,11 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     configs:
-      - config_id: "{{ config_result_1.config_id }}"
+      - config_id: "{{ config_result_1.config_id|default('') }}"
         config_name: "{{ config_name_1 }}"
         filename: "/tmp/{{ config_name_1 }}.txt"
   register: configs_2
+  ignore_errors: yes
 
 - name: configs (add)
   docker_swarm_service:
@@ -154,13 +160,14 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     configs:
-      - config_id: "{{ config_result_1.config_id }}"
+      - config_id: "{{ config_result_1.config_id|default('') }}"
         config_name: "{{ config_name_1 }}"
         filename: "/tmp/{{ config_name_1 }}.txt"
-      - config_id: "{{ config_result_2.config_id }}"
+      - config_id: "{{ config_result_2.config_id|default('') }}"
         config_name: "{{ config_name_2 }}"
         filename: "/tmp/{{ config_name_2 }}.txt"
   register: configs_3
+  ignore_errors: yes
 
 - name: configs (empty)
   docker_swarm_service:
@@ -169,6 +176,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     configs: []
   register: configs_4
+  ignore_errors: yes
 
 - name: configs (empty idempotency)
   docker_swarm_service:
@@ -177,6 +185,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     configs: []
   register: configs_5
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -191,13 +200,13 @@
     - configs_3 is changed
     - configs_4 is changed
     - configs_5 is not changed
-  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.5.0', '>=')
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
 
 - assert:
     that:
     - configs_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.30') in configs_1.msg"
-  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.5.0', '<')
+    - "'Minimum version required' in configs_1.msg"
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
 ## command #########################################################
@@ -360,6 +369,7 @@
       - 1.1.1.1
       - 8.8.8.8
   register: dns_1
+  ignore_errors: yes
 
 - name: dns (idempotency)
   docker_swarm_service:
@@ -370,6 +380,7 @@
       - 1.1.1.1
       - 8.8.8.8
   register: dns_2
+  ignore_errors: yes
 
 - name: dns_servers (changed order)
   docker_swarm_service:
@@ -380,6 +391,7 @@
       - 8.8.8.8
       - 1.1.1.1
   register: dns_3
+  ignore_errors: yes
 
 - name: dns_servers (changed elements)
   docker_swarm_service:
@@ -390,6 +402,7 @@
       - 8.8.8.8
       - 9.9.9.9
   register: dns_4
+  ignore_errors: yes
 
 - name: dns_servers (empty)
   docker_swarm_service:
@@ -398,6 +411,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     dns: []
   register: dns_5
+  ignore_errors: yes
 
 - name: dns_servers (empty idempotency)
   docker_swarm_service:
@@ -406,6 +420,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     dns: []
   register: dns_6
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -425,7 +440,7 @@
 - assert:
     that:
     - dns_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in dns_1.msg"
+    - "'Minimum version required' in dns_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -500,7 +515,7 @@
 - assert:
     that:
     - dns_options_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in dns_options_1.msg"
+    - "'Minimum version required' in dns_options_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -516,6 +531,7 @@
       - example.com
       - example.org
   register: dns_search_1
+  ignore_errors: yes
 
 - name: dns_search (idempotency)
   docker_swarm_service:
@@ -526,6 +542,7 @@
       - example.com
       - example.org
   register: dns_search_2
+  ignore_errors: yes
 
 - name: dns_search (different order)
   docker_swarm_service:
@@ -536,6 +553,7 @@
       - example.org
       - example.com
   register: dns_search_3
+  ignore_errors: yes
 
 - name: dns_search (changed elements)
   docker_swarm_service:
@@ -546,6 +564,7 @@
       - ansible.com
       - example.com
   register: dns_search_4
+  ignore_errors: yes
 
 - name: dns_search (empty)
   docker_swarm_service:
@@ -554,6 +573,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     dns_search: []
   register: dns_search_5
+  ignore_errors: yes
 
 - name: dns_search (empty idempotency)
   docker_swarm_service:
@@ -562,6 +582,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     dns_search: []
   register: dns_search_6
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -581,7 +602,7 @@
 - assert:
     that:
     - dns_search_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in dns_search_1.msg"
+    - "'Minimum version required' in dns_search_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -595,6 +616,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     endpoint_mode: "dnsrr"
   register: endpoint_mode_1
+  ignore_errors: yes
 
 - name: endpoint_mode (idempotency)
   docker_swarm_service:
@@ -603,6 +625,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     endpoint_mode: "dnsrr"
   register: endpoint_mode_2
+  ignore_errors: yes
 
 - name: endpoint_mode (changes)
   docker_swarm_service:
@@ -611,6 +634,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     endpoint_mode: "vip"
   register: endpoint_mode_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -627,7 +651,7 @@
 - assert:
     that:
     - endpoint_mode_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in endpoint_mode_1.msg"
+    - "'Minimum version required' in endpoint_mode_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('3.0.0', '<')
 
 ####################################################################
@@ -806,6 +830,7 @@
       - "3600"
     force_update: yes
   register: force_update_1
+  ignore_errors: yes
 
 - name: force_update (idempotency)
   docker_swarm_service:
@@ -817,6 +842,7 @@
       - "3600"
     force_update: yes
   register: force_update_2
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -832,7 +858,7 @@
 - assert:
     that:
     - force_update_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in force_update_1.msg"
+    - "'Minimum version required' in force_update_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
 
 ####################################################################
@@ -848,6 +874,7 @@
       - 1234
       - 5678
   register: groups_1
+  ignore_errors: yes
 
 - name: groups (idempotency)
   docker_swarm_service:
@@ -858,6 +885,7 @@
       - 1234
       - 5678
   register: groups_2
+  ignore_errors: yes
 
 - name: groups (change)
   docker_swarm_service:
@@ -867,6 +895,7 @@
     groups:
       - 1234
   register: groups_3
+  ignore_errors: yes
 
 - name: groups (empty)
   docker_swarm_service:
@@ -875,6 +904,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     groups: []
   register: groups_4
+  ignore_errors: yes
 
 - name: groups (empty idempotency)
   docker_swarm_service:
@@ -883,6 +913,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     groups: []
   register: groups_5
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -901,7 +932,7 @@
 - assert:
     that:
     - groups_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in groups_1.msg"
+    - "'Minimum version required' in groups_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -922,6 +953,7 @@
       interval: 0h0m2s3ms4us
       retries: 2
   register: healthcheck_1
+  ignore_errors: yes
 
 - name: healthcheck (idempotency)
   docker_swarm_service:
@@ -937,6 +969,7 @@
       interval: 0h0m2s3ms4us
       retries: 2
   register: healthcheck_2
+  ignore_errors: yes
 
 - name: healthcheck (changed)
   docker_swarm_service:
@@ -952,6 +985,7 @@
       interval: 0h1m2s3ms4us
       retries: 3
   register: healthcheck_3
+  ignore_errors: yes
 
 - name: healthcheck (disabled)
   docker_swarm_service:
@@ -962,6 +996,7 @@
       test:
         - NONE
   register: healthcheck_4
+  ignore_errors: yes
 
 - name: healthcheck (disabled, idempotency)
   docker_swarm_service:
@@ -972,6 +1007,7 @@
       test:
       - NONE
   register: healthcheck_5
+  ignore_errors: yes
 
 - name: healthcheck (string in healthcheck test, changed)
   docker_swarm_service:
@@ -981,6 +1017,7 @@
     healthcheck:
       test: "sleep 1"
   register: healthcheck_6
+  ignore_errors: yes
 
 - name: healthcheck (string in healthcheck test, idempotency)
   docker_swarm_service:
@@ -990,6 +1027,7 @@
     healthcheck:
       test: "sleep 1"
   register: healthcheck_7
+  ignore_errors: yes
 
 - name: healthcheck (empty)
   docker_swarm_service:
@@ -998,6 +1036,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     labels: {}
   register: healthcheck_8
+  ignore_errors: yes
 
 - name: healthcheck (empty idempotency)
   docker_swarm_service:
@@ -1006,6 +1045,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     labels: {}
   register: healthcheck_9
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1024,12 +1064,12 @@
     - healthcheck_7 is not changed
     - healthcheck_8 is changed
     - healthcheck_9 is not changed
-  when: docker_api_version is version('1.25', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.6.0', '>=')
 - assert:
     that:
     - healthcheck_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in healthcheck_1.msg"
-  when: docker_api_version is version('1.25', '<')
+    - "'Minimum version required' in healthcheck_1.msg"
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.6.0', '<')
 
 ###################################################################
 ## hostname #######################################################
@@ -1042,6 +1082,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     hostname: me.example.com
   register: hostname_1
+  ignore_errors: yes
 
 - name: hostname (idempotency)
   docker_swarm_service:
@@ -1050,6 +1091,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     hostname: me.example.com
   register: hostname_2
+  ignore_errors: yes
 
 - name: hostname (change)
   docker_swarm_service:
@@ -1058,6 +1100,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     hostname: me.example.org
   register: hostname_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1074,7 +1117,7 @@
 - assert:
     that:
     - hostname_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in hostname_1.msg"
+    - "'Minimum version required' in hostname_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.2.0', '<')
 
 ###################################################################
@@ -1440,13 +1483,13 @@
     that:
     - networks_3.rebuilt == false
     - networks_5.rebuilt == false
-  when: docker_api_version is version('1.29', '>=')
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.7.0', '>=')
 
 - assert:
     that:
     - networks_3.rebuilt == true
     - networks_5.rebuilt == true
-  when: docker_api_version is version('1.29', '<')
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.7.0', '<')
 
 ####################################################################
 ## stop_grace_period ###############################################
@@ -1499,6 +1542,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     stop_signal: 30
   register: stop_signal_1
+  ignore_errors: yes
 
 - name: stop_signal (idempotency)
   docker_swarm_service:
@@ -1507,6 +1551,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     stop_signal: 30
   register: stop_signal_2
+  ignore_errors: yes
 
 - name: stop_signal (change)
   docker_swarm_service:
@@ -1515,6 +1560,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     stop_signal: 9
   register: stop_signal_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1531,7 +1577,7 @@
 - assert:
     that:
     - stop_signal_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.28') in stop_signal_1.msg"
+    - "'Minimum version required' in stop_signal_1.msg"
   when: docker_api_version is version('1.28', '<') or docker_py_version is version('2.6.0', '<')
 
 ####################################################################
@@ -1551,6 +1597,7 @@
         published_port: 60002
         target_port: 60002
   register: publish_1
+  ignore_errors: yes
 
 - name: publish (idempotency)
   docker_swarm_service:
@@ -1564,6 +1611,7 @@
       - published_port: 60001
         target_port: 60001
   register: publish_2
+  ignore_errors: yes
 
 - name: publish (change)
   docker_swarm_service:
@@ -1578,6 +1626,7 @@
         published_port: 60001
         target_port: 60001
   register: publish_3
+  ignore_errors: yes
 
 - name: publish (mode)
   docker_swarm_service:
@@ -1594,6 +1643,7 @@
         target_port: 60001
         mode: host
   register: publish_4
+  ignore_errors: yes
 
 - name: publish (mode idempotency)
   docker_swarm_service:
@@ -1610,6 +1660,7 @@
         target_port: 60003
         mode: host
   register: publish_5
+  ignore_errors: yes
 
 - name: publish (empty)
   docker_swarm_service:
@@ -1618,6 +1669,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     publish: []
   register: publish_6
+  ignore_errors: yes
 
 - name: publish (empty idempotency)
   docker_swarm_service:
@@ -1626,6 +1678,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     publish: []
   register: publish_7
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1646,7 +1699,7 @@
 - assert:
     that:
     - publish_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in publish_1.msg"
+    - "'Minimum version required' in publish_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('3.0.0', '<')
 
 ###################################################################
@@ -1728,6 +1781,13 @@
       - resolve_image_1 is changed
       - resolve_image_2 is not changed
       - resolve_image_3 is changed
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('3.2.0', '>=')
+- assert:
+    that:
+      - resolve_image_1 is changed
+      - resolve_image_2 is not changed
+      - resolve_image_3 is not changed
+  when: docker_api_version is version('1.30', '<') or docker_py_version is version('3.2.0', '<')
 
 ####################################################################
 ## secrets #########################################################
@@ -1739,10 +1799,11 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     secrets:
-      - secret_id: "{{ secret_result_1.secret_id }}"
+      - secret_id: "{{ secret_result_1.secret_id|default('') }}"
         secret_name: "{{ secret_name_1 }}"
         filename: "/run/secrets/{{ secret_name_1 }}.txt"
   register: secrets_1
+  ignore_errors: yes
 
 - name: secrets (idempotency)
   docker_swarm_service:
@@ -1750,10 +1811,11 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     secrets:
-      - secret_id: "{{ secret_result_1.secret_id }}"
+      - secret_id: "{{ secret_result_1.secret_id|default('') }}"
         secret_name: "{{ secret_name_1 }}"
         filename: "/run/secrets/{{ secret_name_1 }}.txt"
   register: secrets_2
+  ignore_errors: yes
 
 - name: secrets (add)
   docker_swarm_service:
@@ -1761,13 +1823,14 @@
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     secrets:
-      - secret_id: "{{ secret_result_1.secret_id }}"
+      - secret_id: "{{ secret_result_1.secret_id|default('') }}"
         secret_name: "{{ secret_name_1 }}"
         filename: "/run/secrets/{{ secret_name_1 }}.txt"
-      - secret_id: "{{ secret_result_2.secret_id }}"
+      - secret_id: "{{ secret_result_2.secret_id|default('') }}"
         secret_name: "{{ secret_name_2 }}"
         filename: "/run/secrets/{{ secret_name_2 }}.txt"
   register: secrets_3
+  ignore_errors: yes
 
 - name: secrets (empty)
   docker_swarm_service:
@@ -1776,6 +1839,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     secrets: []
   register: secrets_4
+  ignore_errors: yes
 
 - name: secrets (empty idempotency)
   docker_swarm_service:
@@ -1784,6 +1848,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     secrets: []
   register: secrets_5
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1802,8 +1867,9 @@
 - assert:
     that:
     - secrets_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in secrets_1.msg"
+    - "'Minimum version required' in secrets_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
+
 
 ###################################################################
 # tty #############################################################
@@ -1816,6 +1882,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     tty: yes
   register: tty_1
+  ignore_errors: yes
 
 - name: tty (idempotency)
   docker_swarm_service:
@@ -1824,6 +1891,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     tty: yes
   register: tty_2
+  ignore_errors: yes
 
 - name: tty (change)
   docker_swarm_service:
@@ -1832,6 +1900,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     tty: no
   register: tty_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -1848,7 +1917,7 @@
 - assert:
     that:
     - tty_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.25') in tty_1.msg"
+    - "'Minimum version required' in tty_1.msg"
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.4.0', '<')
 
 ###################################################################
@@ -1956,7 +2025,7 @@
   ignore_errors: yes
 
 - name: Delete configs
-  docker_network:
+  docker_config:
     name: "{{ config_name }}"
     state: absent
     force: yes
@@ -1966,9 +2035,10 @@
   loop_control:
     loop_var: config_name
   ignore_errors: yes
+  when: docker_api_version is version('1.30', '>=') and docker_py_version is version('2.6.0', '>=')
 
 - name: Delete secrets
-  docker_network:
+  docker_secret:
     name: "{{ secret_name }}"
     state: absent
     force: yes
@@ -1978,3 +2048,4 @@
   loop_control:
     loop_var: secret_name
   ignore_errors: yes
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
