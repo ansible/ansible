@@ -54,6 +54,12 @@
       - csr_oldapi_cn.stdout.split('=')[-1] == 'www.ansible.com'
       - csr_oldapi_modulus.stdout == privatekey_modulus.stdout
 
+- name: Validate invalid SAN
+  assert:
+    that:
+      - generate_csr_invalid_san is failed
+      - "'Subject Alternative Name' in generate_csr_invalid_san.msg"
+
 - name: Validate OCSP Must Staple CSR (test - everything)
   shell: "openssl req -noout -in {{ output_dir }}/csr_ocsp.csr -text"
   register: csr_ocsp
