@@ -345,6 +345,13 @@ class PlayContext(Base):
     def set_become_plugin(self, plugin):
         self._become_plugin = plugin
 
+    def _get_attr_force_handlers(self):
+        display.deprecated(
+            "PlayContext.force_handlers should not be used, the calling code should be using play itself instead",
+            version="2.19"
+        )
+        return self._attributes.get('force_handlers', None)
+
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
         display.deprecated(
