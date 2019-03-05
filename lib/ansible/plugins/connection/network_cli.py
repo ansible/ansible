@@ -541,12 +541,11 @@ class Connection(NetworkConnectionBase):
         for line in resp.splitlines():
             if command and line.strip() == command.strip():
                 continue
-            ignore_line = False
+
             for prompt in self._matched_prompt.strip().splitlines():
                 if prompt.strip() in line:
-                    ignore_line = True
                     break
-            if not ignore_line:
+            else:
                 cleaned.append(line)
         return b'\n'.join(cleaned).strip()
 
