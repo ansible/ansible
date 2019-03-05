@@ -198,10 +198,12 @@ class NetAppOntapQTree(object):
 
     def apply(self):
         changed = False
+        qtree_exists = False
         rename_qtree = False
         netapp_utils.ems_log_event("na_ontap_qtree", self.server)
         qtree_detail = self.get_qtree()
         if qtree_detail:
+            qtree_exists = True
             if self.state == 'absent':  # delete
                 changed = True
         elif self.state == 'present':
