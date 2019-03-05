@@ -105,7 +105,7 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: lab_vms_shutdown
-    time: "10:30"
+    time: "1030"
     time_zone_id: "UTC+12"
   register: output
 - debug:
@@ -120,7 +120,7 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: lab_vms_shutdown
-    time: "10:30"
+    time: "1030"
     time_zone_id: "UTC+12"
   register: output
 - debug:
@@ -135,7 +135,7 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: lab_vms_shutdown
-    time: "11:30"
+    time: "1130"
     time_zone_id: "UTC+12"
   register: output
 - debug:
