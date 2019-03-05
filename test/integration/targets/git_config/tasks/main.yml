@@ -19,5 +19,9 @@
     - import_tasks: precedence_between_unset_and_value.yml
     # testing state=absent with check mode
     - import_tasks: unset_check_mode.yml
+  always:
+    # Always renove git config
+    - import_tasks: setup_no_value.yml
   when: git_installed is succeeded and git_version.stdout is version(git_version_supporting_includes, ">=")
+
 ...
