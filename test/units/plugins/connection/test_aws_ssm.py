@@ -13,6 +13,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import aws_ssm
 from ansible.plugins.loader import connection_loader, become_loader
 
+
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
@@ -37,7 +38,6 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn.SESSION_START = 'abc'
 
         conn.start_session()
-
 
     @patch('random.choice')
     def test_plugins_connection_aws_ssm_exec_command(self, r_choice):
@@ -88,7 +88,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         res, stdout, stderr = conn.fetch_file('/in/file', '/out/file')
 
-
     @patch('subprocess.check_output')
     def test_plugins_connection_file_transport_command(self, s_check_output):
         pc = PlayContext()
@@ -103,7 +102,6 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'get')
         res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'put')
-
 
     @patch('subprocess.check_output')
     def test_plugins_connection_aws_ssm_close(self, s_check_output):
