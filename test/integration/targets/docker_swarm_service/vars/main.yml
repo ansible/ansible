@@ -16,6 +16,7 @@ service_expected_output:
   healthcheck: null
   healthcheck_disabled: null
   hostname: null
+  hosts: null
   image: busybox
   labels: null
   limit_cpu: null
