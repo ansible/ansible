@@ -1,6 +1,7 @@
 minor_changes:
-- "docker_container, docker_network, docker_volume - return facts as regular variable additionally to
-   facts. This is now the preferred way to obtain results."
+- "docker_container, docker_network, docker_volume - return facts as regular variables ``container``,
+   ``network`` respectively ``volume`` additionally to facts. This is now the preferred way to
+   obtain results. The facts will be removed in Ansible 2.12."
 - "docker_service - return facts as regular variable ``service_facts``; this is a dictionary mapping
    service names to container dictionaries. The facts are still returned, but it is recommended to
-   use ``register`` and ``service_facts`` in the future."
+   use ``register`` and ``service_facts`` in the future. The facts will be removed in Ansible 2.12."

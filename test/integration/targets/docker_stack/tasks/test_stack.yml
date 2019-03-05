@@ -80,7 +80,7 @@
   #  assert:
   #    that:
   #    - output is changed
-  #    - output.docker_stack_spec_diff == stack_update_expected_diff
+  #    - output.stack_spec_diff == stack_update_expected_diff
 
   - name: Delete stack
     register: output

@@ -36,8 +36,8 @@
   - name: assert reading docker swarm node facts
     assert:
       that:
-         - 'output.nodes_facts | length > 0'
-         - 'output.nodes_facts[0].ID is string'
+         - 'output.nodes | length > 0'
+         - 'output.nodes[0].ID is string'
 
   - name: Try to get docker_node_facts using the self parameter
     docker_node_facts:
@@ -47,12 +47,12 @@
   - name: assert reading swarm facts with list of nodes option
     assert:
       that:
-         - 'output.nodes_facts | length == 1'
-         - 'output.nodes_facts[0].ID is string'
+         - 'output.nodes | length == 1'
+         - 'output.nodes[0].ID is string'
 
   - name: Get local docker node name
     set_fact:
-      localnodename:  "{{ output.nodes_facts[0].Description.Hostname }}"
+      localnodename:  "{{ output.nodes[0].Description.Hostname }}"
 
 
   - name: Try to get docker_node_facts using the local node name as parameter
@@ -63,8 +63,8 @@
   - name: assert reading reading swarm facts and using node filter (random node name)
     assert:
       that:
-         - 'output.nodes_facts | length == 1'
-         - 'output.nodes_facts[0].ID is string'
+         - 'output.nodes | length == 1'
+         - 'output.nodes[0].ID is string'
 
   - name: Create random name
     set_fact:
@@ -78,7 +78,7 @@
   - name: assert reading reading swarm facts and using node filter (random node name)
     assert:
       that:
-         - 'output.nodes_facts | length == 0'
+         - 'output.nodes | length == 0'
 
   always:
   - name: Cleanup

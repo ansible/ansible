@@ -18,8 +18,8 @@
   - assert:
       that:
       - "not result.exists"
-      - "'docker_container' in result"
-      - "result.docker_container is none"
+      - "'container' in result"
+      - "result.container is none"
 
   - name: Make sure container exists
     docker_container:
@@ -54,9 +54,9 @@
   - assert:
       that:
       - result.exists
-      - "'docker_container' in result"
-      - "result.docker_container"
-      - "result.docker_container == docker_inspect_result[0]"
+      - "'container' in result"
+      - "result.container"
+      - "result.container == docker_inspect_result[0]"
 
   when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.20', '>=')
 
