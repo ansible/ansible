@@ -185,7 +185,7 @@ def configure_timeout(args):
 
     signal.signal(signal.SIGUSR1, timeout_handler)
 
-    instance = WrappedThread(functools.partial(timeout_waiter, timeout_remaining.total_seconds()))
+    instance = WrappedThread(functools.partial(timeout_waiter, timeout_remaining.seconds))
     instance.daemon = True
     instance.start()
 
