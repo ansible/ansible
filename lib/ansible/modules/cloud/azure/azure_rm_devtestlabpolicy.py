@@ -38,16 +38,9 @@ options:
         description:
             - The name of the policy.
         required: True
-    location:
-        description:
-            - The location of the resource.
     description:
         description:
             - The description of the policy.
-    status:
-        description:
-            - "The status of the policy. Possible values include: 'Enabled', 'Disabled'"
-        type: bool
     fact_name:
         description:
             - The fact name of the policy (e.g. C(lab_vm_count), C(lab_vm_size), MaxVmsAllowedPerLab, etc.
@@ -60,22 +53,14 @@ options:
             - 'gallery_image'
             - 'user_owned_lab_vm_count_in_subnet'
             - 'lab_target_cost'
-    fact_data:
-        description:
-            - The fact data of the policy.
     threshold:
         description:
-            - The threshold of the policy (i.e. a number for C(max_value_policy), and a JSON array of values for C(allowed_values_policy)).
-    evaluator_type:
-        description:
-            - The evaluator type of the policy (i.e. C(allowed_values_policy), C(max_value_policy)).
-        choices:
-            - 'allowed_values_policy'
-            - 'max_value_policy'
+            - The threshold of the policy (it could be either a maximum value or a list of allowed values).
+        type: raw
     state:
       description:
         - Assert the state of the Policy.
-        - Use 'present' to create or update an Policy and 'absent' to delete it.
+        - Use C(present) to create or update an Policy and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -155,14 +140,8 @@ class AzureRMDtlPolicy(AzureRMModuleBase):
                 type='str',
                 required=True
             ),
-            location=dict(
-                type='str'
-            ),
             description=dict(
                 type='str'
-            ),
-            status=dict(
-                type='bool'
             ),
             fact_name=dict(
                 type='str',
@@ -175,16 +154,8 @@ class AzureRMDtlPolicy(AzureRMModuleBase):
                          'user_owned_lab_vm_count_in_subnet',
                          'lab_target_cost']
             ),
-            fact_data=dict(
-                type='str'
-            ),
             threshold=dict(
-                type='str'
-            ),
-            evaluator_type=dict(
-                type='str',
-                choices=['allowed_values_policy',
-                         'max_value_policy']
+                type='raw'
             ),
             state=dict(
                 type='str',
@@ -204,9 +175,14 @@ class AzureRMDtlPolicy(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
+        required_if = [
+            ('state', 'present', ['threshold', 'fact_name'])
+        ]
+
         super(AzureRMDtlPolicy, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                supports_check_mode=True,
-                                               supports_tags=True)
+                                               supports_tags=True,
+                                               required_id=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -217,9 +193,13 @@ class AzureRMDtlPolicy(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.policy[key] = kwargs[key]
 
-        dict_map(self.policy, ['status'], {True: 'Enabled', False: 'Disabled'})
-        dict_camelize(self.policy, ['fact_name'], True)
-        dict_camelize(self.policy, ['evaluator_type'], True)
+        if self.state == 'present':
+            self.policy['status'] = 'Enabled'
+            dict_camelize(self.policy, ['fact_name'], True)
+            if isinstance(self.policy['threshold'], list):
+                self.policy['evaluator_type'] = 'AllowedValuesPolicy'
+            else:
+                self.policy['evaluator_type'] = 'MaxValuePolicy'
 
         response = None
 

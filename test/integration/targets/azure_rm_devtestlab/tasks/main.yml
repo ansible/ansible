@@ -99,6 +99,43 @@
       - output_lab.labs[0]['provisioning_state'] != None
       - output_lab.labs[0]['vault_name'] != None
 
+# azure_rm_devtestlabpolicy
+- name: Create instance of DevTest Lab Policy
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 5
+  register: output
+- debug:
+    var: output
+
+- name: Create instance of DevTest Lab Policy -- idempotent
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 5
+  register: output
+- debug:
+    var: output
+
+- name: Create instance of DevTest Lab Policy -- change value
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 6
+  register: output
+- debug:
+    var: output
+
 # azure_rm_devtestlabschedule
 - name: Create instance of DevTest Lab Schedule
   azure_rm_devtestlabschedule:
@@ -584,49 +621,6 @@
       - output.artifacts[0]['target_os_type'] != None
       - output.artifacts[0]['publisher'] != None
       - "output.artifacts | length == 1"
-
-# azure_rm_devtestlabpolicy
-- name: Create instance of DevTest Lab Policy
-  azure_rm_devtestlabpolicy:
-    resource_group: "{{ resource_group }}"
-    lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
-    name: myDtlPolicy
-    status: yes
-    fact_name: user_owned_lab_vm_count
-    evaluator_type: max_value_policy
-    threshold: 5
-  register: output
-- debug:
-    var: output
-
-- name: Create instance of DevTest Lab Policy -- idempotent
-  azure_rm_devtestlabpolicy:
-    resource_group: "{{ resource_group }}"
-    lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
-    name: myDtlPolicy
-    status: yes
-    fact_name: user_owned_lab_vm_count
-    evaluator_type: max_value_policy
-    threshold: 5
-  register: output
-- debug:
-    var: output
-
-- name: Create instance of DevTest Lab Policy -- change value
-  azure_rm_devtestlabpolicy:
-    resource_group: "{{ resource_group }}"
-    lab_name: "{{ lab_name }}"
-    policy_set_name: myDtlPolicySet
-    name: myDtlPolicy
-    status: yes
-    fact_name: user_owned_lab_vm_count
-    evaluator_type: max_value_policy
-    threshold: 6
-  register: output
-- debug:
-    var: output
 
 - name: Create instance of DevTest Lab Environment
   azure_rm_devtestlabenvironment:
