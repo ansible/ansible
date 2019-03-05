@@ -2206,7 +2206,7 @@ def main():
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         endpoint_mode=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
-        healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.25'),
+        healthcheck=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
         hosts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         groups=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
