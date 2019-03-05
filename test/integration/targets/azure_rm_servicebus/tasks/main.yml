@@ -81,7 +81,7 @@
       resource_group: "{{ resource_group }}"
       namespace: "ns{{ rpfx }}"
       topic: "topic{{ rpfx }}"
-      right: manage
+      rights: manage
 
 - name: Create a subscription
   azure_rm_servicebus_topic_subscription:
