@@ -121,7 +121,7 @@ except ImportError:
     pass
 
 
-class AzureRMServersFacts(AzureRMModuleBase):
+class AzureRMSqlServerFacts(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -140,7 +140,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
         )
         self.resource_group = None
         self.server_name = None
-        super(AzureRMServersFacts, self).__init__(self.module_arg_spec)
+        super(AzureRMSqlServerFacts, self).__init__(self.module_arg_spec)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -195,7 +195,7 @@ class AzureRMServersFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMServersFacts()
+    AzureRMSqlServerFacts()
 
 
 if __name__ == '__main__':
