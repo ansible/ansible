@@ -136,8 +136,7 @@ from datetime import datetime, timedelta
 duration_spec_map = dict(
     default_message_time_to_live='default_message_time_to_live_seconds',
     duplicate_detection_history_time_window='duplicate_detection_time_in_seconds',
-    auto_delete_on_idle='auto_delete_on_idle_in_seconds',
-    lock_duration='lock_duration_in_seconds'
+    auto_delete_on_idle='auto_delete_on_idle_in_seconds'
 )
 
 
