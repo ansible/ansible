@@ -1,6 +1,7 @@
 ---
 name: 📝 Documentation Report
 about: Ask us about docs
+labels: docs
 ---
 <!--- Verify first that your improvement is not already reported on GitHub -->
 <!--- Also test if the latest release and devel branch are affected too -->
