@@ -10,7 +10,7 @@ author: Ansible Team
 connection: grpc
 short_description: Provides a persistent connection using the gRPC protocol
 description:
-  - This connection plugin provides a connection to remote devices over grpc and
+  - This connection plugin provides a connection to remote devices over gRPC and
     is typically used with devices for sending and receiving RPC calls
     over gRPC framework.
   - Note this connection plugin requires grpcio python library to be installed on the
