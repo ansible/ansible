@@ -111,6 +111,10 @@
   register: output
 - debug:
     var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
 
 - name: Create instance of DevTest Lab Policy -- idempotent
   azure_rm_devtestlabpolicy:
@@ -123,6 +127,10 @@
   register: output
 - debug:
     var: output
+- name: Assert if the change was not reported
+  assert:
+    that:
+      - not output.changed
 
 - name: Create instance of DevTest Lab Policy -- change value
   azure_rm_devtestlabpolicy:
@@ -135,6 +143,25 @@
   register: output
 - debug:
     var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
+
+- name: Delete instance of DevTest Lab Policy
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    state: absent
+  register: output
+- debug:
+    var: output
+- name: Assert if the change was correctly reported
+  assert:
+    that:
+      - output.changed
 
 # azure_rm_devtestlabschedule
 - name: Create instance of DevTest Lab Schedule

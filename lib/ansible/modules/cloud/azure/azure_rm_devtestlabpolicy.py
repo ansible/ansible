@@ -358,7 +358,7 @@ def default_compare(new, old, path, result):
         if path == '/location':
             new = new.replace(' ', '').lower()
             old = new.replace(' ', '').lower()
-        if new == old:
+        if str(new) == str(old):
             return True
         else:
             result['compare'] = 'changed [' + path + '] ' + str(new) + ' != ' + str(old)

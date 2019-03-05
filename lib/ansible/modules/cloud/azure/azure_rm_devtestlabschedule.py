@@ -62,12 +62,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Schedule
+  - name: Create (or update) DevTest Lab Schedule
     azure_rm_devtestlabschedule:
-      resource_group: NOT FOUND
-      lab_name: NOT FOUND
-      name: NOT FOUND
-      status: status
+      resource_group: myResourceGroup
+        lab_name: myLab
+        name: lab_vms_shutdown
+        time: "1030"
+        time_zone_id: "UTC+12"
 '''
 
 RETURN = '''
@@ -77,12 +78,6 @@ id:
     returned: always
     type: str
     sample: id
-status:
-    description:
-        - "The status of the schedule (i.e. Enabled, Disabled). Possible values include: 'Enabled', 'Disabled'"
-    returned: always
-    type: str
-    sample: status
 '''
 
 import time
@@ -164,7 +159,7 @@ class AzureRMSchedule(AzureRMModuleBase):
                 self.schedule[key] = kwargs[key]
 
         self.schedule['status'] = "Enabled"
-        
+
         if self.name == 'lab_vms_startup':
             self.name = 'LabVmsStartup'
             self.schedule['task_type'] = 'LabVmsStartupTask'
@@ -228,9 +223,8 @@ class AzureRMSchedule(AzureRMModuleBase):
 
         if self.state == 'present':
             self.results.update({
-                'id': response.get('id', None),
-                'status': response.get('status', None)
-                })
+                'id': response.get('id', None)
+            })
         return self.results
 
     def create_update_schedule(self):
