@@ -37,7 +37,7 @@ all: docs
 
 docs: htmldocs
 
-generate_rst: staticmin config cli keywords modules plugins testing
+generate_rst: config cli keywords modules plugins testing
 
 htmldocs: generate_rst
 	CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx html
@@ -101,9 +101,6 @@ plugins: $(FORMATTER) ../templates/plugin.rst.j2
 
 testing:
 	$(TESTING_FORMATTER)
-
-staticmin:
-	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ 	]*//g; s/[ 	]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css
 
 epub:
 	(CPUS=$(CPUS) $(MAKE) -f Makefile.sphinx epub)
