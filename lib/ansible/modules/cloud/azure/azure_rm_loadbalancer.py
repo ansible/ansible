@@ -96,7 +96,6 @@ options:
                 choices:
                     - Tcp
                     - Http
-                default: Tcp
             interval:
                 description:
                     - The interval, in seconds, for how frequently to probe the endpoint for health status.
@@ -136,7 +135,6 @@ options:
                     - Tcp
                     - Udp
                     - All
-                default: Tcp
             frontend_port_range_start:
                 description:
                     - The first port in the range of external ports that will be used to provide inbound NAT to NICs associated with the load balancer.
@@ -174,7 +172,6 @@ options:
                     - Tcp
                     - Udp
                     - All
-                default: Tcp
             load_distribution:
                 description:
                     - The session persistence policy for this rule; C(Default) is no persistence.
@@ -224,7 +221,6 @@ options:
                     - Tcp
                     - Udp
                     - All
-                default: Tcp
             frontend_port:
                 description:
                     - The port for the external endpoint.
@@ -386,7 +382,7 @@ changed:
 
 import random
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, format_resource_id
-
+from ansible.module_utils._text import to_native
 try:
     from msrestazure.tools import parse_resource_id
     from msrestazure.azure_exceptions import CloudError
@@ -434,8 +430,7 @@ probes_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Http'],
-        default='Tcp'
+        choices=['Tcp', 'Http']
     ),
     interval=dict(
         type='int',
@@ -463,8 +458,7 @@ inbound_nat_pool_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All'],
-        default='Tcp'
+        choices=['Tcp', 'Udp', 'All']
     ),
     frontend_port_range_start=dict(
         type='int',
@@ -492,8 +486,7 @@ inbound_nat_rule_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All'],
-        default='Tcp'
+        choices=['Tcp', 'Udp', 'All']
     ),
     frontend_port=dict(
         type='int',
@@ -534,8 +527,7 @@ load_balancing_rule_spec = dict(
     ),
     protocol=dict(
         type='str',
-        choices=['Tcp', 'Udp', 'All'],
-        default='Tcp'
+        choices=['Tcp', 'Udp', 'All']
     ),
     load_distribution=dict(
         type='str',
@@ -866,6 +858,8 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
                 inbound_nat_rules=inbound_nat_rules_param
             )
 
+            self.new_load_balancer = self.assign_protocol(self.new_load_balancer, load_balancer)
+
             if load_balancer:
                 self.new_load_balancer = self.object_assign(self.new_load_balancer, load_balancer)
                 load_balancer_dict = load_balancer.as_dict()
@@ -933,6 +927,21 @@ class AzureRMLoadBalancer(AzureRMModuleBase):
         for key in attribute_map:
             if not getattr(patch, key):
                 setattr(patch, key, getattr(origin, key))
+        return patch
+
+    def assign_protocol(self, patch, origin):
+        attribute_map = ['probes', 'inbound_nat_rules', 'inbound_nat_pools', 'load_balancing_rules']
+        for attribute in attribute_map:
+            properties = getattr(patch, attribute)
+            if not properties:
+                continue
+            references = getattr(origin, attribute) if origin else []
+            for item in properties:
+                if item.protocol:
+                    continue
+                refs = [x for x in references if to_native(x.name) == item.name]
+                ref = refs[0] if len(refs) > 0 else None
+                item.protocol = ref.protocol if ref else 'Tcp'
         return patch
 
 
