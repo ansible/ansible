@@ -590,7 +590,6 @@ class RHEVConn(object):
                 return False
         elif int(DISK.size) > (1024 * 1024 * 1024 * int(disksize)):
             setMsg("Shrinking disks is not supported")
-            setMsg(str(e))
             setFailed()
             return False
         else:
