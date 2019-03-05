@@ -54,7 +54,7 @@ class EnvConfig(CommonConfig):
         """
         super(EnvConfig, self).__init__(args, 'env')
 
-        self.show = args.show or not args.dump
+        self.show = args.show
         self.dump = args.dump
         self.timeout = args.timeout
 
