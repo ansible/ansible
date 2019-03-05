@@ -312,7 +312,7 @@ class AzureRMClusters(AzureRMModuleBase):
                         self.to_do = Actions.Update
                     if compare_result:
                         for k in compare_result.keys():
-                            self.module.warn("property '" + k "' cannot be updated (" + compare_results[k] + ")")
+                            self.module.warn("property '" + k + "' cannot be updated (" + compare_results[k] + ")")
                         self.module.warn("only tags and target_instance_count can be updated")
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
