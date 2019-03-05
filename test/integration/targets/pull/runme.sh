@@ -32,8 +32,15 @@ cd "${repo_dir}"
 function git_supports_depth()
 {
   # Output boolean 1 for true if git supports --depth or 0 for false
+  local git_version=''
 
-  if [[ -z "$(git clone -h | grep '\--depth')" ]]; then
+  set +x
+
+  git_version="$(git --version | grep 'git version' | sed 's/git version //')"
+
+  set -x
+
+  if [[ "${git_version}" == '1.8.3.1' ]] || ! grep -q '\--depth' <<< "$(git clone -h)"; then
     echo -n '0'
   else
     echo -n '1'
@@ -301,10 +308,10 @@ submodule_full_cloned
 
 rm -rf "${pull_dir}"
 
-# Run ansible-pull with --checkout at tag 1.0.0 and accept GH host key
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.0.0' "$@" | tee "${temp_log}"
+# Run ansible-pull with --checkout at tag 1.2.0 and accept GH host key
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --accept-host-key --checkout '1.2.0' "$@" | tee "${temp_log}"
 
-main_repo_at_tag '1.0.0'
+main_repo_at_tag '1.2.0'
 main_repo_shallow_cloned "${temp_log}"
 submodule_initialized
 submodule_recursively_initialized
@@ -332,10 +339,10 @@ submodule_full_cloned
 
 rm -rf "${pull_dir}"
 
-# Run ansible-pull with checkout at tag 1.0.0 and accept GH host key using --module-args
-ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.0.0' "$@" | tee "${temp_log}"
+# Run ansible-pull with checkout at tag 1.2.0 and accept GH host key using --module-args
+ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${remote_repo}" --module-args 'accept_hostkey=yes depth=1 version=1.2.0' "$@" | tee "${temp_log}"
 
-main_repo_at_tag '1.0.0'
+main_repo_at_tag '1.2.0'
 main_repo_shallow_cloned "${temp_log}"
 submodule_initialized
 submodule_recursively_initialized
