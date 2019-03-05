@@ -108,6 +108,11 @@ fingerprint:
     returned: changed or success
     type: str
     sample: 4096 SHA256:r4YCZxihVjedH2OlfjVGI6Y5xAYtdCwk8VxKyzVyYfM example@example.com (RSA)
+public_key:
+    description: The public key of the generated SSH private key
+    returned: changed or success
+    type: str
+    sample: ssh-rsa AAAAB3Nza(...omitted...)veL4E3Xcw== test_key
 '''
 
 import os
@@ -134,6 +139,7 @@ class Keypair(object):
         self.check_mode = module.check_mode
         self.privatekey = None
         self.fingerprint = {}
+        self.public_key = {}
 
         if self.type in ('rsa', 'rsa1'):
             self.size = 4096 if self.size is None else self.size
@@ -178,6 +184,8 @@ class Keypair(object):
                 module.run_command(args)
                 proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
                 self.fingerprint = proc[1].split()
+                pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
+                self.public_key = pubkey[1].strip('\n')
             except Exception as e:
                 self.remove()
                 module.fail_json(msg="%s" % to_native(e))
@@ -195,6 +203,8 @@ class Keypair(object):
         if _check_state():
             proc = module.run_command([module.get_bin_path('ssh-keygen', True), '-lf', self.path])
             fingerprint = proc[1].split()
+            pubkey = module.run_command([module.get_bin_path('ssh-keygen', True), '-yf', self.path])
+            pubkey = pubkey[1].strip('\n')
             keysize = int(fingerprint[0])
             keytype = fingerprint[-1][1:-1].lower()
         else:
@@ -211,6 +221,7 @@ class Keypair(object):
             return self.size == keysize
 
         self.fingerprint = fingerprint
+        self.public_key = pubkey
 
         if not perms_required:
             return _check_state() and _check_type() and _check_size()
@@ -228,6 +239,7 @@ class Keypair(object):
             'type': self.type,
             'filename': self.path,
             'fingerprint': self.fingerprint,
+            'public_key': self.public_key,
         }
 
         return result

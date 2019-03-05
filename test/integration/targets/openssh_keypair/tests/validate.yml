@@ -37,3 +37,9 @@
   assert:
     that:
       - privatekey4.stat.exists == False
+
+
+- name: Validate privatekey5 (assert - Public key module output equal to the public key on host)
+  assert:
+    that:
+      - "publickey_gen.public_key == lookup('file', output_dir ~ '/privatekey5.pub').strip('\n')"
