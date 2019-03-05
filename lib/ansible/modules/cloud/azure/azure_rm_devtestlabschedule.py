@@ -35,8 +35,8 @@ options:
             - The name of the schedule.
         required: True
         choices:
-            - labs_vms_start
-            - labs_vms_shutdown
+            - lab_vms_startup
+            - lab_vms_shutdown
     time:
         description:
             - The time of day the schedule will occur.
@@ -119,7 +119,8 @@ class AzureRMSchedule(AzureRMModuleBase):
             ),
             name=dict(
                 type='str',
-                required=True
+                required=True,
+                choices=['lab_vms_startup', 'lab_vms_shutdown']
             ),
             location=dict(
                 type='str'
@@ -167,12 +168,12 @@ class AzureRMSchedule(AzureRMModuleBase):
 
         self.schedule['status'] = "Enabled"
         
-        if self.name == 'labs_vms_start':
-            self.name = 'LabVmsStart'
-            self.schedule['task_type'] = 'ComputeVmStartTask'
+        if self.name == 'labs_vms_startup':
+            self.name = 'LabVmsStartup'
+            self.schedule['task_type'] = 'LabVmsStartupTask'
         elif self.name == 'labs_vms_shutdown':
             self.name = 'LabVmsShutdown'
-            self.schedule['task_type'] = 'ComputeVmShutdownTask'
+            self.schedule['task_type'] = 'LabVmsShutdownTask'
 
         self.schedule['daily_recurrence'] = { 'time': self.schedule.pop('time') }
         self.schedule['time_zone_id'] = self.schedule['time_zone_id'].upper()

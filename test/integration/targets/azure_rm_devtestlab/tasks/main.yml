@@ -104,7 +104,7 @@
   azure_rm_devtestlabschedule:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
-    name: LabVmsShutdown
+    name: lab_vms_shutdown
     time: "10:30"
     time_zone_id: "UTC+12"
   register: output
