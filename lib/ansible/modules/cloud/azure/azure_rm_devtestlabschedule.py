@@ -174,7 +174,7 @@ class AzureRMSchedule(AzureRMModuleBase):
             self.name = 'LabVmsShutdown'
             self.schedule['task_type'] = 'ComputeVmShutdownTask'
 
-        self.schedule['daily_recurrence']['time'] = self.schedule.pop('time')
+        self.schedule['daily_recurrence'] = { 'time': self.schedule.pop('time') }
         self.schedule['time_zone_id'] = self.schedule['time_zone_id'].upper()
 
         response = None
