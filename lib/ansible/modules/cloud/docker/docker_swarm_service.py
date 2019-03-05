@@ -2200,6 +2200,7 @@ def main():
     )
 
     option_minimal_versions = dict(
+        constraints=dict(docker_py_version='2.4.0'),
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
