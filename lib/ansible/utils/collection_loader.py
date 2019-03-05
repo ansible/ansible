@@ -31,6 +31,15 @@ _collection_role_name_re = re.compile(r'^(\w+)\.(\w+)\.(\w+)$')
 class AnsibleCollectionLoader(object):
     def __init__(self):
         self._configured_paths = C.config.get_config_value('INSTALLED_CONTENT_ROOTS')
+
+        if isinstance(self._configured_paths, string_types):
+            self._configured_paths = [self._configured_paths]
+        elif self._configured_paths is None:
+            self._configured_paths = []
+
+        # expand any placeholders in configured paths
+        self._configured_paths = [os.path.expanduser(p) for p in self._configured_paths]
+
         self._playbook_paths = []
         # pre-inject grafted package maps so we can force them to use the right loader instead of potentially delegating to a "normal" loader
         for p in (p for p in iteritems(_SYNTHETIC_PACKAGES) if p[1].get('graft')):
