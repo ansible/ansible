@@ -41,7 +41,7 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         conn.start_session()
 
-        
+
     @patch('random.choice')
     def test_plugins_connection_aws_ssm_exec_command(self, r_choice):
         pc = PlayContext()
@@ -91,20 +91,21 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         res, stdout, stderr = conn.fetch_file('/in/file', '/out/file')
 
-    
+
     @patch('subprocess.check_output')
-    def test_plugins_connection_aws_transport_command(self, s_check_output):
+    def test_plugins_connection_file_transport_command(self, s_check_output):
         pc = PlayContext()
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
         conn.get_option = MagicMock()
         conn.get_option.return_value = 1
-        
+
         conn.exec_command = MagicMock()
         conn.exec_command.return_value = (0, 'stdout', 'stderr')
 
-        res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'abc')
+        res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'get')
+        res, stdout, stderr = conn._file_transport_command('/in/file', '/out/file', 'put')
 
 
     @patch('subprocess.check_output')
