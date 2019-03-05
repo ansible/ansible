@@ -101,10 +101,14 @@ EXAMPLES = '''
 - name: SET FORTIMANAGER HA NODE TO MASTER
   fmgr_ha:
     fmgr_ha_mode: "master"
+    fmgr_ha_cluster_pw: "fortinet"
+    fmgr_ha_cluster_id: "1"
 
 - name: SET FORTIMANAGER HA NODE TO SLAVE
   fmgr_ha:
     fmgr_ha_mode: "slave"
+    fmgr_ha_cluster_pw: "fortinet"
+    fmgr_ha_cluster_id: "1"
 
 - name: SET FORTIMANAGER HA NODE TO STANDALONE
   fmgr_ha:
@@ -132,7 +136,7 @@ api_result:
   type: str
 """
 
-from ansible.module_utils.basic import AnsibleModule, env_fallback
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import Connection
 from ansible.module_utils.network.fortimanager.fortimanager import FortiManagerHandler
 from ansible.module_utils.network.fortimanager.common import FMGBaseException
@@ -236,8 +240,14 @@ def main():
         fmgr_ha_cluster_id=dict(required=False, type="int", default=1)
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, )
-    # VALIDATE PARAMS BEFORE ATTEMPTING TO CONNECT
+    required_if = [
+        ['fmgr_ha_peer_ipv4', 'present', ['fmgr_ha_peer_sn', 'fmgr_ha_peer_status']],
+        ['fmgr_ha_peer_ipv6', 'present', ['fmgr_ha_peer_sn', 'fmgr_ha_peer_status']],
+        ['fmgr_ha_mode', 'master', ['fmgr_ha_cluster_pw', 'fmgr_ha_cluster_id']],
+        ['fmgr_ha_mode', 'slave', ['fmgr_ha_cluster_pw', 'fmgr_ha_cluster_id']],
+    ]
+
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False, required_if=required_if)
     paramgram = {
         "fmgr_ha_mode": module.params["fmgr_ha_mode"],
         "fmgr_ha_cluster_pw": module.params["fmgr_ha_cluster_pw"],
@@ -261,41 +271,11 @@ def main():
 
     # INIT FLAGS AND COUNTERS
     get_ha_peers = 0
-    # validate required arguments are passed; not used in argument_spec to allow params to be called from provider
-
     results = DEFAULT_RESULT_OBJ
     try:
-        # RULE VALIDATIONS!
-        # IF THE PEER SN DEFINED, BUT THE IPS ARE NOT, THEN QUIT
-        if paramgram["fmgr_ha_peer_sn"] is not None:
-            # CHANGE GET_HA_PEERS TO SHOW INTENT TO EDIT PEERS
+        if any(v is not None for v in (paramgram["fmgr_ha_peer_sn"], paramgram["fmgr_ha_peer_ipv4"],
+                                       paramgram["fmgr_ha_peer_ipv6"], paramgram["fmgr_ha_peer_status"])):
             get_ha_peers = 1
-            # DOUBLE CHECK THAT THE REST OF THE NEEDED PARAMETERS ARE THERE
-            if paramgram["fmgr_ha_peer_ipv4"] is None and paramgram["fmgr_ha_peer_ipv6"] is None:
-                module.exit_json(msg="HA Peer Serial Number is defined but the "
-                                     "IPv4 and IPv6 fields are empty."
-                                     " Fill in the IPv4 or v6 parameters in the playbook")
-
-        # IF THE PEER IPS ARE DEFINED, BUT NOT THE SERIAL NUMBER, THEN QUIT
-        if paramgram["fmgr_ha_peer_ipv4"] is not None or paramgram["fmgr_ha_peer_ipv6"] is not None:
-            # CHANGE GET_HA_PEERS TO SHOW INTENT TO EDIT PEERS
-            get_ha_peers = 1
-            # DOUBLE CHECK THAT THE REST OF THE NEEDED PARAMETERS ARE THERE
-            if paramgram["fmgr_ha_peer_sn"] is None:
-                module.exit_json(msg="HA Peer IP Address is defined, but not the Peer Serial Number. "
-                                     "Fill in the SN parameter in the playbook.")
-
-        # IF THE PEER STATUS IS SET, BUT THE SERIAL NUMBER OR IP FIELDS AREN'T THERE, THEN EXIT
-        if paramgram["fmgr_ha_peer_status"] is not None:
-            # CHANGE GET_HA_PEERS TO SHOW INTENT TO EDIT PEERS
-            get_ha_peers = 1
-            # DOUBLE CHECK THAT THE REST OF THE NEEDED PARAMETERS ARE THERE
-            if paramgram["fmgr_ha_peer_ipv4"] is None and paramgram["fmgr_ha_peer_sn"] is None:
-                if paramgram["fmgr_ha_peer_sn"] is None and paramgram["fmgr_ha_peer_ipv6"] is None:
-                    module.exit_json(msg="HA Peer Status was defined, but nothing "
-                                         "to identify the peer was set. "
-                                         "Fill in one of"
-                                         " three parameters peer_ipv4 or v6 or serial_num")
     except Exception as err:
         raise FMGBaseException(err)
     try:
