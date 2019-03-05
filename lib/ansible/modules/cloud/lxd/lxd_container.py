@@ -67,6 +67,12 @@ options:
           - 'See U(https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-1) for complete API documentation.'
           - 'Note that C(protocol) accepts two choices: C(lxd) or C(simplestreams)'
         required: false
+    instance_type:
+        description:
+            - 'Simple instance types'
+            - 'See U(https://github.com/lxc/lxd/blob/master/doc/containers.md#instance-types)'
+        required: false
+        version_added: '2.8'
     state:
         choices:
           - started
@@ -276,7 +282,7 @@ ANSIBLE_LXD_STATES = {
 
 # CONFIG_PARAMS is a list of config attribute names.
 CONFIG_PARAMS = [
-    'architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source'
+    'architecture', 'config', 'devices', 'ephemeral', 'profiles', 'source', 'instance_type'
 ]
 
 
@@ -609,7 +615,10 @@ def main():
                 type='str',
                 default='{0}/.config/lxc/client.crt'.format(os.environ['HOME'])
             ),
-            trust_password=dict(type='str', no_log=True)
+            trust_password=dict(type='str', no_log=True),
+            instance_type=dict(
+                type='str',
+            )
         ),
         supports_check_mode=False,
     )
