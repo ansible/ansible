@@ -496,18 +496,18 @@ service on the Windows host. This can be done in the following ways;
 
 Microsoft do offer a way to install the OpenSSH service through a Windows
 capability but currently the version that is installed through this process is
-not compatible with Ansible due to a few bugs. The three options above will in
-install the service based on the latest GitHub releases.
+too old to work with Ansible. The three options above will install the OpenSSH
+service based on the latest GitHub releases.
 
 .. note:: The Win32-OpenSSH port is still a beta product and is constantly
     being updated to include new features and bugfixes. If using SSH as a
     connection option for Windows. It is highly recommend you install the
-    latest release from the GitHub repo or through Chocolatey.
+    latest release from one of the 3 methods above.
 
-By default the service will use ``cmd.exe`` as the default shell but has the
-ability to override this through a registry setting. Ansible supports both the
-``cmd.exe`` and ``powershell.exe`` shells. The following tasks can be run to
-set the default shell for the SSH service::
+By default the service will use ``cmd.exe`` as the default shell but it can be
+configured to use a different shell. The default shell is defined in a registry
+property which can be set by an Ansible task. The following tasks show how this
+can be configured in an Ansible playbook::
 
     - name: set the default shell to PowerShell
       win_regedit:
@@ -517,6 +517,7 @@ set the default shell for the SSH service::
         type: string
         state: present
 
+    # Or if you wish to keep the defaults this can revert the settings back to cmd
     - name: set the default shell to cmd
       win_regedit:
         path: HKLM:\SOFTWARE\OpenSSH
@@ -525,14 +526,14 @@ set the default shell for the SSH service::
 
 SSH Authentication
 ------------------
-Currently SSH authentication with Windows can use both plaintext password as
-well as SSH key pairs. Setting up authentication is the same as a Linux host
-where an authorized_key file is set up in the user's ``.ssh`` folder of their
-profile. This can be configured in the ``sshd_config`` file but it is outside
-the scope of Ansible.
+Currently SSH authentication with Windows can use both a plaintext password and
+SSH public key authentication. Setting up authentication is the same as a
+Linux host where an authorized_key file is set up in the user's ``.ssh`` folder
+in their user profile directory. This can be configured in the ``sshd_config``
+file used by the SSH service but this is outside the scope of Ansible.
 
 When using SSH key authentication, the remote session won't have access to the
-user's credentials and will fail when attempting to access a resource resource.
+user's credentials and will fail when attempting to access a network resource.
 This is also known as the double-hop or credential delegation issue. There are
 a few ways to work around this issue;
 
@@ -554,10 +555,10 @@ configured on the Windows host. Set to ``cmd`` for the default shell or set to
 Known Issues
 ------------
 Using SSH with Windows is experimental, there will be issues that come up and
-this list documents shome of the already known issues.
+this list documents some of the already known issues.
 
 * Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type
-* While SCP should work, SFTP is the recommended SSH file transfer mechanism is use when copying or fetching a file
+* While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file
 
 
 .. seealso::

@@ -169,18 +169,19 @@ fork that is in development with Microsoft to be installed and configured on
 the Windows host. While most of the basics should work with SSH, the
 Win32-OpenSSH port is rapidly changing with every release to add new features
 and fix various bugs. It is highly recommend you install the latest release from
-the GitHub Releases page when using this with ansible.
+the GitHub Releases page when using this with Ansible.
 
 To use SSH as the connection to a Windows host, set the following variables in
 the inventory::
 
     ansible_connection=ssh
 
-    # Works with Win32-OpenSSH out of the box that defaults to the cmd.exe shell
-    ansible_shell_type=cmd
+    # Set either cmd or powershell not both
+    ansible_shell_type=cmd/powershell
 
-    # Required if Win32-OpenSSH has been configured to use PowerShell as the DefaultShell
-    ansible_shell_type=powershell
+The value for ``ansible_shell_type`` should either be ``cmd`` or ``powershell``.
+Use ``cmd`` if the ``DefaultShell`` has not been configured on the SSH service
+and ``powershell`` if that has been set as the ``DefaultShell``.
 
 Why is connecting to the host via ssh failing?
 ``````````````````````````````````````````````
