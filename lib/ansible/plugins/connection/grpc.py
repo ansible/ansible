@@ -148,7 +148,7 @@ options:
     type: boolean
     description:
       - This flag will enable logging the command executed and response received from
-        target device in the ansible log file. For this option to work 'log_path' ansible
+        target device in the ansible log file. For this option to work the 'log_path' ansible
         configuration option is required to be set to a file path with write access.
       - Be sure to fully understand the security implications of enabling this
         option as it could create a security vulnerability by logging sensitive information in log file.
