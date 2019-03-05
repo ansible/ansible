@@ -85,6 +85,14 @@ options:
       - Specifies whether or not the configuration is active or deactivated
     default: True
     type: bool
+  confirm:
+    description:
+      - The C(confirm) argument will configure a time out value in minutes
+        for the commit to be confirmed before it is automatically
+        rolled back.  If the C(confirm) argument is set to False, this
+        argument is silently ignored.  If the value for this argument
+        is set to 0, the commit is confirmed immediately.
+    default: 0
 requirements:
   - ncclient (>=v0.5.2)
 notes:
@@ -174,6 +182,11 @@ EXAMPLES = """
     name: "{{ name }}"
     enabled: False
     state: down
+
+- name: 
+  junos_interface:
+    aggregate: "{{ interfaces }}"
+    confirm: 3
 """
 
 RETURN = """
@@ -199,6 +212,7 @@ from ansible.module_utils.network.common.utils import conditional
 from ansible.module_utils.network.junos.junos import junos_argument_spec, tostring
 from ansible.module_utils.network.junos.junos import load_config, map_params_to_obj, map_obj_to_ele
 from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes, locked_config, to_param_list
+from ansible.module_utils._text import to_text
 
 try:
     from lxml.etree import Element, SubElement
@@ -206,6 +220,7 @@ except ImportError:
     from xml.etree.ElementTree import Element, SubElement
 
 USE_PERSISTENT_CONNECTION = True
+DEFAULT_COMMENT = 'configured by junos_interface'
 
 
 def validate_mtu(value, module):
@@ -243,7 +258,9 @@ def main():
         neighbors=dict(type='list', elements='dict', options=neighbors_spec),
         delay=dict(default=10, type='int'),
         state=dict(default='present', choices=['present', 'absent', 'up', 'down']),
-        active=dict(default=True, type='bool')
+        active=dict(default=True, type='bool'),
+        confirm=dict(default=0, type='int'),
+        comment=dict(default=DEFAULT_COMMENT)
     )
 
     aggregate_spec = deepcopy(element_spec)
@@ -318,7 +335,17 @@ def main():
         commit = not module.check_mode
         if diff:
             if commit:
-                commit_configuration(module)
+                kwargs = {
+                    'comment': module.params['comment']
+                }
+
+                confirm = module.params['confirm']
+                if confirm > 0:
+                    kwargs.update({
+                        'confirm': True,
+                        'confirm_timeout': to_text(confirm, errors='surrogate_then_replace')
+                    })
+                commit_configuration(module, **kwargs)
             else:
                 discard_changes(module)
             result['changed'] = True
