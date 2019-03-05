@@ -160,10 +160,11 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
                 changed = changed | self.regenerate_primary_key | self.regenerate_secondary_key
                 if self.regenerate_primary_key and not self.check_mode:
                     self.regenerate_sas_key('primary')
+                    policy = self.get_sas_key()
                 if self.regenerate_secondary_key and not self.check_mode:
                     self.regenerate_sas_key('secondary')
-                policy = self.get_sas_key()
-                self.results = self.policy_to_dict(policy)
+                    policy = self.get_sas_key()
+            self.results = self.policy_to_dict(policy)
         elif policy:
             changed = True
             if not self.check_mode:
