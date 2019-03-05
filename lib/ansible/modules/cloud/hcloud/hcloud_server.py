@@ -347,6 +347,7 @@ class AnsibleHcloudServer(Hcloud):
                 },
                 **Hcloud.base_module_arguments()
             ),
+            required_one_of=[['id', 'name']],
             mutually_exclusive=[["location", "datacenter"]],
             supports_check_mode=True,
         )
