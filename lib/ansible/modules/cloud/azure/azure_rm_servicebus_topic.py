@@ -250,7 +250,7 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
             client = self._get_client()
             return client.create_or_update(self.resource_group, self.namespace, self.name, param)
         except Exception as exc:
-            self.fail("Error creating or updating topic {0} - {1}".format(self.name, str(exc)))
+            self.fail('Error creating or updating topic {0} - {1}'.format(self.name, str(exc.inner_exception) or str(exc)))
 
     def delete(self):
         try:
