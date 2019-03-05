@@ -345,20 +345,20 @@ options:
     version_added: '2.6'
   vapp_product:
     description:
-	- Set Product information properties
-	- ' Basic attributes are:'
-	- ' - C(name) (string): Product name - required.'
+    - Set Product information properties
+    - 'Basic attributes are:'
+    - ' - C(name) (string): Product name - required.'
     - ' - C(vendor) (string): Vendor name.'
-	- ' - C(vendorUrl) (string): Vendor URL.'
-	- ' - C(productUrl) (string): Product URL.'
-	- ' - C(version) (string): Product short version.'
-	- ' - C(fullVersion) (string): Product full version.'
+    - ' - C(vendorUrl) (string): Vendor URL.'
+    - ' - C(productUrl) (string): Product URL.'
+    - ' - C(version) (string): Product short version.'
+    - ' - C(fullVersion) (string): Product full version.'
     version_added: '2.7.8'
   vapp_ovf_environment_transport:
-    description
-	- Set OVF Transport mode
-	- 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
-	default: com.vmware.guestInfo
+    description:
+    - Set OVF Transport mode
+    - 'For value, refer to: U(https://www.vmware.com/support/developer/converter-sdk/conv61_apireference/vim.vApp.VmConfigSpec.html)'
+    default: com.vmware.guestInfo
     version_added: '2.7.8'
   customization_spec:
     description:
