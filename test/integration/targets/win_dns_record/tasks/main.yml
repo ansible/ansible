@@ -4,14 +4,11 @@
     fail_on_missing: false
 
 - block:
-   - name: install DNS features
-     block:
-
-       - name: ensure DNS services are installed
-         win_feature:
-           name: DNS
-           state: present
-         register: dns_install
+   - name: ensure DNS services are installed
+     win_feature:
+       name: DNS
+       state: present
+     register: dns_install
 
    - name: reboot server if needed
      win_reboot:

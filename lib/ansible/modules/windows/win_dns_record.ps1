@@ -34,41 +34,29 @@ if ($dns_computer_name -ne $null) {
     $extra_args.ComputerName = $dns_computer_name
 }
 
-if ($state -eq 'present')
-{
-    if ($values.Count -eq 0)
-    {
+if ($state -eq 'present') {
+    if ($values.Count -eq 0) {
         $module.FailJson("values must be non-empty when state='present'")
     }
-}
-else
-{
-    if ($values.Count -ne 0)
-    {
+} else {
+    if ($values.Count -ne 0) {
         $module.FailJson("values must be undefined or empty when state='absent'")
     }
 }
 
 
 # TODO: add warning for forest minTTL override -- see https://docs.microsoft.com/en-us/windows/desktop/ad/configuration-of-ttl-limits
-if ($ttl -lt 1 -or $ttl -gt 31557600)
-{
+if ($ttl -lt 1 -or $ttl -gt 31557600) {
     $module.FailJson("ttl must be between 1 and 31557600")
 }
 $ttl = New-TimeSpan -Seconds $ttl
 
 
-if (($type -eq 'CNAME' -or $type -eq 'PTR') -and $values -ne $null -and $values.Count -gt 0 -and $zone[-1] -ne '.')
-{
+if (($type -eq 'CNAME' -or $type -eq 'PTR') -and $values -ne $null -and $values.Count -gt 0 -and $zone[-1] -ne '.') {
     # CNAMEs and PTRs should be '.'-terminated, or record matching will fail
     $values = $values | ForEach-Object {
         if ($_ -Like "*.") { $_ } else { "$_." }
     }
-}
-
-
-$result = @{
-    changed = $false
 }
 
 
@@ -84,33 +72,28 @@ $record_argument_name = @{
 
 
 $changes = @{
-  before = "";
-  after = ""
+    before = "";
+    after = ""
 }
 
 
 $records = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
-if ($records -ne $null)
-{
+if ($records -ne $null) {
     # We use [Hashtable]$required_values below as a set rather than a map.
     # It provides quick lookup to test existing DNS record against. By removing
     # items as each is processed, whatever remains at the end is missing
     # content (that needs to be added).
     $required_values = @{}
-    foreach ($value in $values)
-    {
+    foreach ($value in $values) {
         $required_values[$value.ToString()] = $null
     }
 
-    foreach ($record in $records)
-    {
+    foreach ($record in $records) {
         $record_value = $record.RecordData.$record_argument_name.ToString()
 
-        if ($required_values.ContainsKey($record_value))
-        {
+        if ($required_values.ContainsKey($record_value)) {
             # This record matches one of the values; but does it match the TTL?
-            if ($record.TimeToLive -ne $ttl)
-            {
+            if ($record.TimeToLive -ne $ttl) {
                 $new_record = $record.Clone()
                 $new_record.TimeToLive = $ttl
                 Set-DnsServerResourceRecord -ZoneName $zone -OldInputObject $record -NewInputObject $new_record -WhatIf:$module.CheckMode @extra_args
@@ -122,9 +105,7 @@ if ($records -ne $null)
 
             # Cross this one off the list, so we don't try adding it later
             $required_values.Remove($record_value)
-        }
-        else
-        {
+        } else {
             # This record doesn't match any of the values, and must be removed
             $record | Remove-DnsServerResourceRecord -ZoneName $zone -Force -WhatIf:$module.CheckMode @extra_args
 
@@ -138,14 +119,12 @@ if ($records -ne $null)
 }
 
 
-if ($values -ne $null -and $values.Count -gt 0)
-{
-    foreach ($value in $values)
-    {
+if ($values -ne $null -and $values.Count -gt 0) {
+    foreach ($value in $values) {
         $splat_args = @{ $type = $true; $record_argument_name = $value }
         $module.Result.debug_splat_args = $splat_args
         try {
-          Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$module.CheckMode @extra_args
+            Add-DnsServerResourceRecord -ZoneName $zone -Name $name -AllowUpdateAny -TimeToLive $ttl @splat_args -WhatIf:$module.CheckMode @extra_args
         } catch {
             $module.FailJson("Error adding DNS $type resource $name in zone $zone with value $value", $_)
         }
@@ -155,17 +134,16 @@ if ($values -ne $null -and $values.Count -gt 0)
     $module.Result.changed = $true
 }
 
-if ($module.CheckMode)
-{
-  # Simulated changes
-  $module.Diff.before = $changes.before
-  $module.Diff.after = $changes.after
+if ($module.CheckMode) {
+    # Simulated changes
+    $module.Diff.before = $changes.before
+    $module.Diff.after = $changes.after
 } else {
-  # Real changes
-  $records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
+    # Real changes
+    $records_end = Get-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType $type -Node -ErrorAction:Ignore @extra_args | Sort-Object
 
-  $module.Diff.before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
-  $module.Diff.after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+    $module.Diff.before = @($records | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
+    $module.Diff.after = @($records_end | ForEach-Object { "[$zone] $($_.HostName) $($_.TimeToLive.TotalSeconds) $type $($_.RecordData.$record_argument_name.ToString())`n" }) -join ''
 }
 
 $module.ExitJson()
