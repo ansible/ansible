@@ -7,8 +7,6 @@
 #Requires -Module Ansible.ModuleUtils.CommandUtil
 #Requires -Module Ansible.ModuleUtils.Legacy
 
-$ErrorActionPreference = "Stop"
-
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
@@ -22,7 +20,7 @@ $bypass_proxy = Get-AnsibleParam -obj $params -name "bypass_proxy" -type "bool"
 $certificate = Get-AnsibleParam -obj $params -name "certificate" -type "str"
 $certificate_password = Get-AnsibleParam -obj $params -name "certificate_password" -type "str"
 $priority = Get-AnsibleParam -obj $params -name "priority" -type "int"
-$source = Get-AnsibleParam -obj $params -name "source" -type "str" -failifempty ($state -ne "absent")
+$source = Get-AnsibleParam -obj $params -name "source" -type "str"
 $source_username = Get-AnsibleParam -obj $params -name "source_username" -type "str"
 $source_password = Get-AnsibleParam -obj $params -name "source_password" -type "str" -failifempty ($null -ne $source_username)
 $update_password = Get-AnsibleParam -obj $params -name "update_password" -type "str" -default "always" -validateset "always", "on_create"
@@ -225,9 +223,12 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
 } elseif ($state -in ("disabled", "present")) {
     $change = $false
     if ($null -eq $actual_source) {
+        if ($null -eq $source) {
+            Fail-Json -obj $result -message "The source option must be set when creating a new source"
+        }
         $change = $true
     } else {
-        if ($source -ne $actual_source.source) {
+        if ($null -ne $source -and $source -ne $actual_source.source) {
             $change = $true
         }
         if ($null -ne $source_username -and $source_username -ne $actual_source.source_username) {
@@ -271,29 +272,23 @@ if ($state -eq "absent" -and $null -ne $actual_source) {
     }
 
     # enable/disable the source if necessary
+    $status_action = $null
     if ($state -ne "disabled" -and $actual_source.disabled) {
-        $arguments = [System.Collections.ArrayList]@($choco_app.Path, "source", "enable", "--name", $name)
-        if ($check_mode) {
-            $arguments.Add("--what-if") > $null
-        }
-        $command = Argv-ToString -arguments $arguments
-        $res = Run-Command -command $command
-        if ($res.rc -ne 0) {
-            Fail-Json -obj $result -message "Failed to enable Chocolatey source '$name': $($res.stderr)"
-        }
-        $actual_source.disabled = $false
-        $result.changed = $true
+        $status_action = "enable"
     } elseif ($state -eq "disabled" -and (-not $actual_source.disabled)) {
-        $arguments = [System.Collections.ArrayList]@($choco_app.Path, "source", "disable", "--name", $name)
+        $status_action = "disable"
+    }
+    if ($null -ne $status_action) {
+        $arguments = [System.Collections.ArrayList]@($choco_app.Path, "source", $status_action, "--name", $name)
         if ($check_mode) {
             $arguments.Add("--what-if") > $null
         }
         $command = Argv-ToString -arguments $arguments
         $res = Run-Command -command $command
         if ($res.rc -ne 0) {
-            Fail-Json -obj $result -message "Failed to disable Chocolatey source '$name': $($res.stderr)"
+            Fail-Json -obj $result -message "Failed to $status_action Chocolatey source '$name': $($res.stderr)"
         }
-        $actual_source.disabled = $true
+        $actual_source.disabled = ($status_action -eq "disable")
         $result.changed = $true
     }
 

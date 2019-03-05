@@ -1,0 +1,2 @@
+bugfixes:
+- win_chocolatey_source - fix bug where a Chocolatey source could not be disabled unless ``source`` was also set - https://github.com/ansible/ansible/issues/50133

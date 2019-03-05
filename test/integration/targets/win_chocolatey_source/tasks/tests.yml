@@ -241,3 +241,91 @@
   assert:
     that:
     - not modify_source_again is changed
+
+- name: disable source (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: disabled
+  register: disable_source_check
+  check_mode: True
+
+- name: get result of disable source (check mode)
+  win_command: choco.exe source list -r
+  register: disable_source_actual_check
+
+- name: assert disable source (check mode)
+  assert:
+    that:
+    - disable_source_check is changed
+    - disable_source_actual_check.stdout == modify_source_actual.stdout
+
+- name: disable source
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: disabled
+  register: disable_source
+
+- name: get result of disable source
+  win_command: choco.exe source list -r
+  register: disable_source_actual
+
+- name: assert disable source
+  assert:
+    that:
+    - disable_source is changed
+    - disable_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|True|username2|C:\\cert2.pfx|5|False|True|True"]
+
+- name: disable source (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: disabled
+  register: disable_source_again
+
+- name: assert disable source (idempotent)
+  assert:
+    that:
+    - not disable_source_again is changed
+
+- name: enable source (check mode)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: present
+  register: enable_source_check
+  check_mode: True
+
+- name: get result of enable source (check mode)
+  win_command: choco.exe source list -r
+  register: enable_source_actual_check
+
+- name: assert enable source (check mode)
+  assert:
+    that:
+    - enable_source_check is changed
+    - enable_source_actual_check.stdout == disable_source_actual.stdout
+
+- name: enable source
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: present
+  register: enable_source
+
+- name: get result of enable source
+  win_command: choco.exe source list -r
+  register: enable_source_actual
+
+- name: assert enable source
+  assert:
+    that:
+    - enable_source is changed
+    - enable_source_actual.stdout_lines == ["test'|\"source 123^|C:\\chocolatey repos2|False|username2|C:\\cert2.pfx|5|False|True|True"]
+
+- name: enable source (idempotent)
+  win_chocolatey_source:
+    name: '{{ test_chocolatey_name }}'
+    state: present
+  register: enable_source_again
+
+- name: assert enable source (idempotent)
+  assert:
+    that:
+    - not enable_source_again is changed
