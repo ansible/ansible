@@ -142,3 +142,66 @@
   assert:
     that:
       - sha1_checksum.stat.checksum == 'de86f79b409383447cf4cf112b20af8ffffcfdbf'
+
+# features added ansible 2.8
+# count
+
+- name: count logger nodes in log4j.xml
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: //logger
+    count: yes
+  register: logger_node_count
+
+- name: show node count
+  debug:
+    var: logger_node_count
+
+- name: verify node count
+  assert:
+    that:
+      - logger_node_count.count == 5
+
+- name: count logger level error nodes and change to debug
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '//logger/level[@value="error"]'
+    type: attribute
+    attribute: value
+    fragment: debug
+    count: yes
+  register: logger_level_error_node_count
+ 
+- name: show logger_level_error_node_count result
+  debug:
+    var: logger_level_error_node_count
+
+- name: verify logger level error node count
+  assert:
+    that:
+      - logger_level_error_node_count.count == 4
+      - logger_level_error_node_count.changed == true
+      - logger_level_error_node_count.msg == 'attribute changed'
+
+- name: redo count logger level error nodes and change to debug
+  win_xml:
+    path: "{{ win_output_dir }}\\log4j.xml"
+    xpath: '//logger/level[@value="error"]'
+    type: attribute
+    attribute: value
+    fragment: debug
+    count: yes
+  register: logger_level_error_node_count_again
+ 
+- name: show logger_level_error_node_count_again result
+  debug:
+    var: logger_level_error_node_count_again
+
+- name: verify logger level error node count again (idempotency)
+  assert:
+    that:
+      - logger_level_error_node_count_again.count == 0
+      - logger_level_error_node_count_again.changed == false
+      - logger_level_error_node_count_again.msg == 'The supplied xpath did not match any nodes.  If this is unexpected, check your xpath is valid for the xml file at supplied path.'
+
+
