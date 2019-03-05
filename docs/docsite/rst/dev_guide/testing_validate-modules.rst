@@ -128,7 +128,7 @@ Errors
   333       ``ANSIBLE_METADATA.status`` of deprecated or removed can't include other statuses
   334       ``ANSIBLE_METADATA`` cannot be changed in a point release for a stable branch
   335       argument_spec implies type="str" but documentation defines it as different data type
-
+  336       argument in argument_spec is not a valid python identifier
   ..
 ---------   -------------------
   **4xx**   **Syntax**

@@ -36,6 +36,11 @@ from lib.test import (
 VALIDATE_SKIP_PATH = 'test/sanity/validate-modules/skip.txt'
 VALIDATE_IGNORE_PATH = 'test/sanity/validate-modules/ignore.txt'
 
+UNSUPPORTED_PYTHON_VERSIONS = (
+    '2.6',
+    '2.7',
+)
+
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
@@ -45,6 +50,10 @@ class ValidateModulesTest(SanitySingleVersion):
         :type targets: SanityTargets
         :rtype: TestResult
         """
+        if args.python_version in UNSUPPORTED_PYTHON_VERSIONS:
+            display.warning('Skipping validate-modules on unsupported Python version %s.' % args.python_version)
+            return SanitySkipped(self.name)
+
         skip_paths = read_lines_without_comments(VALIDATE_SKIP_PATH)
         skip_paths_set = set(skip_paths)
 
