@@ -66,33 +66,12 @@ options:
                             - 'non_deprovisioned'
                             - 'deprovision_requested'
                             - 'deprovision_applied'
-    vhd:
-        description:
-            - The VHD from which the image is to be created.
-        suboptions:
-            image_name:
-                description:
-                    - The image name.
-            sys_prep:
-                description:
-                    - Indicates whether sysprep has been run on the VHD.
-            os_type:
-                description:
-                    - The OS type of the custom image (i.e. C(windows), C(linux)).
-                    - Required when C(state) is I(present).
-                choices:
-                    - 'windows'
-                    - 'linux'
-                    - 'none'
     description:
         description:
             - The description of the custom image.
     author:
         description:
             - The author of the custom image.
-    managed_image_id:
-        description:
-            - The Managed Image Id backing the custom image.
     state:
       description:
         - Assert the state of the Custom Image.
@@ -197,30 +176,10 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
                     )
                 )
             ),
-            vhd=dict(
-                type='dict',
-                options=dict(
-                    image_name=dict(
-                        type='str'
-                    ),
-                    sys_prep=dict(
-                        type='str'
-                    ),
-                    os_type=dict(
-                        type='str',
-                        choices=['windows',
-                                 'linux',
-                                 'none']
-                    )
-                )
-            ),
             description=dict(
                 type='str'
             ),
             author=dict(
-                type='str'
-            ),
-            managed_image_id=dict(
                 type='str'
             ),
             state=dict(
@@ -255,14 +214,11 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
 
         dict_camelize(self.custom_image, ['vm', 'windows_os_info', 'windows_os_state'], True)
         dict_camelize(self.custom_image, ['vm', 'linux_os_info', 'linux_os_state'], True)
-        dict_camelize(self.custom_image, ['vhd', 'os_type'], True)
 
         response = None
 
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
                                                     base_url=self._cloud_environment.endpoints.resource_manager)
-
-        resource_group = self.get_resource_group(self.resource_group)
 
         old_response = self.get_customimage()
 
