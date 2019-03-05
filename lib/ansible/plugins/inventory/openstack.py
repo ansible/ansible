@@ -23,6 +23,8 @@ DOCUMENTATION = '''
     description:
         - Get inventory hosts from OpenStack clouds
         - Uses openstack.(yml|yaml) YAML configuration file to configure the inventory plugin
+        - If the plugin configuration file starts with ``---`` (the yaml document
+          start indicator,) the ``.(yml|yaml)`` extension may be omitted. (Version 2.8)
         - Uses standard clouds.yaml YAML configuration file to configure cloud credentials
     options:
         plugin:
@@ -326,6 +328,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         if super(InventoryModule, self).verify_file(path):
             for fn in ('openstack', 'clouds'):
+                if path.endswith(fn) and self.verify_yaml_header(path):
+                    return True
                 for suffix in ('yaml', 'yml'):
                     maybe = '{fn}.{suffix}'.format(fn=fn, suffix=suffix)
                     if path.endswith(maybe):

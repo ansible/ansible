@@ -1,0 +1,4 @@
+---
+minor_changes:
+- openstack inventory plugin - accept inventory files with names ending in
+  'openstack' or 'cloud' when the ``---`` yaml doc-start indicator is used.
