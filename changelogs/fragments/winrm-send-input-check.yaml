@@ -1,0 +1,2 @@
+bugfixes:
+- winrm - attempt to recover from a WinRM send input failure if possible
