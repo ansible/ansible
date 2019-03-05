@@ -23,6 +23,7 @@
    - import_tasks: tests-AAAA.yml
    - import_tasks: tests-CNAME.yml
    - import_tasks: tests-PTR.yml
+   - import_tasks: tests-diff.yml
 
   always:
    - name: Clean slate
