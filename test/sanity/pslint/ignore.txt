@@ -30,9 +30,7 @@ lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidGlobalVars
 lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_domain_membership.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain_membership.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingEmptyCatchBlock
-lib/ansible/modules/windows/win_dsc.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_eventlog.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
@@ -72,7 +70,6 @@ lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSAvoidUsingCmdletAliases
-test/integration/targets/win_dsc/templates/ANSIBLE_xTestResource.psm1 PSAvoidDefaultValueForMandatoryParameter
 test/integration/targets/win_iis_webbinding/library/test_get_webbindings.ps1 PSUseApprovedVerbs
 test/integration/targets/win_module_utils/library/argv_parser_test.ps1 PSUseApprovedVerbs
 test/integration/targets/win_module_utils/library/camel_conversion_test.ps1 PSUseDeclaredVarsMoreThanAssignments
