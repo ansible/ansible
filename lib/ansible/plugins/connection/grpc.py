@@ -216,7 +216,7 @@ class Connection(NetworkConnectionBase):
         """
         if not HAS_GRPC:
             raise AnsibleError(
-                "grpcio is required to use the grpc connection type. Please run 'pip install grpcio'"
+                "grpcio is required to use the gRPC connection type. Please run 'pip install grpcio'"
             )
 
         host = self.get_option('host')
