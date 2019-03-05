@@ -69,6 +69,40 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
+candidate:
+  description: The configuration sent to the device.
+  returned: When the method is not delete
+  type: dict
+  sample: |
+        {
+            "vpn-service": [
+                {
+                    "customer-name": "red",
+                    "vpn-id": "blue_vpn1",
+                    "vpn-service-topology": "ietf-l3vpn-svc:any-to-any"
+                }
+            ]
+        }
+running:
+  description: The current running configuration on the device.
+  returned: When the method is not delete
+  type: dict
+  sample: |
+        {
+            "vpn-service": [
+                {
+                  "vpn-id": "red_vpn2",
+                  "customer-name": "blue",
+                  "vpn-service-topology": "ietf-l3vpn-svc:any-to-any"
+                },
+                {
+                  "vpn-id": "blue_vpn1",
+                  "customer-name": "red",
+                  "vpn-service-topology": "ietf-l3vpn-svc:any-to-any"
+                }
+            ]
+        }
+
 '''
 
 import json
@@ -153,8 +187,6 @@ def main():
 
     except ConnectionError as exc:
         module.fail_json(msg=str(exc), code=exc.code)
-
-    result['response'] = response
 
     module.exit_json(**result)
 
