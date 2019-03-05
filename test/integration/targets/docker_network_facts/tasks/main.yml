@@ -18,8 +18,8 @@
   - assert:
       that:
       - "not result.exists"
-      - "'docker_network' in result"
-      - "result.docker_network is none"
+      - "'network' in result"
+      - "result.network is none"
 
   - name: Make sure network exists
     docker_network:
@@ -50,9 +50,9 @@
   - assert:
       that:
       - result.exists
-      - "'docker_network' in result"
-      - "result.docker_network"
-      - "result.docker_network == docker_inspect_result[0]"
+      - "'network' in result"
+      - "result.network"
+      - "result.network == docker_inspect_result[0]"
 
   when: docker_py_version is version('1.8.0', '>=') and docker_api_version is version('1.21', '>=')
 

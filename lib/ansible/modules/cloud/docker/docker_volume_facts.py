@@ -52,7 +52,7 @@ EXAMPLES = '''
 
 - name: Print information about volume
   debug:
-    var: result.docker_volume
+    var: result.volume
   when: result.exists
 '''
 
@@ -63,7 +63,7 @@ exists:
     type: bool
     returned: always
     sample: true
-docker_volume:
+volume:
     description:
       - Volume inspection results for the affected volume.
       - Will be C(None) if volume does not exist.
@@ -115,7 +115,7 @@ def main():
     client.module.exit_json(
         changed=False,
         exists=(True if volume else False),
-        docker_volume=volume,
+        volume=volume,
     )
 
 

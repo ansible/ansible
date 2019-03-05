@@ -143,40 +143,40 @@ can_talk_to_docker:
     returned: both on success and on error
     type: bool
 
-docker_host_facts:
+host_facts:
     description:
       - Facts representing the basic state of the docker host. Matches the C(docker system info) output.
     returned: always
     type: dict
-docker_volumes_list:
+volumes:
     description:
       - List of dict objects containing the basic information about each volume.
         Keys matches the C(docker volume ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(volumes) is C(yes)
     type: list
-docker_networks_list:
+networks:
     description:
       - List of dict objects containing the basic information about each network.
         Keys matches the C(docker network ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(networks) is C(yes)
     type: list
-docker_containers_list:
+containers:
     description:
       - List of dict objects containing the basic information about each container.
         Keys matches the C(docker container ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(containers) is C(yes)
     type: list
-docker_images_list:
+images:
     description:
       - List of dict objects containing the basic information about each image.
         Keys matches the C(docker image ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(images) is C(yes)
     type: list
-docker_disk_usage:
+disk_usage:
     description:
       - Information on summary disk usage by images, containers and volumes on docker host
         unless I(verbose_output=yes). See description for I(verbose_output).
@@ -209,14 +209,14 @@ class DockerHostManager(DockerBaseClass):
 
         listed_objects = ['volumes', 'networks', 'containers', 'images']
 
-        self.results['docker_host_facts'] = self.get_docker_host_facts()
+        self.results['host_facts'] = self.get_docker_host_facts()
 
         if self.client.module.params['disk_usage']:
-            self.results['docker_disk_usage'] = self.get_docker_disk_usage_facts()
+            self.results['disk_usage'] = self.get_docker_disk_usage_facts()
 
         for docker_object in listed_objects:
             if self.client.module.params[docker_object]:
-                returned_name = "docker_" + docker_object + "_list"
+                returned_name = docker_object
                 filter_name = docker_object + "_filters"
                 filters = clean_dict_booleans_for_docker_api(client.module.params.get(filter_name))
                 self.results[returned_name] = self.get_docker_items_list(docker_object, filters)
@@ -314,7 +314,6 @@ def main():
 
     results = dict(
         changed=False,
-        docker_host_facts=[]
     )
 
     DockerHostManager(client, results)
