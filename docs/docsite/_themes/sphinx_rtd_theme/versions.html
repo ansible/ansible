@@ -33,5 +33,23 @@
 
     </div>
   </div>
+{% else %}
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book">Ansible Version docs</span>
+      v: {{ current_version }}
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl>
+        <dt>{{ _('Versions') }}</dt>
+        {% for slug in available_versions %}
+          <dd>
+            <a href="{{ doc_base_url }}/{{ slug }}/index.html">{{ slug }}</a>
+          </dd>
+        {% endfor %}
+      </dl>
+    </div>
+  </div>
 {% endif %}
 

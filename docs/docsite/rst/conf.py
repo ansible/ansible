@@ -240,3 +240,9 @@ autoclass_content = 'both'
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2-2.7.13.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3-3.6.2.inv')),
                        'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja2-2.9.7.inv'))}
+
+html_context = {
+    'current_version': '2.7',
+    'available_versions': ('2.4', '2.5', '2.6', '2.7', 'latest', 'devel'),
+    'doc_base_url': 'https://docs.ansible.com/ansible'
+}
