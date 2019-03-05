@@ -38,7 +38,7 @@ lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_get_url.ps1 PSUseApprovedVerbs
+lib/ansible/modules/windows/win_get_url.ps1 PSUsePSCredentialType  # Credential param can take a base64 encoded string as well as a PSCredential
 lib/ansible/modules/windows/win_hotfix.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_webbinding.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_website.ps1 PSAvoidUsingCmdletAliases
