@@ -241,18 +241,18 @@ class ClusterNetworksModule(BaseModule):
         return (
             equal(self._cluster_network.get('required'), entity.required) and
             equal(self._cluster_network.get('display'), entity.display) and
-            equal(
-                sorted([
-                    usage
-                    for usage in ['display', 'gluster', 'migration']
-                    if self._cluster_network.get(usage, False)
-                ]),
-                sorted([
+            all(
+                x in [
                     str(usage)
                     for usage in getattr(entity, 'usages', [])
                     # VM + MANAGEMENT is part of root network
                     if usage != otypes.NetworkUsage.VM and usage != otypes.NetworkUsage.MANAGEMENT
-                ]),
+                ]
+                for x in [
+                    usage
+                    for usage in ['display', 'gluster', 'migration']
+                    if self._cluster_network.get(usage, False)
+                ]
             )
         )
 
