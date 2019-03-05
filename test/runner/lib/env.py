@@ -14,6 +14,7 @@ import time
 
 from lib.config import (
     CommonConfig,
+    TestConfig,
 )
 
 from lib.util import (
@@ -63,6 +64,17 @@ def command_env(args):
     """
     :type args: EnvConfig
     """
+    show_dump_env(args)
+    set_timeout(args)
+
+
+def show_dump_env(args):
+    """
+    :type args: EnvConfig
+    """
+    if not args.show and not args.dump:
+        return
+
     data = dict(
         ansible=dict(
             version=get_ansible_version(args),
@@ -94,8 +106,6 @@ def command_env(args):
     if args.dump and not args.explain:
         with open('test/results/bot/data-environment.json', 'w') as results_fd:
             results_fd.write(json.dumps(data, sort_keys=True))
-
-    set_timeout(args)
 
 
 def set_timeout(args):
@@ -148,9 +158,14 @@ def configure_timeout(args):
     """
     :type args: CommonConfig
     """
-    if isinstance(args, EnvConfig):
-        return  # the 'env' command is not subject to timeouts
+    if isinstance(args, TestConfig):
+        configure_test_timeout(args)  # only tests are subject to the timeout
 
+
+def configure_test_timeout(args):
+    """
+    :type args: TestConfig
+    """
     timeout = get_timeout()
 
     if not timeout:
