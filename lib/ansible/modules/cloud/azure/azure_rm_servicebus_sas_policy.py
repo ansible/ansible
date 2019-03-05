@@ -46,7 +46,7 @@ options:
         description:
             - Type of the messaging queue.
             - Cannot set C(topc) when this field set.
-    topic
+    topic:
         description:
             - Name of the messaging topic.
             - Cannot set C(queue) when this field set.
@@ -82,7 +82,7 @@ EXAMPLES = '''
   azure_rm_servicebus_sas_policy:
       name: deadbeef
       queue: qux
-      namespace bar
+      namespace: bar
       resource_group: foo
 '''
 RETURN = '''
@@ -212,7 +212,7 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
     def regenerate_sas_key(self, key_type):
         try:
             client = self._get_client()
-            key  = str.capitalize(key_type) + 'Key'
+            key = str.capitalize(key_type) + 'Key'
             if self.queue or self.topic:
                 client.regenerate_keys(self.resource_group, self.namespace, self.queue or self.topic, self.name, key)
             else:

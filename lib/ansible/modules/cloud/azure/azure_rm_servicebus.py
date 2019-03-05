@@ -107,7 +107,6 @@ class AzureRMServiceBus(AzureRMModuleBase):
         )
 
         super(AzureRMServiceBus, self).__init__(self.module_arg_spec,
-                                                required_if=required_if,
                                                 supports_check_mode=True)
 
     def exec_module(self, **kwargs):
@@ -184,15 +183,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             value = getattr(instance, attribute)
             if not value:
                 continue
-            if attribute_map[attribute]['type'] == 'duration':
-                if is_valid_timedelta(value):
-                    key = duration_spec_map.get(attribute) or attribute
-                    result[key] = int(value.total_seconds())
-            elif attribute == 'status':
-                result['status'] = _camel_to_snake(value)
-            elif isinstance(value, self.servicebus_models.MessageCountDetails):
-                result[attribute] = value.as_dict()
-            elif isinstance(value, self.servicebus_models.SBSku):
+            if isinstance(value, self.servicebus_models.SBSku):
                 result[attribute] = value.name.lower()
             elif isinstance(value, datetime):
                 result[attribute] = str(value)

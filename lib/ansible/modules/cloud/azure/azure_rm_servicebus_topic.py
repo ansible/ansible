@@ -15,7 +15,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 
 DOCUMENTATION = '''
 ---
-module: azure_rm_servicebus_Topic
+module: azure_rm_servicebus_topic
 version_added: "2.8"
 short_description: Manage Azure Service Bus.
 description:
@@ -45,13 +45,9 @@ options:
             - present
     auto_delete_on_idle_in_seconds:
         description:
-            - Time idle interval after which a Topic is automatically deleted.
+            - Time idle interval after which a topic is automatically deleted.
             - The minimum duration is 5 minutes.
         type: int
-    dead_lettering_on_message_expiration:
-        description:
-            - A value that indicates whether a Topic has dead letter support when a message expires.
-        type: bool
     default_message_time_to_live_seconds:
         description:
             - Default message timespan to live value.
@@ -71,23 +67,6 @@ options:
         description:
             - A value that indicates whether the topic is to be partitioned across multiple message brokers.
         type: bool
-    forward_dead_lettered_messages_to:
-        description:
-            - Topic or queue name to forward the Dead Letter message for a Topic.
-    forward_to:
-        description:
-            - Topic or queue name to forward the messages for a Topic.
-    lock_duration_in_seconds:
-        description:
-            - Timespan duration of a peek-lock.
-            - The amount of time that the message is locked for other receivers.
-            - The maximum value for LockDuration is 5 minutes.
-        type: int
-    max_delivery_count:
-        description:
-            - he maximum delivery count.
-            - A message is automatically deadlettered after this number of deliveries.
-        type: int
     max_size_in_mb:
         description:
             - The maximum size of the topic in megabytes, which is the size of memory allocated for the topic.
@@ -100,6 +79,10 @@ options:
         description:
             - TimeSpan structure that defines the duration of the duplicate detection history.
         type: int
+    support_ordering:
+        description:
+            - Value that indicates whether the topic supports ordering.
+        type: bool
     status:
         description:
             - Status of the entity.
@@ -238,7 +221,7 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
             if not original:
                 changed = True
                 result = instance
-            else: 
+            else:
                 result = original
                 attribute_map = set(self.servicebus_models.SBTopic._attribute_map.keys()) - set(self.servicebus_models.SBTopic._validation.keys())
                 for attribute in attribute_map:
