@@ -22,7 +22,7 @@ requirements:
 options:
   host:
     description:
-      - Specifies the remote device FQDN or IP address to establish the GRPC
+      - Specifies the remote device FQDN or IP address to establish the gRPC
         connection to.
     default: inventory_hostname
     vars:
