@@ -46,6 +46,10 @@ from lib.constants import (
     TIMEOUT_PATH,
 )
 
+from lib.test import (
+    TestTimeout,
+)
+
 
 class EnvConfig(CommonConfig):
     """Configuration for the tools command."""
@@ -176,7 +180,11 @@ def configure_test_timeout(args):
     timeout_deadline = timeout['deadline']
     timeout_remaining = timeout_deadline - timeout_start
 
+    test_timeout = TestTimeout(timeout_duration)
+
     if timeout_remaining <= datetime.timedelta():
+        test_timeout.write(args)
+
         raise ApplicationError('The %d minute test timeout expired %s ago at %s.' % (
             timeout_duration, timeout_remaining * -1, timeout_deadline))
 
@@ -185,11 +193,9 @@ def configure_test_timeout(args):
 
     def timeout_handler(_dummy1, _dummy2):
         """Runs when SIGUSR1 is received."""
-        actual_end = datetime.datetime.utcnow()
-        actual_duration = actual_end - timeout_start
+        test_timeout.write(args)
 
-        raise ApplicationError('The %d minute test timeout expired after %s at %s.' % (
-            timeout_duration, actual_duration, actual_end))
+        raise ApplicationError('Tests aborted after exceeding the %d minute time limit.' % timeout_duration)
 
     def timeout_waiter(timeout_seconds):
         """
