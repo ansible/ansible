@@ -75,6 +75,14 @@
       that:
           - not output.changed
 
+- name: Create test policy
+  azure_rm_servicebus_sas_policy:
+      name: testpolicy
+      resource_group: "{{ resource_group }}"
+      namespace: "ns{{ rpfx }}"
+      topic: "topic{{ rpfx }}"
+      right: manage
+
 - name: Create a subscription
   azure_rm_servicebus_topic_subscription:
       name: "subs{{ rpfx }}"
