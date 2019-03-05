@@ -106,7 +106,7 @@ options:
       - The option overrides SSL target name used for SSL host name checking.
         The name used for SSL host name checking will be the target parameter
         (assuming that the secure channel is an SSL channel). If this parameter is
-        specified and the underlying is not an SSL channel, it will just be ignored.
+        specified and the underlying secure channel is not an SSL channel, it will just be ignored.
     ini:
       - section: grpc_connection
         key: ssl_target_name_override
