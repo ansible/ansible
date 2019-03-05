@@ -18,7 +18,7 @@
 import os
 import sys
 
-from units.compat import mock, unittest
+from ansible.compat.tests import mock, unittest
 from ansible.module_utils.gcp_utils import GcpRequest
 
 
@@ -29,7 +29,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             'test': 'original'
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEquals(request == request, True)
 
     def test_simple_different(self):
         value1 = {
@@ -45,7 +45,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         }
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
-        self.assertNotEquals(request1, request2)
+        self.assertEquals(request1 == request2, False)
         self.assertEquals(request1.difference(request2), difference)
 
     def test_nested_dictionaries_no_difference(self):
@@ -59,7 +59,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             'test': 'original'
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEquals(request == request, True)
 
     def test_nested_dictionaries_with_difference(self):
         value1 = {
@@ -90,7 +90,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         }
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
-        self.assertNotEquals(request1, request2)
+        self.assertEquals(request1 == request2, False)
         self.assertEquals(request1.difference(request2), difference)
 
     def test_arrays_strings_no_difference(self):
@@ -101,7 +101,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             ]
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEquals(request == request, True)
 
     def test_arrays_strings_with_difference(self):
         value1 = {
@@ -124,7 +124,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         }
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
-        self.assertNotEquals(request1, request2)
+        self.assertEquals(request1 == request2, False)
         self.assertEquals(request1.difference(request2), difference)
 
     def test_arrays_dicts_with_no_difference(self):
@@ -140,7 +140,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
             ]
         }
         request = GcpRequest(value1)
-        self.assertEquals(request, request)
+        self.assertEquals(request == request, True)
 
     def test_arrays_dicts_with_difference(self):
         value1 = {
@@ -149,9 +149,6 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
                     'test': 'value',
                     'foo': 'bar'
                 },
-                {
-                    'different': 'dict'
-                }
             ]
         }
         value2 = {
@@ -172,5 +169,7 @@ class GCPRequestDifferenceTestCase(unittest.TestCase):
         }
         request1 = GcpRequest(value1)
         request2 = GcpRequest(value2)
-        self.assertNotEquals(request1, request2)
+        self.assertEquals(request1 == request2, False)
         self.assertEquals(request1.difference(request2), difference)
+
+

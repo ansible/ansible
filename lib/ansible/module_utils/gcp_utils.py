@@ -264,11 +264,19 @@ class GcpRequest(object):
     # Takes in two lists and compares them.
     def _compare_lists(self, list1, list2):
         difference = []
+        list1.sort()
+        list2.sort()
         for index in range(len(list1)):
             value1 = list1[index]
-            if index < len(list2):
-                value2 = list2[index]
-                difference.append(self._compare_value(value1, value2))
+            # If items are dicts or arrays, we're assuming the next value
+            # is the correct one.
+            if isinstance(value1, dict) or isinstance(value1, list):
+                if index < len(list2):
+                    value2 = list2[index]
+                    difference.append(self._compare_value(value1, value2))
+            else:
+                if value1 not in list2:
+                    difference.append(value1)
 
         difference2 = []
         for value in difference:
