@@ -1,8 +1,12 @@
 ---
 - name: ensure testing folder is present
   win_file:
-    path: '{{test_win_get_url_path}}'
+    path: '{{ item }}'
     state: directory
+  loop:
+    - '{{ test_win_get_url_path }}'
+    - '{{ remote_http_path }}'
+    - '{{ remote_tmp_path }}'
 
 - name: copy across testing files
   win_copy:
@@ -41,6 +45,9 @@
   - name: run FTP tests
     include_tasks: tests_ftp.yml
 
+  - name: run checksum tests
+    include_tasks: tests_checksum.yml
+
   always:
   - name: remove SlimFTPd service
     win_service:
@@ -53,7 +60,10 @@
       level: machine
       state: absent
 
-  - name: remove testing folder
+  - name: remove testing folders
     win_file:
-      path: '{{test_win_get_url_path}}'
+      path: '{{ item }}'
       state: absent
+    loop:
+      - '{{ test_win_get_url_path }}'
+      - '{{ remote_tmp_path }}'
