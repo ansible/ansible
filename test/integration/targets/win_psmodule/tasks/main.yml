@@ -7,6 +7,7 @@
 
 - name: get PowerShell version
   win_shell: '$PSVersionTable.PSVersion.Major'
+  changed_when: false
   register: powershell_major_version
 
 - name: update PackageManagement and PowerShellGet when PowerShell < 5.0

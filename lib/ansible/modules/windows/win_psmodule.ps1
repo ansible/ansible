@@ -33,12 +33,12 @@ Function Install-NugetProvider {
     )
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
     if (-not($PackageProvider)){
-        try{
+        try {
             Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -WhatIf:$CheckMode | out-null
             $result.changed = $true
             $result.nuget_changed = $true
         }
-        catch{
+        catch [ System.Exception ] {
             $ErrorMessage = "Problems adding package provider: $($_.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
@@ -79,7 +79,7 @@ Function Install-PrereqModule {
 
                     $result.changed = $true
                 }
-                catch {
+                catch [ System.Exception ] {
                     $ErrorMessage = "Problems adding a prerequisite module $Name $($_.Exception.Message)"
                     Fail-Json $result $ErrorMessage
                 }
@@ -197,8 +197,8 @@ Function Install-PsModule {
             $result.changed = $true
             $result.output = "Module $($Name) installed"
         }
-        catch {
-            $ErrorMessage = "Problems installing $($Name) module: $($ErrorDetails.Exception.Message)"
+        catch [ System.Exception ] {
+            $ErrorMessage = "Problems installing $($Name) module: $($_.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
     }
@@ -244,8 +244,8 @@ Function Remove-PsModule {
                 $result.output = "Module $($Name) removed"
             }
         }
-        catch {
-            $ErrorMessage = "Problems removing $($Name) module: $($ErrorDetails.Exception.Message)"
+        catch [ System.Exception ] {
+            $ErrorMessage = "Problems uninstalling $($Name) module: $($_.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
     }
@@ -275,7 +275,7 @@ Function Find-LatestPsModule {
         $LatestModule = Find-Module @ht
         $LatestModuleVersion = $LatestModule.Version
     }
-    catch {
+    catch [ System.Exception ] {
         $ErrorMessage = "Cant find the module $($Name): $($_.Exception.Message)"
         Fail-Json $result $ErrorMessage
     }
@@ -294,10 +294,10 @@ Function Install-Repository {
     # Install NuGet provider if needed.
     Install-NugetProvider -CheckMode $CheckMode
 
-    $Repo = (Get-PSRepository).SourceLocation
+    $Repos = (Get-PSRepository).SourceLocation
 
     # If repository isn't already present, try to register it as trusted.
-    if ($Repo -notcontains $Url){
+    if ($Repos -notcontains $Url){
       try {
            if ( -not ($CheckMode) ) {
                Register-PSRepository -Name $Name -SourceLocation $Url -InstallationPolicy Trusted -ErrorAction Stop
@@ -306,7 +306,7 @@ Function Install-Repository {
           $result.repository_changed = $true
       }
       catch {
-        $ErrorMessage = "Problems adding $($Name) repository: $($_.Exception.Message)"
+        $ErrorMessage = "Problems registering $($Name) repository: $($_.Exception.Message)"
         Fail-Json $result $ErrorMessage
       }
     }
@@ -330,8 +330,8 @@ Function Remove-Repository{
             $result.changed = $true
             $result.repository_changed = $true
         }
-        catch {
-            $ErrorMessage = "Problems removing $($Name)repository: $($_.Exception.Message)"
+        catch [ System.Exception ] {
+            $ErrorMessage = "Problems unregistering $($Name)repository: $($_.Exception.Message)"
             Fail-Json $result $ErrorMessage
         }
     }
