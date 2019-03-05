@@ -281,7 +281,12 @@ def db_dump(module, target, target_opts="",
         cmd += " {0} ".format(target_opts)
 
     if comp_prog_path:
-        cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
+        # Use a fifo to be notfied of an error in pg_dump
+        # Using shell pipe has no way to return the code of the first command
+        # in a portable way.
+        fifo = os.path.join(module.tmpdir, 'pg_fifo')
+        os.mkfifo(fifo)
+        cmd = '{1} <{3} > {2} & {0} >{3}'.format(cmd, comp_prog_path, pipes.quote(target), fifo)
     else:
         cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
 
@@ -397,9 +402,6 @@ def main():
         supports_check_mode=True
     )
 
-    if not HAS_PSYCOPG2:
-        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
-
     db = module.params["db"]
     owner = module.params["owner"]
     template = module.params["template"]
@@ -412,6 +414,11 @@ def main():
     changed = False
     maintenance_db = module.params['maintenance_db']
     session_role = module.params["session_role"]
+
+    raw_connection = state in ("dump", "restore")
+
+    if not HAS_PSYCOPG2 and not raw_connection:
+        module.fail_json(msg=missing_required_lib('psycopg2'), exception=PSYCOPG2_IMP_ERR)
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -437,34 +444,35 @@ def main():
         target = "{0}/{1}.sql".format(os.getcwd(), db)
         target = os.path.expanduser(target)
 
-    try:
-        pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
-        db_connection = psycopg2.connect(database=maintenance_db, **kw)
-
-        # Enable autocommit so we can create databases
-        if psycopg2.__version__ >= '2.4.2':
-            db_connection.autocommit = True
-        else:
-            db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    except pgutils.LibraryError as e:
-        module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
-
-    except TypeError as e:
-        if 'sslrootcert' in e.args[0]:
-            module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
-                             exception=traceback.format_exc())
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    except Exception as e:
-        module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
-
-    if session_role:
+    if not raw_connection:
         try:
-            cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+            pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
+            db_connection = psycopg2.connect(database=maintenance_db, **kw)
+
+            # Enable autocommit so we can create databases
+            if psycopg2.__version__ >= '2.4.2':
+                db_connection.autocommit = True
+            else:
+                db_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+            cursor = db_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        except pgutils.LibraryError as e:
+            module.fail_json(msg="unable to connect to database: {0}".format(to_native(e)), exception=traceback.format_exc())
+
+        except TypeError as e:
+            if 'sslrootcert' in e.args[0]:
+                module.fail_json(msg='Postgresql server must be at least version 8.4 to support sslrootcert. Exception: {0}'.format(to_native(e)),
+                                 exception=traceback.format_exc())
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
         except Exception as e:
-            module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
+            module.fail_json(msg="unable to connect to database: %s" % to_native(e), exception=traceback.format_exc())
+
+        if session_role:
+            try:
+                cursor.execute('SET ROLE %s' % pg_quote_identifier(session_role, 'role'))
+            except Exception as e:
+                module.fail_json(msg="Could not switch role: %s" % to_native(e), exception=traceback.format_exc())
 
     try:
         if module.check_mode:
@@ -487,9 +495,6 @@ def main():
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
         elif state in ("dump", "restore"):
-            if not db_exists(cursor, db) and state == "dump":
-                module.fail_json(
-                    msg="database \"{db}\" does not exist".format(db=db))
             method = state == "dump" and db_dump or db_restore
             try:
                 rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
