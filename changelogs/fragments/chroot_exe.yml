@@ -1,0 +1,2 @@
+minor_changes:
+    - Add config option for chroot binary for chroot connection plugin
