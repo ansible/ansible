@@ -201,11 +201,13 @@ class Display(with_metaclass(Singleton, object)):
                 self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
+
+        to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color=C.COLOR_VERBOSE)
+                self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
