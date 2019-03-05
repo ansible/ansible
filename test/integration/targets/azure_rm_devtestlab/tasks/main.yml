@@ -563,7 +563,7 @@
 
     # azure_rm_devtestlabglobalschedule
 - name: Create instance of DevTest Lab Global Schedule
-  azure_rm_devtestlabglobalschedule:
+  azure_rm_devtestlabschedule:
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: LabVmsShutdown
