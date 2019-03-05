@@ -182,7 +182,7 @@ class AzureRMDtlPolicy(AzureRMModuleBase):
         super(AzureRMDtlPolicy, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                supports_check_mode=True,
                                                supports_tags=True,
-                                               required_id=required_if)
+                                               required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
