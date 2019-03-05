@@ -2263,6 +2263,13 @@ def main():
             ) is not None,
             usage_msg='set placement.preferences'
         ),
+        placement_config_constraints=dict(
+            docker_py_version='2.4.0',
+            detect_usage=lambda c: (c.module.params['placement'] or {}).get(
+                'constraints'
+            ) is not None,
+            usage_msg='set placement.constraints'
+        ),
     )
 
     required_if = [
