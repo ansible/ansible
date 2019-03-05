@@ -64,7 +64,6 @@ options:
     type: path
     default: ~/.docker/config.json
     aliases:
-      - self.config_path
       - dockercfg_path
   state:
     version_added: '2.3'
