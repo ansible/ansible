@@ -25,6 +25,7 @@ $spec = @{
         force = @{ type = "bool"; default = $false }
         name = @{ type = "list"; elements = "str"; required = $true }
         package_params = @{ type = "str"; aliases = "params" }
+        pinned = @{ type = "bool" }
         proxy_url = @{ type = "str" }
         proxy_username = @{ type = "str" }
         proxy_password = @{ type = "str"; no_log = $true }
@@ -51,6 +52,7 @@ $ignore_dependencies = $module.Params.ignore_dependencies
 $force = $module.Params.force
 $name = $module.Params.name
 $package_params = $module.Params.package_params
+$pinned = $module.Params.pinned
 $proxy_url = $module.Params.proxy_url
 $proxy_username = $module.Params.proxy_username
 $proxy_password = $module.Params.proxy_password
@@ -340,6 +342,75 @@ Function Get-ChocolateyPackageVersion {
     }
 
     return ,$versions
+}
+
+Function Get-ChocolateyPin {
+    param(
+        [Parameter(Mandatory=$true)][String]$choco_path
+    )
+
+    $command = Argv-ToString -arguments @($choco_path, "pin", "list", "--limit-output")
+    $res = Run-Command -command $command
+    if ($res.rc -ne 0) {
+        $module.Result.command = $command
+        $module.Result.rc = $res.rc
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson("Error getting list of pinned packages")
+    }
+
+    $stdout = $res.stdout.Trim()
+    $pins = @{}
+
+    $stdout.Split("`r`n", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object {
+        $package = $_.Substring(0, $_.LastIndexOf("|"))
+        $version = $_.Substring($_.LastIndexOf("|") + 1)
+
+        if ($pins.ContainsKey($package)) {
+            $pinned_versions = $pins.$package
+        } else {
+            $pinned_versions = [System.Collections.Generic.List`1[String]]@()
+        }
+        $pinned_versions.Add($version)
+        $pins.$package = $pinned_versions
+    }
+    return ,$pins
+}
+
+Function Set-ChocolateyPin {
+    param(
+        [Parameter(Mandatory=$true)][String]$choco_path,
+        [Parameter(Mandatory=$true)][String]$name,
+        [Switch]$pin,
+        [String]$version
+    )
+    if ($pin) {
+        $action = "add"
+        $err_msg = "Error pinning package '$name'"
+    } else {
+        $action = "remove"
+        $err_msg = "Error unpinning package '$name'"
+    }
+
+    $arguments = [System.Collections.ArrayList]@($choco_path, "pin", $action, "--name", $name)
+    if ($version) {
+        $err_msg += " at '$version'"
+        $arguments.Add("--version") > $null
+        $arguments.Add($version) > $null
+    }
+    $common_args = Get-CommonChocolateyArguments
+    $arguments.AddRange($common_args)
+
+    $command = Argv-ToString -arguments $arguments
+    $res = Run-Command -command $command
+    if ($res.rc -ne 0) {
+        $module.Result.command = $command
+        $module.Result.rc = $res.rc
+        $module.Result.stdout = $res.stdout
+        $module.Result.stderr = $res.stderr
+        $module.FailJson($err_msg)
+    }
+    $module.result.changed = $true
 }
 
 Function Update-ChocolateyPackage {
@@ -644,6 +715,30 @@ if ($state -in @("downgrade", "latest", "present", "reinstalled")) {
         $installed_packages = ($package_info.GetEnumerator() | Where-Object { $null -ne $_.Value }).Key
         if ($null -ne $installed_packages) {
             Update-ChocolateyPackage -packages $installed_packages @common_args
+        }
+    }
+
+    # Now we want to pin/unpin any packages now that it has been installed/upgraded
+    if ($null -ne $pinned) {
+        $pins = Get-ChocolateyPin -choco_path $choco_path
+
+        foreach ($package in $name) {
+            if ($pins.ContainsKey($package)) {
+                if (-not $pinned -and $null -eq $version) {
+                    # No version is set and pinned=no, we want to remove all pins on the package. There is a bug in
+                    # 'choco pin remove' with multiple versions where an older version might be pinned but
+                    # 'choco pin remove' will still fail without an explicit version. Instead we take the literal
+                    # interpretation that pinned=no and no version means the package has no pins at all
+                    foreach ($v in $pins.$package) {
+                        Set-ChocolateyPin -choco_path $choco_path -name $package -version $v
+                    }
+                } elseif ($null -ne $version -and $pins.$package.Contains($version) -ne $pinned) {
+                    Set-ChocolateyPin -choco_path $choco_path -name $package -pin:$pinned -version $version
+                }
+            } elseif ($pinned) {
+                # Package had no pins but pinned=yes is set.
+                Set-ChocolateyPin -choco_path $choco_path -name $package -pin -version $version
+            }
         }
     }
 }
