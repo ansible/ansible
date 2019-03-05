@@ -175,8 +175,9 @@ class AzureRMSchedule(AzureRMModuleBase):
             self.name = 'LabVmsShutdown'
             self.schedule['task_type'] = 'LabVmsShutdownTask'
 
-        self.schedule['daily_recurrence'] = {'time': self.schedule.pop('time')}
-        self.schedule['time_zone_id'] = self.schedule['time_zone_id'].upper()
+        if self.state == 'present':
+            self.schedule['daily_recurrence'] = {'time': self.schedule.pop('time')}
+            self.schedule['time_zone_id'] = self.schedule['time_zone_id'].upper()
 
         response = None
 
