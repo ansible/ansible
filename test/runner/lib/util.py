@@ -380,23 +380,30 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         stderr = None
 
     start = time.time()
+    process = None
 
     try:
-        process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
-    except OSError as ex:
-        if ex.errno == errno.ENOENT:
-            raise ApplicationError('Required program "%s" not found.' % cmd[0])
-        raise
+        try:
+            process = subprocess.Popen(cmd, env=env, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
+        except OSError as ex:
+            if ex.errno == errno.ENOENT:
+                raise ApplicationError('Required program "%s" not found.' % cmd[0])
+            raise
 
-    if communicate:
-        encoding = 'utf-8'
-        data_bytes = data.encode(encoding, 'surrogateescape') if data else None
-        stdout_bytes, stderr_bytes = process.communicate(data_bytes)
-        stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
-        stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
-    else:
-        process.wait()
-        stdout_text, stderr_text = None, None
+        if communicate:
+            encoding = 'utf-8'
+            data_bytes = data.encode(encoding, 'surrogateescape') if data else None
+            stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+            stdout_text = stdout_bytes.decode(encoding, str_errors) if stdout_bytes else u''
+            stderr_text = stderr_bytes.decode(encoding, str_errors) if stderr_bytes else u''
+        else:
+            process.wait()
+            stdout_text, stderr_text = None, None
+    finally:
+        if process and process.returncode is None:
+            process.kill()
+            display.info('')  # the process we're interrupting may have completed a partial line of output
+            display.notice('Killed command to avoid an orphaned child process during handling of an unexpected exception.')
 
     status = process.returncode
     runtime = time.time() - start
