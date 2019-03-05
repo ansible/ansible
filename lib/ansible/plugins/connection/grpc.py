@@ -132,7 +132,7 @@ options:
   persistent_command_timeout:
     type: int
     description:
-      - Configures, in seconds, this timeout is used as the default timeout
+      - Configures, in seconds,  the default timeout
         value when awaiting a response after issuing a call to a RPC. If the RPC
         does not return in timeout seconds, an error is generated and connection is
         closed.
