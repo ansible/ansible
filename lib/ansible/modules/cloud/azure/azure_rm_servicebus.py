@@ -135,7 +135,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
                 self.results['deleted'] = True
 
         if original:
-            self.results = self.to_dict()
+            self.results = self.to_dict(original)
             rules = self.get_auth_rules()
             for name in rules.keys():
                 rules[name]['keys'] = self.get_sas_key(name)
@@ -177,9 +177,9 @@ class AzureRMServiceBus(AzureRMModuleBase):
         except Exception:
             return None
 
-    def to_dict(self, instance, instance_type):
+    def to_dict(self, instance):
         result = dict()
-        attribute_map = instance_type._attribute_map
+        attribute_map = self.servicebus_models.SBNamespace._attribute_map
         for attribute in attribute_map.keys():
             value = getattr(instance, attribute)
             if not value:
@@ -207,6 +207,13 @@ class AzureRMServiceBus(AzureRMModuleBase):
         except Exception:
             pass
         return result
+
+    def get_sas_key(self, name):
+        try:
+            return self.servicebus_client.namespaces.list_keys(self.resource_group, self.name, name).as_dict()
+        except Exception:
+            pass
+        return None
 
     def policy_to_dict(self, rule):
         result = rule.as_dict()
