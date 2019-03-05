@@ -316,8 +316,8 @@ class Constructable(object):
         if groups and isinstance(groups, dict):
             self.templar.set_available_variables(variables)
             for group_name in groups:
-                group_name = to_safe_group_name(group_name)
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
+                group_name = to_safe_group_name(group_name)
                 try:
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:
