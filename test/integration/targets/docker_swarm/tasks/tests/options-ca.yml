@@ -44,8 +44,8 @@
     docker_swarm:
       advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
       state: present
-      signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
-      signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
       timeout: 120
     check_mode: yes
     diff: yes
@@ -56,17 +56,17 @@
     docker_swarm:
       advertise_addr: "{{ansible_default_ipv4.address | default('127.0.0.1')}}"
       state: present
-      signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
-      signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
       timeout: 120
     diff: yes
     register: output_2
     ignore_errors: yes
 
   - name: Private key
-    debug: msg="{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
+    debug: msg="{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
   - name: Cert
-    debug: msg="{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
+    debug: msg="{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
   - docker_swarm_facts:
     register: output
     ignore_errors: yes
@@ -77,8 +77,8 @@
   #- name: signing_ca_cert and signing_ca_key (idempotent)
   #  docker_swarm:
   #    state: present
-  #    signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
-  #    signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
+  #    signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+  #    signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
   #    timeout: 120
   #  diff: yes
   #  register: output_3
@@ -87,8 +87,8 @@
   #- name: signing_ca_cert and signing_ca_key (idempotent, check mode)
   #  docker_swarm:
   #    state: present
-  #    signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.pem') }}"
-  #    signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key1.key') }}"
+  #    signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key1.pem') }}"
+  #    signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key1.key') }}"
   #    timeout: 120
   #  check_mode: yes
   #  diff: yes
@@ -98,8 +98,8 @@
   - name: signing_ca_cert and signing_ca_key (change, check mode)
     docker_swarm:
       state: present
-      signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.pem') }}"
-      signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.key') }}"
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key2.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key2.key') }}"
       timeout: 120
     check_mode: yes
     diff: yes
@@ -109,8 +109,8 @@
   - name: signing_ca_cert and signing_ca_key (change)
     docker_swarm:
       state: present
-      signing_ca_cert: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.pem') }}"
-      signing_ca_key: "{{ lookup('file', role_path ~ '/' ~ output_dir ~ '/ansible_key2.key') }}"
+      signing_ca_cert: "{{ lookup('file', output_dir ~ '/ansible_key2.pem') }}"
+      signing_ca_key: "{{ lookup('file', output_dir ~ '/ansible_key2.key') }}"
       timeout: 120
     diff: yes
     register: output_6
