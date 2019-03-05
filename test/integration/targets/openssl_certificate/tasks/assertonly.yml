@@ -7,9 +7,6 @@
   openssl_csr:
     path: '{{ output_dir }}/csr_noext.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
-    subject:
-      commonName: www.example.com
-    useCommonNameForSAN: no
 
 - name: Generate selfsigned certificate (no extensions)
   openssl_certificate:
