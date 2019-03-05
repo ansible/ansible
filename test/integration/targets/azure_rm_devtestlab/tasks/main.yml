@@ -594,9 +594,36 @@
     name: myDtlPolicy
     status: yes
     fact_name: user_owned_lab_vm_count
-    #fact_data: 5
     evaluator_type: max_value_policy
     threshold: 5
+  register: output
+- debug:
+    var: output
+
+- name: Create instance of DevTest Lab Policy -- idempotent
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    status: yes
+    fact_name: user_owned_lab_vm_count
+    evaluator_type: max_value_policy
+    threshold: 5
+  register: output
+- debug:
+    var: output
+
+- name: Create instance of DevTest Lab Policy -- change value
+  azure_rm_devtestlabpolicy:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    policy_set_name: myDtlPolicySet
+    name: myDtlPolicy
+    status: yes
+    fact_name: user_owned_lab_vm_count
+    evaluator_type: max_value_policy
+    threshold: 6
   register: output
 - debug:
     var: output

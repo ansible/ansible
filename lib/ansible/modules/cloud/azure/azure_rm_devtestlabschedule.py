@@ -122,9 +122,6 @@ class AzureRMSchedule(AzureRMModuleBase):
                 required=True,
                 choices=['lab_vms_startup', 'lab_vms_shutdown']
             ),
-            location=dict(
-                type='str'
-            ),
             time=dict(
                 type='str'
             ),
