@@ -378,7 +378,14 @@ class CertificateSigningRequest(crypto_utils.OpenSSLObject):
             extensions = []
             if self.subjectAltName:
                 altnames = ', '.join(self.subjectAltName)
-                extensions.append(crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii')))
+                try:
+                    extensions.append(crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii')))
+                except OpenSSL.crypto.Error as e:
+                    raise CertificateSigningRequestError(
+                        'Error while parsing Subject Alternative Names {0} (check for missing type prefix, such as "DNS:"!): {1}'.format(
+                            ', '.join(["{0}".format(san) for san in self.subjectAltName]), str(e)
+                        )
+                    )
 
             if self.keyUsage:
                 usages = ', '.join(self.keyUsage)
