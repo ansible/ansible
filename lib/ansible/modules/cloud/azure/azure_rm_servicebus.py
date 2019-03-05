@@ -127,7 +127,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             changed = True
             if not self.check_mode:
                 original = self.create()
-        elif original:
+        elif self.state == 'absent' and original:
             changed = True
             original = None
             if not self.check_mode:
