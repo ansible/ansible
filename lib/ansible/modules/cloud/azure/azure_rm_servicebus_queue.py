@@ -100,6 +100,10 @@ options:
         description:
             - TimeSpan structure that defines the duration of the duplicate detection history.
         type: int
+    requires_session:
+        description:
+            - A value that indicates whether the queue supports the concept of sessions.
+        type: bool
     status:
         description:
             - Status of the entity.
@@ -220,7 +224,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
         )
 
         super(AzureRMServiceBusQueue, self).__init__(self.module_arg_spec,
-                                                supports_check_mode=True)
+                                                     supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 

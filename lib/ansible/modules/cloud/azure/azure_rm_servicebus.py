@@ -92,6 +92,7 @@ class AzureRMServiceBus(AzureRMModuleBase):
             resource_group=dict(type='str', required=True),
             name=dict(type='str', required=True),
             location=dict(type='str'),
+            state=dict(type='str', default='present', choices=['present', 'absent']),
             sku=dict(type='str', choices=['basic', 'standard', 'premium'], default='standard')
         )
 

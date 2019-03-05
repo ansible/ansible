@@ -173,7 +173,8 @@ class AzureRMServiceSubscription(AzureRMModuleBase):
             requires_session=dict(type='bool'),
             resource_group=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['present', 'absent']),
-            status=dict(type='str', choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unkown']),
+            status=dict(type='str',
+                        choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unkown']),
             topic=dict(type='str', required=True)
         )
 
@@ -201,7 +202,7 @@ class AzureRMServiceSubscription(AzureRMModuleBase):
         )
 
         super(AzureRMServiceSubscription, self).__init__(self.module_arg_spec,
-                                                supports_check_mode=True)
+                                                         supports_check_mode=True)
 
     def exec_module(self, **kwargs):
 
