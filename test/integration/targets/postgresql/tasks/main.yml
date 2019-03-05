@@ -724,6 +724,49 @@
       - "result_database.stdout_lines[-1] == '(1 row)'"
       - "'{{ db_user2 }}=Cc' in result_database.stdout"
 
+- name: Create function for test
+  become: True
+  become_user: "{{ pg_user }}"
+  postgresql_query:
+    login_user: "{{ db_user1 }}"
+    login_password: password
+    db: "{{ db_name }}"
+    query: CREATE FUNCTION public.a() RETURNS integer LANGUAGE SQL AS 'SELECT 2';
+
+- name: Grant execute to all functions
+  postgresql_privs:
+    type: "function"
+    state: "present"
+    privs: "EXECUTE"
+    roles: "{{ db_user2 }}"
+    objs: "ALL_IN_SCHEMA"
+    schema: "public"
+    db: "{{ db_name }}"
+    login: "{{ db_user1 }}"
+    password: "password"
+    host: "localhost"
+
+- name: Check that all functions have no execute privileges
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: psql {{ db_name }} -c "SELECT proacl FROM pg_proc WHERE proname = 'a'" -t
+  register: result_database
+- assert:
+    that: "'{{ db_user2 }}=X/{{ db_user1 }}' in '{{ result_database.stdout_lines[0] }}'"
+
+- name: Revoke execute to all functions
+  postgresql_privs:
+    type: "function"
+    state: "absent"
+    privs: "EXECUTE"
+    roles: "{{ db_user2 }}"
+    objs: "ALL_IN_SCHEMA"
+    schema: "public"
+    db: "{{ db_name }}"
+    login: "{{ db_user1 }}"
+    password: "password"
+    host: "localhost"
+
 - name: Remove user
   postgresql_user:
     name: "{{ db_user2 }}"
