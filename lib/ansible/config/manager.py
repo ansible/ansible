@@ -382,7 +382,7 @@ class ConfigManager(object):
         except AnsibleError:
             raise
         except Exception as e:
-            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config), orig_exc=e)
+            raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
     def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
