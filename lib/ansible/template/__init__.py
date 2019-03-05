@@ -27,7 +27,7 @@ import pwd
 import re
 import time
 
-from functools import wraps
+from functools import partial, wraps
 from io import StringIO
 from numbers import Number
 
@@ -592,7 +592,10 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
+        if isinstance(name, string_types):
+            instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
+        else:
+            instance = name
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)
@@ -690,11 +693,17 @@ class Templar:
                 else:
                     return data
 
+            lookups = self._lookup_loader.all(loader=self._loader, templar=self)
+
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
+                for lookup in lookups:
+                    t.globals[lookup._load_name] = self._fail_lookup
             else:
                 t.globals['lookup'] = self._lookup
                 t.globals['query'] = t.globals['q'] = self._query_lookup
+                for lookup in lookups:
+                    t.globals[lookup._load_name] = partial(self._query_lookup, lookup)
 
             t.globals['now'] = self._now_datetime
 
