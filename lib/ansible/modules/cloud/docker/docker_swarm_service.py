@@ -1943,7 +1943,10 @@ class DockerServiceManager(object):
 
     def can_update_networks(self):
         # Before Docker API 1.29 adding/removing networks was not supported
-        return self.client.docker_api_version >= LooseVersion('1.29')
+        return (
+            self.client.docker_api_version >= LooseVersion('1.29') and
+            self.client.docker_py_version >= LooseVersion('2.7')
+        )
 
     def run(self):
         self.diff_tracker = DifferenceTracker()
