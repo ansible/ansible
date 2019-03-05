@@ -61,4 +61,3 @@
       - delete_check.diff.before == "[{{ win_dns_record_zone }}] diff_host 7200 IN A 1.2.3.4\n"
       - delete_check.diff.after == delete_do.diff.after
       - delete_check.diff.after == ''
-
