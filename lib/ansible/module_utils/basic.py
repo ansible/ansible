@@ -1864,7 +1864,7 @@ class AnsibleModule(object):
         raise TypeError('%s cannot be converted to a bool' % type(value))
 
     def _check_type_int(self, value):
-        if isinstance(value, int):
+        if isinstance(value, integer_types):
             return value
 
         if isinstance(value, string_types):

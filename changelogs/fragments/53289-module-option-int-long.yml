@@ -1,0 +1,3 @@
+bugfixes:
+- "If large integers are passed as options to modules under Python 2, module argument
+   parsing will reject them as they are of type ``long`` and not of type ``int``."
