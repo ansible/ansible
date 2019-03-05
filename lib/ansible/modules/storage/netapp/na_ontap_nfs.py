@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -103,6 +103,11 @@ options:
     - Whether SVM allows showmount
     choices: ['enabled', 'disabled']
     version_added: '2.7'
+  tcp_max_xfer_size:
+    description:
+    - TCP Maximum Transfer Size (bytes). The default value is 65536.
+    version_added: '2.8'
+    type: int
 
 """
 
@@ -159,7 +164,8 @@ class NetAppONTAPNFS(object):
             nfsv41_acl=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv41_read_delegation=dict(required=False, default=None, choices=['enabled', 'disabled']),
             nfsv41_write_delegation=dict(required=False, default=None, choices=['enabled', 'disabled']),
-            showmount=dict(required=False, default=None, choices=['enabled', 'disabled'])
+            showmount=dict(required=False, default=None, choices=['enabled', 'disabled']),
+            tcp_max_xfer_size=dict(required=False, default=None, type='int')
         ))
 
         self.module = AnsibleModule(
@@ -188,6 +194,7 @@ class NetAppONTAPNFS(object):
         self.nfsv41_read_delegation = parameters['nfsv41_read_delegation']
         self.nfsv41_write_delegation = parameters['nfsv41_write_delegation']
         self.showmount = parameters['showmount']
+        self.tcp_max_xfer_size = parameters['tcp_max_xfer_size']
 
         if HAS_NETAPP_LIB is False:
             self.module.fail_json(msg="the python NetApp-Lib module is required")
@@ -229,6 +236,7 @@ class NetAppONTAPNFS(object):
             is_nfsv41_write_delegation_enabled = attributes_list.get_child_content('is-nfsv41-write-delegation-enabled')
             is_nfsv41_read_delegation_enabled = attributes_list.get_child_content('is-nfsv41-read-delegation-enabled')
             is_showmount_enabled = attributes_list.get_child_content('showmount')
+            tcp_max_xfer_size = attributes_list.get_child_content('tcp-max-xfer-size')
             nfs_details = {
                 'is_nfsv3_enabled': is_nfsv3_enabled,
                 'is_nfsv3_fsid_change_enabled': is_nfsv3_fsid_change_enabled,
@@ -244,7 +252,8 @@ class NetAppONTAPNFS(object):
                 'is_nfsv41_acl_enabled': is_nfsv41_acl_enabled,
                 'is_nfsv41_write_delegation_enabled': is_nfsv41_write_delegation_enabled,
                 'is_nfsv41_read_delegation_enabled': is_nfsv41_read_delegation_enabled,
-                'is_showmount_enabled': is_showmount_enabled
+                'is_showmount_enabled': is_showmount_enabled,
+                'tcp_max_xfer_size': tcp_max_xfer_size
             }
         return nfs_details
 
@@ -350,6 +359,8 @@ class NetAppONTAPNFS(object):
             nfs_modify.add_new_child('showmount', 'true')
         elif self.showmount == 'disabled':
             nfs_modify.add_new_child('showmount', 'false')
+        if self.tcp_max_xfer_size is not None:
+            nfs_modify.add_new_child('tcp-max-xfer-size', str(self.tcp_max_xfer_size))
         try:
             self.server.invoke_successfully(nfs_modify,
                                             enable_tunneling=True)
@@ -418,7 +429,8 @@ class NetAppONTAPNFS(object):
                 ((self.nfsv40_write_delegation is not None) and state_changed(self.nfsv40_write_delegation,
                                                                               nfs_service_details['is_nfsv40_write_delegation_enabled'])) or
                 ((self.showmount is not None) and state_changed(self.showmount, nfs_service_details['is_showmount_enabled'])) or
-                    ((self.vstorage_state is not None) and state_changed(self.vstorage_state, nfs_service_details['is_vstorage_enabled']))):
+                    ((self.vstorage_state is not None) and state_changed(self.vstorage_state, nfs_service_details['is_vstorage_enabled'])) or
+                    ((self.tcp_max_xfer_size is not None) and int(self.tcp_max_xfer_size) != int(nfs_service_details['tcp_max_xfer_size']))):
                 return True
             return False
 
