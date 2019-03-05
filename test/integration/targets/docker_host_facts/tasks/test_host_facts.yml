@@ -15,12 +15,12 @@
   - name: assert reading docker host facts when docker is running
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
 
 # Container and volume are created so that all lists are non-empty:
 # * container and volume lists are non-emtpy because of the created objects;
@@ -55,13 +55,13 @@
   - name: assert reading docker host facts when docker is running and list containers
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
-         - 'output.docker_containers_list[0].Image is string'
-         - 'output.docker_containers_list[0].ImageID is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is not defined'
 
   - name: Get info on Docker host and list containers with verbose output
     docker_host_facts:
@@ -72,13 +72,13 @@
   - name: assert reading docker host facts when docker is running and list containers with verbose output
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
-         - 'output.docker_containers_list[0].Image is string'
-         - 'output.docker_containers_list[0].ImageID is string'
+         - 'output.host_facts.Name is string'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is string'
 
   - name: Get info on Docker host and list images
     docker_host_facts:
@@ -88,13 +88,13 @@
   - name: assert reading docker host facts when docker is running and list images
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list[0].Id is string'
-         - 'output.docker_images_list[0].ParentId is not defined'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is not defined'
+         - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list images with verbose output
     docker_host_facts:
@@ -105,13 +105,13 @@
   - name: assert reading docker host facts when docker is running and list images with verbose output
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list[0].Id is string'
-         - 'output.docker_images_list[0].ParentId is string'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is string'
+         - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list networks
     docker_host_facts:
@@ -121,13 +121,13 @@
   - name: assert reading docker host facts when docker is running and list networks
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list[0].Id is string'
-         - 'output.docker_networks_list[0].Created is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list networks with verbose output
     docker_host_facts:
@@ -138,13 +138,13 @@
   - name: assert reading docker host facts when docker is running and list networks with verbose output
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list[0].Id is string'
-         - 'output.docker_networks_list[0].Created is string'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is string'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list volumes
     docker_host_facts:
@@ -154,13 +154,13 @@
   - name: assert reading docker host facts when docker is running and list volumes
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list[0].Name is string'
-         - 'output.docker_volumes_list[0].Mountpoint is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and list volumes with verbose output
     docker_host_facts:
@@ -171,13 +171,13 @@
   - name: assert reading docker host facts when docker is running and list volumes with verbose output
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list[0].Name is string'
-         - 'output.docker_volumes_list[0].Mountpoint is string'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is string'
+         - 'output.images is not defined'
+         - 'output.disk_usage is not defined'
 
   - name: Get info on Docker host and get disk usage
     docker_host_facts:
@@ -187,13 +187,13 @@
   - name: assert reading docker host facts when docker is running and get disk usage
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage.LayersSize is number'
-         - 'output.docker_disk_usage.BuilderSize is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is not defined'
 
   - name: Get info on Docker host and get disk usage with verbose output
     docker_host_facts:
@@ -204,13 +204,13 @@
   - name: assert reading docker host facts when docker is running and get disk usage with verbose output
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list is not defined'
-         - 'output.docker_networks_list is not defined'
-         - 'output.docker_volumes_list is not defined'
-         - 'output.docker_images_list is not defined'
-         - 'output.docker_disk_usage.LayersSize is number'
-         - 'output.docker_disk_usage.BuilderSize is number'
+         - 'output.host_facts.Name is string'
+         - 'output.containers is not defined'
+         - 'output.networks is not defined'
+         - 'output.volumes is not defined'
+         - 'output.images is not defined'
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is number'
 
   - name: Get info on Docker host, disk usage and get all lists together
     docker_host_facts:
@@ -224,17 +224,17 @@
   - name: assert reading docker host facts when docker is running, disk usage and get lists together
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list[0].Image is string'
-         - 'output.docker_containers_list[0].ImageID is not defined'
-         - 'output.docker_networks_list[0].Id is string'
-         - 'output.docker_networks_list[0].Created is not defined'
-         - 'output.docker_volumes_list[0].Name is string'
-         - 'output.docker_volumes_list[0].Mountpoint is not defined'
-         - 'output.docker_images_list[0].Id is string'
-         - 'output.docker_images_list[0].ParentId is not defined'
-         - 'output.docker_disk_usage.LayersSize is number'
-         - 'output.docker_disk_usage.BuilderSize is not defined'
+         - 'output.host_facts.Name is string'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is not defined'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is not defined'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is not defined'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is not defined'
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is not defined'
 
   - name: Get info on Docker host, disk usage and get all lists together with verbose output
     docker_host_facts:
@@ -249,17 +249,17 @@
   - name: assert reading docker host facts when docker is running and get disk usage with verbose output
     assert:
       that:
-         - 'output.docker_host_facts.Name is string'
-         - 'output.docker_containers_list[0].Image is string'
-         - 'output.docker_containers_list[0].ImageID is string'
-         - 'output.docker_networks_list[0].Id is string'
-         - 'output.docker_networks_list[0].Created is string'
-         - 'output.docker_volumes_list[0].Name is string'
-         - 'output.docker_volumes_list[0].Mountpoint is string'
-         - 'output.docker_images_list[0].Id is string'
-         - 'output.docker_images_list[0].ParentId is string'
-         - 'output.docker_disk_usage.LayersSize is number'
-         - 'output.docker_disk_usage.BuilderSize is number'
+         - 'output.host_facts.Name is string'
+         - 'output.containers[0].Image is string'
+         - 'output.containers[0].ImageID is string'
+         - 'output.networks[0].Id is string'
+         - 'output.networks[0].Created is string'
+         - 'output.volumes[0].Name is string'
+         - 'output.volumes[0].Mountpoint is string'
+         - 'output.images[0].Id is string'
+         - 'output.images[0].ParentId is string'
+         - 'output.disk_usage.LayersSize is number'
+         - 'output.disk_usage.BuilderSize is number'
 
   always:
   - name: Delete container

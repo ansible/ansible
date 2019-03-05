@@ -120,7 +120,7 @@ EXAMPLES = '''
   register: result
 
 - debug:
-    var: result.docker_swarm_facts
+    var: result.swarm_facts
 '''
 
 RETURN = '''
@@ -144,27 +144,27 @@ docker_swarm_manager:
     returned: both on success and on error
     type: bool
 
-docker_swarm_facts:
+swarm_facts:
     description:
       - Facts representing the basic state of the docker Swarm cluster.
       - Contains tokens to connect to the Swarm
     returned: always
     type: dict
-docker_nodes_list:
+nodes:
     description:
       - List of dict objects containing the basic information about each volume.
         Keys matches the C(docker node ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(nodes) is C(yes)
     type: list
-docker_services_list:
+services:
     description:
       - List of dict objects containing the basic information about each volume.
         Keys matches the C(docker service ls) output unless I(verbose_output=yes).
         See description for I(verbose_output).
     returned: When I(services) is C(yes)
     type: list
-docker_tasks_list:
+tasks:
     description:
       - List of dict objects containing the basic information about each volume.
         Keys matches the C(docker service ps) output unless I(verbose_output=yes).
@@ -200,11 +200,11 @@ class DockerSwarmManager(DockerBaseClass):
 
         self.client.fail_task_if_not_swarm_manager()
 
-        self.results['docker_swarm_facts'] = self.get_docker_swarm_facts()
+        self.results['swarm_facts'] = self.get_docker_swarm_facts()
 
         for docker_object in listed_objects:
             if self.client.module.params[docker_object]:
-                returned_name = "docker_" + docker_object + "_list"
+                returned_name = docker_object
                 filter_name = docker_object + "_filters"
                 filters = clean_dict_booleans_for_docker_api(client.module.params.get(filter_name))
                 self.results[returned_name] = self.get_docker_items_list(docker_object, filters)
@@ -334,7 +334,6 @@ def main():
 
     results = dict(
         changed=False,
-        docker_swarm_facts=[],
     )
 
     DockerSwarmManager(client, results)

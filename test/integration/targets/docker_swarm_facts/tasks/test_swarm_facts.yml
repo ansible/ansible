@@ -39,9 +39,9 @@
   - name: assert creding docker swarm facts
     assert:
       that:
-         - 'output.docker_swarm_facts.JoinTokens.Manager'
-         - 'output.docker_swarm_facts.JoinTokens.Worker'
-         - 'output.docker_swarm_facts.ID'
+         - 'output.swarm_facts.JoinTokens.Manager'
+         - 'output.swarm_facts.JoinTokens.Worker'
+         - 'output.swarm_facts.ID'
          - 'output.can_talk_to_docker == true'
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
@@ -54,17 +54,17 @@
   - name: assert reding swarm facts with list of nodes option
     assert:
       that:
-         - 'output.docker_swarm_facts.JoinTokens.Manager'
-         - 'output.docker_swarm_facts.JoinTokens.Worker'
-         - 'output.docker_swarm_facts.ID'
-         - 'output.docker_nodes_list[0].ID is string'
+         - 'output.swarm_facts.JoinTokens.Manager'
+         - 'output.swarm_facts.JoinTokens.Worker'
+         - 'output.swarm_facts.ID'
+         - 'output.nodes[0].ID is string'
          - 'output.can_talk_to_docker == true'
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
 
   - name: Get local docker node name
     set_fact:
-      localnodename:  "{{ output.docker_nodes_list[0].Hostname }}"
+      localnodename:  "{{ output.nodes[0].Hostname }}"
 
 
   - name: Try to get docker_swarm_facts and verbose list of nodes when docker is running in swarm mode and as manager
@@ -76,11 +76,11 @@
   - name: assert reading swarm facts with list of nodes and versbose output options
     assert:
       that:
-         - 'output.docker_swarm_facts.JoinTokens.Manager'
-         - 'output.docker_swarm_facts.JoinTokens.Worker'
-         - 'output.docker_swarm_facts.ID'
-         - 'output.docker_nodes_list[0].ID is string'
-         - 'output.docker_nodes_list[0].CreatedAt'
+         - 'output.swarm_facts.JoinTokens.Manager'
+         - 'output.swarm_facts.JoinTokens.Worker'
+         - 'output.swarm_facts.ID'
+         - 'output.nodes[0].ID is string'
+         - 'output.nodes[0].CreatedAt'
          - 'output.can_talk_to_docker == true'
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
@@ -95,10 +95,10 @@
   - name: assert reading reading swarm facts and using node filter (random node name)
     assert:
       that:
-         - 'output.docker_swarm_facts.JoinTokens.Manager'
-         - 'output.docker_swarm_facts.JoinTokens.Worker'
-         - 'output.docker_swarm_facts.ID'
-         - 'output.docker_nodes_list | length == 1'
+         - 'output.swarm_facts.JoinTokens.Manager'
+         - 'output.swarm_facts.JoinTokens.Worker'
+         - 'output.swarm_facts.ID'
+         - 'output.nodes | length == 1'
          - 'output.can_talk_to_docker == true'
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
@@ -117,10 +117,10 @@
   - name: assert reading reading swarm facts and using node filter (random node name)
     assert:
       that:
-         - 'output.docker_swarm_facts.JoinTokens.Manager'
-         - 'output.docker_swarm_facts.JoinTokens.Worker'
-         - 'output.docker_swarm_facts.ID'
-         - 'output.docker_nodes_list | length == 0'
+         - 'output.swarm_facts.JoinTokens.Manager'
+         - 'output.swarm_facts.JoinTokens.Worker'
+         - 'output.swarm_facts.ID'
+         - 'output.nodes | length == 0'
          - 'output.can_talk_to_docker == true'
          - 'output.docker_swarm_active == true'
          - 'output.docker_swarm_manager == true'
