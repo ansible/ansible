@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright: (c) 2018, Sandeep Kasargod <sandeep@vexata.com>
+# Copyright: (c) 2019, Sandeep Kasargod <sandeep@vexata.com>
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 

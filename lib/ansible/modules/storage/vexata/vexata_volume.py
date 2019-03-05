@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) 2018, Sandeep Kasargod (sandeep@vexata.com)
+# Copyright: (c) 2019, Sandeep Kasargod (sandeep@vexata.com)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: vexata_volume
 version_added: 2.8
@@ -27,19 +27,22 @@ options:
     description:
       - Volume name.
     required: true
+    type: str
   state:
     description:
       - Creates/Modifies volume when present or removes when absent.
     default: present
     choices: [ present, absent ]
+    type: str
   size:
     description:
       - Volume size in M, G, T units. M=2^20, G=2^30, T=2^40 bytes.
+    type: str
 extends_documentation_fragment:
     - vexata.vx100
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Create new 2 TiB volume named foo
   vexata_volume:
     name: foo
@@ -67,7 +70,7 @@ EXAMPLES = '''
     password: secret
 '''
 
-RETURN = '''
+RETURN = r'''
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -171,7 +174,7 @@ def main():
         dict(
             name=dict(type='str', required=True),
             state=dict(default='present', choices=['present', 'absent']),
-            size=dict()
+            size=dict(type='str')
         )
     )
 
