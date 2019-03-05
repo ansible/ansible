@@ -18,7 +18,7 @@
 import os
 import sys
 
-from ansible.compat.tests import mock, unittest
+import unittest
 from ansible.module_utils.gcp_utils import GcpRequest
 
 
