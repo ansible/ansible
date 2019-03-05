@@ -56,6 +56,12 @@ options:
             - Works only with C(state) I(present) and I(absent).
         type: bool
         default: false
+    datavolumes:
+        description:
+            - "DataVolumes are a way to automate importing virtual machine disks onto pvcs during the virtual machine's
+               launch flow. Without using a DataVolume, users have to prepare a pvc with a disk image before assigning
+               it to a VM or VMI manifest. With a DataVolume, both the pvc creation and import is automated on behalf of the user."
+        type: list
 
 extends_documentation_fragment:
   - k8s_auth_options
@@ -218,6 +224,7 @@ VM_ARG_SPEC = {
         ],
         'default': 'present'
     },
+    'datavolumes': {'type': 'list'},
 }
 
 
