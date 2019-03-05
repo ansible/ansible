@@ -468,6 +468,8 @@ def main():
             commands.extend(command)
 
     if commands:
+        results['changed'] = True
+        results['commands'] = commands
         if module.check_mode:
             module.exit_json(**results)
         else:
@@ -479,12 +481,9 @@ def main():
                 body = run_commands(module, commands)
                 validate_config(body, vip, module)
 
-            results['changed'] = True
-
             if 'configure' in commands:
                 commands.pop(0)
 
-    results['commands'] = commands
     module.exit_json(**results)
 
 
