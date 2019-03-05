@@ -8,7 +8,7 @@ DOCUMENTATION = """
 ---
 author: Ansible Team
 connection: grpc
-short_description: Provides a persistent connection using the grpc protocol
+short_description: Provides a persistent connection using the gRPC protocol
 description:
   - This connection plugin provides a connection to remote devices over grpc and
     is typically used with devices for sending and receiving RPC calls
