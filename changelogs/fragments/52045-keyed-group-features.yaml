@@ -1,0 +1,2 @@
+minor_changes:
+- keyed_groups now has a 'parent_group' keyword that allows assigning all generated groups to the same parent group
