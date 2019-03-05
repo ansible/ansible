@@ -7,68 +7,79 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_policy
 short_description: Manage the state of policies in RabbitMQ
 description:
-  - Manage the state of a policy in RabbitMQ.
+- Manage the state of a policy in RabbitMQ.
 version_added: "1.5"
 author: John Dewey (@retr0h)
 options:
   name:
     description:
-      - The name of the policy to manage.
+    - The name of the policy to manage.
+    type: str
     required: true
   vhost:
     description:
-      - The name of the vhost to apply to.
+    - The name of the vhost to apply to.
+    type: str
     default: /
   apply_to:
     description:
-      - What the policy applies to. Requires RabbitMQ 3.2.0 or later.
-    default: all
+    - What the policy applies to.
+    - Requires RabbitMQ 3.2.0 or later.
+    type: str
     choices: [all, exchanges, queues]
+    default: all
     version_added: "2.1"
   pattern:
     description:
-      - A regex of queues to apply the policy to.
+    - A regex of queues to apply the policy to.
+    type: str
     required: true
   tags:
     description:
-      - A dict or string describing the policy.
+    - A dict or string describing the policy.
+    type: dict
     required: true
   priority:
     description:
-      - The priority of the policy.
+    - The priority of the policy.
+    type: int
     default: 0
   node:
     description:
-      - Erlang node name of the rabbit we wish to configure.
+    - Erlang node name of the rabbit we wish to configure.
+    type: str
     default: rabbit
   state:
     description:
-      - The state of the policy.
+    - The state of the policy.
+    type: str
+    choices: [ absent, present ]
     default: present
-    choices: [present, absent]
+seealso:
+- module: rabbitmq_plugins
+- module: rabbitmq_policy
+- module: rabbitmq_user
+- module: rabbitmq_vhost
 '''
 
-EXAMPLES = '''
-- name: ensure the default vhost contains the HA policy via a dict
+EXAMPLES = r'''
+- name: Ensure the default vhost contains the HA policy via a dict
   rabbitmq_policy:
     name: HA
     pattern: .*
-  args:
     tags:
       ha-mode: all
 
-- name: ensure the default vhost contains the HA policy
+- name: Ensure the default vhost contains the HA policy
   rabbitmq_policy:
     name: HA
     pattern: .*
@@ -77,6 +88,7 @@ EXAMPLES = '''
 '''
 
 import json
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -131,19 +143,19 @@ class RabbitMqPolicy(object):
 
 def main():
     arg_spec = dict(
-        name=dict(required=True),
-        vhost=dict(default='/'),
-        pattern=dict(required=True),
-        apply_to=dict(default='all', choices=['all', 'exchanges', 'queues']),
+        name=dict(type='str', required=True),
+        vhost=dict(type='str', default='/'),
+        pattern=dict(type='str', required=True),
+        apply_to=dict(type='str', default='all', choices=['all', 'exchanges', 'queues']),
         tags=dict(type='dict', required=True),
-        priority=dict(default='0'),
-        node=dict(default='rabbit'),
-        state=dict(default='present', choices=['present', 'absent']),
+        priority=dict(type='int', default=0),
+        node=dict(type='str', default='rabbit'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
     )
 
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     name = module.params['name']

@@ -13,63 +13,73 @@ ANSIBLE_METADATA = {
     'supported_by': 'community'
 }
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_binding
-author: Manuel Sousa (@manuel-sousa)
+author:
+- Manuel Sousa (@manuel-sousa)
 version_added: "2.0"
-
-short_description: Manage rabbitMQ bindings
+short_description: Manage RabbitMQ bindings
 description:
-  - This module uses rabbitMQ REST APIs to create / delete bindings.
-requirements: [ "requests >= 1.0.0" ]
+- This module uses RabbitMQ REST APIs to create / delete bindings.
+requirements:
+- requests >= 1.0.0
 options:
-    state:
-      description:
-      - Whether the bindings should be present or absent.
-      choices: [ "present", "absent" ]
-      default: present
-    name:
-      description:
-      - source exchange to create binding on.
-      required: true
-      aliases: [ "src", "source" ]
-    destination:
-      description:
-      - destination exchange or queue for the binding.
-      required: true
-      aliases: [ "dst", "dest" ]
-    destination_type:
-      description:
-      - Either queue or exchange.
-      required: true
-      choices: [ "queue", "exchange" ]
-      aliases: [ "type", "dest_type" ]
-    routing_key:
-      description:
-      - routing key for the binding.
-      default: "#"
-    arguments:
-      description:
-      - extra arguments for exchange. If defined this argument is a key/value dictionary
-      required: false
-      default: {}
+  state:
+    description:
+    - Whether the bindings should be present or absent.
+    type: str
+    choices: [ absent, present ]
+    default: present
+  name:
+    description:
+    - Source exchange to create binding on.
+    type: str
+    required: true
+    aliases: [ source, src ]
+  destination:
+    description:
+    - Destination exchange or queue for the binding.
+    type: str
+    required: true
+    aliases: [ dest, dst ]
+  destination_type:
+    description:
+    - Either queue or exchange.
+    type: str
+    required: true
+    choices: [ exchange, queue ]
+    aliases: [ dest_type, type ]
+  routing_key:
+    description:
+    - Routing key for the binding.
+    type: str
+    default: "#"
+  arguments:
+    description:
+    - Extra arguments for exchange.
+    - If defined this argument is a key/value dictionary
+    type: dict
+    default: {}
 extends_documentation_fragment:
-    - rabbitmq
+- rabbitmq
+seealso:
+- module: rabbitmq_exchange
+- module: rabbitmq_queue
 '''
 
-EXAMPLES = '''
-# Bind myQueue to directExchange with routing key info
-- rabbitmq_binding:
+EXAMPLES = r'''
+- name: Bind myQueue to directExchange with routing key 'info'
+  rabbitmq_binding:
     name: directExchange
     destination: myQueue
     type: queue
     routing_key: info
 
-# Bind directExchange to topicExchange with routing key *.info
-- rabbitmq_binding:
+- name: Bind directExchange to topicExchange with routing key '*.info'
+  rabbitmq_binding:
     name: topicExchange
-    destination: topicExchange
+    destination: directExchange
     type: exchange
     routing_key: '*.info'
 '''
@@ -85,9 +95,9 @@ except ImportError:
     REQUESTS_IMP_ERR = traceback.format_exc()
     HAS_REQUESTS = False
 
-from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 
 
 class RabbitMqBinding(object):
@@ -275,17 +285,17 @@ def main():
 
     argument_spec = rabbitmq_argument_spec()
     argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(required=True, aliases=["src", "source"], type='str'),
-            destination=dict(required=True, aliases=["dst", "dest"], type='str'),
-            destination_type=dict(required=True, aliases=["type", "dest_type"], choices=["queue", "exchange"],
-                                  type='str'),
-            routing_key=dict(default='#', type='str'),
-            arguments=dict(default=dict(), type='dict')
-        )
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        name=dict(type='str', required=True, aliases=['source', 'src']),
+        destination=dict(type='str', required=True, aliases=['dest', 'dst']),
+        destination_type=dict(type='str', required=True, choices=['exchange', 'queue'], aliases=['dest_type', 'type']),
+        routing_key=dict(type='str', default='#'),
+        arguments=dict(type='dict', default=dict()),
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     if not HAS_REQUESTS:
         module.fail_json(msg=missing_required_lib("requests"), exception=REQUESTS_IMP_ERR)

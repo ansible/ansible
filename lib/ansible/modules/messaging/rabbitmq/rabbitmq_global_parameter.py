@@ -8,66 +8,63 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_global_parameter
 short_description: Manage RabbitMQ global parameters
 description:
-  - Manage dynamic, cluster-wide global parameters for RabbitMQ
+- Manage dynamic, cluster-wide global parameters for RabbitMQ.
 version_added: "2.8"
-author: "Juergen Kirschbaum (@jgkirschbaum)"
+author:
+- Juergen Kirschbaum (@jgkirschbaum)
 options:
   name:
     description:
-      - Name of the global parameter being set
+    - Name of the global parameter being set.
     required: true
-    default: null
   value:
     description:
-      - Value of the global parameter, as a JSON term
-    required: false
-    default: null
+    - Value of the global parameter, as a JSON term.
   node:
     description:
-      - erlang node name of the rabbit we wish to configure
-    required: false
+    - Erlang node name of the rabbit we wish to configure.
     default: rabbit
   state:
     description:
-      - Specify if user is to be added or removed
-    required: false
+    - Specify if user is to be added or removed.
+    choices: [ absent, present ]
     default: present
-    choices: [ 'present', 'absent']
+seealso:
+- module: rabbitmq_parameter
 '''
 
-EXAMPLES = '''
-# Set the global parameter 'cluster_name' to a value of 'mq-cluster' (in quotes)
-- rabbitmq_global_parameter:
+EXAMPLES = r'''
+- name: Set the global parameter 'cluster_name' to a value of 'mq-cluster'
+  rabbitmq_global_parameter:
     name: cluster_name
     value: "{{ 'mq-cluster' | to_json }}"
     state: present
 '''
 
-RETURN = '''
+RETURN = r'''
 name:
-    description: name of the global parameter being set
+    description: Name of the global parameter being set
     returned: success
     type: str
     sample: "cluster_name"
 value:
-    description: value of the global parameter, as a JSON term
+    description: Value of the global parameter, as a JSON term
     returned: changed
     type: str
     sample: "the-cluster-name"
 '''
 
 import json
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -115,13 +112,13 @@ class RabbitMqGlobalParameter(object):
 def main():
     arg_spec = dict(
         name=dict(type='str', required=True),
-        value=dict(type='str', default=None),
-        state=dict(default='present', choices=['present', 'absent']),
-        node=dict(type='str', default='rabbit')
+        value=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        node=dict(type='str', default='rabbit'),
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     name = module.params['name']

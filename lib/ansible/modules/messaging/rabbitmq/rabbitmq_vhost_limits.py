@@ -7,75 +7,77 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_vhost_limits
-author: Hiroyuki Matsuo (@h-matsuo)
+author:
+- Hiroyuki Matsuo (@h-matsuo)
 version_added: "2.8"
-
 short_description: Manage the state of virtual host limits in RabbitMQ
 description:
-    - This module sets/clears certain limits on a virtual host.
-    - The configurable limits are I(max_connections) and I(max-queues).
-
+- This module sets/clears certain limits on a virtual host.
+- The configurable limits are I(max_connections) and I(max-queues).
 options:
-    max_connections:
-        description:
-            - Max number of concurrent client connections.
-            - Negative value means "no limit".
-            - Ignored when the I(state) is C(absent).
-        default: -1
-    max_queues:
-        description:
-            - Max number of queues.
-            - Negative value means "no limit".
-            - Ignored when the I(state) is C(absent).
-        default: -1
-    node:
-        description:
-            - Name of the RabbitMQ Erlang node to manage.
-    state:
-        description:
-            - Specify whether the limits are to be set or cleared.
-            - If set to C(absent), the limits of both I(max_connections) and I(max-queues) will be cleared.
-        default: present
-        choices: [present, absent]
-    vhost:
-        description:
-            - Name of the virtual host to manage.
-        default: /
+  max_connections:
+    description:
+    - Max number of concurrent client connections.
+    - Negative value means "no limit".
+    - Ignored when the I(state) is C(absent).
+    default: -1
+  max_queues:
+    description:
+    - Max number of queues.
+    - Negative value means "no limit".
+    - Ignored when the I(state) is C(absent).
+    default: -1
+  node:
+    description:
+    - Name of the RabbitMQ Erlang node to manage.
+  state:
+    description:
+    - Specify whether the limits are to be set or cleared.
+    - If set to C(absent), the limits of both I(max_connections) and I(max-queues) will be cleared.
+    default: present
+    choices: [present, absent]
+  vhost:
+    description:
+    - Name of the virtual host to manage.
+    default: /
+seealso:
+- module: rabbitmq_policy
+- module: rabbitmq_user
+- module: rabbitmq_vhost
 '''
 
-EXAMPLES = '''
-# Limit both of the max number of connections and queues on the vhost '/'.
-- rabbitmq_vhost_limits:
+EXAMPLES = r'''
+- name: Limit both of the max number of connections and queues on the vhost '/'
+  rabbitmq_vhost_limits:
     vhost: /
     max_connections: 64
     max_queues: 256
     state: present
 
-# Limit the max number of connections on the vhost '/'.
-# This task implicitly clears the max number of queues limit using default value: -1.
-- rabbitmq_vhost_limits:
+# This task implicitly clears the max number of queues limit using default value: -1
+- name: Limit the max number of connections on the vhost '/'
+  rabbitmq_vhost_limits:
     vhost: /
     max_connections: 64
     state: present
 
-# Clear the limits on the vhost '/'.
-- rabbitmq_vhost_limits:
+- name: Clear the limits on the vhost '/'
+  rabbitmq_vhost_limits:
     vhost: /
     state: absent
 '''
 
-RETURN = ''' # '''
-
+RETURN = r''' # '''
 
 import json
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -126,16 +128,16 @@ class RabbitMqVhostLimits(object):
 
 def main():
     arg_spec = dict(
-        max_connections=dict(default=-1, type='int'),
-        max_queues=dict(default=-1, type='int'),
-        node=dict(default=None, type='str'),
-        state=dict(default='present', choices=['present', 'absent'], type='str'),
-        vhost=dict(default='/', type='str')
+        max_connections=dict(type='int', default=-1),
+        max_queues=dict(type='int', default=-1),
+        node=dict(type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        vhost=dict(type='str', default='/'),
     )
 
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     max_connections = module.params['max_connections']

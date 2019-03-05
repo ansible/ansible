@@ -17,6 +17,7 @@ options:
         description:
             - RabbitMQ password for connection.
         type: str
+        default: guest
     login_host:
         description:
             - RabbitMQ host for connection.

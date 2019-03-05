@@ -7,88 +7,102 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_queue
-author: Manuel Sousa (@manuel-sousa)
+author:
+- Manuel Sousa (@manuel-sousa)
 version_added: "2.0"
-
-short_description: Manage rabbitMQ queues
+short_description: Manage RabbitMQ queues
 description:
-  - This module uses rabbitMQ Rest API to create/delete queues
-requirements: [ "requests >= 1.0.0" ]
+- This module uses RabbitMQ Rest API to create/delete queues.
+requirements:
+- requests >= 1.0.0
 options:
-    name:
-        description:
-            - Name of the queue to create
-        required: true
-    state:
-        description:
-            - Whether the queue should be present or absent
-        choices: [ "present", "absent" ]
-        default: present
-    durable:
-        description:
-            - whether queue is durable or not
-        type: bool
-        default: 'yes'
-    auto_delete:
-        description:
-            - if the queue should delete itself after all queues/queues unbound from it
-        type: bool
-        default: 'no'
-    message_ttl:
-        description:
-            - How long a message can live in queue before it is discarded (milliseconds)
-        default: forever
-    auto_expires:
-        description:
-            - How long a queue can be unused before it is automatically deleted (milliseconds)
-        default: forever
-    max_length:
-        description:
-            - How many messages can the queue contain before it starts rejecting
-        default: no limit
-    dead_letter_exchange:
-        description:
-            - Optional name of an exchange to which messages will be republished if they
-            - are rejected or expire
-    dead_letter_routing_key:
-        description:
-            - Optional replacement routing key to use when a message is dead-lettered.
-            - Original routing key will be used if unset
-    max_priority:
-        description:
-            - Maximum number of priority levels for the queue to support.
-            - If not set, the queue will not support message priorities.
-            - Larger numbers indicate higher priority.
-        version_added: "2.4"
-    arguments:
-        description:
-            - extra arguments for queue. If defined this argument is a key/value dictionary
-        default: {}
+  name:
+    description:
+    - Name of the queue to create.
+    type: str
+    required: true
+  state:
+    description:
+    - Whether the queue should be present or absent.
+    type: str
+    choices: [ absent, present ]
+    default: present
+  durable:
+    description:
+    - Whether queue is durable or not.
+    type: bool
+    default: yes
+  auto_delete:
+    description:
+    - Whether the queue should delete itself after all queues/queues unbound from it.
+    type: bool
+    default: no
+  message_ttl:
+    description:
+    - How long a message can live in queue before it is discarded (milliseconds).
+    - When unset, defaults to I(forever).
+    type: int
+  auto_expires:
+    description:
+    - How long a queue can be unused before it is automatically deleted (milliseconds).
+    - When unset, defaults to I(forever).
+    type: int
+  max_length:
+    description:
+    - How many messages can the queue contain before it starts rejecting.
+    - When unset, defaults to I(no limit).
+    type: int
+  dead_letter_exchange:
+    description:
+    - Optional name of an exchange to which messages will be republished if they
+      are rejected or expire.
+    type: str
+  dead_letter_routing_key:
+    description:
+    - Optional replacement routing key to use when a message is dead-lettered.
+    - When unset, defaults to the Original routing key.
+    type: str
+  max_priority:
+    description:
+    - Maximum number of priority levels for the queue to support.
+    - Larger numbers indicate higher priority..
+    - When unset, the queue will not support message priorities.
+    type: int
+    version_added: "2.4"
+  arguments:
+    description:
+    - Extra arguments for queue.
+    - If defined this argument is a key/value dictionary.
+    type: dict
+    default: {}
 extends_documentation_fragment:
-    - rabbitmq
+- rabbitmq
+seealso:
+- module: rabbitmq_binding
+- module: rabbitmq_exchange
 '''
 
-EXAMPLES = '''
-# Create a queue
-- rabbitmq_queue:
+EXAMPLES = r'''
+- name: Create a queue
+  rabbitmq_queue:
     name: myQueue
 
-# Create a queue on remote host
-- rabbitmq_queue:
+- name: Create a queue on remote host
+  rabbitmq_queue:
     name: myRemoteQueue
     login_user: user
     login_password: secret
     login_host: remote.example.org
 '''
+
+RETURN = r''' # '''
 
 import json
 import traceback
@@ -110,21 +124,22 @@ def main():
 
     argument_spec = rabbitmq_argument_spec()
     argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(required=True, type='str'),
-            durable=dict(default=True, type='bool'),
-            auto_delete=dict(default=False, type='bool'),
-            message_ttl=dict(default=None, type='int'),
-            auto_expires=dict(default=None, type='int'),
-            max_length=dict(default=None, type='int'),
-            dead_letter_exchange=dict(default=None, type='str'),
-            dead_letter_routing_key=dict(default=None, type='str'),
-            arguments=dict(default=dict(), type='dict'),
-            max_priority=dict(default=None, type='int')
-        )
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        name=dict(type='str', required=True),
+        durable=dict(type='bool', default=True),
+        auto_delete=dict(type='bool', default=False),
+        message_ttl=dict(type='int'),
+        auto_expires=dict(type='int'),
+        max_length=dict(type='int'),
+        dead_letter_exchange=dict(type='str'),
+        dead_letter_routing_key=dict(type='str'),
+        arguments=dict(type='dict', default=dict()),
+        max_priority=dict(type='int'),
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     url = "%s://%s:%s/api/queues/%s/%s" % (
         module.params['login_protocol'],

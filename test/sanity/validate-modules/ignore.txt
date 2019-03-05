@@ -398,12 +398,6 @@ lib/ansible/modules/files/synchronize.py E324
 lib/ansible/modules/files/unarchive.py E323
 lib/ansible/modules/identity/keycloak/keycloak_client.py E324
 lib/ansible/modules/identity/keycloak/keycloak_clienttemplate.py E324
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_binding.py E324
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_exchange.py E324
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_exchange.py E326
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_policy.py E324
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_queue.py E324
-lib/ansible/modules/messaging/rabbitmq/rabbitmq_queue.py E327
 lib/ansible/modules/monitoring/airbrake_deployment.py E324
 lib/ansible/modules/monitoring/bigpanda.py E322
 lib/ansible/modules/monitoring/bigpanda.py E324

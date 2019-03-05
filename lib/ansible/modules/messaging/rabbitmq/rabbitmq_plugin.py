@@ -7,47 +7,49 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
     'status': ['preview'],
     'supported_by': 'community'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_plugin
 short_description: Manage RabbitMQ plugins
 description:
-  - This module can be used to enable or disable RabbitMQ plugins.
+- This module can be used to enable or disable RabbitMQ plugins.
 version_added: "1.1"
 author:
-  - Chris Hoffman (@chrishoffman)
+- Chris Hoffman (@chrishoffman)
 options:
   names:
     description:
-      - Comma-separated list of plugin names. Also, accepts plugin name.
+    - A list of plugin names.
+    type: list
     required: true
-    aliases: [name]
+    aliases: [ name ]
   new_only:
     description:
-      - Only enable missing plugins.
-      - Does not disable plugins that are not in the names list.
+    - Only enable missing plugins.
+    - Does not disable plugins that are not in the I(names) list.
     type: bool
-    default: "no"
+    default: no
   state:
     description:
-      - Specify if plugins are to be enabled or disabled.
+    - Specify if plugins are to be enabled or disabled.
     default: enabled
-    choices: [enabled, disabled]
+    choices: [ disabled, enabled ]
   prefix:
     description:
-      - Specify a custom install prefix to a Rabbit.
+    - Specify a custom install prefix to a Rabbit.
     version_added: "1.3"
+seealso:
+- module: rabbitmq_global_parameter
+- module: rabbitmq_parameter
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Enables the rabbitmq_management plugin
   rabbitmq_plugin:
     names: rabbitmq_management
@@ -65,12 +67,16 @@ EXAMPLES = '''
 
 - name: Enable every plugin in list with existing plugins
   rabbitmq_plugin:
-    names: rabbitmq_management,rabbitmq_management_visualiser,rabbitmq_shovel,rabbitmq_shovel_management
+    names:
+    - rabbitmq_management
+    - rabbitmq_management_visualiser
+    - rabbitmq_shovel
+    - rabbitmq_shovel_management
     state: enabled
-    new_only: 'yes'
+    new_only: yes
 '''
 
-RETURN = '''
+RETURN = r'''
 enabled:
   description: list of plugins enabled during task run
   returned: always
@@ -84,6 +90,7 @@ disabled:
 '''
 
 import os
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -131,18 +138,18 @@ class RabbitMqPlugins(object):
 
 def main():
     arg_spec = dict(
-        names=dict(required=True, aliases=['name']),
-        new_only=dict(default='no', type='bool'),
-        state=dict(default='enabled', choices=['enabled', 'disabled']),
-        prefix=dict(required=False, default=None)
+        names=dict(type='list', required=True, aliases=['name']),
+        new_only=dict(type='bool', default=False),
+        state=dict(type='str', default='enabled', choices=['disabled', 'enabled']),
+        prefix=dict(type='str', required=False),
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     result = dict()
-    names = module.params['names'].split(',')
+    names = module.params['names']
     new_only = module.params['new_only']
     state = module.params['state']
 

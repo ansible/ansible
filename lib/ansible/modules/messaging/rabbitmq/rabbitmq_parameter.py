@@ -7,57 +7,65 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_parameter
 short_description: Manage RabbitMQ parameters
 description:
-  - Manage dynamic, cluster-wide parameters for RabbitMQ
+- Manage dynamic, cluster-wide parameters for RabbitMQ.
 version_added: "1.1"
-author: Chris Hoffman (@chrishoffman)
+author:
+- Chris Hoffman (@chrishoffman)
 options:
   component:
     description:
-      - Name of the component of which the parameter is being set
+    - Name of the component of which the parameter is being set.
+    type: str
     required: true
   name:
     description:
-      - Name of the parameter being set
+    - Name of the parameter being set.
+    type: str
     required: true
   value:
     description:
-      - Value of the parameter, as a JSON term
+    - Value of the parameter, as a JSON term.
+    type: str
   vhost:
     description:
-      - vhost to apply access privileges.
+    - Vhost to apply access privileges.
+    type: str
     default: /
   node:
     description:
-      - erlang node name of the rabbit we wish to configure
+    - Erlang node name of the rabbit we wish to configure.
+    type: str
     default: rabbit
     version_added: "1.2"
   state:
     description:
-      - Specify if user is to be added or removed
+    - Specify if user is to be added or removed.
     default: present
-    choices: [ 'present', 'absent']
+    choices: [ absent, present ]
+seealso:
+- module: rabbitmq_global_parameter
 '''
 
-EXAMPLES = """
-# Set the federation parameter 'local_username' to a value of 'guest' (in quotes)
-- rabbitmq_parameter:
+EXAMPLES = r'''
+- name: Set the federation parameter 'local_username' to a value of 'guest'
+  rabbitmq_parameter:
     component: federation
     name: local-username
     value: '"guest"'
     state: present
-"""
+'''
+
 import json
+
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -109,16 +117,16 @@ class RabbitMqParameter(object):
 
 def main():
     arg_spec = dict(
-        component=dict(required=True),
-        name=dict(required=True),
-        value=dict(default=None),
-        vhost=dict(default='/'),
-        state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit')
+        component=dict(type='str', required=True),
+        name=dict(type='str', required=True),
+        value=dict(type='str'),
+        vhost=dict(type='str', default='/'),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        node=dict(type='str', default='rabbit'),
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     component = module.params['component']

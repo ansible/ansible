@@ -7,47 +7,53 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_vhost
 short_description: Manage the state of a virtual host in RabbitMQ
 description:
-  - Manage the state of a virtual host in RabbitMQ
+- Manage the state of a virtual host in RabbitMQ.
 version_added: "1.1"
-author: Chris Hoffman (@chrishoffman)
+author:
+- Chris Hoffman (@chrishoffman)
 options:
   name:
     description:
-      - The name of the vhost to manage
+    - The name of the vhost to manage.
+    type: str
     required: true
-    aliases: [vhost]
+    aliases: [ vhost ]
   node:
     description:
-      - erlang node name of the rabbit we wish to configure
+    - Erlang node name of the rabbit we wish to configure.
+    type: str
     default: rabbit
     version_added: "1.2"
   tracing:
     description:
-      - Enable/disable tracing for a vhost
+    - Enable/disable tracing for a vhost.
     type: bool
-    default: 'no'
-    aliases: [trace]
+    default: no
+    aliases: [ trace ]
   state:
     description:
-      - The state of vhost
+    - The state of vhost.
+    type: str
     default: present
-    choices: [present, absent]
+    choices: [ absent, present ]
+seealso:
+- module: rabbitmq_policy
+- module: rabbitmq_user
+- module: rabbitmq_vhost_limit
 '''
 
-EXAMPLES = '''
-# Ensure that the vhost /test exists.
-- rabbitmq_vhost:
+EXAMPLES = r'''
+- name: Ensure that the vhost /test exists
+  rabbitmq_vhost:
     name: /test
     state: present
 '''
@@ -109,15 +115,15 @@ class RabbitMqVhost(object):
 
 def main():
     arg_spec = dict(
-        name=dict(required=True, aliases=['vhost']),
-        tracing=dict(default='off', aliases=['trace'], type='bool'),
-        state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit'),
+        name=dict(type='str', required=True, aliases=['vhost']),
+        tracing=dict(type='bool', default=False, aliases=['trace']),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        node=dict(type='str', default='rabbit'),
     )
 
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     name = module.params['name']

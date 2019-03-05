@@ -7,74 +7,74 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_exchange
-author: Manuel Sousa (@manuel-sousa)
+author:
+- Manuel Sousa (@manuel-sousa)
 version_added: "2.0"
-
-short_description: Manage rabbitMQ exchanges
+short_description: Manage RabbitMQ exchanges
 description:
-  - This module uses rabbitMQ Rest API to create/delete exchanges
-requirements: [ "requests >= 1.0.0" ]
+- This module uses RabbitMQ Rest API to create/delete exchanges
+requirements:
+- requests >= 1.0.0
 options:
-    name:
-        description:
-            - Name of the exchange to create
-        required: true
-    state:
-        description:
-            - Whether the exchange should be present or absent
-        choices: [ "present", "absent" ]
-        required: false
-        default: present
-    durable:
-        description:
-            - whether exchange is durable or not
-        required: false
-        type: bool
-        default: yes
-    exchange_type:
-        description:
-            - type for the exchange
-        required: false
-        choices: [ "fanout", "direct", "headers", "topic" ]
-        aliases: [ "type" ]
-        default: direct
-    auto_delete:
-        description:
-            - if the exchange should delete itself after all queues/exchanges unbound from it
-        required: false
-        type: bool
-        default: no
-    internal:
-        description:
-            - exchange is available only for other exchanges
-        required: false
-        type: bool
-        default: no
-    arguments:
-        description:
-            - extra arguments for exchange. If defined this argument is a key/value dictionary
-        required: false
-        default: {}
+  name:
+    description:
+    - Name of the exchange to create.
+    required: true
+  state:
+    description:
+    - Whether the exchange should be present or absent.
+    type: str
+    choices: [ absent, present ]
+    default: present
+  durable:
+    description:
+    - Whether exchange is durable or not.
+    type: bool
+    default: yes
+  exchange_type:
+    description:
+    - Type for the exchange.
+    type: str
+    choices: [ direct, fanout, headers, topic ]
+    default: direct
+    aliases: [ type ]
+  auto_delete:
+    description:
+    - Whether the exchange should delete itself after all queues/exchanges unbound from it.
+    type: bool
+    default: no
+  internal:
+    description:
+    - hether the exchange is available only for other exchanges.
+    type: bool
+    default: no
+  arguments:
+    description:
+    - Extra arguments for exchange.
+    - If defined this argument is a key/value dictionary.
+    type: dict
+    default: {}
 extends_documentation_fragment:
-    - rabbitmq
+- rabbitmq
+seealso:
+- module: rabbitmq_binding
+- module: rabbitmq_queue
 '''
 
-EXAMPLES = '''
-# Create direct exchange
-- rabbitmq_exchange:
+EXAMPLES = r'''
+- name: Create direct exchange
+  rabbitmq_exchange:
     name: directExchange
 
-# Create topic exchange on vhost
-- rabbitmq_exchange:
+- name: Create topic exchange on vhost
+  rabbitmq_exchange:
     name: topicExchange
     type: topic
     vhost: myVhost
@@ -92,25 +92,26 @@ except ImportError:
     HAS_REQUESTS = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 from ansible.module_utils.rabbitmq import rabbitmq_argument_spec
+from ansible.module_utils.six.moves.urllib import parse as urllib_parse
 
 
 def main():
 
     argument_spec = rabbitmq_argument_spec()
     argument_spec.update(
-        dict(
-            state=dict(default='present', choices=['present', 'absent'], type='str'),
-            name=dict(required=True, type='str'),
-            durable=dict(default=True, type='bool'),
-            auto_delete=dict(default=False, type='bool'),
-            internal=dict(default=False, type='bool'),
-            exchange_type=dict(default='direct', aliases=['type'], type='str'),
-            arguments=dict(default=dict(), type='dict')
-        )
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        name=dict(type='str', required=True),
+        durable=dict(type='bool', default=True),
+        auto_delete=dict(type='bool', default=False),
+        internal=dict(type='bool', default=False),
+        exchange_type=dict(type='str', default='direct', choices=['direct', 'fanout', 'headers', 'topic'], aliases=['type']),
+        arguments=dict(type='dict', default=dict()),
     )
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
     url = "%s://%s:%s/api/exchanges/%s/%s" % (
         module.params['login_protocol'],

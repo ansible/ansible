@@ -7,96 +7,104 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rabbitmq_user
 short_description: Manage RabbitMQ users
 description:
-  - Add or remove users to RabbitMQ and assign permissions
+- Add or remove users to RabbitMQ and assign permissions.
 version_added: "1.1"
-author: Chris Hoffman (@chrishoffman)
+author:
+- Chris Hoffman (@chrishoffman)
 options:
   user:
     description:
-      - Name of user to add
+    - Name of user to add.
+    type: str
     required: true
-    aliases: [username, name]
+    aliases: [ name, username ]
   password:
     description:
-      - Password of user to add.
-      - To change the password of an existing user, you must also specify
-        C(update_password=always).
+    - Password of user to add.
+    - To change the password of an existing user, you must also specify
+      C(update_password=always).
+    type: str
   tags:
     description:
-      - User tags specified as comma delimited
+    - A list of user tags.
+    type: list
   permissions:
     description:
-      - a list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv,
-        and represents a permission rule for that vhost.
-      - This option should be preferable when you care about all permissions of the user.
-      - You should use vhost, configure_priv, write_priv, and read_priv options instead
-        if you care about permissions for just some vhosts.
+    - A list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv,
+      and represents a permission rule for that vhost.
+    - This option should be preferable when you care about all permissions of the user.
+    - You should use vhost, configure_priv, write_priv, and read_priv options instead
+      if you care about permissions for just some vhosts.
+    type: list
     default: []
   vhost:
     description:
-      - vhost to apply access privileges.
-      - This option will be ignored when permissions option is used.
+    - vhost to apply access privileges.
+    - This option will be ignored when permissions option is used.
+    type: str
     default: /
   node:
     description:
-      - erlang node name of the rabbit we wish to configure
+    - Erlang node name of the rabbit we wish to configure.
+    type: str
     default: rabbit
     version_added: "1.2"
   configure_priv:
     description:
-      - Regular expression to restrict configure actions on a resource
-        for the specified vhost.
-      - By default all actions are restricted.
-      - This option will be ignored when permissions option is used.
+    - Regular expression to restrict configure actions on a resource for the specified vhost.
+    - By default all actions are restricted.
+    - This option will be ignored when permissions option is used.
+    type: str
     default: ^$
   write_priv:
     description:
-      - Regular expression to restrict configure actions on a resource
-        for the specified vhost.
-      - By default all actions are restricted.
-      - This option will be ignored when permissions option is used.
+    - Regular expression to restrict configure actions on a resource for the specified vhost.
+    - By default all actions are restricted.
+    - This option will be ignored when permissions option is used.
+    type: str
     default: ^$
   read_priv:
     description:
-      - Regular expression to restrict configure actions on a resource
-        for the specified vhost.
-      - By default all actions are restricted.
-      - This option will be ignored when permissions option is used.
+    - Regular expression to restrict configure actions on a resource for the specified vhost.
+    - By default all actions are restricted.
+    - This option will be ignored when permissions option is used.
+    type: str
     default: ^$
   force:
     description:
-      - Deletes and recreates the user.
+    - Deletes and recreates the user.
     type: bool
-    default: 'no'
+    default: no
   state:
     description:
-      - Specify if user is to be added or removed
+    - Specify if user is to be added or removed.
     default: present
-    choices: [present, absent]
+    choices: [ absent, present ]
   update_password:
     description:
-      - C(on_create) will only set the password for newly created users.  C(always) will update passwords if they differ.
-    required: false
+    - C(on_create) will only set the password for newly created users.  C(always) will update passwords if they differ.
+    type: str
+    choices: [ always, on_create ]
     default: on_create
-    choices: [ on_create, always ]
     version_added: "2.6"
+seealso:
+- module: rabbitmq_policy
+- module: rabbitmq_vhost
 '''
 
 EXAMPLES = '''
-# Add user to server and assign full access control on / vhost.
-# The user might have permission rules for other vhost but you don't care.
-- rabbitmq_user:
+# The user might have permission rules for other vhost but you do not care
+- name: Add user to server and assign full access control on / vhost
+  rabbitmq_user:
     user: joe
     password: changeme
     vhost: /
@@ -105,16 +113,16 @@ EXAMPLES = '''
     write_priv: .*
     state: present
 
-# Add user to server and assign full access control on / vhost.
-# The user doesn't have permission rules for other vhosts
-- rabbitmq_user:
+# The user does not have permission rules for other vhosts
+- name: Add user to server and assign full access control on / vhost
+  rabbitmq_user:
     user: joe
     password: changeme
     permissions:
-      - vhost: /
-        configure_priv: .*
-        read_priv: .*
-        write_priv: .*
+    - vhost: /
+      configure_priv: .*
+      read_priv: .*
+      write_priv: .*
     state: present
 '''
 
@@ -129,10 +137,8 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         self.node = node
-        if not tags:
+        if tags is None:
             self.tags = list()
-        else:
-            self.tags = tags.split(',')
 
         self.permissions = permissions
         self.bulk_permissions = bulk_permissions
@@ -238,22 +244,22 @@ class RabbitMqUser(object):
 
 def main():
     arg_spec = dict(
-        user=dict(required=True, aliases=['username', 'name']),
-        password=dict(default=None, no_log=True),
-        tags=dict(default=None),
-        permissions=dict(default=list(), type='list'),
-        vhost=dict(default='/'),
-        configure_priv=dict(default='^$'),
-        write_priv=dict(default='^$'),
-        read_priv=dict(default='^$'),
-        force=dict(default='no', type='bool'),
-        state=dict(default='present', choices=['present', 'absent']),
-        node=dict(default='rabbit'),
-        update_password=dict(default='on_create', choices=['on_create', 'always'])
+        user=dict(type='str', required=True, aliases=['name', 'username']),
+        password=dict(type='str', no_log=True),
+        tags=dict(type='list'),
+        permissions=dict(type='list', default=list()),
+        vhost=dict(type='str', default='/'),
+        configure_priv=dict(type='str', default='^$'),
+        write_priv=dict(type='str', default='^$'),
+        read_priv=dict(type='str', default='^$'),
+        force=dict(type='bool', default=False),
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        node=dict(type='str', default='rabbit'),
+        update_password=dict(type='str', default='on_create', choices=['always', 'on_create']),
     )
     module = AnsibleModule(
         argument_spec=arg_spec,
-        supports_check_mode=True
+        supports_check_mode=True,
     )
 
     username = module.params['user']
