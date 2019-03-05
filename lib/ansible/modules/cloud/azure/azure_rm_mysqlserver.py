@@ -149,7 +149,7 @@ class Actions:
     NoAction, Create, Update, Delete = range(4)
 
 
-class AzureRMServers(AzureRMModuleBase):
+class AzureRMMySqlServers(AzureRMModuleBase):
     """Configuration class for an Azure RM MySQL Server resource"""
 
     def __init__(self):
@@ -206,9 +206,9 @@ class AzureRMServers(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
-        super(AzureRMServers, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                             supports_check_mode=True,
-                                             supports_tags=True)
+        super(AzureRMMySqlServers, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                  supports_check_mode=True,
+                                                  supports_tags=True)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -374,7 +374,7 @@ class AzureRMServers(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMServers()
+    AzureRMMySqlServers()
 
 
 if __name__ == '__main__':
