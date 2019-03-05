@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 - name: Print information about network
   debug:
-    var: result.docker_network
+    var: result.network
   when: result.exists
 '''
 
@@ -67,7 +67,7 @@ exists:
     type: bool
     returned: always
     sample: true
-docker_network:
+network:
     description:
       - Facts representing the current state of the network. Matches the docker inspection output.
       - Will be C(None) if network does not exist.
@@ -122,7 +122,7 @@ def main():
     client.module.exit_json(
         changed=False,
         exists=(True if network else False),
-        docker_network=network,
+        network=network,
     )
 
 

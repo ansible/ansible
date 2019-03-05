@@ -56,7 +56,7 @@ EXAMPLES = '''
 
 - name: Print information about container
   debug:
-    var: result.docker_container
+    var: result.container
   when: result.exists
 '''
 
@@ -67,7 +67,7 @@ exists:
     type: bool
     returned: always
     sample: true
-docker_container:
+container:
     description:
       - Facts representing the current state of the container. Matches the docker inspection output.
       - Will be C(None) if container does not exist.
@@ -126,7 +126,7 @@ def main():
     client.module.exit_json(
         changed=False,
         exists=(True if container else False),
-        docker_container=container,
+        container=container,
     )
 
 

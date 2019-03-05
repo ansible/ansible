@@ -241,11 +241,11 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-docker_network:
+network:
     description:
     - Network inspection results for the affected network.
     - Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts
-      are also accessible directly. Note that the returned fact will be removed in Ansible 2.12.
+      are also accessible directly as C(docker_network). Note that the returned fact will be removed in Ansible 2.12.
     returned: success
     type: dict
     sample: {}
@@ -575,7 +575,7 @@ class DockerNetworkManager(object):
 
         network_facts = self.get_existing_network()
         self.results['ansible_facts'] = {u'docker_network': network_facts}
-        self.results['docker_network'] = network_facts
+        self.results['network'] = network_facts
 
     def absent(self):
         self.diff_tracker.add('exists', parameter=False, active=self.existing_network is not None)

@@ -276,11 +276,11 @@ Noteworthy module changes
   This allows for more flexibility and better module support.
 
 * The ``docker_container`` module has deprecated the returned fact ``docker_container``. The same value is
-  available as the returned variable ``docker_container``. The returned fact will be removed in Ansible 2.12.
+  available as the returned variable ``container``. The returned fact will be removed in Ansible 2.12.
 * The ``docker_network`` module has deprecated the returned fact ``docker_container``. The same value is
-  available as the returned variable ``docker_network``. The returned fact will be removed in Ansible 2.12.
+  available as the returned variable ``network``. The returned fact will be removed in Ansible 2.12.
 * The ``docker_volume`` module has deprecated the returned fact ``docker_container``. The same value is
-  available as the returned variable ``docker_volume``. The returned fact will be removed in Ansible 2.12.
+  available as the returned variable ``volume``. The returned fact will be removed in Ansible 2.12.
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 * The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary

@@ -17,8 +17,8 @@
   - assert:
       that:
       - "not result.exists"
-      - "'docker_volume' in result"
-      - "result.docker_volume is none"
+      - "'volume' in result"
+      - "result.volume is none"
 
   - name: Make sure volume exists
     docker_volume:
@@ -47,9 +47,9 @@
   - assert:
       that:
       - result.exists
-      - "'docker_volume' in result"
-      - "result.docker_volume"
-      - "result.docker_volume == docker_volume_inspect_result[0]"
+      - "'volume' in result"
+      - "result.volume"
+      - "result.volume == docker_volume_inspect_result[0]"
 
   # Requirements for docker_volume
   when: docker_py_version is version('1.10.0', '>=') and docker_api_version is version('1.24', '>=')
