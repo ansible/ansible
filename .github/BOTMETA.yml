@@ -135,6 +135,10 @@ files:
     maintainers: $team_google
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
+  $modules/cloud/hcloud/: &hcloud
+    keywords: [ hcloud, hetzner cloud ]
+    labels: [ cloud, hcloud ]
+    maintainers: $team_hcloud
   $modules/cloud/kubevirt/: machacekondra mmazur pkliczewski
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
@@ -1108,6 +1112,7 @@ files:
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
+  $plugins/inventory/hcloud.py: *hcloud
   $plugins/inventory/ini.py:
     support: core
   $plugins/inventory/k8s.py:
@@ -1381,6 +1386,7 @@ macros:
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
+  team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
   team_imc: dagwieers
   team_ios: rcarrillocruz
