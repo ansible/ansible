@@ -13,9 +13,6 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import aws_ssm
 from ansible.plugins.loader import connection_loader, become_loader
 
-
-
-
 class TestConnectionBaseClass(unittest.TestCase):
 
     @patch('os.path.exists')
@@ -48,7 +45,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         new_stdin = StringIO()
         conn = connection_loader.get('aws_ssm', pc, new_stdin)
 
-        r_choice.side_effect = ['a','a','a','a','a','b','b','b','b','b']
+        r_choice.side_effect = ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b']
 
         conn._connected = True
         conn.MARK_LENGTH = 5
@@ -117,7 +114,7 @@ class TestConnectionBaseClass(unittest.TestCase):
         conn._session_id = True
 
         conn.get_option = MagicMock()
-        conn.get_option.side_effect = ["i-12345","/abc", "pqr"]
+        conn.get_option.side_effect = ["i-12345", "/abc", "pqr"]
 
         conn._session = MagicMock()
         conn._session.terminate = MagicMock()
