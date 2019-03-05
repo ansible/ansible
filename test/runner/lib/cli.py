@@ -52,6 +52,7 @@ from lib.config import (
 from lib.env import (
     EnvConfig,
     command_env,
+    configure_timeout,
 )
 
 from lib.sanity import (
@@ -95,6 +96,7 @@ def main():
         display.color = config.color
         display.info_stderr = (isinstance(config, SanityConfig) and config.lint) or (isinstance(config, IntegrationConfig) and config.list_targets)
         check_startup()
+        configure_timeout(config)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
         display.info('MAXFD: %d' % MAXFD, verbosity=2)
@@ -508,6 +510,11 @@ def parse_args():
     env.add_argument('--dump',
                      action='store_true',
                      help='dump environment to disk')
+
+    env.add_argument('--timeout',
+                     type=int,
+                     metavar='MINUTES',
+                     help='timeout for future ansible-test commands (0 clears)')
 
     if argcomplete:
         argcomplete.autocomplete(parser, always_complete_options=False, validator=lambda i, k: True)

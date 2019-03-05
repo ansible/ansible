@@ -57,15 +57,17 @@ def calculate_confidence(path, line, metadata):
 
 class TestResult(object):
     """Base class for test results."""
-    def __init__(self, command, test, python_version=None):
+    def __init__(self, command, test, python_version=None, enable_junit=False):
         """
         :type command: str
         :type test: str
         :type python_version: str
+        :type enable_junit: bool
         """
         self.command = command
         self.test = test
         self.python_version = python_version
+        self.enable_junit = enable_junit
         self.name = self.test or self.command
 
         if self.python_version:
@@ -88,7 +90,7 @@ class TestResult(object):
         if args.lint:
             self.write_lint()
 
-        if args.junit:
+        if args.junit or self.enable_junit:
             if self.junit:
                 self.write_junit(args)
             else:
@@ -157,6 +159,38 @@ class TestResult(object):
 
         with open(path, 'wb') as xml:
             xml.write(report.encode('utf-8', 'strict'))
+
+
+class TestTimeout(TestResult):
+    """Test timeout."""
+    def __init__(self, timeout_duration):
+        """
+        :type timeout_duration: int
+        """
+        super(TestTimeout, self).__init__(command='timeout', test='', enable_junit=True)
+
+        self.timeout_duration = timeout_duration
+
+    def write_junit(self, args):
+        """
+        :type args: TestConfig
+        """
+        message = 'Tests were aborted after exceeding the %d minute time limit.' % self.timeout_duration
+        output = '''One or more of the following situations may be responsible:
+
+- Code changes have resulted in tests that hang or run for an excessive amount of time.
+- Tests have been added which exceed the time limit when combined with existing tests.
+- Test infrastructure and/or external dependencies are operating slower than normal.'''
+
+        if args.coverage:
+            output += '\n- Additional overhead from collecting code coverage has resulted in tests exceeding the time limit.'
+
+        output += '\n\nConsult the console log for additional details on where the timeout occurred.'
+
+        test_case = self.junit.TestCase(classname=self.command, name=self.name)
+        test_case.add_error_info(message, output)
+
+        self.save_junit(args, test_case)
 
 
 class TestSuccess(TestResult):

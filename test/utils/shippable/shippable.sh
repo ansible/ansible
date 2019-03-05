@@ -116,6 +116,12 @@ function cleanup
 
 trap cleanup EXIT
 
-ansible-test env --dump --show --color -v
+if [[ "${COVERAGE:-}" ]]; then
+    timeout=60
+else
+    timeout=45
+fi
+
+ansible-test env --dump --show --timeout "${timeout}" --color -v
 
 "test/utils/shippable/${script}.sh" "${test}"
