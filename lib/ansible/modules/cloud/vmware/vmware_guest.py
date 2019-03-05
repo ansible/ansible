@@ -597,6 +597,18 @@ from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs
                                          wait_for_task, TaskError)
 
 
+# While creating many devices, temporary key values
+# should be unique negative integers
+class PyVmomiKeyHelper(object):
+    """ This class is a helper that creates unique keys when needed for the VMware API."""
+
+    current_key = -99
+
+    @staticmethod
+    def next_key():
+        PyVmomiKeyHelper.current_key -= 1
+        return PyVmomiKeyHelper.current_key
+
 class PyVmomiDeviceHelper(object):
     """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
 
@@ -616,9 +628,7 @@ class PyVmomiDeviceHelper(object):
         scsi_device = self.scsi_device_type.get(scsi_type, vim.vm.device.ParaVirtualSCSIController)
         scsi_ctl.device = scsi_device()
         scsi_ctl.device.busNumber = 0
-        # While creating a new SCSI controller, temporary key value
-        # should be unique negative integers
-        scsi_ctl.device.key = -randint(1000, 9999)
+        scsi_ctl.device.key = PyVmomiKeyHelper.next_key()
         scsi_ctl.device.hotAddRemove = True
         scsi_ctl.device.sharedBus = 'noSharing'
         scsi_ctl.device.scsiCtlrUnitNumber = 7
@@ -634,9 +644,7 @@ class PyVmomiDeviceHelper(object):
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         ide_ctl.device = vim.vm.device.VirtualIDEController()
         ide_ctl.device.deviceInfo = vim.Description()
-        # While creating a new IDE controller, temporary key value
-        # should be unique negative integers
-        ide_ctl.device.key = -randint(200, 299)
+        ide_ctl.device.key = PyVmomiDeviceHelper.next_key()
         ide_ctl.device.busNumber = 0
 
         return ide_ctl
@@ -647,7 +655,7 @@ class PyVmomiDeviceHelper(object):
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
         cdrom_spec.device.controllerKey = ide_ctl.device.key
-        cdrom_spec.device.key = -1
+        cdrom_spec.device.key = PyVmomiKeyHelper.next_key()
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
         cdrom_spec.device.connectable.startConnected = (cdrom_type != "none")
@@ -683,6 +691,7 @@ class PyVmomiDeviceHelper(object):
         diskspec.device = vim.vm.device.VirtualDisk()
         diskspec.device.backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
         diskspec.device.controllerKey = scsi_ctl.device.key
+        diskspec.device.key = PyVmomiKeyHelper.next_key()
 
         if self.next_disk_unit_number == 7:
             raise AssertionError()
@@ -1431,11 +1440,6 @@ class PyVmomiHelper(PyVmomi):
         vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
         vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
 
-        # each property must have a unique key
-        # init key counter with max value + 1
-        all_keys = [x.key for x in orig_spec.property]
-        new_property_index = max(all_keys) + 1 if all_keys else 0
-
         for property_id, property_spec in vapp_properties_to_change.items():
             is_property_changed = False
             new_vapp_property_spec = vim.vApp.PropertySpec()
@@ -1486,8 +1490,7 @@ class PyVmomiHelper(PyVmomi):
                 property_info.description = property_spec.get('description')
 
                 new_vapp_property_spec.info = property_info
-                new_vapp_property_spec.info.key = new_property_index
-                new_property_index += 1
+                new_vapp_property_spec.info.key = PyVmomiKeyHelper.next_key()
                 is_property_changed = True
             if is_property_changed:
                 new_vmconfig_spec.property.append(new_vapp_property_spec)
