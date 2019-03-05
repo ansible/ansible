@@ -474,6 +474,114 @@
     - allow_multiple is changed
     - allow_multiple_actual.stdout == "ansible|0.1.0\r\nansible|0.0.1\r\n"
 
+- name: pin 2 packages (check mode)
+  win_chocolatey:
+    name:
+    - '{{ test_choco_package1 }}'
+    - '{{ test_choco_package2 }}'
+    state: present
+    pinned: yes
+  register: pin_multiple_check
+  check_mode: True
+
+- name: get result of pin 2 packages (check mode)
+  win_command: choco.exe pin list --limit-output
+  register: pin_multiple_actual_check
+
+- name: assert pin 2 packages (check mode)
+  assert:
+    that:
+    - pin_multiple_check is changed
+    - pin_multiple_actual_check.stdout == ""
+
+- name: pin 2 packages
+  win_chocolatey:
+    name:
+    - '{{ test_choco_package1 }}'
+    - '{{ test_choco_package2 }}'
+    state: present
+    pinned: yes
+  register: pin_multiple
+
+- name: get result of pin 2 packages
+  win_command: choco.exe pin list --limit-output
+  register: pin_multiple_actual
+
+- name: assert pin 2 packages
+  assert:
+    that:
+    - pin_multiple is changed
+    - pin_multiple_actual.stdout_lines == ["ansible|0.1.0", "ansible-test|1.0.1-beta1"]
+
+- name: pin 2 packages (idempotent)
+  win_chocolatey:
+    name:
+    - '{{ test_choco_package1 }}'
+    - '{{ test_choco_package2 }}'
+    state: present
+    pinned: yes
+  register: pin_multiple_again
+
+- name: assert pin 2 packages (idempoent)
+  assert:
+    that:
+    - not pin_multiple_again is changed
+
+- name: pin specific older version
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    pinned: yes
+    version: '0.0.1'
+  register: pin_older
+
+- name: get result of pin specific older version
+  win_command: choco.exe pin list --limit-output
+  register: pin_older_actual
+
+- name: assert pin specific older version
+  assert:
+    that:
+    - pin_older is changed
+    - pin_older_actual.stdout_lines == ["ansible|0.1.0", "ansible|0.0.1", "ansible-test|1.0.1-beta1"]
+
+- name: unpin package at version
+  win_chocolatey:
+    name: '{{ test_choco_package1 }}'
+    state: present
+    pinned: no
+    version: '0.1.0'
+  register: unpin_version
+
+- name: get result of unpin package at version
+  win_command: choco.exe pin list --limit-output
+  register: unpin_version_actual
+
+- name: assert unpin package at version
+  assert:
+    that:
+    - unpin_version is changed
+    - unpin_version_actual.stdout_lines == ["ansible|0.0.1", "ansible-test|1.0.1-beta1"]
+
+- name: unpin multiple packages without a version
+  win_chocolatey:
+    name:
+    - '{{ test_choco_package1 }}'
+    - '{{ test_choco_package2 }}'
+    state: present
+    pinned: no
+  register: unpin_multiple
+
+- name: get result of unpin multiple packages without a version
+  win_command: choco.exe pin list --limit-output
+  register: unpin_multiple_actual
+
+- name: assert unpin multiple packages without a version
+  assert:
+    that:
+    - unpin_multiple is changed
+    - unpin_multiple_actual.stdout == ""
+
 - name: uninstall specific version installed with allow_multiple
   win_chocolatey:
     name: '{{ test_choco_package1 }}'
