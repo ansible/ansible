@@ -494,13 +494,16 @@ def main():
             try:
                 rc, stdout, stderr, cmd = method(module, target, target_opts, db, **kw)
                 if rc != 0:
-                    module.fail_json(msg=stderr, stdout=stdout, rc=rc, cmd=cmd)
+                    module.fail_json(msg='Dump of database %s failed' % db,
+                                     stdout=stdout, stderr=stderr, rc=rc, cmd=cmd)
 
-                elif stderr and ('FATAL' in str(stderr) or 'ERROR' in str(stderr)):
-                    module.fail_json(msg=stderr, stdout=stdout, rc=1, cmd=cmd)
+                elif stderr and ('FATAL' in stderr or 'ERROR' in stderr):
+                    module.fail_json(msg='Dump of database %s failed' % db,
+                                     stdout=stdout, stderr=stderr, rc=1, cmd=cmd)
 
                 else:
-                    module.exit_json(changed=True, msg=stdout, stderr=stderr, rc=rc, cmd=cmd)
+                    module.exit_json(changed=True, msg='Dump of database %s has been done' % db,
+                                     stdout=stdout, stderr=stderr, rc=rc, cmd=cmd)
             except SQLParseError as e:
                 module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
