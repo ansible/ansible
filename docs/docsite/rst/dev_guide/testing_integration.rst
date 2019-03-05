@@ -33,7 +33,7 @@ more information about supported credentials, refer to ``credentials.template``.
 Prerequisites
 =============
 
-The tests will assume things like hg, svn, and git are installed, and in path.  Some tests
+Some tests assume things like hg, svn, and git are installed, and in path.  Some tests
 (such as those for Amazon Web Services) need separate definitions, which will be covered
 later in this document.
 
@@ -55,7 +55,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 Run as follows for all POSIX platform tests executed by our CI system::
 
-    test/runner/ansible-test integration --docker fedora29 -v shippable/posix/
+    ansible-test integration --docker fedora29 -v shippable/
 
 You can target a specific tests as well, such as for individual modules::
 
@@ -117,7 +117,7 @@ Running Integration Tests
 
 To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container::
 
-    test/runner/ansible-test integration --docker -v shippable/
+    test/runner/ansible-test integration --docker ubuntu1604 -v shippable/
 
 You can also run specific tests or select a different Linux distribution.
 For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
