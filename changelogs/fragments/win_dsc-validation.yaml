@@ -1,0 +1,4 @@
+minor_changes:
+- win_dsc - The win_dsc module will now fail if an invalid DSC property is set.
+- win_dsc - The module invocation and possible options will be displayed when running with ``-vvv``.
+- win_dsc - The Verbose logs will be returned when running with ``-vvv``.
