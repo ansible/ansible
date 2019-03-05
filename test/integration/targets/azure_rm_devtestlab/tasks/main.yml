@@ -561,6 +561,25 @@
 - debug:
     var: output
 
+    # azure_rm_devtestlabglobalschedule
+- name: Create instance of DevTest Lab Global Schedule
+  azure_rm_devtestlabglobalschedule:
+    resource_group: "{{ resource_group }}"
+    lab_name: "{{ lab_name }}"
+    name: LabVmsShutdown
+    location: eastus
+    status: yes
+    task_type: ComputeVmShutdownTask # LabVmsShutdownTask
+    #hourly_recurrence:
+    #  minute: 10
+    daily_recurrence:
+      time: "10:30"
+    time_zone_id: "UTC+12"
+    #target_resource_id: "{{ output_vm.virtualmachines[0]['compute_vm_id'] }}"
+  register: output
+- debug:
+    var: output
+
 - name: Create instance of DevTest Lab Environment
   azure_rm_devtestlabenvironment:
     resource_group: "{{ resource_group }}"
