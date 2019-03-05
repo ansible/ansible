@@ -33,7 +33,7 @@ more information about supported credentials, refer to ``credentials.template``.
 Prerequisites
 =============
 
-The tests will assume things like hg, svn, and git are installed and in path.  Some tests
+The tests will assume things like hg, svn, and git are installed, and in path.  Some tests
 (such as those for Amazon Web Services) need separate definitions, which will be covered
 later in this document.
 
@@ -55,15 +55,19 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 Run as follows for all POSIX platform tests executed by our CI system::
 
-    test/runner/ansible-test integration --docker fedora25 -v posix/ci/
+    test/runner/ansible-test integration --docker fedora29 -v shippable/posix/
 
-You can select specific tests as well, such as for individual modules::
+You can target a specific tests as well, such as for individual modules::
 
     test/runner/ansible-test integration -v ping
 
-By installing ``argcomplete`` you can obtain a full list by doing::
+Use the following command to list all the available targets::
 
-    test/runner/ansible-test integration <tab><tab>
+    test/runner/ansible-test integration --list-targets
+
+.. note:: Bash users
+
+   If you use ``Bash`` with ``argcomplete``, obtain a full list by doing: ``test/runner/ansible-test integration <tab><tab>``
 
 Destructive Tests
 =================
@@ -71,7 +75,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    test/runner/ansible-test integration --docker fedora25 -v destructive/
+    test/runner/ansible-test integration --docker fedora29 -v destructive/
 
 Windows Tests
 =============
@@ -113,7 +117,7 @@ Running Integration Tests
 
 To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container::
 
-    test/runner/ansible-test integration -v posix/ci/ --docker
+    test/runner/ansible-test integration --docker -v shippable/
 
 You can also run specific tests or select a different Linux distribution.
 For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
