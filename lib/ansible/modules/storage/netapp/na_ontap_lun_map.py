@@ -2,7 +2,7 @@
 
 """ this is lun mapping module
 
- (c) 2018, NetApp, Inc
+ (c) 2018-2019, NetApp, Inc
  # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """
 
@@ -84,27 +84,27 @@ RETURN = """
 lun_node:
     description: NetApp controller that is hosting the LUN.
     returned: success
-    type: str
+    type: string
     sample: node01
 lun_ostype:
     description: Specifies the OS of the host accessing the LUN.
     returned: success
-    type: str
+    type: string
     sample: vmware
 lun_serial:
     description: A unique, 12-byte, ASCII string used to identify the LUN.
     returned: success
-    type: str
+    type: string
     sample: 80E7/]LZp1Tt
 lun_naa_id:
     description: The Network Address Authority (NAA) identifier for the LUN.
     returned: success
-    type: str
+    type: string
     sample: 600a0980383045372f5d4c5a70315474
 lun_state:
     description: Online or offline status of the LUN.
     returned: success
-    type: str
+    type: string
     sample: online
 lun_size:
     description: Size of the LUN in bytes.
@@ -118,6 +118,7 @@ import traceback
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 import ansible.module_utils.netapp as netapp_utils
+import codecs
 
 HAS_NETAPP_LIB = netapp_utils.has_netapp_lib()
 
@@ -209,11 +210,13 @@ class NetAppOntapLUNMap(object):
             lun = result.get_child_by_name('attributes-list').get_child_by_name('lun-info')
 
             # extract and assign lun infomation to return value
+            hexlify = codecs.getencoder('hex')
+            naa_hex = hexlify(str.encode(lun.get_child_content('serial-number')))[0].decode("utf-8")
             return_value = {
                 'lun_node': lun.get_child_content('node'),
                 'lun_ostype': lun.get_child_content('multiprotocol-type'),
                 'lun_serial': lun.get_child_content('serial-number'),
-                'lun_naa_id': '600a0980' + lun.get_child_content('serial-number').encode('hex'),
+                'lun_naa_id': '600a0980' + str(naa_hex),
                 'lun_state': lun.get_child_content('state'),
                 'lun_size': lun.get_child_content('size'),
             }
