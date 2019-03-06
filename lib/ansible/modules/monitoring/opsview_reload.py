@@ -8,6 +8,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os.path
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -192,12 +194,17 @@ def do_reload(module, opsview_client):
 
 
 def module_main(module):
+    verify = module.params['verify_ssl']
+
+    if not os.path.exists(verify):
+        verify = module.boolean(verify)
+
     opsview_client = ov.new_opsview_client(
         username=module.params['username'],
         password=module.params['password'],
         endpoint=module.params['endpoint'],
         token=module.params['token'],
-        verify=module.params['verify_ssl'],
+        verify=verify,
     )
 
     return do_reload(module, opsview_client)

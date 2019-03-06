@@ -8,6 +8,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os.path
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -97,12 +99,17 @@ def main():
         module.fail_json(msg=ov.PYOV_IMPORT_EXC[0],
                          exception=ov.PYOV_IMPORT_EXC[1])
 
+    verify = module.params['verify_ssl']
+
+    if not os.path.exists(verify):
+        verify = module.boolean(verify)
+
     try:
         opsview_client = ov.new_opsview_client(
             username=module.params['username'],
             password=module.params['password'],
             endpoint=module.params['endpoint'],
-            verify=module.params['verify_ssl'],
+            verify=verify,
         )
 
         summary = {'changed': True,
