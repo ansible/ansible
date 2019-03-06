@@ -70,8 +70,8 @@ options:
     description:
       - Whether or not to return the body of the response as a "content" key in
         the dictionary result.
-      - If the reported Content-type is "application/json", then the JSON is
-        additionally loaded into a key called C(json) in the dictionary results.
+      - Independently of this option, if the reported Content-type is "application/json", then the JSON is
+        always loaded into a key called C(json) in the dictionary results.
     type: bool
     default: no
   force_basic_auth:
