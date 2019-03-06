@@ -62,30 +62,26 @@ class HttpApi(HttpApiBase):
             'Content-Type': message_kwargs.get('content_type') or CONTENT_TYPE,
             'Accept': message_kwargs.get('accept') or CONTENT_TYPE,
         }
-        try:
-            response, response_data = self.connection.send(path, data, headers=headers, method=message_kwargs.get('method'))
-        except HTTPError as exc:
-            response_data = exc
+        response, response_data = self.connection.send(path, data, headers=headers, method=message_kwargs.get('method'))
 
-        return handle_response(response_data)
-
-    def handle_httperror(self, exc):
-        return None
+        return handle_response(response, response_data)
 
 
-def handle_response(response):
+def handle_response(response, response_data):
     try:
-        response_json = json.loads(response.read())
+        response_data = json.loads(response_data.read())
     except ValueError:
-        if isinstance(response, HTTPError):
-            raise ConnectionError(to_text(response), code=response.code)
-        return response.read()
+        response_data = response_data.read()
 
-    if 'errors' in response_json and 'jsonrpc' not in response_json:
-        errors = response_json['errors']['error']
+    if isinstance(response, HTTPError):
+        if response_data:
+            if 'errors' in response_data:
+                errors = response_data['errors']['error']
+                error_text = '\n'.join((error['error-message'] for error in errors))
+            else:
+                error_text = response_data
 
-        error_text = '\n'.join((error['error-message'] for error in errors))
+            raise ConnectionError(error_text, code=response.code)
+        raise ConnectionError(to_text(response), code=response.code)
 
-        raise ConnectionError(error_text, code=response.code)
-
-    return response_json
+    return response_data

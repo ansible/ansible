@@ -277,9 +277,9 @@ class Connection(NetworkConnectionBase):
             if is_handled is True:
                 return self.send(path, data, **kwargs)
             elif is_handled is False:
-                raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
-            else:
                 raise
+            else:
+                response = is_handled
         except URLError as exc:
             raise AnsibleConnectionFailure('Could not connect to {0}: {1}'.format(self._url + path, exc.reason))
 
