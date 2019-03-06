@@ -22,8 +22,8 @@ run_test() {
       > >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
       2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2) 0</dev/null
 
-   perl -pi -e 's/ *$//s' "${OUTFILE}.${testname}.stdout"
-   perl -pi -e 's/ *$//s' "${OUTFILE}.${testname}.stderr"
+   sed -i -e 's/ *$//' "${OUTFILE}.${testname}.stdout"
+   sed -i -e 's/ *$//' "${OUTFILE}.${testname}.stderr"
 
    diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
    diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
