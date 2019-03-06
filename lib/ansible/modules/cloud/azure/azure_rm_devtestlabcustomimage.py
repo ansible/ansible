@@ -197,7 +197,7 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
             if windows_os_state:
                 self.custom_image['vm']['windows_os_info'] = {'windows_os_state': _snake_to_camel(windows_os_state, True)}
             elif linux_os_state:
-                self.custom_image['vm']['windows_os_info'] = {'linux_os_state': _snake_to_camel(linux_os_state, True)}
+                self.custom_image['vm']['linux_os_info'] = {'linux_os_state': _snake_to_camel(linux_os_state, True)}
             else:
                 self.fail("Either 'linux_os_state' or 'linux_os_state' must be specified")
 
