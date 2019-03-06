@@ -77,7 +77,7 @@ options:
     privatekey_passphrase:
         description:
             - The passphrase for the I(privatekey_path).
-            - This is required if the privatekey is password protected.
+            - This is required if the private key is password protected.
         type: str
 
     selfsigned_version:

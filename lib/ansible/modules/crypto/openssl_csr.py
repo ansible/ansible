@@ -40,13 +40,13 @@ options:
         default: sha256
     privatekey_path:
         description:
-            - The path to the privatekey to use when signing the certificate signing request.
+            - The path to the private key to use when signing the certificate signing request.
         type: path
         required: true
     privatekey_passphrase:
         description:
-            - The passphrase for the privatekey.
-            - This is required if the privatekey is password protected.
+            - The passphrase for the private key.
+            - This is required if the private key is password protected.
         type: str
     version:
         description:
