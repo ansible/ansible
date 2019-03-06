@@ -160,24 +160,22 @@ def lock(path, lock_timeout=15):
         raise IOError('{0} does not exist'.format(path))
 
     if lock_timeout is None or lock_timeout < 0:
-        fd = open(b_path, 'rb+')
+        fd = open(b_path, 'ab+')
         filelock(fd, fcntl.LOCK_EX)
         return fd
 
     if lock_timeout >= 0:
         total_wait = 0
         while total_wait <= lock_timeout:
-            fd = open(b_path, 'rb+')
+            fd = open(b_path, 'ab+')
             try:
                 filelock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 return fd
             except lock_exception:
-                fd.close()
                 time.sleep(wait)
                 total_wait += wait
                 continue
 
-        fd.close()
         raise LockTimeout('Waited {0} seconds for lock on {1}'.format(total_wait, path))
 
 
