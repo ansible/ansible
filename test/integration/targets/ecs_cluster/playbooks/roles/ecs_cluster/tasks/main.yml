@@ -664,7 +664,7 @@
       assert:
         that:
           - ecs_fargate_task_definition_bridged_with_host_port is failed
-          - 'ecs_fargate_task_definition_bridged_with_host_port.msg == "To use FARGATE launch type, network_mode must be awsvpc"' 
+          - 'ecs_fargate_task_definition_bridged_with_host_port.msg == "To use FARGATE launch type, network_mode must be awsvpc"'
 
     - name: create Fargate VPC-networked task definition without CPU or Memory (expected to Fail)
       ecs_taskdefinition:
@@ -681,7 +681,7 @@
       assert:
         that:
           - ecs_fargate_task_definition_vpc_no_mem is failed
-          - 'ecs_fargate_task_definition_vpc_no_mem.msg == "launch_type is FARGATE but all of the following are missing: cpu, memory"' 
+          - 'ecs_fargate_task_definition_vpc_no_mem.msg == "launch_type is FARGATE but all of the following are missing: cpu, memory"'
 
     - name: create Fargate VPC-networked task definition with CPU or Memory and execution role
       ecs_taskdefinition:
@@ -715,13 +715,13 @@
         <<: *aws_connection_info
       register: ecs_fargate_service_network_without_awsvpc
       ignore_errors: yes
-     
+
     - name: assert that using Fargate ECS service fails
       assert:
         that:
           - ecs_fargate_service_network_without_awsvpc is failed
 
-    - name: create fargate ECS service with network config 
+    - name: create fargate ECS service with network config
       ecs_service:
         state: present
         name: "{{ ecs_service_name }}4"
@@ -737,6 +737,22 @@
           assign_public_ip: true
         <<: *aws_connection_info
       register: ecs_fargate_service_network_with_awsvpc
+
+    - name: create fargate ECS task with run task
+      ecs_task:
+        operation: run
+        cluster: "{{ ecs_cluster_name }}"
+        task_definition: "{{ ecs_task_name }}-vpc"
+        launch_type: FARGATE
+        count: 1
+        network_configuration:
+          subnets: "{{ setup_subnet.results | json_query('[].subnet.id') }}"
+          security_groups:
+            - '{{ setup_sg.group_id }}'
+          assign_public_ip: true
+        started_by: ansible_user
+        <<: *aws_connection_info
+      register: fargate_run_task_output
 
     - name: assert that public IP assignment is enabled
       assert:
@@ -878,6 +894,15 @@
         <<: *aws_connection_info
       ignore_errors: yes
       register: ecs_service_scale_down
+
+    - name: stop Fargate ECS task
+      ecs_task:
+        task: "{{ fargate_run_task_output.task[0].taskArn }}"
+        task_definition: "{{ ecs_task_name }}-vpc"
+        operation: stop
+        cluster: "{{ ecs_cluster_name }}"
+        <<: *aws_connection_info
+      ignore_errors: yes
 
     - name: pause to allow services to scale down
       pause:
