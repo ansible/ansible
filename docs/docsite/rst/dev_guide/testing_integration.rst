@@ -25,6 +25,22 @@ It provides tab completion in ``bash`` for the ``ansible-test`` test runner.
 Configuration
 =============
 
+ansible-test command
+--------------------
+
+The example below assumes ``test/runner`` is in your ``$PATH``. An easy way to achieve that
+is to initialize your environment with the ``env-setup`` command::
+
+    source hacking/env-setup
+    ansible-test --help
+
+You can also call ``ansible-test`` with the full path::
+
+    test/runner/ansible-test --help
+
+integration_config.yml
+----------------------
+
 Making your own version of ``integration_config.yml`` can allow for setting some
 tunable parameters to help run the tests better in your environment.  Some
 tests (e.g. cloud) will only run when access credentials are provided.  For
@@ -59,11 +75,11 @@ Run as follows for all POSIX platform tests executed by our CI system::
 
 You can target a specific tests as well, such as for individual modules::
 
-    test/runner/ansible-test integration -v ping
+    ansible-test integration -v ping
 
 Use the following command to list all the available targets::
 
-    test/runner/ansible-test integration --list-targets
+    ansible-test integration --list-targets
 
 .. note:: Bash users
 
@@ -75,7 +91,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    test/runner/ansible-test integration --docker fedora29 -v destructive/
+    ansible-test integration --docker fedora29 -v destructive/
 
 Windows Tests
 =============
@@ -98,7 +114,7 @@ Define Windows inventory::
 
 Run the Windows tests executed by our CI system::
 
-    test/runner/ansible-test windows-integration -v windows/ci/
+    ansible-test windows-integration -v windows/ci/
 
 Tests in Docker containers
 ==========================
@@ -117,12 +133,12 @@ Running Integration Tests
 
 To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container::
 
-    test/runner/ansible-test integration --docker ubuntu1604 -v shippable/
+    ansible-test integration --docker ubuntu1604 -v shippable/
 
 You can also run specific tests or select a different Linux distribution.
 For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
 
-    test/runner/ansible-test integration -v ping --docker ubuntu1404
+    ansible-test integration -v ping --docker ubuntu1404
 
 Container Images
 ----------------
