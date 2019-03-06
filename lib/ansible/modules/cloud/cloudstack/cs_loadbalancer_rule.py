@@ -98,14 +98,12 @@ options:
       - Poll async jobs until job has finished.
     type: bool
     default: yes
-    version_added: '2.8'
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys I(key) and I(value).
       - "To delete all tags, set a empty list e.g. I(tags: [])."
     type: list
     aliases: [ tag ]
-    version_added: '2.8'
 extends_documentation_fragment: cloudstack
 '''
 
