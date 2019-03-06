@@ -119,7 +119,7 @@ def main():
                 result = inventory.delete(name=name, organization=org['id'])
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update inventory, organization not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update inventory: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

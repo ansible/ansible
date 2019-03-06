@@ -118,7 +118,7 @@ def main():
             if query:
                 params['query'] = query.items()
             json_output = job.list(**params)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to list jobs: {0}'.format(excinfo), changed=False)
 
     module.exit_json(**json_output)

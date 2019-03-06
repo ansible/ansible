@@ -120,7 +120,7 @@ def main():
                 result = host.delete(name=name, inventory=inv['id'])
         except (exc.NotFound) as excinfo:
             module.fail_json(msg='Failed to update host, inventory not found: {0}'.format(excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update host: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']

@@ -132,7 +132,7 @@ def main():
             json_output['timeout'] = True
         except exc.NotFound as excinfo:
             fail_json = dict(msg='Unable to wait, no job_id {0} found: {1}'.format(job_id, excinfo), changed=False)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             fail_json = dict(msg='Unable to wait for job: {0}'.format(excinfo), changed=False)
 
     if fail_json is not None:

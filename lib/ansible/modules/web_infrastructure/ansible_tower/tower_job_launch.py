@@ -134,7 +134,7 @@ def main():
             result = job.launch(no_input=True, **params)
             json_output['id'] = result['id']
             json_output['status'] = result['status']
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Unable to launch job: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
