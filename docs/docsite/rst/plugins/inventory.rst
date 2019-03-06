@@ -110,6 +110,31 @@ Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
 
 If a host does not have the variables in the configuration above (i.e. ``tags.Name``, ``tags``, ``private_ip_address``), the host will not be added to groups other than those that the inventory plugin creates and the ``ansible_host`` host variable will not be modified.
 
+If an inventory plugin supports caching, you can enable and set caching options for an individual YAML configuration source or for multiple inventory sources using environment variables or Ansible configuration files. If you enable caching for an inventory plugin without providing inventory-specific caching options, the inventory plugin will use fact-caching options. Here is an example of enabling caching for an individual YAML configuration file:
+
+.. code-block:: yaml
+
+    # demo.aws_ec2.yml
+    plugin: aws_ec2
+    cache: yes
+    cache_plugin: jsonfile
+    cache_timeout: 7200
+    cache_connection: /tmp/aws_inventory
+    cache_prefix: aws_ec2
+
+Here is an example of setting inventory caching with some fact caching defaults for the cache plugin used and the timeout in an ``ansible.cfg`` file:
+
+.. code-block:: ini
+
+   [defaults]
+   fact_caching = json
+   fact_caching_connection = /tmp/ansible_facts
+   cache_timeout = 3600
+
+   [inventory]
+   cache = yes
+   cache_connection = /tmp/ansible_inventory
+
 .. _inventory_plugin_list:
 
 Plugin List

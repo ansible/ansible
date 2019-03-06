@@ -70,6 +70,7 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
 
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
 
+
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) must include well-formed doc strings to be considered for merge into the Ansible repo. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
 Developing particular plugin types
@@ -143,6 +144,46 @@ the local time, returning the time delta in days, seconds and microseconds.
 
 For practical examples of action plugins,
 see the source code for the `action plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/action>`_
+
+.. _developing_cache_plugins:
+
+Cache plugins
+-------------
+
+Cache plugins store gathered facts and data retrieved by inventory plugins.
+
+Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
+
+.. code-block:: python
+
+    from ansible.plugins.loader import cache_loader
+    [...]
+    plugin = cache_loader.get('custom_cache', **cache_kwargs)
+
+There are two base classes for cache plugins, ``BaseCacheModule`` for database-backed caches, and ``BaseCacheFileModule`` for file-backed caches.
+
+To create a cache plugin, start by creating a new ``CacheModule`` class with the appropriate base class. If you're creating a plugin using an ``__init__`` method you should initialize the base class with any provided args and kwargs to be compatible with inventory plugin cache options. The base class calls ``self.set_options(direct=kwargs)``. After the base class ``__init__`` method is called ``self.get_option(<option_name>)`` should be used to access cache options.
+
+New cache plugins should take the options ``_uri``, ``_prefix``, and ``_timeout`` to be consistent with existing cache plugins.
+
+.. code-block:: python
+
+    from ansible.plugins.cache import BaseCacheModule
+
+    class CacheModule(BaseCacheModule):
+        def __init__(self, *args, **kwargs):
+            super(CacheModule, self).__init__(*args, **kwargs)
+            self._connection = self.get_option('_uri')
+            self._prefix = self.get_option('_prefix')
+            self._timeout = self.get_option('_timeout')
+
+If you use the ``BaseCacheModule``, you must implement the methods ``get``, ``contains``, ``keys``, ``set``, ``delete``, ``flush``, and ``copy``. The ``contains`` method should return a boolean that indicates if the key exists and has not expired. Unlike file-based caches, the ``get`` method does not raise a KeyError if the cache has expired.
+
+If you use the ``BaseFileCacheModule``, you must implement ``_load`` and ``_dump`` methods that will be called from the base class methods ``get`` and ``set``.
+
+If your cache plugin stores JSON, use ``AnsibleJSONEncoder`` in the ``_dump`` or ``set`` method  and ``AnsibleJSONDecoder`` in the ``_load`` or ``get`` method.
+
+For example cache plugins, see the source code for the `cache plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/cache>`_.
 
 .. _developing_callbacks:
 
