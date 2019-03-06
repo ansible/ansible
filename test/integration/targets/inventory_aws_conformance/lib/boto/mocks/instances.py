@@ -24,6 +24,7 @@ class BotoInstance(object):
 
     _in_monitoring_element = False
     account_id = 100000
+    owner_id = 100000
     ami_launch_index = 0
     architecture = "x86_64"
     block_devices = {
@@ -77,6 +78,7 @@ class BotoInstance(object):
     def __init__(self, id=None, owner_id=None, region=None):
         self.id = 'i-%s' % id
         self.region = region
+        self.placement = region
         self.groups = []
         self.image_id = 'ami-%s' % self.id
         self.instance_type = 't1.micro'
@@ -113,6 +115,6 @@ class Boto3Instance(BotoInstance):
             if attr.startswith('__'):
                 continue
             val = getattr(self, attr)
-            if type(val) in [str, bool, unicode, int, dict, None]:
+            if type(val) in [str, bool, unicode, int, float, dict, None]:
                 data[attr] = val
         return data
