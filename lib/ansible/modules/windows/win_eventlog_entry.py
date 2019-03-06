@@ -19,30 +19,29 @@ options:
   log:
     description:
       - Name of the event log to write an entry to.
+    type: str
     required: yes
   source:
     description:
       - Name of the log source to indicate where the entry is from.
+    type: str
     required: yes
   event_id:
     description:
       - The numeric event identifier for the entry.
       - Value must be between 0 and 65535.
-    required: yes
     type: int
+    required: yes
   message:
     description:
       - The message for the given log entry.
+    type: str
     required: yes
   entry_type:
     description:
       - Indicates the entry being written to the log is of a specific type.
-    choices:
-      - Error
-      - FailureAudit
-      - Information
-      - SuccessAudit
-      - Warning
+    type: str
+    choices: [ Error, FailureAudit, Information, SuccessAudit, Warning ]
   category:
     description:
       - A numeric task category associated with the category message file for the log source.
@@ -51,6 +50,7 @@ options:
     description:
       - Binary data associated with the log entry.
       - Value must be a comma-separated array of 8-bit unsigned integers (0 to 255).
+    type: str
 notes:
     - This module will always report a change when writing an event entry.
 seealso:

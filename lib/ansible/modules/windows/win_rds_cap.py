@@ -22,6 +22,7 @@ options:
   name:
     description:
       - Name of the connection authorization policy.
+    type: str
     required: yes
   state:
     description:
@@ -30,13 +31,15 @@ options:
       - If C(present) will ensure the policy is configured and exists.
       - If C(enabled) will ensure the policy is configured, exists and enabled.
       - If C(disabled) will ensure the policy is configured, exists, but disabled.
-    choices: [ absent, present, enabled, disabled ]
+    type: str
+    choices: [ absent, enabled, disabled, present ]
     default: present
   auth_method:
     description:
       - Specifies how the RD Gateway server authenticates users.
       - When a new CAP is created, the default value is C(password).
-    choices: [ password, smartcard, both, none ]
+    type: str
+    choices: [ both, none, password, smartcard ]
   order:
     description:
       - Evaluation order of the policy.
@@ -56,6 +59,7 @@ options:
       - The action the server takes when a session times out.
       - 'C(disconnect): disconnect the session.'
       - 'C(reauth): silently reauthenticate and reauthorize the session.'
+    type: str
     choices: [ disconnect, reauth ]
     default: disconnect
   idle_timeout:
@@ -100,6 +104,10 @@ options:
 requirements:
   - Windows Server 2008R2 (6.1) or higher.
   - The Windows Feature "RDS-Gateway" must be enabled.
+seealso:
+- module: win_rds_cap
+- module: win_rds_rap
+- module: win_rds_settings
 '''
 
 EXAMPLES = r'''
@@ -110,12 +118,12 @@ EXAMPLES = r'''
       - BUILTIN\users
     session_timeout: 30
     session_timeout_action: disconnect
-    allow_only_sdrts_servers: true
-    redirect_clipboard: true
-    redirect_drives: false
-    redirect_printers: false
-    redirect_serial: false
-    redirect_pnp: false
+    allow_only_sdrts_servers: yes
+    redirect_clipboard: yes
+    redirect_drives: no
+    redirect_printers: no
+    redirect_serial: no
+    redirect_pnp: no
     state: enabled
 '''
 
