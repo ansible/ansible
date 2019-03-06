@@ -381,7 +381,7 @@ class AzureRMClusters(AzureRMModuleBase):
                         response = self.get_poller_result(response)
         except CloudError as exc:
             self.fail("Error creating or updating Cluster instance: {0}".format(str(exc)))
-        return response.as_dict()
+        return response.as_dict() if response else {}
 
     def delete_cluster(self):
         '''
