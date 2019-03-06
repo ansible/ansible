@@ -62,7 +62,9 @@ options:
         version_added: "2.8"
 seealso:
 - module: stat
+- module: win_acl
 - module: win_file
+- module: win_owner
 author:
 - Chris Church (@cchurch)
 '''
