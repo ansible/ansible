@@ -194,7 +194,7 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
         if self.state == 'present':
             windows_os_state = self.custom_image.pop('windows_os_state', False)
             linux_os_state = self.custom_image.pop('linux_os_state', False)
-            source_vm_name = self.custom_image.pop('source_vm_name')
+            source_vm_name = self.custom_image.pop('source_vm')
             temp = "/subscriptions/{0}/resourcegroups/{1}/providers/microsoft.devtestlab/labs/{2}/virtualmachines/{3}"
             self.custom_image['vm'] = {}
             self.custom_image['vm']['source_vm_id'] = temp.format(self.subscription_id, self.resource_group, self.lab_name, source_vm_name)
