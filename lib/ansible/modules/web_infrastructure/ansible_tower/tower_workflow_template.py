@@ -168,7 +168,7 @@ def main():
             elif state == 'absent':
                 params['fail_on_missing'] = False
                 result = wfjt_res.delete(**params)
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update workflow template: \
                     {0}'.format(excinfo), changed=False)
 

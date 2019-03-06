@@ -302,7 +302,7 @@ def main():
                 params['fail_on_missing'] = False
                 result = inventory_source.delete(**params)
 
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to update inventory source: \
                     {0}'.format(excinfo), changed=False)
 
