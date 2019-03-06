@@ -28,7 +28,7 @@ Configuration
 ansible-test command
 --------------------
 
-The example below assumes ``test/runner`` is in your ``$PATH``. An easy way to achieve that
+The example below assumes ``bin/`` is in your ``$PATH``. An easy way to achieve that
 is to initialize your environment with the ``env-setup`` command::
 
     source hacking/env-setup
@@ -36,7 +36,7 @@ is to initialize your environment with the ``env-setup`` command::
 
 You can also call ``ansible-test`` with the full path::
 
-    test/runner/ansible-test --help
+    bin/ansible-test --help
 
 integration_config.yml
 ----------------------
