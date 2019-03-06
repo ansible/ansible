@@ -267,9 +267,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 os.makedirs(b_destpath)
             except Exception as e:
                 module.fail_json(msg='Error creating {0} Error code: {1} Error description: {2}'.format(b_destpath, e[0], e[1]))
-        # destination must exist to be able to lock it
-        if not module.check_mode:
-            open(b_dest, 'ab').close()
 
     if module.check_mode:
         if create:
