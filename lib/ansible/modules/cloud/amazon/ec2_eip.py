@@ -434,7 +434,11 @@ def main():
     )
 
     module = AnsibleAWSModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+                              supports_check_mode=True,
+                              required_together=[
+                                    ['device_id', 'private_ip_address'],
+                                ],
+                              )
 
     ec2 = module.client('ec2')
 
@@ -451,11 +455,6 @@ def main():
 
     changed = False
     response = {}
-
-    # Parameter checks
-    if private_ip_address is not None and device_id is None:
-        module.fail_json(
-            msg="parameters are required together: ('device_id', 'private_ip_address')")
 
     if instance_id:
         device_id = instance_id
