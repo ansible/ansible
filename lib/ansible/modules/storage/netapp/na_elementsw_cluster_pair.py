@@ -127,16 +127,26 @@ class ElementSWClusterPair(object):
         self.dest_elem = netapp_utils.create_sf_connection(module=self.module)
         self.dest_elementsw_helper = NaElementSWModule(self.dest_elem)
 
-    def check_if_already_paired(self):
+    def check_if_already_paired(self, paired_clusters, hostname):
+        for pair in paired_clusters.cluster_pairs:
+            if pair.mvip == hostname:
+                return pair.cluster_pair_id
+        return None
+
+    def get_src_pair_id(self):
         """
             Check for idempotency
         """
         # src cluster and dest cluster exist
         paired_clusters = self.elem.list_cluster_pairs()
-        for pair in paired_clusters.cluster_pairs:
-            if pair.mvip == self.parameters['dest_mvip']:
-                return pair.cluster_pair_id
-        return None
+        return self.check_if_already_paired(paired_clusters, self.parameters['dest_mvip'])
+
+    def get_dest_pair_id(self):
+        """
+        Getting destination cluster_pair_id
+        """
+        paired_clusters = self.dest_elem.list_cluster_pairs()
+        return self.check_if_already_paired(paired_clusters, self.parameters['hostname'])
 
     def pair_clusters(self):
         """
@@ -152,13 +162,13 @@ class ElementSWClusterPair(object):
                                      self.parameters['dest_mvip']),
                                   exception=to_native(err))
 
-    def unpair_clusters(self, pair_id):
+    def unpair_clusters(self, pair_id_source, pair_id_dest):
         """
             Delete cluster pair
         """
         try:
-            self.elem.remove_cluster_pair(cluster_pair_id=pair_id)
-            self.dest_elem.remove_cluster_pair(cluster_pair_id=pair_id)
+            self.elem.remove_cluster_pair(cluster_pair_id=pair_id_source)
+            self.dest_elem.remove_cluster_pair(cluster_pair_id=pair_id_dest)
         except solidfire.common.ApiServerError as err:
             self.module.fail_json(msg="Error unpairing cluster %s and %s"
                                   % (self.parameters['hostname'],
@@ -169,13 +179,16 @@ class ElementSWClusterPair(object):
         """
             Call create / delete cluster pair methods
         """
-        pair_id = self.check_if_already_paired()
+        pair_id_source = self.get_src_pair_id()
+        # If already paired, find the cluster_pair_id of destination cluster
+        if pair_id_source:
+            pair_id_dest = self.get_dest_pair_id()
         # calling helper to determine action
-        cd_action = self.na_helper.get_cd_action(pair_id, self.parameters)
+        cd_action = self.na_helper.get_cd_action(pair_id_source, self.parameters)
         if cd_action == "create":
             self.pair_clusters()
         elif cd_action == "delete":
-            self.unpair_clusters(pair_id)
+            self.unpair_clusters(pair_id_source, pair_id_dest)
         self.module.exit_json(changed=self.na_helper.changed)
 
 
