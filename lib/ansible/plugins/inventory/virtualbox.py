@@ -107,7 +107,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if group == 'all':
                 continue
             else:
-                self.inventory.add_group(group)
+                group = self.inventory.add_group(group)
                 hosts = source_data[group].get('hosts', [])
                 for host in hosts:
                     self._populate_host_vars([host], hostvars.get(host, {}), group)
@@ -162,10 +162,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             elif k == 'Groups':
                 for group in v.split('/'):
                     if group:
+                        group = self.inventory.add_group(group)
+                        self.inventory.add_child(group, current_host)
                         if group not in cacheable_results:
                             cacheable_results[group] = {'hosts': []}
-                        self.inventory.add_group(group)
-                        self.inventory.add_child(group, current_host)
                         cacheable_results[group]['hosts'].append(current_host)
                 continue
 
