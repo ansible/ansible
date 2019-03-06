@@ -1,0 +1,3 @@
+bugfixes:
+  - rds_instance - Don't hardcode the license models because there are accepted values undocumented by AWS.
+    Rely on the exception handling instead to provide a helpful error for invalid license models.
