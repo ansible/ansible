@@ -471,7 +471,9 @@ files:
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
   $modules/utilities/logic/async_status.py: $team_ansible
-  $modules/utilities/logic/async_wrapper.py: $team_ansible
+  $modules/utilities/logic/async_wrapper.py:
+    maintainers: $team_ansible
+    support: core
   $modules/utilities/logic/include.py: $team_ansible
   $modules/utilities/logic/include_role.py: $team_ansible
   $modules/utilities/logic/include_vars.py: $team_ansible
