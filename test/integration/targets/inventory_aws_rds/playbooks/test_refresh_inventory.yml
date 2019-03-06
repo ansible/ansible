@@ -9,34 +9,28 @@
           - "'aws_rds' in groups"
           - "not groups.aws_rds"
 
-    #- name: set connection information for all tasks
-    #  set_fact:
-    #    aws_connection_info: &aws_connection_info
-    #      aws_access_key: "{{ aws_access_key }}"
-    #      aws_secret_key: "{{ aws_secret_key }}"
-    #      security_token: "{{ security_token }}"
-    #      region: "{{ aws_region }}"
-    #  no_log: yes
+    - name: set connection information for all tasks
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
 
-    #- name: create minimal mariadb instance in default VPC and default subnet group
-    #  rds_instance:
-    #    state: present
-    #    engine: mariadb
-    #    instance_class: db.t2.micro
-    #    storage: 20
-    #    instance_id: 'rds-mariadb-{{ resource_prefix }}'
-    #    master_username: 'ansible-test-user'
-    #    master_password: 'password-{{ resource_prefix }}'
-    #    <<: *aws_connection_info
-    #  register: setup_instance
-
-    - name: Use AWS CLI to create an RDS DB instance
-      command: "aws rds create-db-instance --db-instance-identifier '{{ instance_id }}' --engine 'mariadb' --db-instance-class 'db.t2.micro' --allocated-storage 20 --master-user-password '{{ resource_prefix }}' --master-username 'ansibletestuser'"
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-        AWS_SESSION_TOKEN: "{{ security_token }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+    - name: create minimal mariadb instance in default VPC and default subnet group
+      rds_instance:
+        state: present
+        engine: mariadb
+        db_instance_class: db.t2.micro
+        allocated_storage: 20
+        instance_id: 'rds-mariadb-{{ resource_prefix }}'
+        master_username: 'ansibletestuser'
+        master_user_password: 'password-{{ resource_prefix | regex_findall(".{8}$") | first }}'
+        tags:
+          workload_type: other
+        <<: *aws_connection_info
+      register: setup_instance
 
     - meta: refresh_inventory
 
@@ -47,22 +41,13 @@
           - "groups.aws_rds | length == 1"
           - "groups.aws_rds.0 == '{{ resource_prefix }}'"
 
-    #- name: remove mariadb instance
-    #  rds_instance:
-    #    state: absent
-    #    engine: mariadb
-    #    skip_final_snapshot: yes
-    #    instance_id: ansible-rds-mariadb-example
-    #    <<: *aws_connection_info
-
-    - name: Use AWS CLI to delete the DB instance
-      command: "aws rds delete-db-instance --db-instance-identifier '{{ instance_id }}' --skip-final-snapshot"
-      ignore_errors: True
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-        AWS_SESSION_TOKEN: "{{ security_token }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
+    - name: remove mariadb instance
+      rds_instance:
+        state: absent
+        engine: mariadb
+        skip_final_snapshot: yes
+        instance_id: ansible-rds-mariadb-example
+        <<: *aws_connection_info
 
     - meta: refresh_inventory
 
@@ -74,21 +59,12 @@
 
   always:
 
-    - name: Use AWS CLI to delete the DB instance
-      command: "aws rds delete-db-instance --db-instance-identifier '{{ instance_id }}' --skip-final-snapshot"
-      ignore_errors: True
-      environment:
-        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
-        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
-        AWS_SESSION_TOKEN: "{{ security_token }}"
-        AWS_DEFAULT_REGION: "{{ aws_region }}"
-
-    #- name: remove mariadb instance
-    #  rds_instance:
-    #    state: absent
-    #    engine: mariadb
-    #    skip_final_snapshot: yes
-    #    instance_id: ansible-rds-mariadb-example
-    #    <<: *aws_connection_info
-    #  ignore_errors: yes
-    #  when: setup_instance is defined
+    - name: remove mariadb instance
+      rds_instance:
+        state: absent
+        engine: mariadb
+        skip_final_snapshot: yes
+        instance_id: ansible-rds-mariadb-example
+        <<: *aws_connection_info
+      ignore_errors: yes
+      when: setup_instance is defined

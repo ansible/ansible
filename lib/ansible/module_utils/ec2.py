@@ -31,7 +31,7 @@ import re
 import traceback
 
 from ansible.module_utils.ansible_release import __version__
-from ansible.module_utils.basic import missing_required_lib
+from ansible.module_utils.basic import missing_required_lib, env_fallback
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.cloud import CloudRetry
 from ansible.module_utils.six import string_types, binary_type, text_type
@@ -177,7 +177,7 @@ def boto_exception(err):
 
 def aws_common_argument_spec():
     return dict(
-        debug_botocore_endpoint_logs=dict(default=False, type='bool'),
+        debug_botocore_endpoint_logs=dict(fallback=(env_fallback, ['ANSIBLE_DEBUG_BOTOCORE_LOGS']), default=False, type='bool'),
         ec2_url=dict(),
         aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),

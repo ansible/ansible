@@ -13,7 +13,7 @@ options:
     description:
       - Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing
         the set to the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during
-        a playbook.
+        a playbook. The ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
     type: bool
     default: 'no'
     version_added: "2.8"
