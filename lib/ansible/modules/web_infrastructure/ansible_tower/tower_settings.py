@@ -91,7 +91,7 @@ def main():
             json_output['id'] = result['id']
             json_output['value'] = result['value']
 
-        except (exc.ConnectionError, exc.BadRequest) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.AuthError) as excinfo:
             module.fail_json(msg='Failed to modify the setting: {0}'.format(excinfo), changed=False)
 
     json_output['changed'] = result['changed']
