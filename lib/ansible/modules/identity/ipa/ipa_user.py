@@ -21,6 +21,12 @@ description:
 options:
   displayname:
     description: Display name
+  update_password:
+    description:
+    - Set password for a user.
+    default: 'always'
+    version_added: 2.8
+    choices: [ always, on_create ]
   givenname:
     description: First name
   krbpasswordexpiration:
@@ -38,7 +44,7 @@ options:
     - If None is passed email addresses will not be checked or changed.
   password:
     description:
-    - Password for new user
+    - Password for a user. Will not be set for an existing user unless C(update_password) is set to C(always), which is the default.
   sn:
     description: Surname
   sshpubkey:
@@ -77,7 +83,7 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Ensure pinky is present
+# Ensure pinky is present and always reset password
 - ipa_user:
     name: pinky
     state: present
@@ -104,6 +110,19 @@ EXAMPLES = '''
     ipa_host: ipa.example.com
     ipa_user: admin
     ipa_pass: topsecret
+
+# Ensure pinky is present but don't reset password if already exists
+- ipa_user:
+    name: pinky
+    state: present
+    givenname: Pinky
+    sn: Acme
+    password: zounds
+    ipa_host: ipa.example.com
+    ipa_user: admin
+    ipa_pass: topsecret
+    update_password: on_create
+
 '''
 
 RETURN = '''
@@ -257,6 +276,7 @@ def ensure(module, client):
                                 userpassword=module.params['password'],
                                 gidnumber=module.params.get('gidnumber'), uidnumber=module.params.get('uidnumber'))
 
+    update_password = module.params.get('update_password')
     ipa_user = client.user_find(name=name)
 
     changed = False
@@ -266,6 +286,8 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_user = client.user_add(name=name, item=module_user)
         else:
+            if update_password == "on_create":
+                module_user.pop('userpassword', None)
             diff = get_user_diff(client, ipa_user, module_user)
             if len(diff) > 0:
                 changed = True
@@ -284,6 +306,8 @@ def main():
     argument_spec = ipa_argument_spec()
     argument_spec.update(displayname=dict(type='str'),
                          givenname=dict(type='str'),
+                         update_password=dict(type='str', default="always",
+                                              choices=['always', 'on_create']),
                          krbpasswordexpiration=dict(type='str'),
                          loginshell=dict(type='str'),
                          mail=dict(type='list'),

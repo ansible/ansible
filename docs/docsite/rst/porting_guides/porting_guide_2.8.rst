@@ -301,6 +301,7 @@ Noteworthy module changes
   <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
   `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
 
+* The ``ipa_user`` module originally always sent ``password`` to FreeIPA regardless of whether the password changed. Now the module only sends ``password`` if ``update_password`` is set to ``always``, which is the default.
 
 Plugins
 =======
