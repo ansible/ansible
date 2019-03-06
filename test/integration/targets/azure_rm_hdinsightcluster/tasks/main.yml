@@ -221,14 +221,3 @@
   assert:
     that:
       - output.changed
-
-- name: Delete unexisting instance of Cluster
-  azure_rm_hdinsightcluster:
-    resource_group: "{{ resource_group }}"
-    name: "cluster{{ rpfx }}"
-    state: absent
-  register: output
-- name: Assert the state has changed
-  assert:
-    that:
-      - output.changed == false
