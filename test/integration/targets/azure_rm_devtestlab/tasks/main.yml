@@ -692,21 +692,6 @@
     that:
       - output.changed
 
-#- name: Generalize VM
-#  azure_rm_virtualmachine:
-#    resource_group: "{{ output_vm.virtualmachines[0]['compute_vm_resource_group'] }}"
-#    name: "{{ output_vm.virtualmachines[0]['compute_vm_name'] }}"
-#    generalized: yes
-#- name: Create image from VM
-#  azure_rm_image:
-#    resource_group: "{{ resource_group }}"
-#    name: testimage
-#    source:
-#      name: "{{ output_vm.virtualmachines[0]['compute_vm_name'] }}"
-#      resource_group: "{{ output_vm.virtualmachines[0]['compute_vm_resource_group'] }}"
-#    os_type: Linux
-#  register: image_output
-
 - name: Create instance of DevTest Lab Image
   azure_rm_devtestlabcustomimage:
     resource_group: "{{ resource_group }}"
