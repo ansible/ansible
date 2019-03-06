@@ -163,7 +163,7 @@ class InventoryModule(BaseFileInventoryPlugin):
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
             return
 
-        self.inventory.add_group(group)
+        group = self.inventory.add_group(group)
         if group_data is None:
             return
 

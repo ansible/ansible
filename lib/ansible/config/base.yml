@@ -1439,6 +1439,18 @@ INTERPRETER_PYTHON_FALLBACK:
   - python
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   version_added: "2.8"
+TRANSFORM_INVALID_GROUP_CHARS:
+  name: Transform invalid characters in group names
+  default: False
+  description:
+    - Make ansible transform invalid characters in group names supplied by inventory sources.
+    - If 'false' it will allow for the group name but warn about the issue.
+    - When 'true' it will replace any invalid charachters with '_' (underscore).
+  env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
+  ini:
+  - {key: force_valid_group_names, section: defaults}
+  type: bool
+  version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
   default: True
