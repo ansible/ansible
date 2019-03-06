@@ -1203,6 +1203,7 @@ def main():
         rebuilt=rebuilt,
         changes=changes,
         swarm_service=facts,
+        ansible_docker_service=facts  # kept for backwards-compatibility, will be removed in Ansible 2.8
     )
 
 
