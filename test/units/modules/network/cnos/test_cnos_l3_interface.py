@@ -39,9 +39,13 @@ class TestCnosL3InterfaceModule(TestCnosModule):
         self._patch_load_config = patch(
             'ansible.modules.network.cnos.cnos_l3_interface.load_config'
         )
+        self._patch_is_switchport = patch(
+            'ansible.modules.network.cnos.cnos_l3_interface.is_switchport'
+        )
 
         self._get_config = self._patch_get_config.start()
         self._load_config = self._patch_load_config.start()
+        self._is_switchport = self._patch_is_switchport.start()
 
     def tearDown(self):
         super(TestCnosL3InterfaceModule, self).tearDown()
@@ -52,6 +56,7 @@ class TestCnosL3InterfaceModule(TestCnosModule):
         config_file = 'l3_interface_config.cfg'
         self._get_config.return_value = load_fixture(config_file)
         self._load_config.return_value = None
+        self._is_switchport.return_value = False
 
     def test_cnos_l3_interface_ipv4_address(self, *args, **kwargs):
         set_module_args(dict(
