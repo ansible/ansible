@@ -464,7 +464,8 @@ class AzureHost(object):
         self.nics = []
 
         # Azure often doesn't provide a globally-unique filename, so use resource name + a chunk of ID hash
-        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(vm_model['id']).hexdigest()[0:4])
+        utf8_vm_model = vm_model['id'].encode('utf-8')
+        self.default_inventory_hostname = '{0}_{1}'.format(vm_model['name'], hashlib.sha1(utf8_vm_model).hexdigest()[0:4])
 
         self._hostvars = {}
 
