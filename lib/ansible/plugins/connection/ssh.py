@@ -525,9 +525,10 @@ class Connection(ConnectionBase):
         self._terminate_process(ssh_add_proc)
 
     def _get_extra_ssh_proc_env_vars(self):
-        return {
-            'SSH_AUTH_SOCK': self._ssh_agent_socket
-        } if self._ssh_version < (7, 3) else {}
+        env_vars = dict(os.environ)
+        if self._ssh_version < (7, 3):
+            env_vars['SSH_AUTH_SOCK'] = self._ssh_agent_socket
+        return env_vars
 
     def _destroy_ssh_agent(self):
         self._terminate_process(self._ssh_agent)
