@@ -45,7 +45,7 @@ options:
         required: true
     privatekey_passphrase:
         description:
-            - The passphrase for the privatekey(privatekey_path).
+            - The passphrase for the privatekey.
             - This is required if the privatekey is password protected.
         type: str
     version:
