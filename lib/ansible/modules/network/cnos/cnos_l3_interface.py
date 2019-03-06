@@ -161,14 +161,14 @@ EXAMPLES = """
   cnos_l3_interface:
     aggregate:
       - { name: Ethernet1/33, ipv4: 10.241.107.1/24 }
-      - { name: Ethernet1/33, ipv4: 10.241.107.1/24,
+      - { name: Ethernet1/44, ipv4: 10.240.106.1/24,
           ipv6: "fd5d:12c9:2201:1::1/64" }
 
 - name: Remove IP addresses on aggregate
   cnos_l3_interface:
     aggregate:
       - { name: Ethernet1/33, ipv4: 10.241.107.1/24 }
-      - { name: Ethernet1/3``3, ipv4: 10.241.107.1/24,
+      - { name: Ethernet1/44, ipv4: 10.240.106.1/24,
           ipv6: "fd5d:12c9:2201:1::1/64" }
     state: absent
 """
