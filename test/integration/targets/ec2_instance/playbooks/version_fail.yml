@@ -36,3 +36,11 @@
             that:
               - ec2_instance_cpu_options_creation.failed
               - 'ec2_instance_cpu_options_creation.msg == "cpu_options is only supported with botocore >= 1.10.16"'
+
+      always:
+        - name: cleanup c4.large in case graceful failure was in fact a graceful success
+          ec2_instance:
+            state: absent
+            name: "ansible-test-{{ resource_prefix | regex_search('([0-9]+)$') }}-ec2"
+            <<: *aws_connection_info
+          ignore_errors: yes
