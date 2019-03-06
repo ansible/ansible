@@ -68,13 +68,26 @@ def main():
     # Find all path (none-team) macros so we can substitute them
     macros = botmeta.get('macros', {})
     path_macros = []
+    team_macros = []
+
     for macro in macros:
         if macro.startswith('team_'):
-            continue
-        path_macros.append(macro)
+            team_macros.append('$'+macro)
+        else:
+            path_macros.append(macro)
 
-    # Ensure all `files` correspond to a file
+    # Validate files
     for file in botmeta['files']:
+        try:
+            if botmeta.get('files', {}).get(file, '').get('maintainers', ''):
+                maintainers = botmeta.get('files', {}).get(file, '').get('maintainers', '').split(' ')
+                for m in maintainers:
+                    if m[0:5] == '$team':
+                        if m not in team_macros:
+                            print("%s:%d:%d: Entry '%s' references unknown team '%s'" % (path, 0, 0, file, m))
+
+        except AttributeError:
+            continue
         for macro in path_macros:
             file = file.replace('$' + macro, botmeta.get('macros', {}).get(macro, ''))
         if not os.path.exists(file):
