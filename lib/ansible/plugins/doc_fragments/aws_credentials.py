@@ -6,8 +6,8 @@
 
 class ModuleDocFragment(object):
 
-    # inventory cache
-    DOCUMENTATION = r'''
+# Plugin options for AWS credentials
+DOCUMENTATION = r'''
 options:
   aws_profile:
     description: The AWS profile
@@ -19,6 +19,7 @@ options:
   aws_access_key:
     description: The AWS access key to use.
     type: str
+    aliases: [ aws_access_key_id ]
     env:
       - name: EC2_ACCESS_KEY
       - name: AWS_ACCESS_KEY
@@ -26,6 +27,7 @@ options:
   aws_secret_key:
     description: The AWS secret key that corresponds to the access key.
     type: str
+    aliases: [ aws_secret_access_key ]
     env:
       - name: EC2_SECRET_KEY
       - name: AWS_SECRET_KEY
@@ -37,10 +39,4 @@ options:
       - name: EC2_SECURITY_TOKEN
       - name: AWS_SESSION_TOKEN
       - name: AWS_SECURITY_TOKEN
-  region:
-    description: The region for which to create the connection.
-    type: str
-    env:
-      - name: EC2_REGION
-      - name: AWS_REGION
 '''

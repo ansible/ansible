@@ -399,8 +399,14 @@ class ConfigManager(object):
         if config in defs:
 
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
-            if direct and config in direct:
-                value = direct[config]
+            direct_aliases = []
+            if direct:
+                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
+            if direct and (config in direct or direct_aliases):
+                if config in direct:
+                    value = direct[config]
+                else:
+                    value = direct_aliases[0]
                 origin = 'Direct'
 
             else:
