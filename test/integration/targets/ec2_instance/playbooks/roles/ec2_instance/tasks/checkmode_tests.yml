@@ -20,7 +20,7 @@
           ebs:
             delete_on_termination: true
         <<: *aws_connection_info
-      register: instance_creation
+      register: basic_instance
 
     - name: Make basic instance(check mode)
       ec2_instance:
@@ -28,7 +28,7 @@
         image_id: "{{ ec2_ami_image[aws_region] }}"
         security_groups: "{{ sg.group_id }}"
         instance_type: t2.micro
-        vpc_subnet_id: "{{ testing_subnet_c.subnet.id }}"
+        vpc_subnet_id: "{{ testing_subnet_b.subnet.id }}"
         volumes:
         - device_name: /dev/sda1
           ebs:
