@@ -446,7 +446,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     def _populate(self, groups, hostnames):
         for group in groups:
-            self.inventory.add_group(group)
+            group = self.inventory.add_group(group)
             self._add_hosts(hosts=groups[group], group=group, hostnames=hostnames)
             self.inventory.add_child('all', group)
 

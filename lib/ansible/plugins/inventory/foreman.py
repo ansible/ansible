@@ -60,14 +60,12 @@ password: secure
 validate_certs: False
 '''
 
-import re
-
 from distutils.version import LooseVersion
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name
 
 # 3rd party imports
 try:
@@ -185,14 +183,6 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise ValueError("More than one set of facts returned for '%s'" % host)
         return facts
 
-    def to_safe(self, word):
-        '''Converts 'bad' characters in a string to underscores so they can be used as Ansible groups
-        #> ForemanInventory.to_safe("foo-bar baz")
-        'foo_barbaz'
-        '''
-        regex = r"[^A-Za-z0-9\_]"
-        return re.sub(regex, "_", word.replace(" ", ""))
-
     def _populate(self):
 
         for host in self._get_hosts():
@@ -203,8 +193,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 # create directly mapped groups
                 group_name = host.get('hostgroup_title', host.get('hostgroup_name'))
                 if group_name:
-                    group_name = self.to_safe('%s%s' % (self.get_option('group_prefix'), group_name.lower()))
-                    self.inventory.add_group(group_name)
+                    group_name = to_safe_group_name('%s%s' % (self.get_option('group_prefix'), group_name.lower().replace(" ", "")))
+                    group_name = self.inventory.add_group(group_name)
                     self.inventory.add_child(group_name, host['name'])
 
                 # set host vars from host info
@@ -224,7 +214,8 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                         try:
                             self.inventory.set_variable(host['name'], p['name'], p['value'])
                         except ValueError as e:
-                            self.display.warning("Could not set parameter hostvar for %s, skipping %s: %s" % (host, p['name'], to_native(p['value'])))
+                            self.display.warning("Could not set hostvar %s to '%s' for the '%s' host, skipping:  %s" %
+                                                 (p['name'], to_native(p['value']), host, to_native(e)))
 
                 # set host vars from facts
                 if self.get_option('want_facts'):
