@@ -53,3 +53,5 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleParserError("inventory config '{0}' could not be verified by plugin '{1}'".format(path, plugin_name))
 
         plugin.parse(inventory, loader, path, cache=cache)
+        if getattr(plugin, '_cache', None):
+            plugin.update_cache_if_changed()

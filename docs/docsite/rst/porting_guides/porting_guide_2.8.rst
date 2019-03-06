@@ -193,6 +193,19 @@ Deprecated
      removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
      instead.
 
+* Supporting file-backed caching via self.cache is deprecated and will
+  be removed in Ansible 2.12. If you maintain an inventory plugin, update it to use ``self._cache`` as a dictionary. For implementation details, see
+  the :ref:`developer guide on inventory plugins<inventory_plugin_caching>`.
+
+* Importing cache plugins directly is deprecated and will be removed in Ansible 2.12. Use the plugin_loader
+  so direct options, environment variables, and other means of configuration can be reconciled using the config
+  system rather than constants.
+
+  .. code-block:: python
+
+     from ansible.plugins.loader import cache_loader
+     cache = cache_loader.get('redis', **kwargs)
+
 Modules
 =======
 
@@ -335,6 +348,8 @@ Plugins
 * Play recap now counts ``ignored`` and ``rescued`` tasks as well as ``ok``, ``changed``, ``unreachable``, ``failed`` and ``skipped`` tasks, thanks to two additional stat counters in the ``default`` callback plugin. Tasks that fail and have ``ignore_errors: yes`` set are listed as ``ignored``. Tasks that fail and then execute a rescue section are listed as ``rescued``. Note that ``rescued`` tasks are no longer counted as ``failed`` as in Ansible 2.7 (and earlier).
 
 * ``osx_say`` callback plugin was renamed into :ref:`say <say_callback>`.
+
+* Inventory plugins now support caching via cache plugins. To start using a cache plugin with your inventory see the section on caching in the :ref:`inventory guide<using_inventory>`. To port a custom cache plugin to be compatible with inventory see :ref:`developer guide on cache plugins<developing_cache_plugins>`.
 
 Porting custom scripts
 ======================
