@@ -1543,7 +1543,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    stop_signal: 30
+    stop_signal: "30"
   register: stop_signal_1
   ignore_errors: yes
 
@@ -1552,7 +1552,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    stop_signal: 30
+    stop_signal: "30"
   register: stop_signal_2
   ignore_errors: yes
 
@@ -1561,7 +1561,7 @@
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
-    stop_signal: 9
+    stop_signal: "9"
   register: stop_signal_3
   ignore_errors: yes
 
