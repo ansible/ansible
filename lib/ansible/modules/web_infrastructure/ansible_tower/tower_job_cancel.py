@@ -89,7 +89,7 @@ def main():
         try:
             result = job.cancel(job_id, **params)
             json_output['id'] = job_id
-        except (exc.ConnectionError, exc.BadRequest, exc.TowerCLIError) as excinfo:
+        except (exc.ConnectionError, exc.BadRequest, exc.TowerCLIError, exc.AuthError) as excinfo:
             module.fail_json(msg='Unable to cancel job_id/{0}: {1}'.format(job_id, excinfo), changed=False)
 
     json_output['changed'] = result['changed']
