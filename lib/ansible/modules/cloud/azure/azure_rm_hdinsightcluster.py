@@ -316,7 +316,7 @@ class AzureRMClusters(AzureRMModuleBase):
                         for role in self.parameters['properties']['compute_profile']['roles']:
                             if role['name'] == 'workernode':
                                 new_count = role['target_instance_count']
-                        for role in old_response['compute_profile']['roles']:
+                        for role in old_response['properties']['compute_profile']['roles']:
                             if role['name'] == 'workernode':
                                 old_count = role['target_instance_count']
                         if old_count != new_count:
