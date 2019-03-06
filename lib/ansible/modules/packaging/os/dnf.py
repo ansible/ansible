@@ -1097,9 +1097,10 @@ class DnfModule(YumDnf):
                     installed_pkg = list(map(str, installed.filter(name=pkg_spec).run()))
                     if installed_pkg:
                         candidate_pkg = self._packagename_dict(installed_pkg[0])
+                        installed_pkg = installed.filter(name=candidate_pkg['name']).run()
                     else:
                         candidate_pkg = self._packagename_dict(pkg_spec)
-                    installed_pkg = installed.filter(name=candidate_pkg['name']).run()
+                        installed_pkg = installed.filter(nevra_strict=pkg_spec).run()
                     if installed_pkg:
                         installed_pkg = installed_pkg[0]
                         evr_cmp = self._compare_evr(
