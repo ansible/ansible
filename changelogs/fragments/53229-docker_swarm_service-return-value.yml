@@ -1,0 +1,5 @@
+bugfixes:
+- "docker_swarm_service - the return value was documented as ``ansible_swarm_service``, but the
+   module actually returned ``ansible_docker_service``. Documentation and code have been updated
+   so that the variable is now called ``swarm_service``. In Ansible 2.7.x, the old name
+   ``ansible_docker_service`` can still be used to access the result."
