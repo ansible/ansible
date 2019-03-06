@@ -186,7 +186,7 @@ class ACIModule(object):
     def login(self):
         ''' Log in to APIC '''
 
-        cookie_file = self.module._remote_tmp + '/aci.p'
+        cookie_file = os.path.expanduser(self.module._remote_tmp) + '/aci_' + self.params['host'].replace(':', '.') + '.p'
         if os.path.exists(cookie_file):
             cookie = pickle.load(open(cookie_file, 'rb'))
             time_skew = int(time.time()) - int(cookie['time'])
@@ -259,8 +259,10 @@ class ACIModule(object):
             "time": time.time(),
             "cookie": self.headers['Cookie']
         }
-
-        pickle.dump(cookie, open(cookie_file, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+        try:
+            pickle.dump(cookie, open(cookie_file, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+        except:
+            self.module.fail_json(msg='Cannot save ACI cookie %s' % cookie_file)
 
     def cert_auth(self, path=None, payload='', method=None):
         ''' Perform APIC signature-based authentication, not the expected SSL client certificate authentication. '''
