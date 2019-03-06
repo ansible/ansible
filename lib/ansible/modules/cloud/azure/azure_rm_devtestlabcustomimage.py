@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabcustomimage
 version_added: "2.8"
-short_description: Manage Azure Custom Image instance.
+short_description: Manage Azure DevTest Lab Custom Image instance.
 description:
-    - Create, update and delete instance of Azure Custom Image.
+    - Create, update and delete instance of Azure DevTest Lab Custom Image.
 
 options:
     resource_group:
@@ -37,35 +37,23 @@ options:
     location:
         description:
             - The location of the resource.
-    vm:
+    source_vm:
         description:
-            - The virtual machine from which the image is to be created.
-        suboptions:
-            source_vm_id:
-                description:
-                    - The source vm identifier.
-            windows_os_info:
-                description:
-                    - The Windows OS information of the VM.
-                suboptions:
-                    windows_os_state:
-                        description:
-                            - The state of the Windows OS (i.e. C(non_sysprepped), C(sysprep_requested), C(sysprep_applied)).
-                        choices:
-                            - 'non_sysprepped'
-                            - 'sysprep_requested'
-                            - 'sysprep_applied'
-            linux_os_info:
-                description:
-                    - The Linux OS information of the VM.
-                suboptions:
-                    linux_os_state:
-                        description:
-                            - The state of the Linux OS (i.e. C(non_deprovisioned), C(deprovision_requested), C(deprovision_applied)).
-                        choices:
-                            - 'non_deprovisioned'
-                            - 'deprovision_requested'
-                            - 'deprovision_applied'
+            - Source DevTest Lab virtual machine name.
+    windows_os_state:
+        description:
+            - The state of the Windows OS.
+        choices:
+            - 'non_sysprepped'
+            - 'sysprep_requested'
+            - 'sysprep_applied'
+    linux_os_state:
+        description:
+            - The state of the Linux OS.
+        choices:
+            - 'non_deprovisioned'
+            - 'deprovision_requested'
+            - 'deprovision_applied'
     description:
         description:
             - The description of the custom image.
@@ -75,7 +63,7 @@ options:
     state:
       description:
         - Assert the state of the Custom Image.
-        - Use 'present' to create or update an Custom Image and 'absent' to delete it.
+        - Use C(present) to create or update an Custom Image and C(absent) to delete it.
       default: present
       choices:
         - absent
@@ -146,35 +134,20 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
             location=dict(
                 type='str'
             ),
-            vm=dict(
-                type='dict',
-                options=dict(
-                    source_vm_id=dict(
-                        type='str'
-                    ),
-                    windows_os_info=dict(
-                        type='dict',
-                        options=dict(
-                            windows_os_state=dict(
-                                type='str',
-                                choices=['non_sysprepped',
-                                         'sysprep_requested',
-                                         'sysprep_applied']
-                            )
-                        )
-                    ),
-                    linux_os_info=dict(
-                        type='dict',
-                        options=dict(
-                            linux_os_state=dict(
-                                type='str',
-                                choices=['non_deprovisioned',
-                                         'deprovision_requested',
-                                         'deprovision_applied']
-                            )
-                        )
-                    )
-                )
+            source_vm=dict(
+                type='str'
+            ),
+            windows_os_state=dict(
+                type='str',
+                choices=['non_sysprepped',
+                         'sysprep_requested',
+                         'sysprep_applied']
+            ),
+            linux_os_state=dict(
+                type='str',
+                choices=['non_deprovisioned',
+                         'deprovision_requested',
+                         'deprovision_applied']
             ),
             description=dict(
                 type='str'
@@ -199,9 +172,15 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
         self.state = None
         self.to_do = Actions.NoAction
 
+        required_if = [
+            ('state', 'present', [
+             'source_vm'])
+        ]
+
         super(AzureRMDtlCustomImage, self).__init__(derived_arg_spec=self.module_arg_spec,
                                                     supports_check_mode=True,
-                                                    supports_tags=True)
+                                                    supports_tags=True,
+                                                    required_if=required_if)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
@@ -212,8 +191,19 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
             elif kwargs[key] is not None:
                 self.custom_image[key] = kwargs[key]
 
-        dict_camelize(self.custom_image, ['vm', 'windows_os_info', 'windows_os_state'], True)
-        dict_camelize(self.custom_image, ['vm', 'linux_os_info', 'linux_os_state'], True)
+        if self.state == 'present':
+            windows_os_state = self.custom_image.pop('windows_os_state', False)
+            linux_os_state = self.custom_image.pop('linux_os_state', False)
+            source_vm_name = self.custom_image.pop('source_vm_name')
+            temp = "/subscriptions/{0}/resourcegroups/{1}/providers/microsoft.devtestlab/labs/{2}/virtualmachines/{3}"
+            self.custom_image['vm'] = {}
+            self.custom_image['vm']['source_vm_id'] = temp.format(self.subscription_id, self.resource_group, self.lab_name, source_vm_name)
+            if windows_os_state:
+                self.custom_image['vm']['windows_os_info'] = {'windows_os_state': _snake_to_camel(windows_os_state, True)}
+            elif linux_os_state:
+                self.custom_image['vm']['windows_os_info'] = {'linux_os_state': _snake_to_camel(windows_os_state, True)}
+            else:
+                self.fail("Either 'linux_os_state' or 'linux_os_state' must be specified")
 
         response = None
 

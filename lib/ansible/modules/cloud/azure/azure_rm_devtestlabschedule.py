@@ -65,10 +65,10 @@ EXAMPLES = '''
   - name: Create (or update) DevTest Lab Schedule
     azure_rm_devtestlabschedule:
       resource_group: myResourceGroup
-        lab_name: myLab
-        name: lab_vms_shutdown
-        time: "1030"
-        time_zone_id: "UTC+12"
+      lab_name: myLab
+      name: lab_vms_shutdown
+      time: "1030"
+      time_zone_id: "UTC+12"
 '''
 
 RETURN = '''

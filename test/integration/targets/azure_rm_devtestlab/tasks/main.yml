@@ -712,11 +712,8 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: myImage
-    #managed_image_id: "{{ image_output['id']}}"
-    vm:
-      source_vm_id: "{{ output_vm.virtualmachines[0]['id'] }}"
-      linux_os_info:
-        linux_os_state: non_deprovisioned
+    source_vm: "{{ output_vm.virtualmachines[0]['name'] }}"
+    linux_os_state: non_deprovisioned
   register: output
 - name: Assert that change was detected
   assert:
@@ -728,11 +725,8 @@
     resource_group: "{{ resource_group }}"
     lab_name: "{{ lab_name }}"
     name: myImage
-    #managed_image_id: "{{ image_output['id']}}"
-    vm:
-      source_vm_id: "{{ output_vm.virtualmachines[0]['id'] }}"
-      linux_os_info:
-        linux_os_state: non_deprovisioned
+    source_vm: "{{ output_vm.virtualmachines[0]['name'] }}"
+    linux_os_state: non_deprovisioned
   register: output
 - name: Assert that change was detected
   assert:
