@@ -154,7 +154,14 @@ class VMwareHostFactManager(PyVmomi):
         ansible_facts.update(self.get_network_facts())
         ansible_facts.update(self.get_system_facts())
         ansible_facts.update(self.get_vsan_facts())
+        ansible_facts.update(self.get_cluster_facts())
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
+
+    def get_cluster_facts(self):
+        cluster_facts = {'cluster': None}
+        if self.host.parent and isinstance(self.host.parent, vim.ClusterComputeResource):
+            cluster_facts.update(cluster=self.host.parent.name)
+        return cluster_facts
 
     def get_vsan_facts(self):
         config_mgr = self.host.configManager.vsanSystem
