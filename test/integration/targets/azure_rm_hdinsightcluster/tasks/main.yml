@@ -44,14 +44,14 @@
         key: "{{ storage_output['response']['keys'][0]['value'] }}"
     compute_profile_roles:
       - name: headnode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
       - name: workernode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -87,14 +87,14 @@
         key: "{{ storage_output['response']['keys'][0]['value'] }}"
     compute_profile_roles:
       - name: headnode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
       - name: workernode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -130,14 +130,14 @@
         key: "{{ storage_output['response']['keys'][0]['value'] }}"
     compute_profile_roles:
       - name: headnode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
       - name: workernode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -172,14 +172,14 @@
         key: "{{ storage_output['response']['keys'][0]['value'] }}"
     compute_profile_roles:
       - name: headnode
-        target_instance_count: 2
-        vm_size: Standard_D3
+        target_instance_count: 1
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
       - name: workernode
-        target_instance_count: 1
-        vm_size: Standard_D3
+        target_instance_count: 2
+        vm_size: Standard_A1_v2
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
