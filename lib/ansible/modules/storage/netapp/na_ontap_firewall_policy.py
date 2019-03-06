@@ -19,6 +19,8 @@ description:
   - Configure firewall on an ONTAP node and manage firewall policy for an ONTAP SVM
 extends_documentation_fragment:
   - netapp.na_ontap
+requirements:
+  - Python package ipaddress. Install using 'pip install ipaddress'
 options:
   state:
     description:
@@ -164,7 +166,7 @@ class NetAppONTAPFirewallPolicy(object):
             if sys.version_info[0] >= 3:
                 ip_addr = str(ip)
             else:
-                ip_addr = unicode(ip)  # pylint: disable=undefined-variable
+                ip_addr = unicode(ip)
             # get network address from netmask, throw exception if address is not a network address
             try:
                 ipaddress.ip_network(ip_addr)
