@@ -78,16 +78,22 @@ def main():
 
     # Validate files
     for file in botmeta['files']:
-        try:
-            if botmeta.get('files', {}).get(file, '').get('maintainers', ''):
+        # maintainers can be:
+        # implicit: $modules/command/shell.py $team_foo
+        # maintainer (string): maintainers: $team_foo fred steve
+        # maintainer (list): maintainers:
+        #                      - $team_foo
+        #                      - fred
+        if isinstance(botmeta.get('files', {}).get(file, ''), str):
+            maintainers = botmeta.get('files', {}).get(file, '').split(' ')
+            validate_maintainers(maintainers, team_macros, path, file)
+        elif botmeta.get('files', {}).get(file, '').get('maintainers', ''):
+            if isinstance(botmeta.get('files', {}).get(file, '').get('maintainers', ''), str):
                 maintainers = botmeta.get('files', {}).get(file, '').get('maintainers', '').split(' ')
-                for m in maintainers:
-                    if m[0:5] == '$team':
-                        if m not in team_macros:
-                            print("%s:%d:%d: Entry '%s' references unknown team '%s'" % (path, 0, 0, file, m))
+            if isinstance(botmeta.get('files', {}).get(file, '').get('maintainers', ''), list):
+                maintainers = botmeta.get('files', {}).get(file, '').get('maintainers', '')
+            validate_maintainers(maintainers, team_macros, path, file)
 
-        except AttributeError:
-            continue
         for macro in path_macros:
             file = file.replace('$' + macro, botmeta.get('macros', {}).get(macro, ''))
         if not os.path.exists(file):
@@ -96,11 +102,17 @@ def main():
             if not glob.glob('%s*' % file):
                 print("%s:%d:%d: Can't find '%s.*' in this branch" % (path, 0, 0, file))
 
+def validate_maintainers(maintainers, team_macros, path, file):
+    """Ensure any mentioned `$team_` entries exist"""
+    for maintainer in maintainers:
+        if maintainer[0:5] == '$team':
+            if maintainer not in team_macros:
+                print("%s:%d:%d: Entry '%s' references unknown team '%s'" % (path, 0, 0, file, maintainer))
+
 
 if __name__ == '__main__':
     main()
 
 # Possible future work
 # * Schema for `macros:` - currently ignored due to team_ansible
-# * Ensure that all $teams mention in `files:` exist in `$macros`
 # * Validate GitHub names - possibly expensive lookup needed - No should be validated when module is added - gundalow
