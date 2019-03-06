@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # Copyright:  Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -13,8 +13,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'core'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author: Ansible Core Team (@ansible)
 module: import_tasks
@@ -26,13 +25,20 @@ options:
   free-form:
     description:
       - The name of the imported file is specified directly without any other option.
-      - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement
-        itself. If you need any of those to apply, use M(include_tasks) instead.
+      - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
+      - If you need any of those to apply, use M(include_tasks) instead.
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+seealso:
+- module: import_playbook
+- module: import_role
+- module: include_role
+- module: include_tasks
+- ref: playbooks_reuse_includes
+  description: More information related to including and importing playbooks, roles and tasks.
 '''
 
-EXAMPLES = """
+EXAMPLES = r'''
 - hosts: all
   tasks:
     - debug:
@@ -52,8 +58,8 @@ EXAMPLES = """
     - name: Apply conditional to all imported tasks
       import_tasks: stuff.yaml
       when: hostvar is defined
-"""
+'''
 
-RETURN = """
+RETURN = r'''
 # This module does not return anything except tasks to execute.
-"""
+'''
