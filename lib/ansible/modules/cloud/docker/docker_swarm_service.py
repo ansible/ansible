@@ -1784,7 +1784,12 @@ class DockerServiceManager(object):
 
         hosts = task_template_data['ContainerSpec'].get('Hosts')
         if hosts:
-            hosts = [host.split(' ', 1) for host in hosts]
+            hosts = [
+                list(reversed(host.split(":", 1)))
+                if ":" in host
+                else host.split(" ", 1)
+                for host in hosts
+            ]
             ds.hosts = dict((hostname, ip) for ip, hostname in hosts)
         ds.tty = task_template_data['ContainerSpec'].get('TTY')
 
