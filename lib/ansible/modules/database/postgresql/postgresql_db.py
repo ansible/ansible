@@ -281,7 +281,7 @@ def db_dump(module, target, target_opts="",
         cmd += " {0} ".format(target_opts)
 
     if comp_prog_path:
-        # Use a fifo to be notfied of an error in pg_dump
+        # Use a fifo to be notified of an error in pg_dump
         # Using shell pipe has no way to return the code of the first command
         # in a portable way.
         fifo = os.path.join(module.tmpdir, 'pg_fifo')
