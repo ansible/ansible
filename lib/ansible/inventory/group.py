@@ -17,9 +17,31 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
-
 from itertools import chain
+
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.module_utils._text import to_native, to_text
+
+from ansible.utils.display import Display
+
+display = Display()
+
+
+def to_safe_group_name(name, replacer="_", force=False, silent=False):
+    # Converts 'bad' characters in a string to underscores (or provided replacer) so they can be used as Ansible hosts or groups
+
+    if name:  # when deserializing we might not have name yet
+        invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
+        if invalid_chars:
+            msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
+            if C.TRANSFORM_INVALID_GROUP_CHARS or force:
+                name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
+                if not silent:
+                    display.warning('Replacing ' + msg)
+            else:
+                display.deprecated('Ignoring ' + msg, version='2.12')
+    return name
 
 
 class Group:
@@ -30,7 +52,7 @@ class Group:
     def __init__(self, name=None):
 
         self.depth = 0
-        self.name = name
+        self.name = to_safe_group_name(name)
         self.hosts = []
         self._hosts = None
         self.vars = {}
@@ -148,9 +170,7 @@ class Group:
             start_ancestors = group.get_ancestors()
             new_ancestors = self.get_ancestors()
             if group in new_ancestors:
-                raise AnsibleError(
-                    "Adding group '%s' as child to '%s' creates a recursive "
-                    "dependency loop." % (group.name, self.name))
+                raise AnsibleError("Adding group '%s' as child to '%s' creates a recursive dependency loop." % (to_native(group.name), to_native(self.name)))
             new_ancestors.add(self)
             new_ancestors.difference_update(start_ancestors)
 
@@ -188,7 +208,7 @@ class Group:
                     g.depth = depth
                     unprocessed.update(g.child_groups)
             if depth - start_depth > len(seen):
-                raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
+                raise AnsibleError("The group named '%s' has a recursive dependency loop." % to_native(self.name))
 
     def add_host(self, host):
         if host.name not in self.host_names:
