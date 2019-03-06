@@ -386,6 +386,7 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
             'bulk_volume_size_gb': params['bulk_volume_size_gb'],
             'ssh_keys': params['ssh_keys'],
             'use_public_network': params['use_public_network'],
+            'use_private_network': params['use_private_network'],
             'use_ipv6': params['use_ipv6'],
             'anti_affinity_with': params['anti_affinity_with'],
             'user_data': params['user_data'],
