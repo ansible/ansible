@@ -50,7 +50,7 @@
 - name: assert service args are correct
   assert:
     that:
-      - output.ansible_docker_service.args == ['sleep', '1800']
+      - output.swarm_service.args == ['sleep', '1800']
 
 - name: set service mode to global
   register: output
@@ -88,7 +88,7 @@
 
 - name: fake image key as it is not predictable
   set_fact:
-    ansible_docker_service_output: "{{ output.ansible_docker_service|combine({'image': 'busybox'}) }}"
+    ansible_docker_service_output: "{{ output.swarm_service|combine({'image': 'busybox'}) }}"
 
 - name: assert service matches expectations
   assert:
