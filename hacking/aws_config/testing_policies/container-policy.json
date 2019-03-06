@@ -41,6 +41,8 @@
             "ecs:List*",
             "ecs:RegisterTaskDefinition",
             "ecs:RunTask",
+            "ecs:StartTask",
+            "ecs:StopTask",
             "ecs:UpdateService",
             "elasticloadbalancing:Describe*",
             "iam:AttachRolePolicy",
