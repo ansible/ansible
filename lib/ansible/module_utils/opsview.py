@@ -27,6 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import copy
+import os.path
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -222,6 +223,11 @@ def config_module_main(module, object_type, get_params=None,
     """Helper to execute a standard Opsview Configuration module and return
     a dict which can be used as the arguments to module.exit_json
     """
+    verify = module.params['verify_ssl']
+
+    if not os.path.exists(verify):
+        verify = module.boolean(verify)
+
     opsview_client = new_opsview_client(
         username=module.params['username'],
         password=module.params['password'],
