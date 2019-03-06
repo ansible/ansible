@@ -27,6 +27,43 @@
             "Sid": "AllowReadOnlyIAMUse"
         },
         {
+            "Action": [
+                "iam:AttachRolePolicy",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:DetachRolePolicy",
+                "iam:PassRole"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:role/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowUpdateOfSpecificRoles"
+        },
+        {
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:AddRoleToInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile"
+             ],
+            "Resource": "arn:aws:iam::{{ aws_account }}:instance-profile/ansible-test-*",
+            "Effect": "Allow",
+            "Sid": "AllowUpdateOfSpecificInstanceProfiles"
+        },
+        {
+            "Action": [
+                "ec2:ReplaceIamInstanceProfileAssociation"
+             ],
+            "Resource": "*",
+            "Condition": {
+              "ArnEquals": {
+                "ec2:InstanceProfile": "arn:aws:iam::{{ aws_account }}:instance-profile/ansible-test-*"
+              }
+            },
+            "Effect": "Allow",
+            "Sid": "AllowReplacementOfSpecificInstanceProfiles"
+        },
+
+        {
             "Sid": "AllowWAFusage",
             "Action": "waf:*",
             "Effect": "Allow",

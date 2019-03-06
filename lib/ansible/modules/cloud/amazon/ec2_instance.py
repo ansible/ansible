@@ -301,7 +301,7 @@ EXAMPLES = '''
 RETURN = '''
 instances:
     description: a list of ec2 instances
-    returned: always
+    returned: when wait == true
     type: complex
     contains:
         ami_launch_index:
@@ -1335,11 +1335,11 @@ def ensure_instance_state(state, ec2=None):
     if ec2 is None:
         module.client('ec2')
     if state in ('running', 'started'):
-        changed, failed, instances = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        changed, failed, instances, failure_reason = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
 
         if failed:
             module.fail_json(
-                msg="Unable to start instances",
+                msg="Unable to start instances: {0}".format(failure_reason),
                 reboot_success=list(changed),
                 reboot_failed=failed)
 
@@ -1351,16 +1351,16 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('restarted', 'rebooted'):
-        changed, failed, instances = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='STOPPED')
-        changed, failed, instances = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='RUNNING')
 
         if failed:
             module.fail_json(
-                msg="Unable to restart instances",
+                msg="Unable to restart instances: {0}".format(failure_reason),
                 reboot_success=list(changed),
                 reboot_failed=failed)
 
@@ -1372,13 +1372,13 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('stopped',):
-        changed, failed, instances = change_instance_state(
+        changed, failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='STOPPED')
 
         if failed:
             module.fail_json(
-                msg="Unable to stop instances",
+                msg="Unable to stop instances: {0}".format(failure_reason),
                 stop_success=list(changed),
                 stop_failed=failed)
 
@@ -1390,13 +1390,13 @@ def ensure_instance_state(state, ec2=None):
             instances=[pretty_instance(i) for i in instances],
         )
     elif state in ('absent', 'terminated'):
-        terminated, terminate_failed, instances = change_instance_state(
+        terminated, terminate_failed, instances, failure_reason = change_instance_state(
             filters=module.params.get('filters'),
             desired_state='TERMINATED')
 
         if terminate_failed:
             module.fail_json(
-                msg="Unable to terminate instances",
+                msg="Unable to terminate instances: {0}".format(failure_reason),
                 terminate_success=list(terminated),
                 terminate_failed=terminate_failed)
         module.exit_json(
@@ -1418,6 +1418,7 @@ def change_instance_state(filters, desired_state, ec2=None):
     instances = find_instances(ec2, filters=filters)
     to_change = set(i['InstanceId'] for i in instances if i['State']['Name'].upper() != desired_state)
     unchanged = set()
+    failure_reason = ""
 
     for inst in instances:
         try:
@@ -1448,16 +1449,18 @@ def change_instance_state(filters, desired_state, ec2=None):
 
                 resp = ec2.start_instances(InstanceIds=[inst['InstanceId']])
                 [changed.add(i['InstanceId']) for i in resp['StartingInstances']]
-        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
-            # we don't care about exceptions here, as we'll fail out if any instances failed to terminate
-            pass
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            try:
+                failure_reason = to_native(e.message)
+            except AttributeError:
+                failure_reason = to_native(e)
 
     if changed:
         await_instances(ids=list(changed) + list(unchanged), state=desired_state)
 
     change_failed = list(to_change - changed)
     instances = find_instances(ec2, ids=list(i['InstanceId'] for i in instances))
-    return changed, change_failed, instances
+    return changed, change_failed, instances, failure_reason
 
 
 def pretty_instance(i):
@@ -1481,7 +1484,9 @@ def determine_iam_role(name_or_arn):
 
 def handle_existing(existing_matches, changed, ec2, state):
     if state in ('running', 'started') and [i for i in existing_matches if i['State']['Name'] != 'running']:
-        ins_changed, failed, instances = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        ins_changed, failed, instances, failure_reason = change_instance_state(filters=module.params.get('filters'), desired_state='RUNNING')
+        if failed:
+            module.fail_json(msg="Couldn't start instances: {0}. Failure reason: {1}".format(instances, failure_reason))
         module.exit_json(
             changed=bool(len(ins_changed)) or changed,
             instances=[pretty_instance(i) for i in instances],
@@ -1532,6 +1537,12 @@ def ensure_present(existing_matches, changed, ec2, state):
                 except botocore.exceptions.ClientError as e:
                     module.fail_json_aws(e, msg="Could not apply change {0} to new instance.".format(str(c)))
 
+        if not module.params.get('wait'):
+            module.exit_json(
+                changed=True,
+                instance_ids=instance_ids,
+                spec=instance_spec,
+            )
         await_instances(instance_ids)
         instances = ec2.get_paginator('describe_instances').paginate(
             InstanceIds=instance_ids

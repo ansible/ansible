@@ -98,7 +98,7 @@
     - include_tasks: iam_instance_role.yml
     - include_tasks: checkmode_tests.yml
     - include_tasks: ebs_optimized.yml
-
+    - include_tasks: instance_no_wait.yml
 
     # ============================================================
 
