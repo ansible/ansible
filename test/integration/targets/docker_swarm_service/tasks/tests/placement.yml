@@ -17,6 +17,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       preferences:
@@ -28,6 +29,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       preferences:
@@ -39,6 +41,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       preferences:
@@ -50,6 +53,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       preferences: []
@@ -60,6 +64,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       preferences: []
@@ -94,6 +99,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints:
@@ -105,6 +111,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints:
@@ -116,6 +123,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     constraints:
       - "node.role == manager"
@@ -126,6 +134,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints:
@@ -137,6 +146,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints: []
@@ -147,6 +157,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     placement:
       constraints: []

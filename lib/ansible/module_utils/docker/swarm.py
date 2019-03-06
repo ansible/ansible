@@ -128,10 +128,11 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             node_id = self.get_swarm_node_id()
 
         for retry in range(0, repeat_check):
+            if retry > 0:
+                sleep(5)
             node_info = self.get_node_inspect(node_id=node_id)
             if node_info['Status']['State'] == 'down':
                 return True
-            sleep(5)
         return False
 
     def get_node_inspect(self, node_id=None, skip_missing=False):
