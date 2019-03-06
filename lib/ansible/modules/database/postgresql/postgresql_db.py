@@ -83,6 +83,8 @@ options:
     type: str
     default: postgres
     version_added: "2.5"
+notes:
+- State C(dump) and C(restore) don't require I(psycopg2) since version 2.7.9.
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
