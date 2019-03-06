@@ -309,6 +309,8 @@ def gather_vm_facts(content, vm):
         try:
             host = vm.summary.runtime.host
             facts['hw_esxi_host'] = host.summary.config.name
+            facts['hw_cluster'] = host.parent.name if host.parent and isinstance(host.parent, vim.ClusterComputeResource) else None
+
         except vim.fault.NoPermission:
             # User does not have read permission for the host system,
             # proceed without this value. This value does not contribute or hamper
