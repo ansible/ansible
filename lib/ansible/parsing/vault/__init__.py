@@ -370,7 +370,7 @@ def script_is_client(filename):
 
 
 def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=None):
-    this_path = os.path.realpath(os.path.expanduser(filename))
+    this_path = os.path.realpath(os.path.expanduser(to_native(filename)))
 
     if not os.path.exists(this_path):
         raise AnsibleError("The vault password file %s was not found" % this_path)
@@ -629,9 +629,9 @@ class VaultLib:
 
         # encrypt data
         if vault_id:
-            display.vvvvv('Encrypting with vault_id "%s" and vault secret %s' % (vault_id, secret))
+            display.vvvvv(u'Encrypting with vault_id "%s" and vault secret %s' % (to_text(vault_id), to_text(secret)))
         else:
-            display.vvvvv('Encrypting without a vault_id using vault secret %s' % secret)
+            display.vvvvv(u'Encrypting without a vault_id using vault secret %s' % to_text(secret))
 
         b_ciphertext = this_cipher.encrypt(b_plaintext, secret)
 
@@ -725,11 +725,11 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv('Trying to use vault secret=(%s) id=%s to decrypt %s' % (vault_secret, vault_secret_id, to_text(filename)))
+            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(filename)))
 
             try:
                 # secret = self.secrets[vault_secret_id]
-                display.vvvv('Trying secret %s for vault_id=%s' % (vault_secret, vault_secret_id))
+                display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
@@ -737,18 +737,18 @@ class VaultLib:
                     file_slug = ''
                     if filename:
                         file_slug = ' of "%s"' % filename
-                    display.vvvvv(u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), vault_secret, vault_secret_id))
+                    display.vvvvv(u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id)))
                     break
             except AnsibleVaultFormatError as exc:
-                msg = "There was a vault format error"
+                msg = u'There was a vault format error'
                 if filename:
-                    msg += ' in %s' % (to_text(filename))
-                msg += ': %s' % exc
+                    msg += u' in %s' % (to_text(filename))
+                msg += u': %s' % to_text(exc)
                 display.warning(msg)
                 raise
             except AnsibleError as e:
-                display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (vault_secret_id, to_text(filename), e))
+                display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
+                             (to_text(vault_secret_id), to_text(filename), to_text(e)))
                 continue
         else:
             msg = "Decryption failed (no vault secrets were found that could decrypt)"

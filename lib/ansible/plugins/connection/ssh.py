@@ -483,8 +483,10 @@ class Connection(ConnectionBase):
             )
         )
         ssh_version_string = (
-            ssh_version_proc.
-            stderr.readline().
+            to_native(
+                ssh_version_proc.
+                stderr.readline()
+            ).
             split()[0].split('_')[1]
         )
         ssh_version_proc.terminate()
