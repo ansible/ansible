@@ -348,10 +348,6 @@ class AzureRMClusters(AzureRMModuleBase):
                 return self.results
 
             self.delete_cluster()
-            # make sure instance is actually deleted, for some Azure resources, instance is hanging around
-            # for some time after deletion -- this should be really fixed in Azure.
-            while self.get_cluster():
-                time.sleep(20)
         else:
             self.log("Cluster instance unchanged")
             self.results['changed'] = False
@@ -388,7 +384,6 @@ class AzureRMClusters(AzureRMModuleBase):
                     if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                         response = self.get_poller_result(response)
         except CloudError as exc:
-            self.log('Error attempting to create or updatethe Cluster instance.')
             self.fail("Error creating or updating Cluster instance: {0}".format(str(exc)))
         return response.as_dict()
 
@@ -403,7 +398,6 @@ class AzureRMClusters(AzureRMModuleBase):
             response = self.mgmt_client.clusters.delete(resource_group_name=self.resource_group,
                                                         cluster_name=self.name)
         except CloudError as e:
-            self.log('Error attempting to delete the Cluster instance.')
             self.fail("Error deleting the Cluster instance: {0}".format(str(e)))
 
         return True
