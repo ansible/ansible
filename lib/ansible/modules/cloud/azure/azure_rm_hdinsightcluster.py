@@ -364,6 +364,8 @@ class AzureRMClusters(AzureRMModuleBase):
                 response = self.mgmt_client.clusters.create(resource_group_name=self.resource_group,
                                                             cluster_name=self.name,
                                                             parameters=self.parameters)
+                if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
+                    response = self.get_poller_result(response)
             else:
                 if self.tags_changed:
                     response = self.mgmt_client.clusters.update(resource_group_name=self.resource_group,
