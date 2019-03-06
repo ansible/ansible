@@ -1,0 +1,8 @@
+bugfixes:
+    - 'dump' and 'restore' state only need pg_dump and pg_restore. These tools
+    don't use psycopg2 so this change tries to avoid the use of it in these
+    cases. Fixes https://github.com/ansible/ansible/issues/35906
+    - Replace the fix for https://github.com/ansible/ansible/issues/39412
+    made in https://github.com/ansible/ansible/pull/39483 when using a compression
+    program. This now uses a FIFO file to ensure failure detection of pg_dump.
+    The Windows compatibility is completely dropped in this case.
