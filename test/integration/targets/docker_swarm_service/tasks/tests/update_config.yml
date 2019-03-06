@@ -124,6 +124,7 @@
     update_config:
       max_failure_ratio: 0.25
   register: update_max_failure_ratio_1
+  ignore_errors: yes
 
 - name: update_config.max_failure_ratio (idempotency)
   docker_swarm_service:
@@ -133,6 +134,7 @@
     update_config:
       max_failure_ratio: 0.25
   register: update_max_failure_ratio_2
+  ignore_errors: yes
 
 - name: update_max_failure_ratio (idempotency, old name)
   docker_swarm_service:
@@ -141,6 +143,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     update_max_failure_ratio: 0.25
   register: update_max_failure_ratio_2b
+  ignore_errors: yes
 
 - name: update_config.max_failure_ratio (change)
   docker_swarm_service:
@@ -150,6 +153,7 @@
     update_config:
       max_failure_ratio: 0.50
   register: update_max_failure_ratio_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -163,6 +167,12 @@
       - update_max_failure_ratio_2 is not changed
       - update_max_failure_ratio_2b is not changed
       - update_max_failure_ratio_3 is changed
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
+- assert:
+    that:
+    - update_max_failure_ratio_1 is failed
+    - "'Minimum version required' in update_max_failure_ratio_1.msg"
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
 
 ###################################################################
 # update_config.monitor ###########################################
@@ -176,6 +186,7 @@
     update_config:
       monitor: 10s
   register: update_monitor_1
+  ignore_errors: yes
 
 - name: update_config.monitor (idempotency)
   docker_swarm_service:
@@ -185,6 +196,7 @@
     update_config:
       monitor: 10s
   register: update_monitor_2
+  ignore_errors: yes
 
 - name: update_monitor (idempotency, old name)
   docker_swarm_service:
@@ -193,6 +205,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     update_monitor: 10s
   register: update_monitor_2b
+  ignore_errors: yes
 
 - name: update_config.monitor (change)
   docker_swarm_service:
@@ -202,6 +215,7 @@
     update_config:
       monitor: 60s
   register: update_monitor_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -215,6 +229,12 @@
       - update_monitor_2 is not changed
       - update_monitor_2b is not changed
       - update_monitor_3 is changed
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
+- assert:
+    that:
+    - update_monitor_1 is failed
+    - "'Minimum version required' in update_monitor_1.msg"
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
 
 ###################################################################
 # update_config.order #############################################
@@ -228,6 +248,7 @@
     update_config:
       order: "start-first"
   register: update_order_1
+  ignore_errors: yes
 
 - name: update_config.order (idempotency)
   docker_swarm_service:
@@ -237,6 +258,7 @@
     update_config:
       order: "start-first"
   register: update_order_2
+  ignore_errors: yes
 
 - name: update_order (idempotency, old name)
   docker_swarm_service:
@@ -245,6 +267,7 @@
     command: '/bin/sh -v -c "sleep 10m"'
     update_order: "start-first"
   register: update_order_2b
+  ignore_errors: yes
 
 - name: update_config.order (change)
   docker_swarm_service:
@@ -254,6 +277,7 @@
     update_config:
       order: "stop-first"
   register: update_order_3
+  ignore_errors: yes
 
 - name: cleanup
   docker_swarm_service:
@@ -267,12 +291,12 @@
       - update_order_2 is not changed
       - update_order_2b is not changed
       - update_order_3 is changed
-  when: docker_api_version is version('1.29', '>=')
+  when: docker_api_version is version('1.29', '>=') and docker_py_version is version('2.7.0', '>=')
 - assert:
     that:
-    - secrets_1 is failed
-    - "('version is ' ~ docker_api_version ~'. Minimum version required is 1.29') in update_order_1.msg"
-  when: docker_api_version is version('1.29', '<')
+    - update_order_1 is failed
+    - "'Minimum version required' in update_order_1.msg"
+  when: docker_api_version is version('1.29', '<') or docker_py_version is version('2.7.0', '<')
 
 ###################################################################
 ## update_config.parallelism ######################################
