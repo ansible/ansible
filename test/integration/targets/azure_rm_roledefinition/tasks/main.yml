@@ -1,0 +1,139 @@
+- name: Fix resource prefix
+  set_fact:
+    role_name: "{{ (resource_group | replace('-','x'))[-8:] }}{{ 1000 | random }}testrole"
+    subscription_id: "{{ lookup('env','AZURE_SUBSCRIPTION_ID') }}"
+  run_once: yes
+
+- name: Create a role definition (Check Mode)
+  azure_rm_roledefinition:
+    name: "{{ role_name }}"
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+    permissions:
+      - actions:
+          - "Microsoft.Compute/virtualMachines/read"
+        not_actions:
+          - "Microsoft.Compute/virtualMachines/write"
+        data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+        not_data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+    assignable_scopes:
+        - "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+  check_mode: yes
+  register: output
+
+- name: Assert creating role definition check mode
+  assert:
+    that:
+      - output.changed
+
+- name: Create a role definition
+  azure_rm_roledefinition:
+    name: "{{ role_name }}"
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+    permissions:
+      - actions:
+          - "Microsoft.Compute/virtualMachines/read"
+        not_actions:
+          - "Microsoft.Compute/virtualMachines/write"
+        data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+        not_data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+    assignable_scopes:
+        - "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+  register: output
+
+- name: Assert creating role definition
+  assert:
+    that:
+      - output.changed
+
+- name: Get facts by name
+  azure_rm_roledefinition_facts:
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+    type: custom
+  register: facts
+
+- name: Assert facts
+  assert:
+    - facts['roledefinitions'] | length > 1
+
+- name: Get facts
+  azure_rm_roledefinition_facts:
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+    role_name: "{{ role_name }}"
+  register: facts
+
+- name: Assert facts
+  assert:
+    - facts['roledefinitions'] | length == 1
+    - facts['roledefinitions']['permissions'] | length == 1
+    - facts['roledefinitions']['permissions'][0]['not_data_actions'] | length == 1
+    - facts['roledefinitions']['permissions'][0]['data_actions'] | length == 1
+
+- name: Update the role definition (idempotent)
+  azure_rm_roledefinition:
+    name: "{{ role_name }}"
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+    permissions:
+      - actions:
+          - "Microsoft.Compute/virtualMachines/read"
+        not_actions:
+          - "Microsoft.Compute/virtualMachines/write"
+        data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+        not_data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+    assignable_scopes:
+          - "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+  register: output
+
+- name: assert output not changed
+  assert:
+    that:
+      - not output.changed
+
+- name: Update the role definition
+  azure_rm_roledefinition:
+    name: "{{ role_name }}"
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+    permissions:
+      - actions:
+          - "Microsoft.Compute/virtualMachines/read"
+          - "Microsoft.Compute/virtualMachines/start/action"
+        not_actions:
+          - "Microsoft.Compute/virtualMachines/write"
+        data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"
+        not_data_actions:
+          - "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+    assignable_scopes:
+        - "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+  register: output
+
+- name: assert output changed
+  assert:
+    that:
+      - output.changed
+
+- name: Delete the role definition (Check Mode)
+  azure_rm_roledefinition:
+    name: "{{ role_name }}"
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+  check_mode: yes
+  register: output
+
+- name: assert deleting role definition check mode
+  assert:
+    that: output.changed
+
+- name: Delete the redis cache
+  azure_rm_roledefinition:
+    name: "{{ role_name }}"
+    scope: "/subscriptions/{{ subscription_id }}/resourceGroups/{{ resource_group }}"
+  register: output
+
+- assert:
+    that:
+      - output.changed
