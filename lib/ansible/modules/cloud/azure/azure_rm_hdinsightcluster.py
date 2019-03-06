@@ -331,22 +331,16 @@ class AzureRMClusters(AzureRMModuleBase):
 
         if (self.to_do == Actions.Create) or (self.to_do == Actions.Update):
             self.log("Need to Create / Update the Cluster instance")
-
-            if self.check_mode:
-                self.results['changed'] = True
-                return self.results
-
-            response = self.create_update_cluster()
-
             self.results['changed'] = True
+            if self.check_mode:
+                return self.results
+            response = self.create_update_cluster()
             self.log("Creation / Update done")
         elif self.to_do == Actions.Delete:
             self.log("Cluster instance deleted")
             self.results['changed'] = True
-
             if self.check_mode:
                 return self.results
-
             self.delete_cluster()
         else:
             self.log("Cluster instance unchanged")
