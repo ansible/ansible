@@ -305,7 +305,7 @@ class Connection(NetworkConnectionBase):
             for cls in netconf_loader.all(class_only=True):
                 network_os = cls.guess_network_os(self)
                 if network_os:
-                    self.queue_message('log', 'discovered network_os %s' % network_os)
+                    self.queue_message('vvv', 'discovered network_os %s' % network_os)
                     self._network_os = network_os
 
         # If we have tried to detect the network_os but were unable to i.e. network_os is still 'auto'
@@ -313,14 +313,15 @@ class Connection(NetworkConnectionBase):
 
         if self._network_os == 'auto':
             # Network os not discovered. Set it to default
+            self.queue_message('vvv', 'Unable do discover network_os. Falling back to default.')
             self._network_os = 'default'
 
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
         
         try:
             port = self._play_context.port or 830
-            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s" %
-                               (self._play_context.remote_user, port, self._play_context.remote_addr))
+            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s WITH SSH_CONFIG = %s" %
+                               (self._play_context.remote_user, port, self._play_context.remote_addr, self._ssh_config))
             self._manager = manager.connect(
                 host=self._play_context.remote_addr,
                 port=port,
