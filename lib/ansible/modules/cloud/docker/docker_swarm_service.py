@@ -666,13 +666,17 @@ notes:
 '''
 
 RETURN = '''
-ansible_swarm_service:
+swarm_service:
   returned: always
   type: dict
   description:
   - Dictionary of variables representing the current state of the service.
     Matches the module parameters format.
   - Note that facts are not part of registered vars but accessible directly.
+  - Note that before Ansible 2.7.9, the return variable was documented as C(ansible_swarm_service),
+    while the module actually returned a variable called C(ansible_docker_service). The variable
+    was renamed to C(swarm_service) in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0.
+    In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
   sample: '{
     "args": [
       "sleep",
@@ -2278,7 +2282,7 @@ def main():
         changed=changed,
         rebuilt=rebuilt,
         changes=changes,
-        ansible_docker_service=facts,
+        swarm_service=facts,
     )
     if client.module._diff:
         before, after = dsm.diff_tracker.get_before_after()
