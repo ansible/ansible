@@ -16,6 +16,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
       cpus: 1
@@ -25,6 +26,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
       cpus: 1
@@ -34,6 +36,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limit_cpu: 1
   register: limit_cpu_2b
@@ -42,6 +45,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
       cpus: 2
@@ -68,6 +72,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
       memory: 64M
@@ -77,6 +82,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
       memory: 64M
@@ -86,6 +92,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limit_memory: "67108864"
   register: limit_memory_2b
@@ -94,6 +101,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limit_memory: 32M
   register: limit_memory_3
@@ -119,6 +127,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
       cpus: 1
@@ -128,6 +137,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
       cpus: 1
@@ -137,6 +147,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_cpu: 1
   register: reserve_cpu_2b
@@ -145,6 +156,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
       cpus: 2
@@ -171,6 +183,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
       memory: 64M
@@ -180,6 +193,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_memory: 64M
   register: reserve_memory_2
@@ -188,6 +202,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_memory: "67108864"
   register: reserve_memory_2b
@@ -196,6 +211,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reserve_memory: 32M
   register: reserve_memory_3

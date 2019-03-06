@@ -29,6 +29,7 @@
         name: test_service
         endpoint_mode: dnsrr
         image: busybox
+        resolve_image: no
         args:
           - sleep
           - "3600"
@@ -43,6 +44,7 @@
       docker_swarm_service:
         name: test_service
         image: busybox
+        resolve_image: no
         args:
           - sleep
           - "1800"
@@ -57,6 +59,7 @@
       docker_swarm_service:
         name: test_service
         image: busybox
+        resolve_image: no
         endpoint_mode: vip
         mode: global
         args:
@@ -73,6 +76,7 @@
       docker_swarm_service:
         name: test_service
         image: busybox
+        resolve_image: no
         mode: global
         args:
           - sleep
