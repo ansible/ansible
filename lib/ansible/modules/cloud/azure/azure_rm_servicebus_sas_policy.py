@@ -150,7 +150,7 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
 
         changed = False
 
-        policy = self.get_sas_key()
+        policy = self.get_auth_rule()
         if self.state == 'present':
             if not policy:  # Create a new one
                 changed = True
@@ -160,11 +160,10 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
                 changed = changed | self.regenerate_primary_key | self.regenerate_secondary_key
                 if self.regenerate_primary_key and not self.check_mode:
                     self.regenerate_sas_key('primary')
-                    policy = self.get_sas_key()
                 if self.regenerate_secondary_key and not self.check_mode:
                     self.regenerate_sas_key('secondary')
-                    policy = self.get_sas_key()
             self.results = self.policy_to_dict(policy)
+            self.results['keys'] = self.get_sas_key()
         elif policy:
             changed = True
             if not self.check_mode:
@@ -194,10 +193,22 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
                 rule = client.create_or_update_authorization_rule(self.resource_group, self.namespace, self.queue or self.topic, self.name, rights)
             else:
                 rule = client.create_or_update_authorization_rule(self.resource_group, self.namespace, self.name, rights)
-            return self.policy_to_dict(rule)
+            return rule
         except Exception as exc:
             self.fail('Error when creating or updating SAS policy {0} - {1}'.format(self.name, exc.message or str(exc)))
         return None
+
+    def get_auth_rule(self):
+        rule = None
+        try:
+            client = self._get_client()
+            if self.queue or self.topic:
+                rule = client.get_authorization_rule(self.resource_group, self.namespace, self.queue or self.topic, self.name)
+            else:
+                rule = client.get_authorization_rule(self.resource_group, self.namespace, self.name)
+        except Exception:
+            pass
+        return rule
 
     def delete_sas_policy(self):
         try:
