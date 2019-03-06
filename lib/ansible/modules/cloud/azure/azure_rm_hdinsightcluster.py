@@ -244,6 +244,8 @@ class AzureRMClusters(AzureRMModuleBase):
         self.mgmt_client = None
         self.state = None
         self.to_do = Actions.NoAction
+        self.tags_changed = False
+        self.new_instance_count = None
 
         super(AzureRMClusters, self).__init__(derived_arg_spec=self.module_arg_spec,
                                               supports_check_mode=True,
@@ -308,8 +310,20 @@ class AzureRMClusters(AzureRMModuleBase):
                 if (not default_compare(self.parameters, old_response, '', compare_result)):
                     if compare_result.pop('/properties/compute_profile/roles/*/target_instance_count', False):
                         self.to_do = Actions.Update
+                        # check if it's workernode
+                        new_count = 0
+                        old_count = 0
+                        for role in self.parameters['properties']['compute_profile']['roles']:
+                            if role['name'] == 'workernode':
+                                new_count = role['target_instance_count']
+                        for role in old_response['compute_profile']['roles']:
+                            if role['name'] == 'workernode':
+                                old_count = role['target_instance_count']
+                        if old_count != new_count:
+                            self.new_instance_count = new_count
                     if compare_result.pop('/tags', False):
                         self.to_do = Actions.Update
+                        self.tags_changed = True
                     if compare_result:
                         for k in compare_result.keys():
                             self.module.warn("property '" + k + "' cannot be updated (" + compare_result[k] + ")")
@@ -361,17 +375,21 @@ class AzureRMClusters(AzureRMModuleBase):
                                                             cluster_name=self.name,
                                                             parameters=self.parameters)
             else:
-                response = self.mgmt_client.clusters.update(resource_group_name=self.resource_group,
-                                                            cluster_name=self.name,
-                                                            tags=self.parameters.get('tags'))
-            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
-                response = self.get_poller_result(response)
-
-            # need to resize cluster?
-
+                if self.tags_changed:
+                    response = self.mgmt_client.clusters.update(resource_group_name=self.resource_group,
+                                                                cluster_name=self.name,
+                                                                tags=self.parameters.get('tags'))
+                    if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
+                        response = self.get_poller_result(response)
+                if self.new_instance_count:
+                    response = self.mgmt_client.clusters.resize(resource_group_name=self.resource_group,
+                                                                cluster_name=self.name,
+                                                                target_instance_count=self.new_instance_count)
+                    if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
+                        response = self.get_poller_result(response)
         except CloudError as exc:
-            self.log('Error attempting to create the Cluster instance.')
-            self.fail("Error creating the Cluster instance: {0}".format(str(exc)))
+            self.log('Error attempting to create or updatethe Cluster instance.')
+            self.fail("Error creating or updating Cluster instance: {0}".format(str(exc)))
         return response.as_dict()
 
     def delete_cluster(self):
