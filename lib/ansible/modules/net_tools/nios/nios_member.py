@@ -13,7 +13,7 @@ DOCUMENTATION = '''
 ---
 module: nios_member
 version_added: "2.9"
-author: "Krishna Vasudevan"
+author: "Krishna Vasudevan (@krisvasudevan)"
 short_description: Configure Infoblox NIOS members
 description:
   - Adds and/or removes Infoblox NIOS servers.  This module manages NIOS C(member) objects using the Infoblox WAPI interface over REST.
@@ -83,7 +83,7 @@ options:
     suboptions:
       enabled:
         description:
-          - If set to True, then it has its own IP settings. Otherwise, port redundancy mechanism is used, in which the LAN1 and LAN2 ports share the same IP settings for failover purposes.
+          - If set to True, then it has its own IP settings. 
         type: bool
       network_setting:
         description:
@@ -222,12 +222,12 @@ options:
     default: Default
   use_syslog_proxy_setting:
     description:
-      - Use flag for: external_syslog_server_enable , syslog_servers, syslog_proxy_setting, syslog_size
+      - Use flag for external_syslog_server_enable , syslog_servers, syslog_proxy_setting, syslog_size
     type: bool
   external_syslog_server_enable:
     description:
       - Determines if external syslog servers should be enabled
-    type:bool
+    type: bool
   syslog_servers:
     description:
       - The list of external syslog servers.
@@ -252,9 +252,7 @@ options:
         default: LAN
       message_source:
         description:
-          - The source of syslog messages to be sent to the external syslog server. If set to 'INTERNAL', only messages the appliance generates will be sent to the syslog server.
-          If set to 'EXTERNAL', the appliance sends syslog messages that it receives from other devices, such as syslog servers and routers.
-          If set to 'ANY', the appliance sends both internal and external syslog messages.
+          - The source of syslog messages to be sent to the external syslog server.
         default: ANY
       only_category_list:
         description:
@@ -278,14 +276,13 @@ options:
         suboptions:
           hwmodel:
             description:
-              - Hardware model - for IB-4010 are Rev1, Rev2; for IB-4030 are Rev1, Rev2; for PT-4000 is Rev2; for IB-VNIOS are IB-VM-100, IB-VM-810, IB-VM-820, IB-VM-RSP, IB-VM-1410, IB-VM-1420, IB-VM-2210, IB-VM-2220, IBVM-4010, CP-V800, CP-V1400, CP-V2200. Note that you cannot specify hwmodel for following hardware types: IB-FLEX, IB-V2215, IB-V1425, IB-V4025, IB-V4015, IB-V1415, IB-V815, IB-V825, IB-V2225.
+              - Hardware model
           hwtype
             description:
               - Hardware type.
       licenses:
         description:
-          - An array of license types the pre-provisioned member should have in order to join the Grid, or the licenses that must be allocated to the member when it joins the Grid using the token-based authentication.
-  state:
+          - An array of license types the pre-provisioned member should have in order to join the Grid, or the licenses that must be allocated to the member when it joins the Grid.
     description:
       - Configures the intended state of the instance of the object on
         the NIOS server.  When this value is set to C(present), the object
@@ -376,6 +373,7 @@ from ansible.module_utils.six import iteritems
 from ansible.module_utils.net_tools.nios.api import WapiModule
 from ansible.module_utils.net_tools.nios.api import NIOS_MEMBER
 
+
 def main():
     ''' Main entry point for module execution
     '''
@@ -432,7 +430,7 @@ def main():
         message_node_id=dict(default='LAN'),
         message_source=dict(default='ANY'),
         only_category_list=dict(type='bool'),
-        port=dict(type='int',default=514),
+        port=dict(type='int', default=514),
         severity=dict(default='DEBUG'),
     )
 
@@ -452,9 +450,9 @@ def main():
         ipv6_setting=dict(type='dict', elements='dict', options=ipv6_spec),
         config_addr_type=dict(default='IPV4'),
         comment=dict(),
-        enable_ha=dict(type='bool',default=False),
+        enable_ha=dict(type='bool', default=False),
         router_id=dict(type='int'),
-        lan2_enabled=dict(type='bool',default=False),
+        lan2_enabled=dict(type='bool', default=False),
         lan2_port_setting=dict(type='dict', elements='dict', options=lan2_port_spec),
         platform=dict(default='INFOBLOX'),
         node_info=dict(type='list', elements='dict', options=node_spec),
@@ -477,10 +475,11 @@ def main():
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
-    
+
     wapi = WapiModule(module)
     result = wapi.run(NIOS_MEMBER, ib_spec)
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
