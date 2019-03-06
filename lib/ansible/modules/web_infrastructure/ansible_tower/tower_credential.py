@@ -27,43 +27,56 @@ options:
       description:
         - The name to use for the credential.
       required: True
+      type: str
     description:
       description:
         - The description to use for the credential.
+      type: str
     user:
       description:
         - User that should own this credential.
+      type: str
     team:
       description:
         - Team that should own this credential.
+      type: str
     project:
       description:
         - Project that should for this credential.
+      type: str
     organization:
       description:
         - Organization that should own the credential.
       required: True
+      type: str
     kind:
       description:
-        - Type of credential being added.  The ssh choice refers to a Tower Machine credential.
+        - Type of credential being added.
+        - The ssh choice refers to a Tower Machine credential.
       required: True
+      type: str
       choices: ["ssh", "vault", "net", "scm", "aws", "vmware", "satellite6", "cloudforms", "gce", "azure_rm", "openstack", "rhv", "insights", "tower"]
     host:
       description:
         - Host for this credential.
+      type: str
     username:
       description:
         - Username for this credential. access_key for AWS.
+      type: str
     password:
       description:
         - Password for this credential. Use ASK for prompting. secret_key for AWS. api_key for RAX.
+      type: str
     ssh_key_data:
       description:
         - SSH private key content. To extract the content from a file path, use the lookup function (see examples).
       required: False
+      type: str
     ssh_key_unlock:
       description:
         - Unlock password for ssh_key. Use ASK for prompting.
+      type: str
     authorize:
       description:
         - Should use authorize for net type.
@@ -72,43 +85,61 @@ options:
     authorize_password:
       description:
         - Password for net credentials that require authorize.
+      type: str
     client:
       description:
         - Client or application ID for azure_rm type.
+      type: str
     security_token:
       description:
         - STS token for aws type.
       version_added: "2.6"
+      type: str
     secret:
       description:
         - Secret token for azure_rm type.
+      type: str
     subscription:
       description:
         - Subscription ID for azure_rm type.
+      type: str
     tenant:
       description:
         - Tenant ID for azure_rm type.
+      type: str
     domain:
       description:
         - Domain for openstack type.
+      type: str
     become_method:
       description:
         - Become method to use for privilege escalation.
       choices: ["None", "sudo", "su", "pbrun", "pfexec", "pmrun"]
+      type: str
     become_username:
       description:
         - Become username. Use ASK for prompting.
+      type: str
     become_password:
       description:
         - Become password. Use ASK for prompting.
+      type: str
     vault_password:
       description:
         - Vault password. Use ASK for prompting.
+      type: str
+    vault_id:
+      description:
+        - Vault identifier.
+        - This parameter is only valid if C(kind) is specified as C(vault).
+      type: str
+      version_added: "2.8"
     state:
       description:
         - Desired state of the resource.
       choices: ["present", "absent"]
       default: "present"
+      type: str
 extends_documentation_fragment: tower
 '''
 
@@ -227,6 +258,7 @@ def main():
         organization=dict(required=True),
         project=dict(),
         state=dict(choices=['present', 'absent'], default='present'),
+        vault_id=dict(),
     )
 
     module = TowerModule(argument_spec=argument_spec, supports_check_mode=True)
@@ -289,11 +321,14 @@ def main():
                 else:
                     module.params['ssh_key_data'] = data
 
+            if module.params.get('vault_id', None) and module.params.get('kind') != 'vault':
+                module.fail_json(msg="Parameter 'vault_id' is only valid if parameter 'kind' is specified as 'vault'")
+
             for key in ('authorize', 'authorize_password', 'client',
                         'security_token', 'secret', 'tenant', 'subscription',
                         'domain', 'become_method', 'become_username',
                         'become_password', 'vault_password', 'project', 'host',
-                        'username', 'password', 'ssh_key_data',
+                        'username', 'password', 'ssh_key_data', 'vault_id',
                         'ssh_key_unlock'):
                 if 'kind' in params:
                     params[key] = module.params.get(key)
