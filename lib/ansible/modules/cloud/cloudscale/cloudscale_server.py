@@ -377,20 +377,11 @@ class AnsibleCloudscaleServer(AnsibleCloudscaleBase):
         self._result['changed'] = True
         required_params = ('name', 'ssh_keys', 'image', 'flavor')
         self._module.fail_on_missing_params(required_params)
-        params = self._module.params
-        data = {
-            'name': params['name'],
-            'image': params['image'],
-            'flavor': params['flavor'],
-            'volume_size_gb': params['volume_size_gb'],
-            'bulk_volume_size_gb': params['bulk_volume_size_gb'],
-            'ssh_keys': params['ssh_keys'],
-            'use_public_network': params['use_public_network'],
-            'use_private_network': params['use_private_network'],
-            'use_ipv6': params['use_ipv6'],
-            'anti_affinity_with': params['anti_affinity_with'],
-            'user_data': params['user_data'],
-        }
+
+        data = deepcopy(self._module.params)
+        for i in ('uuid', 'state', 'force', 'api_timeout', 'api_token'):
+            del data[i]
+
         self._result['diff']['before'] = self._init_server_container()
         self._result['diff']['after'] = deepcopy(data)
         if not self._module.check_mode:
