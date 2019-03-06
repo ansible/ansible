@@ -186,48 +186,65 @@
       - server.flavor.slug == '{{ cloudscale_test_flavor_2 }}'
       - server.name == '{{ cloudscale_resource_prefix }}-test-renamed'
 
-- name: Test create server stopped in check mode
+- name: Remember uuid of running server for anti affinity
+  set_fact:
+    running_server_uuid: '{{ server.uuid }}'
+
+- name: Test create server stopped in anti affinity and private network only in check mode
   cloudscale_server:
     name: '{{ cloudscale_resource_prefix }}-test-stopped'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    anti_affinity_with: '{{ running_server_uuid }}'
+    use_public_network: no
+    use_private_network: yes
     state: stopped
   check_mode: yes
   register: server_stopped
-- name: Verify create server stopped
+- name: Verify create server stopped in anti affinity and private network only in check mode
   assert:
     that:
       - server_stopped is changed
       - server_stopped.state == 'absent'
 
-- name: Test create server stopped
+- name: Test create server stopped in anti affinity and private network only
   cloudscale_server:
     name: '{{ cloudscale_resource_prefix }}-test-stopped'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    anti_affinity_with: '{{ running_server_uuid }}'
+    use_public_network: no
+    use_private_network: yes
     state: stopped
   register: server_stopped
-- name: Verify create server stopped
+- name: Verify create server stopped in anti affinity and private network only
   assert:
     that:
       - server_stopped is changed
       - server_stopped.state == 'stopped'
+      - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
+      - server_stopped.interfaces.0.type == 'private'
 
-- name: Test create server stopped idempotence
+- name: Test create server stopped in anti affinity and private network only idempotence
   cloudscale_server:
     name: '{{ cloudscale_resource_prefix }}-test-stopped'
     flavor: '{{ cloudscale_test_flavor }}'
     image: '{{ cloudscale_test_image }}'
     ssh_keys: '{{ cloudscale_test_ssh_key }}'
+    anti_affinity_with: '{{ running_server_uuid }}'
+    use_public_network: no
+    use_private_network: yes
     state: stopped
   register: server_stopped
-- name: Verify create server stopped idempotence
+- name: Verify create server stopped in anti affinity and private network only idempotence
   assert:
     that:
       - server_stopped is not changed
       - server_stopped.state == 'stopped'
+      - server_stopped.anti_affinity_with.0.uuid == running_server_uuid
+      - server_stopped.interfaces.0.type == 'private'
 
 - name: Test create server failure without required parameters
   cloudscale_server:
