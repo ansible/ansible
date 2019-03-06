@@ -135,6 +135,21 @@ def get_grafana_plugin_version(module, params):
                 return plugin_version
     return None
 
+def get_grafana_plugin_version_latest(module, params):
+    '''
+    Fetch the latest version available from grafana-cli.
+    Return the newest version number or None not found.
+
+    :param module: ansible module object. used to run system commands.
+    :param params: ansible module params.
+    '''
+    grafana_cli = grafana_cli_bin(params)
+    rc, stdout, stderr = module.run_command('{0} list-versions {1}'.format(grafana_cli,
+                                                                           params['name']))
+    stdout_lines = stdout.split("\n")
+    if stdout_lines[0]:
+        return stdout_lines[0].rstrip()
+    return None
 
 def grafana_plugin(module, params):
     '''
@@ -155,6 +170,11 @@ def grafana_plugin(module, params):
                             'version': grafana_plugin_version}
                 else:
                     if params['version'] == 'latest' or params['version'] is None:
+                        latest_version = get_grafana_plugin_version_latest(module, params)
+                        if latest_version == grafana_plugin_version:
+                            return {'msg': 'Grafana plugin already installed',
+                                    'changed': False,
+                                    'version': grafana_plugin_version}
                         cmd = '{0} update {1}'.format(grafana_cli, params['name'])
                     else:
                         cmd = '{0} install {1} {2}'.format(grafana_cli, params['name'], params['version'])
