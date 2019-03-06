@@ -78,6 +78,7 @@ EXAMPLES = '''
 
 RETURN = '''
 log:
+  type: str
   description:
   - The text log of the object
   returned: success
