@@ -16,6 +16,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       delay: 5s
@@ -25,6 +26,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       delay: 5s
@@ -34,6 +36,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_delay: 5000000000
   register: update_delay_2b
@@ -42,6 +45,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       delay: 12s
@@ -68,6 +72,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       failure_action: "pause"
@@ -77,6 +82,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       failure_action: "pause"
@@ -86,6 +92,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_failure_action: "pause"
   register: update_failure_action_2b
@@ -94,6 +101,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       failure_action: "continue"
@@ -120,6 +128,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       max_failure_ratio: 0.25
@@ -130,6 +139,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       max_failure_ratio: 0.25
@@ -140,6 +150,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_max_failure_ratio: 0.25
   register: update_max_failure_ratio_2b
@@ -149,6 +160,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       max_failure_ratio: 0.50
@@ -182,6 +194,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       monitor: 10s
@@ -192,6 +205,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       monitor: 10s
@@ -202,6 +216,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_monitor: 10s
   register: update_monitor_2b
@@ -211,6 +226,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       monitor: 60s
@@ -244,6 +260,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       order: "start-first"
@@ -254,6 +271,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       order: "start-first"
@@ -264,6 +282,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_order: "start-first"
   register: update_order_2b
@@ -273,6 +292,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       order: "stop-first"
@@ -306,6 +326,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       parallelism: 2
@@ -315,6 +336,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       parallelism: 2
@@ -324,6 +346,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_parallelism: 2
   register: update_parallelism_2b
@@ -332,6 +355,7 @@
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
+    resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     update_config:
       parallelism: 1
