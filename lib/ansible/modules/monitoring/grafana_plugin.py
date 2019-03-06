@@ -135,6 +135,7 @@ def get_grafana_plugin_version(module, params):
                 return plugin_version
     return None
 
+
 def get_grafana_plugin_version_latest(module, params):
     '''
     Fetch the latest version available from grafana-cli.
@@ -150,6 +151,7 @@ def get_grafana_plugin_version_latest(module, params):
     if stdout_lines[0]:
         return stdout_lines[0].rstrip()
     return None
+
 
 def grafana_plugin(module, params):
     '''
