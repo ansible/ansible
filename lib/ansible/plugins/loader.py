@@ -113,11 +113,27 @@ class PluginLoader:
         if class_name not in PLUGIN_PATH_CACHE:
             PLUGIN_PATH_CACHE[class_name] = defaultdict(dict)
 
+        # hold dirs added at runtime outside of config
+        self._extra_dirs = []
+
+        # caches
         self._module_cache = MODULE_CACHE[class_name]
         self._paths = PATH_CACHE[class_name]
         self._plugin_path_cache = PLUGIN_PATH_CACHE[class_name]
 
-        self._extra_dirs = []
+        self._searched_paths = set()
+
+    def _clear_caches(self):
+
+        # reset global caches
+        MODULE_CACHE[self.class_name] = {}
+        PATH_CACHE[self.class_name] = None
+        PLUGIN_PATH_CACHE[self.class_name] = defaultdict(dict)
+
+        # reset internal caches
+        self._module_cache = MODULE_CACHE[self.class_name]
+        self._paths = PATH_CACHE[self.class_name]
+        self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
         self._searched_paths = set()
 
     def __setstate__(self, data):
@@ -269,6 +285,7 @@ class PluginLoader:
         ''' Adds an additional directory to the search path '''
 
         directory = os.path.realpath(directory)
+        orig_size = len(self._extra_dirs)
 
         if directory is not None:
             if with_subdir:
@@ -276,8 +293,10 @@ class PluginLoader:
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
-                self._paths = None
                 display.debug('Added %s to loader search path' % (directory))
+
+        if orig_size != len(self._extra_dirs):
+            self._clear_caches()
 
     def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''

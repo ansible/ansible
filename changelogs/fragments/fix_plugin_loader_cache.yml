@@ -1,0 +1,3 @@
+bugfixes:
+    - > clear all caches in plugin loader for a plugin type when adding new paths,
+       otherwise new versions of already loaded plugin won't be discovered
