@@ -4,6 +4,8 @@
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from ansible.module_utils.ec2 import camel_dict_to_snake_dict
+from ansible.module_utils.aws.core import AnsibleAWSModule
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -176,8 +178,6 @@ response_metadata:
     retry_attempts: 0
 '''
 
-from ansible.module_utils.aws.core import AnsibleAWSModule
-from ansible.module_utils.ec2 import camel_dict_to_snake_dict
 
 try:
     import botocore
@@ -333,7 +333,8 @@ def release_address(ec2, address, check_mode):
         changed = False
         response = None
     else:
-        response = ec2.release_address(AllocationId=address.get('AllocationId'))
+        response = ec2.release_address(
+            AllocationId=address.get('AllocationId'))
         changed = True
 
     return response, changed
@@ -436,8 +437,8 @@ def main():
     module = AnsibleAWSModule(argument_spec=argument_spec,
                               supports_check_mode=True,
                               required_together=[
-                                    ['device_id', 'private_ip_address'],
-                                ],
+                                  ['device_id', 'private_ip_address'],
+                              ],
                               )
 
     ec2 = module.client('ec2')
@@ -487,11 +488,14 @@ def main():
                                                      reuse_existing_ip_allowed)
         else:
             if device_id:
-                response, changed = ensure_absent(ec2, domain, address, device_id, module.check_mode, is_aninstance=an_instance)
+                response, changed = ensure_absent(
+                    ec2, domain, address, device_id, module.check_mode, is_aninstance=an_instance)
                 if release_on_disassociation and changed:
-                    response, changed = release_address(ec2, address, module.check_mode)
+                    response, changed = release_address(
+                        ec2, address, module.check_mode)
             else:
-                response, changed = release_address(ec2, address, module.check_mode)
+                response, changed = release_address(
+                    ec2, address, module.check_mode)
 
     except botocore.exceptions.BotoCoreError as e:
         raise
