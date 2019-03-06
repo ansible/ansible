@@ -51,7 +51,7 @@
           password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 1
-        vm_size: Standard_A1_v2
+        vm_size: Standard_D3
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -94,7 +94,7 @@
           password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 1
-        vm_size: Standard_A1_v2
+        vm_size: Standard_D3
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -137,7 +137,7 @@
           password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 1
-        vm_size: Standard_A1_v2
+        vm_size: Standard_D3
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
@@ -179,7 +179,7 @@
           password: MuABCPassword!!@123
       - name: workernode
         target_instance_count: 2
-        vm_size: Standard_A1_v2
+        vm_size: Standard_D3
         linux_profile:
           username: sshuser
           password: MuABCPassword!!@123
