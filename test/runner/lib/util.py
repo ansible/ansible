@@ -183,7 +183,7 @@ def generate_pip_command(python):
     return [python, '-m', 'pip.__main__']
 
 
-def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None):
+def intercept_command(args, cmd, target_name, capture=False, env=None, data=None, cwd=None, python_version=None, path=None, coverage=None):
     """
     :type args: TestConfig
     :type cmd: collections.Iterable[str]
@@ -194,10 +194,14 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     :type cwd: str | None
     :type python_version: str | None
     :type path: str | None
+    :type coverage: bool | None
     :rtype: str | None, str | None
     """
     if not env:
         env = common_environment()
+
+    if coverage is None:
+        coverage = args.coverage
 
     cmd = list(cmd)
     version = python_version or args.python_version
@@ -211,13 +215,13 @@ def intercept_command(args, cmd, target_name, capture=False, env=None, data=None
     env['ANSIBLE_TEST_PYTHON_VERSION'] = version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = interpreter
 
-    if args.coverage:
+    if coverage:
         env['_ANSIBLE_COVERAGE_CONFIG'] = os.path.join(inject_path, '.coveragerc')
         env['_ANSIBLE_COVERAGE_OUTPUT'] = coverage_file
 
     config = dict(
         python_interpreter=interpreter,
-        coverage_file=coverage_file if args.coverage else None,
+        coverage_file=coverage_file if coverage else None,
     )
 
     if not args.explain:
