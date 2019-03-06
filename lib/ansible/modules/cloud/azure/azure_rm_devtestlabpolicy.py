@@ -76,13 +76,14 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Policy
-    azure_rm_devtestlabpolicy:
-      resource_group: NOT FOUND
-      lab_name: NOT FOUND
-      policy_set_name: NOT FOUND
-      name: NOT FOUND
-      status: status
+- name: Create DevTest Lab Policy
+  azure_rm_devtestlabpolicy:
+    resource_group: myResourceGroup
+    lab_name: myLab
+    policy_set_name: myPolicySet
+    name: myPolicy
+    fact_name: user_owned_lab_vm_count
+    threshold: 5
 '''
 
 RETURN = '''
@@ -91,13 +92,9 @@ id:
         - The identifier of the resource.
     returned: always
     type: str
-    sample: id
-status:
-    description:
-        - "The status of the policy. Possible values include: 'Enabled', 'Disabled'"
-    returned: always
-    type: str
-    sample: status
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/policySets/
+             myPolicySet/policies/myPolicy"
+
 '''
 
 import time

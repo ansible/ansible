@@ -74,12 +74,16 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Environment
-    azure_rm_devtestlabenvironment:
-      resource_group: NOT FOUND
-      lab_name: NOT FOUND
-      user_name: NOT FOUND
-      name: NOT FOUND
+- name: Create instance of DevTest Lab Environment from public environment repo
+  azure_rm_devtestlabenvironment:
+    resource_group: myResourceGroup
+    lab_name: myLab
+    user_name: user
+    name: myEnvironment
+    location: eastus
+    deployment_template:
+      artifact_source_name: public environment repo
+      name: WebApp
 '''
 
 RETURN = '''
@@ -88,7 +92,9 @@ id:
         - The identifier of the resource.
     returned: always
     type: str
-    sample: id
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/environment
+             s/myEnvironment"
+
 '''
 
 import time

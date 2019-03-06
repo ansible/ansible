@@ -77,7 +77,8 @@ id:
         - The identifier of the resource.
     returned: always
     type: str
-    sample: id
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/schedules/l
+             abVmsShutdown"
 '''
 
 import time

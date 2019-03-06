@@ -34,9 +34,6 @@ options:
         description:
             - The name of the custom image.
         required: True
-    location:
-        description:
-            - The location of the resource.
     source_vm:
         description:
             - Source DevTest Lab virtual machine name.
@@ -79,11 +76,13 @@ author:
 '''
 
 EXAMPLES = '''
-  - name: Create (or update) Custom Image
-    azure_rm_devtestlabcustomimage:
-      resource_group: NOT FOUND
-      lab_name: NOT FOUND
-      name: NOT FOUND
+- name: Create instance of DevTest Lab Image
+  azure_rm_devtestlabcustomimage:
+    resource_group: myResourceGroup
+    lab_name: myLab
+    name: myImage
+    source_vm: myDevTestLabVm
+    linux_os_state: non_deprovisioned
 '''
 
 RETURN = '''
@@ -92,7 +91,7 @@ id:
         - The identifier of the resource.
     returned: always
     type: str
-    sample: id
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourcegroups/myResourceGroup/providers/microsoft.devtestlab/labs/myLab/images/myImage"
 '''
 
 import time
@@ -130,9 +129,6 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
             name=dict(
                 type='str',
                 required=True
-            ),
-            location=dict(
-                type='str'
             ),
             source_vm=dict(
                 type='str'
@@ -201,7 +197,7 @@ class AzureRMDtlCustomImage(AzureRMModuleBase):
             if windows_os_state:
                 self.custom_image['vm']['windows_os_info'] = {'windows_os_state': _snake_to_camel(windows_os_state, True)}
             elif linux_os_state:
-                self.custom_image['vm']['windows_os_info'] = {'linux_os_state': _snake_to_camel(windows_os_state, True)}
+                self.custom_image['vm']['windows_os_info'] = {'linux_os_state': _snake_to_camel(linux_os_state, True)}
             else:
                 self.fail("Either 'linux_os_state' or 'linux_os_state' must be specified")
 
