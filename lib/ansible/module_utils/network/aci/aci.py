@@ -186,9 +186,15 @@ class ACIModule(object):
     def login(self):
         ''' Log in to APIC '''
 
+        # Create a cookie file name including full path
         cookie_file = os.path.expanduser(self.module._remote_tmp) + '/aci_' + self.params['host'].replace(':', '.') + '.p'
         if os.path.exists(cookie_file):
-            cookie = pickle.load(open(cookie_file, 'rb'))
+            try:
+                cookie = pickle.load(open(cookie_file, 'rb'))
+            except:
+                # Removing file to start clean
+                os.remove(cookie_file)
+                self.module.fail_json(msg='Cannot open ACI cookie %s' % cookie_file)
             time_skew = int(time.time()) - int(cookie['time'])
             if time_skew > 200 and time_skew < 300:
                 self.module.warn("ACI Cookie gets old. Refreshing...")
@@ -220,7 +226,10 @@ class ACIModule(object):
                         "time": time.time(),
                         "cookie": self.headers['Cookie']
                     }
-                    pickle.dump(cookie, open(cookie_file, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+                    try:
+                        pickle.dump(cookie, open(cookie_file, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+                    except:
+                        self.module.fail_json(msg='Cannot save ACI cookie %s' % cookie_file)
                 return
 
             elif time_skew > 0 and time_skew <= 200:
