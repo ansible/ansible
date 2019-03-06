@@ -17,6 +17,7 @@ version_added: "2.6"
 
 import json
 import re
+import collections
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
@@ -36,6 +37,18 @@ class HttpApi(HttpApiBase):
     def __init__(self, *args, **kwargs):
         super(HttpApi, self).__init__(*args, **kwargs)
         self._device_info = None
+        self._module_context = {}
+
+    def read_module_context(self, module_key):
+        if self._module_context.get(module_key):
+            return self._module_context[module_key]
+
+        return None
+
+    def save_module_context(self, module_key, module_context):
+        self._module_context[module_key] = module_context
+
+        return None
 
     def send_request(self, data, **message_kwargs):
         output = None
@@ -201,12 +214,15 @@ def request_builder(commands, output, version='1.0', chunk='0', sid=None):
     if isinstance(commands, (list, set, tuple)):
         commands = ' ;'.join(commands)
 
-    msg = {
-        'version': version,
-        'type': command_type,
-        'chunk': chunk,
-        'sid': sid,
-        'input': commands,
-        'output_format': 'json'
-    }
+    # Order should not matter but some versions of NX-OS software fail
+    # to process the payload properly if 'input' gets serialized before
+    # 'type' and the payload of 'input' contains the word 'type'.
+    msg = collections.OrderedDict()
+    msg['version'] = version
+    msg['type'] = command_type
+    msg['chunk'] = chunk
+    msg['sid'] = sid
+    msg['input'] = commands
+    msg['output_format'] = 'json'
+
     return json.dumps(dict(ins_api=msg))
