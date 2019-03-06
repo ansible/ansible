@@ -1866,12 +1866,12 @@
       - secrets_3 is changed
       - secrets_4 is changed
       - secrets_5 is not changed
-  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.1.0', '>=')
+  when: docker_api_version is version('1.25', '>=') and docker_py_version is version('2.4.0', '>=')
 - assert:
     that:
     - secrets_1 is failed
     - "'Minimum version required' in secrets_1.msg"
-  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.1.0', '<')
+  when: docker_api_version is version('1.25', '<') or docker_py_version is version('2.4.0', '<')
 
 
 ###################################################################

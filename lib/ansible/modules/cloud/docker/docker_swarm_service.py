@@ -2216,7 +2216,7 @@ def main():
         hosts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         groups=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
-        secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        secrets=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         update_max_failure_ratio=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_monitor=dict(docker_py_version='2.1.0', docker_api_version='1.25'),

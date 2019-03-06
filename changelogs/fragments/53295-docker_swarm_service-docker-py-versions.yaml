@@ -1,3 +1,4 @@
 bugfixes:
 - "docker_swarm_service - Raise minimum required docker-py version for module to 2.0.2."
+- "docker_swarm_service - Raise minimum required docker-py version for ``secrets`` to 2.4.0."
 - "docker_swarm_service - Validate minimum docker-py version of 2.4.0 for option ``constraints``."
