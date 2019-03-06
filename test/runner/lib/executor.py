@@ -1183,7 +1183,8 @@ def command_integration_script(args, target, test_dir, inventory_path):
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+            coverage = args.coverage and 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, coverage=coverage)
 
 
 def command_integration_role(args, target, start_at_task, test_dir, inventory_path):
@@ -1265,7 +1266,8 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
 
             env['ANSIBLE_ROLES_PATH'] = os.path.abspath(os.path.join(test_env.integration_dir, 'targets'))
 
-            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd)
+            coverage = args.coverage and 'non_local/' not in target.aliases
+            intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, coverage=coverage)
 
 
 def command_units(args):
