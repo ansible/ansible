@@ -233,7 +233,7 @@ def config_module_main(module, object_type, get_params=None,
         password=module.params['password'],
         endpoint=module.params['endpoint'],
         token=module.params['token'],
-        verify=module.params['verify_ssl'],
+        verify=verify,
     )
 
     config_manager = get_config_manager(opsview_client, object_type)
