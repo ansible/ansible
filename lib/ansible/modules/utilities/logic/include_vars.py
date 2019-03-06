@@ -1,9 +1,10 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
-
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -11,8 +12,7 @@ ANSIBLE_METADATA = {
     'supported_by': 'core'
 }
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 author: Allen Sanabria (@linuxdynasty)
 module: include_vars
@@ -22,58 +22,72 @@ description:
   - If loading a directory, the files are sorted alphabetically before being loaded.
   - This module is also supported for Windows targets.
   - To assign included variables to a different host than C(inventory_hostname),
-    use C(delegate_to) and set L(delegate_facts=True,../user_guide/playbooks_delegate.html#delegated-facts).
+    use C(delegate_to) and set C(delegate_facts=yes).
 version_added: "1.4"
 options:
   file:
-    version_added: "2.2"
     description:
       - The file name from which variables should be loaded.
       - If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
-  dir:
+    type: path
     version_added: "2.2"
+  dir:
     description:
       - The directory name from which the variables should be loaded.
       - If the path is relative and the task is inside a role, it will look inside the role's vars/ subdirectory.
       - If the path is relative and not inside a role, it will be parsed relative to the playbook.
+    type: path
+    version_added: "2.2"
   name:
-    version_added: "2.2"
     description:
-      - The name of a variable into which assign the included vars. If omitted (null) they will be made top level vars.
-  depth:
+      - The name of a variable into which assign the included vars.
+      - If omitted (null) they will be made top level vars.
+    type: str
     version_added: "2.2"
+  depth:
     description:
       - When using C(dir), this module will, by default, recursively go through each sub directory and load up the
         variables. By explicitly setting the depth, this module will only go as deep as the depth.
+    type: int
     default: 0
-  files_matching:
     version_added: "2.2"
+  files_matching:
     description:
       - Limit the files that are loaded within any directory to this regular expression.
-  ignore_files:
+    type: str
     version_added: "2.2"
+  ignore_files:
     description:
       - List of file names to ignore.
+    type: list
+    version_added: "2.2"
   extensions:
-    version_added: "2.3"
     description:
       - List of file extensions to read when using C(dir).
-    default: [yaml, yml, json]
+    type: list
+    default: [ json, yaml, yml ]
+    version_added: "2.3"
   ignore_unknown_extensions:
-    version_added: "2.7"
     description:
-      - Ignore unknown file extensions within the directory. This allows users to specify a directory containing vars files
-        that are intermingled with non vars files extension types (For example, a directory with a README in it and vars files)
-    default: False
+      - Ignore unknown file extensions within the directory.
+      - This allows users to specify a directory containing vars files that are intermingled with non-vars files extension types
+        (e.g. a directory with a README in it and vars files).
+    type: bool
+    default: no
+    version_added: "2.7"
   free-form:
     description:
       - This module allows you to specify the 'file' option directly without any other options.
-        There is no 'free-form' option, this is just an indicator, see example below.
+      - There is no 'free-form' option, this is just an indicator, see example below.
 notes:
   - This module is also supported for Windows targets.
+seealso:
+- module: set_fact
+- ref: playbooks_delegation
+  description: More information related to task delegation.
 '''
 
-EXAMPLES = """
+EXAMPLES = r'''
 - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
   include_vars:
     file: stuff.yaml
@@ -129,9 +143,9 @@ EXAMPLES = """
     dir: vars
     ignore_unknown_extensions: True
     extensions: ['', 'yaml', 'yml', 'json']
-"""
+'''
 
-RETURN = '''
+RETURN = r'''
 ansible_facts:
   description: Variables that were included and their values
   returned: success
@@ -141,6 +155,6 @@ ansible_included_var_files:
   description: A list of files that were successfully included
   returned: success
   type: list
-  sample: [ '/path/to/file.yaml', '/path/to/file.json' ]
-  version_added: 2.4
+  sample: [ /path/to/file.json, /path/to/file.yaml ]
+  version_added: '2.4'
 '''
