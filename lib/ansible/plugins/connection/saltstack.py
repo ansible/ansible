@@ -65,7 +65,7 @@ class Connection(ConnectionBase):
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         # Fixes an issue where tilde '~' is not resolved to the actual user home
-        get_current_user_home = self.client.cmd(self.host, 'cmd.exec_code_all', ['bash', 'echo ~'])[self.host]
+        get_current_user_home = self.client.cmd(self.host, 'cmd.exec_code_all', ['sh', 'echo $HOME'])[self.host]
         if get_current_user_home and get_current_user_home['retcode'] == 0:
             current_user_home = get_current_user_home['stdout']
         else:
