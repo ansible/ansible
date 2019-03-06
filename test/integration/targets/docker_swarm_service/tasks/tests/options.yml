@@ -1498,29 +1498,29 @@
 ## stop_grace_period ###############################################
 ####################################################################
 
-- name: stop_signal
+- name: stop_grace_period
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     stop_grace_period: 60s
-  register: stop_signal_1
+  register: stop_grace_period_1
 
-- name: stop_signal (idempotency)
+- name: stop_grace_period (idempotency)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     stop_grace_period: 60s
-  register: stop_signal_2
+  register: stop_grace_period_2
 
-- name: stop_signal (change)
+- name: stop_grace_period (change)
   docker_swarm_service:
     name: "{{ service_name }}"
     image: alpine:3.8
     command: '/bin/sh -v -c "sleep 10m"'
     stop_grace_period: 1m30s
-  register: stop_signal_3
+  register: stop_grace_period_3
 
 - name: cleanup
   docker_swarm_service:
@@ -1530,9 +1530,9 @@
 
 - assert:
     that:
-    - stop_signal_1 is changed
-    - stop_signal_2 is not changed
-    - stop_signal_3 is changed
+    - stop_grace_period_1 is changed
+    - stop_grace_period_2 is not changed
+    - stop_grace_period_3 is changed
 
 ####################################################################
 ## stop_signal #####################################################
