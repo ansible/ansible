@@ -107,7 +107,10 @@ class Netconf(NetconfBase):
                 hostkey_verify=obj.get_option('host_key_checking'),
                 look_for_keys=obj.get_option('look_for_keys'),
                 allow_agent=obj._play_context.allow_agent,
-                timeout=obj.get_option('persistent_connect_timeout')
+                timeout=obj.get_option('persistent_connect_timeout'),
+                # We need to pass in the path to the ssh_config file when guessing
+                # the network_os so that a jumphost is correctly used if defined
+                ssh_config=obj._ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))

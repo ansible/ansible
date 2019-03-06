@@ -44,7 +44,9 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
-        configured, then the default netconf plugin will be used.
+        configured (or set to auto), then ansible will attempt to guess the 
+        correct network_os to use. 
+        If it can not guess a network_os correctly it will use default.
     vars:
       - name: ansible_network_os
   remote_user:
@@ -233,7 +235,9 @@ class Connection(NetworkConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self._network_os = self._network_os or 'default'
+        # If network_os is not specified then set the network os to auto
+        # This will be used to trigger the the use of guess_network_os when connecting.
+        self._network_os = self._network_os or 'auto'
 
         netconf = netconf_loader.get(self._network_os, self)
         if netconf:
@@ -247,6 +251,7 @@ class Connection(NetworkConnectionBase):
 
         self._manager = None
         self.key_filename = None
+        self._ssh_config = None
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -289,21 +294,29 @@ class Connection(NetworkConnectionBase):
         if self.key_filename:
             self.key_filename = str(os.path.expanduser(self.key_filename))
 
-        if self._network_os == 'default':
+        self._ssh_config = self.get_option('netconf_ssh_config')
+        if self._ssh_config in BOOLEANS_TRUE:
+            self._ssh_config = True
+        elif self._ssh_config in BOOLEANS_FALSE:
+            self._ssh_config = None
+
+        # Try to guess the network_os if the network_os is set to auto
+        if self._network_os == 'auto':
             for cls in netconf_loader.all(class_only=True):
                 network_os = cls.guess_network_os(self)
                 if network_os:
                     self.queue_message('log', 'discovered network_os %s' % network_os)
                     self._network_os = network_os
 
+        # If we have tried to detect the network_os but were unable to i.e. network_os is still 'auto'
+        # then use default as the network_os
+
+        if self._network_os == 'auto':
+            # Network os not discovered. Set it to default
+            self._network_os = 'default'
+
         device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
-
-        ssh_config = self.get_option('netconf_ssh_config')
-        if ssh_config in BOOLEANS_TRUE:
-            ssh_config = True
-        elif ssh_config in BOOLEANS_FALSE:
-            ssh_config = None
-
+        
         try:
             port = self._play_context.port or 830
             self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s" %
@@ -319,7 +332,7 @@ class Connection(NetworkConnectionBase):
                 device_params=device_params,
                 allow_agent=self._play_context.allow_agent,
                 timeout=self.get_option('persistent_connect_timeout'),
-                ssh_config=ssh_config
+                ssh_config=self._ssh_config
             )
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
