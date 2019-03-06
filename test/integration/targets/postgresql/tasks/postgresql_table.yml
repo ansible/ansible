@@ -8,7 +8,8 @@
   become_user: "{{ pg_user }}"
   become: yes
   postgresql_table:
-    db: postgres
+    login_db: postgres
+    login_port: 5432
     login_user: "{{ pg_user }}"
     name: test1
     columns: id int
@@ -19,7 +20,7 @@
     that:
       - result.changed == true
       - result.table == 'test1'
-      - result.query == 'CREATE TABLE test1 (id int)'
+      - result.query == "CREATE TABLE \"test1\" (id int)"
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
@@ -41,7 +42,7 @@
     that:
       - result.changed == true
       - result.table == 'test2'
-      - result.query == 'CREATE TABLE test2 (LIKE test1)'
+      - result.query == "CREATE TABLE \"test2\" (LIKE \"test1\")"
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
@@ -62,7 +63,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == 'DROP TABLE test2'
+      - result.query == "DROP TABLE \"test2\""
       - result.state == 'absent'
       - result.storage_params == []
       - result.tablespace == ""
@@ -84,7 +85,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == 'CREATE TABLE test2 (LIKE test1 INCLUDING indexes)'
+      - result.query == "CREATE TABLE \"test2\" (LIKE \"test1\" INCLUDING indexes)"
       - result.state == 'present'
       - result.storage_params == []
       - result.tablespace == ""
@@ -161,7 +162,7 @@
 - assert:
     that:
       - result.owner == 'test_user'
-      - result.query == 'ALTER TABLE test1 OWNER TO test_user'
+      - result.query == "ALTER TABLE \"test1\" OWNER TO \"test_user\""
       - result.state == 'present'
       - result.changed == true
 
@@ -186,7 +187,7 @@
     that:
       - result.changed == true
       - result.state == 'present'
-      - result.query == 'CREATE TABLE test3 (id int,name text) WITH (fillfactor=10,autovacuum_analyze_threshold=1)'
+      - result.query == "CREATE TABLE \"test3\" (id int,name text) WITH (fillfactor=10,autovacuum_analyze_threshold=1)"
       - result.storage_params == [ "fillfactor=10", "autovacuum_analyze_threshold=1" ]
   
 # Truncate a table. It always returns changed == true
@@ -205,7 +206,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "TRUNCATE TABLE test3"
+      - result.query == "TRUNCATE TABLE \"test3\""
       - result.state == "present"
 
 # Rename a table:
@@ -223,7 +224,7 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "ALTER TABLE test3 RENAME TO test4"
+      - result.query == "ALTER TABLE \"test3\" RENAME TO \"test4\""
       - result.state == "present"
 
 # Create unlogged table:
@@ -241,5 +242,5 @@
 - assert:
     that:
       - result.changed == true
-      - result.query == "CREATE UNLOGGED TABLE test5 ()"
+      - result.query == "CREATE UNLOGGED TABLE \"test5\" ()"
   when: postgres_version_resp.stdout is version('9.1', '>=')

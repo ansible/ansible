@@ -35,7 +35,7 @@ options:
       I(like), I(including), I(columns), I(truncate), I(storage_params) and, I(rename).
     type: str
     default: present
-    choices: [ present, absent ]
+    choices: [ absent, present ]
   tablespace:
     description:
     - Set a tablespace for the table.
@@ -80,13 +80,17 @@ options:
     type: list
   db:
     description:
-    - Name of database to connect.
+    - Name of database to connect and where the table will be created.
     type: str
+    aliases:
+    - login_db
   port:
     description:
     - Database port to connect.
     type: int
     default: 5432
+    aliases:
+    - login_port
   login_user:
     description:
     - User (role) used to authenticate with PostgreSQL.
@@ -253,7 +257,7 @@ except ImportError:
 
 import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.database import SQLParseError
+from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.postgres import postgres_common_argument_spec
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems
@@ -317,6 +321,8 @@ class Table(object):
         unlogged - create unlogged table.
         columns - column string (comma separated).
         """
+        name = pg_quote_identifier(self.name, 'table')
+
         if self.exists:
             changed = False
 
@@ -348,9 +354,9 @@ class Table(object):
 
         query = "CREATE"
         if unlogged:
-            query += " UNLOGGED TABLE %s" % self.name
+            query += " UNLOGGED TABLE %s" % name
         else:
-            query += " TABLE %s" % self.name
+            query += " TABLE %s" % name
 
         if columns:
             query += " (%s)" % columns
@@ -361,7 +367,7 @@ class Table(object):
             query += " WITH (%s)" % params
 
         if tblspace:
-            query += " TABLESPACE %s" % tblspace
+            query += " TABLESPACE %s" % pg_quote_identifier(tblspace, 'database')
 
         self.executed_query = query
 
@@ -384,13 +390,15 @@ class Table(object):
         owner - table owner.
         unlogged - create unlogged table.
         """
+        name = pg_quote_identifier(self.name, 'table')
+
         query = "CREATE"
         if unlogged:
-            query += " UNLOGGED TABLE %s" % self.name
+            query += " UNLOGGED TABLE %s" % name
         else:
-            query += " TABLE %s" % self.name
+            query += " TABLE %s" % name
 
-        query += " (LIKE %s" % src_table
+        query += " (LIKE %s" % pg_quote_identifier(src_table, 'table')
 
         if including:
             including = including.split(',')
@@ -403,34 +411,37 @@ class Table(object):
             query += " WITH (%s)" % params
 
         if tblspace:
-            query += " TABLESPACE %s" % tblspace
+            query += " TABLESPACE %s" % pg_quote_identifier(tblspace, 'database')
 
         self.executed_query = query
 
         return self.__exec_sql(query, ddl=True)
 
     def truncate(self):
-        self.executed_query = "TRUNCATE TABLE %s" % self.name
+        self.executed_query = "TRUNCATE TABLE %s" % pg_quote_identifier(self.name, 'table')
         return self.__exec_sql(self.executed_query, ddl=True)
 
     def rename(self, newname):
-        self.executed_query = "ALTER TABLE %s RENAME TO %s" % (self.name, newname)
+        self.executed_query = "ALTER TABLE %s RENAME TO %s" % (pg_quote_identifier(self.name, 'table'),
+                                                               pg_quote_identifier(newname, 'table'))
         return self.__exec_sql(self.executed_query, ddl=True)
 
     def set_owner(self, username):
-        self.executed_query = "ALTER TABLE %s OWNER TO %s" % (self.name, username)
+        self.executed_query = "ALTER TABLE %s OWNER TO %s" % (pg_quote_identifier(self.name, 'table'),
+                                                              pg_quote_identifier(username, 'role'))
         return self.__exec_sql(self.executed_query, ddl=True)
 
     def drop(self):
-        self.executed_query = "DROP TABLE %s" % self.name
+        self.executed_query = "DROP TABLE %s" % pg_quote_identifier(self.name, 'table')
         return self.__exec_sql(self.executed_query, ddl=True)
 
     def set_tblspace(self, tblspace):
-        self.executed_query = "ALTER TABLE %s SET TABLESPACE %s" % (self.name, tblspace)
+        self.executed_query = "ALTER TABLE %s SET TABLESPACE %s" % (pg_quote_identifier(self.name, 'table'),
+                                                                    pg_quote_identifier(tblspace, 'database'))
         return self.__exec_sql(self.executed_query, ddl=True)
 
     def set_stor_params(self, params):
-        self.executed_query = "ALTER TABLE %s SET (%s)" % (self.name, params)
+        self.executed_query = "ALTER TABLE %s SET (%s)" % (pg_quote_identifier(self.name, 'table'), params)
         return self.__exec_sql(self.executed_query, ddl=True)
 
     def __exec_sql(self, query, ddl=False):
@@ -457,8 +468,9 @@ def main():
     argument_spec.update(
         table=dict(type='str', required=True, aliases=['name']),
         state=dict(type='str', default="present", choices=["absent", "present"]),
-        db=dict(default=''),
-        ssl_mode=dict(type='str', default='prefer', choices=['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full']),
+        db=dict(type='str', default='', aliases=['login_db']),
+        port=dict(type='int', default=5432, aliases=['login_port']),
+        ssl_mode=dict(type='str', default='prefer', choices=['allow', 'disable', 'prefer', 'require', 'verify-ca', 'verify-full']),
         ssl_rootcert=dict(type='str'),
         tablespace=dict(type='str'),
         owner=dict(type='str'),
