@@ -1,0 +1,102 @@
+---
+
+######################################################
+# Test foreign data wrapper and foreign server privs #
+######################################################
+
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Create test role
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE ROLE fdw_test" | psql -d "{{ db_name }}"
+
+- name: Create fdw extension
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE EXTENSION postgres_fdw" | psql -d "{{ db_name }}"
+
+- name: Create foreign data wrapper
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+- name: Create foreign server
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "CREATE SERVER dummy_server FOREIGN DATA WRAPPER dummy" | psql -d "{{ db_name }}"
+
+- name: Grant foreign data wrapper privileges
+  postgresql_privs:
+    state: present
+    type: foreign_data_wrapper
+    roles: fdw_test
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Get foreign data wrapper privileges
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+      WHERE fdwname = ANY (ARRAY['dummy']) ORDER BY fdwname
+  register: fdw_result
+
+- assert:
+    that:
+      - "fdw_result.stdout_lines[-1] == '(1 row)'"
+      - "'fdw_test' in fdw_result.stdout_lines[-2]"
+
+- name: Grant foreign server privileges
+  postgresql_privs:
+    state: present
+    type: foreign_server
+    roles: fdw_test
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Get foreign server privileges
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT srvacl FROM pg_catalog.pg_foreign_server
+      WHERE srvname = ANY (ARRAY['dummy_server']) ORDER BY srvname
+  register: fs_result
+
+- assert:
+    that:
+      - "fs_result.stdout_lines[-1] == '(1 row)'"
+      - "'fdw_test' in fs_result.stdout_lines[-2]"
+
+- name: Cleanup
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ item }}" | psql -d "{{ db_name }}"
+  with_items:
+    - DROP ROLE fdw_test
+    - DROP FOREIGN DATA WRAPPER dummy
+    - DROP SERVER dummy_server
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: True
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result

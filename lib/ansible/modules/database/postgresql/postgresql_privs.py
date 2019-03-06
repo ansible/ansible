@@ -41,7 +41,7 @@ options:
     description:
       - Type of database object to set privileges on.
       - The `default_prives` choice is available starting at version 2.7.
-      - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.7'.
+      - The 'foreign_data_wrapper' and 'foreign_server' object types are available from Ansible version '2.8'.
     default: table
     choices: [table, sequence, function, database,
               schema, language, tablespace, group,
@@ -271,6 +271,23 @@ EXAMPLES = """
     objs: TYPES
     privs: USAGE
     type: default_privs
+    role: reader
+
+# Available since version 2.8
+# GRANT ALL PRIVILEGES ON FOREIGN DATA WRAPPER fdw TO reader
+- postgresql_privs:
+    db: test
+    objs: fdw
+    privs: ALL
+    type: foreign_data_wrapper
+    role: reader
+
+# GRANT ALL PRIVILEGES ON FOREIGN SERVER fdw_server TO reader
+- postgresql_privs:
+    db: test
+    objs: fdw_server
+    privs: ALL
+    type: foreign_server
     role: reader
 
 """
