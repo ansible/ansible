@@ -60,6 +60,23 @@
     that:
       - output.changed
 
+- name: List DevTest Lab in a resource group
+  azure_rm_devtestlab_facts:
+    resource_group: "{{ resource_group }}"
+  register: output_lab
+- name: Assert that facts are returned
+  assert:
+    that:
+      - output_lab.changed == False
+      - output_lab.labs[0]['id'] != None
+      - output_lab.labs[0]['resource_group'] != None
+      - output_lab.labs[0]['name'] != None
+      - output_lab.labs[0]['location'] != None
+      - output_lab.labs[0]['storage_type'] != None
+      - output_lab.labs[0]['premium_data_disks'] != None
+      - output_lab.labs[0]['provisioning_state'] != None
+      - output_lab.labs[0]['vault_name'] != None
+
 - name: Get DevTest Lab facts
   azure_rm_devtestlab_facts:
     resource_group: "{{ resource_group }}"
@@ -80,23 +97,6 @@
       - output_lab.labs[0]['default_premium_storage_account'] != None
       - output_lab.labs[0]['default_storage_account'] != None
       - output_lab.labs[0]['premium_data_disk_storage_account'] != None
-      - output_lab.labs[0]['vault_name'] != None
-
-- name: List DevTest Lab in a resource group
-  azure_rm_devtestlab_facts:
-    resource_group: "{{ resource_group }}"
-  register: output_lab
-- name: Assert that facts are returned
-  assert:
-    that:
-      - output_lab.changed == False
-      - output_lab.labs[0]['id'] != None
-      - output_lab.labs[0]['resource_group'] != None
-      - output_lab.labs[0]['name'] != None
-      - output_lab.labs[0]['location'] != None
-      - output_lab.labs[0]['storage_type'] != None
-      - output_lab.labs[0]['premium_data_disks'] != None
-      - output_lab.labs[0]['provisioning_state'] != None
       - output_lab.labs[0]['vault_name'] != None
 
 # azure_rm_devtestlabpolicy
