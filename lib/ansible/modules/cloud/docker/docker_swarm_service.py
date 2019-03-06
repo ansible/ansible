@@ -658,7 +658,7 @@ extends_documentation_fragment:
   - docker
   - docker.docker_py_2_documentation
 requirements:
-  - "docker >= 2.0"
+  - "docker >= 2.0.2"
   - "Docker API >= 1.24"
 notes:
   - "Images will only resolve to the latest digest when using Docker API >= 1.30 and docker-py >= 3.2.0.
@@ -1784,7 +1784,12 @@ class DockerServiceManager(object):
 
         hosts = task_template_data['ContainerSpec'].get('Hosts')
         if hosts:
-            hosts = [host.split(' ', 1) for host in hosts]
+            hosts = [
+                list(reversed(host.split(":", 1)))
+                if ":" in host
+                else host.split(" ", 1)
+                for host in hosts
+            ]
             ds.hosts = dict((hostname, ip) for ip, hostname in hosts)
         ds.tty = task_template_data['ContainerSpec'].get('TTY')
 
@@ -1943,7 +1948,10 @@ class DockerServiceManager(object):
 
     def can_update_networks(self):
         # Before Docker API 1.29 adding/removing networks was not supported
-        return self.client.docker_api_version >= LooseVersion('1.29')
+        return (
+            self.client.docker_api_version >= LooseVersion('1.29') and
+            self.client.docker_py_version >= LooseVersion('2.7')
+        )
 
     def run(self):
         self.diff_tracker = DifferenceTracker()
@@ -2197,17 +2205,18 @@ def main():
     )
 
     option_minimal_versions = dict(
+        constraints=dict(docker_py_version='2.4.0'),
         dns=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_options=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         dns_search=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         endpoint_mode=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         force_update=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
-        healthcheck=dict(docker_py_version='2.0.0', docker_api_version='1.25'),
+        healthcheck=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         hostname=dict(docker_py_version='2.2.0', docker_api_version='1.25'),
         hosts=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         groups=dict(docker_py_version='2.6.0', docker_api_version='1.25'),
         tty=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
-        secrets=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
+        secrets=dict(docker_py_version='2.4.0', docker_api_version='1.25'),
         configs=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         update_max_failure_ratio=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
         update_monitor=dict(docker_py_version='2.1.0', docker_api_version='1.25'),
@@ -2259,6 +2268,13 @@ def main():
             ) is not None,
             usage_msg='set placement.preferences'
         ),
+        placement_config_constraints=dict(
+            docker_py_version='2.4.0',
+            detect_usage=lambda c: (c.module.params['placement'] or {}).get(
+                'constraints'
+            ) is not None,
+            usage_msg='set placement.constraints'
+        ),
     )
 
     required_if = [
@@ -2269,7 +2285,7 @@ def main():
         argument_spec=argument_spec,
         required_if=required_if,
         supports_check_mode=True,
-        min_docker_version='2.0.0',
+        min_docker_version='2.0.2',
         min_docker_api_version='1.24',
         option_minimal_versions=option_minimal_versions,
     )
