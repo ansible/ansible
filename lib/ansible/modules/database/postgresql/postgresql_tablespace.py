@@ -44,8 +44,8 @@ options:
     - Tablespace state.
     - I(state=present) implies the tablespace must be created if it doesn't exist.
     - I(state=absent) implies the tablespace must be removed if present.
-      I(state=absent) is mutually exclusive with I(location), I(owner), i(opt).
-    - See the Note section for information about check mode restrictions.
+      I(state=absent) is mutually exclusive with I(location), I(owner), i(options).
+    - See the Notes section for information about check mode restrictions.
     type: str
     default: present
     choices: [ absent, present ]
@@ -120,8 +120,8 @@ options:
       verified to be signed by one of these authorities.
     type: str
 notes:
-- I(stat=absent) and I(state=present) (the second one if the tablespace doesn't exist) do not
-  support check mode because the corresponding PostgreSQl DROP and CREATE TABLESPACE commands
+- I(state=absent) and I(state=present) (the second one if the tablespace doesn't exist) do not
+  support check mode because the corresponding PostgreSQL DROP and CREATE TABLESPACE commands
   can not be run inside the transaction block.
 - The default authentication assumes that you are either logging in as or
   sudo'ing to the postgres account on the host.
@@ -215,7 +215,6 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
-import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.postgres import postgres_common_argument_spec
@@ -342,10 +341,7 @@ class PgTablespace(object):
                     changed = self.__reset_setting(i)
                     self.settings[i] = None
 
-            elif i not in self.settings:
-                changed = self.__set_setting("%s = '%s'" % (i, new_settings[i]))
-
-            elif str(new_settings[i]) != self.settings[i]:
+            elif (i not in self.settings) or (str(new_settings[i]) != self.settings[i]):
                 changed = self.__set_setting("%s = '%s'" % (i, new_settings[i]))
 
         return changed
