@@ -73,7 +73,7 @@ EXAMPLES = '''
   - name: Get several inventories
     redfish_facts:
       category: Systems
-      command: GetNicInventory,GetPsuInventory,GetBiosAttributes
+      command: GetNicInventory,GetBiosAttributes
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -129,10 +129,10 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.redfish_utils import RedfishUtils
 
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["GetSystemInventory", "GetPsuInventory", "GetCpuInventory",
+    "Systems": ["GetSystemInventory", "GetCpuInventory",
                 "GetNicInventory", "GetStorageControllerInventory",
                 "GetDiskInventory", "GetBiosAttributes", "GetBootOrder"],
-    "Chassis": ["GetFanInventory"],
+    "Chassis": ["GetFanInventory", "GetPsuInventory"],
     "Accounts": ["ListUsers"],
     "Update": ["GetFirmwareInventory"],
     "Manager": ["GetManagerNicInventory", "GetLogs"],
@@ -211,8 +211,6 @@ def main():
             for command in command_list:
                 if command == "GetSystemInventory":
                     result["system"] = rf_utils.get_system_inventory()
-                elif command == "GetPsuInventory":
-                    result["psu"] = rf_utils.get_psu_inventory()
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_cpu_inventory()
                 elif command == "GetNicInventory":
@@ -235,6 +233,8 @@ def main():
             for command in command_list:
                 if command == "GetFanInventory":
                     result["fan"] = rf_utils.get_fan_inventory()
+                elif command == "GetPsuInventory":
+                    result["psu"] = rf_utils.get_psu_inventory()
 
         elif category == "Accounts":
             # execute only if we find an Account service resource
