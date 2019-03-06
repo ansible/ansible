@@ -1,6 +1,8 @@
 Including and Importing
 =======================
 
+.. _playbooks_reuse_includes:
+
 .. contents:: Topics
 
 Includes vs. Imports
