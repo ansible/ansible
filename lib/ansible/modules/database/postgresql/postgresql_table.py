@@ -255,7 +255,6 @@ try:
 except ImportError:
     HAS_PSYCOPG2 = False
 
-import ansible.module_utils.postgres as pgutils
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.database import SQLParseError, pg_quote_identifier
 from ansible.module_utils.postgres import postgres_common_argument_spec
