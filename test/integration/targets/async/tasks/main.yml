@@ -280,3 +280,9 @@
     file:
       path: '{{ custom_async_tmp }}'
       state: absent
+
+- name: Test that async has stdin
+  command: >
+    {{ ansible_python_interpreter|default('/usr/bin/python') }} -c 'import os; os.fdopen(os.dup(0), "r")'
+  async: 1
+  poll: 1
