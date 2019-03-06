@@ -554,7 +554,12 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         display.v('about to template %s' % module)
         display.vvvvv(pp.pformat(doc))
-        text = templates['plugin'].render(doc)
+        try:
+            text = templates['plugin'].render(doc)
+        except Exception as e:
+            display.warning(msg="Could not parse %s due to %s" % (module, e))
+            continue
+
         if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):
             # jinja2 < 2.10's indent filter indents blank lines.  Cleanup
             text = re.sub(' +\n', '\n', text)
