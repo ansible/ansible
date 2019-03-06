@@ -60,6 +60,12 @@ options:
           - I(network_configuration) has two keys, I(subnets), a list of subnet IDs to which the task is attached and I(security_groups),
             a list of group names or group IDs for the task
         version_added: 2.6
+    launch_type:
+        description:
+          - The launch type on which to run your service
+        required: false
+        version_added: 2.8
+        choices: ["EC2", "FARGATE"]
 extends_documentation_fragment:
     - aws
     - ec2
@@ -87,6 +93,22 @@ EXAMPLES = '''
       container_instances:
       - arn:aws:ecs:us-west-2:172139249013:container-instance/79c23f22-876c-438a-bddf-55c98a3538a8
       started_by: ansible_user
+      network_configuration:
+        subnets:
+        - subnet-abcd1234
+        security_groups:
+        - sg-aaaa1111
+        - my_security_group
+  register: task_output
+
+- name: RUN a task on Fargate
+  ecs_task:
+      operation: run
+      cluster: console-sample-app-static-cluster
+      task_definition: console-sample-app-static-taskdef
+      task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
+      started_by: ansible_user
+      launch_type: FARGATE
       network_configuration:
         subnets:
         - subnet-abcd1234
@@ -160,6 +182,10 @@ task:
             description: The timestamp of when the task was stopped.
             returned: only when details is true
             type: str
+        launchType:
+            description: The launch type on which to run your task.
+            returned: always
+            type: str
 '''
 
 from ansible.module_utils.aws.core import AnsibleAWSModule
@@ -208,13 +234,15 @@ class EcsExecManager:
                     return c
         return None
 
-    def run_task(self, cluster, task_definition, overrides, count, startedBy):
+    def run_task(self, cluster, task_definition, overrides, count, startedBy, launch_type):
         if overrides is None:
             overrides = dict()
         params = dict(cluster=cluster, taskDefinition=task_definition,
                       overrides=overrides, count=count, startedBy=startedBy)
         if self.module.params['network_configuration']:
             params['networkConfiguration'] = self.format_network_configuration(self.module.params['network_configuration'])
+        if launch_type:
+            params['launchType'] = launch_type
         try:
             response = self.ecs.run_task(**params)
         except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
@@ -247,6 +275,13 @@ class EcsExecManager:
         response = self.ecs.stop_task(cluster=cluster, task=task)
         return response['task']
 
+    def ecs_api_handles_launch_type(self):
+        from distutils.version import LooseVersion
+        # There doesn't seem to be a nice way to inspect botocore to look
+        # for attributes (and networkConfiguration is not an explicit argument
+        # to e.g. ecs.run_task, it's just passed as a keyword argument)
+        return LooseVersion(botocore.__version__) >= LooseVersion('1.8.4')
+
     def ecs_api_handles_network_configuration(self):
         from distutils.version import LooseVersion
         # There doesn't seem to be a nice way to inspect botocore to look
@@ -266,10 +301,12 @@ def main():
         task=dict(required=False, type='str'),  # P*
         container_instances=dict(required=False, type='list'),  # S*
         started_by=dict(required=False, type='str'),  # R S
-        network_configuration=dict(required=False, type='dict')
+        network_configuration=dict(required=False, type='dict'),
+        launch_type=dict(required=False, choices=['EC2', 'FARGATE'])
     ))
 
-    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True,
+                              required_if=[('launch_type', 'FARGATE', ['network_configuration'])])
 
     # Validate Inputs
     if module.params['operation'] == 'run':
@@ -295,8 +332,13 @@ def main():
         status_type = "STOPPED"
 
     service_mgr = EcsExecManager(module)
+
     if module.params['network_configuration'] and not service_mgr.ecs_api_handles_network_configuration():
         module.fail_json(msg='botocore needs to be version 1.7.44 or higher to use network configuration')
+
+    if module.params['launch_type'] and not service_mgr.ecs_api_handles_launch_type():
+        module.fail_json(msg='botocore needs to be version 1.8.4 or higher to use launch type')
+
     existing = service_mgr.list_tasks(module.params['cluster'], task_to_list, status_type)
 
     results = dict(changed=False)
@@ -311,7 +353,8 @@ def main():
                     module.params['task_definition'],
                     module.params['overrides'],
                     module.params['count'],
-                    module.params['started_by'])
+                    module.params['started_by'],
+                    module.params['launch_type'])
             results['changed'] = True
 
     elif module.params['operation'] == 'start':

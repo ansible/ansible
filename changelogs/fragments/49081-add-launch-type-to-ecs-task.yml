@@ -1,0 +1,2 @@
+minor_changes:
+  - adds launch type to ecs task to support fargate launch type.
