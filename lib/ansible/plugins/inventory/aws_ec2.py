@@ -528,9 +528,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param config_data: contents of the inventory config file
         '''
 
-        self.boto_profile = self.get_option('boto_profile')
-        self.aws_access_key_id = self.get_option('aws_access_key_id')
-        self.aws_secret_access_key = self.get_option('aws_secret_access_key')
+        self.boto_profile = self.get_option('aws_profile')
+        self.aws_access_key_id = self.get_option('aws_access_key')
+        self.aws_secret_access_key = self.get_option('aws_secret_key')
         self.aws_security_token = self.get_option('aws_security_token')
 
         if not self.boto_profile and not (self.aws_access_key_id and self.aws_secret_access_key):
