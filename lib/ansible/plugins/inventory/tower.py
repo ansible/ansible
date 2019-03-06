@@ -59,6 +59,11 @@ DOCUMENTATION = '''
             env:
                 - name: TOWER_VERIFY_SSL
             required: False
+        include_metadata:
+            description: Make extra requests to provide all group vars with metadata about the source Ansible Tower host.
+            type: bool
+            default: False
+            version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -110,20 +115,11 @@ class InventoryModule(BaseInventoryPlugin):
     # If the user supplies '@tower_inventory' as path, the plugin will read from environment variables.
     no_config_file_supplied = False
 
-    def read_tower_inventory(self, tower_host, tower_user, tower_pass, inventory, verify_ssl=True):
-        if not re.match('(?:http|https)://', tower_host):
-            tower_host = 'https://{tower_host}'.format(tower_host=tower_host)
-        inventory_id = inventory.replace('/', '')
-        inventory_url = '/api/v2/inventories/{inv_id}/script/?hostvars=1&towervars=1&all=1'.format(inv_id=inventory_id)
-        inventory_url = urljoin(tower_host, inventory_url)
-
-        request_handler = Request(url_username=tower_user,
-                                  url_password=tower_pass,
-                                  force_basic_auth=True,
-                                  validate_certs=verify_ssl)
-
+    def make_request(self, request_handler, tower_url):
+        """Makes the request to given URL, handles errors, returns JSON
+        """
         try:
-            response = request_handler.get(inventory_url)
+            response = request_handler.get(tower_url)
         except (ConnectionError, urllib_error.URLError, socket.error, httplib.HTTPException) as e:
             error_msg = 'Connection to remote host failed: {err}'.format(err=e)
             # If Tower gives a readable error message, display that message to the user.
@@ -153,11 +149,20 @@ class InventoryModule(BaseInventoryPlugin):
             self._read_config_data(path)
         # Read inventory from tower server.
         # Note the environment variables will be handled automatically by InventoryManager.
-        inventory = self.read_tower_inventory(self.get_option('host'),
-                                              self.get_option('username'),
-                                              self.get_option('password'),
-                                              self.get_option('inventory_id'),
-                                              verify_ssl=self.get_option('verify_ssl'))
+        tower_host = self.get_option('host')
+        if not re.match('(?:http|https)://', tower_host):
+            tower_host = 'https://{tower_host}'.format(tower_host=tower_host)
+
+        request_handler = Request(url_username=self.get_option('username'),
+                                  url_password=self.get_option('password'),
+                                  force_basic_auth=True,
+                                  validate_certs=self.get_option('verify_ssl'))
+
+        inventory_id = self.get_option('inventory_id').replace('/', '')
+        inventory_url = '/api/v2/inventories/{inv_id}/script/?hostvars=1&towervars=1&all=1'.format(inv_id=inventory_id)
+        inventory_url = urljoin(tower_host, inventory_url)
+
+        inventory = self.make_request(request_handler, inventory_url)
         # To start with, create all the groups.
         for group_name in inventory:
             if group_name != '_meta':
@@ -183,5 +188,16 @@ class InventoryModule(BaseInventoryPlugin):
             if group_name != '_meta':
                 for var_name, var_value in six.iteritems(group_content.get('vars', {})):
                     self.inventory.set_variable(group_name, var_name, var_value)
+
+        # Fetch extra variables if told to do so
+        if self.get_option('include_metadata'):
+            config_url = urljoin(tower_host, '/api/v2/config/')
+            config_data = self.make_request(request_handler, config_url)
+            server_data = {}
+            server_data['license_type'] = config_data.get('license_info', {}).get('license_type', 'unknown')
+            for key in ('version', 'ansible_version'):
+                server_data[key] = config_data.get(key, 'unknown')
+            self.inventory.set_variable('all', 'tower_metadata', server_data)
+
         # Clean up the inventory.
         self.inventory.reconcile_inventory()
