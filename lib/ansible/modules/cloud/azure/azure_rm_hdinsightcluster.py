@@ -309,7 +309,6 @@ class AzureRMClusters(AzureRMModuleBase):
                 compare_result = {}
                 if (not default_compare(self.parameters, old_response, '', compare_result)):
                     if compare_result.pop('/properties/compute_profile/roles/*/target_instance_count', False):
-                        self.to_do = Actions.Update
                         # check if it's workernode
                         new_count = 0
                         old_count = 0
@@ -321,6 +320,7 @@ class AzureRMClusters(AzureRMModuleBase):
                                 old_count = role['target_instance_count']
                         if old_count != new_count:
                             self.new_instance_count = new_count
+                            self.to_do = Actions.Update
                     if compare_result.pop('/tags', False):
                         self.to_do = Actions.Update
                         self.tags_changed = True
