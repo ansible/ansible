@@ -25,12 +25,21 @@ DOCUMENTATION = '''
       url:
         description: url to foreman
         default: 'http://localhost:3000'
+        env:
+            - name: FOREMAN_SERVER
+              version_added: "2.8"
       user:
         description: foreman authentication user
         required: True
+        env:
+            - name: FOREMAN_USER
+              version_added: "2.8"
       password:
         description: foreman authentication password
         required: True
+        env:
+            - name: FOREMAN_PASSWORD
+              version_added: "2.8"
       validate_certs:
         description: verify SSL certificate if using https
         type: boolean
