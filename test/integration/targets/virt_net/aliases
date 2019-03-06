@@ -1,5 +1,4 @@
-destructive
-shippable/posix/group1
+unsupported
 skip/freebsd
 skip/osx
 needs/privileged
