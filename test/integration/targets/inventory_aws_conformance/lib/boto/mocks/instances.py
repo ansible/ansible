@@ -1,4 +1,11 @@
 import sys
+
+try:
+    from ansible.parsing.yaml.objects import AnsibleUnicode
+except ImportError:
+    AnsibleUnicode = str
+
+
 if sys.version_info[0] >= 3:
     unicode = str
 
@@ -15,9 +22,21 @@ class Tag(object):
         self.value = value
 
 
+class SecurityGroup(object):
+    name = 'sg_default'
+    group_id = 'sg-00000'
+    id = 'sg-00000'
+    def __init__(self, group_name, group_id):
+        self.name = group_name
+        self.group_id = group_id
+        self.id = self.group_id
+    def __str__(self):
+        return self.name
+
+
 class BotoInstance(object):
     id = None
-    owner_id = None
+    #owner_id = None
     instances = None
     region = None
     state = None
@@ -34,7 +53,7 @@ class BotoInstance(object):
 
     _in_monitoring_element = False
     account_id = 100000
-    owner_id = 100000
+    #owner_id = 100000
     ami_launch_index = 0
     architecture = "x86_64"
     block_devices = {
@@ -64,8 +83,9 @@ class BotoInstance(object):
     requester_id = ""
     root_device_name = "/dev/sda1"
     root_device_type = "ebs",
-    security_group_ids = "sg-000000"
-    security_group_names = "myappsg"
+    #security_group_ids = "sg-000000"
+    #group_id = "sg-000000"
+    #security_group_names = "myappsg"
     sourceDestCheck = True
     spot_instance_request_id = ""
     state = "running"
@@ -93,11 +113,12 @@ class BotoInstance(object):
     def __init__(self, id=None, owner_id=None, region=None):
         self.id = 'i-%s' % id
         self.region = region
-        self.placement = region
+        self.placement = region + 'b'
         self.groups = []
         self.image_id = 'ami-%s' % self.id
         self.instance_type = 't1.micro'
-        self.owner_id = owner_id
+        self.account_id = owner_id or ''
+        self.owner_id = owner_id or ''
         self.instances = [self]
         self.state = 'running'
         self.public_dns_name = 'ec2-dhcp-%s.%s.%s' \
@@ -107,6 +128,9 @@ class BotoInstance(object):
         self._tags = [
             Tag(self.id, 'TAG1', 'TAG1val')
         ]
+        self.groups = [SecurityGroup('sgroup1', 'sg-1000')]
+        #self.group_ids = SecurityGroup('sg-1000')
+        #self.security_group_ids = SecurityGroup('sg-1000')
 
 
 class Boto3Instance(BotoInstance):
@@ -119,17 +143,32 @@ class Boto3Instance(BotoInstance):
     def __init__(self, *args, **kwargs):
         super(Boto3Instance, self).__init__(*args, **kwargs)
 
+        self.account_id = kwargs.get('owner_id', '')
+        self.owner_id = kwargs.get('owner_id', '')
         self.InstanceId = self.id
         self.PublicDnsName = self.public_dns_name
         self.PrivateDnsName = self.private_dns_name
         self.placement = {
-            'availability_zone': [self.region]
+            'availability_zone': [self.region + 'b']
         }
         self.Tags = [
             Tag(self.id, 'TAG1', 'TAG1val')
         ]
 
+        #self.security_group_ids = [
+        #    SecurityGroup('sg-1000'),
+        #    SecurityGroup('sg-2000'),
+        #    SecurityGroup('sg-3000'),
+        #]
+        self.groups = [SecurityGroup('sgroup1', 'sg-1000')]
+        #self.group_ids = SecurityGroup('sg-1000')
+        #self.security_group_ids = SecurityGroup('sg-1000')
+        #import epdb; epdb.st()
+
     def to_dict(self):
+
+        allowed = [str, bool, unicode, int, float, dict, None, AnsibleUnicode]
+
         data = {}
         for attr in dir(self):
             if attr.startswith('__'):
@@ -140,7 +179,13 @@ class Boto3Instance(BotoInstance):
             if attr == 'Tags':
                 data['Tags'] = [{'Key': x.name, 'Value': x.value} for x in val]
                 continue
+            
+            if attr == 'groups':
+                data['security_groups'] = [{'name': x.name, 'group_id': x.group_id} for x in val]
+                continue
 
-            if type(val) in [str, bool, unicode, int, float, dict, None]:
+            if type(val) in allowed:
                 data[attr] = val
+
+        #import epdb; epdb.st()
         return data

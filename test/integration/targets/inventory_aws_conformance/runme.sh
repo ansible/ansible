@@ -54,6 +54,7 @@ regions:
     - us-east-1
 compose:
   # vars that don't exist
+  ansible_host: public_dns_name
   ec2_item: backwardscompat | default("")  # boto anomaly, always appears to be u'\n', don't see a reason to keep it around
   ec2_monitoring: backwardscompat | default("") # boto anomaly, always appears to be u'\n', don't see a reason to keep it around
   ec2_previous_state: backwardscompat | default("")  # This is only returned with boto3 when starting, stopping, and terminating instances, not applicable
@@ -74,12 +75,13 @@ compose:
   ec2_kernel: kernel_id | default("")
   ec2_monitored:  monitoring.state in ['enabled', 'pending']
   ec2_monitoring_state: monitoring.state
-  ec2_placement: placement.availability_zone
+  ec2_owner_id: account_id
+  ec2_placement: placement.availability_zone[0]
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
   ec2_security_group_ids: security_groups | map(attribute='group_id') | list |  join(',')
-  ec2_security_group_names: security_groups | map(attribute='group_name') | list |  join(',')
-  ec2_state: state.name
+  ec2_security_group_names: security_groups | map(attribute='name') | list |  join(',')
+  ec2_state: state
   ec2_state_code: state.code
   ec2_state_reason: state_reason.message if state_reason is defined else ""
   ec2_sourceDestCheck: source_dest_check | lower | string  # butchered snake_case case not a typo.
@@ -98,7 +100,7 @@ compose:
   ec2_private_dns_name: private_dns_name
   ec2_private_ip_address: private_ip_address
   ec2_public_dns_name: public_dns_name
-  ec2_region: placement.region
+  ec2_region: region
   ec2_root_device_name: root_device_name
   ec2_root_device_type: root_device_type
   ec2_spot_instance_request_id: spot_instance_request_id
@@ -123,7 +125,8 @@ keyed_groups:
   - prefix: ""
     separator: ""
     key: placement.availability_zone
-  - key: security_group
+  - key: 'groups|json_query("[].name")'
+    prefix: 'security_groups'
   - key: '"platform_" + platform'
     prefix: ""
     separator: ""
@@ -137,7 +140,10 @@ keyed_groups:
   - prefix: ""
     separator: ""
     key: image_id
-  - key: 'security_groups | json_query("[].group_name")'
+  #- key: 'security_groups'
+  - key: 'security_groups | json_query("[].name")'
+    prefix: security_group
+    #separator: "_"
 prefix: security_group
 EOF
 
@@ -147,7 +153,7 @@ export PYTHONPATH=$(pwd)/lib:$PYTHONPATH
 
 rm -f $OUTPUT_DIR/plugin.out
 #ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list | tee -a $OUTPUT_DIR/plugin.out
-ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list --output=$OUTPUT_DIR/plugin.out
+ANSIBLE_JINJA2_NATIVE=1 ansible-inventory -vvvv -i $OUTPUT_DIR/test.aws_ec2.yml --list --output=$OUTPUT_DIR/plugin.out
 rm -f $OUTPUT_DIR/aws_ec2.yml
 
 #################################################
