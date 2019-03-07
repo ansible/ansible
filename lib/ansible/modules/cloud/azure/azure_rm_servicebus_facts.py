@@ -315,7 +315,7 @@ servicebuses:
                 - Dict of SAS policies.
                 - Will not be returned until C(show_sas_policy) set
             type: dict
-            sample:  "{
+            sample:  '{
                         "testpolicy1": {
                             "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/
                                    foo/providers/Microsoft.ServiceBus/namespaces/bar/queues/qux/authorizationRules/testpolicy1",
@@ -332,7 +332,7 @@ servicebuses:
                             "rights": "listen_send",
                             "type": "Microsoft.ServiceBus/Namespaces/Queues/AuthorizationRules"
                         }
-                     }"
+                     }'
 '''
 
 try:
