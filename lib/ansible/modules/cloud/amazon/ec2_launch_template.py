@@ -374,6 +374,10 @@ def existing_templates(module):
 
 def params_to_launch_data(module, template_params):
     if template_params.get('tags'):
+        r_types = ['instance', 'volume']
+        if template_params.get('network_interfaces'):
+            # don't say we want to tag the ENI if the user didn't ask for one explicitly
+            r_types.append('network-interface')
         template_params['tag_specifications'] = [
             {
                 'resource_type': r_type,
@@ -382,7 +386,7 @@ def params_to_launch_data(module, template_params):
                     in template_params['tags'].items()
                 ]
             }
-            for r_type in ('instance', 'network-interface', 'volume')
+            for r_type in r_types
         ]
         del template_params['tags']
     if module.params.get('iam_instance_profile'):
