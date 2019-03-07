@@ -17,6 +17,7 @@ cat << EOF > $OUTPUT_DIR/ec2.ini
 regions = us-east-1
 cache_path = $(pwd)/.cache
 cache_max_age = 0
+group_by_tag_none = False
 
 [credentials]
 aws_access_key_id = FOO
@@ -32,7 +33,7 @@ if [[ $RC != 0 ]]; then
 fi
 #rm -f $OUTPUT_DIR/ec2.ini
 #rm -f $OUTPUT_DIR/ec2.py
-#rm -rf .cache
+rm -rf .cache
 
 #exit 0
 
@@ -105,6 +106,12 @@ compose:
   ec2_vpc_id: vpc_id
 
 keyed_groups:
+  - key: '"ec2"'
+    prefix: ""
+    separator: ""
+  - key: 'instance_id'
+    prefix: ""
+    separator: ""
   - prefix: tag
     key: tags
   - prefix: key
@@ -116,8 +123,12 @@ keyed_groups:
     separator: ""
     key: placement.availability_zone
   - key: security_group
-  - key: platform
-  - key: vpc_id
+  - key: '"platform_" + platform'
+    prefix: ""
+    separator: ""
+  - key: '"vpc_id_" + vpc_id'
+    prefix: ""
+    separator: ""
   - prefix: type  # may need to replace . with _
     key: instance_type
   - prefix: instance_state
@@ -141,4 +152,5 @@ rm -f $OUTPUT_DIR/aws_ec2.yml
 #   DIFF THE RESULTS
 #################################################
 
-diff -y $OUTPUT_DIR/script.out $OUTPUT_DIR/plugin.out
+#diff -y $OUTPUT_DIR/script.out $OUTPUT_DIR/plugin.out
+./inventory_diff.py script.out plugin.out

@@ -4,6 +4,16 @@ if sys.version_info[0] >= 3:
 
 DNSDOMAIN="ansible.amazon.com"
 
+class Tag(object):
+    res_id = None
+    name = None
+    value = None
+
+    def __init__(self, res_id, name, value):
+        self.res_id = res_id
+        self.name = name
+        self.value = value
+
 
 class BotoInstance(object):
     id = None
@@ -46,7 +56,7 @@ class BotoInstance(object):
     monitoring_state = "disabled"
     ec2_persistent = False
     placement = None
-    platform = ""
+    platform = "mockplatform"
     previous_state = ""
     previous_state_code = 0
     ramdisk = ""
@@ -71,9 +81,14 @@ class BotoInstance(object):
     #tags = {
     #    'TAG1': "TAG1_VAL"
     #}
-    tags = [
-        {'TAG1': 'TAG1val'}
-    ]
+    #tags = [
+    #    {'TAG1': 'TAG1val'}
+    #]
+
+    #_tags = {'TAG1': 'TAG1val'}
+    #_tags = [
+    #    Tag('TAG1', 'TAG1val')
+    #]
 
     def __init__(self, id=None, owner_id=None, region=None):
         self.id = 'i-%s' % id
@@ -89,7 +104,9 @@ class BotoInstance(object):
             % (self.id, self.region, DNSDOMAIN)
         self.private_dns_name = 'ec2-internal-%s.%s.%s' \
             % (self.id, self.region, DNSDOMAIN)
-
+        self._tags = [
+            Tag(self.id, 'TAG1', 'TAG1val')
+        ]
 
 
 class Boto3Instance(BotoInstance):
@@ -108,6 +125,9 @@ class Boto3Instance(BotoInstance):
         self.placement = {
             'availability_zone': [self.region]
         }
+        self._tags = [
+            Tag(self.id, 'TAG1', 'TAG1val')
+        ]
 
     def to_dict(self):
         data = {}

@@ -28,8 +28,14 @@ class Connection(object):
     def describe_cache_clusters(*args, **kwargs):
         return {}
 
-    def get_all_tags(*args, **kwargs):
-        return []
+    def get_all_tags(self, *args, **kwargs):
+        tags = []
+        resid = kwargs['filters']['resource-id'][0]
+        for instance in self.instances:
+            if instance.id == resid:
+                tags = instance._tags[:]
+                break
+        return tags
 
 
 def connect_to_region(*args, **kwargs):
