@@ -1,0 +1,2 @@
+bugfixes:
+- win_domain - Fix when running without credential delegated authentication - https://github.com/ansible/ansible/issues/53182

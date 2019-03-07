@@ -71,8 +71,10 @@ if (($forest_mode -ne $null) -and -not ($forest_mode -in $valid_forest_modes)) {
 
 $forest = $null
 try {
-    $forest = Get-ADForest $dns_domain_name -ErrorAction SilentlyContinue
-} catch { }
+    # Cannot use Get-ADForest as that requires credential delegation, the below does not
+    $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
+    $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] { }
 
 if (-not $forest) {
     $result.changed = $true
