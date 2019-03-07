@@ -475,6 +475,7 @@ options:
       - Mount the containers root filesystem as read only.
       - Corresponds to the C(--read-only) option of C(docker service create).
     type: bool
+    version_added: "2.8"
   replicas:
     description:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
