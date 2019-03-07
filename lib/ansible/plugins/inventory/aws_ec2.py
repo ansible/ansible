@@ -526,12 +526,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return False
 
     def parse(self, inventory, loader, path, cache=True):
+
         super(InventoryModule, self).parse(inventory, loader, path)
+
+        config_data = self._read_config_data(path)
 
         if get_option('use_legacy_script_group_name_sanitization'):
             self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
-        config_data = self._read_config_data(path)
         self._set_credentials()
 
         # get user specifications
