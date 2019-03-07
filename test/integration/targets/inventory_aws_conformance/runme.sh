@@ -160,5 +160,4 @@ rm -f $OUTPUT_DIR/aws_ec2.yml
 #   DIFF THE RESULTS
 #################################################
 
-#diff -y $OUTPUT_DIR/script.out $OUTPUT_DIR/plugin.out
-./inventory_diff.py script.out plugin.out
+./inventory_diff.py $OUTPUT_DIR/script.out $OUTPUT_DIR/plugin.out

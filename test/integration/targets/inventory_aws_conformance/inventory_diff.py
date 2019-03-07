@@ -22,12 +22,12 @@ def main():
     assert ahosts == bhosts
 
     # all groups should be present obviously
-    agroups = adata.keys()
+    agroups = list(adata.keys())
     agroups.remove('_meta')
     if 'all' in agroups:
         agroups.remove('all')
     agroups = sorted(agroups)
-    bgroups = bdata.keys()
+    bgroups = list(bdata.keys())
     bgroups.remove('_meta')
     if 'all' in bgroups:
         bgroups.remove('all')
@@ -61,8 +61,6 @@ def main():
             print('assert var',k,v,k in bdata['_meta']['hostvars'][ahost], bdata['_meta']['hostvars'][ahost].get(k))
             assert k in bdata['_meta']['hostvars'][ahost], "%s not in b's %s hostvars" % (k, ahost)
             assert v == bdata['_meta']['hostvars'][ahost][k], "%s != %s" % (v, bdata['_meta']['hostvars'][ahost][k]) 
-
-    import epdb; epdb.st()
 
 
 
