@@ -142,6 +142,13 @@ EXAMPLES = r'''
     opts: bind
     state: mounted
     fstype: none
+    
+- name: Mount an ISO9660
+  mount:
+    path: /mnt/foo
+    src: /foo/file.iso
+    opts: ro,loop=
+    state: mounted
 '''
 
 
