@@ -71,6 +71,23 @@
     - result.options == {}
     - result.location == '/ssd'
 
+# Try to create a tablespace with the same name but with a different location
+- name: postgresql_tablespace - try to create the same tablespace with different location
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    location: /another-ssd
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.changed == false
+    - result.msg == "Tablespace 'acme' exists with different location '/ssd'"
+
 # Change tablespace owner
 - name: postgresql_tablespace - change tablespace owner to alice
   become_user: "{{ pg_user }}"
@@ -225,5 +242,4 @@
 - assert:
     that:
     - result.changed == false
-    - result.state == 'absent'
-    - result.queries == []
+    - result.msg == "Tries to drop nonexistent tablespace 'foo'"

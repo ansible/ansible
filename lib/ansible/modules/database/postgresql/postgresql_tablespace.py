@@ -44,7 +44,7 @@ options:
     - Tablespace state.
     - I(state=present) implies the tablespace must be created if it doesn't exist.
     - I(state=absent) implies the tablespace must be removed if present.
-      I(state=absent) is mutually exclusive with I(location), I(owner), i(options).
+      I(state=absent) is mutually exclusive with I(location), I(owner), i(set).
     - See the Notes section for information about check mode restrictions.
     type: str
     default: present
@@ -413,7 +413,7 @@ def main():
 
     if state == 'absent' and (location or owner or rename_to or settings):
         module.fail_json(msg="state=absent is mutually exclusive location, "
-                             "owner, rename_to, and settings")
+                             "owner, rename_to, and set")
 
     # To use defaults values, keyword arguments must be absent, so
     # check which values are empty and don't include in the **kw
@@ -464,6 +464,10 @@ def main():
     # Create PgTablespace object and do main job:
     tblspace = PgTablespace(module, cursor, tablespace)
 
+    # If tablespace exists with different location, exit:
+    if tblspace.exists and location and location != tblspace.location:
+        module.fail_json(msg="Tablespace '%s' exists with different location '%s'" % (tblspace.name, tblspace.location))
+
     # Create new tablespace:
     if not tblspace.exists and state == 'present':
         if rename_to:
@@ -471,7 +475,7 @@ def main():
 
         if not location:
             module.fail_json(msg="'location' parameter must be passed with "
-                                 "state=present if the tablespace doesn't exists")
+                                 "state=present if the tablespace doesn't exist")
 
         # Because CREATE TABLESPACE can not be run inside the transaction block:
         autocommit = True
@@ -485,7 +489,7 @@ def main():
     # Drop non-existing tablespace:
     elif not tblspace.exists and state == 'absent':
         # Nothing to do:
-        module.warn("Tries to drop nonexistent tablespace '%s'" % tblspace.name)
+        module.fail_json(msg="Tries to drop nonexistent tablespace '%s'" % tblspace.name)
 
     # Drop existing tablespace:
     elif tblspace.exists and state == 'absent':
