@@ -198,7 +198,7 @@ def main():
             vm_full = vm_path + '/' + module.params['name']
             folder = search_index.FindByInventoryPath(
                 module.params['dest_folder'])
-            if folder == None:
+            if folder is None:
                 module.fail_json(msg="Folder name and/or path does not exist")    
             vm_to_move = search_index.FindByInventoryPath(vm_full)
             if vm_path != module.params['dest_folder'].lstrip('/'):
