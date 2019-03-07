@@ -15,11 +15,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import sys
+from units.compat import unittest
+from ansible.module_utils.gcp_utils import GcpRequest, navigate_hash
 
-from units.compat import mock, unittest
-from ansible.module_utils.gcp_utils import GcpRequest
+
+class NavigateHashTestCase(unittest.TestCase):
+    def test_one_level(self):
+        value = {
+            'key': 'value'
+        }
+        self.assertEquals(navigate_hash(value, ['key']), value['key'])
+
+    def test_multilevel(self):
+        value = {
+            'key': {
+                'key2': 'value'
+            }
+        }
+        self.assertEquals(navigate_hash(value, ['key', 'key2']), value['key']['key2'])
+
+    def test_default(self):
+        value = {
+            'key': 'value'
+        }
+        default = 'not found'
+        self.assertEquals(navigate_hash(value, ['key', 'key2'], default), default)
 
 
 class GCPRequestDifferenceTestCase(unittest.TestCase):
