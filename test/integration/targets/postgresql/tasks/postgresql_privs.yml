@@ -42,6 +42,12 @@
     objs: dummy
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == true"
 
 - name: Get foreign data wrapper privileges
   become: True
@@ -58,6 +64,69 @@
       - "fdw_result.stdout_lines[-1] == '(1 row)'"
       - "'fdw_test' in fdw_result.stdout_lines[-2]"
 
+- name: Grant foreign data wrapper privileges second time
+  postgresql_privs:
+    state: present
+    type: foreign_data_wrapper
+    roles: fdw_test
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Revoke foreign data wrapper privileges
+  postgresql_privs:
+    state: absent
+    type: foreign_data_wrapper
+    roles: fdw_test
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Get foreign data wrapper privileges
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT fdwacl FROM pg_catalog.pg_foreign_data_wrapper
+      WHERE fdwname = ANY (ARRAY['dummy']) ORDER BY fdwname
+  register: fdw_result
+
+- assert:
+    that:
+      - "fdw_result.stdout_lines[-1] == '(1 row)'"
+      - "'fdw_test' not in fdw_result.stdout_lines[-2]"
+
+- name: Revoke foreign data wrapper privileges for second time
+  postgresql_privs:
+    state: absent
+    type: foreign_data_wrapper
+    roles: fdw_test
+    privs: ALL
+    objs: dummy
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == false"
+
 - name: Grant foreign server privileges
   postgresql_privs:
     state: present
@@ -67,6 +136,12 @@
     objs: dummy_server
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == true"
 
 - name: Get foreign server privileges
   become: True
@@ -82,6 +157,69 @@
     that:
       - "fs_result.stdout_lines[-1] == '(1 row)'"
       - "'fdw_test' in fs_result.stdout_lines[-2]"
+
+- name: Grant foreign server privileges for second time
+  postgresql_privs:
+    state: present
+    type: foreign_server
+    roles: fdw_test
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Revoke foreign server privileges
+  postgresql_privs:
+    state: absent
+    type: foreign_server
+    roles: fdw_test
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == true"
+
+- name: Get foreign server privileges
+  become: True
+  become_user: "{{ pg_user }}"
+  shell: echo "{{ fdw_query }}" | psql -d "{{ db_name }}"
+  vars:
+    fdw_query: >
+      SELECT srvacl FROM pg_catalog.pg_foreign_server
+      WHERE srvname = ANY (ARRAY['dummy_server']) ORDER BY srvname
+  register: fs_result
+
+- assert:
+    that:
+      - "fs_result.stdout_lines[-1] == '(1 row)'"
+      - "'fdw_test' not in fs_result.stdout_lines[-2]"
+
+- name: Revoke foreign server privileges for second time
+  postgresql_privs:
+    state: absent
+    type: foreign_server
+    roles: fdw_test
+    privs: ALL
+    objs: dummy_server
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "result.changed == false"
 
 - name: Cleanup
   become: True
@@ -99,4 +237,3 @@
     state: absent
     name: "{{ db_name }}"
     login_user: "{{ pg_user }}"
-  register: result
