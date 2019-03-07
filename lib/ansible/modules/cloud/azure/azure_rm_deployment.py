@@ -432,7 +432,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         mutually_exclusive = [('template', 'template_link'),
                               ('parameters', 'parameters_link')]
 
-        self.resource_group_name = None
+        self.resource_group = None
         self.state = None
         self.template = None
         self.parameters = None
@@ -466,7 +466,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             if deployment is None:
                 self.results['deployment'] = dict(
                     name=self.deployment_name,
-                    group_name=self.resource_group_name,
+                    group_name=self.resource_group,
                     id=None,
                     outputs=None,
                     instances=None
@@ -474,7 +474,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             else:
                 self.results['deployment'] = dict(
                     name=deployment.name,
-                    group_name=self.resource_group_name,
+                    group_name=self.resource_group,
                     id=deployment.id,
                     outputs=deployment.properties.outputs,
                     instances=self._get_instances(deployment)
@@ -484,7 +484,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             self.results['msg'] = 'deployment succeeded'
         else:
             try:
-                if self.get_resource_group(self.resource_group_name):
+                if self.get_resource_group(self.resource_group):
                     self.destroy_resource_group()
                     self.results['changed'] = True
                     self.results['msg'] = "deployment deleted"
@@ -520,7 +520,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         if self.append_tags and self.tags:
             try:
                 # fetch the RG directly (instead of using the base helper) since we don't want to exit if it's missing
-                rg = self.rm_client.resource_groups.get(self.resource_group_name)
+                rg = self.rm_client.resource_groups.get(self.resource_group)
                 if rg.tags:
                     self.tags = dict(self.tags, **rg.tags)
             except CloudError:
@@ -530,12 +530,12 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         params = self.rm_models.ResourceGroup(location=self.location, tags=self.tags)
 
         try:
-            self.rm_client.resource_groups.create_or_update(self.resource_group_name, params)
+            self.rm_client.resource_groups.create_or_update(self.resource_group, params)
         except CloudError as exc:
             self.fail("Resource group create_or_update failed with status code: %s and message: %s" %
                       (exc.status_code, exc.message))
         try:
-            result = self.rm_client.deployments.create_or_update(self.resource_group_name,
+            result = self.rm_client.deployments.create_or_update(self.resource_group,
                                                                  self.deployment_name,
                                                                  deploy_parameter)
 
@@ -545,7 +545,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 while deployment_result.properties is None or deployment_result.properties.provisioning_state not in ['Canceled', 'Failed', 'Deleted',
                                                                                                                       'Succeeded']:
                     time.sleep(self.wait_for_deployment_polling_period)
-                    deployment_result = self.rm_client.deployments.get(self.resource_group_name, self.deployment_name)
+                    deployment_result = self.rm_client.deployments.get(self.resource_group, self.deployment_name)
         except CloudError as exc:
             failed_deployment_operations = self._get_failed_deployment_operations(self.deployment_name)
             self.log("Deployment failed %s: %s" % (exc.status_code, exc.message))
@@ -565,7 +565,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         Destroy the targeted resource group
         """
         try:
-            result = self.rm_client.resource_groups.delete(self.resource_group_name)
+            result = self.rm_client.resource_groups.delete(self.resource_group)
             result.wait()  # Blocking wait till the delete is finished
         except CloudError as e:
             if e.status_code == 404 or e.status_code == 204:
@@ -583,7 +583,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                    'Microsoft.Resources/deployments' in operation.properties.target_resource.id:
                     nested_deployment = operation.properties.target_resource.resource_name
                     try:
-                        nested_operations = self.rm_client.deployment_operations.list(self.resource_group_name,
+                        nested_operations = self.rm_client.deployment_operations.list(self.resource_group,
                                                                                       nested_deployment)
                     except CloudError as exc:
                         self.fail("List nested deployment operations failed with status code: %s and message: %s" %
@@ -598,7 +598,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         #               # status is available.
 
         try:
-            operations = self.rm_client.deployment_operations.list(self.resource_group_name, deployment_name)
+            operations = self.rm_client.deployment_operations.list(self.resource_group, deployment_name)
         except CloudError as exc:
             self.fail("Get deployment failed with status code: %s and message: %s" %
                       (exc.status_code, exc.message))
@@ -673,7 +673,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
 
     def _nic_to_public_ips_instance(self, nics):
         return [self.network_client.public_ip_addresses.get(public_ip_id.split('/')[4], public_ip_id.split('/')[-1])
-                for nic_obj in (self.network_client.network_interfaces.get(self.resource_group_name,
+                for nic_obj in (self.network_client.network_interfaces.get(self.resource_group,
                                                                            nic['dep'].resource_name) for nic in nics)
                 for public_ip_id in [ip_conf_instance.public_ip_address.id
                                      for ip_conf_instance in nic_obj.ip_configurations
