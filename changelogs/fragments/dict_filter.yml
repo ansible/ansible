@@ -1,0 +1,2 @@
+minor_change:
+    - new filter (dict|to_dict) that converts a list of pairs into a dictionary/associative array/map
