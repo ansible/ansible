@@ -1,3 +1,10 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright: (c) 2019, Rob Huelga (@RobW3LGA)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+
 import pytest
 
 from ansible.module_utils.basic import AnsibleModule
@@ -16,7 +23,7 @@ class TestReference_AnsibleModule_Construct_Url_1(object):
             'state': 'query'
         }
 
-    def testRootP01_moduleObjectValid_returnsObjectUrlAndFilterStringConfigOnly(self, setup, params):
+    def testRootP01(self, setup, params):
 
         params['state'] = 'present'
         module = setup
@@ -36,7 +43,7 @@ class TestReference_AnsibleModule_Construct_Url_1(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-prop-include=config-only' == sut.filter_string
 
-    def testRootA01_moduleObjectValid_returnsObjectUrlAndFilterStringConfigOnly(self, setup, params):
+    def testRootA01(self, setup, params):
 
         params['state'] = 'absent'
         module = setup
@@ -56,7 +63,7 @@ class TestReference_AnsibleModule_Construct_Url_1(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-prop-include=config-only' == sut.filter_string
 
-    def testRootQ01_moduleObjectNone_returnsClassUrlAndFilterStringEmpty(self, setup, params):
+    def testRootQ01(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -76,7 +83,7 @@ class TestReference_AnsibleModule_Construct_Url_1(object):
         assert 'https://local.host.local:443/api/class/fvTenant.json' == sut.url
         assert '' == sut.filter_string
 
-    def testRootQ02_moduleObjectValid_returnsObjectUrlAndFilterStringEmpty(self, setup, params):
+    def testRootQ02(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -110,7 +117,7 @@ class TestReference_AnsibleModule_Construct_Url_2(object):
             'state': 'query'
         }
 
-    def testChildP01_moduleParentValidChildValid_returnsObjectUrlAndFilterStringConfigOnly(self, setup, params):
+    def testChildP01(self, setup, params):
 
         params['state'] = 'present'
         module = setup
@@ -137,7 +144,7 @@ class TestReference_AnsibleModule_Construct_Url_2(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/ap-Test-Ap.json' == sut.url
         assert '?rsp-prop-include=config-only' == sut.filter_string
 
-    def testChildA01_moduleParentValidChildValid_returnsObjectUrlAndFilterStringConfigOnly(self, setup, params):
+    def testChildA01(self, setup, params):
 
         params['state'] = 'absent'
         module = setup
@@ -164,7 +171,7 @@ class TestReference_AnsibleModule_Construct_Url_2(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/ap-Test-Ap.json' == sut.url
         assert '?rsp-prop-include=config-only' == sut.filter_string
 
-    def testChildQ01_moduleParentNoneChildNone_returnsChildClassUrlAndFilterStringSubtreeClass(self, setup, params):
+    def testChildQ01(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -191,7 +198,7 @@ class TestReference_AnsibleModule_Construct_Url_2(object):
         assert 'https://local.host.local:443/api/class/fvAp.json' == sut.url
         assert '' == sut.filter_string
 
-    def testChildQ02_moduleParentValidChildNone_returnsObjectUrlAndFilterStringSubtreeChildClass(self, setup, params):
+    def testChildQ02(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -218,7 +225,7 @@ class TestReference_AnsibleModule_Construct_Url_2(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=fvAp' == sut.filter_string
 
-    def testChildQ03_moduleParentNoneChildValid_returnsParentClassUrlAndFilterStringSubtreeClass(self, setup, params):
+    def testChildQ03(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -247,7 +254,7 @@ class TestReference_AnsibleModule_Construct_Url_2(object):
 
         sut = None
 
-    def testChildQ04_moduleParentValidChildValid_returnsParentClassUrlAndNoFilterString(self, setup, params):
+    def testChildQ04(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -287,7 +294,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
             'state': 'query'
         }
 
-    def testGrandChildP01_moduleGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringConfigOnlyAndSubtreeClass(self, setup, params):
+    def testGrandChildP01(self, setup, params):
 
         params['state'] = 'present'
         module = setup
@@ -322,7 +329,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/ap-Test-Ap/epg-Test-Epg.json' == sut.url
         assert '?rsp-prop-include=config-only&rsp-subtree=full&rsp-subtree-class=fvRsBd' == sut.filter_string
 
-    def testGrandChildA01_moduleGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringConfigOnlyAndSubtreeClass(self, setup, params):
+    def testGrandChildA01(self, setup, params):
 
         params['state'] = 'absent'
         module = setup
@@ -357,7 +364,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/ap-Test-Ap/epg-Test-Epg.json' == sut.url
         assert '?rsp-prop-include=config-only&rsp-subtree=full&rsp-subtree-class=fvRsBd' == sut.filter_string
 
-    def testGrandChildQ01_moduleGrandParentNoneParentNoneChildNone_returnsClassUrlAndFilterStringSubtreeFullAndSubtreeClass(self, setup, params):
+    def testGrandChildQ01(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -392,7 +399,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/class/fvAEPg.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=fvRsBd' == sut.filter_string
 
-    def testGrandChildQ02_moduleGrandParentValidParentNoneChildNone_returnsObjectUrlAndFilterStringSubtreeFullAndSubtreeClasses(self, setup, params):
+    def testGrandChildQ02(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -427,7 +434,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=fvAEPg%2CfvAp%2CfvRsBd' == sut.filter_string
 
-    def testGrandChildQ03_moduleGrandParentValidParentValidChildNone_returnsObjectUrlAndFilterStringSubtreeFullAndSubtreeClasses(self, setup, params):
+    def testGrandChildQ03(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -462,7 +469,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/ap-Test-Ap.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=fvAEPg%2CfvRsBd' == sut.filter_string
 
-    def testGrandChildQ04_moduleGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringSubtreeFullAndSubtreeClasses(self, setup, params):
+    def testGrandChildQ04(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -497,7 +504,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/ap-Test-Ap/epg-Test-Epg.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=fvRsBd' == sut.filter_string
 
-    def testGrandChildQ05_moduleGrandParentNoneParentValidChildValid_returnsObjectUrlAndFilterStringSubtreeFullAndSubtreeClasses(self, setup, params):
+    def testGrandChildQ05(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -532,7 +539,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/class/fvAp.json' == sut.url
         assert '?query-target-filter=eq%28fvAp.name%2C+%22Test-Ap%22%29&rsp-subtree-filter=eq%28fvAEPg.name%2C+%22Test-Epg%22%29&rsp-subtree=full&rsp-subtree-class=fvAEPg%2CfvRsBd' == sut.filter_string
 
-    def testGrandChildQ06_moduleGrandParentNoneParentNoneChildValid_returnsObjectUrlAndFilterStringSubtreeFullAndSubtreeClasses(self, setup, params):
+    def testGrandChildQ06(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -567,7 +574,7 @@ class TestReference_AnsibleModule_Construct_Url_3(object):
         assert 'https://local.host.local:443/api/class/fvAEPg.json' == sut.url
         assert '?query-target-filter=eq%28fvAEPg.name%2C+%22Test-Epg%22%29&rsp-subtree=full&rsp-subtree-class=fvRsBd' == sut.filter_string
 
-    def testGrandChildQ07_moduleGrandParentNoneParentNoneChildValid_returnsObjectUrlAndFilterStringSubtreeFullAndSubtreeClasses(self, setup, params):
+    def testGrandChildQ07(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -617,7 +624,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
             'state': 'query'
         }
 
-    def testGreatGrandChildP01_moduleGreatGrandParentValidGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringConfigOnly(self, setup, params):
+    def testGreatGrandChildP01(self, setup, params):
 
         params['state'] = 'present'
         module = setup
@@ -662,7 +669,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-InterfaceProfile.json' == sut.url
         assert '?rsp-prop-include=config-only' == sut.filter_string
 
-    def testGreatGrandChildA01_moduleGreatGrandParentValidGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringConfigOnly(self, setup, params):
+    def testGreatGrandChildA01(self, setup, params):
 
         params['state'] = 'absent'
         module = setup
@@ -707,7 +714,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-InterfaceProfile.json' == sut.url
         assert '?rsp-prop-include=config-only' == sut.filter_string
 
-    def testGreatGrandChildQ01_moduleGreatGrandParentNoneGrandParentNoneParentNoneChildNone_returnsObjectUrlAndFilterStringSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ01(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -752,7 +759,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ02_moduleGreatGrandParentValidGrandParentNoneParentNoneChildNone_returnsObjectUrlAndFilterStringSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ02(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -797,7 +804,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ03_moduleGreatGrandParentValidGrandParentValidParentNoneChildNone_returnsObjectUrlAndFilterStringSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ03(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -842,7 +849,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ04_moduleGreatGrandParentValidGrandParentValidParentValidChildNone_returnsObjectUrlAndFilterStringSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ04(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -887,7 +894,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ05_moduleGreatGrandParentValidGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringEmpty(self, setup, params):
+    def testGreatGrandChildQ05(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -932,7 +939,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-InterfaceProfile.json' == sut.url
         assert '' == sut.filter_string
 
-    def testGreatGrandChildQ06_moduleGreatGrandParentNoneGrandParentValidParentValidChildValid_returnsObjectUrlAndFilterStringTargetFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ06(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -977,7 +984,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ07_moduleGreatGrandParentNoneGrandParentNoneParentValidChildValid_returnsObjectUrlAndFilterStringTargetFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ07(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -1022,7 +1029,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ08_moduleGreatGrandParentNoneGrandParentNoneParentNoneChildValid_returnsObjectUrlAndFilterStringTargetFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ08(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -1067,7 +1074,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ09_moduleGreatGrandParentValidGrandParentNoneParentNoneChildValid_returnsObjectUrlAndFilterStringSubtreeFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ09(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -1112,7 +1119,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ10_moduleGreatGrandParentValidGrandParentValidParentNoneChildValid_returnsObjectUrlAndFilterStringSubtreeFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ10(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -1157,7 +1164,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out.json' == sut.url
         assert '?rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ11_moduleGreatGrandParentValidGrandParentNoneParentValidChildValid_returnsObjectUrlAndFilterStringSubtreeFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ11(self, setup, params):
 
         params['state'] = 'query'
         module = setup
@@ -1202,7 +1209,7 @@ class TestReference_AnsibleModule_Construct_Url_4(object):
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
         assert '?rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
-    def testGreatGrandChildQ12_moduleGreatGrandParentNoneGrandParentValidParentNoneChildValid_returnsObjectUrlAndFilterStringSubtreeFilterAndSubtreeClass(self, setup, params):
+    def testGreatGrandChildQ12(self, setup, params):
 
         params['state'] = 'query'
         module = setup
