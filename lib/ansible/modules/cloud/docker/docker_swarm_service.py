@@ -470,6 +470,11 @@ options:
         choices:
           - ingress
           - host
+  read_only:
+    description:
+      - Mount the containers root filesystem as read only.
+      - Corresponds to the C(--read-only) option of C(docker service create).
+    type: bool
   replicas:
     description:
       - Number of containers instantiated in the service. Valid only if I(mode) is C(replicated).
@@ -747,6 +752,7 @@ swarm_service:
       }
     ],
     "publish": null,
+    "read_only": null,
     "replicas": 1,
     "reserve_cpu": 0.25,
     "reserve_memory": 20971520,
@@ -1055,6 +1061,7 @@ class DockerService(DockerBaseClass):
         self.replicas = -1
         self.service_id = False
         self.service_version = False
+        self.read_only = None
         self.restart_policy = None
         self.restart_policy_attempts = None
         self.restart_policy_delay = None
@@ -1103,6 +1110,7 @@ class DockerService(DockerBaseClass):
             'stop_signal': self.stop_signal,
             'limit_cpu': self.limit_cpu,
             'limit_memory': self.limit_memory,
+            'read_only': self.read_only,
             'reserve_cpu': self.reserve_cpu,
             'reserve_memory': self.reserve_memory,
             'restart_policy_delay': self.restart_policy_delay,
@@ -1307,6 +1315,7 @@ class DockerService(DockerBaseClass):
         s.stop_signal = ap['stop_signal']
         s.user = ap['user']
         s.working_dir = ap['working_dir']
+        s.read_only = ap['read_only']
 
         s.command = ap['command']
         if isinstance(s.command, string_types):
@@ -1482,6 +1491,8 @@ class DockerService(DockerBaseClass):
             differences.add('stop_grace_period', parameter=self.stop_grace_period, active=os.stop_grace_period)
         if self.has_publish_changed(os.publish):
             differences.add('publish', parameter=self.publish, active=os.publish)
+        if self.read_only is not None and self.read_only != os.read_only:
+            differences.add('read_only', parameter=self.read_only, active=os.read_only)
         if self.restart_policy is not None and self.restart_policy != os.restart_policy:
             differences.add('restart_policy', parameter=self.restart_policy, active=os.restart_policy)
         if self.restart_policy_attempts is not None and self.restart_policy_attempts != os.restart_policy_attempts:
@@ -1645,6 +1656,8 @@ class DockerService(DockerBaseClass):
             container_spec_args['hostname'] = self.hostname
         if self.hosts is not None:
             container_spec_args['hosts'] = self.hosts
+        if self.read_only is not None:
+            container_spec_args['read_only'] = self.read_only
         if self.stop_grace_period is not None:
             container_spec_args['stop_grace_period'] = self.stop_grace_period
         if self.stop_signal is not None:
@@ -1837,6 +1850,7 @@ class DockerServiceManager(object):
         ds.stop_grace_period = task_template_data['ContainerSpec'].get('StopGracePeriod')
         ds.stop_signal = task_template_data['ContainerSpec'].get('StopSignal')
         ds.working_dir = task_template_data['ContainerSpec'].get('Dir')
+        ds.read_only = task_template_data['ContainerSpec'].get('ReadOnly')
 
         healthcheck_data = task_template_data['ContainerSpec'].get('Healthcheck')
         if healthcheck_data:
@@ -2243,6 +2257,7 @@ def main():
         )),
         limit_cpu=dict(type='float', removed_in_version='2.12'),
         limit_memory=dict(type='str', removed_in_version='2.12'),
+        read_only=dict(type='bool'),
         reservations=dict(type='dict', options=dict(
             cpus=dict(type='float'),
             memory=dict(type='str'),
@@ -2309,6 +2324,7 @@ def main():
         update_order=dict(docker_py_version='2.7.0', docker_api_version='1.29'),
         stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
+        read_only=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         # specials
         publish_mode=dict(
             docker_py_version='3.0.0',
