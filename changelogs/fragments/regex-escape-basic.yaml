@@ -1,0 +1,8 @@
+minor_changes:
+- |
+    regex_escape - added re_type option to enable escaping POSIX BRE chars
+
+    This distinction is necessary because escaping non-special chars such as
+    '(' or '{' turns them into special chars, the opposite of what is intended
+    by using regex_escape on strings being passed as a Basic Regular
+    Expression.
