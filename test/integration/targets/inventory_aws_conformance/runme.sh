@@ -49,6 +49,7 @@ export AWS_SECRET_ACCESS_KEY=BAR
 
 cat << EOF > $OUTPUT_DIR/test.aws_ec2.yml
 plugin: aws_ec2
+cache: False
 regions:
     - us-east-1
 compose:

@@ -125,7 +125,7 @@ class Boto3Instance(BotoInstance):
         self.placement = {
             'availability_zone': [self.region]
         }
-        self._tags = [
+        self.Tags = [
             Tag(self.id, 'TAG1', 'TAG1val')
         ]
 
@@ -135,6 +135,12 @@ class Boto3Instance(BotoInstance):
             if attr.startswith('__'):
                 continue
             val = getattr(self, attr)
+
+            # lib/ansible/module_utils/ec2.py:ansible_dict_to_boto3_tag_list
+            if attr == 'Tags':
+                data['Tags'] = [{'Key': x.name, 'Value': x.value} for x in val]
+                continue
+
             if type(val) in [str, bool, unicode, int, float, dict, None]:
                 data[attr] = val
         return data
