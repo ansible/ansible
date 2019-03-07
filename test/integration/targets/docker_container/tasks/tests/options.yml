@@ -101,7 +101,7 @@
 - assert:
     that:
     - blkio_weight_1 is changed
-    - blkio_weight_2 is not changed
+    - blkio_weight_2 is not changed or 'Your kernel does not support Block I/O weight or the cgroup is not mounted. Weight discarded.' in blkio_weight_2.warnings
     - blkio_weight_3 is changed
 
 ####################################################################
