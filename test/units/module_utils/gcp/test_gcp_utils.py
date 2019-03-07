@@ -16,7 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from units.compat import unittest
-from ansible.module_utils.gcp_utils import GcpRequest, navigate_hash, remove_nones_from_dict
+from ansible.module_utils.gcp_utils import (GcpRequest,
+                                            navigate_hash,
+                                            remove_nones_from_dict,
+                                            replace_resource_dict)
+
+
+class ReplaceResourceDictTestCase(unittest.TestCase):
+    def test_given_dict(self):
+        value = {
+            'selfLink': 'value'
+        }
+        self.assertEquals(replace_resource_dict(value, 'selfLink'), value['selfLink'])
+
+    def test_given_array(self):
+        value = {
+            'selfLink': 'value'
+        }
+        self.assertEquals(replace_resource_dict([value] * 3, 'selfLink'), [value['selfLink']] * 3)
 
 
 class NavigateHashTestCase(unittest.TestCase):
