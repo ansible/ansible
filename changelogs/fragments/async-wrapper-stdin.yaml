@@ -1,0 +1,2 @@
+bugfixes:
+- async_wrapper - Allocate an explicit stdin (https://github.com/ansible/ansible/issues/50758)
