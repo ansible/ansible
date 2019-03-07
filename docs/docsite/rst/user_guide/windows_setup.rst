@@ -4,7 +4,7 @@ Setting up a Windows Host
 =========================
 This document discusses the setup that is required before Ansible can communicate with a Microsoft Windows host.
 
-.. contents:: Topics
+.. contents::
    :local:
 
 Host Requirements
@@ -457,24 +457,28 @@ Sometimes an installer may restart the WinRM or HTTP service and cause this erro
 best way to deal with this is to use ``win_psexec`` from another
 Windows host.
 
-SSH Setup
-`````````
+Windows SSH Setup
+`````````````````
 Ansible 2.8 has added experimental support for using SSH to connect to a
 Windows host.
 
 .. warning::
+    Use this feature at your own risk!
     Using SSH with Windows is experimental, the implementation may make
     backwards incompatible changes in feature releases. The server side
-    components can be unreliable dependending on the version that is installed,
-    use it at your own risk.
+    components can be unreliable depending on the version that is installed.
 
 Installing Win32-OpenSSH
 ------------------------
 The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
-service on the Windows host. This can be done in the following ways;
+service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows
+capability but currently the version that is installed through this process is
+too old to work with Ansible. To install ``Win32-OpenSSH`` for use with
+Ansible, select one of these three installation options:
 
-* Follow the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
-  from Microsoft to manually install the service.
+* Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
+  from Microsoft.
+
 * Use ``win_chocolatey`` to install the service::
 
     - name: install the Win32-OpenSSH service
@@ -496,20 +500,16 @@ service on the Windows host. This can be done in the following ways;
       - role: jborean93.win_openssh
         opt_openssh_setup_service: True
 
-Microsoft do offer a way to install the OpenSSH service through a Windows
-capability but currently the version that is installed through this process is
-too old to work with Ansible. The three options above will install the OpenSSH
-service based on the latest GitHub releases.
-
-.. note:: The Win32-OpenSSH port is still a beta product and is constantly
-    being updated to include new features and bugfixes. If using SSH as a
-    connection option for Windows. It is highly recommend you install the
+.. note:: ``Win32-OpenSSH`` is still a beta product and is constantly
+    being updated to include new features and bugfixes. If you are using SSH as
+    a connection option for Windows, it is highly recommend you install the
     latest release from one of the 3 methods above.
 
-By default the service will use ``cmd.exe`` as the default shell but it can be
-configured to use a different shell. The default shell is defined in a registry
-property which can be set by an Ansible task. The following tasks show how this
-can be configured in an Ansible playbook::
+Configuring the Win32-OpenSSH shell
+-----------------------------------
+
+By default ``Win32-OpenSSH`` will use ``cmd.exe`` as a shell. To configure a
+different shell, use an Ansible task to define the registry setting::
 
     - name: set the default shell to PowerShell
       win_regedit:
@@ -519,45 +519,45 @@ can be configured in an Ansible playbook::
         type: string
         state: present
 
-    # Or if you wish to keep the defaults this can revert the settings back to cmd
+    # Or revert the settings back to the default, cmd
     - name: set the default shell to cmd
       win_regedit:
         path: HKLM:\SOFTWARE\OpenSSH
         name: DefaultShell
         state: absent
 
-SSH Authentication
-------------------
-Currently SSH authentication with Windows can use both a plaintext password and
-SSH public key authentication. Setting up authentication is the same as a
-Linux host where an authorized_key file is set up in the user's ``.ssh`` folder
-in their user profile directory. This can be configured in the ``sshd_config``
-file used by the SSH service but this is outside the scope of Ansible.
+Win32-OpenSSH Authentication
+----------------------------
+Win32-OpenSSH authentication with Windows is similar to SSH
+authentication on Unix/Linux hosts. You can use a plaintext password or
+SSH public key authentication, add public keys to an ``authorized_key`` file
+in the ``.ssh`` folder of the user's profile directory, and configure the
+service using the ``sshd_config`` file used by the SSH service as you would on
+a Unix/Linux host.
 
-When using SSH key authentication, the remote session won't have access to the
+When using SSH key authentication with Ansible, the remote session won't have access to the
 user's credentials and will fail when attempting to access a network resource.
 This is also known as the double-hop or credential delegation issue. There are
-a few ways to work around this issue;
+two ways to work around this issue:
 
 * Use plaintext password auth by setting ``ansible_password``
 * Use ``become`` on the task with the credentials of the user that needs access to the remote resource
 
-Ansible Configuration
----------------------
-Configuring Ansible to use SSH requires 2 connection variables to be set. These
-variables are;
+Configuring Ansible for SSH on Windows
+--------------------------------------
+To configure Ansible to use SSH for Windows hosts, you must set two connection variables:
 
-* ``ansible_connection: ssh``
-* ``ansible_shell_type: cmd/powershell``
+* set ``ansible_connection`` to ``ssh``
+* set ``ansible_shell_type`` to ``cmd`` or ``powershell``
 
 The ``ansible_shell_type`` variable should reflect the ``DefaultShell``
 configured on the Windows host. Set to ``cmd`` for the default shell or set to
 ``powershell`` if the ``DefaultShell`` has been changed to PowerShell.
 
-Known Issues
-------------
-Using SSH with Windows is experimental, there will be issues that come up and
-this list documents some of the already known issues.
+Known issues with SSH on Windows
+--------------------------------
+Using SSH with Windows is experimental, and we expect to uncover more issues.
+Here are the known ones:
 
 * Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type
 * While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file
@@ -565,11 +565,9 @@ this list documents some of the already known issues.
 
 .. seealso::
 
-   :doc:`index`
-       The documentation index
-   :doc:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices advice
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
