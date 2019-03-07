@@ -2,10 +2,7 @@
 #
 # Copyright: (c) 2019, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-try:
-    import mock
-except ImportError:
-    from unittest import mock
+from units.compat import mock
 
 
 def test_virt_net_recreate(virt_net_obj, dummy_libvirt):
