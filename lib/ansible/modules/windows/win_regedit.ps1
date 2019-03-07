@@ -8,8 +8,6 @@
 #Requires -Module Ansible.ModuleUtils.Legacy
 #Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
-$ErrorActionPreference = "Stop"
-
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
 $diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
@@ -120,10 +118,12 @@ if ($path -notmatch "^HK(CC|CR|CU|LM|U):\\") {
     Fail-Json $result "path: $path is not a valid powershell path, see module documentation for examples."
 }
 
-# Make sure '/' is swapped to '\' if it's being used as a path separator.
+# Add a warning if the path does not contains a \ and is not the leaf path
 $registry_path = (Split-Path -Path $path -NoQualifier).Substring(1)  # removes the hive: and leading \
 $registry_leaf = Split-Path -Path $path -Leaf
 if ($registry_path -ne $registry_leaf -and -not $registry_path.Contains('\')) {
+    $msg = "path is not using '\' as a separator, support for '/' as a separator will be removed in a future Ansible version"
+    Add-DeprecationWarning -obj $result -message $msg -version 2.12
     $registry_path = $registry_path.Replace('/', '\')
 }
 

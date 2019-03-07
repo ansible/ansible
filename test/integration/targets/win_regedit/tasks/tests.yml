@@ -1,4 +1,17 @@
 ---
+- name: check warning is fired if path with / as separators is used
+  win_regedit:
+    path: HKLM:\SOFTWARE/Microsoft
+    state: present
+  register: forward_separator_warn
+
+- name: assert warning is fired if / is used as a separator
+  assert:
+    that:
+    - forward_separator_warn.deprecations|length == 1
+    - forward_separator_warn.deprecations[0].msg == "path is not using '\\' as a separator, support for '/' as a separator will be removed in a future Ansible version"
+    - forward_separator_warn.deprecations[0].version == 2.12
+
 - name: fail run win_regedit with larger dword
   win_regedit:
     path: '{{test_win_regedit_local_key}}'
