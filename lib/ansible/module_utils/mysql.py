@@ -34,7 +34,8 @@ try:
     _mysql_cursor_param = 'cursor'
 except ImportError:
     try:
-        import MySQLdb as mysql_driver, MySQLdb.cursors
+        import MySQLdb as mysql_driver
+        import MySQLdb.cursors
         _mysql_cursor_param = 'cursorclass'
     except ImportError:
         mysql_driver = None
