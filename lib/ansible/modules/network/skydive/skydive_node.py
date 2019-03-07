@@ -20,13 +20,7 @@ author:
   - "Sumit Jaiswal (@sjaiswal)"
 short_description: Module which add nodes to Skydive topology
 description:
-  - This module handles adding node to the Skydive topology. The Gremlin
-    expression is continuously evaluated which means that it is
-    possible to define a capture on nodes that do not exist yet.
-  - It is useful when you want to start a capture on all OpenvSwitch
-    whatever the number of Skydive agents you will start.
-  - While starting the capture, user can specify the capture name,
-    capture description and capture type optionally.
+  - This module handles adding node to the Skydive topology.
 requirements:
   - skydive-client
 extends_documentation_fragment: skydive
@@ -46,7 +40,7 @@ options:
   seed:
     description:
       - used to generate the UUID of the node
-    default: <name>:<type>
+    default: ""
   metadata:
     description:
       - To define metadata for the node.
@@ -76,13 +70,26 @@ EXAMPLES = """
       username: admin
       password: admin
 
+- name: update tor node
+  skydive_node:
+    name: TOR
+    node_type: host
+    seed: TOR1
+    metadata:
+      Model: Cisco 3400
+    state: update
+    provider:
+      endpoint: localhost:8082
+      username: admin
+      password: admin
+
 - name: Delete the tor node
   skydive_node:
     name: TOR
-    node_type: fabric
+    node_type: host
     seed: TOR1
     metadata:
-      Model: Cisco 5300
+      Model: Cisco 3400
     state: absent
     provider:
       endpoint: localhost:8082
