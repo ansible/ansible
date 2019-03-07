@@ -6,7 +6,6 @@
    azure_rm_storageaccount:
        resource_group: "{{ resource_group }}" 
        name: "invalid_char$"
-       state: present
    register: invalid_name     
    ignore_errors: yes  
 

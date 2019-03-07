@@ -3,7 +3,6 @@
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}"
      resource_group: "{{ resource_group }}"
      location: eastus2
-     state: present
      admin_user_enabled: true
      sku: Premium
      tags:
@@ -42,7 +41,6 @@
      name: "acr{{ resource_group | hash('md5') | truncate(7, True, '') }}sec"
      resource_group: "{{ resource_group }}"
      location: eastus2
-     state: present
      admin_user_enabled: false
      sku: Premium
      tags:

@@ -37,7 +37,6 @@
        resource_group: "{{ resource_group }}"
        name: "invalid_char$"
        disk_size_gb: 1
-       state: present
    register: output
    ignore_errors: yes
    check_mode: no

@@ -107,7 +107,6 @@ EXAMPLES = '''
 # Create or update a template deployment based on uris using parameter and template links
 - name: Create Azure Deploy
   azure_rm_deployment:
-    state: present
     resource_group_name: dev-ops-cle
     template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
     parameters_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.parameters.json'
@@ -128,7 +127,6 @@ EXAMPLES = '''
 
     - name: Create Azure Deploy
       azure_rm_deployment:
-        state: present
         subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         resource_group_name: dev-ops-cle
         parameters:
@@ -169,7 +167,6 @@ EXAMPLES = '''
 # Deploy an Azure WebApp running a hello world'ish node app
 - name: Create Azure WebApp Deployment at http://devopscleweb.azurewebsites.net/hello.js
   azure_rm_deployment:
-    state: present
     subscription_id: cbbdaed0-fea9-4693-bf0c-d446ac93c030
     resource_group_name: dev-ops-cle-webapp
     parameters:
@@ -188,7 +185,6 @@ EXAMPLES = '''
 # Create or update a template deployment based on an inline template and parameters
 - name: Create Azure Deploy
   azure_rm_deployment:
-    state: present
     subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     resource_group_name: dev-ops-cle
 
