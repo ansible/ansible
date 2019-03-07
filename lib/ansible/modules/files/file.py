@@ -181,6 +181,12 @@ EXAMPLES = r'''
     state: file
     modification_time: now
     access_time: now
+
+- name: Set access time based on seconds from epoch value
+  file:
+    path: /etc/another_file
+    state: file
+    access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
 '''
 RETURN = r'''
 
