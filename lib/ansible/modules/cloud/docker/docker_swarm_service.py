@@ -673,13 +673,13 @@ swarm_service:
   returned: always
   type: dict
   description:
-  - Dictionary of variables representing the current state of the service.
-    Matches the module parameters format.
-  - Note that facts are not part of registered vars but accessible directly.
-  - Note that before Ansible 2.7.9, the return variable was documented as C(ansible_swarm_service),
-    while the module actually returned a variable called C(ansible_docker_service). The variable
-    was renamed to C(swarm_service) in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0.
-    In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
+    - Dictionary of variables representing the current state of the service.
+      Matches the module parameters format.
+    - Note that facts are not part of registered vars but accessible directly.
+    - Note that before Ansible 2.7.9, the return variable was documented as C(ansible_swarm_service),
+      while the module actually returned a variable called C(ansible_docker_service). The variable
+      was renamed to C(swarm_service) in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0.
+      In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
   sample: '{
     "args": [
       "3600"
@@ -770,14 +770,13 @@ swarm_service:
 changes:
   returned: always
   description:
-  - List of changed service attributes if a service has been altered,
-    [] otherwise
+    - List of changed service attributes if a service has been altered, [] otherwise.
   type: list
   sample: ['container_labels', 'replicas']
 rebuilt:
   returned: always
   description:
-  - True if the service has been recreated (removed and created)
+    - True if the service has been recreated (removed and created)
   type: bool
   sample: True
 '''
