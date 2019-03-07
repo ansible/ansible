@@ -514,7 +514,7 @@ class ACIModule(object):
             is_single_parent = None
             search_classes = set()
 
-            while current_parent_class is not 'uni':
+            while current_parent_class != 'uni':
                 parent_object = self._deep_url_parent_object(
                     parent_objects=parent_objects, parent_class=current_parent_class)
 
@@ -531,7 +531,7 @@ class ACIModule(object):
                         is_single_parent = False
                     is_first_parent = False
 
-                    if parent_parent_class is not 'uni':
+                    if parent_parent_class != 'uni':
                         search_classes.add(parent_class)
 
                     if parent_module_object is not None:
@@ -555,7 +555,8 @@ class ACIModule(object):
 
                     current_parent_class = parent_parent_class
                 else:
-                    raise ValueError("There appears to be a break in the URL chain referencing parent_class '{0}'. Make sure each parent_class is referencing a valid parent object".format(current_parent_class))
+                    raise ValueError("There appears to be a break in the URL chain referencing parent_class '{0}'. Make sure each parent_class is referencing a valid parent object".format(
+                        current_parent_class))
 
                 if not has_target_query_difference and not has_target_query_called:
                     if has_target_query is not has_target_query_compare:
