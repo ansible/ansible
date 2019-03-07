@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.six import string_types
 
 
 def count_terms(terms, module_parameters):
@@ -92,5 +93,35 @@ def check_required_together(terms, module_parameters):
         if len(non_zero) > 0:
             if 0 in counts:
                 result.append(term)
+
+    return result
+
+
+def check_required_by(requirements, module_parameters):
+    """For each key in requirements, check the corresponding list to see if they
+    exist in module_parameters. Accepts a single string or list of values for
+    each key.
+
+    :arg requirements: Dictionary of requirements
+    :arg module_parameters: Dictionary of module parameters
+
+    :returns: Dictionary of required terms with a list of missing terms for
+        each key
+    """
+
+    result = {}
+    if requirements is None:
+        return result
+
+    for (key, value) in requirements.items():
+        if key not in module_parameters or module_parameters[key] is None:
+            continue
+        result[key] = []
+        # Support strings (single-item lists)
+        if isinstance(value, string_types):
+            value = [value]
+        for required in value:
+            if required not in module_parameters or module_parameters[required] is None:
+                result[key].append(required)
 
     return result

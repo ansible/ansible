@@ -173,6 +173,7 @@ from ansible.module_utils.six import (
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     count_terms,
+    check_required_by,
     check_mutually_exclusive,
     check_required_one_of,
     check_required_together,
@@ -1645,16 +1646,9 @@ class AnsibleModule(object):
             return
         if param is None:
             param = self.params
-        for (key, value) in spec.items():
-            if key not in param or param[key] is None:
-                continue
-            missing = []
-            # Support strings (single-item lists)
-            if isinstance(value, string_types):
-                value = [value, ]
-            for required in value:
-                if required not in param or param[required] is None:
-                    missing.append(required)
+
+        check_required_by_results = check_required_by(spec, param)
+        for key, missing in check_required_by_results.items():
             if len(missing) > 0:
                 self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
 
