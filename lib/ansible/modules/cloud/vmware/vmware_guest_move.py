@@ -199,7 +199,7 @@ def main():
             folder = search_index.FindByInventoryPath(
                 module.params['dest_folder'])
             if folder is None:
-                module.fail_json(msg="Folder name and/or path does not exist")    
+                module.fail_json(msg="Folder name and/or path does not exist")
             vm_to_move = search_index.FindByInventoryPath(vm_full)
             if vm_path != module.params['dest_folder'].lstrip('/'):
                 move_task = folder.MoveInto([vm_to_move])
