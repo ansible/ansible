@@ -84,7 +84,7 @@ Use the following command to list all the available targets::
 
 .. note:: Bash users
 
-   If you use ``Bash`` with ``argcomplete``, obtain a full list by doing: ``test/runner/ansible-test integration <tab><tab>``
+   If you use ``bash`` with ``argcomplete``, obtain a full list by doing: ``test/runner/ansible-test integration <tab><tab>``
 
 Destructive Tests
 =================
