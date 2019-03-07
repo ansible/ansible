@@ -8,6 +8,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # All rights reserved. Dell, EMC, and other trademarks are trademarks of Dell Inc. or its subsidiaries.
+# Other trademarks may be trademarks of their respective owners.
 #
 
 
@@ -272,7 +273,7 @@ def _check_duplicate_device_id(device_id_list, service_tag_dict):
         common_val = list(set(device_id_represents_int) & set(service_tag_dict.keys()))
         for device_id in common_val:
             device_fact_error_report.update(
-                {service_tag_dict[device_id]: "Duplicate report of device_id: {}".format(device_id)})
+                {service_tag_dict[device_id]: "Duplicate report of device_id: {0}".format(device_id)})
             del service_tag_dict[device_id]
 
 
@@ -348,7 +349,7 @@ def _check_mutually_inclusive_arguments(val, module_params, required_args):
     system_query_options_param = module_params.get("system_query_options")
     if system_query_options_param is None or (system_query_options_param is not None and not any(
             system_query_options_param.get(qualifier) for qualifier in required_args)):
-        raise ValueError("One of the following {} is required for {}".format(required_args, val))
+        raise ValueError("One of the following {0} is required for {1}".format(required_args, val))
 
 
 def _validate_inputs(module_params):

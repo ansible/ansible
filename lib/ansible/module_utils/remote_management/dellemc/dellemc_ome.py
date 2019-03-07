@@ -70,14 +70,14 @@ class RestOME(object):
 
     def _get_base_url(self):
         """builds base url"""
-        return '{}://{}:{}/api'.format(self.protocol, self.hostname, self.port)
+        return '{0}://{1}:{2}/api'.format(self.protocol, self.hostname, self.port)
 
     def _build_url(self, path, query_param=None):
         """builds complete url"""
         url = path
         base_uri = self._get_base_url()
         if path:
-            url = '{}/{}'.format(base_uri, path)
+            url = '{0}/{1}'.format(base_uri, path)
         if query_param:
             url += "?" + urlencode(query_param)
         return url
