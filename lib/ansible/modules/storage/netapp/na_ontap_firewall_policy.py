@@ -166,7 +166,7 @@ class NetAppONTAPFirewallPolicy(object):
             if sys.version_info[0] >= 3:
                 ip_addr = str(ip)
             else:
-                ip_addr = unicode(ip) # pylint: disable=undefined-variable
+                ip_addr = unicode(ip)  # pylint: disable=undefined-variable
             # get network address from netmask, throw exception if address is not a network address
             try:
                 ipaddress.ip_network(ip_addr)
