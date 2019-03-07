@@ -1099,6 +1099,7 @@ class DockerService(DockerBaseClass):
             'replicas': self.replicas,
             'endpoint_mode': self.endpoint_mode,
             'restart_policy': self.restart_policy,
+            'secrets': self.secrets,
             'stop_grace_period': self.stop_grace_period,
             'stop_signal': self.stop_signal,
             'limit_cpu': self.limit_cpu,
@@ -1114,6 +1115,7 @@ class DockerService(DockerBaseClass):
             'update_monitor': self.update_monitor,
             'update_max_failure_ratio': self.update_max_failure_ratio,
             'update_order': self.update_order,
+            'user': self.user,
             'working_dir': self.working_dir,
         }
 
