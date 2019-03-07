@@ -14,21 +14,21 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: rhsm_repository_release
-short_description: Set or Unset RHSM Repository Release version
+module: rhsm_release
+short_description: Set or Unset RHSM Release version
 version_added: '2.8'
 description:
   - Sets or unsets the release version used by RHSM repositories.
 notes:
   - This module will fail on an unregistered system.
     Use the C(redhat_subscription) module to register a system
-    prior to setting the RHSM repository release.
+    prior to setting the RHSM release.
 requirements:
   - Red Hat Enterprise Linux 6+ with subscription-manager installed
 options:
   release:
     description:
-      - RHSM repository release version to use (use null to unset)
+      - RHSM release version to use (use null to unset)
     required: true
 author:
   - Sean Myers (@seandst)
@@ -36,24 +36,24 @@ author:
 
 EXAMPLES = '''
 # Set release version to 7.1
-- name: Set RHSM repository release version
-  rhsm_repository_release:
+- name: Set RHSM release version
+  rhsm_release:
       release: "7.1"
 
 # Set release version to 6Server
-- name: Set RHSM repository release version
-  rhsm_repository_release:
+- name: Set RHSM release version
+  rhsm_release:
       release: "6Server"
 
 # Unset release version
-- name: Unset RHSM repository release release
-  rhsm_repository_release:
+- name: Unset RHSM release release
+  rhsm_release:
       release: null
 '''
 
 RETURN = '''
 current_release:
-  description: The current RHSM repository release version value
+  description: The current RHSM release version value
   returned: success
   type: str
 '''
