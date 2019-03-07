@@ -277,7 +277,7 @@ options:
           hwmodel:
             description:
               - Hardware model
-          hwtype
+          hwtype:
             description:
               - Hardware type.
       licenses:
