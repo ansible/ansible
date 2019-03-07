@@ -4,7 +4,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-from ..six import BytesIO
+from ansible.module_utils.six import BytesIO
+
 
 if not hasattr(BytesIO, '__enter__') or not hasattr(BytesIO, '__exit__'):
     class BytesIO(BytesIO):
