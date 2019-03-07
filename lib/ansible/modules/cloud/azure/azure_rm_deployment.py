@@ -440,7 +440,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
         self.parameters_link = None
         self.location = None
         self.deployment_mode = None
-        self.deployment_name = None
+        self.name = None
         self.wait_for_deployment_completion = None
         self.wait_for_deployment_polling_period = None
         self.tags = None
@@ -465,7 +465,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             deployment = self.deploy_template()
             if deployment is None:
                 self.results['deployment'] = dict(
-                    name=self.deployment_name,
+                    name=self.name,
                     group_name=self.resource_group,
                     id=None,
                     outputs=None,
@@ -536,7 +536,7 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                       (exc.status_code, exc.message))
         try:
             result = self.rm_client.deployments.create_or_update(self.resource_group,
-                                                                 self.deployment_name,
+                                                                 self.name,
                                                                  deploy_parameter)
 
             deployment_result = None
@@ -545,16 +545,16 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                 while deployment_result.properties is None or deployment_result.properties.provisioning_state not in ['Canceled', 'Failed', 'Deleted',
                                                                                                                       'Succeeded']:
                     time.sleep(self.wait_for_deployment_polling_period)
-                    deployment_result = self.rm_client.deployments.get(self.resource_group, self.deployment_name)
+                    deployment_result = self.rm_client.deployments.get(self.resource_group, self.name)
         except CloudError as exc:
-            failed_deployment_operations = self._get_failed_deployment_operations(self.deployment_name)
+            failed_deployment_operations = self._get_failed_deployment_operations(self.name)
             self.log("Deployment failed %s: %s" % (exc.status_code, exc.message))
             self.fail("Deployment failed with status code: %s and message: %s" % (exc.status_code, exc.message),
                       failed_deployment_operations=failed_deployment_operations)
 
         if self.wait_for_deployment_completion and deployment_result.properties.provisioning_state != 'Succeeded':
             self.log("provisioning state: %s" % deployment_result.properties.provisioning_state)
-            failed_deployment_operations = self._get_failed_deployment_operations(self.deployment_name)
+            failed_deployment_operations = self._get_failed_deployment_operations(self.name)
             self.fail('Deployment failed. Deployment id: %s' % deployment_result.id,
                       failed_deployment_operations=failed_deployment_operations)
 
@@ -592,13 +592,13 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
                     new_operations += new_nested_operations
         return new_operations
 
-    def _get_failed_deployment_operations(self, deployment_name):
+    def _get_failed_deployment_operations(self, name):
         results = []
         # time.sleep(15) # there is a race condition between when we ask for deployment status and when the
         #               # status is available.
 
         try:
-            operations = self.rm_client.deployment_operations.list(self.resource_group, deployment_name)
+            operations = self.rm_client.deployment_operations.list(self.resource_group, name)
         except CloudError as exc:
             self.fail("Get deployment failed with status code: %s and message: %s" %
                       (exc.status_code, exc.message))
