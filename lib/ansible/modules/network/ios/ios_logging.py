@@ -274,9 +274,7 @@ def map_config_to_obj(module):
     data = get_config(module, flags=['| include logging'])
 
     for line in data.split('\n'):
-        if line.startswith("no "):  # 'no logging console' or similar
-            continue  # we do not have this setting, it is disabled
-        match = re.search(r'logging (\S+)', line, re.M)
+        match = re.search(r'^logging (\S+)', line, re.M)
         if match:
             if match.group(1) in dest_group:
                 dest = match.group(1)
