@@ -72,7 +72,7 @@ def main():
 
     for macro in macros:
         if macro.startswith('team_'):
-            team_macros.append('$'+macro)
+            team_macros.append('$' + macro)
         else:
             path_macros.append(macro)
 
@@ -86,13 +86,12 @@ def main():
         #                      - fred
         if isinstance(botmeta.get('files', {}).get(file, ''), str):
             maintainers = botmeta.get('files', {}).get(file, '').split(' ')
-            validate_maintainers(maintainers, team_macros, path, file)
         elif botmeta.get('files', {}).get(file, '').get('maintainers', ''):
             if isinstance(botmeta.get('files', {}).get(file, '').get('maintainers', ''), str):
                 maintainers = botmeta.get('files', {}).get(file, '').get('maintainers', '').split(' ')
             if isinstance(botmeta.get('files', {}).get(file, '').get('maintainers', ''), list):
                 maintainers = botmeta.get('files', {}).get(file, '').get('maintainers', '')
-            validate_maintainers(maintainers, team_macros, path, file)
+        validate_maintainers(maintainers, team_macros, path, file)
 
         for macro in path_macros:
             file = file.replace('$' + macro, botmeta.get('macros', {}).get(macro, ''))
@@ -101,6 +100,7 @@ def main():
             # https://github.com/ansible/ansibullbot/pull/1023
             if not glob.glob('%s*' % file):
                 print("%s:%d:%d: Can't find '%s.*' in this branch" % (path, 0, 0, file))
+
 
 def validate_maintainers(maintainers, team_macros, path, file):
     """Ensure any mentioned `$team_` entries exist"""
