@@ -219,7 +219,7 @@ host.
 
    :ref:`windows`
        The Windows documentation index
-   :ref:`playbooks`
+   :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
        Best practices advice
