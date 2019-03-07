@@ -137,6 +137,6 @@ class TaskResult:
                     del result._result[remove_key]
 
             # remove almost ALL internal keys, keep ones relevant to callback
-            strip_internal_keys(result._result, exceptions=('_ansible_verbose_always', '_ansible_item_label', '_ansible_no_log'))
+            strip_internal_keys(result._result, exceptions=('_ansible_verbose_always', '_ansible_item_label', '_ansible_no_log', '_ansible_verbose_override'))
 
         return result
