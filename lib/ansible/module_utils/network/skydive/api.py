@@ -108,12 +108,11 @@ class skydive_inject_protocol(object):
                 metadata["Name"] = params["name"]
                 metadata["Type"] = params["node_type"]
                 seed = params["seed"]
-                if seed:
-                    if len(seed) == 0:
-                        seed = "%s:%s" % (params["name"], params["type"])
+                if not seed:
+                    seed = "%s:%s" % (params["name"], params["type"])
                 if module.params['state'] == 'present' or module.params['state'] == 'update':
                     uid = str(uuid.uuid5(uuid.NAMESPACE_OID, seed))
-                    node = Node(str(uid), host, metadata=metadata)
+                    node = Node(uid, host, metadata=metadata)
                     if module.params['state'] == 'present':
                         msg = WSMessage("Graph", NodeAddedMsgType, node)
                     else:
@@ -137,7 +136,7 @@ class skydive_inject_protocol(object):
                     edge = Edge(uid, host, node1, node2, metadata=metadata)
                     msg = WSMessage("Graph", EdgeDeletedMsgType, edge)
 
-            WSClientDefaultProtocol.sendWSMessage(msg)
+            self.sendWSMessage(msg)
             if uid:
                 result["UUID"] = uid
             result["changed"] = True
@@ -145,7 +144,7 @@ class skydive_inject_protocol(object):
             module.fail_json(
                 msg='Error during topology update %s' % e, **result)
         finally:
-            WSClientDefaultProtocol.stop()
+            self.stop()
 
 
 class skydive_wsclient(skydive_client_check):
@@ -153,6 +152,9 @@ class skydive_wsclient(skydive_client_check):
 
     def __init__(self, module, **kwargs):
         super(skydive_wsclient, self).__init__(**kwargs)
+
+        class skydive_full_inject_protocol(skydive_inject_protocol, WSClientDefaultProtocol):
+            pass
         kwargs['scheme'] = "ws"
         if 'ssl' in kwargs:
             if kwargs['ssl']:
@@ -164,7 +166,9 @@ class skydive_wsclient(skydive_client_check):
         if "node_type" in module.params:
             self.wsclient_object = WSClient("ansible-" + str(os.getpid()) + "-" + module.params['host'],
                                             "%s://%s/ws/publisher" % (scheme, kwargs["endpoint"]),
-                                            protocol=skydive_inject_protocol, persistent=True,
+                                            protocol=type('skydive_full_inject_protocol', (skydive_inject_protocol,
+                                                                                           WSClientDefaultProtocol), dict()),
+                                            persistent=True,
                                             insecure=kwargs["insecure"],
                                             username=kwargs["username"],
                                             password=kwargs["password"],
@@ -174,7 +178,9 @@ class skydive_wsclient(skydive_client_check):
         elif "relation_type" in module.params:
             self.wsclient_object = WSClient("ansible-" + str(os.getpid()) + "-" + module.params['host'],
                                             "%s://%s/ws/publisher" % (scheme, kwargs["endpoint"]),
-                                            protocol=skydive_inject_protocol, persistent=True,
+                                            protocol=type('skydive_full_inject_protocol', (skydive_inject_protocol,
+                                                                                           WSClientDefaultProtocol), dict()),
+                                            persistent=True,
                                             insecure=kwargs["insecure"],
                                             username=kwargs["username"],
                                             password=kwargs["password"],
@@ -292,7 +298,8 @@ class skydive_node(skydive_wsclient, skydive_restclient):
 
     def run(self):
         try:
-            lookup_query = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}')".format(self.module.params['name'])
+            lookup_query = SKYDIVE_GREMLIN_QUERY + "('Name', '{0}', 'Type', '{1}')".format(self.module.params['name'],
+                                                                                           self.module.params['node_type'])
             node_exists = self.restclient_object.lookup_nodes(lookup_query)
 
             if not node_exists and self.module.params['state'] == 'present':
@@ -322,13 +329,12 @@ class skydive_edge(skydive_wsclient, skydive_restclient):
     def run(self):
         try:
             edge_exists = False
-            edge_query = SKYDIVE_GREMLIN_EDGE_QUERY + "('RelationType', '{0}')".format(self.module.params['relation_type'])
+            edge_query = SKYDIVE_GREMLIN_EDGE_QUERY + "('Parent', '{0}', 'Child', '{1}')".format(self.module.params['parent_node'],
+                                                                                                 self.module.params['child_node'])
             query_result = self.restclient_object.lookup_edges(edge_query)
-            for each in query_result:
-                if each.__dict__['parent'] == self.module.params['parent_node'] and each.__dict__['child'] == self.module.params['child_node']:
-                    query_result = each.__dict__
-                    edge_exists = True
-                    break
+            if query_result:
+                query_result = query_result[0].__dict__
+                edge_exists = True
 
             if not edge_exists and self.module.params['state'] == 'present':
                 self.wsclient_object.connect()
