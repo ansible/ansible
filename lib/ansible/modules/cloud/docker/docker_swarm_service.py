@@ -2205,8 +2205,8 @@ def main():
         publish=dict(type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
-            protocol=dict(type='str', default='tcp', choices=('tcp', 'udp')),
-            mode=dict(type='str', choices=('ingress', 'host')),
+            protocol=dict(type='str', default='tcp', choices=['tcp', 'udp']),
+            mode=dict(type='str', choices=['ingress', 'host']),
         )),
         placement=dict(type='dict', options=dict(
             constraints=dict(type='list'),
@@ -2231,7 +2231,7 @@ def main():
         mode=dict(
             type='str',
             default='replicated',
-            choices=('replicated', 'global')
+            choices=['replicated', 'global']
         ),
         replicas=dict(type='int', default=-1),
         endpoint_mode=dict(type='str', choices=['vip', 'dnsrr']),
