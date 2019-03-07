@@ -236,7 +236,8 @@ class AzureRMPublicIPAddress(AzureRMModuleBase):
             self.log("PIP {0} exists".format(self.name))
             if self.state == 'present':
                 results = pip_to_dict(pip)
-                if self.domain_name != results['dns_settings'].get('domain_name_label'):
+                domain_lable = results['dns_settings'].get('domain_name_label')
+                if self.domain_name is not None and ((self.domain_name or domain_lable) and self.domain_name != domain_lable):
                     self.log('CHANGED: domain_name_label')
                     changed = True
                     results['dns_settings']['domain_name_label'] = self.domain_name
