@@ -356,7 +356,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_1
 
@@ -365,7 +365,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 0
+    cpuset_cpus: "0"
     state: started
   register: cpuset_cpus_2
 
@@ -374,7 +374,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_cpus: 1
+    cpuset_cpus: "1"
     state: started
     force_kill: yes
   # This will fail if the system the test is run on doesn't have
@@ -404,7 +404,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_1
 
@@ -413,7 +413,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 0
+    cpuset_mems: "0"
     state: started
   register: cpuset_mems_2
 
@@ -422,7 +422,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    cpuset_mems: 1
+    cpuset_mems: "1"
     state: started
     force_kill: yes
   # This will fail if the system the test is run on doesn't have
@@ -1355,8 +1355,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 5678
+    - "1234"
+    - "5678"
   register: exposed_ports_1
 
 - name: exposed_ports (idempotency)
@@ -1366,8 +1366,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 5678
-    - 1234
+    - "5678"
+    - "1234"
   register: exposed_ports_2
 
 - name: exposed_ports (less ports)
@@ -1377,7 +1377,7 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
+    - "1234"
   register: exposed_ports_3
 
 - name: exposed_ports (more ports)
@@ -1387,8 +1387,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 1234
-    - 1235
+    - "1234"
+    - "1235"
     force_kill: yes
   register: exposed_ports_4
 
@@ -1423,8 +1423,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 5678
+    - "1234"
+    - "5678"
   register: groups_1
 
 - name: groups (idempotency)
@@ -1434,8 +1434,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 5678
-    - 1234
+    - "5678"
+    - "1234"
   register: groups_2
 
 - name: groups (less groups)
@@ -1445,7 +1445,7 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
+    - "1234"
   register: groups_3
 
 - name: groups (more groups)
@@ -1455,8 +1455,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1234
-    - 2345
+    - "1234"
+    - "2345"
     force_kill: yes
   register: groups_4
 
@@ -3413,7 +3413,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_1
 
@@ -3422,7 +3422,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 30
+    stop_signal: "30"
     state: started
   register: stop_signal_2
 
@@ -3431,7 +3431,7 @@
     image: alpine:3.8
     command: '/bin/sh -c "sleep 10m"'
     name: "{{ cname }}"
-    stop_signal: 9
+    stop_signal: "9"
     state: started
     force_kill: yes
   register: stop_signal_3
