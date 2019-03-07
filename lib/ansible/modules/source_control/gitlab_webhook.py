@@ -55,12 +55,12 @@ options:
     description:
       - Defines how to proceed when hook_id is omitted
     type: bool
-    default: 'yes'
-  enable_ssl_verification:
+    default: yes
+  hook_ssl_verify:
     description:
       - Enable SSL verification of webhook URL
     type: bool
-    default: 'yes'
+    default: yes
   token:
     description:
       - Secret token usually used to validate GitLab HTTP requests
@@ -122,9 +122,8 @@ EXAMPLES = '''
   delegate_to: localhost
 
 - If a token is specified, webhook is always modified since API does not
-  provide a way to know current token
-- To forcefully remove the value of token for an already existing webhook,
-  set it to the empty string.
+  provide a way to know the value of the token store inside GitLab.
+- Use token = '' to reset the value of the token for an existing webhook.
 - For convenience, webhook's URL may be used as the unique key for webhook
   edition/deletion instead of providing the hook_id.
   The "solo" attribute can be used to handle cases where various hooks are
@@ -197,42 +196,32 @@ class GitLabWebhook(object):
     def __init__(self, module, git):
         self._module = module
 
-    def create(self, project, local_webhook, combined_events):
-        if self._module.check_mode:
-            self._module.exit_json(changed=True)
-        return project.hooks.create(local_webhook)
-
     def delete(self, project, local_webhook):
-        if self._module.check_mode:
-            self._module.exit_json(changed=True)
-        project.hooks.delete(local_webhook['hook_id'])
+        if not self._module.check_mode:
+            project.hooks.delete(local_webhook['hook_id'])
 
     def deleteByUrl(self, project, remote_webhooks, url):
-        if self._module.check_mode:
-            self._module.exit_json(changed=True, result="Successfully deleted %d webhooks" % len(remote_webhooks))
+        deleted = 0
         try:
-            deleted = 0
             for wh in remote_webhooks:
                 if wh.attributes['url'] == url:
-                    project.hooks.delete(wh.attributes['id'])
+                    if not self._module.check_mode:
+                        project.hooks.delete(wh.attributes['id'])
                     deleted += 1
         except (gitlab.GitlabHttpError, gitlab.GitlabDeleteError) as e:
             self._module.fail_json(msg='Failed to delete 1 of %d webhooks' % len(remote_webhooks), exception=to_native(e))
-        else:
-            self._module.exit_json(changed=deleted > 0, result="Successfully deleted %d webhooks" % deleted, webhook=remote_webhooks[0])
+        return deleted
 
     def update(self, project, local_webhook, remote_webhook):
         webhook_diff = False
         new_hook_attr = remote_webhook.attributes.copy()
         new_hook_attr.update(local_webhook)
-        compare_on = ['url', 'events', 'token']
+        compare_on = ['url', 'events', 'token', 'enable_ssl_verification']
         webhook_diff = not self.equals(remote_webhook.attributes, new_hook_attr, compare_on)
         if webhook_diff:
             self.setattrs(remote_webhook, local_webhook)
-            if self._module.check_mode:
-                self._module.exit_json(changed=True)
-
-            remote_webhook.save()
+            if not self._module.check_mode:
+                remote_webhook.save()
             return remote_webhook
         else:
             return False
@@ -244,7 +233,7 @@ class GitLabWebhook(object):
                 found.append(wh)
         return found
 
-    def asApiObject(self, url, events, hook_id=None, token=None):
+    def asApiObject(self, url, events, hook_id=None, token=None, enable_ssl_verification=True):
         obj = {
             'url': url,
             'push_events': bool('push' in events) and len(events) > 0,
@@ -257,6 +246,7 @@ class GitLabWebhook(object):
             obj['hook_id'] = hook_id
         if token is not None:
             obj['token'] = token
+        obj['enable_ssl_verification'] = enable_ssl_verification
         return obj
 
     # ToDo: API does not provide current token of a given webhook
@@ -295,7 +285,7 @@ def main():
             url=dict(required=False),
             events=dict(required=False, type='list', elements='str', default=['push'],
                         choices=['push', 'issues', 'confidential_issues', 'merge_requests', 'tag_push', 'note', 'job', 'pipeline', 'wiki_page']),
-            enable_ssl_verification=dict(required=False, default='yes', type='bool'),
+            hook_ssl_verify=dict(required=False, default='yes', type='bool'),
             token=dict(required=False, no_log=True),
             state=dict(default='present', choices=['present', 'absent']),
         ),
@@ -328,7 +318,7 @@ def main():
     project = module.params['project']
     url = module.params['url']
     events = module.params['events']
-    enable_ssl_verification = module.params['enable_ssl_verification']
+    enable_ssl_verification = module.params['hook_ssl_verify']
     token = module.params['token']
     state = module.params['state']
 
@@ -339,9 +329,13 @@ def main():
         git = Gitlab(url=api_url, ssl_verify=validate_certs, email=api_username, password=api_password, private_token=api_token, api_version=4)
         # git.enable_debug() ?
         git.auth()
-        project = git.projects.get(project)
-    except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError, gitlab.GitlabGetError) as e:
+    except (gitlab.GitlabHttpError, gitlab.GitlabAuthenticationError) as e:
         module.fail_json(msg="Failed to connect to GitLab server", exception=to_native(e))
+
+    try:
+        project = git.projects.get(project)
+    except gitlab.GitlabGetError as e:
+        module.fail_json(msg='No such a project %s' % project, exception=to_native(e))
 
     HookHelper = GitLabWebhook(module, git)
     if hook_id:
@@ -358,7 +352,7 @@ def main():
         remote_webhook = HookHelper.findByUrl(all_remote_webhooks, url)
         num_found = len(remote_webhook)
 
-    local_webhook = HookHelper.asApiObject(url, events, hook_id, token)
+    local_webhook = HookHelper.asApiObject(url, events, hook_id, token, enable_ssl_verification)
     deleteByHookId = 'hook_id' in local_webhook and local_webhook['hook_id']
 
     if remote_webhook and state == "absent":
@@ -371,9 +365,10 @@ def main():
                 except (gitlab.GitlabHttpError, gitlab.GitlabDeleteError) as e:
                     module.fail_json(msg='Failed to delete webhook %s' % hook_id, exception=to_native(e))
                 else:
-                    module.exit_json(changed=True, result="Successfully deleted webhook %s" % url, webhook=remote_webhook)
+                    module.exit_json(changed=True, msg="Successfully deleted webhook %s" % url, webhook=remote_webhook)
             else:
-                HookHelper.deleteByUrl(project, remote_webhook, local_webhook['url'])
+                deleted = HookHelper.deleteByUrl(project, remote_webhook, local_webhook['url'])
+                module.exit_json(changed=deleted > 0, msg="Successfully deleted %d webhooks" % deleted, webhook=remote_webhook[0].attributes)
         else:
             if not solo:
                 # * state=absent, 2+ found, solo=no  : remove all
@@ -383,9 +378,10 @@ def main():
                     except (gitlab.GitlabHttpError, gitlab.GitlabDeleteError) as e:
                         module.fail_json(msg='Failed to delete webhook %s' % hook_id, exception=to_native(e))
                     else:
-                        module.exit_json(changed=True, result="Successfully deleted webhook %s" % url, webhook=remote_webhook)
+                        module.exit_json(changed=True, msg="Successfully deleted webhook %s" % url, webhook=remote_webhook)
                 else:
-                    HookHelper.deleteByUrl(project, remote_webhook, local_webhook['url'])
+                    deleted = HookHelper.deleteByUrl(project, remote_webhook, local_webhook['url'])
+                    module.exit_json(changed=deleted > 0, msg="Successfully deleted %d webhooks" % deleted, webhook=remote_webhook[0].attributes)
             else:
                 # * state=absent, 2+ found, solo=yes : error
                 module.fail_json(msg='Multiple hooks match',
@@ -393,7 +389,7 @@ def main():
 
     elif state == "absent":
         # state=absent,  none found: error
-        module.exit_json(changed=False, result="No existing webhook for url %s" % url)
+        module.exit_json(changed=False, msg="No existing webhook for url %s" % url)
     else:
         # state == "present"
         if remote_webhook and num_found > 1:
@@ -415,27 +411,28 @@ def main():
             # * state=present, 1 found, solo=no  : edit
             # * state=present, 1 found, hook_id  : edit
             try:
-                diff = {'before': str(remote_webhook[0].attributes)}
+                remote_state = remote_webhook[0].attributes.copy()
                 h = HookHelper.update(project, local_webhook, remote_webhook[0])
-                diff['after'] = str(h)
             except gitlab.GitlabUpdateError as e:
                 module.fail_json(changed=False, msg='Could not update webhook %s' % url, exception=to_native(e))
             else:
-                if h:
-                    module.exit_json(changed=True, webhook=h.attributes, diff=diff, state='changed', result='Successfully updated hook %s' % url)
-                else:
+                if not h:
                     module.exit_json(changed=False)
-
+                diff = {'before': remote_state, 'after': h.attributes} if module._diff else None
+                module.exit_json(changed=True, webhook=h.attributes, diff=diff, state='changed', msg='Successfully updated hook %s' % url)
         else:
             # Create
             # * state=present, none found : create
             try:
-                h = HookHelper.create(project, local_webhook, events)
-                diff = {'before': {}, 'after': str(h)}
+                h = False if module.check_mode else project.hooks.create(local_webhook)
             except gitlab.GitlabCreateError as e:
                 module.fail_json(changed=False, msg='Could not create webhook %s' % url)
             else:
-                module.exit_json(changed=True, webhook=h.attributes, diff=diff, state='created', result='Successfully created hook %s' % url)
+                diff = None
+                if module._diff:
+                    diff = {'before': {}, 'after': local_webhook if module.check_mode else project.hooks.get(h.attributes['id']).attributes}
+                module.exit_json(changed=True, webhook=h.attributes if h else local_webhook, diff=diff, state='created',
+                                 msg='Successfully created hook %s' % url)
 
 
 if __name__ == '__main__':
