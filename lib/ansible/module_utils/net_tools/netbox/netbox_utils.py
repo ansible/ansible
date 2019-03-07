@@ -312,7 +312,7 @@ def find_ids(nb, data):
                 try:
                     query_id = nb_endpoint.get(**{QUERY_TYPES.get(k, "q"): search})
                 except ValueError:
-                    return ValueError(
+                    raise ValueError(
                         "Multiple results found while searching for key: %s" % (k)
                     )
 
@@ -320,6 +320,8 @@ def find_ids(nb, data):
                 data[k] = id_list
             elif query_id:
                 data[k] = query_id.id
+            elif k in NO_DEFAULT_ID:
+                pass
             else:
                 raise ValueError("Could not resolve id of %s: %s" % (k, v))
 
