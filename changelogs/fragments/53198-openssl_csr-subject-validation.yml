@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_csr - improve ``subject`` validation."
