@@ -57,17 +57,15 @@ def calculate_confidence(path, line, metadata):
 
 class TestResult(object):
     """Base class for test results."""
-    def __init__(self, command, test, python_version=None, enable_junit=False):
+    def __init__(self, command, test, python_version=None):
         """
         :type command: str
         :type test: str
         :type python_version: str
-        :type enable_junit: bool
         """
         self.command = command
         self.test = test
         self.python_version = python_version
-        self.enable_junit = enable_junit
         self.name = self.test or self.command
 
         if self.python_version:
@@ -90,7 +88,7 @@ class TestResult(object):
         if args.lint:
             self.write_lint()
 
-        if args.junit or self.enable_junit:
+        if args.junit:
             if self.junit:
                 self.write_junit(args)
             else:
@@ -167,11 +165,11 @@ class TestTimeout(TestResult):
         """
         :type timeout_duration: int
         """
-        super(TestTimeout, self).__init__(command='timeout', test='', enable_junit=True)
+        super(TestTimeout, self).__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
 
-    def write_junit(self, args):
+    def write(self, args):
         """
         :type args: TestConfig
         """
@@ -187,10 +185,24 @@ class TestTimeout(TestResult):
 
         output += '\n\nConsult the console log for additional details on where the timeout occurred.'
 
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
-        test_case.add_error_info(message, output)
+        timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
 
-        self.save_junit(args, test_case)
+        # hack to avoid requiring junit-xml, which isn't pre-installed on Shippable outside our test containers
+        xml = '''
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">
+\t<testsuite disabled="0" errors="1" failures="0" file="None" log="None" name="ansible-test" skipped="0" tests="1" time="0" timestamp="%s" url="None">
+\t\t<testcase classname="timeout" name="timeout">
+\t\t\t<error message="%s" type="error">%s</error>
+\t\t</testcase>
+\t</testsuite>
+</testsuites>
+''' % (timestamp, message, output)
+
+        path = self.create_path('junit', '.xml')
+
+        with open(path, 'w') as junit_fd:
+            junit_fd.write(xml)
 
 
 class TestSuccess(TestResult):
