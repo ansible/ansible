@@ -417,6 +417,8 @@ class VirtNetwork(object):
         return self.conn.set_autostart(entryid, state)
 
     def create(self, entryid):
+        if self.conn.get_status(entryid) == "active":
+            return
         try:
             return self.conn.create(entryid)
         except libvirt.libvirtError as e:

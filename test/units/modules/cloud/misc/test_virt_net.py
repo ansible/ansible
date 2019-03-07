@@ -5,6 +5,12 @@
 from units.compat import mock
 
 
+def test_virt_net_create_already_active(virt_net_obj, dummy_libvirt):
+    virt_net_obj.conn.create = mock.Mock()
+    assert virt_net_obj.create("active_net") is None
+    virt_net_obj.conn.create.assert_not_called()
+
+
 def test_virt_net_recreate(virt_net_obj, dummy_libvirt):
     virt_net_obj.conn.create = mock.Mock()
     dummy_libvirt.libvirtError.error_code = 'VIR_ERR_NETWORK_EXIST'
