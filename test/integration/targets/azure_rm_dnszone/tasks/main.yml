@@ -222,7 +222,6 @@
     zone_name: "{{ domain_name }}.com"
     time_to_live: 7200
     record_type: SRV
-    state: present
     records:
     - entry: sip.{{ domain_name }}.com
       priority: 20
@@ -241,7 +240,6 @@
     relative_name: "_txt.{{ domain_name }}.com"
     zone_name: "{{ domain_name }}.com"
     record_type: TXT
-    state: present
     records:
       - entry: "v=spf1 a -all"
       - entry: "foo"

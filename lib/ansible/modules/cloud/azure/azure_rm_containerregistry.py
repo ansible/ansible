@@ -67,7 +67,6 @@ EXAMPLES = '''
         name: testacr1
         location: eastus
         resource_group: myResourceGroup
-        state: present
         admin_user_enabled: true
         sku: Premium
         tags:

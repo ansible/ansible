@@ -88,7 +88,6 @@ EXAMPLES = '''
   azure_rm_dnszone:
     resource_group: myResourceGroup
     name: example.com
-    state: present
 
 - name: Delete a DNS zone
   azure_rm_dnszone:
