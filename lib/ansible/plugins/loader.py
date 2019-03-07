@@ -285,7 +285,6 @@ class PluginLoader:
         ''' Adds an additional directory to the search path '''
 
         directory = os.path.realpath(directory)
-        orig_size = len(self._extra_dirs)
 
         if directory is not None:
             if with_subdir:
@@ -293,10 +292,8 @@ class PluginLoader:
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
+                self._clear_caches()
                 display.debug('Added %s to loader search path' % (directory))
-
-        if orig_size != len(self._extra_dirs):
-            self._clear_caches()
 
     def _find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False):
         ''' Find a plugin named name '''
