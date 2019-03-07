@@ -247,7 +247,7 @@ def _get_device_id_from_service_tags(service_tags, rest_obj):
                     service_tag_dict.update({item["Id"]: item["DeviceServiceTag"]})
             available_service_tags = service_tag_dict.values()
             not_available_service_tag = list(set(service_tags) - set(available_service_tags))
-            device_fact_error_report.update({tag: DESC_HTTP_ERROR for tag in not_available_service_tag})
+            device_fact_error_report.update(dict((tag, DESC_HTTP_ERROR) for tag in not_available_service_tag))
         else:
             raise ValueError(resp.json_data)
     except (URLError, HTTPError, SSLValidationError, ConnectionError, TypeError, ValueError) as err:
