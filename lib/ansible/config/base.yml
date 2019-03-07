@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Ansible Project
+ Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 ALLOW_WORLD_READABLE_TMPFILES:
@@ -1328,8 +1328,10 @@ CONNECTION_FACTS_MODULES:
   name: Map of connections to fact modules
   default:
     eos: eos_facts
+    frr: frr_facts
     ios: ios_facts
     iosxr: iosxr_facts
+    junos: junos_facts
     nxos: nxos_facts
     vyos: vyos_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
