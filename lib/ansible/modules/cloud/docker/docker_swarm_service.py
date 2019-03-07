@@ -306,9 +306,13 @@ options:
   mode:
     description:
       - Service replication mode.
+      - Service will be removed and recreated when changed.
       - Corresponds to the C(--mode) option of C(docker service create).
     type: str
     default: replicated
+    choices:
+        - replicated
+        - global
   mounts:
     description:
       - List of dictionaries describing the service mounts.
@@ -461,7 +465,6 @@ options:
       mode:
         description:
           - What publish mode to use.
-          - Service will be removed and recreated when changed.
           - Requires API version >= 1.32.
         type: str
         choices:
@@ -2146,7 +2149,11 @@ def main():
         hosts=dict(type='dict'),
         labels=dict(type='dict'),
         container_labels=dict(type='dict'),
-        mode=dict(type='str', default='replicated'),
+        mode=dict(
+            type='str',
+            default='replicated',
+            choices=('replicated', 'global')
+        ),
         replicas=dict(type='int', default=-1),
         endpoint_mode=dict(type='str', choices=['vip', 'dnsrr']),
         stop_grace_period=dict(type='str'),
