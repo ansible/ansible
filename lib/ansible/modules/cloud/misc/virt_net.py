@@ -422,6 +422,7 @@ class VirtNetwork(object):
         except libvirt.libvirtError as e:
             if e.get_error_code() == libvirt.VIR_ERR_NETWORK_EXIST:
                 return None
+            raise
 
     def modify(self, entryid, xml):
         return self.conn.modify(entryid, xml)
