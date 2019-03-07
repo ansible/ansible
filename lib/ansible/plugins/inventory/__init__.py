@@ -378,7 +378,7 @@ class Constructable(object):
                     continue
 
                 if result:
-                    # ensure group exists, use sanatized name
+                    # ensure group exists, use santanized name
                     group_name = self.inventory.add_group(group_name)
                     # add host to group
                     self.inventory.add_child(group_name, host)
@@ -415,7 +415,11 @@ class Constructable(object):
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
 
                         for bare_name in new_raw_group_names:
-                            gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
+                            if keyed.get('unsafe', False):
+                                gname = bare_name
+                            else:
+                                gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
+
                             self.inventory.add_group(gname)
                             self.inventory.add_child(gname, host)
 

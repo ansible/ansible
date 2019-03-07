@@ -129,6 +129,9 @@ keyed_groups:
   # create a group per region e.g. aws_region_us_east_2
   - key: placement.region
     prefix: aws_region
+  # create a group when name contains hyphens
+  - key: tags['Name']
+    unsafe: True
 # set individual variables with compose
 compose:
   # use the private IP address to connect to the host

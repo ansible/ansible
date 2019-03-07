@@ -14,6 +14,9 @@ keyed_groups:
     prefix: 'tag'
   - prefix: 'arch'
     key: "architecture"
+  - key: 'unsafe_security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
+    unsafe: true
 compose:
   test_compose_var_sum: tags.tag1 + tags.tag2
 groups:
