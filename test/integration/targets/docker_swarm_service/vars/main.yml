@@ -26,6 +26,7 @@ service_expected_output:
   mode: global
   mounts: null
   networks: null
+  secrets: null
   stop_grace_period: null
   stop_signal: null
   placement_preferences: null
@@ -46,4 +47,5 @@ service_expected_output:
   update_monitor: null
   update_order: null
   update_parallelism: null
+  user: null
   working_dir: null
