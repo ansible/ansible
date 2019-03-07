@@ -1115,7 +1115,7 @@
     state: started
   register: entrypoint_2
 
-- name: entrypoint (change order idempotency)
+- name: entrypoint (change order, should not be idempotent)
   docker_container:
     image: alpine:3.8
     entrypoint:
@@ -1125,6 +1125,7 @@
     - "-v"
     name: "{{ cname }}"
     state: started
+    force_kill: yes
   register: entrypoint_3
 
 - name: entrypoint (less parameters)
