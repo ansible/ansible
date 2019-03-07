@@ -202,7 +202,7 @@ class TestTimeout(TestResult):
         path = self.create_path('junit', '.xml')
 
         with open(path, 'w') as junit_fd:
-            junit_fd.write(xml)
+            junit_fd.write(xml.lstrip())
 
 
 class TestSuccess(TestResult):
