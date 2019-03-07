@@ -43,8 +43,9 @@ integration_config.yml
 
 Making your own version of ``integration_config.yml`` can allow for setting some
 tunable parameters to help run the tests better in your environment.  Some
-tests (e.g. cloud) will only run when access credentials are provided.  For
-more information about supported credentials, refer to ``credentials.template``.
+tests (e.g. cloud) will only run when access credentials are provided.  For more
+information about supported credentials, refer to the various ``cloud-config-*.template``
+files in the ``test/integration/`` directory.
 
 Prerequisites
 =============
