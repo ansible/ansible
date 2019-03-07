@@ -71,7 +71,7 @@ options:
     type: bool
     description:
     - If this is set and a machine account with the same name as
-      specified in 'cifs_server_name' exists in the Active Directory, it
+      specified in 'name' exists in the Active Directory, it
       will be overwritten and reused.
     version_added: '2.7'
 
