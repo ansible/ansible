@@ -288,7 +288,7 @@ def _get_device_identifier_map(module_params, rest_obj):
         device_id_list = system_query_options_param.get("device_id")
         device_service_tag_list = system_query_options_param.get("device_service_tag")
         if device_id_list:
-            device_id_dict = {device_id: None for device_id in list(set(device_id_list))}
+            device_id_dict = dict((device_id, None) for device_id in list(set(device_id_list)))
             device_id_service_tag_dict["device_id"] = device_id_dict
         if device_service_tag_list:
             service_tag_dict = _get_device_id_from_service_tags(device_service_tag_list,
