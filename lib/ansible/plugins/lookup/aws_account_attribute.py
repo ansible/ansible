@@ -56,8 +56,9 @@ from ansible.errors import AnsibleError
 try:
     import boto3
     import botocore
+    HAS_BOTO = True
 except ImportError:
-    raise AnsibleError("The lookup aws_account_attribute requires boto3 and botocore.")
+    HAS_BOTO = False
 
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
@@ -95,6 +96,8 @@ def _get_credentials(options):
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
+        if not HAS_BOTO:
+            raise AnsibleError("The lookup aws_account_attribute requires boto3 and botocore.")
 
         self.set_options(var_options=variables, direct=kwargs)
         boto_credentials = _get_credentials(self._options)

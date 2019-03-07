@@ -63,8 +63,9 @@ from ansible.errors import AnsibleError
 try:
     import boto3
     import botocore
+    HAS_BOTO = True
 except ImportError:
-    raise AnsibleError("The lookup aws_secret requires boto3 and botocore.")
+    HAS_BOTO = False
 
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.lookup import LookupBase
@@ -106,6 +107,8 @@ class LookupModule(LookupBase):
         return credentials
 
     def run(self, terms, variables, **kwargs):
+        if not HAS_BOTO:
+            raise AnsibleError("The lookup aws_secret requires boto3 and botocore.")
 
         self.set_options(var_options=variables, direct=kwargs)
         boto_credentials = self._get_credentials()
