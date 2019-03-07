@@ -69,6 +69,14 @@ DOCUMENTATION = '''
               False in the inventory config file which will allow 403 errors to be gracefully skipped.
           type: bool
           default: True
+        use_legacy_script_group_name_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This toggle allows those migration from the old ec2.py inventory script that want to continue using the old sanitization to do so.
+              For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting, otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers which group names end up being used as.
+          type: bool
+          default: False
 '''
 
 EXAMPLES = '''
@@ -140,7 +148,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable, to_safe_group_name
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 from ansible.utils.display import Display
 
 try:
@@ -431,7 +439,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 break
         if hostname:
             if ':' in to_text(hostname):
-                return to_safe_group_name(to_text(hostname))
+                return self._sanitize_group_name((to_text(hostname)))
             else:
                 return to_text(hostname)
 
@@ -520,6 +528,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path)
 
+        if get_option('use_legacy_script_group_name_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+
         config_data = self._read_config_data(path)
         self._set_credentials()
 
@@ -553,3 +564,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, results)
+
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        regex = re.compile(r"[^A-Za-z0-9\_\-]")
+
+        return regex.sub('_', name)
