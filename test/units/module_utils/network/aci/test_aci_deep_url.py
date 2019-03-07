@@ -1,6 +1,5 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # Copyright: (c) 2019, Rob Huelga (@RobW3LGA)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -52,7 +51,7 @@ class Test_AnsibleModule_Construct_Url_Exceptions(object):
                 )
             )
 
-        assert str(exception_output.value) == "There appears to be a break in the URL chain referencing parent_class 'nonExistentParent'. Make sure each parent_class is referencing a valid parent object"
+        assert str(exception_output.value) == "Reference error for parent_class 'nonExistentParent'. Each parent_class must reference a valid object"
 
 
 @pytest.mark.usefixtures('setup')
@@ -644,7 +643,8 @@ class Test_AnsibleModule_Construct_Url_3(object):
         )
 
         assert 'https://local.host.local:443/api/class/fvAp.json' == sut.url
-        assert '?query-target-filter=eq%28fvAp.name%2C+%22Test-Ap%22%29&rsp-subtree-filter=eq%28fvAEPg.name%2C+%22Test-Epg%22%29&rsp-subtree=full&rsp-subtree-class=fvAEPg%2CfvRsBd' == sut.filter_string
+        assert '?query-target-filter=eq%28fvAp.name%2C+%22Test-Ap%22%29&rsp-subtree-filter=eq%28fvAEPg.name%2C+%22Test-Epg%22%29', \
+            '&rsp-subtree=full&rsp-subtree-class=fvAEPg%2CfvRsBd' == sut.filter_string
 
     def testGrandChildQ06(self, setup, params):
 
@@ -880,7 +880,7 @@ class Test_AnsibleModule_Construct_Url_4(object):
         )
 
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
-        #assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
         assert '' == sut.filter_string
 
     def testGreatGrandChildQ02(self, setup, params):
@@ -928,7 +928,7 @@ class Test_AnsibleModule_Construct_Url_4(object):
         )
 
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant.json' == sut.url
-        #assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
         assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP%2Cl3extLNodeP%2Cl3extOut' == sut.filter_string
 
     def testGreatGrandChildQ03(self, setup, params):
@@ -976,7 +976,7 @@ class Test_AnsibleModule_Construct_Url_4(object):
         )
 
         assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out.json' == sut.url
-        #assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
         assert '?rsp-subtree=full&rsp-subtree-class=l3extLIfP%2Cl3extLNodeP%2Cl3extOut' == sut.filter_string
 
     def testGreatGrandChildQ04(self, setup, params):
@@ -1117,10 +1117,11 @@ class Test_AnsibleModule_Construct_Url_4(object):
             )
         )
 
-        #assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
+        # assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert 'https://local.host.local:443/api/class/l3extOut.json' == sut.url
-        #assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
-        assert '?query-target-filter=eq%28l3extOut.name%2C+%22Test-L3Out%22%29&rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        assert '?query-target-filter=eq%28l3extOut.name%2C+%22Test-L3Out%22%29&rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29', \
+            '&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
     def testGreatGrandChildQ07(self, setup, params):
 
@@ -1166,10 +1167,11 @@ class Test_AnsibleModule_Construct_Url_4(object):
             )
         )
 
-        #assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
+        # assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert 'https://local.host.local:443/api/class/l3extLNodeP.json' == sut.url
-        #assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
-        assert '?query-target-filter=eq%28l3extLNodeP.name%2C+%22Test-NodeProfile%22%29&rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        assert '?query-target-filter=eq%28l3extLNodeP.name%2C+%22Test-NodeProfile%22%29', \
+            '&rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
     def testGreatGrandChildQ08(self, setup, params):
 
@@ -1216,7 +1218,7 @@ class Test_AnsibleModule_Construct_Url_4(object):
         )
 
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
-        #assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
         assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29' == sut.filter_string
 
     def testGreatGrandChildQ09(self, setup, params):
@@ -1404,10 +1406,11 @@ class Test_AnsibleModule_Construct_Url_4(object):
             )
         )
 
-        #assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
+        # assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
         assert 'https://local.host.local:443/api/class/l3extOut.json' == sut.url
-        #assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
-        assert '?query-target-filter=eq%28l3extOut.name%2C+%22Test-L3Out%22%29&rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        # assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
+        assert '?query-target-filter=eq%28l3extOut.name%2C+%22Test-L3Out%22%29&rsp-subtree-filter=eq%28l3extLIfP.name%2C+%22Test-InterfaceProfile%22%29', \
+            '&rsp-subtree=full&rsp-subtree-class=l3extLIfP' == sut.filter_string
 
     def testGreatGrandChildQ13(self, setup, params):
 
@@ -1526,7 +1529,8 @@ class Test_AnsibleModule_Construct_Url_5(object):
             child_classes=['bfdRsIfPol']
         )
 
-        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-LogicalInterfaceProfile/bfdIfP-Test-InterfaceProfile.json' == sut.url
+        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/', \
+            'lifp-Test-LogicalInterfaceProfile/bfdIfP-Test-InterfaceProfile.json' == sut.url
         assert '?rsp-prop-include=config-only&rsp-subtree=full&rsp-subtree-class=bfdRsIfPol' == sut.filter_string
 
     def testGreatGreatGrandChildA01(self, setup, params):
@@ -1582,7 +1586,8 @@ class Test_AnsibleModule_Construct_Url_5(object):
             child_classes=['bfdRsIfPol']
         )
 
-        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-LogicalInterfaceProfile/bfdIfP-Test-InterfaceProfile.json' == sut.url
+        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/', \
+            'lifp-Test-LogicalInterfaceProfile/bfdIfP-Test-InterfaceProfile.json' == sut.url
         assert '?rsp-prop-include=config-only&rsp-subtree=full&rsp-subtree-class=bfdRsIfPol' == sut.filter_string
 
     def testGreatGreatGrandChildQ01(self, setup, params):
@@ -1918,7 +1923,8 @@ class Test_AnsibleModule_Construct_Url_5(object):
             child_classes=['bfdRsIfPol']
         )
 
-        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-LogicalInterfaceProfile/bfdIfP.json' == sut.url
+        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/', \
+            'lifp-Test-LogicalInterfaceProfile/bfdIfP.json' == sut.url
         assert '?rsp-subtree=full&rsp-subtree-class=bfdRsIfPol' == sut.filter_string
 
     def testGreatGreatGrandChildQ07(self, setup, params):
@@ -1973,7 +1979,8 @@ class Test_AnsibleModule_Construct_Url_5(object):
             )
         )
 
-        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/lifp-Test-LogicalInterfaceProfile/bfdIfP.json' == sut.url
+        assert 'https://local.host.local:443/api/mo/uni/tn-Test-Tenant/out-Test-L3Out/lnodep-Test-NodeProfile/', \
+            'lifp-Test-LogicalInterfaceProfile/bfdIfP.json' == sut.url
         assert '' == sut.filter_string
 
     def testGreatGreatGrandChildQ08(self, setup, params):
@@ -2086,7 +2093,8 @@ class Test_AnsibleModule_Construct_Url_5(object):
         )
 
         assert 'https://local.host.local:443/api/class/l3extLNodeP.json' == sut.url
-        assert '?query-target-filter=eq%28l3extLNodeP.name%2C+%22Test-NodeProfile%22%29&rsp-subtree=full&rsp-subtree-class=bfdIfP%2CbfdRsIfPol' == sut.filter_string
+        assert '?query-target-filter=eq%28l3extLNodeP.name%2C+%22Test-NodeProfile%22%29&rsp-subtree=full', \
+            '&rsp-subtree-class=bfdIfP%2CbfdRsIfPol' == sut.filter_string
 
     def testGreatGreatGrandChildQ10(self, setup, params):
 
@@ -2142,7 +2150,8 @@ class Test_AnsibleModule_Construct_Url_5(object):
         )
 
         assert 'https://local.host.local:443/api/class/l3extLIfP.json' == sut.url
-        assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-LogicalInterfaceProfile%22%29&rsp-subtree=full&rsp-subtree-class=bfdIfP%2CbfdRsIfPol' == sut.filter_string
+        assert '?query-target-filter=eq%28l3extLIfP.name%2C+%22Test-LogicalInterfaceProfile%22%29&rsp-subtree=full', \
+            '&rsp-subtree-class=bfdIfP%2CbfdRsIfPol' == sut.filter_string
 
     def testGreatGreatGrandChildQ11(self, setup, params):
 
