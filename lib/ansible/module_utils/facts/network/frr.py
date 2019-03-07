@@ -1,8 +1,7 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
+#
 # (c) 2019, Ansible by Red Hat, inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -108,6 +107,7 @@ class FrrNetwork(Network):
                 ipv6 = dict(address=addr.strip(), subnet=subnet.strip())
                 ipv6_interfaces.append(ipv6)
         return ipv6_interfaces
+
 
 class FrrNetworkCollector(NetworkCollector):
     _platform = 'frr'
