@@ -740,12 +740,12 @@ rebuilt:
 '''
 
 EXAMPLES = '''
-- name: Set arguments
+- name: Set command and arguments
   docker_swarm_service:
     name: myservice
     image: alpine
+    command: sleep
     args:
-      - "sleep"
       - "3600"
 
 - name: Set a bind mount
@@ -757,33 +757,54 @@ EXAMPLES = '''
         target: /remote_tmp/
         type: bind
 
+- name: Set service labels
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    labels:
+      com.example.description: "Accounting webapp"
+      com.example.department: "Finance"
+
 - name: Set environment variables
   docker_swarm_service:
     name: myservice
     image: alpine
     env:
-      - "ENVVAR1=envvar1"
-      - "ENVVAR2=envvar2"
+      ENVVAR1: envvar1
+      ENVVAR2: envvar2
+    env_files:
+      - envs/common.env
+      - envs/apps/web.env
 
 - name: Set fluentd logging
   docker_swarm_service:
     name: myservice
     image: alpine
-    log_driver: fluentd
-    log_driver_options:
-      fluentd-address: "127.0.0.1:24224"
-      fluentd-async-connect: true
-      tag: myservice
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "127.0.0.1:24224"
+        fluentd-async-connect: "true"
+        tag: myservice
 
 - name: Set restart policies
   docker_swarm_service:
     name: myservice
     image: alpine
     restart_config:
-      condition: any
-      max_attempts: 5
+      condition: on-failure
       delay: 5s
-      window: 30s
+      max_attempts: 3
+      window: 120s
+
+- name: Set update config
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    update_config:
+      parallelism: 2
+      delay: 10s
+      order: stop-first
 
 - name: Set placement preferences
   docker_swarm_service:
@@ -791,7 +812,10 @@ EXAMPLES = '''
     image: alpine:edge
     placement:
       preferences:
-        - spread: "node.labels.mylabel"
+        - spread: node.labels.mylabel
+      constraints:
+        - node.role == manager
+        - engine.labels.operatingsystem == ubuntu 14.04
 
 - name: Set configs
   docker_swarm_service:
@@ -818,11 +842,6 @@ EXAMPLES = '''
         secret_name: mysecret_name
         filename: "/run/secrets/secret.txt"
 
-- name: Remove service
-  docker_swarm_service:
-    name: myservice
-    state: absent
-
 - name: Start service with healthcheck
   docker_swarm_service:
     name: myservice
@@ -835,6 +854,22 @@ EXAMPLES = '''
       timeout: 10s
       retries: 3
       start_period: 30s
+
+- name: Configure service resources
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    reservations:
+      cpus: 0.25
+      memory: 20M
+    limits:
+      cpus: 0.50
+      memory: 50M
+
+- name: Remove service
+  docker_swarm_service:
+    name: myservice
+    state: absent
 '''
 
 import shlex
