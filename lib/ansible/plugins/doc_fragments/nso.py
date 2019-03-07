@@ -28,6 +28,7 @@ options:
   validate_certs:
     description: When set to true, validates the SSL certificate of NSO when
                  using SSL
+    type: bool
     required: false
     default: false
 '''
