@@ -580,7 +580,6 @@
   azure_rm_virtualmachine_scaleset:
       resource_group: "{{ resource_group }}"
       name: testvm002
-      state: present
       vm_size: Standard_B1s
       image:
         offer: UbuntuServer
@@ -591,7 +590,6 @@
   azure_rm_virtualmachine_scaleset:
       resource_group: "{{ resource_group }}"
       name: testvm002
-      state: present
       vm_size: Standard_B1s
       image:
       - testing
@@ -602,7 +600,6 @@
   azure_rm_virtualmachine_scaleset:
       resource_group: "{{ resource_group }}"
       name: testvm002
-      state: present
       vm_size: Standard_B1s
       image: invalid-image
   register: fail_missing_custom_image
@@ -612,7 +609,6 @@
   azure_rm_virtualmachine_scaleset:
       resource_group: "{{ resource_group }}"
       name: testvm002
-      state: present
       vm_size: Standard_B1s
       image:
         name: invalid-image

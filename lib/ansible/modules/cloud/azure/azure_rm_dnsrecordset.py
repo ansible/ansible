@@ -107,7 +107,6 @@ EXAMPLES = '''
     relative_name: www
     zone_name: testing.com
     record_type: A
-    state: present
     records:
       - entry: 192.168.100.101
       - entry: 192.168.100.102
@@ -125,7 +124,6 @@ EXAMPLES = '''
   azure_rm_dnsrecordset:
     resource_group: myResourceGroup
     zone_name: testing.com
-    state: present
     relative_name: "{{ item.name }}"
     record_type: "{{ item.type }}"
     records: "{{ item.records }}"
@@ -141,7 +139,6 @@ EXAMPLES = '''
     zone_name: testing.com
     time_to_live: 7200
     record_type: SRV
-    state: present
     records:
     - entry: sip.testing.com
       preference: 10
