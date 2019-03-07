@@ -27,4 +27,4 @@ def test_virt_stop_ignore_inactive(virt_net_obj):
 def test_virt_stop_active(virt_net_obj, monkeypatch):
     virt_net_obj.conn.destroy = mock.Mock()
     virt_net_obj.stop('active_net')
-    virt_net_obj.conn.destroy.assert_called()
+    virt_net_obj.conn.destroy.assert_called_with('active_net')
