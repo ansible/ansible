@@ -33,6 +33,7 @@ service_expected_output:
   publish:
     - {mode: null, protocol: tcp, published_port: 60001, target_port: 60001}
     - {mode: null, protocol: udp, published_port: 60001, target_port: 60001}
+  read_only: null
   replicas: null
   reserve_cpu: null
   reserve_memory: null
