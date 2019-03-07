@@ -51,6 +51,29 @@ def test_group_by_value_only(inventory_module):
     assert group.hosts == [host]
 
 
+def test_keyed_group_with_hyphen(inventory_module):
+    inventory_module.inventory.add_host('sample-host')
+    inventory_module.inventory.set_variable('sample-host', 'region', 'us-east')
+    host = inventory_module.inventory.get_host('sample-host')
+    keyed_groups = [
+        {
+            'key': 'region',
+            'unsafe': False
+        },
+        {
+            'key': 'region',
+            'unsafe': True
+        }
+    ]
+    inventory_module._add_host_to_keyed_groups(
+        keyed_groups, host.vars, host.name, strict=False
+    )
+    for group_name in ('_us_east', '_us-east'):
+        assert group_name in inventory_module.inventory.groups
+        group = inventory_module.inventory.groups[group_name]
+        assert group.hosts == [host]
+
+
 def test_keyed_group_separator(inventory_module):
     inventory_module.inventory.add_host('farm')
     inventory_module.inventory.set_variable('farm', 'farmer', 'mcdonald')

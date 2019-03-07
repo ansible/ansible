@@ -416,7 +416,7 @@ class Constructable(object):
 
                         for bare_name in new_raw_group_names:
                             if keyed.get('unsafe', False):
-                                gname = bare_name
+                                gname = '%s%s%s' % (prefix, sep, bare_name)
                             else:
                                 gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
 
