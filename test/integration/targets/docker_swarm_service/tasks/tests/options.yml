@@ -1106,7 +1106,7 @@
     image: alpine:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
-    labels: {}
+    healthcheck: {}
   register: healthcheck_8
   ignore_errors: yes
 
@@ -1116,7 +1116,7 @@
     image: alpine:3.8
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
-    labels: {}
+    healthcheck: {}
   register: healthcheck_9
   ignore_errors: yes
 

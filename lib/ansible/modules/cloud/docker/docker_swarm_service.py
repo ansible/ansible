@@ -306,9 +306,13 @@ options:
   mode:
     description:
       - Service replication mode.
+      - Service will be removed and recreated when changed.
       - Corresponds to the C(--mode) option of C(docker service create).
     type: str
     default: replicated
+    choices:
+        - replicated
+        - global
   mounts:
     description:
       - List of dictionaries describing the service mounts.
@@ -461,7 +465,6 @@ options:
       mode:
         description:
           - What publish mode to use.
-          - Service will be removed and recreated when changed.
           - Requires API version >= 1.32.
         type: str
         choices:
@@ -670,79 +673,121 @@ swarm_service:
   returned: always
   type: dict
   description:
-  - Dictionary of variables representing the current state of the service.
-    Matches the module parameters format.
-  - Note that facts are not part of registered vars but accessible directly.
-  - Note that before Ansible 2.7.9, the return variable was documented as C(ansible_swarm_service),
-    while the module actually returned a variable called C(ansible_docker_service). The variable
-    was renamed to C(swarm_service) in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0.
-    In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
+    - Dictionary of variables representing the current state of the service.
+      Matches the module parameters format.
+    - Note that facts are not part of registered vars but accessible directly.
+    - Note that before Ansible 2.7.9, the return variable was documented as C(ansible_swarm_service),
+      while the module actually returned a variable called C(ansible_docker_service). The variable
+      was renamed to C(swarm_service) in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0.
+      In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
   sample: '{
     "args": [
-      "sleep",
       "3600"
     ],
-    "constraints": [],
-    "container_labels": {},
-    "endpoint_mode": "vip",
-    "env": [
-      "ENVVAR1=envvar1"
+    "command": [
+      "sleep"
     ],
-    "force_update": False,
-    "image": "alpine",
-    "labels": {},
-    "limit_cpu": 0.0,
-    "limit_memory": 0,
-    "log_driver": "json-file",
-    "log_driver_options": {},
+    "configs": null,
+    "constraints": [
+      "node.role == manager",
+      "engine.labels.operatingsystem == ubuntu 14.04"
+    ],
+    "container_labels": null,
+    "dns": null,
+    "dns_options": null,
+    "dns_search": null,
+    "endpoint_mode": null,
+    "env": [
+       "ENVVAR1=envvar1",
+       "ENVVAR2=envvar2"
+    ],
+    "force_update": null,
+    "groups": null,
+    "healthcheck": {
+      "interval": 90000000000,
+      "retries": 3,
+      "start_period": 30000000000,
+      "test": [
+        "CMD",
+        "curl",
+        "--fail",
+        "http://nginx.host.com"
+      ],
+      "timeout": 10000000000
+    },
+    "healthcheck_disabled": false,
+    "hostname": null,
+    "hosts": null,
+    "image": "alpine:latest@sha256:b3dbf31b77fd99d9c08f780ce6f5282aba076d70a513a8be859d8d3a4d0c92b8",
+    "labels": {
+      "com.example.department": "Finance",
+      "com.example.description": "Accounting webapp"
+    },
+    "limit_cpu": 0.5,
+    "limit_memory": 52428800,
+    "log_driver": "fluentd",
+    "log_driver_options": {
+      "fluentd-address": "127.0.0.1:24224",
+      "fluentd-async-connect": "true",
+      "tag": "myservice"
+    },
     "mode": "replicated",
     "mounts": [
       {
+        "readonly": false,
         "source": "/tmp/",
         "target": "/remote_tmp/",
         "type": "bind"
       }
     ],
-    "secrets": [],
-    "configs": [],
-    "networks": [],
-    "publish": [],
+    "networks": null,
+    "placement_preferences": [
+      {
+        "spread": "node.labels.mylabel"
+      }
+    ],
+    "publish": null,
     "replicas": 1,
-    "reserve_cpu": 0.0,
-    "reserve_memory": 0,
-    "restart_policy": "any",
-    "restart_policy_attempts": 5,
-    "restart_policy_delay": 0,
-    "restart_policy_window": 30,
-    "update_delay": 10,
-    "update_parallelism": 1,
-    "update_failure_action": "continue",
-    "update_monitor": 5000000000
-    "update_max_failure_ratio": 0,
-    "update_order": "stop-first"
+    "reserve_cpu": 0.25,
+    "reserve_memory": 20971520,
+    "restart_policy": "on-failure",
+    "restart_policy_attempts": 3,
+    "restart_policy_delay": 5000000000,
+    "restart_policy_window": 120000000000,
+    "secrets": null,
+    "stop_grace_period": null,
+    "stop_signal": null,
+    "tty": null,
+    "update_delay": 10000000000,
+    "update_failure_action": null,
+    "update_max_failure_ratio": null,
+    "update_monitor": null,
+    "update_order": "stop-first",
+    "update_parallelism": 2,
+    "user": null,
+    "working_dir": null
   }'
 changes:
   returned: always
   description:
-  - List of changed service attributes if a service has been altered,
-    [] otherwise
+    - List of changed service attributes if a service has been altered, [] otherwise.
   type: list
   sample: ['container_labels', 'replicas']
 rebuilt:
   returned: always
   description:
-  - True if the service has been recreated (removed and created)
+    - True if the service has been recreated (removed and created)
   type: bool
   sample: True
 '''
 
 EXAMPLES = '''
-- name: Set arguments
+- name: Set command and arguments
   docker_swarm_service:
     name: myservice
     image: alpine
+    command: sleep
     args:
-      - "sleep"
       - "3600"
 
 - name: Set a bind mount
@@ -754,33 +799,54 @@ EXAMPLES = '''
         target: /remote_tmp/
         type: bind
 
+- name: Set service labels
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    labels:
+      com.example.description: "Accounting webapp"
+      com.example.department: "Finance"
+
 - name: Set environment variables
   docker_swarm_service:
     name: myservice
     image: alpine
     env:
-      - "ENVVAR1=envvar1"
-      - "ENVVAR2=envvar2"
+      ENVVAR1: envvar1
+      ENVVAR2: envvar2
+    env_files:
+      - envs/common.env
+      - envs/apps/web.env
 
 - name: Set fluentd logging
   docker_swarm_service:
     name: myservice
     image: alpine
-    log_driver: fluentd
-    log_driver_options:
-      fluentd-address: "127.0.0.1:24224"
-      fluentd-async-connect: true
-      tag: myservice
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "127.0.0.1:24224"
+        fluentd-async-connect: "true"
+        tag: myservice
 
 - name: Set restart policies
   docker_swarm_service:
     name: myservice
     image: alpine
     restart_config:
-      condition: any
-      max_attempts: 5
+      condition: on-failure
       delay: 5s
-      window: 30s
+      max_attempts: 3
+      window: 120s
+
+- name: Set update config
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    update_config:
+      parallelism: 2
+      delay: 10s
+      order: stop-first
 
 - name: Set placement preferences
   docker_swarm_service:
@@ -788,7 +854,10 @@ EXAMPLES = '''
     image: alpine:edge
     placement:
       preferences:
-        - spread: "node.labels.mylabel"
+        - spread: node.labels.mylabel
+      constraints:
+        - node.role == manager
+        - engine.labels.operatingsystem == ubuntu 14.04
 
 - name: Set configs
   docker_swarm_service:
@@ -815,11 +884,6 @@ EXAMPLES = '''
         secret_name: mysecret_name
         filename: "/run/secrets/secret.txt"
 
-- name: Remove service
-  docker_swarm_service:
-    name: myservice
-    state: absent
-
 - name: Start service with healthcheck
   docker_swarm_service:
     name: myservice
@@ -832,6 +896,22 @@ EXAMPLES = '''
       timeout: 10s
       retries: 3
       start_period: 30s
+
+- name: Configure service resources
+  docker_swarm_service:
+    name: myservice
+    image: alpine:edge
+    reservations:
+      cpus: 0.25
+      memory: 20M
+    limits:
+      cpus: 0.50
+      memory: 50M
+
+- name: Remove service
+  docker_swarm_service:
+    name: myservice
+    state: absent
 '''
 
 import shlex
@@ -1018,6 +1098,7 @@ class DockerService(DockerBaseClass):
             'replicas': self.replicas,
             'endpoint_mode': self.endpoint_mode,
             'restart_policy': self.restart_policy,
+            'secrets': self.secrets,
             'stop_grace_period': self.stop_grace_period,
             'stop_signal': self.stop_signal,
             'limit_cpu': self.limit_cpu,
@@ -1033,6 +1114,7 @@ class DockerService(DockerBaseClass):
             'update_monitor': self.update_monitor,
             'update_max_failure_ratio': self.update_max_failure_ratio,
             'update_order': self.update_order,
+            'user': self.user,
             'working_dir': self.working_dir,
         }
 
@@ -2123,8 +2205,8 @@ def main():
         publish=dict(type='list', elements='dict', options=dict(
             published_port=dict(type='int', required=True),
             target_port=dict(type='int', required=True),
-            protocol=dict(type='str', default='tcp', choices=('tcp', 'udp')),
-            mode=dict(type='str', choices=('ingress', 'host')),
+            protocol=dict(type='str', default='tcp', choices=['tcp', 'udp']),
+            mode=dict(type='str', choices=['ingress', 'host']),
         )),
         placement=dict(type='dict', options=dict(
             constraints=dict(type='list'),
@@ -2146,7 +2228,11 @@ def main():
         hosts=dict(type='dict'),
         labels=dict(type='dict'),
         container_labels=dict(type='dict'),
-        mode=dict(type='str', default='replicated'),
+        mode=dict(
+            type='str',
+            default='replicated',
+            choices=['replicated', 'global']
+        ),
         replicas=dict(type='int', default=-1),
         endpoint_mode=dict(type='str', choices=['vip', 'dnsrr']),
         stop_grace_period=dict(type='str'),
