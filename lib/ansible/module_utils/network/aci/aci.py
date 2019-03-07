@@ -555,8 +555,7 @@ class ACIModule(object):
 
                     current_parent_class = parent_parent_class
                 else:
-                    raise ValueError("There appears to be a break in the URL chain referencing parent_class '{0}'. Make sure each parent_class is referencing a valid parent object".format(
-                        current_parent_class))
+                    raise ValueError("Reference error for parent_class '{0}'. Each parent_class must reference a valid object".format(current_parent_class))
 
                 if not has_target_query_difference and not has_target_query_called:
                     if has_target_query is not has_target_query_compare:
