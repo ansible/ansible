@@ -66,3 +66,77 @@ class TestIosLoggingModule(TestIosModule):
         set_module_args(dict(dest='buffered', size=6000))
         commands = ['logging buffered 6000']
         self.execute_module(changed=True, commands=commands)
+
+    def test_ios_logging_add_host(self):
+        set_module_args(dict(dest='host', name='192.168.1.1'))
+        commands = ['logging host 192.168.1.1']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_ios_logging_host_idempotent(self):
+        set_module_args(dict(dest='host', name='2.3.4.5'))
+        commands = []
+        self.execute_module(changed=False, commands=commands)
+
+    def test_ios_logging_delete_non_exist_host(self):
+        set_module_args(dict(dest='host', name='192.168.1.1', state='absent'))
+        commands = []
+        self.execute_module(changed=False, commands=commands)
+
+    def test_ios_logging_delete_host(self):
+        set_module_args(dict(dest='host', name='2.3.4.5', state='absent'))
+        commands = ['no logging host 2.3.4.5']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_ios_logging_configure_disabled_monitor_destination(self):
+        set_module_args(dict(dest='monitor', level='debugging'))
+        commands = ['logging monitor debugging']
+        self.execute_module(changed=True, commands=commands)
+
+
+class TestIosLoggingModuleIOS12(TestIosModule):
+
+    module = ios_logging
+
+    def setUp(self):
+        super(TestIosLoggingModuleIOS12, self).setUp()
+
+        self.mock_get_config = patch('ansible.modules.network.ios.ios_logging.get_config')
+        self.get_config = self.mock_get_config.start()
+
+        self.mock_load_config = patch('ansible.modules.network.ios.ios_logging.load_config')
+        self.load_config = self.mock_load_config.start()
+
+        self.mock_get_capabilities = patch('ansible.modules.network.ios.ios_logging.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {'device_info': {'network_os_version': '12.1(2)T'}}
+
+    def tearDown(self):
+        super(TestIosLoggingModuleIOS12, self).tearDown()
+
+        self.mock_get_config.stop()
+        self.mock_load_config.stop()
+        self.mock_get_capabilities.stop()
+
+    def load_fixtures(self, commands=None):
+        self.get_config.return_value = load_fixture('ios_logging_config_ios12.cfg')
+        self.load_config.return_value = None
+
+    def test_ios_logging_add_host(self):
+        set_module_args(dict(dest='host', name='192.168.1.1'))
+        commands = ['logging 192.168.1.1']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_ios_logging_host_idempotent(self):
+        set_module_args(dict(dest='host', name='2.3.4.5'))
+        commands = []
+        self.execute_module(changed=False, commands=commands)
+
+    def test_ios_logging_delete_non_exist_host(self):
+        set_module_args(dict(dest='host', name='192.168.1.1', state='absent'))
+        commands = []
+        self.execute_module(changed=False, commands=commands)
+
+    def test_ios_logging_delete_host(self):
+        set_module_args(dict(dest='host', name='2.3.4.5', state='absent'))
+        commands = ['no logging 2.3.4.5']
+        self.execute_module(changed=True, commands=commands)
