@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 from units.compat import unittest
-from ansible.module_utils.gcp_utils import GcpRequest, navigate_hash
+from ansible.module_utils.gcp_utils import GcpRequest, navigate_hash, remove_nones_from_dict
 
 
 class NavigateHashTestCase(unittest.TestCase):
@@ -40,6 +40,38 @@ class NavigateHashTestCase(unittest.TestCase):
         }
         default = 'not found'
         self.assertEquals(navigate_hash(value, ['key', 'key2'], default), default)
+
+
+class RemoveNonesFromDictTestCase(unittest.TestCase):
+    def test_remove_nones(self):
+        value = {
+            'key': None,
+            'good': 'value'
+        }
+        value_correct = {
+            'good': 'value'
+        }
+        self.assertEquals(remove_nones_from_dict(value), value_correct)
+
+    def test_remove_empty_arrays(self):
+        value = {
+            'key': [],
+            'good': 'value'
+        }
+        value_correct = {
+            'good': 'value'
+        }
+        self.assertEquals(remove_nones_from_dict(value), value_correct)
+
+    def test_remove_empty_dicts(self):
+        value = {
+            'key': {},
+            'good': 'value'
+        }
+        value_correct = {
+            'good': 'value'
+        }
+        self.assertEquals(remove_nones_from_dict(value), value_correct)
 
 
 class GCPRequestDifferenceTestCase(unittest.TestCase):
