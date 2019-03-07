@@ -221,7 +221,7 @@ AZURE_PKG_VERSIONS = {
     },
     'ResourceManagementClient': {
         'package_name': 'resource',
-        'expected_version': '1.2.2'
+        'expected_version': '2.1.0'
     },
     'DnsManagementClient': {
         'package_name': 'dns',
