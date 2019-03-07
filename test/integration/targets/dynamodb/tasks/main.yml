@@ -9,7 +9,7 @@
           aws_access_key: "{{ aws_access_key }}"
           aws_secret_key: "{{ aws_secret_key }}"
           security_token: "{{ security_token }}"
-          region: "{{ aws_region }}"
+          region: "{{ ec2_region }}"
       no_log: yes
 
     - name: create dynamodb database
@@ -102,7 +102,7 @@
     - name: delete the test dynamo db
       dynamodb_table:
         name: "{{ dynamo_db_table }}"
-        region: "{{ aws_region }}"
+        region: "{{ ec2_region }}"
         state: absent
         <<: *aws_connection_info
       ignore_errors: yes

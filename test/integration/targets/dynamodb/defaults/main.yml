@@ -1,4 +1,3 @@
 ---
 # defaults file for dynamodb
-aws_region: eu-west-1
-dynamo_db_table: ansible-dynamodb-int-test
+dynamo_db_table: "int-test-{{ resource_prefix }}"
