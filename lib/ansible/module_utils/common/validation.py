@@ -45,3 +45,25 @@ def check_mutually_exclusive(terms, module_parameters):
             result.append(check)
 
     return result
+
+
+def check_required_one_of(terms, module_parameters):
+    """Check each list of terms to ensure at least one exists in the given module
+    parameters. Accepts a list of lists or tuples.
+
+    :arg terms: List of lists of terms to check. For each list of terms, at
+        least is required.
+    :arg module_parameters: Dictionary of module parameters
+
+    :returns: list of terms that should be present in module parameters but
+              are missing
+    """
+
+    result = []
+    for term in terms:
+
+        count = count_terms(term, module_parameters)
+        if count == 0:
+            result.append(term)
+
+    return result
