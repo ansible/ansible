@@ -112,7 +112,8 @@ EXAMPLES = """
     server_type: cx11
     image: ubuntu-18.04
     location: fsn1
-    ssh-key: my-ssh-key
+    ssh_keys:
+      - my-ssh-key
     state: present
 
 - name: Resize an existing server
