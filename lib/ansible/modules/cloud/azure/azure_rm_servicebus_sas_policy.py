@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_servicebus_sas_policy
 version_added: "2.8"
-short_description: Manage Azure Service Bus.
+short_description: Manage Azure Service Bus SAS policy.
 description:
-    - Create, update or delete an Azure Service Bus sas policy.
+    - Create, update or delete an Azure Service Bus SAS policy.
 options:
     resource_group:
         description:
@@ -84,11 +84,49 @@ EXAMPLES = '''
       queue: qux
       namespace: bar
       resource_group: foo
+      rights: send
 '''
 RETURN = '''
 id:
     description: Current state of the SAS policy.
-    returned: success
+    returned: Successed
+    type: str
+keys:
+    description: Key dict of the SAS policy.
+    returned: Successed
+    type: dict
+    contains:
+        key_name:
+            description: Name of the SAS policy.
+            returned: Successed
+            type: str
+        primary_connection_string:
+            description: Primary connection string.
+            returned: Successed
+            type: str
+        primary_key:
+            description: Primary key.
+            returned: Successed
+            type: str
+        secondary_key:
+            description: Secondary key.
+            returned: Successed
+            type: str
+        secondary_connection_string:
+            description: Secondary connection string.
+            returned: Successed
+            type: str
+name:
+    description: Name of the SAS policy.
+    returned: Successed
+    type: str
+rights:
+    description: Priviledge of the SAS policy.
+    returned: Successed
+    type: str
+type:
+    description: Type of the SAS policy.
+    returned: Successed
     type: str
 '''
 
@@ -124,6 +162,8 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
             ['queue', 'topic']
         ]
 
+        required_if = [('state', 'present', ['rights'])]
+
         self.resource_group = None
         self.name = None
         self.state = None
@@ -141,6 +181,7 @@ class AzureRMServiceBusSASPolicy(AzureRMModuleBase):
 
         super(AzureRMServiceBusSASPolicy, self).__init__(self.module_arg_spec,
                                                          mutually_exclusive=mutually_exclusive,
+                                                         required_if=required_if
                                                          supports_check_mode=True)
 
     def exec_module(self, **kwargs):

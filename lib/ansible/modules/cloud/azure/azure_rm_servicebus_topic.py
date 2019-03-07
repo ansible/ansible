@@ -230,12 +230,6 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
             if changed and not self.check_mode:
                 result = self.create_or_update(instance)
             self.results = self.to_dict(result)
-
-            # handle SAS policies
-            rules = self.get_auth_rules()
-            for name in rules.keys():
-                rules[name]['keys'] = self.get_sas_key(name)
-            self.results['sas_policies'] = rules
         elif original:
             changed = True
             if not self.check_mode:
@@ -295,38 +289,6 @@ class AzureRMServiceBusTopic(AzureRMModuleBase):
                 result['max_size_in_mb'] = value
             else:
                 result[attribute] = value
-        return result
-
-    # SAS policy
-    def get_auth_rules(self):
-        result = dict()
-        try:
-            client = self._get_client()
-            rules = client.list_authorization_rules(self.resource_group, self.namespace, self.name)
-            while True:
-                rule = rules.next()
-                result[rule.name] = self.policy_to_dict(rule)
-        except Exception:
-            pass
-        return result
-
-    def get_sas_key(self, name):
-        try:
-            client = self._get_client()
-            return client.list_keys(self.resource_group, self.namespace, self.name, name).as_dict()
-        except Exception as exc:
-            self.fail('Error when getting SAS policy {0}\'s key - {1}'.format(name, exc.message or str(exc)))
-        return None
-
-    def policy_to_dict(self, rule):
-        result = rule.as_dict()
-        rights = result['rights']
-        if 'Manage' in rights:
-            result['rights'] = 'manage'
-        elif 'Listen' in rights and 'Send' in rights:
-            result['rights'] = 'listen_send'
-        else:
-            result['rights'] = rights[0].lower()
         return result
 
 

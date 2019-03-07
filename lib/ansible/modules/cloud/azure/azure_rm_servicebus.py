@@ -19,7 +19,7 @@ module: azure_rm_servicebus
 version_added: "2.8"
 short_description: Manage Azure Service Bus.
 description:
-    - Create, update or delete an Azure Service Bus namespaces, queues, topics, subscriptions and rules.
+    - Create, update or delete an Azure Service Bus namespaces.
 options:
     resource_group:
         description:
@@ -136,10 +136,6 @@ class AzureRMServiceBus(AzureRMModuleBase):
 
         if original:
             self.results = self.to_dict(original)
-            rules = self.get_auth_rules()
-            for name in rules.keys():
-                rules[name]['keys'] = self.get_sas_key(name)
-            self.results['sas_policies'] = rules
         self.results['changed'] = changed
         return self.results
 
@@ -194,36 +190,6 @@ class AzureRMServiceBus(AzureRMModuleBase):
                 result['max_size_in_mb'] = value
             else:
                 result[attribute] = value
-        return result
-
-    # SAS policy
-    def get_auth_rules(self):
-        result = dict()
-        try:
-            rules = self.servicebus_client.namespaces.list_authorization_rules(self.resource_group, self.name)
-            while True:
-                rule = rules.next()
-                result[rule.name] = self.policy_to_dict(rule)
-        except Exception:
-            pass
-        return result
-
-    def get_sas_key(self, name):
-        try:
-            return self.servicebus_client.namespaces.list_keys(self.resource_group, self.name, name).as_dict()
-        except Exception:
-            pass
-        return None
-
-    def policy_to_dict(self, rule):
-        result = rule.as_dict()
-        rights = result['rights']
-        if 'Manage' in rights:
-            result['rights'] = 'manage'
-        elif 'Listen' in rights and 'Send' in rights:
-            result['rights'] = 'listen_send'
-        else:
-            result['rights'] = rights[0].lower()
         return result
 
 

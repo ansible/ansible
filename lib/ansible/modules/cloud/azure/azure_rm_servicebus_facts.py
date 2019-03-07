@@ -310,6 +310,29 @@ servicebuses:
                 - Number of messages.
             type: int
             sample: 10
+        sas_policies:
+            description:
+                - Dict of SAS policies.
+                - Will not be returned until C(show_sas_policy) set
+            type: dict
+            sample:  "{
+                        "testpolicy1": {
+                            "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/
+                                   foo/providers/Microsoft.ServiceBus/namespaces/bar/queues/qux/authorizationRules/testpolicy1",
+                            "keys": {
+                                "key_name": "testpolicy1",
+                                "primary_connection_string": "Endpoint=sb://bar.servicebus.windows.net/;
+                                                              SharedAccessKeyName=testpolicy1;SharedAccessKey=XXXXXXXXXXXXXXXXX;EntityPath=qux",
+                                "primary_key": "XXXXXXXXXXXXXXXXX",
+                                "secondary_connection_string": "Endpoint=sb://bar.servicebus.windows.net/;
+                                                                SharedAccessKeyName=testpolicy1;SharedAccessKey=XXXXXXXXXXXXXXX;EntityPath=qux",
+                                "secondary_key": "XXXXXXXXXXXXXXX"
+                            },
+                            "name": "testpolicy1",
+                            "rights": "listen_send",
+                            "type": "Microsoft.ServiceBus/Namespaces/Queues/AuthorizationRules"
+                        }
+                     }"
 '''
 
 try:

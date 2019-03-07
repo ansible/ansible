@@ -17,9 +17,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_servicebus_queue
 version_added: "2.8"
-short_description: Manage Azure Service Bus.
+short_description: Manage Azure Service Bus queue.
 description:
-    - Create, update or delete an Azure Service Bus namespaces, queues, topics, subscriptions and rules.
+    - Create, update or delete an Azure Service Bus queue.
 options:
     resource_group:
         description:
@@ -116,7 +116,7 @@ options:
             - creating
             - deleting
             - renaming
-            - unkown
+            - unknown
 
 extends_documentation_fragment:
     - azure
@@ -194,7 +194,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             requires_duplicate_detection=dict(type='bool'),
             requires_session=dict(type='bool'),
             status=dict(type='str',
-                        choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unkown'])
+                        choices=['active', 'disabled', 'restoring', 'send_disabled', 'receive_disabled', 'creating', 'deleting', 'renaming', 'unknown'])
         )
 
         self.resource_group = None
@@ -258,7 +258,7 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             if not original:
                 changed = True
                 result = instance
-            else:  # namespace's location and sku cannot be updated
+            else:
                 result = original
                 attribute_map = set(self.servicebus_models.SBQueue._attribute_map.keys()) - set(self.servicebus_models.SBQueue._validation.keys())
                 for attribute in attribute_map:
@@ -268,12 +268,6 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
             if changed and not self.check_mode:
                 result = self.create_or_update(instance)
             self.results = self.to_dict(result)
-
-            # handle SAS policies
-            rules = self.get_auth_rules()
-            for name in rules.keys():
-                rules[name]['keys'] = self.get_sas_key(name)
-            self.results['sas_policies'] = rules
         elif original:
             changed = True
             if not self.check_mode:
@@ -333,38 +327,6 @@ class AzureRMServiceBusQueue(AzureRMModuleBase):
                 result['max_size_in_mb'] = value
             else:
                 result[attribute] = value
-        return result
-
-    # SAS policy
-    def get_auth_rules(self):
-        result = dict()
-        try:
-            client = self._get_client()
-            rules = client.list_authorization_rules(self.resource_group, self.namespace, self.name)
-            while True:
-                rule = rules.next()
-                result[rule.name] = self.policy_to_dict(rule)
-        except Exception:
-            pass
-        return result
-
-    def get_sas_key(self, name):
-        try:
-            client = self._get_client()
-            return client.list_keys(self.resource_group, self.namespace, self.name, name).as_dict()
-        except Exception as exc:
-            self.fail('Error when getting SAS policy {0}\'s key - {1}'.format(name, exc.message or str(exc)))
-        return None
-
-    def policy_to_dict(self, rule):
-        result = rule.as_dict()
-        rights = result['rights']
-        if 'Manage' in rights:
-            result['rights'] = 'manage'
-        elif 'Listen' in rights and 'Send' in rights:
-            result['rights'] = 'listen_send'
-        else:
-            result['rights'] = rights[0].lower()
         return result
 
 
