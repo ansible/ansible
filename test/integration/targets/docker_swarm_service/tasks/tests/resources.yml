@@ -48,7 +48,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     limits:
-      cpus: 2
+      cpus: 0.5
   register: limit_cpu_3
 
 - name: cleanup
@@ -159,7 +159,7 @@
     resolve_image: no
     command: '/bin/sh -v -c "sleep 10m"'
     reservations:
-      cpus: 2
+      cpus: 0.5
   register: reserve_cpu_3
 
 - name: cleanup
