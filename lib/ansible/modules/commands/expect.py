@@ -57,7 +57,11 @@ options:
     description:
       - Used to avoid the utf-8 codec error, options are strict,replace
     default: false
+    choices:
+      - strict
+      - replace
     type: str
+    version_added: "2.8"
 requirements:
   - python >= 2.6
   - pexpect >= 3.3
