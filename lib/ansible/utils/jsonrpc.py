@@ -45,7 +45,10 @@ class JsonRpcServer(object):
                 result = rpc_method(*args, **kwargs)
             except ConnectionError as exc:
                 display.vvv(traceback.format_exc())
-                error = self.error(code=exc.code, message=to_text(exc))
+                try:
+                    error = self.error(code=exc.code, message=to_text(exc))
+                except AttributeError:
+                    error = self.internal_error(data=to_text(exc))
                 response = json.dumps(error)
             except Exception as exc:
                 display.vvv(traceback.format_exc())
