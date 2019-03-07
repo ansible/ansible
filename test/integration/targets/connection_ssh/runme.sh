@@ -9,7 +9,7 @@ VAULT_PASS_ARG=--vault-password-file=../connection_ssh/"${ANSIBLE_VAULT_PASS_FIL
 export ANSIBLE_PRIVATE_KEY_FILE=../connection_ssh/"${SSH_PRIVATE_KEY_FILE}"
 
 # generate a random alpha-numeric 64 characters long password
-dd count=1 if=/dev/urandom | tr -cd "[:alpha:][:digit:]" | head -c 64 > "${ANSIBLE_VAULT_PASS_FILE}"
+dd count=1 if=/dev/urandom | LC_CTYPE=C tr -cd "[:alpha:][:digit:]" | head -c 64 > "${ANSIBLE_VAULT_PASS_FILE}"
 
 # generate an SSH key with an empty password
 ssh-keygen -N "" -f "${SSH_PRIVATE_KEY_FILE}"
