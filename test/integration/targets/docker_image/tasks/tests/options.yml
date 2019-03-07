@@ -78,8 +78,14 @@
 
 - assert:
     that:
-    - "('Minimum memory limit allowed is 4MB') in container_limits_1.msg"
-    - container_limits_2 is changed
+    # It *sometimes* happens that the first task does not fail.
+    # For now, we work around this by
+    #   a) requiring that if it fails, the message must
+    #      contain 'Minimum memory limit allowed is 4MB', and
+    #   b) requiring that either the first task, or the second
+    #      task is changed, but not both.
+    - "not container_limits_1 is failed or ('Minimum memory limit allowed is 4MB') in container_limits_1.msg"
+    - "container_limits_1 is changed or container_limits_2 is changed and not (container_limits_1 is changed and container_limits_2 is changed)"
 
 ####################################################################
 ## dockerfile ######################################################
