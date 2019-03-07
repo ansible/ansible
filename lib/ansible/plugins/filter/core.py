@@ -185,9 +185,22 @@ def ternary(value, true_val, false_val, none_val=None):
         return false_val
 
 
-def regex_escape(string):
+def regex_escape(string, re_type='python'):
     '''Escape all regular expressions special characters from STRING.'''
-    return re.escape(string)
+    if re_type == 'python':
+        return re.escape(string)
+    elif re_type == 'posix_basic':
+        # list of BRE special chars:
+        # https://en.wikibooks.org/wiki/Regular_Expressions/POSIX_Basic_Regular_Expressions
+        return regex_replace(string, r'([].[^$*\\])', r'\\\1')
+    # TODO: implement posix_extended
+    # It's similar to, but different from python regex, which is similar to,
+    # but different from PCRE.  It's possible that re.escape would work here.
+    # https://remram44.github.io/regex-cheatsheet/regex.html#programs
+    elif re_type == 'posix_extended':
+        raise AnsibleFilterError('Regex type (%s) not yet implemented' % re_type)
+    else:
+        raise AnsibleFilterError('Invalid regex type (%s)' % re_type)
 
 
 def from_yaml(data):
