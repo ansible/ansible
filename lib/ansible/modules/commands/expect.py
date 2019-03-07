@@ -142,7 +142,7 @@ def main():
             responses=dict(type='dict', required=True),
             timeout=dict(type='int', default=30),
             echo=dict(type='bool', default=False),
-            codec_errors=dict(type='str'),
+            codec_errors=dict(type='str', choices=['strict','replace']),
         )
     )
 
