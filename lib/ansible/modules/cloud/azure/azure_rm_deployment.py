@@ -26,12 +26,19 @@ description:
        For more information on Azure Resource Manager templates see https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/."
 
 options:
-  resource_group_name:
+  resource_group:
     description:
       - The resource group name to use or create to host the deployed template
     required: true
     aliases:
-      - resource_group
+      - resource_group_name
+  name:
+    description:
+      - The name of the deployment to be tracked in the resource group deployment history. Re-using a deployment name
+        will overwrite the previous value in the resource group's deployment history.
+    default: ansible-arm
+    aliases:
+      - deployment_name
   location:
     description:
       - The geo-locations in which the resource group will be located.
@@ -44,14 +51,6 @@ options:
     choices:
         - complete
         - incremental
-  state:
-    description:
-      - If state is "present", template will be created. If state is "present" and if deployment exists, it will be
-        updated. If state is "absent", stack will be removed.
-    default: present
-    choices:
-        - present
-        - absent
   template:
     description:
       - A hash containing the templates inline. This parameter is mutually exclusive with 'template_link'.
@@ -70,11 +69,6 @@ options:
     description:
       - Uri of file containing the parameters body. This parameter is mutually exclusive with 'parameters'. Either
         one of them is required if "state" parameter is "present".
-  deployment_name:
-    description:
-      - The name of the deployment to be tracked in the resource group deployment history. Re-using a deployment name
-        will overwrite the previous value in the resource group's deployment history.
-    default: ansible-arm
   wait_for_deployment_completion:
     description:
       - Whether or not to block until the deployment has completed.
@@ -84,6 +78,14 @@ options:
     description:
       - Time (in seconds) to wait between polls when waiting for deployment completion.
     default: 10
+  state:
+    description:
+      - If state is C(present), template will be created. If state is C(present) and deployment exists, it will be
+        updated. If state is C(absent), stack will be removed.
+    default: present
+    choices:
+        - present
+        - absent
 
 extends_documentation_fragment:
     - azure
@@ -100,14 +102,15 @@ EXAMPLES = '''
 # Destroy a template deployment
 - name: Destroy Azure Deploy
   azure_rm_deployment:
+    resource_group: myResourceGroup
+    name: myDeployment
     state: absent
-    subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    resource_group_name: dev-ops-cle
 
 # Create or update a template deployment based on uris using parameter and template links
 - name: Create Azure Deploy
   azure_rm_deployment:
-    resource_group_name: dev-ops-cle
+    resource_group: myResourceGroup
+    name: myDeployment
     template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
     parameters_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.parameters.json'
 
@@ -115,60 +118,38 @@ EXAMPLES = '''
 # This deploys a VM with SSH support for a given public key, then stores the result in 'azure_vms'. The result is then
 # used to create a new host group. This host group is then used to wait for each instance to respond to the public IP SSH.
 ---
-- hosts: localhost
-  connection: local
-  gather_facts: no
-  tasks:
-    - name: Destroy Azure Deploy
-      azure_rm_deployment:
-        state: absent
-        subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        resource_group_name: dev-ops-cle
-
-    - name: Create Azure Deploy
-      azure_rm_deployment:
-        subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-        resource_group_name: dev-ops-cle
-        parameters:
-          newStorageAccountName:
-            value: devopsclestorage1
-          adminUsername:
-            value: devopscle
-          dnsNameForPublicIP:
-            value: devopscleazure
-          location:
-            value: West US
-          vmSize:
-            value: Standard_A2
-          vmName:
-            value: ansibleSshVm
-          sshKeyData:
-            value: YOUR_SSH_PUBLIC_KEY
-        template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sshkey/azuredeploy.json'
-      register: azure
-
-    - name: Add new instance to host group
-      add_host:
-        hostname: "{{ item['ips'][0].public_ip }}"
-        groupname: azure_vms
-      loop: "{{ azure.deployment.instances }}"
-
-    - hosts: azure_vms
-      user: devopscle
-      tasks:
-        - name: Wait for SSH to come up
-          wait_for:
-            port: 22
-            timeout: 2000
-            state: started
-        - name: echo the hostname of the vm
-          shell: hostname
+- name: Create Azure Deploy
+  azure_rm_deployment:
+    resource_group: myResourceGroup
+    name: myDeployment
+    parameters:
+      newStorageAccountName:
+        value: devopsclestorage1
+      adminUsername:
+        value: devopscle
+      dnsNameForPublicIP:
+        value: devopscleazure
+      location:
+        value: West US
+      vmSize:
+        value: Standard_A2
+      vmName:
+        value: ansibleSshVm
+      sshKeyData:
+        value: YOUR_SSH_PUBLIC_KEY
+    template_link: 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sshkey/azuredeploy.json'
+  register: azure
+- name: Add new instance to host group
+  add_host:
+    hostname: "{{ item['ips'][0].public_ip }}"
+    groupname: azure_vms
+  loop: "{{ azure.deployment.instances }}"
 
 # Deploy an Azure WebApp running a hello world'ish node app
 - name: Create Azure WebApp Deployment at http://devopscleweb.azurewebsites.net/hello.js
   azure_rm_deployment:
-    subscription_id: cbbdaed0-fea9-4693-bf0c-d446ac93c030
-    resource_group_name: dev-ops-cle-webapp
+    resource_group: myResourceGroup
+    name: myDeployment
     parameters:
       repoURL:
         value: 'https://github.com/devigned/az-roadshow-oss.git'
@@ -185,9 +166,8 @@ EXAMPLES = '''
 # Create or update a template deployment based on an inline template and parameters
 - name: Create Azure Deploy
   azure_rm_deployment:
-    subscription_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    resource_group_name: dev-ops-cle
-
+    resource_group: myResourceGroup
+    name: myDeployment
     template:
       $schema: "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#"
       contentVersion: "1.0.0.0"
@@ -331,30 +311,82 @@ EXAMPLES = '''
 
 RETURN = '''
 deployment:
-  description: Deployment details
-  type: dict
-  returned: always
-  sample:
-      group_name:
-        description: Name of the resource group
-        type: str
-        returned: always
-      id:
-        description: The Azure ID of the deployment
-        type: str
-        returned: always
-      instances:
-        description: Provides the public IP addresses for each VM instance.
-        type: list
-        returned: always
-      name:
-        description: Name of the deployment
-        type: str
-        returned: always
-      outputs:
-        description: Dictionary of outputs received from the deployment
-        type: dict
-        returned: always
+    description: Deployment details
+    type: complex
+    returned: always
+    contains:
+        group_name:
+            description: Name of the resource group
+            type: str
+            returned: always
+            sample: myResourceGroup
+        id:
+            description: The Azure ID of the deployment
+            type: str
+            returned: always
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Resources/deployments/myD
+                     eployment"
+        instances:
+            description: Provides the public IP addresses for each VM instance.
+            type: list
+            returned: always
+            contains:
+                ips:
+                    description: List of Public IP addresses.
+                    type: list
+                    returned: always
+                    contains:
+                        dns_settings:
+                            description: DNS Settings
+                            type: complex
+                            returned: always
+                            contains:
+                                domain_name_label:
+                                    description: Domain Name Label
+                                    type: str
+                                    returned: always
+                                    sample: myvirtualmachine
+                                fqdn:
+                                    description: Fully Qualified Domain Name.
+                                    type: str
+                                    returned: always
+                                    sample: myvirtualmachine.eastus2.cloudapp.azure.com
+                        id:
+                            description: Public IP resource id.
+                            returned: always
+                            type: str
+                            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/p
+                                     ublicIPAddresses/myPublicIP"
+                        name:
+                            decription: Public IP resource name.
+                            returned: always
+                            type: str
+                            sample: myPublicIP
+                        public_ip:
+                            description: Public IP address value.
+                            returned: always
+                            type: str
+                            sample: 104.209.244.123
+                        public_ip_allocation_method:
+                            description: Public IP allocation method.
+                            returned: always
+                            type: str
+                            sample: Dynamic
+                vm_name:
+                    description: Virtual machine name.
+                    returned: always
+                    type: str
+                    sample: myvirtualmachine
+        name:
+          description: Name of the deployment
+          type: str
+          returned: always
+          sample: myDeployment
+        outputs:
+          description: Dictionary of outputs received from the deployment.
+          type: complex
+          returned: always
+          sample: { "hostname": { "type": "String", "value": "myvirtualmachine.eastus2.cloudapp.azure.com" } }
 '''
 
 import time
@@ -384,7 +416,8 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
     def __init__(self):
 
         self.module_arg_spec = dict(
-            resource_group_name=dict(type='str', required=True, aliases=['resource_group']),
+            resource_group=dict(type='str', required=True, aliases=['resource_group_name']),
+            name=dict(type='str', default="ansible-arm", aliases=['deployment_name']),
             state=dict(type='str', default='present', choices=['present', 'absent']),
             template=dict(type='dict', default=None),
             parameters=dict(type='dict', default=None),
@@ -392,7 +425,6 @@ class AzureRMDeploymentManager(AzureRMModuleBase):
             parameters_link=dict(type='str', default=None),
             location=dict(type='str', default="westus"),
             deployment_mode=dict(type='str', default='incremental', choices=['complete', 'incremental']),
-            deployment_name=dict(type='str', default="ansible-arm"),
             wait_for_deployment_completion=dict(type='bool', default=True),
             wait_for_deployment_polling_period=dict(type='int', default=10)
         )
