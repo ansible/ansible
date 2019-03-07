@@ -111,6 +111,7 @@ EXAMPLES = """
 RETURN = """
 response:
   description: Output from the CPS transaction.
+               Output of CPS Get operation if CPS set/create/delete not done.
   returned: when a CPS transaction is successfully performed.
   type: list
   sample:
@@ -124,44 +125,41 @@ response:
         },
         "key": "target/dell-base-if-cmn/if/interfaces/interface"
     }]
-candidate:
-  description: CPS input attribute data used to compare with
-               running configuration
-  returned: all CPS operations other than "get"
+cps_curr_config:
+  description: Returns the CPS Get output i.e. the running configuration
+               before CPS operation of set/delete is performed
+  returned: when CPS operations set, delete
   type: dict
   sample:
-    {
-        "base-if-vlan/if/interfaces/interface/id": 230,
-        "if/interfaces/interface/name": "br230",
-        "if/interfaces/interface/type": "ianaift:l2vlan"
-    }
-config:
-  description: Returns the CPS Get output i.e. the running configuration
-               before performing the CPS transaction
+    [{
+        "data": {
+            "base-if-vlan/if/interfaces/interface/id": 230,
+            "cps/key_data": {
+                "if/interfaces/interface/name": "br230"
+            },
+            "dell-base-if-cmn/if/interfaces/interface/if-index": 44,
+            "dell-if/if/interfaces/interface/learning-mode": 1,
+            "dell-if/if/interfaces/interface/mtu": 1532,
+            "dell-if/if/interfaces/interface/phys-address": "",
+            "dell-if/if/interfaces/interface/vlan-type": 1,
+            "if/interfaces/interface/enabled": 0,
+            "if/interfaces/interface/type": "ianaift:l2vlan"
+        },
+        "key": "target/dell-base-if-cmn/if/interfaces/interface"
+    }]
+diff:
+  description: The actual configuration that will be pushed comparing
+               the running configuration and input attributes
   returned: when CPS operations set, delete
   type: dict
   sample:
     {
-        "base-if-vlan/if/interfaces/interface/id": 230,
-        "dell-base-if-cmn/if/interfaces/interface/if-index": 46,
-        "dell-if/if/interfaces/interface/learning-mode": 1,
-        "dell-if/if/interfaces/interface/mtu": 1532,
-        "dell-if/if/interfaces/interface/phys-address": "",
-        "dell-if/if/interfaces/interface/vlan-type": 1,
-        "if/interfaces/interface/enabled": 0,
-        "if/interfaces/interface/name": "br230",
-        "if/interfaces/interface/type": "ianaift:l2vlan"
-    }
-diff:
-  description: The actual configuration that will be pushed comparing
-               the running configuration and input attributes
-  returned: all CPS operations other than "get"
-  type: dict
-  sample:
-    {
-        "base-if-vlan/if/interfaces/interface/id": 230,
-        "if/interfaces/interface/name": "br230",
-        "if/interfaces/interface/type": "ianaift:l2vlan"
+        "cps/key_data": {
+            "if/interfaces/interface/name": "br230"
+        },
+        "dell-if/if/interfaces/interface/untagged-ports": [
+            "e101-007-0"
+        ]
     }
 db:
   description: Denotes if CPS DB transaction was performed
@@ -186,31 +184,6 @@ try:
     HAS_CPS = True
 except ImportError:
     HAS_CPS = False
-
-
-def get_config(module):
-
-    qualifier = module.params['qualifier']
-    module_name = module.params['module_name']
-    attr_type = module.params["attr_type"]
-    attr_data = module.params["attr_data"]
-    db = module.params["db"]
-    commit_event = module.params["commit_event"]
-    config = dict()
-
-    configobj = parse_cps_parameters(module_name, qualifier,
-                                     attr_type, attr_data, "get",
-                                     db, commit_event)
-    cpsconfig = cps_get(configobj)
-
-    if cpsconfig['response']:
-        for key, val in iteritems(cpsconfig['response'][0]['data']):
-            if key == 'cps/key_data':
-                config.update(val)
-            else:
-                config[key] = val
-
-    return config
 
 
 def convert_cps_raw_list(raw_list):
@@ -289,7 +262,6 @@ def cps_get(obj):
     resp_list = convert_cps_raw_list(l)
 
     RESULT["response"] = resp_list
-    RESULT["changed"] = False
     return RESULT
 
 
@@ -304,6 +276,17 @@ def cps_transaction(obj):
         error_msg = "Transaction error while " + obj.get_property('oper')
         raise RuntimeError(error_msg)
     return RESULT
+
+
+def parse_key_data(attrs):
+
+    res = dict()
+    for key, val in iteritems(attrs):
+        if key == 'cps/key_data':
+            res.update(val)
+        else:
+            res[key] = val
+    return res
 
 
 def main():
@@ -341,8 +324,6 @@ def main():
     db = module.params["db"]
     commit_event = module.params["commit_event"]
     RESULT = dict(changed=False, db=False, commit_event=False)
-    obj = parse_cps_parameters(module_name, qualifier, attr_type,
-                               attr_data, operation, db, commit_event)
 
     if db:
         RESULT['db'] = True
@@ -350,38 +331,58 @@ def main():
         RESULT['commit_event'] = True
 
     try:
+        # First do a CPS get operation
+        get_obj = parse_cps_parameters(module_name, qualifier, attr_type,
+                                       attr_data, 'get', db, commit_event)
+        curr_config = cps_get(get_obj)
+
         if operation == 'get':
-            RESULT.update(cps_get(obj))
+            RESULT.update(curr_config)
         else:
-            config = get_config(module)
             diff = attr_data
 
-            if config:
-                candidate = dict()
-                for key, val in iteritems(attr_data):
-                    if key == 'cps/key_data':
-                        candidate.update(val)
-                    else:
-                        candidate[key] = val
-                diff = dict_diff(config, candidate)
+            # Evaluate the changes in the attributes
+            cfg = dict()
+            if curr_config and curr_config['response']:
+                cfg = curr_config['response'][0]['data']
+                key_d = 'cps/key_data'
 
+                # diff computation is not needed for delete
+                if operation != 'delete':
+                    configs = parse_key_data(cfg)
+                    attributes = parse_key_data(attr_data)
+                    diff = dict_diff(configs, attributes)
+                    # Append diff with any 'cps/key_data' from attr_data
+                    if diff and key_d in attr_data:
+                        diff[key_d] = attr_data[key_d]
+
+                # Append diff with any 'cps/key_data' from curr_config
+                # Needed for all operations including delete
+                if diff and key_d in cfg:
+                    if key_d in diff:
+                        diff[key_d].update(cfg[key_d])
+                    else:
+                        diff[key_d] = cfg[key_d]
+
+                RESULT.update({"diff": diff})
+
+            # Create object for cps operation
+            obj = parse_cps_parameters(module_name, qualifier, attr_type,
+                                       diff, operation, db, commit_event)
+
+            res = dict()
             if operation == "delete":
-                if config:
-                    RESULT.update({"config": config,
-                                   "candidate": attr_data,
-                                   "diff": diff})
-                    RESULT.update(cps_transaction(obj))
+                if cfg:
+                    res = cps_transaction(obj)
             else:
                 if diff:
-                    if 'cps/key_data' in attr_data:
-                        diff.update(attr_data['cps/key_data'])
-                    obj = parse_cps_parameters(module_name, qualifier,
-                                               attr_type, diff, operation,
-                                               db, commit_event)
-                    RESULT.update({"config": config,
-                                   "candidate": attr_data,
-                                   "diff": diff})
-                    RESULT.update(cps_transaction(obj))
+                    res = cps_transaction(obj)
+
+            if not res and cfg:
+                res.update({"response": curr_config['response']})
+            else:
+                res.update({"cps_curr_config": curr_config['response']})
+            RESULT.update(res)
 
     except Exception as e:
         module.fail_json(msg=str(type(e).__name__) + ": " + str(e))
