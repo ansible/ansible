@@ -70,11 +70,13 @@ options:
     version_added: "2.8"
   repository:
     description:
-      - Name of the custom repository to register or use.
+      - Name of the custom repository to use.
     type: str
   url:
     description:
       - URL of the custom repository to register.
+      - This option is deprecated and will be removed in Ansible 2.12. Use the
+        M(win_psrepository) module instead.
     type: str
 notes:
   - PowerShell modules needed
