@@ -35,10 +35,10 @@ def check_mutually_exclusive(terms, module_parameters):
     :returns: A list of terms that are mutually exclusive.
     """
 
-    if terms is None:
-        return []
-
     result = []
+    if terms is None:
+        return result
+
     for check in terms:
         count = count_terms(check, module_parameters)
         if count > 1:
@@ -65,5 +65,32 @@ def check_required_one_of(terms, module_parameters):
         count = count_terms(term, module_parameters)
         if count == 0:
             result.append(term)
+
+    return result
+
+
+def check_required_together(terms, module_parameters):
+    """Check each list of terms to ensure every parameter in each list exists
+    in the given module parameters. Accepts a list of lists or tuples.
+
+    :arg terms: List of lists of terms to check. Each list should include
+        parameters that are all required when at least one is specified
+        in the module_parameters.
+    :arg module_parameters: Dictionary of module parameters
+
+    :returns: List of lists of terms that exist in module_parametcs but are
+        missing other required terms.
+    """
+
+    result = []
+    if terms is None:
+        return result
+
+    for term in terms:
+        counts = [count_terms(field, module_parameters) for field in term]
+        non_zero = [c for c in counts if c > 0]
+        if len(non_zero) > 0:
+            if 0 in counts:
+                result.append(term)
 
     return result

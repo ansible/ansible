@@ -175,6 +175,7 @@ from ansible.module_utils.common.validation import (
     count_terms,
     check_mutually_exclusive,
     check_required_one_of,
+    check_required_together,
 )
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -1620,25 +1621,24 @@ class AnsibleModule(object):
             param = self.params
 
         required_one_of_check_results = check_required_one_of(spec, param)
-        if required_one_of_check_results:
-            for term in required_one_of_check_results:
-                msg = "one of the following is required: %s" % ', '.join(term)
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
+        for term in required_one_of_check_results:
+            msg = "one of the following is required: %s" % ', '.join(term)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_together(self, spec, param=None):
         if spec is None:
             return
-        for check in spec:
-            counts = [self._count_terms(field, param) for field in check]
-            non_zero = [c for c in counts if c > 0]
-            if len(non_zero) > 0:
-                if 0 in counts:
-                    msg = "parameters are required together: %s" % ', '.join(check)
-                    if self._options_context:
-                        msg += " found in %s" % " -> ".join(self._options_context)
-                    self.fail_json(msg=msg)
+        if param is None:
+            param = self.params
+
+        check_required_together_results = check_required_together(spec, param)
+        for term in check_required_together_results:
+            msg = "parameters are required together: %s" % ', '.join(term)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_required_by(self, spec, param=None):
         if spec is None:
