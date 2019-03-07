@@ -146,3 +146,76 @@ def check_required_arguments(argument_spec, module_parameters):
             missing.append(k)
 
     return missing
+
+
+def check_required_if(requirements, module_parameters):
+    """Check parameters that are conditionally required.
+
+    :arg requirements: List of lists specifying a parameter, value, parameters
+        required when the given parameter is the specified value, and optionally
+        a boolean indicating any or all parameters are required.
+
+        Example:
+            required_if=[
+                ['state', 'present', ('path',), True],
+                ['someint', 99, ('bool_param', 'string_param')],
+            ]
+
+    :arg module_paramaters: Dictionary of module parameters
+
+    :returns: List of dictionaries. Each dictionary is the result of evaluting
+        each item in requirements. Each return dictionary contains the following
+        keys:
+
+            :key missing: List of parameters that are required but missing
+            :key requires: 'any' or 'all'
+            :key paramater: Parameter name that has the requirement
+            :key value: Original value of the paramater
+            :key requirements: Original required parameters
+
+        Example:
+            [
+                {
+                    'parameter': 'someint',
+                    'value': 99
+                    'requirements': ('bool_param', 'string_param'),
+                    'missing': ['string_param'],
+                    'requires': 'all',
+                }
+            ]
+
+    """
+    result = []
+    if requirements is None:
+        return result
+
+    for req in requirements:
+        missing = {}
+        missing['missing'] = []
+        max_missing_count = 0
+        is_one_of = False
+        if len(req) == 4:
+            key, val, requirements, is_one_of = req
+        else:
+            key, val, requirements = req
+
+        # is_one_of is True at least one requirement should be
+        # present, else all requirements should be present.
+        if is_one_of:
+            max_missing_count = len(requirements)
+            missing['requires'] = 'any'
+        else:
+            missing['requires'] = 'all'
+
+        if key in module_parameters and module_parameters[key] == val:
+            for check in requirements:
+                count = count_terms(check, module_parameters)
+                if count == 0:
+                    missing['missing'].append(check)
+        if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
+            missing['parameter'] = key
+            missing['value'] = val
+            missing['requirements'] = requirements
+            result.append(missing)
+
+    return result

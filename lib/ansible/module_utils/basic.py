@@ -175,6 +175,7 @@ from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
     check_required_arguments,
     check_required_by,
+    check_required_if,
     check_required_one_of,
     check_required_together,
     count_terms,
@@ -1671,33 +1672,13 @@ class AnsibleModule(object):
             return
         if param is None:
             param = self.params
-        for sp in spec:
-            missing = []
-            max_missing_count = 0
-            is_one_of = False
-            if len(sp) == 4:
-                key, val, requirements, is_one_of = sp
-            else:
-                key, val, requirements = sp
-
-            # is_one_of is True at least one requirement should be
-            # present, else all requirements should be present.
-            if is_one_of:
-                max_missing_count = len(requirements)
-                term = 'any'
-            else:
-                term = 'all'
-
-            if key in param and param[key] == val:
-                for check in requirements:
-                    count = self._count_terms(check, param)
-                    if count == 0:
-                        missing.append(check)
-            if len(missing) and len(missing) >= max_missing_count:
-                msg = "%s is %s but %s of the following are missing: %s" % (key, val, term, ', '.join(missing))
-                if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
-                self.fail_json(msg=msg)
+        check_required_if_results = check_required_if(spec, param)
+        for missing in check_required_if_results:
+            msg = "%s is %s but %s of the following are missing: %s" % (
+                missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
