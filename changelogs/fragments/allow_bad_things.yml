@@ -1,0 +1,2 @@
+minor_changes:
+    - Ebmed an overridable static santiization method into base inventory plugin class to allow individual plugins to override
