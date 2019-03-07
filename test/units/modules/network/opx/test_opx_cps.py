@@ -64,7 +64,7 @@ class TestOpxCpsModule(TestOpxModule):
         self.mock_parse_cps_parameters = patch('ansible.modules.network.opx.opx_cps.parse_cps_parameters')
         self.parse_cps_parameters = self.mock_parse_cps_parameters.start()
 
-        self.mock_get_config = patch('ansible.modules.network.opx.opx_cps.get_config')
+        self.mock_get_config = patch('ansible.modules.network.opx.opx_cps.cps_get.parse_cps_parameters')
         self.get_config = self.mock_get_config.start()
 
     def tearDown(self):
@@ -108,7 +108,7 @@ class TestOpxCpsModule(TestOpxModule):
         self.get_config.return_value = config_data
         self.cps_transaction.return_value = dict(changed=True, response=resp)
         self.execute_module(changed=True, response=resp)
-        self.assertEqual(self.parse_cps_parameters.call_count, 1)
+        self.assertEqual(self.parse_cps_parameters.call_count, 2)
         self.assertEqual(self.cps_transaction.call_count, 1)
 
     def test_opx_operation_delete_fail(self):
@@ -118,8 +118,8 @@ class TestOpxCpsModule(TestOpxModule):
         set_module_args(dict(module_name=module_name, operation="delete", attr_data=attr_data))
         self.get_config.return_value = dict()
         self.execute_module(changed=False)
-        self.assertEqual(self.parse_cps_parameters.call_count, 1)
-        self.assertEqual(self.cps_transaction.call_count, 0)
+        self.assertEqual(self.parse_cps_parameters.call_count, 2)
+        self.assertEqual(self.cps_transaction.call_count, 1)
 
     def test_opx_operation_get(self):
         resp = load_fixture('opx_operation_get.cfg')
