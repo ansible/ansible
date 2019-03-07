@@ -539,9 +539,14 @@ class Connection(NetworkConnectionBase):
         '''
         cleaned = []
         for line in resp.splitlines():
-            if (command and line.strip() == command.strip()) or self._matched_prompt.strip() in line:
+            if command and line.strip() == command.strip():
                 continue
-            cleaned.append(line)
+
+            for prompt in self._matched_prompt.strip().splitlines():
+                if prompt.strip() in line:
+                    break
+            else:
+                cleaned.append(line)
         return b'\n'.join(cleaned).strip()
 
     def _find_prompt(self, response):
