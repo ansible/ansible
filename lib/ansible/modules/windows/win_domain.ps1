@@ -56,10 +56,12 @@ $result = @{changed=$false; reboot_required=$false}
 
 Ensure-Prereqs
 
-Try {
-    $forest = Get-ADForest $dns_domain_name -ErrorAction SilentlyContinue
-}
-Catch { }
+$forest = $null
+try {
+    # Cannot use Get-ADForest as that requires credential delegation, the below does not
+    $forest_context = New-Object -TypeName System.DirectoryServices.ActiveDirectory.DirectoryContext -ArgumentList Forest, $dns_domain_name
+    $forest = [System.DirectoryServices.ActiveDirectory.Forest]::GetForest($forest_context)
+} catch [System.DirectoryServices.ActiveDirectory.ActiveDirectoryObjectNotFoundException] { }
 
 If(-not $forest) {
     $result.changed = $true
@@ -84,20 +86,33 @@ If(-not $forest) {
         if ($domain_netbios_name) {
             $install_forest_args.DomainNetBiosName = $domain_netbios_name
         }
-        
-        $iaf = Install-ADDSForest @install_forest_args
 
-        $result.reboot_required = $iaf.RebootRequired
-
-        # The Netlogon service is set to auto start but is not started. This is
-        # required for Ansible to connect back to the host and reboot in a
-        # later task. Even if this fails Ansible can still connect but only
-        # with ansible_winrm_transport=basic so we just display a warning if
-        # this fails.
+        $iaf = $null
         try {
-            Start-Service -Name Netlogon
-        } catch {
-            Add-Warning -obj $result -message "Failed to start the Netlogon service after promoting the host, Ansible may be unable to connect until the host is manually rebooting: $($_.Exception.Message)"
+            $iaf = Install-ADDSForest @install_forest_args
+        } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
+            # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
+            # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
+            if ($_.Exception.ExitCode -eq 15) {
+                $result.reboot_required = $true
+            } else {
+                Fail-Json -obj $result -message "Failed to install ADDSForest with DCPromo: $($_.Exception.Message)"
+            }
+        }
+
+        if ($null -ne $iaf) {
+            $result.reboot_required = $iaf.RebootRequired
+
+            # The Netlogon service is set to auto start but is not started. This is
+            # required for Ansible to connect back to the host and reboot in a
+            # later task. Even if this fails Ansible can still connect but only
+            # with ansible_winrm_transport=basic so we just display a warning if
+            # this fails.
+            try {
+                Start-Service -Name Netlogon
+            } catch {
+                Add-Warning -obj $result -message "Failed to start the Netlogon service after promoting the host, Ansible may be unable to connect until the host is manually rebooting: $($_.Exception.Message)"
+            }
         }
     }
 }
