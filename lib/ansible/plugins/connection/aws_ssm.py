@@ -33,11 +33,6 @@ options:
     description: The name of the S3 bucket used for file transfers.
     vars:
     - name: bucket_name
-  executable:
-    description: This defines the location of the aws binary.
-    vars:
-    - name: aws_executable
-    default: '/usr/local/bin/aws'
   plugin:
     description: This defines the location of the session-manager-plugin binary.
     vars:
@@ -224,6 +219,7 @@ class Connection(ConnectionBase):
         if sudoable == True:
             cmd = "sudo " + cmd
 
+        # Handle the back-end throttling 
         for c in cmd:
             session.stdin.write(c)
             time.sleep(10 / 1000.0)
