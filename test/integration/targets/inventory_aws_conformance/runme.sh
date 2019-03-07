@@ -145,7 +145,8 @@ echo "PWD: $(pwd)"
 export PYTHONPATH=$(pwd)/lib:$PYTHONPATH
 
 rm -f $OUTPUT_DIR/plugin.out
-ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list | tee -a $OUTPUT_DIR/plugin.out
+#ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list | tee -a $OUTPUT_DIR/plugin.out
+ansible-inventory -i $OUTPUT_DIR/test.aws_ec2.yml --list --output=$OUTPUT_DIR/plugin.out
 rm -f $OUTPUT_DIR/aws_ec2.yml
 
 #################################################
