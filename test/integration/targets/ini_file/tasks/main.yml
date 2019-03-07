@@ -45,6 +45,7 @@
 
       [drinks]
       fav = lemonade
+
     content1: "{{ output_content.content | b64decode }}"
 
 - name: Verify content of ini file is as expected

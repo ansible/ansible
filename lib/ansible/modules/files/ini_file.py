@@ -262,6 +262,9 @@ def do_ini(module, filename, section=None, option=None, value=None,
     del ini_lines[-1:]
 
     if not within_section and option and state == 'present':
+        # Add newline before new section
+        if ini_lines[-1] != "\n":
+            ini_lines.append('\n')
         ini_lines.append('[%s]\n' % section)
         if not value and allow_no_value:
             ini_lines.append('%s\n' % option)
