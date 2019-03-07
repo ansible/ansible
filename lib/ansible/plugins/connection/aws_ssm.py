@@ -221,7 +221,13 @@ class Connection(ConnectionBase):
         self._flush_stderr(session)
 
         # Send the command
-        session.stdin.write(cmd + "\n")
+        if sudoable == True:
+            cmd = "sudo " + cmd
+
+        for c in cmd:
+            session.stdin.write(c)
+            time.sleep(10 / 1000.0)
+        session.stdin.write("\n")
 
         # echo command status and end marker
         session.stdin.write("echo $'\\n'$?\n")
@@ -279,19 +285,26 @@ class Connection(ConnectionBase):
 
         return stderr
 
+    def _get_url(self, client_method, bucket_name, out_path, http_method):
+        ''' Generate URL for get_object / put_object '''
+        client = boto3.client('s3')
+        url = client.generate_presigned_url(client_method, Params={'Bucket': bucket_name, 'Key': out_path}, ExpiresIn=3600, HttpMethod=http_method)
+        return (url.encode())
+
     @_ssm_retry
     def _file_transport_command(self, in_path, out_path, ssm_action):
         ''' transfer a file from using an intermediate S3 bucket '''
 
         bucket_url = 's3://%s/%s' % (self.get_option('bucket_name'), out_path)
-        command = 'aws s3 cp %s %s'
+        put_command = 'curl --request PUT --upload-file %s "%s"' % (in_path, self._get_url('put_object', self.get_option('bucket_name'), out_path, 'PUT'))
+        get_command = 'curl -v "%s" -o %s' % (self._get_url('get_object', self.get_option('bucket_name'), out_path, 'GET'), out_path)
 
         if ssm_action == 'get':
-            (returncode, stdout, stderr) = self.exec_command(command % (in_path, bucket_url), in_data=None, sudoable=False)
-            subprocess.check_output(command % (bucket_url, out_path), shell=True)
+            (returncode, stdout, stderr) = self.exec_command(put_command, in_data=None, sudoable=False)
+            subprocess.check_output(get_command, shell=True)
         else:
-            subprocess.check_output(command % (in_path, bucket_url), shell=True)
-            (returncode, stdout, stderr) = self.exec_command(command % (bucket_url, out_path), in_data=None, sudoable=False)
+            subprocess.check_output(put_command, shell=True)
+            (returncode, stdout, stderr) = self.exec_command(get_command, in_data=None, sudoable=False)
 
         # Check the return code
         if returncode == 0:
