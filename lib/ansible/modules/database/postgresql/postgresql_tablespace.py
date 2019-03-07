@@ -504,7 +504,8 @@ def main():
 
     # Rename tablespace:
     elif tblspace.exists and rename_to:
-        changed = tblspace.rename(rename_to)
+        if tblspace.name != rename_to:
+            changed = tblspace.rename(rename_to)
 
     if state == 'present':
         # Refresh information:
