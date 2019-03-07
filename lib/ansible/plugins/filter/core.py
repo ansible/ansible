@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import crypt
 import glob
 import hashlib
 import itertools
@@ -28,13 +27,13 @@ import json
 import ntpath
 import os.path
 import re
-import string
 import sys
 import time
 import uuid
 import yaml
-
 import datetime
+
+from collections import Iterable
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
 
@@ -519,6 +518,25 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
     return ret
 
 
+def do_to_dict(mylist):
+    ''' takes a list of pairs with each having and transforms the list into a dictionary '''
+
+    if isinstance(mylist, string_types) or not isinstance(mylist, Iterable):
+        raise AnsibleFilterError("This filter requires a list, got %s instead." % type(mylist))
+
+    ret = {}
+    for pair in mylist:
+        if isinstance(mylist, string_types) or not isinstance(mylist, Iterable):
+            raise AnsibleFilterError("This filter requires each element of the list to be a list, got %s instead." % type(pair))
+
+        try:
+            ret[pair[0]] = pair[1]
+        except KeyError as e:
+            raise AnsibleFilterError("This filter requires a pair of elements but was unable to access them: %s" % to_native(e))
+
+    return ret
+
+
 def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='value'):
     ''' takes a list of dicts with each having a 'key' and 'value' keys, and transforms the list into a dictionary,
         effectively as the reverse of dict2items '''
@@ -653,6 +671,8 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
+            'dict': do_to_dict,
+            'to_dict': do_to_dict,
 
             # Misc
             'random_mac': random_mac,
