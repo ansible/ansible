@@ -48,12 +48,13 @@
           - "second_virt_net_start is not changed"
           - "second_virt_net_define is not changed"
     
-    - name: Remove libvirt packages
-      package:
-        name: "{{ virt_net_packages }}"
-        state: absent
   always:
-    - name: Remove libvirt packages
+    - name: Stop libvirt
+      service:
+        name: libvirtd
+        state: stopped
+
+    - name: Remove only the libvirt packages
       package:
-        name: "{{ virt_net_packages }}"
+        name: "{{ virt_net_packages|select('match', '.*libvirt.*')|list }}"
         state: absent
