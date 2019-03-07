@@ -20,42 +20,38 @@ author:
   - "Sumit Jaiswal (@sjaiswal)"
 short_description: Module to add edges to Skydive topology
 description:
-  - This module handles adding node to the Skydive topology. The Gremlin
-    expression is continuously evaluated which means that it is
-    possible to define a capture on nodes that do not exist yet.
-  - It is useful when you want to start a capture on all OpenvSwitch
-    whatever the number of Skydive agents you will start.
-  - While starting the capture, user can specify the capture name,
-    capture description and capture type optionally.
+  - This module handles setting up edges between two nodes based on the
+    relationship type to the Skydive topology.
 requirements:
   - skydive-client
 extends_documentation_fragment: skydive
 options:
-  name:
+  parent_node:
     description:
-      - To define name for the node.
+      - To defined the first node of the link, it can be either an ID or
+        a gremlin expression
+    required: true
+  child_node:
+    description:
+      - To defined the second node of the link, it can be either an ID or
+        a gremlin expression
     required: true
   relation_type:
     description:
       - To define relation type of the node I(ownership, layer2, layer3).
     required: true
-  node1:
-    description:
-      - To defined the first node of the link, it can be either an ID or
-        a gremlin expression
-    required: true
-  node2:
-    description:
-      - To defined the second node of the link, it can be either an ID or
-        a gremlin expression
-    required: true
   host:
     description:
-      - To define the host for the node.
+      - To define the host of the node.
+    default: ""
+    required: False
+  metadata:
+    description:
+      - To define metadata for the edge.
     required: false
   state:
     description:
-      - State of the Skydive Node. If value is I(present) new node
+      - State of the Skydive Edge. If value is I(present) new edge
         will be created else if it is I(absent) it will be deleted.
     default: present
     choices:
@@ -67,7 +63,7 @@ EXAMPLES = """
 - name: create tor
   skydive_node:
     name: 'TOR'
-    type: "fabric"
+    node_type: "fabric"
     metadata:
       Model: Cisco xxxx
   register: tor_result
@@ -75,13 +71,13 @@ EXAMPLES = """
 - name: create port 1
   skydive_node:
     name: 'PORT1'
-    type: 'fabric'
+    node_type: 'fabric'
   register: port1_result
 
 - name: create port 2
   skydive_node:
     name: 'PORT2'
-    type: 'fabric'
+    node_type: 'fabric'
   register: port2_result
 
 - name: link node tor and port 1
