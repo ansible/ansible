@@ -115,13 +115,24 @@ if (-not $forest) {
         $install_params.ForestMode = $forest_mode
     }
 
-    $iaf = Install-ADDSForest @install_params
+    $iaf = $null
+    try {
+        $iaf = Install-ADDSForest @install_params
+    } catch [Microsoft.DirectoryServices.Deployment.DCPromoExecutionException] {
+        # ExitCode 15 == 'Role change is in progress or this computer needs to be restarted.'
+        # DCPromo exit codes details can be found at https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/troubleshooting-domain-controller-deployment
+        if ($_.Exception.ExitCode -eq 15) {
+            $result.reboot_required = $true
+        } else {
+            Fail-Json -obj $result -message "Failed to install ADDSForest with DCPromo: $($_.Exception.Message)"
+        }
+    }
 
     if ($check_mode) {
         # the return value after -WhatIf does not have RebootRequired populated
         # manually set to True as the domain would have been installed
         $result.reboot_required = $true
-    } else {
+    } elseif ($null -ne $iaf) {
         $result.reboot_required = $iaf.RebootRequired
 
         # The Netlogon service is set to auto start but is not started. This is
