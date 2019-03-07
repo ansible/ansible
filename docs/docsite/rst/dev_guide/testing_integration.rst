@@ -115,7 +115,7 @@ Define Windows inventory::
 
 Run the Windows tests executed by our CI system::
 
-    ansible-test windows-integration -v windows/ci/
+    ansible-test windows-integration -v shippable/
 
 Tests in Docker containers
 ==========================
