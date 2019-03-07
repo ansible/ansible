@@ -172,11 +172,12 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
-    count_terms,
-    check_required_by,
     check_mutually_exclusive,
+    check_required_arguments,
+    check_required_by,
     check_required_one_of,
     check_required_together,
+    count_terms,
 )
 from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
@@ -1653,16 +1654,11 @@ class AnsibleModule(object):
                 self.fail_json(msg="missing parameter(s) required by '%s': %s" % (key, ', '.join(missing)))
 
     def _check_required_arguments(self, spec=None, param=None):
-        ''' ensure all required arguments are present '''
-        missing = []
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
-        for (k, v) in spec.items():
-            required = v.get('required', False)
-            if required and k not in param:
-                missing.append(k)
+        missing = check_required_arguments(spec, param)
         if len(missing) > 0:
             msg = "missing required arguments: %s" % ", ".join(missing)
             if self._options_context:

@@ -125,3 +125,24 @@ def check_required_by(requirements, module_parameters):
                 result[key].append(required)
 
     return result
+
+
+def check_required_arguments(argument_spec, module_parameters):
+    """Check all paramaters in argument_spec and return a list of parameters
+    that are required by not present in module_parameters.
+
+    :arg argument_spec: Argument spec dicitionary containing all parameters
+        and their specification
+    :arg module_paramaters: Dictionary of module parameters
+
+    :returns: List of parameters that are required but missing.
+
+    """
+
+    missing = []
+    for (k, v) in argument_spec.items():
+        required = v.get('required', False)
+        if required and k not in module_parameters:
+            missing.append(k)
+
+    return missing
