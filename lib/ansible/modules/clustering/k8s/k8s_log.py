@@ -54,7 +54,9 @@ options:
       to identify a specfic object.
   container:
     description:
-    - Use to specify the container within a pod to grab the log from
+    - Use to specify the container within a pod to grab the log from.
+    - If there is only one container, this will default to that container.
+    - If there is more than one container, this option is required.
     required: no
 
 extends_documentation_fragment:
@@ -89,7 +91,7 @@ from ansible.module_utils.k8s.common import KubernetesAnsibleModule, AUTH_ARG_SP
 import copy
 
 
-class KubernetesFactsModule(KubernetesAnsibleModule):
+class KubernetesLogModule(KubernetesAnsibleModule):
 
     def __init__(self, *args, **kwargs):
         KubernetesAnsibleModule.__init__(self, *args,
@@ -99,11 +101,17 @@ class KubernetesFactsModule(KubernetesAnsibleModule):
     def execute_module(self):
         self.client = self.get_api_client()
         resource = self.find_resource(self.params['kind'], self.params['api_version'], fail=True)
+        if 'log' not in resource.subresources:
+            self.fail(msg='{0} {1} does not support the log resource'.format(resource.group_version, resource.kind))
+
+        kwargs = {}
+        if self.params.get('container'):
+            kwargs['query_params'] = dict(containter=self.params['container'])
 
         self.exit_json(changed=False, log=resource.log.get(
             name=self.params['name'],
             namespace=self.params['namespace'],
-            query_params=dict(container=self.params.get('container'))
+            **kwargs
         ))
 
     @property
@@ -122,7 +130,7 @@ class KubernetesFactsModule(KubernetesAnsibleModule):
 
 
 def main():
-    KubernetesFactsModule().execute_module()
+    KubernetesLogModule().execute_module()
 
 
 if __name__ == '__main__':
