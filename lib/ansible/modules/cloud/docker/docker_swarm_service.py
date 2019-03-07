@@ -682,47 +682,90 @@ swarm_service:
     In Ansible 2.7.x, the old name C(ansible_docker_service) can still be used.
   sample: '{
     "args": [
-      "sleep",
       "3600"
     ],
-    "constraints": [],
-    "container_labels": {},
-    "endpoint_mode": "vip",
-    "env": [
-      "ENVVAR1=envvar1"
+    "command": [
+      "sleep"
     ],
-    "force_update": False,
-    "image": "alpine",
-    "labels": {},
-    "limit_cpu": 0.0,
-    "limit_memory": 0,
-    "log_driver": "json-file",
-    "log_driver_options": {},
+    "configs": null,
+    "constraints": [
+      "node.role == manager",
+      "engine.labels.operatingsystem == ubuntu 14.04"
+    ],
+    "container_labels": null,
+    "dns": null,
+    "dns_options": null,
+    "dns_search": null,
+    "endpoint_mode": null,
+    "env": [
+       "ENVVAR1=envvar1",
+       "ENVVAR2=envvar2"
+    ],
+    "force_update": null,
+    "groups": null,
+    "healthcheck": {
+      "interval": 90000000000,
+      "retries": 3,
+      "start_period": 30000000000,
+      "test": [
+        "CMD",
+        "curl",
+        "--fail",
+        "http://nginx.host.com"
+      ],
+      "timeout": 10000000000
+    },
+    "healthcheck_disabled": false,
+    "hostname": null,
+    "hosts": null,
+    "image": "alpine:latest@sha256:b3dbf31b77fd99d9c08f780ce6f5282aba076d70a513a8be859d8d3a4d0c92b8",
+    "labels": {
+      "com.example.department": "Finance",
+      "com.example.description": "Accounting webapp"
+    },
+    "limit_cpu": 0.5,
+    "limit_memory": 52428800,
+    "log_driver": "fluentd",
+    "log_driver_options": {
+      "fluentd-address": "127.0.0.1:24224",
+      "fluentd-async-connect": "true",
+      "tag": "myservice"
+    },
     "mode": "replicated",
     "mounts": [
       {
+        "readonly": false,
         "source": "/tmp/",
         "target": "/remote_tmp/",
         "type": "bind"
       }
     ],
-    "secrets": [],
-    "configs": [],
-    "networks": [],
-    "publish": [],
+    "networks": null,
+    "placement_preferences": [
+      {
+        "spread": "node.labels.mylabel"
+      }
+    ],
+    "publish": null,
     "replicas": 1,
-    "reserve_cpu": 0.0,
-    "reserve_memory": 0,
-    "restart_policy": "any",
-    "restart_policy_attempts": 5,
-    "restart_policy_delay": 0,
-    "restart_policy_window": 30,
-    "update_delay": 10,
-    "update_parallelism": 1,
-    "update_failure_action": "continue",
-    "update_monitor": 5000000000
-    "update_max_failure_ratio": 0,
-    "update_order": "stop-first"
+    "reserve_cpu": 0.25,
+    "reserve_memory": 20971520,
+    "restart_policy": "on-failure",
+    "restart_policy_attempts": 3,
+    "restart_policy_delay": 5000000000,
+    "restart_policy_window": 120000000000,
+    "secrets": null,
+    "stop_grace_period": null,
+    "stop_signal": null,
+    "tty": null,
+    "update_delay": 10000000000,
+    "update_failure_action": null,
+    "update_max_failure_ratio": null,
+    "update_monitor": null,
+    "update_order": "stop-first",
+    "update_parallelism": 2,
+    "user": null,
+    "working_dir": null
   }'
 changes:
   returned: always
