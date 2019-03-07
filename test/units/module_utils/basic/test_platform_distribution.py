@@ -85,7 +85,7 @@ class TestGetDistribution:
             assert get_distribution() == "Raspian"
 
         with patch('ansible.module_utils.distro.id', return_value="rhel"):
-            assert get_distribution() == "Rhel"
+            assert get_distribution() == "Redhat"
 
         with patch('ansible.module_utils.distro.id', return_value="ubuntu"):
             assert get_distribution() == "Ubuntu"

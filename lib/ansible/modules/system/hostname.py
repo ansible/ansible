@@ -591,7 +591,7 @@ class ArchHostname(Hostname):
 
 class RHELHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Rhel'
+    distribution = 'Redhat'
     strategy_class = RedHatStrategy
 
 

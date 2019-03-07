@@ -33,6 +33,8 @@ def get_distribution():
 
         if distribution == 'Amzn':
             distribution = 'Amazon'
+        elif distribution == 'Rhel':
+            distribution = 'Redhat'
         elif not distribution:
             distribution = 'OtherLinux'
 
