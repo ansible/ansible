@@ -250,21 +250,23 @@ def _find_ids(nb, data):
     return find_ids(nb, data)
 
 
-def ensure_device_present(nb, nb_endpoint, data):
+def ensure_device_present(nb, nb_endpoint, normalized_data):
     '''
     :returns dict(device, msg, changed): dictionary resulting of the request,
         where `device` is the serialized device fetched or newly created in
         Netbox
     '''
+    data = _find_ids(nb, normalized_data)
     nb_device = nb_endpoint.get(name=data["name"])
-    data = _find_ids(nb, data)
+    result = {}
     if not nb_device:
         if module.check_mode:
             device = data
         else:
             device = nb_endpoint.create(data).serialize()
-        changed = True
         msg = "Device %s created" % (data["name"])
+        changed = True
+        result["diff"] = {"before": {"state": "absent"}, "after": {"state": "present"}}
     else:
         device = nb_device.serialize()
         updated_device = device.copy()
@@ -273,6 +275,12 @@ def ensure_device_present(nb, nb_endpoint, data):
             msg = "Device %s already exists" % (data["name"])
             changed = False
         else:
+            changed_keys = [k for k in data.keys() if device[k] != updated_device[k]]
+            data_before, data_after = {}, {}
+            for key in changed_keys:
+                data_before[key] = device[key]
+                data_after[key] = updated_device[key]
+
             device = updated_device
             if not module.check_mode:
                 if not nb_device.update(data):
@@ -282,8 +290,10 @@ def ensure_device_present(nb, nb_endpoint, data):
                 device = nb_device.serialize()
             msg = "Device %s updated" % (data["name"])
             changed = True
+            result["diff"] = {"before": data_before, "after": data_after}
 
-    return {"device": device, "msg": msg, "changed": changed}
+    result.update({"device": device, "msg": msg, "changed": changed})
+    return result
 
 
 def ensure_device_absent(nb_endpoint, data):
@@ -291,11 +301,13 @@ def ensure_device_absent(nb_endpoint, data):
     :returns dict(msg, changed)
     '''
     device = nb_endpoint.get(name=data["name"])
+    result = {}
     if device:
         if not module.check_mode:
             device.delete()
         msg = 'Device %s deleted' % (data["name"])
         changed = True
+        result["diff"] = {"before": {"state": "present"}, "after": {"state": "absent"}}
     else:
         msg = 'Device %s already absent' % (data["name"])
         changed = False
