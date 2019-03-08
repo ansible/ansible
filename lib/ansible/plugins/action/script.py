@@ -65,11 +65,11 @@ class ActionModule(ActionBase):
             chdir = self._task.args.get('chdir')
             if chdir:
                 # Powershell is the only Windows-path aware shell
-                if self._connection._shell.SHELL_FAMILY == 'powershell' and \
+                if getattr(self._connection._shell, "_IS_WINDOWS", False) and \
                         not self.windows_absolute_path_detection.match(chdir):
                     raise AnsibleActionFail('chdir %s must be an absolute path for a Windows remote node' % chdir)
                 # Every other shell is unix-path-aware.
-                if self._connection._shell.SHELL_FAMILY != 'powershell' and not chdir.startswith('/'):
+                if not getattr(self._connection._shell, "_IS_WINDOWS", False) and not chdir.startswith('/'):
                     raise AnsibleActionFail('chdir %s must be an absolute path for a Unix-aware remote node' % chdir)
 
             # Split out the script as the first item in raw_params using
@@ -126,7 +126,7 @@ class ActionModule(ActionBase):
             exec_data = None
             # PowerShell runs the script in a special wrapper to enable things
             # like become and environment args
-            if self._connection._shell.SHELL_FAMILY == "powershell":
+            if getattr(self._connection._shell, "_IS_WINDOWS", False):
                 # FUTURE: use a more public method to get the exec payload
                 pc = self._play_context
                 exec_data = ps_manifest._create_powershell_wrapper(

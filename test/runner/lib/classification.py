@@ -474,6 +474,11 @@ class PathMapper(object):
             if integration_name not in self.integration_targets_by_name:
                 integration_name = None
 
+            windows_integration_name = 'connection_windows_%s' % name
+
+            if windows_integration_name not in self.integration_targets_by_name:
+                windows_integration_name = None
+
             # entire integration test commands depend on these connection plugins
 
             if name in ['winrm', 'psrp']:
@@ -506,6 +511,7 @@ class PathMapper(object):
 
             return {
                 'integration': integration_name,
+                'windows-integration': windows_integration_name,
                 'units': units_path,
             }
 

@@ -1,0 +1,2 @@
+minor_changes:
+- Added experimental support for connecting to Windows hosts over SSH using ``ansible_shell_type=cmd`` or ``ansible_shell_type=powershell``
