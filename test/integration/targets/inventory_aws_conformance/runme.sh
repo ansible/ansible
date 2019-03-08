@@ -109,6 +109,7 @@ compose:
   ec2_subnet_id: subnet_id
   ec2_virtualization_type: virtualization_type
   ec2_vpc_id: vpc_id
+  tags: dict(tags.keys() | map('regex_replace', '[^A-Za-z0-9\_]', '_') | list | zip(tags.values() | list))
 
 keyed_groups:
   - key: '"ec2"'

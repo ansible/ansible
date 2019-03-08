@@ -126,9 +126,15 @@ class BotoInstance(object):
         self.private_dns_name = 'ec2-internal-%s.%s.%s' \
             % (self.id, self.region, DNSDOMAIN)
         self._tags = [
-            Tag(self.id, 'TAG1', 'TAG1val')
+            Tag(self.id, 'TAG1', 'TAG1val'),
+            Tag(self.id, 'tag-with-hyphens', 'value:with:colons'),
+            Tag(self.id, 'tag;me', 'value@noplez'),
+            Tag(self.id, 'tag!notit', 'value<=ohwhy?')
         ]
-        self.groups = [SecurityGroup('sgroup1', 'sg-1000')]
+        self.groups = [
+            SecurityGroup('sgroup1', 'sg-1000'),
+            SecurityGroup('sg!with-ch@<?s', 'sg-1001')
+        ]
         #self.group_ids = SecurityGroup('sg-1000')
         #self.security_group_ids = SecurityGroup('sg-1000')
 
@@ -152,7 +158,10 @@ class Boto3Instance(BotoInstance):
             'availability_zone': self.region + 'b'
         }
         self.Tags = [
-            Tag(self.id, 'TAG1', 'TAG1val')
+            Tag(self.id, 'TAG1', 'TAG1val'),
+            Tag(self.id, 'tag-with-hyphens', 'value:with:colons'),
+            Tag(self.id, 'tag;me', 'value@noplez'),
+            Tag(self.id, 'tag!notit', 'value<=ohwhy?')
         ]
         self.state = {'name': self.state, 'code': self.state_code}
         #self.security_group_ids = [
@@ -160,7 +169,10 @@ class Boto3Instance(BotoInstance):
         #    SecurityGroup('sg-2000'),
         #    SecurityGroup('sg-3000'),
         #]
-        self.groups = [SecurityGroup('sgroup1', 'sg-1000')]
+        self.groups = [
+            SecurityGroup('sgroup1', 'sg-1000'),
+            SecurityGroup('sg!with-ch@<?s', 'sg-1001')
+        ]
         #self.group_ids = SecurityGroup('sg-1000')
         #self.security_group_ids = SecurityGroup('sg-1000')
         #import epdb; epdb.st()
