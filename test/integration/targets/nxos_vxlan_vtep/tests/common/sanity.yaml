@@ -3,33 +3,37 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- set_fact: global_ingress_replication_bgp="true"
-  when: platform is search('N9K$') and (major_version is version('9.2', 'ge'))
+- block:
+  # N9K(v9.2+) specific attrs
+  - set_fact: global_mcast_group_L2="225.1.1.2"
+  - set_fact: def_global_mcast_group_L2="default"
 
-- set_fact: def_global_ingress_replication_bgp="false"
-  when: platform is search('N9K$') and (major_version is version('9.2', 'ge'))
+  # Layer 3 Tenant Routed Multicast (TRM) dependency.
+  # global_mcast_group_l3 / global_ingress_replication_bgp have a dependency on TRM.
+  # TRM requires specific 92/93/95 chassis and -EX/-FX line cards.
+  - block:
+    - set_fact: global_mcast_group_L3="225.1.1.1"
+    - set_fact: def_global_mcast_group_L3="default"
+    - set_fact: global_ingress_replication_bgp="true"
+    - set_fact: def_global_ingress_replication_bgp="false"
+    when: false # Manually change this to true when correct h/w is present
 
-- set_fact: global_mcast_group_L3="225.1.1.1"
-  when: platform is search('N9K$') and (major_version is version('9.2', 'ge'))
+  - name: "TCAM resource check for global_suppress_arp"
+    # GSA requires tcam resources. Skip these attrs when arp-ether size is 0.
+    # Note: TCAM changes require a switch reload.
+    # Sample Input: "Ingress ARP-Ether ACL [arp-ether] size =  256"
+    nxos_command:
+      commands:
+        - command: show hardware access-list tcam region | incl arp-ether | sed 's/.*size = *//'
+          output: text
+    connection: network_cli
+    register: tcam_state
+  - block:
+    - set_fact: global_suppress_arp="true"
+    - set_fact: def_global_suppress_arp="false"
+    when: tcam_state.stdout[0] != 0
 
-- set_fact: def_global_mcast_group_L3="default"
-  when: platform is search('N9K$') and (major_version is version('9.2', 'ge'))
-
-- set_fact: global_mcast_group_L2="225.1.1.2"
-  when: platform is search('N9K') and (major_version is version('9.2', 'ge'))
-
-- set_fact: def_global_mcast_group_L2="default"
-  when: platform is search('N9K') and (major_version is version('9.2', 'ge'))
-
-- set_fact: global_suppress_arp="true"
-  when: platform is search('N9K') and (major_version is version('9.2', 'ge'))
-
-- set_fact: def_global_suppress_arp="false"
-  when: platform is search('N9K') and (major_version is version('9.2', 'ge'))
-
-# This parameter requires a switch reload.
-# The line below can be commented out if needed to verify the functionality.
-- set_fact: global_suppress_arp="false"
+  when:  platform is search('N9K') and (major_version is version('9.2', 'ge'))
 
 - block:
   - name: "Apply N7K specific setup config"
@@ -37,12 +41,21 @@
     when: platform is match('N7K')
 
   - name: "Enable feature nv overlay"
-    nxos_config: 
+    nxos_config:
       commands:
         - feature nv overlay
         - nv overlay evpn
       match: none
       provider: "{{ connection }}"
+
+  - block:
+    - name: "Enable feature ngmvpn"
+      nxos_config:
+        commands:
+          - feature ngmvpn
+        match: none
+        provider: "{{ connection }}"
+    when: global_mcast_group_L3 is defined
 
   - block:
     - name: configure vxlan_vtep
@@ -58,11 +71,11 @@
         shutdown: false
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: &true
         that:
           - "result.changed == true"
-  
+
     - name: "Conf Idempotence"
       nxos_vxlan_vtep: *configure9
       register: result
@@ -84,9 +97,9 @@
         shutdown: true
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
-  
+
     - name: "reset Idempotence"
       nxos_vxlan_vtep: *def9
       register: result
@@ -100,9 +113,9 @@
         global_mcast_group_L2: "{{ global_mcast_group_L2|default(omit) }}"
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
-  
+
     - name: "Conf Idempotence"
       nxos_vxlan_vtep: *gml2
       register: result
@@ -116,9 +129,9 @@
         global_mcast_group_L2: "{{ def_global_mcast_group_L2|default(omit) }}"
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
-  
+
     - name: "reset Idempotence"
       nxos_vxlan_vtep: *rgml2
       register: result
@@ -137,11 +150,11 @@
         shutdown: false
         provider: "{{ connection }}"
       register: result
-  
+
     - assert:
         that:
           - "result.changed == true"
-  
+
     - name: "Conf Idempotence"
       nxos_vxlan_vtep: *configure7
       register: result
@@ -159,9 +172,9 @@
         shutdown: true
         provider: "{{ connection }}"
       register: result
-  
+
     - assert: *true
-  
+
     - name: "reset Idempotence"
       nxos_vxlan_vtep: *def7
       register: result
@@ -202,7 +215,7 @@
     when: platform is match('N7K')
 
   - name: "Disable nv overlay evpn"
-    nxos_config: 
+    nxos_config:
       commands:
         - no nv overlay evpn
       match: none
@@ -210,7 +223,7 @@
     ignore_errors: yes
 
   - name: "Disable feature nv overlay"
-    nxos_feature: 
+    nxos_feature:
       feature: nve
       provider: "{{ connection }}"
       state: disabled
