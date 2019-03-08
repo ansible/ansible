@@ -9,7 +9,7 @@
 
 - name: Create a user to be owner of objects
   postgresql_user:
-    name: "{{ db_user1 }}"
+    name: "{{ db_user3 }}"
     state: present
     encrypted: yes
     password: password
@@ -268,7 +268,7 @@
   postgresql_query:
     query: CREATE FUNCTION public.a() RETURNS integer LANGUAGE SQL AS 'SELECT 2';
     db: "{{ db_name }}"
-    login_user: "{{ db_user1 }}"
+    login_user: "{{ db_user3 }}"
     login_password: password
 
 # Test
@@ -281,7 +281,7 @@
     objs: ALL_IN_SCHEMA
     schema: public
     db: "{{ db_name }}"
-    login_user: "{{ db_user1 }}"
+    login_user: "{{ db_user3 }}"
     login_password: password
   register: result
 
@@ -296,7 +296,7 @@
   register: result
 
 - assert:
-    that: "'{{ db_user2 }}=X/{{ db_user1 }}' in '{{ result.stdout_lines[0] }}'"
+    that: "'{{ db_user2 }}=X/{{ db_user3 }}' in '{{ result.stdout_lines[0] }}'"
 
 # Test
 - name: Grant execute to all functions again
@@ -308,7 +308,7 @@
     objs: ALL_IN_SCHEMA
     schema: public
     db: "{{ db_name }}"
-    login_user: "{{ db_user1 }}"
+    login_user: "{{ db_user3 }}"
     login_password: password
   register: result
 
@@ -326,7 +326,7 @@
     objs: ALL_IN_SCHEMA
     schema: public
     db: "{{ db_name }}"
-    login_user: "{{ db_user1 }}"
+    login_user: "{{ db_user3 }}"
     login_password: password
   register: result
 
@@ -344,7 +344,7 @@
     objs: ALL_IN_SCHEMA
     schema: public
     db: "{{ db_name }}"
-    login_user: "{{ db_user1 }}"
+    login_user: "{{ db_user3 }}"
     login_password: password
   register: result
 
@@ -356,7 +356,7 @@
   postgresql_query:
     query: DROP FUNCTION public.a();
     db: "{{ db_name }}"
-    login_user: "{{ db_user1 }}"
+    login_user: "{{ db_user3 }}"
     login_password: password
 
 # Cleanup
@@ -369,7 +369,7 @@
 
 - name: Remove user owner of objects
   postgresql_user:
-    name: "{{ db_user1 }}"
+    name: "{{ db_user3 }}"
     state: absent
     db: "{{ db_name }}"
     login_user: "{{ pg_user }}"
