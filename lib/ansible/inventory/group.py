@@ -35,12 +35,13 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
         invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
             msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
-            if C.TRANSFORM_INVALID_GROUP_CHARS or force:
+            if C.TRANSFORM_INVALID_GROUP_CHARS in ('always', 'silently') or force:
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
-                if not silent:
+                if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.warning('Replacing ' + msg)
-            else:
+            elif C.TRANSFORM_INVALID_GROUP_CHARS != 'ignore':
                 display.deprecated('Ignoring ' + msg, version='2.12')
+
     return name
 
 

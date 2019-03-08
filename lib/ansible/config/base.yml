@@ -1475,7 +1475,8 @@ TRANSFORM_INVALID_GROUP_CHARS:
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
-  type: bool
+  type: string
+  choices: ['always', 'never', 'silently']
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
