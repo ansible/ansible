@@ -9,7 +9,6 @@ These scenarios teach you how to accomplish common VMware tasks using Ansible. T
 .. toctree::
    :maxdepth: 1
 
-   vmware_intro
    scenario_clone_template
    scenario_rename_vm
    scenario_remove_vm
