@@ -56,7 +56,7 @@ options:
     privatekey_passphrase:
         required: false
         description:
-            - The passphrase for the privatekey.
+            - The passphrase for the private key.
         version_added: "2.4"
 extends_documentation_fragment: files
 '''

@@ -41,11 +41,12 @@ options:
     privatekey_path:
         required: true
         description:
-            - Path to the privatekey to use when signing the certificate signing request
+            - The path to the private key to use when signing the certificate signing request.
     privatekey_passphrase:
         required: false
         description:
-            - The passphrase for the privatekey.
+            - The passphrase for the private key.
+            - This is required if the private key is password protected.
     version:
         required: false
         default: 1
