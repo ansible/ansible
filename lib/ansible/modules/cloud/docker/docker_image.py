@@ -446,11 +446,15 @@ class ImageManager(DockerBaseClass):
             if not self.check_mode:
                 status = None
                 try:
+                    changed = False
                     for line in self.client.push(repository, tag=tag, stream=True, decode=True):
                         self.log(line, pretty_print=True)
                         if line.get('errorDetail'):
                             raise Exception(line['errorDetail']['message'])
                         status = line.get('status')
+                        if status == 'Pushing':
+                            changed = True
+                    self.results['changed'] = changed
                 except Exception as exc:
                     if re.search('unauthorized', str(exc)):
                         if re.search('authentication required', str(exc)):
@@ -502,6 +506,9 @@ class ImageManager(DockerBaseClass):
                 except Exception as exc:
                     self.fail("Error: failed to tag image - %s" % str(exc))
                 self.results['image'] = self.client.find_image(name=repo, tag=repo_tag)
+                if image and image['Id'] == self.results['image']['Id']:
+                    self.results['changed'] = False
+
                 if push:
                     self.push_image(repo, repo_tag)
 
