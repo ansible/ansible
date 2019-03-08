@@ -96,3 +96,13 @@
   assert:
     that:
       - publickey5_pubkey.stdout == privatekey5_pubkey.stdout
+
+- name:
+  assert:
+    that:
+      - passphrase_error_1 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_1.msg"
+      - passphrase_error_2 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_2.msg"
+      - passphrase_error_3 is failed
+      - "'assphrase' in passphrase_error_1.msg or 'assword' in passphrase_error_3.msg"

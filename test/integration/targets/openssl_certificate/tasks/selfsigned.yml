@@ -3,6 +3,13 @@
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey.pem'
 
+- name: Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
 - name: Generate CSR
   openssl_csr:
     path: '{{ output_dir }}/csr.csr'
@@ -156,5 +163,37 @@
     provider: selfsigned
     selfsigned_digest: sha256
   register: selfsigned_certificate_ecc
+
+- name: Generate selfsigned certificate (failed passphrase 1)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pw1.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    privatekey_passphrase: hunter2
+    provider: selfsigned
+    selfsigned_digest: sha256
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: Generate selfsigned certificate (failed passphrase 2)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pw2.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: wrong_password
+    provider: selfsigned
+    selfsigned_digest: sha256
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: Generate selfsigned certificate (failed passphrase 3)
+  openssl_certificate:
+    path: '{{ output_dir }}/cert_pw3.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    provider: selfsigned
+    selfsigned_digest: sha256
+  ignore_errors: yes
+  register: passphrase_error_3
 
 - import_tasks: ../tests/validate_selfsigned.yml

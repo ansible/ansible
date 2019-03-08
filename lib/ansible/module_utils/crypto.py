@@ -38,6 +38,10 @@ class OpenSSLObjectError(Exception):
     pass
 
 
+class OpenSSLBadPassphraseError(OpenSSLObjectError):
+    pass
+
+
 def get_fingerprint_of_bytes(source):
     """Generate the fingerprint of the given bytes."""
 
@@ -67,7 +71,7 @@ def get_fingerprint_of_bytes(source):
 def get_fingerprint(path, passphrase=None):
     """Generate the fingerprint of the public key. """
 
-    privatekey = load_privatekey(path, passphrase)
+    privatekey = load_privatekey(path, passphrase, check_passphrase=False)
     try:
         publickey = crypto.dump_publickey(crypto.FILETYPE_ASN1, privatekey)
         return get_fingerprint_of_bytes(publickey)
@@ -78,20 +82,46 @@ def get_fingerprint(path, passphrase=None):
         return None
 
 
-def load_privatekey(path, passphrase=None):
+def load_privatekey(path, passphrase=None, check_passphrase=True):
     """Load the specified OpenSSL private key."""
 
     try:
         with open(path, 'rb') as b_priv_key_fh:
             priv_key_detail = b_priv_key_fh.read()
 
-        if passphrase:
-            return crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                          priv_key_detail,
-                                          to_bytes(passphrase))
-        else:
-            return crypto.load_privatekey(crypto.FILETYPE_PEM,
-                                          priv_key_detail)
+        # First try: try to load with real passphrase (resp. empty string)
+        # Will work if this is the correct passphrase, or the key is not
+        # password-protected.
+        try:
+            result = crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                            priv_key_detail,
+                                            to_bytes(passphrase or ''))
+        except crypto.Error as e:
+            if len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
+                # This happens in case we have the wrong passphrase.
+                if passphrase is not None:
+                    raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key!')
+                else:
+                    raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
+            raise
+        if check_passphrase:
+            # Next we want to make sure that the key is actually protected by
+            # a passphrase (in case we did try the empty string before, make
+            # sure that the key is not protected by the empty string)
+            try:
+                crypto.load_privatekey(crypto.FILETYPE_PEM,
+                                       priv_key_detail,
+                                       to_bytes('y' if passphrase == 'x' else 'x'))
+                if passphrase is not None:
+                    # Since we can load the key without an exception, the
+                    # key isn't password-protected
+                    raise OpenSSLBadPassphraseError('Passphrase provided, but private key is not password-protected!')
+            except crypto.Error:
+                if passphrase is None and len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
+                    # The key is obviously protected by the empty string.
+                    # Don't do this at home (if it's possible at all)...
+                    raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
+        return result
     except (IOError, OSError) as exc:
         raise OpenSSLObjectError(exc)
 
