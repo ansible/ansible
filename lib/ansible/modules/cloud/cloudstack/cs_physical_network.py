@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
 
-ANSIBLE_METADATA = {'metadata_version': '1.0',
+ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
@@ -31,89 +31,70 @@ description:
     - Create, update and remove networks.
     - Enabled and disabled Network Service Providers
     - Enables Internal LoadBalancer and VPC/VirtualRouter elements as required
-version_added: "2.4"
-author: "Netservers Ltd. (@netservers)"
+version_added: "2.8"
+author:
+ - Netservers Ltd. (@netservers)
+ - Patryk Cichy (@PatTheSilent)
 options:
-  name:
+  physical_network:
     description:
-      - name of the network.
+      - Name of the physical network.
     required: true
+    aliases:
+      - name
   zone:
     description:
       - Name of the zone in which the network belongs.
       - If not set, default zone is used.
     required: true
-    default: null
-  broadcastdomainrange:
+  broadcast_domain_range:
     description:
       - broadcast domain range for the physical network[Pod or Zone].
     required: false
-    default: none
-    choices: [ 'POD', 'ZONE' ]
+    choices: [ POD, ZONE ]
   domain:
     description:
       - Domain the network is owned by.
     required: false
-    default: null
   isolation_method:
     description:
       - Isolation method for the physical network.
     required: false
-    default: none
-    choices: [ 'VLAN', 'GRE', 'L3' ]
+    choices: [ VLAN, GRE, L3 ]
   network_speed:
     description:
-      - the speed for the physical network[1G/10G]
+      - The speed for the physical network.
     required: false
-    default: null
+    choices: [1G, 10G]
   tags:
     description:
-      - "A tag to identify this network"
-      - "Physical networks support only one tag"
-      - "To remove an existing tag pass an empty string"
+      - A tag to identify this network.
+      - Physical networks support only one tag.
+      - To remove an existing tag pass an empty string.
     required: false
-    default: null
     aliases:
       - tag
   vlan:
     description:
       - The VLAN/VNI Ranges of the physical network.
     required: false
-    default: null
   nsps_enabled:
     description:
       - List of Network Service Providers to enable
     required: false
-    default: null
   nsps_disabled:
     description:
       - List of Network Service Providers to disable
     required: false
-    default: null
-  url:
-    description:
-      - URL for the cluster
-    required: false
-    default: null
-  username:
-    description:
-      - Username for the cluster.
-    required: false
-    default: null
-  password:
-    description:
-      - Password for the cluster.
-    required: false
-    default: null
   state:
     description:
-      - State of the cluster.
+      - State of the physical network.
     required: false
-    default: 'present'
-    choices: [ 'present', 'absent', 'disabled', 'enabled' ]
+    default: present
+    choices: [ present, absent, disabled, enabled ]
   poll_async:
     description:
-      - "Poll async jobs until job has finished."
+      - Poll async jobs until job has finished.
     required: false
     default: true
 extends_documentation_fragment: cloudstack
@@ -122,7 +103,7 @@ extends_documentation_fragment: cloudstack
 EXAMPLES = '''
 # Ensure a network is present
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     zone: zone01
     isolation_method: VLAN
@@ -130,19 +111,19 @@ EXAMPLES = '''
 
 # Set a tag on a network
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     tag: overlay
 
 # Remove tag on a network
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     tag: ""
 
 # Ensure a network is enabled with specific nsps enabled
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     zone: zone01
     isolation_method: VLAN
@@ -150,28 +131,27 @@ EXAMPLES = '''
     broadcast_domain_range: ZONE
     state: enabled
     nsps_enabled:
-      - Ovs
       - VirtualRouter
       - InternalLbVm
       - VpcVirtualRouter
 
 # Ensure a network is disabled
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     zone: zone01
     state: disabled
 
 # Ensure a network is enabled
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     zone: zone01
     state: enabled
 
 # Ensure a network is absent
 - local_action:
-    module: cs_phsyical_network
+    module: cs_physical_network
     name: net01
     zone: zone01
     state: absent
@@ -182,58 +162,57 @@ RETURN = '''
 id:
   description: UUID of the network.
   returned: success
-  type: string
+  type: str
   sample: 3f8f25cd-c498-443f-9058-438cfbcbff50
 name:
   description: Name of the network.
   returned: success
-  type: string
+  type: str
   sample: net01
 state:
   description: State of the network [Enabled/Disabled].
   returned: success
-  type: string
+  type: str
   sample: Enabled
 broadcast_domain_range:
   description: broadcastdomainrange of the network [POD / ZONE].
   returned: success
-  type: string
+  type: str
   sample: ZONE
 isolation_method:
   description: isolationmethod of the network [VLAN/GRE/L3].
   returned: success
-  type: string
+  type: str
   sample: VLAN
 network_speed:
   description: networkspeed of the network [1G/10G].
   returned: success
-  type: string
+  type: str
   sample: 1G
 zone:
-  description: Name of zone the cluster is in.
+  description: Name of zone the physical network is in.
   returned: success
-  type: string
+  type: str
   sample: ch-gva-2
 domain:
   description: Name of domain the network is in.
   returned: success
-  type: string
+  type: str
   sample: domain1
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
-    CloudStackException,
     cs_argument_spec,
     cs_required_together,
 )
 
 
-class AnsibleCloudStackCluster(AnsibleCloudStack):
+class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
 
     def __init__(self, module):
-        super(AnsibleCloudStackCluster, self).__init__(module)
+        super(AnsibleCloudStackPhysicalNetwork, self).__init__(module)
         self.returns = {
             'isolationmethods': 'isolation_method',
             'broadcastdomainrange': 'broadcast_domain_range',
@@ -241,14 +220,13 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             'vlan': 'vlan',
             'tags': 'tags',
         }
-        self.network = None
         self.nsps = []
         self.vrouters = None
         self.loadbalancers = None
 
     def _get_common_args(self):
         args = {
-            'name': self.module.params.get('name'),
+            'name': self.module.params.get('physical_network'),
             'isolationmethods': self.module.params.get('isolation_method'),
             'broadcastdomainrange': self.module.params.get('broadcast_domain_range'),
             'networkspeed': self.module.params.get('network_speed'),
@@ -263,27 +241,31 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             args['state'] = state.capitalize()
         return args
 
-    def get_network(self, key=None):
-        if self.network:
-            return self.network
+    def get_physical_network(self, key=None):
+        physical_network = self.module.params.get('physical_network')
+        if self.physical_network:
+            return self._get_by_key(key, self.physical_network)
+
         args = {
-            'zoneid': self.get_zone(key='id'),
-            'name': self.module.params.get('name'),
+            'zoneid': self.get_zone(key='id')
         }
-        nets = self.cs.listPhysicalNetworks(**args)
-        if nets:
-            self.network = nets['physicalnetwork'][0]
-        return self.network
+        physical_networks = self.query_api('listPhysicalNetworks', **args)
+        if physical_networks:
+            for net in physical_networks['physicalnetwork']:
+                if physical_network.lower() in [net['name'].lower(), net['id']]:
+                    self.physical_network = net
+                    self.result['physical_network'] = net['name']
+                    break
+
+        return self._get_by_key(key, self.physical_network)
 
     def get_nsp(self, name=None):
         if not self.nsps:
-            network = self.get_network()
             args = {
-                'physicalnetworkid': network['id']
+                'physicalnetworkid': self.get_physical_network(key='id')
             }
-            res = self.cs.listNetworkServiceProviders(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('listNetworkServiceProviders', **args)
+
             self.nsps = res['networkserviceprovider']
 
         names = []
@@ -294,7 +276,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
 
         self.module.fail_json(msg="Failed: '{}' not in network service providers list '[{}]'".format(name, names))
 
-    def _update_nsp(self, name=None, state=None, service_list=None):
+    def update_nsp(self, name=None, state=None, service_list=None):
         nsp = self.get_nsp(name)
         if not service_list and nsp['state'] == state:
             return nsp
@@ -304,9 +286,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             'servicelist': service_list,
             'state': state
         }
-        res = self.cs.updateNetworkServiceProvider(**args)
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        res = self.query_api('updateNetworkServiceProvider', **args)
 
         poll_async = self.module.params.get('poll_async')
         if poll_async:
@@ -320,14 +300,12 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         nspid = nsp['id']
         if self.vrouters is None:
             self.vrouters = dict()
-            res = self.cs.listVirtualRouterElements()
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('listVirtualRouterElements', )
             for vrouter in res['virtualrouterelement']:
                 self.vrouters[vrouter['nspid']] = vrouter
 
         if nspid not in self.vrouters:
-            self.module.fail_json(msg="Failed: No VirtualRouterElement founf for nsp '%s'" % nsp_name)
+            self.module.fail_json(msg="Failed: No VirtualRouterElement found for nsp '%s'" % nsp_name)
 
         return self.vrouters[nspid]
 
@@ -336,9 +314,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         nspid = nsp['id']
         if self.loadbalancers is None:
             self.loadbalancers = dict()
-            res = self.cs.listInternalLoadBalancerElements()
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            res = self.query_api('listInternalLoadBalancerElements', )
             for loadbalancer in res['internalloadbalancerelement']:
                 self.loadbalancers[loadbalancer['nspid']] = loadbalancer
 
@@ -356,9 +332,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             'id': vrouter['id'],
             'enabled': enabled
         }
-        res = self.cs.configureVirtualRouterElement(**args)
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        res = self.query_api('configureVirtualRouterElement', **args)
 
         poll_async = self.module.params.get('poll_async')
         if poll_async:
@@ -376,9 +350,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
             'id': loadbalancer['id'],
             'enabled': enabled
         }
-        res = self.cs.configureInternalLoadBalancerElement(**args)
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+        res = self.query_api('configureInternalLoadBalancerElement', **args)
 
         poll_async = self.module.params.get('poll_async')
         if poll_async:
@@ -388,7 +360,7 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         return loadbalancer
 
     def present_network(self):
-        network = self.get_network()
+        network = self.get_physical_network()
         if network:
             network = self._update_network()
         else:
@@ -396,79 +368,58 @@ class AnsibleCloudStackCluster(AnsibleCloudStack):
         return network
 
     def _create_network(self):
-        required_params = [
-            'name',
-            'zone',
-        ]
-        self.module.fail_on_missing_params(required_params=required_params)
-
-        args = self._get_common_args()
-        args['zoneid'] = self.get_zone(key='id')
-        args['domainid'] = self.get_domain(key='id')
-        args['url'] = self.module.params.get('url')
-        args['username'] = self.module.params.get('username')
-        args['password'] = self.module.params.get('password')
-
         self.result['changed'] = True
+        args = dict(zoneid=self.get_zone(key='id'))
+        args.update(self._get_common_args())
+        if self.get_domain(key='id'):
+            args['domainid'] = self.get_domain(key='id')
 
-        id = None
         if not self.module.check_mode:
-            res = self.cs.createPhysicalNetwork(**args)
-            if 'errortext' in res:
-                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+            resource = self.query_api('createPhysicalNetwork', **args)
 
             poll_async = self.module.params.get('poll_async')
             if poll_async:
-                self.network = self.poll_job(res, 'physicalnetwork')
+                self.network = self.poll_job(resource, 'physicalnetwork')
 
         return self.network
 
     def _update_network(self):
-        network = self.get_network()
+        network = self.get_physical_network()
 
-        args = self._get_common_args()
-        args['id'] = network['id']
+        args = dict(id=network['id'])
+        args.update(self._get_common_args())
 
         if self.has_changed(args, network):
             self.result['changed'] = True
 
             if not self.module.check_mode:
-                res = self.cs.updatePhysicalNetwork(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                resource = self.query_api('updatePhysicalNetwork', **args)
 
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    network = self.poll_job(res, 'physicalnetwork')
-        return network
+                    self.physical_network = self.poll_job(resource, 'physicalnetwork')
+        return self.physical_network
 
     def absent_network(self):
-        network = self.get_network()
-        if network:
+        physical_network = self.get_physical_network()
+        if physical_network:
             self.result['changed'] = True
-
             args = {
-                'id': network['id'],
+                'id': physical_network['id'],
             }
             if not self.module.check_mode:
-                res = self.cs.deletePhysicalNetwork(**args)
-                if 'errortext' in res:
-                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-
+                resource = self.query_api('deletePhysicalNetwork', **args)
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
-                    success = self.poll_job(res, 'success')
+                    self.poll_job(resource, 'success')
 
-                if not success:
-                    self.module.fail_json(msg="Failed: Network not deleted")
-
-        return network
+        return physical_network
 
 
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
+        physical_network=dict(required=True, aliases=['name']),
         zone=dict(default=None),
         domain=dict(default=None),
         vlan=dict(default=None),
@@ -478,9 +429,6 @@ def main():
         broadcast_domain_range=dict(choices=['POD', 'ZONE'], default=None),
         isolation_method=dict(choices=['VLAN', 'GRE', 'L3'], default=None),
         state=dict(choices=['present', 'enabled', 'disabled', 'absent'], default='present'),
-        url=dict(default=None),
-        username=dict(default=None),
-        password=dict(default=None, no_log=True),
         tags=dict(type='list', aliases=['tag'], default=None),
         poll_async=dict(type='bool', default=True),
     ))
@@ -491,37 +439,32 @@ def main():
         supports_check_mode=True
     )
 
-    try:
-        acs_network = AnsibleCloudStackCluster(module)
+    acs_network = AnsibleCloudStackPhysicalNetwork(module)
+    state = module.params.get('state')
+    nsps_disabled = module.params.get('nsps_disabled', [])
+    nsps_enabled = module.params.get('nsps_enabled', [])
 
-        state = module.params.get('state')
-        nsps_disabled = module.params.get('nsps_disabled', [])
-        nsps_enabled = module.params.get('nsps_enabled', [])
+    if state in ['absent']:
+        network = acs_network.absent_network()
+    else:
+        network = acs_network.present_network()
+    if nsps_disabled is not None:
+        for name in nsps_disabled:
+            acs_network.update_nsp(name=name, state='Disabled')
 
-        if state in ['absent']:
-            network = acs_network.absent_network()
-        else:
-            network = acs_network.present_network()
+    if nsps_enabled is not None:
+        for nsp_name in nsps_enabled:
+            if nsp_name in ['VirtualRouter', 'VpcVirtualRouter']:
+                acs_network.set_vrouter_element_state(enabled=True, nsp_name=nsp_name)
+            elif nsp_name == 'InternalLbVm':
+                acs_network.set_loadbalancer_element_state(enabled=True, nsp_name=nsp_name)
 
-        if nsps_disabled is not None:
-            for name in nsps_disabled:
-                acs_network._update_nsp(name=name, state='Disabled')
+            acs_network.update_nsp(name=nsp_name, state='Enabled')
 
-        if nsps_enabled is not None:
-            for nsp_name in nsps_enabled:
-                if nsp_name in ['VirtualRouter', 'VpcVirtualRouter']:
-                    acs_network.set_vrouter_element_state(enabled=True, nsp_name=nsp_name)
-                elif nsp_name == 'InternalLbVm':
-                    acs_network.set_loadbalancer_element_state(enabled=True, nsp_name=nsp_name)
-
-                acs_network._update_nsp(name=nsp_name, state='Enabled')
-
-        result = acs_network.get_result(network)
-
-    except CloudStackException as e:
-        module.fail_json(msg='CloudStackException: %s' % str(e))
+    result = acs_network.get_result(network)
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
