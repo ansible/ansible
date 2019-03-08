@@ -338,20 +338,20 @@ options:
             type: dict
         type: dict
         version_added: "2.8"
-    tmpfs_size:
-      description:
-        - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
-          Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-          C(T) (tebibyte), or C(P) (pebibyte)."
-        - Can only be used when I(mode) is C(tmpfs).
-      type: str
-      version_added: "2.8"
-    tmpfs_mode:
-      description:
-        - File mode of the tmpfs in octal.
-        - Can only be used when I(mode) is C(tmpfs).
-      type: int
-      version_added: "2.8"
+      tmpfs_size:
+        description:
+          - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+            C(T) (tebibyte), or C(P) (pebibyte)."
+          - Can only be used when I(mode) is C(tmpfs).
+        type: str
+        version_added: "2.8"
+      tmpfs_mode:
+        description:
+          - File mode of the tmpfs in octal.
+          - Can only be used when I(mode) is C(tmpfs).
+        type: int
+        version_added: "2.8"
   name:
     description:
       - Service name.
