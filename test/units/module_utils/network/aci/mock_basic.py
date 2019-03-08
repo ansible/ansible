@@ -1,6 +1,7 @@
 # https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/basic.py
 
-#from ansible.module_utils.urls import fetch_url_mock
+import os
+# from ansible.module_utils.urls import fetch_url_mock
 from .mock_urls import fetch_url_mock
 
 
@@ -23,6 +24,7 @@ class AnsibleModule(object):
 
         self._debug = False
         self.check_mode = False
+        self._tmpdir = None
 
         self.mock = fetch_url_mock()
 
@@ -41,3 +43,8 @@ class AnsibleModule(object):
     def deprecate(self, message):
 
         self.params['deprecate'] = message
+
+    @property
+    def tmpdir(self):
+
+        return self._tmpdir
