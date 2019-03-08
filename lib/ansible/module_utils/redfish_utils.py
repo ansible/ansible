@@ -324,12 +324,16 @@ class RedfishUtils(object):
             return {'ret': False, 'msg': "Storage resource not found"}
 
     def get_disk_inventory(self):
-        result = {}
+        result = {'entries': []}
         controller_list = []
         disk_results = []
         # Get these entries, but does not fail if not found
-        properties = ['Name', 'Manufacturer', 'Model', 'Status',
-                      'CapacityBytes']
+        properties = ['BlockSizeBytes', 'CapableSpeedGbs', 'CapacityBytes',
+                      'EncryptionAbility', 'EncryptionStatus',
+                      'FailurePredicted', 'HotspareType', 'Id', 'Identifiers',
+                      'Manufacturer', 'MediaType', 'Model', 'Name',
+                      'PartNumber', 'PhysicalLocation', 'Protocol', 'Revision',
+                      'RotationSpeedRPM', 'SerialNumber', 'Status']
 
         # Find Storage service
         response = self.get_request(self.root_uri + self.systems_uri)
@@ -337,34 +341,69 @@ class RedfishUtils(object):
             return response
         data = response['data']
 
-        if 'SimpleStorage' not in data:
-            return {'ret': False, 'msg': "SimpleStorage resource not found"}
+        if 'SimpleStorage' not in data and 'Storage' not in data:
+            return {'ret': False, 'msg': "SimpleStorage and Storage resource \
+                     not found"}
 
-        # Get a list of all storage controllers and build respective URIs
-        storage_uri = data["SimpleStorage"]["@odata.id"]
-        response = self.get_request(self.root_uri + storage_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        for controller in data[u'Members']:
-            controller_list.append(controller[u'@odata.id'])
-
-        for c in controller_list:
-            uri = self.root_uri + c
-            response = self.get_request(uri)
+        if 'Storage' in data:
+            # Get a list of all storage controllers and build respective URIs
+            storage_uri = data[u'Storage'][u'@odata.id']
+            response = self.get_request(self.root_uri + storage_uri)
             if response['ret'] is False:
                 return response
+            result['ret'] = True
             data = response['data']
 
-            for device in data[u'Devices']:
-                disk = {}
-                for property in properties:
-                    if property in device:
-                        disk[property] = device[property]
-                disk_results.append(disk)
-        result["entries"] = disk_results
+            if data[u'Members']:
+                for controller in data[u'Members']:
+                    controller_list.append(controller[u'@odata.id'])
+                for c in controller_list:
+                    uri = self.root_uri + c
+                    response = self.get_request(uri)
+                    if response['ret'] is False:
+                        return response
+                    data = response['data']
+                    if 'Drives' in data:
+                        for device in data[u'Drives']:
+                            disk_uri = self.root_uri + device[u'@odata.id']
+                            response = self.get_request(disk_uri)
+                            data = response['data']
+
+                            disk_result = {}
+                            for property in properties:
+                                if property in data:
+                                    if data[property] is not None:
+                                        disk_result[property] = data[property]
+                            disk_results.append(disk_result)
+                result["entries"].append(disk_results)
+
+        if 'SimpleStorage' in data:
+            # Get a list of all storage controllers and build respective URIs
+            storage_uri = data["SimpleStorage"]["@odata.id"]
+            response = self.get_request(self.root_uri + storage_uri)
+            if response['ret'] is False:
+                return response
+            result['ret'] = True
+            data = response['data']
+
+            for controller in data[u'Members']:
+                controller_list.append(controller[u'@odata.id'])
+
+            for c in controller_list:
+                uri = self.root_uri + c
+                response = self.get_request(uri)
+                if response['ret'] is False:
+                    return response
+                data = response['data']
+
+                for device in data[u'Devices']:
+                    disk_result = {}
+                    for property in properties:
+                        if property in device:
+                            disk_result[property] = device[property]
+                    disk_results.append(disk_result)
+            result["entries"].append(disk_results)
+
         return result
 
     def restart_manager_gracefully(self):
@@ -872,42 +911,53 @@ class RedfishUtils(object):
         result = {}
         psu_list = []
         psu_results = []
-        key = "PoweredBy"
+        key = "PowerSupplies"
         # Get these entries, but does not fail if not found
         properties = ['Name', 'Model', 'SerialNumber', 'PartNumber', 'Manufacturer',
                       'FirmwareVersion', 'PowerCapacityWatts', 'PowerSupplyType',
                       'Status']
 
-        # Get a list of all PSUs and build respective URIs
-        response = self.get_request(self.root_uri + self.systems_uri)
-        if response['ret'] is False:
-            return response
-        result['ret'] = True
-        data = response['data']
-
-        if 'Links' not in data:
-            return {'ret': False, 'msg': "Property not found"}
-        if key not in data[u'Links']:
-            return {'ret': False, 'msg': "Key %s not found" % key}
-
-        for psu in data[u'Links'][u'PoweredBy']:
-            psu_list.append(psu[u'@odata.id'])
-
-        for p in psu_list:
-            psu = {}
-            uri = self.root_uri + p
-            response = self.get_request(uri)
+        # Get a list of all Chassis and build URIs, then get all PowerSupplies
+        # from each Power entry in the Chassis
+        chassis_uri_list = self.chassis_uri_list
+        for chassis_uri in chassis_uri_list:
+            response = self.get_request(self.root_uri + chassis_uri)
             if response['ret'] is False:
                 return response
 
             result['ret'] = True
             data = response['data']
 
-            for property in properties:
-                if property in data:
-                    psu[property] = data[property]
-            psu_results.append(psu)
+            if 'Power' in data:
+                power_uri = data[u'Power'][u'@odata.id']
+            else:
+                continue
+
+            response = self.get_request(self.root_uri + power_uri)
+            data = response['data']
+
+            if key not in data:
+                return {'ret': False, 'msg': "Key %s not found" % key}
+
+            psu_list = data[key]
+            for psu in psu_list:
+                psu_not_present = False
+                psu_data = {}
+                for property in properties:
+                    if property in psu:
+                        if psu[property] is not None:
+                            if property == 'Status':
+                                if 'State' in psu[property]:
+                                    if psu[property]['State'] == 'Absent':
+                                        psu_not_present = True
+                            psu_data[property] = psu[property]
+                if psu_not_present:
+                    continue
+                psu_results.append(psu_data)
+
         result["entries"] = psu_results
+        if not result["entries"]:
+            return {'ret': False, 'msg': "No PowerSupply objects found"}
         return result
 
     def get_system_inventory(self):
@@ -916,7 +966,7 @@ class RedfishUtils(object):
         # Get these entries, but does not fail if not found
         properties = ['Status', 'HostName', 'PowerState', 'Model', 'Manufacturer',
                       'PartNumber', 'SystemType', 'AssetTag', 'ServiceTag',
-                      'SerialNumber', 'BiosVersion', 'MemorySummary',
+                      'SerialNumber', 'SKU', 'BiosVersion', 'MemorySummary',
                       'ProcessorSummary', 'TrustedModules']
 
         response = self.get_request(self.root_uri + self.systems_uri)

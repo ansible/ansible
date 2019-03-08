@@ -1,0 +1,23 @@
+- hosts: testhost
+  tasks:
+    - name: check that facts were gathered but no local facts exist
+      assert:
+        that:
+            - ansible_facts is defined and 'fqdn' in ansible_facts
+            - not 'uuid' in ansible_local
+    - name: create 'local facts' for next gathering
+      copy:
+        src: uuid.fact
+        dest: /etc/ansible/facts.d/
+        mode: 0755
+
+- hosts: testhost
+  tasks:
+    - name: ensure facts are gathered and includes the new 'local facts' created above
+      assert:
+        that:
+            - ansible_facts is defined and 'fqdn' in ansible_facts
+            - "'uuid' in ansible_local"
+
+    - name: cleanup 'local facts' from target
+      file: path=/etc/ansible/facts.d/uuid.fact state=absent

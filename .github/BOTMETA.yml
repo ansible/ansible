@@ -135,6 +135,10 @@ files:
     maintainers: $team_google
     ignored: supertom
   $modules/cloud/google/gc_storage.py: supertom
+  $modules/cloud/hcloud/: &hcloud
+    keywords: [ hcloud, hetzner cloud ]
+    labels: [ cloud, hcloud ]
+    maintainers: $team_hcloud
   $modules/cloud/kubevirt/: machacekondra mmazur pkliczewski
   $modules/cloud/linode/: $team_linode
   $modules/cloud/lxd/: hnakamur
@@ -173,7 +177,7 @@ files:
   $modules/cloud/vmware/: &vmware
     ignored: cigamit jcpowermac mtnbikenc tchernomax
     keywords: [ esx, vcenter, vcsa, vcsim, vsphere ]
-    labels: vmware
+    labels: [ cloud, vmware ]
     maintainers: $team_vmware
     notified: lparkes
   $modules/cloud/vmware/vmware_vm_shell.py: chrrrles
@@ -202,7 +206,7 @@ files:
     labels: [ database, mysql ]
     maintainers: $team_mysql
   $modules/database/postgresql/: &postgresql
-    keywords: [ postgres, postgresql ]
+    keywords: [ database, postgres, postgresql ]
     labels: postgresql
     maintainers: $team_postgresql
     notified: jbscalia
@@ -264,7 +268,11 @@ files:
       - infoblox
   $modules/net_tools/netbox/: fragmentedpacket
   $modules/network/a10/: ericchou1 mischapeters
-  $modules/network/aci/: $team_aci
+  $modules/network/aci/: &aci
+    keywords: [ ACI, Cisco MSC, Cisco MSO, MultiSite, Multi-Site ]
+    labels: [ aci, cisco, networking ]
+    maintainers: $team_aci
+    notified: koladiya
   $modules/network/aireos/: &aireos
     maintainers: $team_aireos
     labels: [ aireos, cisco, networking ]
@@ -319,7 +327,7 @@ files:
     labels: [ cisco, networking, nxos ]
     maintainers: $team_nxos
   $modules/network/nso/: &nso
-    labels: [ cisco, network, nso ]
+    labels: [ cisco, networking, nso ]
     maintainers: $team_nso
   $modules/network/onyx/: $team_onyx
   $modules/network/ordnance/: alexanderturner djh00t
@@ -398,7 +406,7 @@ files:
   $modules/remote_management/foreman/: ehelms
   $modules/remote_management/hpilo/: dagwieers haad
   $modules/remote_management/imc/:
-    labels: cisco
+    labels: [ cisco ]
     maintainers: $team_imc
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
@@ -413,7 +421,7 @@ files:
   $modules/source_control/github_key.py:
     ignored: erydo
   $modules/source_control/gitlab_: &gitlab
-    keywords: [ gitlab ]
+    keywords: [ gitlab, source_control ]
     labels: gitlab
     maintainers: $team_gitlab
     notified: jlozadad
@@ -463,7 +471,9 @@ files:
   $modules/utilities/helper/meta.py: $team_ansible
   $modules/utilities/logic/assert.py: $team_ansible
   $modules/utilities/logic/async_status.py: $team_ansible
-  $modules/utilities/logic/async_wrapper.py: $team_ansible
+  $modules/utilities/logic/async_wrapper.py:
+    maintainers: $team_ansible
+    support: core
   $modules/utilities/logic/include.py: $team_ansible
   $modules/utilities/logic/include_role.py: $team_ansible
   $modules/utilities/logic/include_vars.py: $team_ansible
@@ -682,11 +692,7 @@ files:
     labels: networking
   $module_utils/network/a10:
     maintainers: ericchou1 mischapeters
-  $module_utils/network/aci: &aci
-    keywords: [ ACI, Cisco MSC, Cisco MSO, MultiSite, Multi-Site ]
-    labels: [ aci, networking ]
-    maintainers: $team_aci
-    notified: koladiya
+  $module_utils/network/aci: *aci
   $module_utils/network/aireos: *aireos
   $module_utils/network/aos:
     maintainers: dgarros jeremyschulman
@@ -733,8 +739,9 @@ files:
       - fortimanager
       - networking
   $module_utils/network/ios:
-    support: network
+    <<: *ios
     maintainers: $team_networking $team_ios
+    support: network
   $module_utils/network/iosxr:
     <<: *iosxr
     maintainers: $team_networking $team_iosxr
@@ -1107,6 +1114,7 @@ files:
   $plugins/inventory/gcp_compute.py:
     maintainers: $team_google
     supershipit: $team_google
+  $plugins/inventory/hcloud.py: *hcloud
   $plugins/inventory/ini.py:
     support: core
   $plugins/inventory/k8s.py:
@@ -1380,6 +1388,7 @@ macros:
   team_fortimanager: Ghilli3 lweighall p4r4n0y1ng Ftntcorecse
   team_gitlab: dj-wasabi Lunik marwatk Shaps waheedi
   team_google: rambleraptor erjohnso
+  team_hcloud: cschmitt-hcloud LKaemmerling
   team_hpux: bcoca dagwieers davx8342
   team_imc: dagwieers
   team_ios: rcarrillocruz
@@ -1403,13 +1412,13 @@ macros:
   team_openswitch: Qalthos gdpak
   team_ovirt: machacekondra mwperina mnecas
   team_postgresql: amenonsen Andersson007 andytom Dorn- jbscalia kostiantyn-nemchenko kustodian matburt nerzhul sebasmannem
-  team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych
+  team_purestorage: sdodsley sile16 lionmax genegr raekins bannaych opslounge
   team_rabbitmq: chrishoffman manuel-sousa hyperized
   team_redfish: jose-delarosa mraineri tomasg2012 billdodd
   team_rhn: alikins barnabycourt FlossWare vritant
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
-  team_tower: ghjm jlaska matburt wwitzel3 simfarm ryanpetrello rooftopcellist AlanCoding
+  team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
   team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb
   team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9
   team_virt: joshainglis karmab

@@ -40,12 +40,13 @@ options:
         default: sha256
     privatekey_path:
         description:
-            - The path to the privatekey to use when signing the certificate signing request.
+            - The path to the private key to use when signing the certificate signing request.
         type: path
         required: true
     privatekey_passphrase:
         description:
-            - The passphrase for the privatekey.
+            - The passphrase for the private key.
+            - This is required if the private key is password protected.
         type: str
     version:
         description:
@@ -484,12 +485,23 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             if entry[1] is not None:
                 # Workaround for https://github.com/pyca/pyopenssl/issues/165
                 nid = OpenSSL._util.lib.OBJ_txt2nid(to_bytes(entry[0]))
-                OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
+                if nid == 0:
+                    raise CertificateSigningRequestError('Unknown subject field identifier "{0}"'.format(entry[0]))
+                res = OpenSSL._util.lib.X509_NAME_add_entry_by_NID(subject._name, nid, OpenSSL._util.lib.MBSTRING_UTF8, to_bytes(entry[1]), -1, -1, 0)
+                if res == 0:
+                    raise CertificateSigningRequestError('Invalid value for subject field identifier "{0}": {1}'.format(entry[0], entry[1]))
 
         extensions = []
         if self.subjectAltName:
             altnames = ', '.join(self.subjectAltName)
-            extensions.append(crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii')))
+            try:
+                extensions.append(crypto.X509Extension(b"subjectAltName", self.subjectAltName_critical, altnames.encode('ascii')))
+            except OpenSSL.crypto.Error as e:
+                raise CertificateSigningRequestError(
+                    'Error while parsing Subject Alternative Names {0} (check for missing type prefix, such as "DNS:"!): {1}'.format(
+                        ', '.join(["{0}".format(san) for san in self.subjectAltName]), str(e)
+                    )
+                )
 
         if self.keyUsage:
             usages = ', '.join(self.keyUsage)
@@ -516,7 +528,10 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
         return crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request)
 
     def _load_private_key(self):
-        self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+        try:
+            self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+        except crypto_utils.OpenSSLBadPassphraseError as exc:
+            raise CertificateSigningRequestError(exc)
 
     def _check_csr(self):
         def _check_subject(csr):
@@ -759,9 +774,12 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
-        csr = csr.subject_name(cryptography.x509.Name([
-            cryptography.x509.NameAttribute(self._get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
-        ]))
+        try:
+            csr = csr.subject_name(cryptography.x509.Name([
+                cryptography.x509.NameAttribute(self._get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
+            ]))
+        except ValueError as e:
+            raise CertificateSigningRequestError(e)
 
         if self.subjectAltName:
             csr = csr.add_extension(cryptography.x509.SubjectAlternativeName([

@@ -8,6 +8,7 @@ __metaclass__ = type
 import fcntl
 import os
 import shlex
+
 from abc import abstractmethod, abstractproperty
 from functools import wraps
 

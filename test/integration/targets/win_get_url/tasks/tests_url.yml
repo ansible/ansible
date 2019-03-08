@@ -39,7 +39,16 @@
     - http_download.dest
     - http_download_result.stat.exists
 
-# TODO: add check for idempotent run once it is added with force: yes
+- name: download single file (idempotent)
+  win_get_url:
+    url: https://{{test_win_get_url_host}}
+    dest: '{{test_win_get_url_path}}\web.html'
+  register: http_download_again
+
+- name: assert download single file (idempotent)
+  assert:
+    that:
+    - not http_download_again is changed
 
 - name: download single file with force no
   win_get_url:
@@ -53,8 +62,10 @@
     that:
     - http_download_no_force is not changed
 
-- name: manually change last modified time on FTP source to older datetime
-  win_shell: (Get-Item -Path '{{test_win_get_url_path}}\web.html').LastWriteTime = (Get-Date -Date "01/01/1970")
+- name: manually change the content and last modified time on FTP source to older datetime
+  win_shell: |
+    Set-Content -Path '{{test_win_get_url_path}}\web.html' -Value 'abc'
+    (Get-Item -Path '{{test_win_get_url_path}}\web.html').LastWriteTime = (Get-Date -Date "01/01/1970")
 
 - name: download newer file with force no
   win_get_url:

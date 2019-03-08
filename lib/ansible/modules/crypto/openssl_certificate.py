@@ -77,6 +77,7 @@ options:
     privatekey_passphrase:
         description:
             - The passphrase for the I(privatekey_path).
+            - This is required if the private key is password protected.
         type: str
 
     selfsigned_version:
@@ -595,10 +596,13 @@ class Certificate(crypto_utils.OpenSSLObject):
         self.cert = crypto_utils.load_certificate(self.path)
 
         if self.privatekey_path:
-            self.privatekey = crypto_utils.load_privatekey(
-                self.privatekey_path,
-                self.privatekey_passphrase
-            )
+            try:
+                self.privatekey = crypto_utils.load_privatekey(
+                    self.privatekey_path,
+                    self.privatekey_passphrase
+                )
+            except crypto_utils.OpenSSLBadPassphraseError as exc:
+                raise CertificateError(exc)
             return _validate_privatekey()
 
         if self.csr_path:
@@ -620,9 +624,12 @@ class SelfSignedCertificate(Certificate):
         self.version = module.params['selfsigned_version']
         self.serial_number = randint(1000, 99999)
         self.csr = crypto_utils.load_certificate_request(self.csr_path)
-        self.privatekey = crypto_utils.load_privatekey(
-            self.privatekey_path, self.privatekey_passphrase
-        )
+        try:
+            self.privatekey = crypto_utils.load_privatekey(
+                self.privatekey_path, self.privatekey_passphrase
+            )
+        except crypto_utils.OpenSSLBadPassphraseError as exc:
+            module.fail_json(msg=str(exc))
 
     def generate(self, module):
 
@@ -702,9 +709,12 @@ class OwnCACertificate(Certificate):
         self.ca_privatekey_passphrase = module.params['ownca_privatekey_passphrase']
         self.csr = crypto_utils.load_certificate_request(self.csr_path)
         self.ca_cert = crypto_utils.load_certificate(self.ca_cert_path)
-        self.ca_privatekey = crypto_utils.load_privatekey(
-            self.ca_privatekey_path, self.ca_privatekey_passphrase
-        )
+        try:
+            self.ca_privatekey = crypto_utils.load_privatekey(
+                self.ca_privatekey_path, self.ca_privatekey_passphrase
+            )
+        except crypto_utils.OpenSSLBadPassphraseError as exc:
+            module.fail_json(msg=str(exc))
 
     def generate(self, module):
 
@@ -1002,10 +1012,15 @@ class AssertOnlyCertificate(Certificate):
 
         self.assertonly()
 
-        if self.privatekey_path and \
-           not super(AssertOnlyCertificate, self).check(module, perms_required=False):
+        try:
+            if self.privatekey_path and \
+               not super(AssertOnlyCertificate, self).check(module, perms_required=False):
+                self.message.append(
+                    'Certificate %s and private key %s do not match' % (self.path, self.privatekey_path)
+                )
+        except CertificateError as e:
             self.message.append(
-                'Certificate %s and private key %s does not match' % (self.path, self.privatekey_path)
+                'Error while reading private key %s: %s' % (self.privatekey_path, str(e))
             )
 
         if len(self.message):

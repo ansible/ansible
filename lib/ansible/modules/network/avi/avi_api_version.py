@@ -55,8 +55,8 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, AviCredentials)
-    from avi.sdk.avi_api import ApiSession
+        avi_common_argument_spec, HAS_AVI)
+    from avi.sdk.avi_api import ApiSession, AviCredentials
 except ImportError:
     HAS_AVI = False
 

@@ -30,15 +30,13 @@ lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidGlobalVars
 lib/ansible/modules/windows/win_domain_membership.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_domain_membership.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_domain_membership.ps1 PSUseDeclaredVarsMoreThanAssignments
-lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_dsc.ps1 PSAvoidUsingEmptyCatchBlock
-lib/ansible/modules/windows/win_dsc.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_eventlog.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_find.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_firewall_rule.ps1 PSUseApprovedVerbs
-lib/ansible/modules/windows/win_get_url.ps1 PSUseApprovedVerbs
+lib/ansible/modules/windows/win_get_url.ps1 PSUsePSCredentialType  # Credential param can take a base64 encoded string as well as a PSCredential
 lib/ansible/modules/windows/win_hotfix.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_webbinding.ps1 PSUseApprovedVerbs
 lib/ansible/modules/windows/win_iis_website.ps1 PSAvoidUsingCmdletAliases
@@ -54,7 +52,6 @@ lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingPositionalParameters
 lib/ansible/modules/windows/win_pagefile.ps1 PSAvoidUsingWMICmdlet
 lib/ansible/modules/windows/win_pagefile.ps1 PSUseDeclaredVarsMoreThanAssignments
 lib/ansible/modules/windows/win_pagefile.ps1 PSUseSupportsShouldProcess
-lib/ansible/modules/windows/win_psmodule.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_rabbitmq_plugin.ps1 PSAvoidUsingInvokeExpression
 lib/ansible/modules/windows/win_region.ps1 PSAvoidUsingEmptyCatchBlock
@@ -72,7 +69,6 @@ lib/ansible/modules/windows/win_user.ps1 PSAvoidUsingCmdletAliases
 lib/ansible/modules/windows/win_wait_for.ps1 PSAvoidUsingEmptyCatchBlock
 lib/ansible/modules/windows/win_webpicmd.ps1 PSAvoidUsingInvokeExpression
 test/integration/targets/win_audit_rule/library/test_get_audit_rule.ps1 PSAvoidUsingCmdletAliases
-test/integration/targets/win_dsc/templates/ANSIBLE_xTestResource.psm1 PSAvoidDefaultValueForMandatoryParameter
 test/integration/targets/win_iis_webbinding/library/test_get_webbindings.ps1 PSUseApprovedVerbs
 test/integration/targets/win_module_utils/library/argv_parser_test.ps1 PSUseApprovedVerbs
 test/integration/targets/win_module_utils/library/camel_conversion_test.ps1 PSUseDeclaredVarsMoreThanAssignments

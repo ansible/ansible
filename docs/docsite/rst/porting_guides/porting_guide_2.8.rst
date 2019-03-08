@@ -193,6 +193,19 @@ Deprecated
      removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
      instead.
 
+* Supporting file-backed caching via self.cache is deprecated and will
+  be removed in Ansible 2.12. If you maintain an inventory plugin, update it to use ``self._cache`` as a dictionary. For implementation details, see
+  the :ref:`developer guide on inventory plugins<inventory_plugin_caching>`.
+
+* Importing cache plugins directly is deprecated and will be removed in Ansible 2.12. Use the plugin_loader
+  so direct options, environment variables, and other means of configuration can be reconciled using the config
+  system rather than constants.
+
+  .. code-block:: python
+
+     from ansible.plugins.loader import cache_loader
+     cache = cache_loader.get('redis', **kwargs)
+
 Modules
 =======
 
@@ -207,6 +220,8 @@ that may occur in execution.
 PowerShell module options and option choices are currently case insensitive to what is defined in the module
 specification. This behaviour is deprecated and a warning displayed to the user if a case insensitive match was found.
 A future release of Ansible will make these checks case sensitive.
+
+The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options would be ignored but are now not.
 
 Modules removed
 ---------------
@@ -276,11 +291,11 @@ Noteworthy module changes
   This allows for more flexibility and better module support.
 
 * The ``docker_container`` module has deprecated the returned fact ``docker_container``. The same value is
-  available as the returned variable ``docker_container``. The returned fact will be removed in Ansible 2.12.
+  available as the returned variable ``container``. The returned fact will be removed in Ansible 2.12.
 * The ``docker_network`` module has deprecated the returned fact ``docker_container``. The same value is
-  available as the returned variable ``docker_network``. The returned fact will be removed in Ansible 2.12.
+  available as the returned variable ``network``. The returned fact will be removed in Ansible 2.12.
 * The ``docker_volume`` module has deprecated the returned fact ``docker_container``. The same value is
-  available as the returned variable ``docker_volume``. The returned fact will be removed in Ansible 2.12.
+  available as the returned variable ``volume``. The returned fact will be removed in Ansible 2.12.
 
 * The ``docker_service`` module was renamed to :ref:`docker_compose <docker_compose_module>`.
 * The renamed ``docker_compose`` module used to return one fact per service, named same as the service. A dictionary
@@ -333,6 +348,8 @@ Plugins
 * Play recap now counts ``ignored`` and ``rescued`` tasks as well as ``ok``, ``changed``, ``unreachable``, ``failed`` and ``skipped`` tasks, thanks to two additional stat counters in the ``default`` callback plugin. Tasks that fail and have ``ignore_errors: yes`` set are listed as ``ignored``. Tasks that fail and then execute a rescue section are listed as ``rescued``. Note that ``rescued`` tasks are no longer counted as ``failed`` as in Ansible 2.7 (and earlier).
 
 * ``osx_say`` callback plugin was renamed into :ref:`say <say_callback>`.
+
+* Inventory plugins now support caching via cache plugins. To start using a cache plugin with your inventory see the section on caching in the :ref:`inventory guide<using_inventory>`. To port a custom cache plugin to be compatible with inventory see :ref:`developer guide on cache plugins<developing_cache_plugins>`.
 
 Porting custom scripts
 ======================

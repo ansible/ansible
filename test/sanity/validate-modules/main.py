@@ -1301,6 +1301,14 @@ class ModuleValidator(Validator):
                          "but documentation defines choices as (%r)" % (arg, arg_choices, doc_choices))
                 )
 
+        for arg in args_from_argspec:
+            if not str(arg).isidentifier():
+                self.reporter.error(
+                    path=self.object_path,
+                    code=336,
+                    msg="Argument '%s' is not a valid python identifier" % arg
+                )
+
         if docs:
             file_common_arguments = set()
             for arg, data in FILE_COMMON_ARGUMENTS.items():

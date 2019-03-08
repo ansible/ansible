@@ -3,6 +3,7 @@ requests[security]
 azure-cli-core==2.0.35
 azure-cli-nspkg==3.0.2
 azure-common==1.1.11
+azure-mgmt-authorization==0.51.1
 azure-mgmt-batch==4.1.0
 azure-mgmt-cdn==3.0.0
 azure-mgmt-compute==4.4.0
@@ -16,7 +17,7 @@ azure-mgmt-monitor==0.5.2
 azure-mgmt-network==2.3.0
 azure-mgmt-nspkg==2.0.0
 azure-mgmt-redis==5.0.0
-azure-mgmt-resource==1.2.2
+azure-mgmt-resource==2.1.0
 azure-mgmt-rdbms==1.4.1
 azure-mgmt-sql==0.10.0
 azure-mgmt-storage==3.1.0

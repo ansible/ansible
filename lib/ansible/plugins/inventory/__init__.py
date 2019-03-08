@@ -21,13 +21,13 @@ __metaclass__ = type
 
 import hashlib
 import os
-import re
 import string
 
 from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.inventory.group import to_safe_group_name as original_safe
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
-from ansible.plugins.cache import InventoryFileCacheModule
+from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -37,13 +37,11 @@ from ansible.utils.display import Display
 
 display = Display()
 
-_SAFE_GROUP = re.compile("[^A-Za-z0-9_]")
-
 
 # Helper methods
 def to_safe_group_name(name):
-    ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible hosts or groups '''
-    return _SAFE_GROUP.sub("_", name)
+    # placeholder for backwards compat
+    return original_safe(name, force=True, silent=True)
 
 
 def detect_range(line=None):
@@ -128,6 +126,25 @@ def expand_hostname_range(line=None):
         return all_hosts
 
 
+def get_cache_plugin(plugin_name, **kwargs):
+    try:
+        cache = CacheObject(plugin_name, **kwargs)
+    except AnsibleError as e:
+        if 'fact_caching_connection' in to_native(e):
+            raise AnsibleError("error, '%s' inventory cache plugin requires the one of the following to be set "
+                               "to a writeable directory path:\nansible.cfg:\n[default]: fact_caching_connection,\n"
+                               "[inventory]: cache_connection;\nEnvironment:\nANSIBLE_INVENTORY_CACHE_CONNECTION,\n"
+                               "ANSIBLE_CACHE_PLUGIN_CONNECTION." % plugin_name)
+        else:
+            raise e
+
+    if plugin_name != 'memory' and kwargs and not getattr(cache._plugin, '_options', None):
+        raise AnsibleError('Unable to use cache plugin {0} for inventory. Cache options were provided but may not reconcile '
+                           'correctly unless set via set_options. Refer to the porting guide if the plugin derives user settings '
+                           'from ansible.constants.'.format(plugin_name))
+    return cache
+
+
 class BaseInventoryPlugin(AnsiblePlugin):
     """ Parses an Inventory Source"""
 
@@ -140,7 +157,6 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
-        self.cache = None
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure
@@ -209,15 +225,12 @@ class BaseInventoryPlugin(AnsiblePlugin):
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config)
-        if self._options.get('cache'):
-            self._set_cache_options(self._options)
+        if 'cache' in self._options and self.get_option('cache'):
+            cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
+            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+            self._cache = get_cache_plugin(self.get_option('cache_plugin'), **cache_options)
 
         return config
-
-    def _set_cache_options(self, options):
-        self.cache = InventoryFileCacheModule(plugin_name=options.get('cache_plugin'),
-                                              timeout=options.get('cache_timeout'),
-                                              cache_dir=options.get('cache_connection'))
 
     def _consume_options(self, data):
         ''' update existing options from alternate configuration sources not normally used by Ansible.
@@ -254,9 +267,6 @@ class BaseInventoryPlugin(AnsiblePlugin):
 
         return (hostnames, port)
 
-    def clear_cache(self):
-        pass
-
 
 class BaseFileInventoryPlugin(BaseInventoryPlugin):
     """ Parses a File based Inventory Source"""
@@ -268,9 +278,43 @@ class BaseFileInventoryPlugin(BaseInventoryPlugin):
         super(BaseFileInventoryPlugin, self).__init__()
 
 
+class DeprecatedCache(object):
+    def __init__(self, real_cacheable):
+        self.real_cacheable = real_cacheable
+
+    def get(self, key):
+        display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
+                           'When expecting a KeyError, use self._cache[key] instead of using self.cache.get(key). '
+                           'self._cache is a dictionary and will return a default value instead of raising a KeyError '
+                           'when the key does not exist', version='2.12')
+        return self.real_cacheable._cache[key]
+
+    def set(self, key, value):
+        display.deprecated('InventoryModule should utilize self._cache as a dict instead of self.cache. '
+                           'To set the self._cache dictionary, use self._cache[key] = value instead of self.cache.set(key, value). '
+                           'To force update the underlying cache plugin with the contents of self._cache before parse() is complete, '
+                           'call self.set_cache_plugin and it will use the self._cache dictionary to update the cache plugin', version='2.12')
+        self.real_cacheable._cache[key] = value
+        self.real_cacheable.set_cache_plugin()
+
+    def __getattr__(self, name):
+        display.deprecated('InventoryModule should utilize self._cache instead of self.cache', version='2.12')
+        return self.real_cacheable._cache.__getattribute__(name)
+
+
 class Cacheable(object):
 
-    _cache = {}
+    _cache = CacheObject()
+
+    @property
+    def cache(self):
+        return DeprecatedCache(self)
+
+    def load_cache_plugin(self):
+        plugin_name = self.get_option('cache_plugin')
+        cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
+        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+        self._cache = get_cache_plugin(plugin_name, **cache_options)
 
     def get_cache_key(self, path):
         return "{0}_{1}".format(self.NAME, self._get_cache_prefix(path))
@@ -289,7 +333,13 @@ class Cacheable(object):
         return 's_'.join([d1[:5], d2[:5]])
 
     def clear_cache(self):
-        self._cache = {}
+        self._cache.flush()
+
+    def update_cache_if_changed(self):
+        self._cache.update_cache_if_changed()
+
+    def set_cache_plugin(self):
+        self._cache.set_cache()
 
 
 class Constructable(object):
@@ -319,6 +369,7 @@ class Constructable(object):
             self.templar.set_available_variables(variables)
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
+                group_name = to_safe_group_name(group_name)
                 try:
                     result = boolean(self.templar.template(conditional))
                 except Exception as e:
@@ -327,15 +378,14 @@ class Constructable(object):
                     continue
 
                 if result:
-                    # ensure group exists
-                    self.inventory.add_group(group_name)
+                    # ensure group exists, use sanatized name
+                    group_name = self.inventory.add_group(group_name)
                     # add host to group
                     self.inventory.add_child(group_name, host)
 
     def _add_host_to_keyed_groups(self, keys, variables, host, strict=False):
         ''' helper to create groups for plugins based on variable values and add the corresponding hosts to it'''
         if keys and isinstance(keys, list):
-            groups = []
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
@@ -349,26 +399,33 @@ class Constructable(object):
                     if key:
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
+                        raw_parent_name = keyed.get('parent_group', None)
 
+                        new_raw_group_names = []
                         if isinstance(key, string_types):
-                            groups.append('%s%s%s' % (prefix, sep, key))
+                            new_raw_group_names.append(key)
                         elif isinstance(key, list):
                             for name in key:
-                                groups.append('%s%s%s' % (prefix, sep, name))
+                                new_raw_group_names.append(name)
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
                                 name = '%s%s%s' % (gname, sep, gval)
-                                groups.append('%s%s%s' % (prefix, sep, name))
+                                new_raw_group_names.append(name)
                         else:
                             raise AnsibleParserError("Invalid group name format, expected a string or a list of them or dictionary, got: %s" % type(key))
+
+                        for bare_name in new_raw_group_names:
+                            gname = to_safe_group_name('%s%s%s' % (prefix, sep, bare_name))
+                            self.inventory.add_group(gname)
+                            self.inventory.add_child(gname, host)
+
+                            if raw_parent_name:
+                                parent_name = to_safe_group_name(raw_parent_name)
+                                self.inventory.add_group(parent_name)
+                                self.inventory.add_child(parent_name, gname)
+
                     else:
                         if strict:
                             raise AnsibleParserError("No key or key resulted empty, invalid entry")
                 else:
                     raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)
-
-            # now actually add any groups
-            for group_name in groups:
-                gname = to_safe_group_name(group_name)
-                self.inventory.add_group(gname)
-                self.inventory.add_child(gname, host)

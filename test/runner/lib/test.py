@@ -159,6 +159,52 @@ class TestResult(object):
             xml.write(report.encode('utf-8', 'strict'))
 
 
+class TestTimeout(TestResult):
+    """Test timeout."""
+    def __init__(self, timeout_duration):
+        """
+        :type timeout_duration: int
+        """
+        super(TestTimeout, self).__init__(command='timeout', test='')
+
+        self.timeout_duration = timeout_duration
+
+    def write(self, args):
+        """
+        :type args: TestConfig
+        """
+        message = 'Tests were aborted after exceeding the %d minute time limit.' % self.timeout_duration
+        output = '''One or more of the following situations may be responsible:
+
+- Code changes have resulted in tests that hang or run for an excessive amount of time.
+- Tests have been added which exceed the time limit when combined with existing tests.
+- Test infrastructure and/or external dependencies are operating slower than normal.'''
+
+        if args.coverage:
+            output += '\n- Additional overhead from collecting code coverage has resulted in tests exceeding the time limit.'
+
+        output += '\n\nConsult the console log for additional details on where the timeout occurred.'
+
+        timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
+
+        # hack to avoid requiring junit-xml, which isn't pre-installed on Shippable outside our test containers
+        xml = '''
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">
+\t<testsuite disabled="0" errors="1" failures="0" file="None" log="None" name="ansible-test" skipped="0" tests="1" time="0" timestamp="%s" url="None">
+\t\t<testcase classname="timeout" name="timeout">
+\t\t\t<error message="%s" type="error">%s</error>
+\t\t</testcase>
+\t</testsuite>
+</testsuites>
+''' % (timestamp, message, output)
+
+        path = self.create_path('junit', '.xml')
+
+        with open(path, 'w') as junit_fd:
+            junit_fd.write(xml.lstrip())
+
+
 class TestSuccess(TestResult):
     """Test success."""
     def write_junit(self, args):

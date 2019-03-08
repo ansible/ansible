@@ -41,7 +41,7 @@ notes:
 options:
   name:
     description:
-      - Name of the Layer-3 interface to be configured eg. GigabitEthernet0/2
+      - Name of the Layer-3 interface to be configured eg. Ethernet1/2
   ipv4:
     description:
       - IPv4 address to be set for the Layer-3 interface mentioned in I(name)
@@ -161,14 +161,14 @@ EXAMPLES = """
   cnos_l3_interface:
     aggregate:
       - { name: Ethernet1/33, ipv4: 10.241.107.1/24 }
-      - { name: GigabitEthernet1/33, ipv4: 10.241.107.1/24,
+      - { name: Ethernet1/44, ipv4: 10.240.106.1/24,
           ipv6: "fd5d:12c9:2201:1::1/64" }
 
 - name: Remove IP addresses on aggregate
   cnos_l3_interface:
     aggregate:
       - { name: Ethernet1/33, ipv4: 10.241.107.1/24 }
-      - { name: Ethernet1/3``3, ipv4: 10.241.107.1/24,
+      - { name: Ethernet1/44, ipv4: 10.240.106.1/24,
           ipv6: "fd5d:12c9:2201:1::1/64" }
     state: absent
 """
@@ -192,6 +192,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.cnos.cnos import get_config, load_config
 from ansible.module_utils.network.cnos.cnos import cnos_argument_spec
+from ansible.module_utils.network.cnos.cnos import run_commands
 from ansible.module_utils.network.common.config import NetworkConfig
 from ansible.module_utils.network.common.utils import remove_default_spec
 from ansible.module_utils.network.common.utils import is_netmask, is_masklen
@@ -254,6 +255,35 @@ def search_obj_in_list(name, lst):
             return o
 
     return None
+
+
+def get_interface_type(interface):
+    intf_type = 'unknown'
+    if interface.upper()[:2] in ('ET', 'GI', 'FA', 'TE', 'FO', 'HU', 'TWE'):
+        intf_type = 'ethernet'
+    elif interface.upper().startswith('VL'):
+        intf_type = 'svi'
+    elif interface.upper().startswith('LO'):
+        intf_type = 'loopback'
+    elif interface.upper()[:2] in ('MG', 'MA'):
+        intf_type = 'management'
+    elif interface.upper().startswith('PO'):
+        intf_type = 'portchannel'
+    elif interface.upper().startswith('NV'):
+        intf_type = 'nve'
+
+    return intf_type
+
+
+def is_switchport(name, module):
+    intf_type = get_interface_type(name)
+
+    if intf_type in ('ethernet', 'portchannel'):
+        config = run_commands(module,
+                              ['show interface {0} switchport'.format(name)])[0]
+        match = re.search(r'Switchport              : enabled', config)
+        return bool(match)
+    return False
 
 
 def map_obj_to_commands(updates, module):
@@ -395,6 +425,14 @@ def main():
     result = {'changed': False}
 
     want = map_params_to_obj(module)
+    for w in want:
+        name = w['name']
+        name = name.lower()
+        if is_switchport(name, module):
+            module.fail_json(msg='Ensure interface is configured to be a L3'
+                             '\nport first before using this module. You can use'
+                             '\nthe cnos_interface module for this.')
+
     have = map_config_to_obj(module)
 
     commands = map_obj_to_commands((want, have), module)

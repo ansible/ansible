@@ -771,6 +771,15 @@
 # Test postgresql_query module
 - include: postgresql_query.yml
 
+# Verify postgresql_ping module
+- include: postgresql_ping.yml db_name_nonexist=fake_db
+
+# Test postgresql_tablespace module
+- include: postgresql_tablespace.yml
+
+# Test postgresql_privs
+- include: postgresql_privs.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql

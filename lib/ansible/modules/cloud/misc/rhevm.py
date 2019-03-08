@@ -1,108 +1,131 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# (c) 2016, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
+# Copyright: (c) 2016, Timothy Vandenbrande <timothy.vandenbrande@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: rhevm
-author: Timothy Vandenbrande (@TimothyVandenbrande)
 short_description: RHEV/oVirt automation
 description:
-    - This module only supports oVirt/RHEV version 3. A newer module M(ovirt_vm) supports oVirt/RHV version 4.
+    - This module only supports oVirt/RHEV version 3.
+    - A newer module M(ovirt_vm) supports oVirt/RHV version 4.
     - Allows you to create/remove/update or powermanage virtual machines on a RHEV/oVirt platform.
 version_added: "2.2"
 requirements:
     - ovirtsdk
+author:
+- Timothy Vandenbrande (@TimothyVandenbrande)
 options:
     user:
         description:
             - The user to authenticate with.
-        default: "admin@internal"
+        type: str
+        default: admin@internal
+    password:
+        description:
+            - The password for user authentication.
+        type: str
     server:
         description:
-            - The name/ip of your RHEV-m/oVirt instance.
-        default: "127.0.0.1"
+            - The name/IP of your RHEV-m/oVirt instance.
+        type: str
+        default: 127.0.0.1
     port:
         description:
             - The port on which the API is reacheable.
-        default: "443"
+        type: int
+        default: 443
     insecure_api:
         description:
             - A boolean switch to make a secure or insecure connection to the server.
         type: bool
-        default: 'no'
+        default: no
     name:
         description:
             - The name of the VM.
+        type: str
     cluster:
         description:
-            - The rhev/ovirt cluster in which you want you VM to start.
+            - The RHEV/oVirt cluster in which you want you VM to start.
+        type: str
     datacenter:
         description:
-            - The rhev/ovirt datacenter in which you want you VM to start.
-        default: "Default"
+            - The RHEV/oVirt datacenter in which you want you VM to start.
+        type: str
+        default: Default
     state:
         description:
             - This serves to create/remove/update or powermanage your VM.
-        default: "present"
-        choices: ['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']
+        type: str
+        choices: [ absent, cd, down, info, ping, present, restarted, up ]
+        default: present
     image:
         description:
             - The template to use for the VM.
+        type: str
     type:
         description:
             - To define if the VM is a server or desktop.
+        type: str
+        choices: [ desktop, host, server ]
         default: server
-        choices: [ 'server', 'desktop', 'host' ]
     vmhost:
         description:
             - The host you wish your VM to run on.
+        type: str
     vmcpu:
         description:
             - The number of CPUs you want in your VM.
-        default: "2"
+        type: int
+        default: 2
     cpu_share:
         description:
-            - This parameter is used to configure the cpu share.
-        default: "0"
+            - This parameter is used to configure the CPU share.
+        type: int
+        default: 0
     vmmem:
         description:
             - The amount of memory you want your VM to use (in GB).
-        default: "1"
+        type: int
+        default: 1
     osver:
         description:
-            - The operationsystem option in RHEV/oVirt.
-        default: "rhel_6x64"
+            - The operating system option in RHEV/oVirt.
+        type: str
+        default: rhel_6x64
     mempol:
         description:
             - The minimum amount of memory you wish to reserve for this system.
-        default: "1"
+        type: int
+        default: 1
     vm_ha:
         description:
             - To make your VM High Available.
         type: bool
-        default: 'yes'
+        default: yes
     disks:
         description:
             - This option uses complex arguments and is a list of disks with the options name, size and domain.
+        type: list
     ifaces:
         description:
             - This option uses complex arguments and is a list of interfaces with the options name and vlan.
-        aliases: ['nics', 'interfaces']
+        type: list
+        aliases: [ interfaces, nics ]
     boot_order:
         description:
             - This option uses complex arguments and is a list of items that specify the bootorder.
-        default: ["network","hd"]
+        type: list
+        default: [ hd, network ]
     del_prot:
         description:
             - This option sets the delete protection checkbox.
@@ -111,15 +134,17 @@ options:
     cd_drive:
         description:
             - The CD you wish to have mounted on the VM when I(state = 'CD').
+        type: str
     timeout:
         description:
             - The timeout you wish to define for power actions.
-            - When I(state = 'up')
-            - When I(state = 'down')
-            - When I(state = 'restarted')
+            - When I(state = 'up').
+            - When I(state = 'down').
+            - When I(state = 'restarted').
+        type: int
 '''
 
-RETURN = '''
+RETURN = r'''
 vm:
     description: Returns all of the VMs variables and execution.
     returned: always
@@ -185,116 +210,116 @@ vm:
     }'
 '''
 
-EXAMPLES = '''
-# basic get info from VM
-  - rhevm:
-      name: "demo"
-      user: "{{ rhev.admin.name }}"
-      password: "{{ rhev.admin.pass }}"
-      server: "rhevm01"
-      state: "info"
+EXAMPLES = r'''
+- name: Basic get info from VM
+  rhevm:
+    server: rhevm01
+    user: '{{ rhev.admin.name }}'
+    password: '{{ rhev.admin.pass }}'
+    name: demo
+    state: info
 
-# basic create example from image
-  - rhevm:
-      name: "demo"
-      user: "{{ rhev.admin.name }}"
-      password: "{{ rhev.admin.pass }}"
-      server: "rhevm01"
-      state: "present"
-      image: "centos7_x64"
-      cluster: "centos"
+- name: Basic create example from image
+  rhevm:
+    server: rhevm01
+    user: '{{ rhev.admin.name }}'
+    password: '{{ rhev.admin.pass }}'
+    name: demo
+    cluster: centos
+    image: centos7_x64
+    state: present
 
-# power management
-  - rhevm:
-      name: "uptime_server"
-      user: "{{ rhev.admin.name }}"
-      password: "{{ rhev.admin.pass }}"
-      server: "rhevm01"
-      cluster: "RH"
-      state: "down"
-      image: "centos7_x64"
+- name: Power management
+  rhevm:
+    server: rhevm01
+    user: '{{ rhev.admin.name }}'
+    password: '{{ rhev.admin.pass }}'
+    cluster: RH
+    name: uptime_server
+    image: centos7_x64
+    state: down
 
-# multi disk, multi nic create example
-  - rhevm:
-      name: "server007"
-      user: "{{ rhev.admin.name }}"
-      password: "{{ rhev.admin.pass }}"
-      server: "rhevm01"
-      cluster: "RH"
-      state: "present"
-      type: "server"
-      vmcpu: 4
-      vmmem: 2
-      ifaces:
-        - name: "eth0"
-          vlan: "vlan2202"
-        - name: "eth1"
-          vlan: "vlan36"
-        - name: "eth2"
-          vlan: "vlan38"
-        - name: "eth3"
-          vlan: "vlan2202"
-      disks:
-        - name: "root"
-          size: 10
-          domain: "ssd-san"
-        - name: "swap"
-          size: 10
-          domain: "15kiscsi-san"
-        - name: "opt"
-          size: 10
-          domain: "15kiscsi-san"
-        - name: "var"
-          size: 10
-          domain: "10kiscsi-san"
-        - name: "home"
-          size: 10
-          domain: "sata-san"
-      boot_order:
-        - "network"
-        - "hd"
+- name: Multi disk, multi nic create example
+  rhevm:
+    server: rhevm01
+    user: '{{ rhev.admin.name }}'
+    password: '{{ rhev.admin.pass }}'
+    cluster: RH
+    name: server007
+    type: server
+    vmcpu: 4
+    vmmem: 2
+    ifaces:
+    - name: eth0
+      vlan: vlan2202
+    - name: eth1
+      vlan: vlan36
+    - name: eth2
+      vlan: vlan38
+    - name: eth3
+      vlan: vlan2202
+    disks:
+    - name: root
+      size: 10
+      domain: ssd-san
+    - name: swap
+      size: 10
+      domain: 15kiscsi-san
+    - name: opt
+      size: 10
+      domain: 15kiscsi-san
+    - name: var
+      size: 10
+      domain: 10kiscsi-san
+    - name: home
+      size: 10
+      domain: sata-san
+    boot_order:
+    - network
+    - hd
+    state: present
 
-# add a CD to the disk cd_drive
-  - rhevm:
-      name: 'server007'
-      user: "{{ rhev.admin.name }}"
-      password: "{{ rhev.admin.pass }}"
-      state: 'cd'
-      cd_drive: 'rhev-tools-setup.iso'
+- name: Add a CD to the disk cd_drive
+  rhevm:
+    user: '{{ rhev.admin.name }}'
+    password: '{{ rhev.admin.pass }}'
+    name: server007
+    cd_drive: rhev-tools-setup.iso
+    state: cd
 
-# new host deployment + host network configuration
-  - rhevm:
-      name: "ovirt_node007"
-      password: "{{ rhevm.admin.pass }}"
-      type: "host"
-      state: present
-      cluster: "rhevm01"
-      ifaces:
-        - name: em1
-        - name: em2
-        - name: p3p1
-          ip: '172.31.224.200'
-          netmask: '255.255.254.0'
-        - name: p3p2
-          ip: '172.31.225.200'
-          netmask: '255.255.254.0'
-        - name: bond0
-          bond:
-            - em1
-            - em2
-          network: 'rhevm'
-          ip: '172.31.222.200'
-          netmask: '255.255.255.0'
-          management: True
-        - name: bond0.36
-          network: 'vlan36'
-          ip: '10.2.36.200'
-          netmask: '255.255.254.0'
-          gateway: '10.2.36.254'
-        - name: bond0.2202
-          network: 'vlan2202'
-        - name: bond0.38
-          network: 'vlan38'
+- name: New host deployment + host network configuration
+  rhevm:
+    password: '{{ rhevm.admin.pass }}'
+    name: ovirt_node007
+    type: host
+    cluster: rhevm01
+    ifaces:
+    - name: em1
+    - name: em2
+    - name: p3p1
+      ip: 172.31.224.200
+      netmask: 255.255.254.0
+    - name: p3p2
+      ip: 172.31.225.200
+      netmask: 255.255.254.0
+    - name: bond0
+      bond:
+      - em1
+      - em2
+      network: rhevm
+      ip: 172.31.222.200
+      netmask: 255.255.255.0
+      management: yes
+    - name: bond0.36
+      network: vlan36
+      ip: 10.2.36.200
+      netmask: 255.255.254.0
+      gateway: 10.2.36.254
+    - name: bond0.2202
+      network: vlan2202
+    - name: bond0.38
+      network: vlan38
+    state: present
 '''
 
 import time
@@ -313,8 +338,8 @@ RHEV_FAILED = 1
 RHEV_SUCCESS = 0
 RHEV_UNAVAILABLE = 2
 
-RHEV_TYPE_OPTS = ['server', 'desktop', 'host']
-STATE_OPTS = ['ping', 'present', 'absent', 'up', 'down', 'restart', 'cd', 'info']
+RHEV_TYPE_OPTS = ['desktop', 'host', 'server']
+STATE_OPTS = ['absent', 'cd', 'down', 'info', 'ping', 'present', 'restart', 'up']
 
 msg = []
 changed = False
@@ -590,7 +615,6 @@ class RHEVConn(object):
                 return False
         elif int(DISK.size) > (1024 * 1024 * 1024 * int(disksize)):
             setMsg("Shrinking disks is not supported")
-            setMsg(str(e))
             setFailed()
             return False
         else:
@@ -1308,15 +1332,15 @@ def core(module):
             memory = module.params.get('vmmem')
             if memory is not None:
                 memory_policy = module.params.get('mempol')
-                if int(memory_policy) == 0:
+                if memory_policy == 0:
                     memory_policy = memory
                 mem_pol_nok = True
-                if int(vminfo['mem_pol']) == int(memory_policy):
+                if int(vminfo['mem_pol']) == memory_policy:
                     setMsg("Memory is correct")
                     mem_pol_nok = False
 
                 mem_nok = True
-                if int(vminfo['memory']) == int(memory):
+                if int(vminfo['memory']) == memory:
                     setMsg("Memory is correct")
                     mem_nok = False
 
@@ -1325,7 +1349,7 @@ def core(module):
                     return RHEV_FAILED, msg
 
                 if mem_nok and mem_pol_nok:
-                    if int(memory_policy) > int(vminfo['memory']):
+                    if memory_policy > int(vminfo['memory']):
                         r.setMemory(vminfo['name'], memory)
                         r.setMemoryPolicy(vminfo['name'], memory_policy)
                     else:
@@ -1339,7 +1363,7 @@ def core(module):
 
             # Set CPU
             cpu = module.params.get('vmcpu')
-            if int(vminfo['cpu_cores']) == int(cpu):
+            if int(vminfo['cpu_cores']) == cpu:
                 setMsg("Number of CPUs is correct")
             else:
                 if r.setCPU(vminfo['name'], cpu) is False:
@@ -1348,7 +1372,7 @@ def core(module):
             # Set CPU SHARE
             cpu_share = module.params.get('cpu_share')
             if cpu_share is not None:
-                if int(vminfo['cpu_shares']) == int(cpu_share):
+                if int(vminfo['cpu_shares']) == cpu_share:
                     setMsg("CPU share is correct.")
                 else:
                     if r.setCPUShare(vminfo['name'], cpu_share) is False:
@@ -1378,7 +1402,7 @@ def core(module):
 
             # Set VM Host
             vmhost = module.params.get('vmhost')
-            if vmhost is not False and vmhost != "False":
+            if vmhost:
                 if r.setVMHost(vminfo['name'], vmhost) is False:
                     return RHEV_FAILED, msg
 
@@ -1447,37 +1471,35 @@ def main():
     global module
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['ping', 'present', 'absent', 'up', 'down', 'restarted', 'cd', 'info']),
-            user=dict(default="admin@internal"),
-            password=dict(required=True, no_log=True),
-            server=dict(default="127.0.0.1"),
-            port=dict(default="443"),
-            insecure_api=dict(default=False, type='bool'),
-            name=dict(),
-            image=dict(default=False),
-            datacenter=dict(default="Default"),
-            type=dict(default="server", choices=['server', 'desktop', 'host']),
-            cluster=dict(default=''),
-            vmhost=dict(default=False),
-            vmcpu=dict(default="2"),
-            vmmem=dict(default="1"),
-            disks=dict(),
-            osver=dict(default="rhel_6x64"),
-            ifaces=dict(aliases=['nics', 'interfaces']),
-            timeout=dict(default=False),
-            mempol=dict(default="1"),
-            vm_ha=dict(default=True),
-            cpu_share=dict(default="0"),
-            boot_order=dict(default=["network", "hd"]),
-            del_prot=dict(default=True, type="bool"),
-            cd_drive=dict(default=False)
+            state=dict(type='str', default='present', choices=['absent', 'cd', 'down', 'info', 'ping', 'present', 'restarted', 'up']),
+            user=dict(type='str', default='admin@internal'),
+            password=dict(type='str', required=True, no_log=True),
+            server=dict(type='str', default='127.0.0.1'),
+            port=dict(type='int', default=443),
+            insecure_api=dict(type='bool', default=False),
+            name=dict(type='str'),
+            image=dict(type='str'),
+            datacenter=dict(type='str', default="Default"),
+            type=dict(type='str', default='server', choices=['desktop', 'host', 'server']),
+            cluster=dict(type='str', default=''),
+            vmhost=dict(type='str'),
+            vmcpu=dict(type='int', default=2),
+            vmmem=dict(type='int', default=1),
+            disks=dict(type='list'),
+            osver=dict(type='str', default="rhel_6x64"),
+            ifaces=dict(type='list', aliases=['interfaces', 'nics']),
+            timeout=dict(type='int'),
+            mempol=dict(type='int', default=1),
+            vm_ha=dict(type='bool', default=True),
+            cpu_share=dict(type='int', default=0),
+            boot_order=dict(type='list', default=['hd', 'network']),
+            del_prot=dict(type='bool', default=True),
+            cd_drive=dict(type='str'),
         ),
     )
 
     if not HAS_SDK:
-        module.fail_json(
-            msg='The `ovirtsdk` module is not importable. Check the requirements.'
-        )
+        module.fail_json(msg="The 'ovirtsdk' module is not importable. Check the requirements.")
 
     rc = RHEV_SUCCESS
     try:
@@ -1487,8 +1509,8 @@ def main():
 
     if rc != 0:  # something went wrong emit the msg
         module.fail_json(rc=rc, msg=result)
-    else:
-        module.exit_json(**result)
+
+    module.exit_json(**result)
 
 
 if __name__ == '__main__':

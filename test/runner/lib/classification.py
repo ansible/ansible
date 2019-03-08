@@ -81,10 +81,10 @@ def categorize_changes(args, paths, verbose_command=None):
         if not dependent_paths:
             continue
 
-        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=1)
+        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=2)
 
         for dependent_path in dependent_paths:
-            display.info(dependent_path, verbosity=1)
+            display.info(dependent_path, verbosity=2)
             additional_paths.add(dependent_path)
 
     additional_paths -= set(paths)  # don't count changed paths as additional paths
@@ -94,6 +94,8 @@ def categorize_changes(args, paths, verbose_command=None):
         paths = sorted(set(paths) | additional_paths)
 
     display.info('Mapping %d changed file(s) to tests.' % len(paths))
+
+    none_count = 0
 
     for path in paths:
         tests = mapper.classify(path)
@@ -125,13 +127,24 @@ def categorize_changes(args, paths, verbose_command=None):
             else:
                 result = '%s' % tests
 
-            display.info('%s -> %s' % (path, result), verbosity=1)
+            if not tests.get(verbose_command):
+                # minimize excessive output from potentially thousands of files which do not trigger tests
+                none_count += 1
+                verbosity = 2
+            else:
+                verbosity = 1
+
+            if args.verbosity >= verbosity:
+                display.info('%s -> %s' % (path, result), verbosity=1)
 
         for command, target in tests.items():
             commands[command].add(target)
 
             if focused_target:
                 focused_commands[command].add(target)
+
+    if none_count > 0 and args.verbosity < 2:
+        display.notice('Omitted %d file(s) that triggered no tests.' % none_count)
 
     for command in commands:
         commands[command].discard('none')
@@ -474,6 +487,11 @@ class PathMapper(object):
             if integration_name not in self.integration_targets_by_name:
                 integration_name = None
 
+            windows_integration_name = 'connection_windows_%s' % name
+
+            if windows_integration_name not in self.integration_targets_by_name:
+                windows_integration_name = None
+
             # entire integration test commands depend on these connection plugins
 
             if name in ['winrm', 'psrp']:
@@ -506,6 +524,7 @@ class PathMapper(object):
 
             return {
                 'integration': integration_name,
+                'windows-integration': windows_integration_name,
                 'units': units_path,
             }
 

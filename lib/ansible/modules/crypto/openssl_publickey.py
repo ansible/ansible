@@ -56,7 +56,7 @@ options:
         required: true
     privatekey_passphrase:
         description:
-            - The passphrase for the privatekey.
+            - The passphrase for the private key.
         type: str
         version_added: "2.4"
 extends_documentation_fragment:
@@ -200,6 +200,8 @@ class PublicKey(crypto_utils.OpenSSLObject):
                     publickey_file.write(publickey_content)
 
                 self.changed = True
+            except crypto_utils.OpenSSLBadPassphraseError as exc:
+                raise PublicKeyError(exc)
             except (IOError, OSError) as exc:
                 raise PublicKeyError(exc)
             except AttributeError as exc:
@@ -237,10 +239,13 @@ class PublicKey(crypto_utils.OpenSSLObject):
             except (crypto.Error, ValueError):
                 return False
 
-            desired_publickey = crypto.dump_publickey(
-                crypto.FILETYPE_ASN1,
-                crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
-            )
+            try:
+                desired_publickey = crypto.dump_publickey(
+                    crypto.FILETYPE_ASN1,
+                    crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+                )
+            except crypto_utils.OpenSSLBadPassphraseError as exc:
+                raise PublicKeyError(exc)
 
             return current_publickey == desired_publickey
 

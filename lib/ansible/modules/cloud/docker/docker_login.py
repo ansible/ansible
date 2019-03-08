@@ -64,7 +64,6 @@ options:
     type: path
     default: ~/.docker/config.json
     aliases:
-      - self.config_path
       - dockercfg_path
   state:
     version_added: '2.3'
@@ -299,7 +298,7 @@ def main():
         email=dict(type='str'),
         reauthorize=dict(type='bool', default=False, aliases=['reauth']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        config_path=dict(type='path', default='~/.docker/config.json', aliases=['self.config_path', 'dockercfg_path']),
+        config_path=dict(type='path', default='~/.docker/config.json', aliases=['dockercfg_path']),
     )
 
     required_if = [

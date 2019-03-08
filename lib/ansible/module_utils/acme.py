@@ -686,8 +686,9 @@ class ACMEAccount(object):
         elif info['status'] == (409 if self.version == 1 else 200):
             # Account did exist
             if result.get('status') == 'deactivated':
-                # A probable bug in Pebble (https://github.com/letsencrypt/pebble/issues/179)
-                # and Boulder: this should not return a valid account object according to
+                # A bug in Pebble (https://github.com/letsencrypt/pebble/issues/179) and
+                # Boulder (https://github.com/letsencrypt/boulder/issues/3971): this should
+                # not return a valid account object according to
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.3.6:
                 #     "Once an account is deactivated, the server MUST NOT accept further
                 #      requests authorized by that account's key."
@@ -701,6 +702,14 @@ class ACMEAccount(object):
         elif info['status'] == 400 and result['type'] == 'urn:ietf:params:acme:error:accountDoesNotExist' and not allow_creation:
             # Account does not exist (and we didn't try to create it)
             return False, None
+        elif info['status'] == 403 and result['type'] == 'urn:ietf:params:acme:error:unauthorized' and 'deactivated' in (result.get('detail') or ''):
+            # Account has been deactivated; currently works for Pebble; hasn't been
+            # implemented for Boulder (https://github.com/letsencrypt/boulder/issues/3971),
+            # might need adjustment in error detection.
+            if not allow_creation:
+                return False, None
+            else:
+                raise ModuleFailException("Account is deactivated")
         else:
             raise ModuleFailException("Error registering: {0} {1}".format(info['status'], result))
 

@@ -9,6 +9,11 @@ export FOREMAN_HOST="${FOREMAN_HOST:-localhost}"
 export FOREMAN_PORT="${FOREMAN_PORT:-8080}"
 FOREMAN_CONFIG=test-config.foreman.yaml
 
+# Set inventory caching environment variables to populate a jsonfile cache
+export ANSIBLE_INVENTORY_CACHE=True
+export ANSIBLE_INVENTORY_CACHE_PLUGIN=jsonfile
+export ANSIBLE_INVENTORY_CACHE_CONNECTION=./foreman_cache
+
 # flag for checking whether cleanup has already fired
 _is_clean=
 
@@ -33,3 +38,7 @@ validate_certs: False
 FOREMAN_YAML
 
 ansible-playbook test_foreman_inventory.yml --connection=local "$@"
+ansible-playbook inspect_cache.yml --connection=local "$@"
+
+# remove inventory cache
+rm -r ./foreman_cache
