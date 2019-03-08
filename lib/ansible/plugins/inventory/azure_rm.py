@@ -152,7 +152,7 @@ except ImportError:
 
 from collections import namedtuple
 from ansible import release
-from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.azure_rm_common import AzureRMAuth
 from ansible.errors import AnsibleParserError, AnsibleError
@@ -234,7 +234,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         try:
             self._credential_setup()
             self._get_hosts()
-        except Exception as ex:
+        except Exception:
             raise
 
     def _credential_setup(self):
