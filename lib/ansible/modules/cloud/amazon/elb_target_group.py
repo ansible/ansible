@@ -99,8 +99,10 @@ options:
     default: lb_cookie
   successful_response_codes:
     description:
-      - The HTTP codes to use when checking for a successful response from a target. You can specify multiple values (for example, "200,202") or a range of
-        values (for example, "200-299"). Requires the I(health_check_protocol) parameter to be set.
+      - The HTTP codes to use when checking for a successful response from a target. 
+      - Accepts multiple values (for example, "200,202") or a range of
+        values (for example, "200-299").
+      - Requires the I(health_check_protocol) parameter to be set.
     required: false
   tags:
     description:
