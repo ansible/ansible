@@ -211,8 +211,6 @@ def main():
             for command in command_list:
                 if command == "GetSystemInventory":
                     result["system"] = rf_utils.get_multi_system_inventory()
-                elif command == "GetPsuInventory":
-                    result["psu"] = rf_utils.get_multi_psu_inventory()
                 elif command == "GetCpuInventory":
                     result["cpu"] = rf_utils.get_multi_cpu_inventory()
                 elif command == "GetNicInventory":

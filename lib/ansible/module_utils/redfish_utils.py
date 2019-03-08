@@ -277,7 +277,9 @@ class RedfishUtils(object):
         for systems_uri in self.systems_uris:
             inventory = func(systems_uri)
             ret = inventory.pop('ret') and ret
-            entries.append(({'systems_uri': systems_uri}, inventory['entries']))
+            if 'entries' in inventory:
+                entries.append(({'systems_uri': systems_uri},
+                               inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_storage_controller_inventory(self, systems_uri):
@@ -332,7 +334,7 @@ class RedfishUtils(object):
         return self.aggregate(self.get_storage_controller_inventory)
 
     def get_disk_inventory(self, systems_uri):
-        result = {}
+        result = {'entries': []}
         controller_list = []
         disk_results = []
         # Get these entries, but does not fail if not found
@@ -933,7 +935,9 @@ class RedfishUtils(object):
         for systems_uri in self.systems_uris:
             inventory = self.get_nic_inventory(resource_type, systems_uri)
             ret = inventory.pop('ret') and ret
-            entries.append(inventory['entries'])
+            if 'entries' in inventory:
+                entries.append(({'systems_uri': systems_uri},
+                               inventory['entries']))
         return dict(ret=ret, entries=entries)
 
     def get_psu_inventory(self, systems_uri):
