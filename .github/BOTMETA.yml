@@ -408,6 +408,9 @@ files:
   $modules/remote_management/imc/:
     labels: [ cisco ]
     maintainers: $team_imc
+  $modules/remote_management/intersight/: &intersight
+    labels: [ cisco, remote_management, intersight ]
+    maintainers: $team_ucs
   $modules/remote_management/ipmi/: cloudnull
   $modules/remote_management/lxca/: navalkp prabhosa
   $modules/remote_management/manageiq/: $team_manageiq
@@ -789,6 +792,7 @@ files:
     labels: pure_storage
   $module_utils/redfish_utils.py:
     maintainers: $team_redfish
+  $module_utils/remote_management/intersight: *intersight
   $module_utils/remote_management/lxca:
     maintainers: navalkp prabhosa
     labels: lxca
@@ -1331,6 +1335,7 @@ files:
   test/integration/targets/inventory_docker_swarm:
     <<: *docker
     maintainers: $team_docker morph027
+  test/integration/targets/intersight: *intersight
   test/integration/targets/meraki: *meraki
   test/integration/targets/mso: *aci
   test/integration/targets/mysql: *mysql
@@ -1428,7 +1433,7 @@ macros:
   team_scaleway: sieben Spredzy abarbare Anthony25 pilou-
   team_solaris: bcoca dagwieers fishman jpdasma jasperla mator scathatheworm troy2914 xen0l
   team_tower: ghjm matburt wwitzel3 ryanpetrello rooftopcellist AlanCoding jladdjr kdelee
-  team_ucs: dsoper2 johnamcdonough SDBrett vallard vvb
+  team_ucs: dsoper2 movinalot SDBrett vallard vvb
   team_vmware: Akasurde dav1x warthog9 ckotte Tomorrow9
   team_virt: joshainglis karmab
   team_vultr: resmo Spredzy
