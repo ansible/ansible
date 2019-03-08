@@ -106,6 +106,7 @@ class AnsibleCloudStack:
         self.project = None
         self.ip_address = None
         self.network = None
+        self.physical_network = None
         self.vpc = None
         self.zone = None
         self.vm = None
