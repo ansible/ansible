@@ -133,6 +133,20 @@ EXAMPLES = '''
     properties: ["config.hardware.memoryMB", "guest.disk", "overallStatus"]
   delegate_to: localhost
   register: facts
+
+- name: Gather Managed object ID (moid) from a guest using the vSphere API output schema for REST Calls
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ datacenter_name }}"
+    name: "{{ vm_name }}"
+    schema: "vsphere"
+    properties:
+      - _moId
+  delegate_to: localhost
+  register: moid_facts
 '''
 
 RETURN = """
@@ -192,7 +206,9 @@ instance:
         "tags": [
             "backup"
         ],
-        "vnc": {}
+        "vnc": {},
+        "moid": "vm-42",
+        "vimref": "vim.VirtualMachine:vm-42"
     }
 """
 
@@ -250,7 +266,6 @@ def main():
                 instance = pyv.gather_facts(vm)
             else:
                 instance = pyv.to_json(vm, module.params['properties'])
-
             if module.params.get('tags'):
                 if not HAS_VCLOUD:
                     module.fail_json(msg="Unable to find 'vCloud Suite SDK' Python library which is required."

@@ -72,6 +72,8 @@
       - "guest_facts_0001['instance']['hw_folder'] is defined"
       - "guest_facts_0001['instance']['guest_question'] is defined"
       - "guest_facts_0001['instance']['guest_consolidation_needed'] is defined"
+      - "guest_facts_0001['instance']['moid'] is defined"
+      - "guest_facts_0001['instance']['vimref'] is defined"
       - "'portgroup_portkey' in guest_facts_0001['instance']['hw_eth0']"
       - "'portgroup_key' in guest_facts_0001['instance']['hw_eth0']"
       - "guest_facts_0001['instance']['instance_uuid'] is defined"
@@ -122,6 +124,8 @@
       - "guest_facts_0002b['instance']['config']['hardware']['memoryMB'] is defined"
       - "guest_facts_0002b['instance']['config']['hardware']['numCoresPerSocket'] is not defined"
       - "guest_facts_0002b['instance']['guest']['toolsVersion'] is defined"
+      - "guest_facts_0001['instance']['moid'] is defined"
+      - "guest_facts_0001['instance']['vimref'] is defined"
       - "guest_facts_0002b['instance']['overallStatus'] is not defined"
 
 # Testcase 0003: Get details about virtual machines without snapshots using UUID
@@ -218,3 +222,5 @@
       - "guest_facts_0005['instance']['guest_consolidation_needed'] is defined"
       - "guest_facts_0005['instance']['instance_uuid'] is defined"
       - "guest_facts_0005['instance']['instance_uuid'] == vm1_instance_uuid"
+      - "guest_facts_0001['instance']['moid'] is defined"
+      - "guest_facts_0001['instance']['vimref'] is defined"

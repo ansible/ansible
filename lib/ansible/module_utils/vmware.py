@@ -302,6 +302,8 @@ def gather_vm_facts(content, vm):
         'snapshots': [],
         'current_snapshot': None,
         'vnc': {},
+        'moid': vm._moId,
+        'vimref': "vim.VirtualMachine:%s" % vm._moId,
     }
 
     # facts that may or may not exist
@@ -1377,6 +1379,13 @@ class PyVmomi(object):
                         self._deepmerge(result, tmp)
                     else:
                         result[prop] = self._jsonify(getattr(obj, prop))
+                        # To match gather_vm_facts output
+                        prop_name = prop
+                        if prop.lower() == '_moid':
+                            prop_name = 'moid'
+                        elif prop.lower() == '_vimref':
+                            prop_name = 'vimref'
+                        result[prop_name] = result[prop]
                 except (AttributeError, KeyError):
                     self.module.fail_json(msg="Property '{0}' not found.".format(prop))
         else:
