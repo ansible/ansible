@@ -114,6 +114,7 @@ import re
 
 from ansible.module_utils.network.nxos.nxos import get_config, load_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec, check_args
+from ansible.module_utils.network.nxos.nxos import run_commands
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.common.config import CustomNetworkConfig
 
@@ -275,6 +276,22 @@ def fix_commands(commands, module):
     return commands
 
 
+def gsa_tcam_check(module):
+    '''
+    global_suppress_arp is an N9k-only command that requires TCAM resources.
+    This method checks the current TCAM allocation.
+    Note that changing tcam_size requires a switch reboot to take effect.
+    '''
+    cmds = [{'command': 'show hardware access-list tcam region', 'output': 'json'}]
+    body = run_commands(module, cmds)
+    if body:
+        tcam_region = body[0]['TCAM_Region']['TABLE_Sizes']['ROW_Sizes']
+        if bool([i for i in tcam_region if i['type'].startswith('Ingress ARP-Ether ACL') and i['tcam_size'] == '0']):
+            msg = "'show hardware access-list tcam region' indicates 'ARP-Ether' tcam size is 0 (no allocated resources). " +\
+                  "'global_suppress_arp' will be rejected by device."
+            module.fail_json(msg=msg)
+
+
 def state_present(module, existing, proposed, candidate):
     commands = list()
     proposed_commands = apply_key_map(PARAM_TO_COMMAND_KEYMAP, proposed)
@@ -371,6 +388,9 @@ def main():
                 proposed[key] = value
 
     candidate = CustomNetworkConfig(indent=3)
+
+    if proposed.get('global_suppress_arp'):
+        gsa_tcam_check(module)
     if state == 'present':
         if not existing:
             warnings.append("The proposed NVE interface did not exist. "
