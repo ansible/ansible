@@ -1,0 +1,2 @@
+bugfixes:
+  - distribution - add check to remove incorrect matches of Clear Linux when processing distribution files (https://github.com/ansible/ansible/issues/50009)
