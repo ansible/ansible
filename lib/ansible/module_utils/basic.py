@@ -2912,11 +2912,11 @@ class AnsibleModule(object):
         try:
             # 1032 == FZ_GETPIPE_SZ
             buffer_size = fcntl.fcntl(fd, 1032)
-         except Exception:
+        except Exception:
             try:
                 # not as exact as above, but should be good enough for most platforms that fail the previous call
                 buffer_size = select.PIPE_BUF
-            except Exception:
+             except Exception:
                 buffer_size = 9000  # use sane default JIC
 
         return buffer_size
