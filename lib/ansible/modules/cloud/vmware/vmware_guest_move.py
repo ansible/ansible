@@ -185,7 +185,6 @@ def main():
     # FindByInventoryPath() does not require an absolute path
     # so we should leave the input folder path unmodified
     module.params['dest_folder'] = module.params['dest_folder'].rstrip('/')
-
     pyv = PyVmomiHelper(module)
     search_index = pyv.content.searchIndex
 
@@ -199,6 +198,8 @@ def main():
             vm_full = vm_path + '/' + module.params['name']
             folder = search_index.FindByInventoryPath(
                 module.params['dest_folder'])
+            if folder is None:
+                module.fail_json(msg="Folder name and/or path does not exist")
             vm_to_move = search_index.FindByInventoryPath(vm_full)
             if vm_path != module.params['dest_folder'].lstrip('/'):
                 move_task = folder.MoveInto([vm_to_move])
