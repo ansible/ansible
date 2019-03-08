@@ -6,8 +6,8 @@
 
 class ModuleDocFragment(object):
 
-# Plugin options for AWS credentials
-DOCUMENTATION = r'''
+    # Plugin options for AWS credentials
+    DOCUMENTATION = r'''
 options:
   aws_profile:
     description: The AWS profile

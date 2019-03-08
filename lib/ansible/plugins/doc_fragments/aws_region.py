@@ -6,8 +6,8 @@
 
 class ModuleDocFragment(object):
 
-# AWS plugin region setting
-DOCUMENTATION = r'''
+    # Plugin option for AWS region
+    DOCUMENTATION = r'''
 options:
   region:
     description: The region for which to create the connection.
