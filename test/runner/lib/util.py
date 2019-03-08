@@ -138,15 +138,14 @@ def get_python_path(args, interpreter):
     prefix = 'python-'
     suffix = '-ansible'
 
-    root_temp_dir = os.path.expanduser('~/.ansible/test/tmp')
+    root_temp_dir = '/tmp'
 
     if args.explain:
         return os.path.join(root_temp_dir, ''.join((prefix, 'temp', suffix)))
 
-    make_dirs(root_temp_dir)
-
     python_path = tempfile.mkdtemp(prefix=prefix, suffix=suffix, dir=root_temp_dir)
 
+    os.chmod(python_path, MODE_DIRECTORY)
     os.symlink(interpreter, os.path.join(python_path, 'python'))
 
     if not PYTHON_PATHS:
