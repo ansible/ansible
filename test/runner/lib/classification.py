@@ -81,10 +81,10 @@ def categorize_changes(args, paths, verbose_command=None):
         if not dependent_paths:
             continue
 
-        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=1)
+        display.info('Expanded "%s" to %d dependent file(s):' % (path, len(dependent_paths)), verbosity=2)
 
         for dependent_path in dependent_paths:
-            display.info(dependent_path, verbosity=1)
+            display.info(dependent_path, verbosity=2)
             additional_paths.add(dependent_path)
 
     additional_paths -= set(paths)  # don't count changed paths as additional paths
