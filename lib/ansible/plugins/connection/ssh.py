@@ -514,7 +514,7 @@ class Connection(ConnectionBase):
             return
 
         key_path = os.path.expanduser(self._play_context.private_key_file)
-        decrypted_contents = to_bytes(self._loader.load_from_file(key_path)[0])
+        decrypted_contents = to_bytes(self._loader.load_from_file(key_path))
         ssh_add_proc = subprocess.Popen(
             ('ssh-add', '-'), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
