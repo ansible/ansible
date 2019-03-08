@@ -340,6 +340,8 @@ LATENCY_REQUIRED_API_VERSION = '1.16'
 AC_REQUIRED_API_VERSION = '1.14'
 CAP_REQUIRED_API_VERSION = '1.6'
 SAN_REQUIRED_API_VERSION = '1.10'
+NVME_API_VERSION = '1.16'
+PREFERRED_API_VERSION = '1.15'
 
 
 def generate_default_dict(array):
@@ -578,6 +580,7 @@ def generate_vol_dict(array):
 
 
 def generate_host_dict(array):
+    api_version = array._list_available_rest_versions()
     host_facts = {}
     hosts = array.list_hosts()
     for host in range(0, len(hosts)):
@@ -589,6 +592,13 @@ def generate_host_dict(array):
             'personality': array.get_host(hostname,
                                           personality=True)['personality']
         }
+        if NVME_API_VERSION in api_version:
+            host_facts[hostname]['nqn'] = hosts[host]['nqn']
+    if PREFERRED_API_VERSION in api_version:
+        hosts = array.list_hosts(preferred_array=True)
+        for host in range(0, len(hosts)):
+            hostname = hosts[host]['name']
+            host_facts[hostname]['preferred_array'] = hosts[host]['preferred_array']
     return host_facts
 
 
@@ -705,6 +715,7 @@ def generate_hgroups_dict(array):
 
 
 def generate_interfaces_dict(array):
+    api_version = array._list_available_rest_versions()
     int_facts = {}
     ports = array.list_ports()
     for port in range(0, len(ports)):
@@ -713,6 +724,9 @@ def generate_interfaces_dict(array):
             int_facts[int_name] = ports[port]['wwn']
         if ports[port]['iqn']:
             int_facts[int_name] = ports[port]['iqn']
+        if NVME_API_VERSION in api_version:
+            if ports[port]['nqn']:
+                int_facts[int_name] = ports[port]['nqn']
     return int_facts
 
 
