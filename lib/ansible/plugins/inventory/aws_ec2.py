@@ -576,6 +576,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
 
+        # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
         regex = re.compile(r"[^A-Za-z0-9\_\-]")
 
         return regex.sub('_', name)
