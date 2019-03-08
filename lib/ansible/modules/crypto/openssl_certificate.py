@@ -1015,7 +1015,7 @@ class AssertOnlyCertificate(Certificate):
             if self.privatekey_path and \
                not super(AssertOnlyCertificate, self).check(module, perms_required=False):
                 self.message.append(
-                    'Certificate %s and private key %s does not match' % (self.path, self.privatekey_path)
+                    'Certificate %s and private key %s do not match' % (self.path, self.privatekey_path)
                 )
         except CertificateError as e:
             self.message.append(
