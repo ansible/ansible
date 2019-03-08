@@ -39,7 +39,10 @@ class InventoryModule(BaseInventoryPlugin):
     def parse(self, inventory, loader, path, cache=True):
         config_data = loader.load_from_file(path, cache=False)
 
-        plugin_name = config_data.get('plugin')
+        try:
+            plugin_name = config_data.get('plugin', None)
+        except AttributeError:
+            plugin_name = None
 
         if not plugin_name:
             raise AnsibleParserError("no root 'plugin' key found, '{0}' is not a valid YAML inventory plugin config file".format(path))
