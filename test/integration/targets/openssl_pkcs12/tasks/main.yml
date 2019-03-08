@@ -53,6 +53,45 @@
       action: 'parse'
       state: 'present'
 
+  - name: Generate privatekey with password
+    openssl_privatekey:
+      path: '{{ output_dir }}/privatekeypw.pem'
+      passphrase: hunter2
+      cipher: auto
+      select_crypto_backend: cryptography
+
+  - name: 'Generate PKCS#12 file (password fail 1)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_pw1.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: "{{ output_dir }}/ansible_pkey.pem"
+      privatekey_passphrase: hunter2
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    ignore_errors: yes
+    register: passphrase_error_1
+
+  - name: 'Generate PKCS#12 file (password fail 2)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_pw2.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+      privatekey_passphrase: wrong_password
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    ignore_errors: yes
+    register: passphrase_error_2
+
+  - name: 'Generate PKCS#12 file (password fail 3)'
+    openssl_pkcs12:
+      path: "{{ output_dir }}/ansible_pw3.p12"
+      friendly_name: 'abracadabra'
+      privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+      certificate_path: "{{ output_dir }}/ansible.crt"
+      state: present
+    ignore_errors: yes
+    register: passphrase_error_3
+
   - import_tasks: ../tests/validate.yml
 
   always:

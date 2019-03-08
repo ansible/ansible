@@ -528,7 +528,10 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
         return crypto.dump_certificate_request(crypto.FILETYPE_PEM, self.request)
 
     def _load_private_key(self):
-        self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+        try:
+            self.privatekey = crypto_utils.load_privatekey(self.privatekey_path, self.privatekey_passphrase)
+        except crypto_utils.OpenSSLBadPassphraseError as exc:
+            raise CertificateSigningRequestError(exc)
 
     def _check_csr(self):
         def _check_subject(csr):
@@ -776,7 +779,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
                 cryptography.x509.NameAttribute(self._get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
             ]))
         except ValueError as e:
-            raise CertificateSigningRequestError(str(e))
+            raise CertificateSigningRequestError(e)
 
         if self.subjectAltName:
             csr = csr.add_extension(cryptography.x509.SubjectAlternativeName([
