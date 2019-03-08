@@ -334,9 +334,9 @@
         target: "/tmp/{{ volume_name_1 }}"
         type: "volume"
         driver_config:
-          name: "local"
+          name: "nfs"
           options:
-            type: "nfs"
+            addr: "127.0.0.1"
   register: mounts_driver_config_1
 
 - name: mounts.driver_config
@@ -350,9 +350,9 @@
         target: "/tmp/{{ volume_name_1 }}"
         type: "volume"
         driver_config:
-          name: "local"
+          name: "nfs"
           options:
-            type: "nfs"
+            addr: "127.0.0.1"
   register: mounts_driver_config_2
 
 - name: mounts.driver_config
@@ -366,7 +366,7 @@
         target: "/tmp/{{ volume_name_1 }}"
         type: "volume"
         driver_config:
-          name: "none"
+          name: "local"
   register: mounts_driver_config_3
 
 - name: cleanup
