@@ -84,6 +84,7 @@ def main():
         # maintainer (list): maintainers:
         #                      - $team_foo
         #                      - fred
+        maintainers = []
         if isinstance(botmeta.get('files', {}).get(file, ''), str):
             maintainers = botmeta.get('files', {}).get(file, '').split(' ')
         elif botmeta.get('files', {}).get(file, '').get('maintainers', ''):
