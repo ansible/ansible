@@ -46,7 +46,7 @@ def main():
 
     for ahost in ahosts:
         ahost_vars = adata['_meta']['hostvars'][ahost]
-        for k,v in ahost_vars.items():
+        for k, v in ahost_vars.items():
 
             # tags are a dict in the plugin
             if k.startswith('ec2_tag'):
@@ -58,10 +58,9 @@ def main():
                 assert v == btags[tagkey], '%s != %s' % (v, btags[tagkey])
                 continue
 
-            print('assert var',k,v,k in bdata['_meta']['hostvars'][ahost], bdata['_meta']['hostvars'][ahost].get(k))
+            print('assert var', k, v, k in bdata['_meta']['hostvars'][ahost], bdata['_meta']['hostvars'][ahost].get(k))
             assert k in bdata['_meta']['hostvars'][ahost], "%s not in b's %s hostvars" % (k, ahost)
-            assert v == bdata['_meta']['hostvars'][ahost][k], "%s != %s" % (v, bdata['_meta']['hostvars'][ahost][k]) 
-
+            assert v == bdata['_meta']['hostvars'][ahost][k], "%s != %s" % (v, bdata['_meta']['hostvars'][ahost][k])
 
 
 if __name__ == "__main__":

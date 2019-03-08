@@ -5,6 +5,7 @@ from boto.mocks.instances import BotoInstance
 
 class Region(object):
     name = None
+
     def __init__(self, name):
         self.name = name
 
@@ -25,7 +26,7 @@ class Connection(object):
     def get_all_instances(self, *args, **kwargs):
         return self.instances
 
-    def describe_cache_clusters(*args, **kwargs):
+    def describe_cache_clusters(self, *args, **kwargs):
         return {}
 
     def get_all_tags(self, *args, **kwargs):

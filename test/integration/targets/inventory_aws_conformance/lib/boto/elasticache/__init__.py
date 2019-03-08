@@ -2,10 +2,10 @@ class Connection(object):
     def __init__(self):
         pass
 
-    def get_all_instances(*args, **kwargs):
+    def get_all_instances(self, *args, **kwargs):
         return []
 
-    def describe_cache_clusters(*args, **kwargs):
+    def describe_cache_clusters(self, *args, **kwargs):
         return {
             'DescribeCacheClustersResponse': {
                 'DescribeCacheClustersResult': {
@@ -15,7 +15,7 @@ class Connection(object):
             }
         }
 
-    def describe_replication_groups(*args, **kwargs):
+    def describe_replication_groups(self, *args, **kwargs):
         return {
             'DescribeReplicationGroupsResponse': {
                 'DescribeReplicationGroupsResult': {
@@ -23,6 +23,7 @@ class Connection(object):
                 }
             }
         }
+
 
 def connect_to_region(*args, **kwargs):
     return Connection()

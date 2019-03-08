@@ -9,7 +9,8 @@ except ImportError:
 if sys.version_info[0] >= 3:
     unicode = str
 
-DNSDOMAIN="ansible.amazon.com"
+DNSDOMAIN = "ansible.amazon.com"
+
 
 class Tag(object):
     res_id = None
@@ -26,17 +27,18 @@ class SecurityGroup(object):
     name = 'sg_default'
     group_id = 'sg-00000'
     id = 'sg-00000'
+
     def __init__(self, group_name, group_id):
         self.name = group_name
         self.group_id = group_id
         self.id = self.group_id
+
     def __str__(self):
         return self.name
 
 
 class BotoInstance(object):
     id = None
-    #owner_id = None
     instances = None
     region = None
     state = None
@@ -53,11 +55,10 @@ class BotoInstance(object):
 
     _in_monitoring_element = False
     account_id = 100000
-    #owner_id = 100000
     ami_launch_index = 0
     architecture = "x86_64"
     block_devices = {
-      "sda1": "vol-000000"
+        "sda1": "vol-000000"
     }
     client_token = "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
     ebs_optimized = False
@@ -83,9 +84,9 @@ class BotoInstance(object):
     requester_id = ""
     root_device_name = "/dev/sda1"
     root_device_type = "ebs",
-    #security_group_ids = "sg-000000"
-    #group_id = "sg-000000"
-    #security_group_names = "myappsg"
+    # security_group_ids = "sg-000000"
+    # group_id = "sg-000000"
+    # security_group_names = "myappsg"
     sourceDestCheck = True
     spot_instance_request_id = ""
     state = "running"
@@ -95,20 +96,20 @@ class BotoInstance(object):
     vpc_id = "vpc-00000"
 
     # This breaks the inv script ...
-    #subnet_id = "subnet-100000"
-    #subnet_id = "subnet-9cdddbb0"
+    # subnet_id = "subnet-100000"
+    # subnet_id = "subnet-9cdddbb0"
 
-    #tags = {
-    #    'TAG1': "TAG1_VAL"
-    #}
-    #tags = [
-    #    {'TAG1': 'TAG1val'}
-    #]
+    # tags = {
+    #     'TAG1': "TAG1_VAL"
+    # }
+    # tags = [
+    #     {'TAG1': 'TAG1val'}
+    # ]
 
-    #_tags = {'TAG1': 'TAG1val'}
-    #_tags = [
-    #    Tag('TAG1', 'TAG1val')
-    #]
+    # _tags = {'TAG1': 'TAG1val'}
+    # _tags = [
+    #     Tag('TAG1', 'TAG1val')
+    # ]
 
     def __init__(self, id=None, owner_id=None, region=None):
         self.id = 'i-%s' % id
@@ -135,8 +136,8 @@ class BotoInstance(object):
             SecurityGroup('sgroup1', 'sg-1000'),
             SecurityGroup('sg!with-ch@<?s', 'sg-1001')
         ]
-        #self.group_ids = SecurityGroup('sg-1000')
-        #self.security_group_ids = SecurityGroup('sg-1000')
+        # self.group_ids = SecurityGroup('sg-1000')
+        # self.security_group_ids = SecurityGroup('sg-1000')
 
 
 class Boto3Instance(BotoInstance):
@@ -164,18 +165,18 @@ class Boto3Instance(BotoInstance):
             Tag(self.id, 'tag!notit', 'value<=ohwhy?')
         ]
         self.state = {'name': self.state, 'code': self.state_code}
-        #self.security_group_ids = [
-        #    SecurityGroup('sg-1000'),
-        #    SecurityGroup('sg-2000'),
-        #    SecurityGroup('sg-3000'),
-        #]
+        # self.security_group_ids = [
+        #     SecurityGroup('sg-1000'),
+        #     SecurityGroup('sg-2000'),
+        #     SecurityGroup('sg-3000'),
+        # ]
         self.groups = [
             SecurityGroup('sgroup1', 'sg-1000'),
             SecurityGroup('sg!with-ch@<?s', 'sg-1001')
         ]
-        #self.group_ids = SecurityGroup('sg-1000')
-        #self.security_group_ids = SecurityGroup('sg-1000')
-        #import epdb; epdb.st()
+        # self.group_ids = SecurityGroup('sg-1000')
+        # self.security_group_ids = SecurityGroup('sg-1000')
+        # import epdb; epdb.st()
 
     def to_dict(self):
 
@@ -191,7 +192,7 @@ class Boto3Instance(BotoInstance):
             if attr == 'Tags':
                 data['Tags'] = [{'Key': x.name, 'Value': x.value} for x in val]
                 continue
-            
+
             if attr == 'groups':
                 data['security_groups'] = [{'name': x.name, 'group_id': x.group_id} for x in val]
                 continue
@@ -199,5 +200,5 @@ class Boto3Instance(BotoInstance):
             if type(val) in allowed:
                 data[attr] = val
 
-        #import epdb; epdb.st()
+        # import epdb; epdb.st()
         return data
