@@ -95,6 +95,8 @@ def categorize_changes(args, paths, verbose_command=None):
 
     display.info('Mapping %d changed file(s) to tests.' % len(paths))
 
+    none_count = 0
+
     for path in paths:
         tests = mapper.classify(path)
 
@@ -125,13 +127,24 @@ def categorize_changes(args, paths, verbose_command=None):
             else:
                 result = '%s' % tests
 
-            display.info('%s -> %s' % (path, result), verbosity=1)
+            if not tests.get(verbose_command):
+                # minimize excessive output from potentially thousands of files which do not trigger tests
+                none_count += 1
+                verbosity = 2
+            else:
+                verbosity = 1
+
+            if args.verbosity >= verbosity:
+                display.info('%s -> %s' % (path, result), verbosity=1)
 
         for command, target in tests.items():
             commands[command].add(target)
 
             if focused_target:
                 focused_commands[command].add(target)
+
+    if none_count > 0 and args.verbosity < 2:
+        display.notice('Omitted %d file(s) that triggered no tests.' % none_count)
 
     for command in commands:
         commands[command].discard('none')
