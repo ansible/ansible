@@ -11,7 +11,6 @@
 #
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
 import json
@@ -79,7 +78,7 @@ class RestOME(object):
         if path:
             url = '{0}/{1}'.format(base_uri, path)
         if query_param:
-            url += "?" + urlencode(query_param)
+            url += "?{0}".format(urlencode(query_param))
         return url
 
     def _url_common_args_spec(self, method, api_timeout, headers=None):
@@ -167,6 +166,3 @@ class RestOME(object):
             self.invoke_request('DELETE', path)
         return False
 
-
-if __name__ == "__main__":
-    pass

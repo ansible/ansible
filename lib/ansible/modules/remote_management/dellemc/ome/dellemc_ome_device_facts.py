@@ -91,9 +91,9 @@ EXAMPLES = """
 ---
 - name: Retrieve basic inventory of all devices.
   dellemc_ome_device_facts:
-    hostname:  "192.168.0.1"
+    hostname: "192.168.0.1"
     username: "username"
-    password:  "password"
+    password: "password"
 
 - name: Retrieve basic inventory for devices identified by IDs 33333 or 11111 using filtering.
   dellemc_ome_device_facts:
@@ -106,7 +106,7 @@ EXAMPLES = """
 
 - name: Retrieve inventory details of specified devices identified by IDs 11111 and 22222.
   dellemc_ome_device_facts:
-    hostname:  "192.168.0.1"
+    hostname: "192.168.0.1"
     username: "username"
     password: "password"
     fact_subset: "detailed_inventory"
