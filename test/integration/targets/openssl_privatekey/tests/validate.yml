@@ -104,3 +104,12 @@
   when: "'skip_reason' not in item"
   loop_control:
     label: "{{ item.item.curve }}"
+
+- name: Validate passphrase changing
+  assert:
+    that:
+      - passphrase_1 is changed
+      - passphrase_2 is not changed
+      - passphrase_3 is changed
+      - passphrase_4 is not changed
+      - passphrase_5 is changed

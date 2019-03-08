@@ -365,6 +365,8 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
             return True
         except crypto.Error:
             return False
+        except crypto_utils.OpenSSLBadPassphraseError as exc:
+            return False
 
     def _check_size_and_type(self):
         def _check_size(privatekey):
@@ -373,7 +375,10 @@ class PrivateKeyPyOpenSSL(PrivateKeyBase):
         def _check_type(privatekey):
             return self.type == privatekey.type()
 
-        privatekey = crypto_utils.load_privatekey(self.path, self.passphrase)
+        try:
+            privatekey = crypto_utils.load_privatekey(self.path, self.passphrase)
+        except crypto_utils.OpenSSLBadPassphraseError as exc:
+            raise PrivateKeyError(exc)
 
         return _check_size(privatekey) and _check_type(privatekey)
 
@@ -513,10 +518,19 @@ class PrivateKeyCryptography(PrivateKeyBase):
 
     def _check_passphrase(self):
         try:
-            self._load_privatekey()
+            with open(self.path, 'rb') as f:
+                return cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                    f.read(),
+                    None if self.passphrase is None else to_bytes(self.passphrase),
+                    backend=self.cryptography_backend
+                )
             return True
-        except crypto.Error:
-            return False
+        except TypeError as e:
+            if 'Password' in str(e) and 'encrypted' in str(e):
+                return False
+            raise PrivateKeyError(e)
+        except Exception as e:
+            raise PrivateKeyError(e)
 
     def _check_size_and_type(self):
         privatekey = self._load_privatekey()

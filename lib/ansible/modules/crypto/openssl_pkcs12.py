@@ -215,6 +215,8 @@ class Pkcs(crypto_utils.OpenSSLObject):
                                                  self.privatekey_passphrase)
                 except crypto.Error:
                     return False
+                except crypto_utils.OpenSSLBadPassphraseError:
+                    return False
             return True
 
         if not state_and_perms:
@@ -256,10 +258,13 @@ class Pkcs(crypto_utils.OpenSSLObject):
             self.pkcs12.set_friendlyname(to_bytes(self.friendly_name))
 
         if self.privatekey_path:
-            self.pkcs12.set_privatekey(crypto_utils.load_privatekey(
-                                       self.privatekey_path,
-                                       self.privatekey_passphrase)
-                                       )
+            try:
+                self.pkcs12.set_privatekey(crypto_utils.load_privatekey(
+                                           self.privatekey_path,
+                                           self.privatekey_passphrase)
+                                           )
+            except crypto_utils.OpenSSLBadPassphraseError as exc:
+                raise PkcsError(exc)
 
         try:
             pkcs12_file = os.open(self.path,

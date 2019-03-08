@@ -142,3 +142,39 @@
   loop_control:
     label: "{{ item.curve }}"
   register: privatekey_ecc_idempotency
+
+- name: Generate privatekey with passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_1
+
+- name: Generate privatekey with passphrase (idempotent)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_2
+
+- name: Regenerate privatekey without passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_3
+
+- name: Regenerate privatekey without passphrase (idempotent)
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_4
+
+- name: Regenerate privatekey with passphrase
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: "{{ 'aes256' if select_crypto_backend == 'pyopenssl' else 'auto' }}"
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  register: passphrase_5
