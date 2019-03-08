@@ -407,7 +407,7 @@ def main():
                     errors.append(path)
 
             if errors:
-                module.fail_json(dest=dest, msg='Error deleting some source files: ' + str(e), files=errors)
+                module.fail_json(dest=dest, msg='Error deleting some source files: ', files=errors)
 
         # Rudimentary check: If size changed then file changed. Not perfect, but easy.
         if not check_mode and os.path.getsize(dest) != size:
