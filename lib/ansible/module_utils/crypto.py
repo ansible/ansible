@@ -97,7 +97,7 @@ def load_privatekey(path, passphrase=None, check_passphrase=True):
                                             priv_key_detail,
                                             to_bytes(passphrase or ''))
         except crypto.Error as e:
-            if e.args[0][0][2] == 'bad decrypt':
+            if len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
                 # This happens in case we have the wrong passphrase.
                 if passphrase is not None:
                     raise OpenSSLBadPassphraseError('Wrong passphrase provided for private key!')
@@ -117,7 +117,7 @@ def load_privatekey(path, passphrase=None, check_passphrase=True):
                     # key isn't password-protected
                     raise OpenSSLBadPassphraseError('Passphrase provided, but private key is not password-protected!')
             except crypto.Error:
-                if passphrase is None and e.args[0][0][2] == 'bad decrypt':
+                if passphrase is None and len(e.args) > 0 and len(e.args[0]) > 0 and e.args[0][0][2] == 'bad decrypt':
                     # The key is obviously protected by the empty string.
                     # Don't do this at home (if it's possible at all)...
                     raise OpenSSLBadPassphraseError('No passphrase provided, but private key is password-protected!')
