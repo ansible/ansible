@@ -34,6 +34,8 @@ RETURN = '''
 
 
 from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code, get_boto3_client_method_parameters
+from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+import traceback
 from time import sleep
 
 try:
@@ -41,9 +43,24 @@ try:
 except ImportError:
     pass  # caught by AnsibleAWSModule
 
+backoff_params = dict(tries=10, delay=3, backoff=1.5)
+
+@AWSRetry.backoff(**backoff_params)
+def describe_endpoints():
+
+
+def create_endpoint(connection):
+    endpoint_identifier = module.params.get('endpointidentifier')
+    endpoint_type = module.params.get('endpointtype')
+    try:
+        endpoint = describe_endpoints()
+    except (ClientError, BotoCoreError) as e:
+        module.fail_json(msg="Failed to describe DMS endpoint.",
+                         exception=traceback.format_exc())
+
 
 def main():
-    arg_spec = dict(
+    argument_spec = dict(
         state=dict(choices=['present', 'absent'], default='present'),
         endpointidentifier = dict(required=True),
         endpointtype = dict(choices=['source', 'target'], required=True),
@@ -67,8 +84,27 @@ def main():
         kinesissettings = dict(type='dict'),
         elasticsearchsettings = dict(type='dict')
     )
-
+    global module
     module = AnsibleAWSModule(
-
+        argument_spec=argument_spec,
         supports_check_mode=True
     )
+
+    if not HAS_BOTO3:
+        module.fail_json(msg='boto3 required for this module')
+
+    state = module.params.get('state')
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module, boto3=True)
+    connection = boto3_conn(module,
+                            conn_type='client',
+                            resource='dms',
+                            region=region,
+                            endpoint=ec2_url,
+                            **aws_connect_params)
+
+    if state == 'present':
+        return 0
+
+    if __name__ == '__main__':
+        main()
+
