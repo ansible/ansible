@@ -89,6 +89,10 @@ options:
             - User Data to be passed to the server on creation.
             - Only used if server does not exists.
         type: str
+    labels:
+        description:
+            - User-defined labels (key-value pairs).
+        type: dict
     state:
         description:
             - State of the server.
@@ -224,6 +228,7 @@ class AnsibleHcloudServer(Hcloud):
             ),
             "image": self.client.images.get_by_name(self.module.params.get("image")),
             "user_data": self.module.params.get("user_data"),
+            "labels": self.module.params.get("labels"),
         }
 
         if self.module.params.get("ssh_keys") is not None:
@@ -266,6 +271,12 @@ class AnsibleHcloudServer(Hcloud):
         elif not self.module.params.get("backups") and self.hcloud_server.backup_window is not None:
             if not self.module.check_mode:
                 self.hcloud_server.disable_backup().wait_until_finished()
+            self._mark_as_changed()
+
+        labels = self.module.params.get("labels")
+        if labels is not None:
+            if not self.module.check_mode:
+                self.hcloud_server.update(labels=labels)
             self._mark_as_changed()
 
         server_type = self.module.params.get("server_type")
@@ -339,6 +350,7 @@ class AnsibleHcloudServer(Hcloud):
                 user_data={"type": "str"},
                 ssh_keys={"type": "list"},
                 volumes={"type": "list"},
+                labels={"type": "dict"},
                 backups={"type": "bool", "default": False},
                 upgrade_disk={"type": "bool", "default": False},
                 force_upgrade={"type": "bool", "default": False},
