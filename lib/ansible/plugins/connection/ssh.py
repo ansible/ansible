@@ -276,6 +276,7 @@ import fcntl
 import hashlib
 import os
 import pty
+import re
 import subprocess
 import time
 
@@ -294,6 +295,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
+from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath, makedirs_safe
 
@@ -452,6 +454,15 @@ class Connection(ConnectionBase):
         self.user = self._play_context.remote_user
         self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
         self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
+
+        # Windows operates differently from a POSIX connection/shell plugin,
+        # we need to set various properties to ensure SSH on Windows continues
+        # to work
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            self.has_native_async = True
+            self.always_pipeline_modules = True
+            self.module_implementation_preferences = ('.ps1', '.exe', '')
+            self.allow_executable = False
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -742,6 +753,7 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         '''
 
+        # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
         display_cmd = list(map(shlex_quote, map(to_text, cmd)))
         display.vvv(u'SSH: EXEC {0}'.format(u' '.join(display_cmd)), host=self.host)
 
@@ -1030,6 +1042,12 @@ class Connection(ConnectionBase):
         # accept them for hostnames and IPv4 addresses too.
         host = '[%s]' % self.host
 
+        smart_methods = ['sftp', 'scp', 'piped']
+
+        # Windows does not support dd so we cannot use the piped method
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            smart_methods.remove('piped')
+
         # Transfer methods to try
         methods = []
 
@@ -1039,7 +1057,7 @@ class Connection(ConnectionBase):
             if not (ssh_transfer_method in ('smart', 'sftp', 'scp', 'piped')):
                 raise AnsibleOptionsError('transfer_method needs to be one of [smart|sftp|scp|piped]')
             if ssh_transfer_method == 'smart':
-                methods = ['sftp', 'scp', 'piped']
+                methods = smart_methods
             else:
                 methods = [ssh_transfer_method]
         else:
@@ -1052,7 +1070,7 @@ class Connection(ConnectionBase):
                 elif scp_if_ssh != 'smart':
                     raise AnsibleOptionsError('scp_if_ssh needs to be one of [smart|True|False]')
             if scp_if_ssh == 'smart':
-                methods = ['sftp', 'scp', 'piped']
+                methods = smart_methods
             elif scp_if_ssh is True:
                 methods = ['scp']
             else:
@@ -1067,10 +1085,11 @@ class Connection(ConnectionBase):
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
                 scp = self.get_option('scp_executable')
+
                 if sftp_action == 'get':
-                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
+                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, shlex_quote(out_path)))
+                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
@@ -1105,6 +1124,16 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to transfer file to %s %s:\n%s\n%s" %
                                (to_native(in_path), to_native(out_path), to_native(stdout), to_native(stderr)))
 
+    def _escape_win_path(self, path):
+        """ converts a Windows path to one that's supported by SFTP and SCP """
+        # If using a root path then we need to start with /
+        prefix = ""
+        if re.match(r'^\w{1}:', path):
+            prefix = "/"
+
+        # Convert all '\' to '/'
+        return "%s%s" % (prefix, path.replace("\\", "/"))
+
     #
     # Main public methods
     #
@@ -1114,6 +1143,18 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            # Become method 'runas' is done in the wrapper that is executed,
+            # need to disable sudoable so the bare_run is not waiting for a
+            # prompt that will not occur
+            sudoable = False
+
+            # Make sure our first command is to set the console encoding to
+            # utf-8, this must be done via chcp to get utf-8 (65001)
+            cmd_parts = ["chcp.com", "65001", self._shell._SHELL_REDIRECT_ALLNULL, self._shell._SHELL_AND]
+            cmd_parts.extend(self._shell._encode_script(cmd, as_list=True, strict_mode=False, preserve_rc=False))
+            cmd = ' '.join(cmd_parts)
 
         # we can only use tty when we are not pipelining the modules. piping
         # data into /usr/bin/python inside a tty automatically invokes the
@@ -1134,6 +1175,10 @@ class Connection(ConnectionBase):
         cmd = self._build_command(*args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
+        # When running on Windows, stderr may contain CLIXML encoded output
+        if getattr(self._shell, "_IS_WINDOWS", False) and stderr.startswith(b"#< CLIXML"):
+            stderr = _parse_clixml(stderr)
+
         return (returncode, stdout, stderr)
 
     def put_file(self, in_path, out_path):
@@ -1145,6 +1190,9 @@ class Connection(ConnectionBase):
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
 
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            out_path = self._escape_win_path(out_path)
+
         return self._file_transport_command(in_path, out_path, 'put')
 
     def fetch_file(self, in_path, out_path):
@@ -1153,6 +1201,11 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
 
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
+
+        # need to add / if path is rooted
+        if getattr(self._shell, "_IS_WINDOWS", False):
+            in_path = self._escape_win_path(in_path)
+
         return self._file_transport_command(in_path, out_path, 'get')
 
     def reset(self):
