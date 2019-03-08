@@ -119,6 +119,40 @@
   assert:
     that: "output['response']['name'] == '{{ storageaccountname }}'"
 
+- name: Delete storage account
+  azure_rm_resource:
+    polling_timeout: 600
+    polling_interval: 60
+    api_version: '2018-07-01'
+    resource_group: "{{ resource_group }}"
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: "{{ storageaccountname }}"
+    state: absent
+  register: output
+
+- name: Assert that storage was successfully created
+  assert:
+    that:
+      - output.changed
+
+- name: Delete storage account
+  azure_rm_resource:
+    polling_timeout: 600
+    polling_interval: 60
+    api_version: '2018-07-01'
+    resource_group: "{{ resource_group }}"
+    provider: Storage
+    resource_type: storageAccounts
+    resource_name: "{{ storageaccountname }}"
+    state: absent
+  register: output
+
+- name: Assert that storage was successfully created
+  assert:
+    that:
+      - not output.changed
+
 
 - name: Try to storage keys -- special case when subresource part has no name
   azure_rm_resource:
