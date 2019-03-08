@@ -1,2 +1,4 @@
 minor_changes:
-    - Ebmed an overridable static santiization method into base inventory plugin class to allow individual plugins to override
+    - Embed an overridable static santiization method into base inventory plugin class to allow individual plugins to optionally override
+      Add override implementation to inital set of cloud plugins
+
