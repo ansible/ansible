@@ -6,6 +6,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
@@ -43,8 +44,9 @@ options:
   state:
     description:
       - Whether the rule should be absent or present.
+      - To save iptables config to file.
     type: str
-    choices: [ absent, present ]
+    choices: [ absent, present, save ]
     default: present
   action:
     description:
@@ -306,6 +308,16 @@ options:
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
+  path:
+    description:
+      - Path where iptables-save output to be store
+    type: str
+    version_added: "2.8"
+  backup:
+    description:
+       - Make backup of the previous stored iptables-save output if the location is same
+    type: bool
+    version_added: "2.8"
 '''
 
 EXAMPLES = r'''
@@ -407,12 +419,22 @@ EXAMPLES = r'''
     chain: '{{ item }}'
     flush: yes
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
+
+- name: Backup and save
+  iptables:
+    path: /tmp/test_back
+    state: save
+
+- name: Check Backup
+  iptables:
+    path: /tmp/test_back
+    state: save
+    backup: true
 '''
 
 import re
 
 from ansible.module_utils.basic import AnsibleModule
-
 
 BINS = dict(
     ipv4='iptables',
@@ -570,12 +592,25 @@ def get_chain_policy(iptables_path, module, params):
     return None
 
 
+def backup_file(module, filename):
+    rc = module.backup_local(filename)
+    if not rc:
+        module.exit_json()
+
+
+def save_iptables(iptables_save_path, module):
+    cmd = ['/usr/sbin/iptables-save']
+    rc, out, _ = module.run_command(cmd, check_rc=True)
+    with open(iptables_save_path, 'w') as fh:
+        fh.write(out)
+
+
 def main():
     module = AnsibleModule(
         supports_check_mode=True,
         argument_spec=dict(
             table=dict(type='str', default='filter', choices=['filter', 'nat', 'mangle', 'raw', 'security']),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
+            state=dict(type='str', default='present', choices=['absent', 'present', 'save']),
             action=dict(type='str', default='append', choices=['append', 'insert']),
             ip_version=dict(type='str', default='ipv4', choices=['ipv4', 'ipv6']),
             chain=dict(type='str'),
@@ -588,8 +623,8 @@ def main():
             match=dict(type='list', default=[]),
             tcp_flags=dict(type='dict',
                            options=dict(
-                                flags=dict(type='list'),
-                                flags_set=dict(type='list'))
+                               flags=dict(type='list'),
+                               flags_set=dict(type='list'))
                            ),
             jump=dict(type='str'),
             log_prefix=dict(type='str'),
@@ -613,6 +648,8 @@ def main():
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            path=dict(type='str'),
+            backup=dict(type='bool', default=False),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
@@ -634,7 +671,7 @@ def main():
     iptables_path = module.get_bin_path(BINS[ip_version], True)
 
     # Check if chain option is required
-    if args['flush'] is False and args['chain'] is None:
+    if args['flush'] is False and args['chain'] is None and args['state'] in ['absent', 'present']:
         module.fail_json(msg="Either chain or flush parameter must be specified.")
 
     # Flush the table
@@ -653,6 +690,13 @@ def main():
         args['changed'] = changed
         if changed and not module.check_mode:
             set_chain_policy(iptables_path, module, module.params)
+
+    # To save the iptables
+    elif module.params['state'] == 'save':
+        path = module.params['path']
+        if module.params['backup']:
+            backup_file(module, path)
+        save_iptables(path, module)
 
     else:
         insert = (module.params['action'] == 'insert')

@@ -1,6 +1,6 @@
-from units.compat.mock import patch
 from ansible.module_utils import basic
 from ansible.modules.system import iptables
+from units.compat.mock import patch
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
 
 
@@ -55,9 +55,9 @@ class TestIptables(ModuleTestCase):
 
         self.assertEqual(run_command.call_count, 0)
 
-# TODO ADD test flush table nat
-# TODO ADD test flush with chain
-# TODO ADD test flush with chain and table nat
+    # TODO ADD test flush table nat
+    # TODO ADD test flush with chain
+    # TODO ADD test flush with chain and table nat
 
     def test_policy_table(self):
         """Test change policy of a chain"""
@@ -151,9 +151,9 @@ class TestIptables(ModuleTestCase):
             'INPUT',
         ])
 
-# TODO ADD test policy without chain fail
-# TODO ADD test policy with chain don't exists
-# TODO ADD test policy with wrong choice fail
+    # TODO ADD test policy without chain fail
+    # TODO ADD test policy with chain don't exists
+    # TODO ADD test policy with wrong choice fail
 
     def test_insert_rule_change_false(self):
         """Test flush without parameters"""
@@ -636,3 +636,24 @@ class TestIptables(ModuleTestCase):
                 '-j',
                 'DROP'
             ])
+
+    def test_iptables_save_cli(self):
+        """Test iptables-save cli"""
+        set_module_args({
+            'path': '/tmp/test_path',
+            'state': 'save',
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/usr/sbin/iptables-save',
+        ])
