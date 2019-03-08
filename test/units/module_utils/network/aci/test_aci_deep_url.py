@@ -6,7 +6,8 @@
 
 import pytest
 
-from ansible.module_utils.basic import AnsibleModule
+# from ansible.module_utils.basic import AnsibleModule
+from .mock_basic import AnsibleModule
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
