@@ -1,0 +1,2 @@
+bugfixes:
+  - "docker_swarm_service - Added support for ``read_only`` parameter."
