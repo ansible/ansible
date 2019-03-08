@@ -1821,6 +1821,58 @@
   when: docker_api_version is version('1.25', '<') or docker_py_version is version('3.0.0', '<')
 
 ###################################################################
+## read_only ######################################################
+###################################################################
+
+- name: read_only
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    read_only: true
+  register: read_only_1
+  ignore_errors: yes
+
+- name: read_only (idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    read_only: true
+  register: read_only_2
+  ignore_errors: yes
+
+- name: read_only (change)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    read_only: false
+  register: read_only_3
+  ignore_errors: yes
+
+- name: cleanup
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    state: absent
+  diff: no
+
+- assert:
+    that:
+      - read_only_1 is changed
+      - read_only_2 is not changed
+      - read_only_3 is changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('2.6.0', '>=')
+- assert:
+    that:
+    - read_only_1 is failed
+    - "'Minimum version required' in read_only_1.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('2.6.0', '<')
+
+###################################################################
 ## replicas #######################################################
 ###################################################################
 
