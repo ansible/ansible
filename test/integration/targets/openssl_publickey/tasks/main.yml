@@ -78,6 +78,36 @@
         path: '{{ output_dir }}/publickey5.pub'
         privatekey_path: '{{ output_dir }}/privatekey5.pem'
 
+    - name: Generate privatekey with password
+      openssl_privatekey:
+        path: '{{ output_dir }}/privatekeypw.pem'
+        passphrase: hunter2
+        cipher: auto
+        select_crypto_backend: cryptography
+
+    - name: Generate publickey - PEM format (failed passphrase 1)
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey_pw1.pub'
+        privatekey_path: '{{ output_dir }}/privatekey.pem'
+        privatekey_passphrase: hunter2
+      ignore_errors: yes
+      register: passphrase_error_1
+
+    - name: Generate publickey - PEM format (failed passphrase 2)
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey_pw2.pub'
+        privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+        privatekey_passphrase: wrong_password
+      ignore_errors: yes
+      register: passphrase_error_2
+
+    - name: Generate publickey - PEM format (failed passphrase 3)
+      openssl_publickey:
+        path: '{{ output_dir }}/publickey_pw3.pub'
+        privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+      ignore_errors: yes
+      register: passphrase_error_3
+
     - import_tasks: ../tests/validate.yml
 
   when: pyopenssl_version.stdout is version('16.0.0', '>=')
