@@ -21,33 +21,6 @@ description:
   - Manages docker services via a swarm manager node.
 version_added: "2.7"
 options:
-  name:
-    description:
-      - Service name.
-      - Corresponds to the C(--name) option of C(docker service create).
-    type: str
-    required: yes
-  image:
-    description:
-      - Service image path and tag.
-      - Corresponds to the C(IMAGE) parameter of C(docker service create).
-    type: str
-    required: yes
-  resolve_image:
-    description:
-      - If the current image digest should be resolved from registry and updated if changed.
-    type: bool
-    default: yes
-    version_added: 2.8
-  state:
-    description:
-      - Service state.
-    type: str
-    required: yes
-    default: present
-    choices:
-      - present
-      - absent
   args:
     description:
       - List arguments to be passed to the container.
@@ -60,29 +33,112 @@ options:
       - Corresponds to the C(COMMAND) parameter of C(docker service create).
     type: raw
     version_added: 2.8
-  placement:
+  configs:
     description:
-      - Configures service placement preferences and constraints.
+      - List of dictionaries describing the service configs.
+      - Corresponds to the C(--config) option of C(docker service create).
+      - Requires API version >= 1.30.
+    type: list
     suboptions:
-      constraints:
+      config_id:
         description:
-          - List of the service constraints.
-          - Corresponds to the C(--constraint) option of C(docker service create).
-        type: list
-      preferences:
+          - Config's ID.
+        type: str
+        required: yes
+      config_name:
         description:
-          - List of the placement preferences as key value pairs.
-          - Corresponds to the C(--placement-pref) option of C(docker service create).
-          - Requires API version >= 1.27.
-        type: list
-    type: dict
-    version_added: "2.8"
+          - Config's name as defined at its creation.
+        type: str
+        required: yes
+      filename:
+        description:
+          - Name of the file containing the config. Defaults to the I(config_name) if not specified.
+        type: str
+        required: yes
+      uid:
+        description:
+          - UID of the config file's owner.
+        type: int
+        default: 0
+      gid:
+        description:
+          - GID of the config file's group.
+        type: int
+        default: 0
+      mode:
+        description:
+          - File access mode inside the container.
+        type: str
+        default: "0o444"
   constraints:
     description:
       - List of the service constraints.
       - Corresponds to the C(--constraint) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(placement.constraints) instead.
     type: list
+  container_labels:
+    description:
+      - Dictionary of key value pairs.
+      - Corresponds to the C(--container-label) option of C(docker service create).
+    type: dict
+  dns:
+    description:
+      - List of custom DNS servers.
+      - Corresponds to the C(--dns) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: list
+  dns_search:
+    description:
+      - List of custom DNS search domains.
+      - Corresponds to the C(--dns-search) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: list
+  dns_options:
+    description:
+      - List of custom DNS options.
+      - Corresponds to the C(--dns-option) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: list
+  endpoint_mode:
+    description:
+      - Service endpoint mode.
+      - Corresponds to the C(--endpoint-mode) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: str
+    choices:
+      - vip
+      - dnsrr
+  env:
+    description:
+      - List or dictionary of the service environment variables.
+      - If passed a list each items need to be in the format of C(KEY=VALUE).
+      - If passed a dictionary values which might be parsed as numbers,
+        booleans or other types by the YAML parser must be quoted (e.g. C("true"))
+        in order to avoid data loss.
+      - Corresponds to the C(--env) option of C(docker service create).
+    type: raw
+  env_files:
+    description:
+      - List of paths to files, present on the target, containing environment variables C(FOO=BAR).
+      - The order of the list is significant in determining the value assigned to a
+        variable that shows up more than once.
+      - If variable also present in I(env), then I(env) value will override.
+    type: list
+    version_added: "2.8"
+  force_update:
+    description:
+      - Force update even if no changes require it.
+      - Corresponds to the C(--force) option of C(docker service update).
+      - Requires API version >= 1.25.
+    type: bool
+    default: no
+  groups:
+    description:
+      - List of additional group names and/or IDs that the container process will run as.
+      - Corresponds to the C(--group) option of C(docker service update).
+      - Requires API version >= 1.25.
+    type: list
+    version_added: "2.8"
   healthcheck:
     description:
       - Configure a check that is run to determine whether or not containers for this service are "healthy".
@@ -129,80 +185,53 @@ options:
       - Requires API version >= 1.25.
     type: dict
     version_added: "2.8"
-  tty:
+  image:
     description:
-      - Allocate a pseudo-TTY.
-      - Corresponds to the C(--tty) option of C(docker service create).
-      - Requires API version >= 1.25.
-    type: bool
-  dns:
-    description:
-      - List of custom DNS servers.
-      - Corresponds to the C(--dns) option of C(docker service create).
-      - Requires API version >= 1.25.
-    type: list
-  dns_search:
-    description:
-      - List of custom DNS search domains.
-      - Corresponds to the C(--dns-search) option of C(docker service create).
-      - Requires API version >= 1.25.
-    type: list
-  dns_options:
-    description:
-      - List of custom DNS options.
-      - Corresponds to the C(--dns-option) option of C(docker service create).
-      - Requires API version >= 1.25.
-    type: list
-  force_update:
-    description:
-      - Force update even if no changes require it.
-      - Corresponds to the C(--force) option of C(docker service update).
-      - Requires API version >= 1.25.
-    type: bool
-    default: no
-  groups:
-    description:
-      - List of additional group names and/or IDs that the container process will run as.
-      - Corresponds to the C(--group) option of C(docker service update).
-      - Requires API version >= 1.25.
-    type: list
-    version_added: "2.8"
+      - Service image path and tag.
+      - Corresponds to the C(IMAGE) parameter of C(docker service create).
+    type: str
+    required: yes
   labels:
     description:
       - Dictionary of key value pairs.
       - Corresponds to the C(--label) option of C(docker service create).
     type: dict
-  container_labels:
+  limits:
     description:
-      - Dictionary of key value pairs.
-      - Corresponds to the C(--container-label) option of C(docker service create).
+      - Configures service resource limits.
+    suboptions:
+      cpus:
+        description:
+          - Service CPU limit. C(0) equals no limit.
+          - Corresponds to the C(--limit-cpu) option of C(docker service create).
+        type: float
+      memory:
+        description:
+          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+            C(T) (tebibyte), or C(P) (pebibyte)."
+          - C(0) equals no reservation.
+          - Omitting the unit defaults to bytes.
+          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+        type: str
     type: dict
-  endpoint_mode:
-    description:
-      - Service endpoint mode.
-      - Corresponds to the C(--endpoint-mode) option of C(docker service create).
-      - Requires API version >= 1.25.
-    type: str
-    choices:
-      - vip
-      - dnsrr
-  env:
-    description:
-      - List or dictionary of the service environment variables.
-      - If passed a list each items need to be in the format of C(KEY=VALUE).
-      - If passed a dictionary values which might be parsed as numbers,
-        booleans or other types by the YAML parser must be quoted (e.g. C("true"))
-        in order to avoid data loss.
-      - Corresponds to the C(--env) option of C(docker service create).
-    type: raw
-  env_files:
-    description:
-      - List of paths to files, present on the target, containing environment variables C(FOO=BAR).
-      - The order of the list is significant in determining the value assigned to a
-        variable that shows up more than once.
-      - If variable also present in I(env), then I(env) value will override.
-    type: list
     version_added: "2.8"
+  limit_cpu:
+    description:
+      - Service CPU limit. C(0) equals no limit.
+      - Corresponds to the C(--limit-cpu) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits.cpus) instead.
+    type: float
+  limit_memory:
+    description:
+      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - C(0) equals no limit.
+      - Omitting the unit defaults to bytes.
+      - Corresponds to the C(--limit-memory) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits.memory) instead.
+    type: str
   logging:
     description:
       - "Logging configuration for the service."
@@ -231,78 +260,6 @@ options:
       - Corresponds to the C(--log-opt) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(logging.options) instead.
     type: dict
-  reservations:
-    description:
-      - Configures service resource reservations.
-    suboptions:
-      cpus:
-        description:
-          - Service CPU reservation. C(0) equals no reservation.
-          - Corresponds to the C(--reserve-cpu) option of C(docker service create).
-        type: float
-      memory:
-        description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
-            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-            C(T) (tebibyte), or C(P) (pebibyte)."
-          - C(0) equals no reservation.
-          - Omitting the unit defaults to bytes.
-          - Corresponds to the C(--reserve-memory) option of C(docker service create).
-        type: str
-    type: dict
-    version_added: "2.8"
-  limits:
-    description:
-      - Configures service resource limits.
-    suboptions:
-      cpus:
-        description:
-          - Service CPU limit. C(0) equals no limit.
-          - Corresponds to the C(--limit-cpu) option of C(docker service create).
-        type: float
-      memory:
-        description:
-          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
-            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-            C(T) (tebibyte), or C(P) (pebibyte)."
-          - C(0) equals no reservation.
-          - Omitting the unit defaults to bytes.
-          - Corresponds to the C(--reserve-memory) option of C(docker service create).
-        type: str
-    type: dict
-    version_added: "2.8"
-  limit_cpu:
-    description:
-      - Service CPU limit. C(0) equals no limit.
-      - Corresponds to the C(--limit-cpu) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits.cpus) instead.
-    type: float
-  reserve_cpu:
-    description:
-      - Service CPU reservation. C(0) equals no reservation.
-      - Corresponds to the C(--reserve-cpu) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations.cpus) instead.
-    type: float
-  limit_memory:
-    description:
-      - "Service memory limit (format: C(<number>[<unit>])). Number is a positive integer.
-        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-        C(T) (tebibyte), or C(P) (pebibyte)."
-      - C(0) equals no limit.
-      - Omitting the unit defaults to bytes.
-      - Corresponds to the C(--limit-memory) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(limits.memory) instead.
-    type: str
-  reserve_memory:
-    description:
-      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
-        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
-        C(T) (tebibyte), or C(P) (pebibyte)."
-      - C(0) equals no reservation.
-      - Omitting the unit defaults to bytes.
-      - Corresponds to the C(--reserve-memory) option of C(docker service create).
-      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations.memory) instead.
-    type: str
   mode:
     description:
       - Service replication mode.
@@ -311,8 +268,8 @@ options:
     type: str
     default: replicated
     choices:
-        - replicated
-        - global
+      - replicated
+      - global
   mounts:
     description:
       - List of dictionaries describing the service mounts.
@@ -343,79 +300,12 @@ options:
           - Whether the mount should be read-only.
         type: bool
         default: no
-  secrets:
+  name:
     description:
-      - List of dictionaries describing the service secrets.
-      - Corresponds to the C(--secret) option of C(docker service create).
-      - Requires API version >= 1.25.
-    type: list
-    suboptions:
-      secret_id:
-        description:
-          - Secret's ID.
-        type: str
-        required: yes
-      secret_name:
-        description:
-          - Secret's name as defined at its creation.
-        type: str
-        required: yes
-      filename:
-        description:
-          - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
-        type: str
-      uid:
-        description:
-          - UID of the secret file's owner.
-        type: int
-        default: 0
-      gid:
-        description:
-          - GID of the secret file's group.
-        type: int
-        default: 0
-      mode:
-        description:
-          - File access mode inside the container.
-        type: int
-        default: 0o444
-  configs:
-    description:
-      - List of dictionaries describing the service configs.
-      - Corresponds to the C(--config) option of C(docker service create).
-      - Requires API version >= 1.30.
-    type: list
-    suboptions:
-      config_id:
-        description:
-          - Config's ID.
-        type: str
-        required: yes
-      config_name:
-        description:
-          - Config's name as defined at its creation.
-        type: str
-        required: yes
-      filename:
-        description:
-          - Name of the file containing the config. Defaults to the I(config_name) if not specified.
-        type: str
-        required: yes
-      uid:
-        description:
-          - UID of the config file's owner.
-        type: int
-        default: 0
-      gid:
-        description:
-          - GID of the config file's group.
-        type: int
-        default: 0
-      mode:
-        description:
-          - File access mode inside the container.
-        type: str
-        default: "0o444"
+      - Service name.
+      - Corresponds to the C(--name) option of C(docker service create).
+    type: str
+    required: yes
   networks:
     description:
       - List of the service networks names.
@@ -423,19 +313,22 @@ options:
         If changes are made the service will then be removed and recreated.
       - Corresponds to the C(--network) option of C(docker service create).
     type: list
-  stop_grace_period:
+  placement:
     description:
-      - Time to wait before force killing a container.
-      - "Accepts a duration as a string in a format that look like:
-        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
-      - Corresponds to the C(--stop-grace-period) option of C(docker service create).
-    type: str
-    version_added: "2.8"
-  stop_signal:
-    description:
-      - Override default signal used to stop the container.
-      - Corresponds to the C(--stop-signal) option of C(docker service create).
-    type: str
+      - Configures service placement preferences and constraints.
+    suboptions:
+      constraints:
+        description:
+          - List of the service constraints.
+          - Corresponds to the C(--constraint) option of C(docker service create).
+        type: list
+      preferences:
+        description:
+          - List of the placement preferences as key value pairs.
+          - Corresponds to the C(--placement-pref) option of C(docker service create).
+          - Requires API version >= 1.27.
+        type: list
+    type: dict
     version_added: "2.8"
   publish:
     description:
@@ -484,6 +377,48 @@ options:
       - Corresponds to the C(--replicas) option of C(docker service create).
     type: int
     default: -1
+  reservations:
+    description:
+      - Configures service resource reservations.
+    suboptions:
+      cpus:
+        description:
+          - Service CPU reservation. C(0) equals no reservation.
+          - Corresponds to the C(--reserve-cpu) option of C(docker service create).
+        type: float
+      memory:
+        description:
+          - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+            Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+            C(T) (tebibyte), or C(P) (pebibyte)."
+          - C(0) equals no reservation.
+          - Omitting the unit defaults to bytes.
+          - Corresponds to the C(--reserve-memory) option of C(docker service create).
+        type: str
+    type: dict
+    version_added: "2.8"
+  reserve_cpu:
+    description:
+      - Service CPU reservation. C(0) equals no reservation.
+      - Corresponds to the C(--reserve-cpu) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations.cpus) instead.
+    type: float
+  reserve_memory:
+    description:
+      - "Service memory reservation (format: C(<number>[<unit>])). Number is a positive integer.
+        Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+        C(T) (tebibyte), or C(P) (pebibyte)."
+      - C(0) equals no reservation.
+      - Omitting the unit defaults to bytes.
+      - Corresponds to the C(--reserve-memory) option of C(docker service create).
+      - Deprecated in 2.8, will be removed in 2.12. Use parameter C(reservations.memory) instead.
+    type: str
+  resolve_image:
+    description:
+      - If the current image digest should be resolved from registry and updated if changed.
+    type: bool
+    default: yes
+    version_added: 2.8
   restart_config:
     description:
       - Configures if and how to restart containers when they exit.
@@ -550,6 +485,71 @@ options:
       - Corresponds to the C(--restart-window) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.window) instead.
     type: raw
+  secrets:
+    description:
+      - List of dictionaries describing the service secrets.
+      - Corresponds to the C(--secret) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: list
+    suboptions:
+      secret_id:
+        description:
+          - Secret's ID.
+        type: str
+        required: yes
+      secret_name:
+        description:
+          - Secret's name as defined at its creation.
+        type: str
+        required: yes
+      filename:
+        description:
+          - Name of the file containing the secret. Defaults to the I(secret_name) if not specified.
+        type: str
+      uid:
+        description:
+          - UID of the secret file's owner.
+        type: int
+        default: 0
+      gid:
+        description:
+          - GID of the secret file's group.
+        type: int
+        default: 0
+      mode:
+        description:
+          - File access mode inside the container.
+        type: int
+        default: 0o444
+  state:
+    description:
+      - Service state.
+    type: str
+    required: yes
+    default: present
+    choices:
+      - present
+      - absent
+  stop_grace_period:
+    description:
+      - Time to wait before force killing a container.
+      - "Accepts a duration as a string in a format that look like:
+        C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+      - Corresponds to the C(--stop-grace-period) option of C(docker service create).
+    type: str
+    version_added: "2.8"
+  stop_signal:
+    description:
+      - Override default signal used to stop the container.
+      - Corresponds to the C(--stop-signal) option of C(docker service create).
+    type: str
+    version_added: "2.8"
+  tty:
+    description:
+      - Allocate a pseudo-TTY.
+      - Corresponds to the C(--tty) option of C(docker service create).
+      - Requires API version >= 1.25.
+    type: bool
   update_config:
     description:
       - Configures how the service should be updated. Useful for configuring rolling updates.
