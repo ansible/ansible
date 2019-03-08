@@ -198,13 +198,13 @@ class AzureRMResourceFacts(AzureRMModuleBase):
                 elif isinstance(response, dict):
                     if response.get('value'):
                         self.results['response'] = self.results['response'] + response['value']
-                        skiptoken = response.get('nextLink') 
+                        skiptoken = response.get('nextLink')
                     else:
                         self.results['response'] = self.results['response'] + [response]
             except Exception:
                 self.results['response'] = []
             if not skiptoken:
-              break
+                break
         return self.results
 
 
