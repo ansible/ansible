@@ -219,3 +219,24 @@ def check_required_if(requirements, module_parameters):
             result.append(missing)
 
     return result
+
+
+def check_missing_parameters(module_parameters, required_parameters=None):
+    """This is for checking for required params when we can not check via
+    argspec because we need more information than is simply given in the argspec.
+
+    :arg module_paramaters: Dictionary of module parameters
+    :arg required_parameters: List of parameters to look for in the given module
+        parameters
+
+    :returns: List of missing parameters.
+    """
+    missing_params = []
+    if required_parameters is None:
+        return missing_params
+
+    for param in required_parameters:
+        if not module_parameters.get(param):
+            missing_params.append(param)
+
+    return missing_params

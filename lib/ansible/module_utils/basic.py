@@ -172,6 +172,7 @@ from ansible.module_utils.six import (
 )
 from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
+    check_missing_parameters,
     check_mutually_exclusive,
     check_required_arguments,
     check_required_by,
@@ -2290,15 +2291,9 @@ class AnsibleModule(object):
         sys.exit(1)
 
     def fail_on_missing_params(self, required_params=None):
-        ''' This is for checking for required params when we can not check via argspec because we
-        need more information than is simply given in the argspec.
-        '''
         if not required_params:
             return
-        missing_params = []
-        for required_param in required_params:
-            if not self.params.get(required_param):
-                missing_params.append(required_param)
+        missing_params = check_missing_parameters(self.params, required_params)
         if missing_params:
             self.fail_json(msg="missing required arguments: %s" % ', '.join(missing_params))
 
