@@ -49,6 +49,8 @@ export LC_ALL=en_US.UTF-8
 "Task_with_always_tag TAGS: [always] Task_with_templated_tags TAGS: [tag3]" ]
 
 # Tests expected to fail
-COMMAND=(ansible-playbook -i ../../inventory test_unexpected_tags.yml -v --list-tasks)
-# Fail as expected
-[ "$("${COMMAND[@]}" 2>&1 | grep -F ERROR | xargs)" = "ERROR! tags must be specified as a list or string" ]
+OUT=$(ansible-playbook -i ../../inventory test_unexpected_tags.yml -v --list-tasks 2>&1 | grep 'ERROR! tags must be specified as a list or string')
+if [[ -z "$OUT" ]]; then
+    echo "Failed unexpected for tags as dict"
+    exit 1
+fi
