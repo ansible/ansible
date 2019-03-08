@@ -22,14 +22,12 @@ Delegation allows you to select the system that executes a given task. If you do
 Modules
 =======
 
-The units of code Ansible executes. Each module has a particular use, from creating virtual machines on vCenter to managing distributed virtual switches on vCenter environment. You can invoke a single module with a task, or invoke several different modules in a playbook. For an idea of how many modules Ansible includes, take a look at the :ref:`list of VMware modules<vmware_cloud_modules>`.
-
+The units of code Ansible executes. Each module has a particular use, from creating virtual machines on vCenter to managing distributed virtual switches in the vCenter environment. You can invoke a single module with a task, or invoke several different modules in a playbook. For an idea of how many modules Ansible includes, take a look at the :ref:`list of VMware modules<vmware_cloud_modules>`.
 
 Playbooks
 =========
 
 Ordered lists of tasks, saved so you can run those tasks in that order repeatedly. Playbooks can include variables as well as tasks. Playbooks are written in YAML and are easy to read, write, share and understand.
-
 
 pyVmomi
 =======
