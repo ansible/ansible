@@ -740,10 +740,16 @@ swarm_service:
     "mode": "replicated",
     "mounts": [
       {
-        "readonly": false,
+        "read_only": false,
         "source": "/tmp/",
         "target": "/remote_tmp/",
-        "type": "bind"
+        "type": "bind",
+        "labels": null,
+        "propagation": null,
+        "no_copy": null,
+        "driver_config": null,
+        "tmpfs_size": null,
+        "tmpfs_mode": null
       }
     ],
     "networks": null,
@@ -1406,10 +1412,25 @@ class DockerService(DockerBaseClass):
             s.mounts = []
             for param_m in ap['mounts']:
                 service_m = {}
-                service_m['readonly'] = param_m['readonly']
+                service_m['read_only'] = param_m['readonly']
                 service_m['type'] = param_m['type']
                 service_m['source'] = param_m['source']
                 service_m['target'] = param_m['target']
+                service_m['labels'] = param_m['labels']
+                service_m['no_copy'] = param_m['no_copy']
+                service_m['propagation'] = param_m['propagation']
+                service_m['driver_config'] = param_m['driver_config']
+                service_m['tmpfs_mode'] = param_m['tmpfs_mode']
+                tmpfs_size = param_m['tmpfs_size']
+                if tmpfs_size is not None:
+                    try:
+                        tmpfs_size = human_to_bytes(tmpfs_size)
+                    except ValueError as exc:
+                        raise ValueError(
+                            'Failed to convert tmpfs_size to bytes: %s' % exc
+                        )
+
+                service_m['tmpfs_size'] = tmpfs_size
                 s.mounts.append(service_m)
 
         if ap['configs'] is not None:
@@ -1592,14 +1613,25 @@ class DockerService(DockerBaseClass):
         if self.mounts is not None:
             mounts = []
             for mount_config in self.mounts:
-                mounts.append(
-                    types.Mount(
-                        target=mount_config['target'],
-                        source=mount_config['source'],
-                        type=mount_config['type'],
-                        read_only=mount_config['readonly']
-                    )
-                )
+                mount_options = [
+                    'target',
+                    'source',
+                    'type',
+                    'read_only',
+                    'propagation',
+                    'labels',
+                    'no_copy',
+                    'driver_config',
+                    'tmpfs_size',
+                    'tmpfs_mode'
+                ]
+                mount_args = {}
+                for option in mount_options:
+                    value = mount_config.get(option)
+                    if value is not None:
+                        mount_args[option] = value
+
+                mounts.append(types.Mount(**mount_args))
 
         configs = None
         if self.configs is not None:
@@ -1962,11 +1994,24 @@ class DockerServiceManager(object):
         if raw_data_mounts:
             ds.mounts = []
             for mount_data in raw_data_mounts:
+                bind_options = mount_data.get('BindOptions', {})
+                volume_options = mount_data.get('VolumeOptions', {})
+                tmpfs_options = mount_data.get('TmpfsOptions', {})
+                driver_config = volume_options.get('DriverConfig', {})
+                driver_config = dict(
+                    (key.lower(), value) for key, value in driver_config.items()
+                ) or None
                 ds.mounts.append({
                     'source': mount_data['Source'],
                     'type': mount_data['Type'],
                     'target': mount_data['Target'],
-                    'readonly': mount_data.get('ReadOnly', False)
+                    'read_only': mount_data.get('ReadOnly', False),
+                    'propagation': bind_options.get('Propagation'),
+                    'no_copy': volume_options.get('NoCopy'),
+                    'labels': volume_options.get('Labels'),
+                    'driver_config': driver_config,
+                    'tmpfs_mode': tmpfs_options.get('Mode'),
+                    'tmpfs_size': tmpfs_options.get('SizeBytes'),
                 })
 
         raw_data_configs = task_template_data['ContainerSpec'].get('Configs')
@@ -2173,6 +2218,17 @@ def _detect_healthcheck_start_period(client):
     return False
 
 
+def _detect_mount_tmpfs_usage(client):
+    for mount in client.module.params['mounts'] or []:
+        if mount.get('type') == 'tmpfs':
+            return True
+        if mount.get('tmpfs_size'):
+            return True
+        if mount.get('tmpfs_mode'):
+            return True
+    return False
+
+
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
@@ -2184,9 +2240,28 @@ def main():
             type=dict(
                 type='str',
                 default='bind',
-                choices=['bind', 'volume', 'tmpfs']
+                choices=['bind', 'volume', 'tmpfs'],
             ),
             readonly=dict(type='bool', default=False),
+            labels=dict(type='dict'),
+            propagation=dict(
+                type='str',
+                choices=[
+                    'shared',
+                    'slave',
+                    'private',
+                    'rshared',
+                    'rslave',
+                    'rprivate'
+                ]
+            ),
+            no_copy=dict(type='bool'),
+            driver_config=dict(type='dict', options=dict(
+                name=dict(type='str'),
+                options=dict(type='dict')
+            )),
+            tmpfs_size=dict(type='str'),
+            tmpfs_mode=dict(type='int')
         )),
         configs=dict(type='list', elements='dict', options=dict(
             config_id=dict(type='str', required=True),
@@ -2377,6 +2452,11 @@ def main():
                 'constraints'
             ) is not None,
             usage_msg='set placement.constraints'
+        ),
+        mounts_tmpfs=dict(
+            docker_py_version='2.6.0',
+            detect_usage=_detect_mount_tmpfs_usage,
+            usage_msg='set mounts.tmpfs'
         ),
     )
 
