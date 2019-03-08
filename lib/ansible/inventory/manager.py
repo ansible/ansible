@@ -608,7 +608,7 @@ class InventoryManager(object):
             for x in subset_patterns:
                 if x.startswith("@"):
                     fd = open(x[1:])
-                    results.extend(fd.read().split("\n"))
+                    results.extend([l.strip() for l in fd.read().split("\n")])
                     fd.close()
                 else:
                     results.append(x)
