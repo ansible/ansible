@@ -125,16 +125,19 @@ class PluginLoader:
 
     def _clear_caches(self):
 
-        # reset global caches
-        MODULE_CACHE[self.class_name] = {}
-        PATH_CACHE[self.class_name] = None
-        PLUGIN_PATH_CACHE[self.class_name] = defaultdict(dict)
+        if C.OLD_PLUGIN_CACHE_CLEARING:
+            self._paths = None
+        else:
+            # reset global caches
+            MODULE_CACHE[self.class_name] = {}
+            PATH_CACHE[self.class_name] = None
+            PLUGIN_PATH_CACHE[self.class_name] = defaultdict(dict)
 
-        # reset internal caches
-        self._module_cache = MODULE_CACHE[self.class_name]
-        self._paths = PATH_CACHE[self.class_name]
-        self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
-        self._searched_paths = set()
+            # reset internal caches
+            self._module_cache = MODULE_CACHE[self.class_name]
+            self._paths = PATH_CACHE[self.class_name]
+            self._plugin_path_cache = PLUGIN_PATH_CACHE[self.class_name]
+            self._searched_paths = set()
 
     def __setstate__(self, data):
         '''
