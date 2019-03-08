@@ -40,8 +40,10 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.warning('Replacing ' + msg)
             elif C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
-                # change this to warning once we change the default in 2.10
-                display.deprecated('Ignoring %s. This is still allowed by default, but that will change at deprecation.' % msg, version='2.10')
+                display.warn('Ignoring %s' % msg)
+                # remove this message after 2.10 AND changing the default to 'always'
+                display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
+                                   ' this will change, but still be user configurable on deprecation.', version='2.10')
 
     return name
 
