@@ -11,7 +11,6 @@ from .mock_basic import AnsibleModule
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
 
 
-@pytest.mark.usefixtures('setup')
 class Test_AnsibleModule_Construct_Url_Exceptions(object):
 
     @pytest.fixture(scope='class')
@@ -23,7 +22,7 @@ class Test_AnsibleModule_Construct_Url_Exceptions(object):
             'state': 'query'
         }
 
-    @pytest.fixture
+    @pytest.fixture(scope='function')
     def setup(self):
 
         argument_spec = aci_argument_spec()
