@@ -273,3 +273,51 @@
   assert:
     that:
     - result is success
+
+- name: test create server with labels
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      key: value
+      mylabel: 123
+    state: started
+  register: main_server
+- name: verify create server with labels
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.labels.key == "value"
+      - main_server.hcloud_server.labels.mylabel == 123
+
+- name: test update server with labels
+  hcloud_server:
+    name: "{{ hcloud_server_name}}"
+    server_type: cx11
+    image: "ubuntu-18.04"
+    ssh_keys:
+      - ci@ansible.hetzner.cloud
+    labels:
+      key: other
+      mylabel: 123
+    state: started
+  register: main_server
+- name: verify update server with labels
+  assert:
+    that:
+      - main_server is changed
+      - main_server.hcloud_server.labels.key == "other"
+      - main_server.hcloud_server.labels.mylabel == 123
+
+- name: cleanup with labels
+  hcloud_server:
+    name: "{{ hcloud_server_name }}"
+    state: absent
+  register: result
+- name: verify cleanup
+  assert:
+    that:
+    - result is success
