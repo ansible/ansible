@@ -8,7 +8,6 @@ These scenarios teach you how to accomplish common VMware tasks using Ansible. T
 
 .. contents::
    :local:
-   :maxdepth: 1
 
    vmware_scenarios/vmware_intro
    vmware_scenarios/scenario_clone_template
