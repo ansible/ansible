@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-import traceback
+#import traceback
 #from ansible.module_utils.aws.core import AnsibleAWSModule, \
 #    is_boto3_error_code, get_boto3_client_method_parameters
 
@@ -34,8 +34,8 @@ RETURN = '''
 '''
 
 
-from ansible.module_utils.aws.core import AnsibleAWSModule, is_boto3_error_code, get_boto3_client_method_parameters
-from ansible.module_utils.ec2 import boto3_conn, ec2_argument_spec, HAS_BOTO3, camel_dict_to_snake_dict, get_aws_connection_info, AWSRetry
+from ansible.module_utils.aws.core import AnsibleAWSModule
+from ansible.module_utils.ec2 import boto3_conn, HAS_BOTO3, get_aws_connection_info, AWSRetry
 
 
 try:
@@ -54,9 +54,20 @@ def describe_endpoints(connection, endpoint_identifier):
 
 
 @AWSRetry.backoff(**backoff_params)
-def create_endpoint(connection, **params):
+def create_endpoint(connection, params):
     """ creates the endpoint"""
-    return connection.create_endpoint(**params)
+    return connection.create_endpoint(params)
+
+
+@AWSRetry.backoff(**backoff_params)
+def endpoint_exists(connection, endpoint_identifier):
+    """ Returns boolean based on the existance of the endpoint
+    :param connection: boto3 aws connection
+    :param endpoint_identifier: id for the endpoint
+    :return: bool
+    """
+    return bool(len(describe_endpoints(connection, endpoint_identifier)))
+
 
 def create_dms_endpoint(connection):
     """
@@ -64,28 +75,31 @@ def create_dms_endpoint(connection):
     :param connection: boto3 aws connection
     :return: information about the dms endpoint object
     """
-    endpoint_identifier = module.params.get('endpointidentifier')
-    endpoint_type = module.params.get('endpointtype')
-    engine_name = module.params.get('enginename')
-    username = module.params.get('username')
-    password = module.params.get('password')
-    servername = module.params.get('servername')
-    port = module.params.get('port')
-
-    try:
-        endpoint_exists = describe_endpoints(connection, endpoint_identifier)
-    except (ClientError, BotoCoreError) as e:
-        module.fail_json(msg="Failed to describe DMS endpoint.",
-                         exception=traceback.format_exc())
-    endpoint = dict(
-        EndpointIdentifier=endpoint_identifier,
-        EndpointType=endpoint_type,
-        EngineName=engine_name,
-        Username=username,
-        Password=password,
-        ServerName=servername,
-        Port=port,
+    endpoint_parameters = dict(
+        EndpointIdentifier=module.params.get('endpointidentifier'),
+        EndpointType=module.params.get('endpointtype'),
+        EngineName=module.params.get('enginename'),
+        Username=module.params.get('username'),
+        Password=module.params.get('password'),
+        ServerName=module.params.get('servername'),
+        Port=module.params.get('port'),
+        DatabaseName=module.params.get('databasename'),
+        ExtraConnectionAttributes=module.params.get('extraconnectionattributes'),
+        KmsKeyId=module.params.get('kmskeyid'),
+        Tags=module.params.get('tags'),
+        CertificateArn=module.params.get('certificatearn'),
+        SslMode=module.params.get('sslmode'),
+        ServiceAccessRoleArn=module.params.get('serviceaccessrolearn'),
+        ExternalTableDefinition=module.params.get('externaltabledefinition'),
+        DynamoDbSettings=module.params.get('dynamodbsettings'),
+        S3Settings=module.params.get('s3settings'),
+        DmsTransferSettings=module.params.get('dmstransfersettings'),
+        MongoDbSettings=module.params.get('mongodbsettings'),
+        KinesisSettings=module.params.get('kinesissettings'),
+        ElasticsearchSettings=module.params.get('elasticsearchsettings'),
     )
+    create_endpoint(connection, endpoint_parameters)
+
 
 def main():
     """ main function, instanciates the ansible module and performs the initial logic"""
@@ -93,7 +107,9 @@ def main():
         state=dict(choices=['present', 'absent'], default='present'),
         endpointidentifier=dict(required=True),
         endpointtype=dict(choices=['source', 'target'], required=True),
-        enginename=dict(choices=['mysql', 'oracle', 'postgres', 'mariadb', 'aurora', 'redshift', 's3', 'db2', 'azuredb', 'sybase', 'dynamodb', 'mongodb', 'sqlserver'], required=True),
+        enginename=dict(choices=['mysql', 'oracle', 'postgres', 'mariadb', 'aurora',
+                                 'redshift', 's3', 'db2', 'azuredb', 'sybase',
+                                 'dynamodb', 'mongodb', 'sqlserver'], required=True),
         username=dict(),
         password=dict(),
         servername=dict(),
@@ -132,8 +148,8 @@ def main():
                             **aws_connect_params)
 
     if state == 'present':
-        create_dms_endpoint(connection)
+        if not endpoint_exists(connection, module.params.get('endpointidentifier')):
+            create_dms_endpoint(connection)
 
     if __name__ == '__main__':
         main()
-
