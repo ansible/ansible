@@ -241,3 +241,36 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: country_fail_4
   ignore_errors: yes
+
+- name: Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: Generate publickey - PEM format
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw1.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    privatekey_passphrase: hunter2
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: Generate publickey - PEM format
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw2.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: wrong_password
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: Generate publickey - PEM format
+  openssl_csr:
+    path: '{{ output_dir }}/csr_pw3.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    select_crypto_backend: '{{ select_crypto_backend }}'
+  ignore_errors: yes
+  register: passphrase_error_3

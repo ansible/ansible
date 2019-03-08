@@ -151,4 +151,39 @@
     ownca_digest: sha256
   register: ownca_certificate_ecc
 
+- name: Generate ownca certificate (failed passphrase 1)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_pw1.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/ca_privatekey.pem'
+    ownca_privatekey_passphrase: hunter2
+    provider: ownca
+    ownca_digest: sha256
+  ignore_errors: yes
+  register: passphrase_error_1
+
+- name: Generate ownca certificate (failed passphrase 2)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_pw1.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    ownca_privatekey_passphrase: wrong_password
+    provider: ownca
+    ownca_digest: sha256
+  ignore_errors: yes
+  register: passphrase_error_2
+
+- name: Generate ownca certificate (failed passphrase 3)
+  openssl_certificate:
+    path: '{{ output_dir }}/ownca_cert_pw3.pem'
+    csr_path: '{{ output_dir }}/csr_ecc.csr'
+    ownca_path: '{{ output_dir }}/ca_cert.pem'
+    ownca_privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    provider: ownca
+    ownca_digest: sha256
+  ignore_errors: yes
+  register: passphrase_error_3
+
 - import_tasks: ../tests/validate_ownca.yml
