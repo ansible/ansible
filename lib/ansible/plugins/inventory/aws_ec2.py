@@ -75,7 +75,7 @@ DOCUMENTATION = '''
               This option allows you to override that, in efforts to allow migration from the old ec2.py and matches the sanitization
               of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
               To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
-              you will need to replace hyphens with underscores via the regex_replace filter for those entries. 
+              you will need to replace hyphens with underscores via the regex_replace filter for those entries.
             - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
               otherwise the core engine will just use the standard sanitization on top.
             - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
