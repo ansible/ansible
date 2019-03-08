@@ -169,7 +169,7 @@ class EntityVnicPorfileModule(BaseModule):
 
     def __get_network_filter_id(self):
         nf_service = self._connection.system_service().network_filters_service()
-        return get_id_by_name(nf_service, self.param('network_filter'))
+        return get_id_by_name(nf_service, self.param('network_filter')) if self.param('network_filter') else None
 
     def build_entity(self):
         return otypes.VnicProfile(
@@ -191,7 +191,7 @@ class EntityVnicPorfileModule(BaseModule):
             qos=otypes.Qos(id=self.__get_qos_id())
             if self.param('qos') else None,
             network_filter=otypes.NetworkFilter(id=self.__get_network_filter_id())
-            if self.param('network_filter') else None
+            if self.param('network_filter') is not None else None
         )
 
     def update_check(self, entity):
@@ -209,7 +209,7 @@ class EntityVnicPorfileModule(BaseModule):
             equal(self.param('migratable'), getattr(entity, 'migratable', None)) and
             equal(self.param('pass_through'), entity.pass_through.mode.name) and
             equal(self.param('description'), entity.description) and
-            equal(self.param('network_filter'), entity.network_filter.name) and
+            equal(self.param('network_filter'), getattr(entity.network_filter, 'name', None)) and
             equal(self.param('qos'), entity.qos.name) and
             equal(self.param('port_mirroring'), getattr(entity, 'port_mirroring', None))
         )
