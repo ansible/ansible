@@ -1,0 +1,224 @@
+---
+
+- name: setup
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: absent
+    type: A
+    answers: []
+  register: record_setup
+
+- name: Verify setup
+  assert:
+    that:
+      - record_setup is success
+
+- name: Test record creation
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: present
+    type: A
+    answers:
+      - answer:
+          - 192.168.1.0
+        meta:
+          up: True
+    filters:
+      - filter: up
+        config: {}
+  register: a_record_create
+
+- name: Verify record creation
+  assert:
+    that:
+      - a_record_create is changed
+      - a_record_create.data.answers[0].answer[0] == "192.168.1.0"
+
+- name: Test answer append
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: present
+    record_mode: append
+    type: A
+    answers:
+      - answer:
+          - 192.168.1.1
+        meta:
+          up: True
+    filters:
+      - filter: up
+        config: {}
+  register: a_answer_append
+
+- name: Verify answer append
+  assert:
+    that:
+      - a_answer_append is changed
+      - a_answer_append.data.answers[0].answer[0] == "192.168.1.0"
+      - a_answer_append.data.answers[1].answer[0] == "192.168.1.1"
+      - a_answer_append.data.answers | length == 2
+
+- name: Test record no change
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: present
+    record_mode: append
+    type: A
+    answers:
+      - answer:
+          - 192.168.1.1
+        meta:
+          up: True
+    filters:
+      - filter: up
+        config: {}
+  register: a_record_no_change
+
+- name: Verify record no change
+  assert:
+    that:
+      - a_record_no_change is not changed
+      - a_record_no_change.data.answers[1].answer[0] == "192.168.1.1"
+      - a_record_no_change.data.answers | length == 2
+
+- name: Test answer update with purge
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: present
+    type: A
+    answers:
+      - answer:
+          - 192.168.2.1
+        meta:
+          up: True
+    filters:
+      - filter: up
+        config: {}
+  register: a_answer_update_purge
+
+- name: Verify answer update with purge
+  assert:
+    that:
+      - a_answer_update_purge is changed
+      - a_answer_update_purge.data.answers[0].answer[0] == "192.168.2.1"
+      - a_answer_update_purge.data.answers | length == 1
+
+- name: Test filter append
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: present
+    record_mode: append
+    type: A
+    answers: []
+    filters:
+      - filter: geotarget_regional
+        config: {}
+  register: a_filter_append
+
+- name: Verify filter append
+  assert:
+    that:
+      - a_filter_append is changed
+      - a_filter_append.data.answers[0].answer[0] == "192.168.2.1"
+      - a_filter_append.data.filters[0].filter == "up"
+      - a_filter_append.data.filters[1].filter == "geotarget_regional"
+
+- name: Test filter purge
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    record_mode: purge
+    state: present
+    type: A
+    answers: []
+    filters: []
+  register: a_filter_purge
+
+- name: Verify filter purge
+  assert:
+    that:
+      - a_filter_purge is changed
+      - a_filter_purge.data.filters | length == 0
+
+- name: Test meta update
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    record_mode: purge
+    state: present
+    type: A
+    answers:
+      - answer:
+          - 192.168.2.1
+        meta:
+          up: False
+  register: a_meta_update
+
+- name: Verify meta update
+  assert:
+    that:
+      - a_meta_update is changed
+      - a_meta_update.data.answers[0].answer[0] == "192.168.2.1"
+      - a_meta_update.data.answers | length == 1
+
+- name: Test answer purge
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    record_mode: purge
+    state: present
+    type: A
+    answers: []
+  register: a_answer_purge
+
+- name: Verify answer purge
+  assert:
+    that:
+      - a_answer_purge is changed
+      - a_answer_purge.data.answers | length == 0
+
+- name: Test record deletion
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "{{ test_zone }}"
+    state: absent
+    type: A
+    answers: []
+  register: a_record_delete
+
+- name: Verify record deletetion
+  assert:
+    that:
+      - a_record_delete is changed
+
+- name: Test record deletion without existing zone
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    name: www
+    zone: "missing-{{ test_zone }}"
+    state: absent
+    type: A
+    answers: []
+    ignore_missing_zone: True
+  register: a_record_missing_zone_delete
+
+- name: Verify record deletetion without existing zone
+  assert:
+    that:
+      - a_record_missing_zone_delete is not changed

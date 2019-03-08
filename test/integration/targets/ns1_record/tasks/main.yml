@@ -1,0 +1,2 @@
+- include: a_record.yml
+- include: mx_record.yml

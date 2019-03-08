@@ -1,0 +1,92 @@
+---
+
+- name: setup
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    zone: "{{ test_zone }}"
+    name: "{{ test_zone }}"
+    state: absent
+    type: MX
+    answers: []
+  register: record_setup
+
+- name: Verify setup
+  assert:
+    that:
+      - record_setup is success
+
+- name: Test record creation
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    zone: "{{ test_zone }}"
+    name: "{{ test_zone }}"
+    state: present
+    type: MX 
+    answers:
+      - answer:
+          - 5
+          - mail1.example.com
+  register: mx_record_create
+
+- name: Verify record creation
+  assert:
+    that:
+      - mx_record_create is changed
+      - mx_record_create.data.answers[0].answer == [5, "mail1.example.com"]
+
+- name: Test answer append
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    zone: "{{ test_zone }}"
+    name: "{{ test_zone }}"
+    state: present
+    record_mode: append
+    type: MX 
+    answers:
+      - answer:
+          - 10
+          - mail2.example.com
+  register: mx_answer_append
+
+- name: Verify answer append
+  assert:
+    that:
+      - mx_answer_append is changed
+      - mx_answer_append.data.answers[0].answer == [5, "mail1.example.com"]
+      - mx_answer_append.data.answers[1].answer == [10, "mail2.example.com"]
+
+- name: Test answer update with purge
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    zone: "{{ test_zone }}"
+    name: "{{ test_zone }}"
+    record_mode: purge
+    state: present
+    type: MX 
+    answers:
+      - answer:
+          - 20
+          - mail3.example.com
+  register: mx_answer_update_purge
+
+- name: Verify answer update with purge
+  assert:
+    that:
+      - mx_answer_update_purge is changed
+      - mx_answer_update_purge.data.answers[0].answer == [20, "mail3.example.com"]
+      - mx_answer_update_purge.data.answers | length == 1
+       
+- name: Test answer delete
+  ns1_record:
+    apiKey: "{{ ns1_token }}"
+    zone: "{{ test_zone }}"
+    name: "{{ test_zone }}"
+    state: absent
+    type: MX 
+    answers: []
+  register: mx_answer_delete
+
+- name: Verify answer delete
+  assert:
+    that:
+      - mx_answer_delete is changed
