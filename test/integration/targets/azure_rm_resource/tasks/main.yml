@@ -127,7 +127,7 @@
     resource_group: "{{ resource_group }}"
     provider: Storage
     resource_type: storageAccounts
-    resource_name: "{{ storageaccountname }}"
+    resource_name: justunexisitingname
     state: absent
   register: output
 

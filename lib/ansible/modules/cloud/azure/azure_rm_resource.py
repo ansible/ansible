@@ -286,7 +286,7 @@ class AzureRMResource(AzureRMModuleBase):
         needs_update = True
         response = None
 
-        if self.idempotency or self.method == "DELETE":
+        if self.idempotency: # or self.method == "DELETE":
             original = self.mgmt_client.query(self.url, "GET", query_parameters, None, None, [200, 404], 0, 0)
 
             if original.status_code == 404:
