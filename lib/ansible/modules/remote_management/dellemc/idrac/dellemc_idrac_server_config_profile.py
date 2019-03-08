@@ -209,7 +209,7 @@ def run_import_server_config_profile(idrac, module):
 
     try:
         myshare = file_share_manager.create_share_obj(
-            share_path="{}{}{}".format(share_name, os.sep, module.params['scp_file']),
+            share_path="{0}{1}{2}".format(share_name, os.sep, module.params['scp_file']),
             creds=UserCredentials(module.params['share_user'],
                                   module.params['share_pwd']), isFolder=False, )
         import_status = idrac.config_mgr.scp_import(myshare,
