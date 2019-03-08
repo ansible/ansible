@@ -501,6 +501,31 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Create a testing file
+  copy:
+    content: "content"
+    dest: "{{ output_dir }}/output"
+
+- name: Download a file from non existing location
+  uri:
+    url: http://does/not/exist
+    dest: "{{ output_dir }}/output"
+  ignore_errors: yes
+
+- name: Save testing file's output
+  command: "cat {{ output_dir }}/output"
+  register: file_out
+
+- name: Test the testing file was not overwritten
+  assert:
+    that:
+      - "'content' in file_out.stdout"
+
+- name: Clean up
+  file:
+    dest: "{{ output_dir }}/output"
+    state: absent
+
 - name: Test follow_redirects=none
   import_tasks: redirect-none.yml
 
