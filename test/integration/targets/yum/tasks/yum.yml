@@ -92,6 +92,14 @@
         - "yum_result is success"
         - "not yum_result is changed"
 
+- name: install sos again with missing repo enablerepo
+  yum: name=sos state=present enablerepo="thisrepodoesnotexist"
+  register: yum_result
+- name: verify no change on fourth install with missing repo enablerepo
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
 
 # INSTALL AGAIN WITH LATEST
 - name: install sos again with state latest in check mode
