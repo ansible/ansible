@@ -164,7 +164,8 @@ options:
   custom_params:
     description:
     - Define a list of custom VM params to set on VM.
-    - A custom value object takes two fields C(key) and C(value).
+    - Useful for advanced users familiar with managing VM params trough xe CLI.
+    - A custom value object takes two fields C(key) and C(value) (see example below).
     type: list
   wait_for_ip_address:
     description:
