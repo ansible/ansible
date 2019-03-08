@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix an 'Unexpected Exception' if tags are not as expected"
