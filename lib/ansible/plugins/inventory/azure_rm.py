@@ -60,6 +60,17 @@ DOCUMENTATION = r'''
                 C(exclude_host_filters) to exclude powered-off and not-fully-provisioned hosts. Set this to a different
                 value or empty list if you need to include hosts in these states.
             default: ['powerstate != "running"', 'provisioning_state != "succeeded"']
+        use_legacy_script_group_name_sanitization:
+          description:
+            - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
+              This toggle allows those migration from the old azure_rm.py inventory script that want to continue using the old sanitization to do so.
+              For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
+              otherwise the core engine will just use the standard sanitization on top.
+            - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
+              which group names end up being used as.
+          type: bool
+          default: False
+          version_added: "2.8"
 '''
 
 EXAMPLES = '''
@@ -228,6 +239,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._read_config_data(path)
         self._batch_fetch = self.get_option('batch_fetch')
+
+        if self.get_option('use_legacy_script_group_name_sanitization'):
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
         self._filters = self.get_option('exclude_host_filters') + self.get_option('default_host_filters')
 
@@ -445,6 +459,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
         content = resp.content
 
         return json.loads(content)
+
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization(name):
+
+        regex = re.compile(r"[^A-Za-z0-9\_\-]")
+
+        return regex.sub('_', name)
 
 
 # VM list (all, N resource groups): VM -> InstanceView, N NICs, N PublicIPAddress)
