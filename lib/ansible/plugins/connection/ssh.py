@@ -531,7 +531,8 @@ class Connection(ConnectionBase):
         return env_vars
 
     def _destroy_ssh_agent(self):
-        self._terminate_process(self._ssh_agent)
+        if self._ssh_agent is not None:
+            self._terminate_process(self._ssh_agent)
         self._ssh_agent_socket = None
 
     def _connect(self):
