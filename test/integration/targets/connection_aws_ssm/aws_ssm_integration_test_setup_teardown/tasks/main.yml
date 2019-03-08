@@ -1,0 +1,106 @@
+---
+# tasks file for ec2
+
+- name: Create IAM role
+  iam:
+    iam_type: role
+    name: "{{iam_role_name}}"
+    state: present
+  register: role_output
+  tags: setup_infra
+
+- name: Assign a policy called SSM and S3 to the "{{iam_role_name}}"
+  iam_policy:
+    iam_type: role
+    iam_name: "{{iam_role_name}}"
+    policy_name: "{{iam_policy_name}}"
+    policy_document:  aws_ssm_integration_test_setup_teardown/files/custom_role.json
+    state: present
+  tags: setup_infra
+
+- pause:
+    seconds: 10
+  tags: setup_infra
+
+- name: Create ec2 instance
+  ec2:
+    instance_type: "{{instance_type}}"
+    image: "{{ami_id}}"
+    wait: "yes"
+    count: 1
+    region: us-east-2
+    instance_profile_name: "{{iam_role_name}}"
+    instance_tags:
+      name: krishna
+    state: present
+  register: output
+  tags: setup_infra
+
+- name: setting fact for bucket name using instance-id
+  set_fact:
+    bucket_name: "{{output.instance_ids[0]}}"
+    del_instance_id: "{{output.instance_ids[0]}}"
+    del_bucket_name: "{{output.instance_ids[0]}}"
+  tags: setup_infra
+
+- name: create var_to_delete.yml
+  template:
+    dest: aws_ssm_integration_test_setup_teardown/vars/vars_to_delete.yml
+    src: vars_to_delete.yml.j2
+  tags: setup_infra
+
+- name: Create hosts file
+  template:
+    dest: inventory.aws_ssm
+    src: inventory.aws_ssm.j2
+  tags: setup_infra
+  
+
+- name: create bucket with instance id and rolename
+  s3_bucket:
+    name: "{{ bucket_name }}"
+  register: s3_output
+  tags: setup_infra
+
+- name: include variable file to delete infra
+  include_vars: vars_to_delete.yml
+  tags: delete_infra
+
+### Delete Infra in AWS
+## S3 Deletion
+- name: S3 bucket Deletion
+  aws_s3:
+    bucket: "{{ bucket_name }}"
+    mode: delete
+  register: s3_delete_status
+  tags: delete_infra
+
+## EC2-Instance Termination
+- name: Terminate instances that were previously launched
+  ec2:
+    state: 'absent'
+    instance_ids: "{{ instance_id }}"
+    region: us-east-2
+  register: ec2_terminate_status
+  tags: delete_infra  
+
+  ## IAM Policy Deletion
+- name: Delete IAM policy
+  iam_policy:
+    iam_type: role
+    iam_name: "{{ iam_role_name }}"
+    policy_name: "{{ iam_policy_name }}"
+    state: absent
+  tags: delete_infra
+  register: iam_policy_deletion_status
+
+
+## IAM Role Deletion
+- name: Delete IAM role
+  iam:
+    iam_type: role
+    name: "{{ iam_role_name }}"
+    state: absent
+  register: iam_role_deletion_status
+  tags: delete_infra
+
