@@ -192,10 +192,7 @@ class AzureRMResourceFacts(AzureRMModuleBase):
 
             try:
                 response = json.loads(response.text)
-
-                if isinstance(response, list):
-                    self.results['response'] = self.results['response'] + response
-                elif isinstance(response, dict):
+                if isinstance(response, dict):
                     if response.get('value'):
                         self.results['response'] = self.results['response'] + response['value']
                         skiptoken = response.get('nextLink')
