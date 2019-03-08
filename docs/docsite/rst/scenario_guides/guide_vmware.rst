@@ -13,15 +13,16 @@ To get started, please select one of the following topics.
 .. toctree::
    :maxdepth: 1
 
+.. comments look like this - start with two dots
    vmware_scenarios/vmware_intro
    vmware_scenarios/vmware_concepts
    vmware_scenarios/vmware_requirements
-#  getting_started content not ready
-#  vmware_scenarios/vmware_getting_started
+.. getting_started content not ready
+.. vmware_scenarios/vmware_getting_started
    vmware_scenarios/vmware_inventory
    vmware_scenarios/vmware_scenarios
-#  module index page not ready
-#   vmware_scenarios/vmware_module_reference
+.. module index page not ready
+.. vmware_scenarios/vmware_module_reference
    vmware_scenarios/vmware_troubleshooting
    vmware_scenarios/vmware_external_doc_links
    vmware_scenarios/faq
