@@ -1,0 +1,2 @@
+minor_changes:
+- Added support for MX and SRV record in ipa_dnsrecord module (https://github.com/ansible/ansible/pull/42482).
