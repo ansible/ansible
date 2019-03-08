@@ -273,6 +273,7 @@ class TaskParameters(DockerBaseClass):
         self.election_tick = None
         self.dispatcher_heartbeat_period = None
         self.node_cert_expiry = None
+        self.node_id = None
         self.name = None
         self.labels = None
         self.log_driver = None
@@ -512,7 +513,7 @@ class SwarmManager(DockerBaseClass):
             self.client.fail("This node is not a manager.")
 
         try:
-            status_down = self.client.check_if_swarm_node_is_down(repeat_check=5)
+            status_down = self.client.check_if_swarm_node_is_down(node_id=self.parameters.node_id, repeat_check=5)
         except APIError:
             return
 
