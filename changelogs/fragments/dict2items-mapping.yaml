@@ -1,0 +1,2 @@
+bugfixes:
+- dict2items - Allow dict2items to work with hostvars
