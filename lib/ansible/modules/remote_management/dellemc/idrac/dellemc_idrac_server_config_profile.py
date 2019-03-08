@@ -8,6 +8,7 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # All rights reserved. Dell, EMC, and other trademarks are trademarks of Dell Inc. or its subsidiaries.
+# Other trademarks may be trademarks of their respective owners.
 #
 
 
@@ -198,27 +199,23 @@ except ImportError:
 
 def run_import_server_config_profile(idrac, module):
     """Import Server Configuration Profile from a network share."""
-    share_name = module.params['share_name']
     target = SCPTargetEnum[module.params['scp_components']]
     job_wait = module.params['job_wait']
-
     end_host_power_state = EndHostPowerStateEnum[module.params['end_host_power_state']]
     shutdown_type = ShutdownTypeEnum[module.params['shutdown_type']]
-
     idrac.use_redfish = True
 
     try:
         myshare = file_share_manager.create_share_obj(
-            share_path="{0}{1}{2}".format(share_name, os.sep, module.params['scp_file']),
+            share_path="{0}{1}{2}".format(module.params['share_name'], os.sep, module.params['scp_file']),
             creds=UserCredentials(module.params['share_user'],
-                                  module.params['share_pwd']), isFolder=False, )
+                                  module.params['share_pwd']), isFolder=False)
         import_status = idrac.config_mgr.scp_import(myshare,
                                                     target=target, shutdown_type=shutdown_type,
                                                     end_host_power_state=end_host_power_state,
                                                     job_wait=job_wait)
         if not import_status or import_status.get('Status') != "Success":
             module.fail_json(msg='Failed to import scp.', scp_status=import_status)
-
     except RuntimeError as e:
         module.fail_json(msg=str(e))
     return import_status
@@ -228,12 +225,10 @@ def run_export_server_config_profile(idrac, module):
     """Export Server Configuration Profile to a network share."""
     file_format = module.params['export_format'].lower()
     export_format = ExportFormatEnum[module.params['export_format']]
-    scp_file_name_format = "%ip_%Y%m%d_%H%M%S_scp." + file_format
-
+    scp_file_name_format = "%ip_%Y%m%d_%H%M%S_scp.{0}".format(file_format)
     target = SCPTargetEnum[module.params['scp_components']]
     job_wait = module.params['job_wait']
     export_use = ExportUseEnum[module.params['export_use']]
-
     idrac.use_redfish = True
 
     try:
@@ -249,7 +244,6 @@ def run_export_server_config_profile(idrac, module):
                                                     job_wait=job_wait)
         if not export_status or export_status.get('Status') != "Success":
             module.fail_json(msg='Failed to export scp.', scp_status=export_status)
-
     except RuntimeError as e:
         module.fail_json(msg=str(e))
     return export_status
@@ -298,7 +292,7 @@ def main():
             command = module.params['command']
             if command == 'import':
                 scp_status = run_import_server_config_profile(idrac, module)
-                if "No changes were applied" not in scp_status.get('Message', " "):
+                if "No changes were applied" not in scp_status.get('Message', ""):
                     changed = True
             else:
                 scp_status = run_export_server_config_profile(idrac, module)
