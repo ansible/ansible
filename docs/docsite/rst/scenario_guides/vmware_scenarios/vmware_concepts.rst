@@ -4,9 +4,10 @@
 Ansible for VMware Concepts
 ***************************
 
-These concepts are common to all uses of Ansible, including VMware automation. You need to understand them to use Ansible for VMware automation. This basic introduction provides the background you need to follow the examples in this guide.
+Some of these concepts are common to all uses of Ansible, including VMware automation; some are specific to VMware. You need to understand them to use Ansible for VMware automation. This introduction provides the background you need to follow the :ref:`scenarios<vmware_scenarios>` in this guide.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Control Node
 ============
@@ -16,7 +17,7 @@ Any machine with Ansible installed. You can run commands and playbooks, invoking
 Delegation
 ==========
 
-If you want to perform a VMware specific task on one host with reference to ESXi server or vCenter server, use the ``delegate_to`` keyword on a task. This delegation host will be any host where you have ``pyVmomi`` installed. Your control node and ``delegate_to`` host can be same or different.
+Delegation allows you to select the system that executes a given task. If you do not have ``pyVmomi`` installed on your control node, use the ``delegate_to`` keyword on VMware-specific tasks to execute them on any host where you have ``pyVmomi`` installed.
 
 Modules
 =======
