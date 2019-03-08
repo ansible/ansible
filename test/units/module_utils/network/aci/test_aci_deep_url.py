@@ -30,6 +30,7 @@ def setup():
     module.params['host'] = 'local.host.local'
     module.params['port'] = 443
     module.params['private_key'] = None
+    module.params['status'] = 200
 
     module.mock.items['login'] = {
         'responseStatus': 200,
