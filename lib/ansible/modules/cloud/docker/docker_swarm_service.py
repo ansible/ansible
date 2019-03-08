@@ -299,7 +299,6 @@ options:
         description:
           - Whether the mount should be read-only.
         type: bool
-        default: no
   name:
     description:
       - Service name.
@@ -2005,7 +2004,7 @@ class DockerServiceManager(object):
                     'source': mount_data['Source'],
                     'type': mount_data['Type'],
                     'target': mount_data['Target'],
-                    'read_only': mount_data.get('ReadOnly', False),
+                    'read_only': mount_data.get('ReadOnly'),
                     'propagation': bind_options.get('Propagation'),
                     'no_copy': volume_options.get('NoCopy'),
                     'labels': volume_options.get('Labels'),
@@ -2242,7 +2241,7 @@ def main():
                 default='bind',
                 choices=['bind', 'volume', 'tmpfs'],
             ),
-            readonly=dict(type='bool', default=False),
+            readonly=dict(type='bool'),
             labels=dict(type='dict'),
             propagation=dict(
                 type='str',
