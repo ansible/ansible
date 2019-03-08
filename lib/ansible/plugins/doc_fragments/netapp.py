@@ -148,7 +148,8 @@ options:
         - Should https certificates be validated?
     type: bool
   ssid:
-    required: true
+    required: false
+    default: 1
     description:
     - The ID of the array to manage. This value must be unique for each array.
 
