@@ -89,7 +89,6 @@ options:
     - A list of existing role (user/group) names to set as the
       default permissions for database objects subsequently created by them.
     - Parameter I(target_roles) is only available with C(type=default_privs).
-    type: list
     version_added: '2.8'
   grant_option:
     description:
