@@ -570,7 +570,7 @@
 
 # Need to use shell to create the file as win_file doesn't support setting attributes
 - name: create hidden file
-  win_shell: $file = New-Item -Path "{{ win_output_dir }}\hidden.txt" -ItemType File; $file.Attributes += "Hidden"
+  win_shell: $file = New-Item -Path "{{ win_output_dir }}\hidden.txt" -ItemType File; $file.Attributes = "Hidden"
 
 - name: delete hidden file
   win_file:
