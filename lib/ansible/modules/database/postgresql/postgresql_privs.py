@@ -86,10 +86,11 @@ options:
       Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
   target_roles:
     description:
-      - Comma-separated list of existing role (user/group) names to set as the
-        default permissions for database objects subsequently created by them.
-        I(target_roles) is only available with I(type=default_privs)."
-    version_added: 2.8
+    - A list of existing role (user/group) names to set as the
+      default permissions for database objects subsequently created by them.
+    - Parameter I(target_roles) is only available with C(type=default_privs).
+    type: list
+    version_added: '2.8'
   grant_option:
     description:
       - Whether C(role) may grant/revoke the specified privileges/group
