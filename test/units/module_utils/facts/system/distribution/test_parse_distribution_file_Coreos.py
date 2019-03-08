@@ -20,29 +20,29 @@ def mock_module():
     return mock_module
 
 
-def test_parse_distribution_file_clear_linux():
+def test_parse_distribution_file_coreos():
     test_input = {
-        'name': 'ClearLinux',
-        'data': DISTRIBUTION_FILE_DATA['clearlinux'],
-        'path': '/usr/lib/os-release',
+        'name': 'Coreos',
+        'data': DISTRIBUTION_FILE_DATA['coreos'],
+        'path': '/etc/os-release',
         'collected_facts': None,
     }
 
     result = (
         True,
         {
-            'distribution': 'Clear Linux OS',
-            'distribution_major_version': '28120',
-            'distribution_release': 'clear-linux-os',
-            'distribution_version': '28120'
+            'distribution': 'Coreos',
+            'distribution_major_version': '1911',
+            'distribution_release': 'rhyolite',
+            'distribution_version': '1911.5.0'
         }
     )
 
     distribution = DistributionFiles(module=mock_module())
-    assert result == distribution.parse_distribution_file_ClearLinux(**test_input)
+    assert result == distribution.parse_distribution_file_Coreos(**test_input)
 
 
-def test_parse_distribution_file_clear_linux_no_match():
+def test_parse_distribution_file_coreos_no_match():
     # Test against data from other distributions that use same file path to
     # ensure we do not get an incorrect match.
 
@@ -50,8 +50,8 @@ def test_parse_distribution_file_clear_linux_no_match():
         {
             'case': {
                 'name': 'ClearLinux',
-                'data': DISTRIBUTION_FILE_DATA['coreos'],
-                'path': '/usr/lib/os-release',
+                'data': DISTRIBUTION_FILE_DATA['clearlinux'],
+                'path': '/etc/os-release',
                 'collected_facts': None,
             },
             'result': (False, {}),
@@ -60,16 +60,16 @@ def test_parse_distribution_file_clear_linux_no_match():
             'case': {
                 'name': 'ClearLinux',
                 'data': DISTRIBUTION_FILE_DATA['linuxmint'],
-                'path': '/usr/lib/os-release',
+                'path': '/etc/os-release',
                 'collected_facts': None,
             },
             'result': (False, {}),
         },
         {
             'case': {
-                'name': 'ClearLinux',
+                'name': 'Debian',
                 'data': DISTRIBUTION_FILE_DATA['debian9'],
-                'path': '/usr/lib/os-release',
+                'path': '/etc/os-release',
                 'collected_facts': None,
             },
             'result': (False, {}),
@@ -78,4 +78,4 @@ def test_parse_distribution_file_clear_linux_no_match():
 
     distribution = DistributionFiles(module=mock_module())
     for scenario in scenarios:
-        assert scenario['result'] == distribution.parse_distribution_file_ClearLinux(**scenario['case'])
+        assert scenario['result'] == distribution.parse_distribution_file_Coreos(**scenario['case'])

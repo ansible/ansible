@@ -70,7 +70,7 @@ class DistributionFiles:
         {'path': '/etc/lsb-release', 'name': 'Mandriva'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
-        {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/etc/lsb-release', 'name': 'Coreos'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
@@ -385,19 +385,22 @@ class DistributionFiles:
 
     def parse_distribution_file_Coreos(self, name, data, path, collected_facts):
         coreos_facts = {}
-        # FIXME: pass in ro copy of facts for this kind of thing
-        distro = get_distribution()
 
-        if distro.lower() == 'coreos':
-            if not data:
-                # include fix from #15230, #15228
-                # TODO: verify this is ok for above bugs
-                return False, coreos_facts
-            release = re.search("^GROUP=(.*)", data)
-            if release:
-                coreos_facts['distribution_release'] = release.group(1).strip('"')
-        else:
-            return False, coreos_facts  # TODO: remove if tested without this
+        if 'CoreOS' not in data:
+            return False, coreos_facts
+
+        dist_id = re.search(r'DISTRIB_ID="(.*)"', data)
+        if dist_id:
+            coreos_facts['distribution'] = name
+
+        version = re.search(r'DISTRIB_RELEASE=(.*)', data)
+        if version:
+            coreos_facts['distribution_major_version'] = version.group(1).split('.')[0]
+            coreos_facts['distribution_version'] = version.group(1)
+
+        release = re.search(r'DISTRIB_CODENAME="(\w+)"', data)
+        if release:
+            coreos_facts['distribution_release'] = release.group(1).lower()
 
         return True, coreos_facts
 
@@ -451,7 +454,7 @@ class Distribution(object):
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
-        {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/etc/lsb-release', 'name': 'Coreos'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
