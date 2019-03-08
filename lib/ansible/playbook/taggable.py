@@ -53,8 +53,11 @@ class Taggable:
             for tag in tags:
                 if isinstance(tag, list):
                     _temp_tags.update(tag)
-                else:
+                elif isinstance(tag, string_types):
                     _temp_tags.add(tag)
+                else:
+                    raise AnsibleError('tags must be specified as a list or string', obj=tag)
+
             tags = _temp_tags
             self.tags = list(tags)
         else:
