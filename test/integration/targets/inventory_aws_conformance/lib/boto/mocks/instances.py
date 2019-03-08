@@ -149,12 +149,12 @@ class Boto3Instance(BotoInstance):
         self.PublicDnsName = self.public_dns_name
         self.PrivateDnsName = self.private_dns_name
         self.placement = {
-            'availability_zone': [self.region + 'b']
+            'availability_zone': self.region + 'b'
         }
         self.Tags = [
             Tag(self.id, 'TAG1', 'TAG1val')
         ]
-
+        self.state = {'name': self.state, 'code': self.state_code}
         #self.security_group_ids = [
         #    SecurityGroup('sg-1000'),
         #    SecurityGroup('sg-2000'),

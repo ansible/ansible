@@ -52,6 +52,8 @@ plugin: aws_ec2
 cache: False
 regions:
     - us-east-1
+hostnames:
+  - dns-name
 compose:
   # vars that don't exist
   ansible_host: public_dns_name
@@ -76,12 +78,12 @@ compose:
   ec2_monitored:  monitoring.state in ['enabled', 'pending']
   ec2_monitoring_state: monitoring.state
   ec2_owner_id: account_id
-  ec2_placement: placement.availability_zone[0]
+  ec2_placement: placement.availability_zone
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
   ec2_security_group_ids: security_groups | map(attribute='group_id') | list |  join(',')
   ec2_security_group_names: security_groups | map(attribute='name') | list |  join(',')
-  ec2_state: state
+  ec2_state: state.name
   ec2_state_code: state.code
   ec2_state_reason: state_reason.message if state_reason is defined else ""
   ec2_sourceDestCheck: source_dest_check | lower | string  # butchered snake_case case not a typo.
@@ -100,7 +102,7 @@ compose:
   ec2_private_dns_name: private_dns_name
   ec2_private_ip_address: private_ip_address
   ec2_public_dns_name: public_dns_name
-  ec2_region: region
+  ec2_region: placement.region
   ec2_root_device_name: root_device_name
   ec2_root_device_type: root_device_type
   ec2_spot_instance_request_id: spot_instance_request_id
@@ -110,41 +112,27 @@ compose:
 
 keyed_groups:
   - key: '"ec2"'
-    prefix: ""
     separator: ""
   - key: 'instance_id'
-    prefix: ""
     separator: ""
-  - prefix: tag
-    key: tags
-  - prefix: key
-    key: key_name
-  - prefix: ""
+  - key: tags
+    prefix: tag
+  - key: key_name
+    prefix: key
+  - key: placement.region
     separator: ""
-    key: placement.region
-  - prefix: ""
+  - key: placement.availability_zone
     separator: ""
-    key: placement.availability_zone
-  - key: 'groups|json_query("[].name")'
-    prefix: 'security_groups'
-  - key: '"platform_" + platform'
-    prefix: ""
+  - key: platform
+    prefix: platform
+  - key: vpc_id
+    prefix: vpc_id
+  - key: instance_type
+    prefix: type
+  - key: image_id
     separator: ""
-  - key: '"vpc_id_" + vpc_id'
-    prefix: ""
-    separator: ""
-  - prefix: type  # may need to replace . with _
-    key: instance_type
-  - prefix: instance_state
-    key: state.name
-  - prefix: ""
-    separator: ""
-    key: image_id
-  #- key: 'security_groups'
   - key: 'security_groups | json_query("[].name")'
     prefix: security_group
-    #separator: "_"
-prefix: security_group
 EOF
 
 # override boto's import path(s)
