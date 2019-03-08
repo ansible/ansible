@@ -266,3 +266,10 @@
       - "'192.168.0.1/24' | ipaddr('network') == '192.168.0.0'"
       - "'fe80::dead:beef/64' | ipaddr('broadcast') == 'fe80::ffff:ffff:ffff:ffff'"
       - "'::1/120' | ipaddr('netmask') == 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00'"
+
+- name: Ensure dict2items works with hostvars
+  debug:
+    msg: "{{ item.key }}"
+  loop: "{{ hostvars|dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

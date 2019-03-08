@@ -45,7 +45,7 @@ from ansible.module_utils.six import iteritems, string_types, integer_types, rer
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.display import Display
@@ -510,7 +510,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
-    if not isinstance(mydict, MutableMapping):
+    if not isinstance(mydict, Mapping):
         raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
