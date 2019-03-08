@@ -299,6 +299,59 @@ options:
         description:
           - Whether the mount should be read-only.
         type: bool
+      labels:
+        description:
+          - Volume labels to apply.
+        type: dict
+        version_added: "2.8"
+      propagation:
+        description:
+          - The propagation mode to use.
+          - Can only be used when I(mode) is C(bind).
+        type: str
+        choices:
+          - shared
+          - slave
+          - private
+          - rshared
+          - rslave
+          - rprivate
+        version_added: "2.8"
+      no_copy:
+        description:
+          - Disable copying of data from a container when a volume is created.
+          - Can only be used when I(mode) is C(volume).
+        type: bool
+        version_added: "2.8"
+      driver_config:
+        description:
+          - Volume driver configuration.
+          - Can only be used when I(mode) is C(volume).
+        suboptions:
+          name:
+            description:
+              - Name of the volume-driver plugin to use for the volume.
+            type: str
+          options:
+            description:
+              - Options as key-value pairs to pass to the driver for this volume.
+            type: dict
+        type: dict
+        version_added: "2.8"
+    tmpfs_size:
+      description:
+        - "Size of the tmpfs mount (format: C(<number>[<unit>])). Number is a positive integer.
+          Unit can be C(B) (byte), C(K) (kibibyte, 1024B), C(M) (mebibyte), C(G) (gibibyte),
+          C(T) (tebibyte), or C(P) (pebibyte)."
+        - Can only be used when I(mode) is C(tmpfs).
+      type: str
+      version_added: "2.8"
+    tmpfs_mode:
+      description:
+        - File mode of the tmpfs in octal.
+        - Can only be used when I(mode) is C(tmpfs).
+      type: int
+      version_added: "2.8"
   name:
     description:
       - Service name.
