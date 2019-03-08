@@ -1,0 +1,8 @@
+---
+# defaults file for ec2
+instance_type: t2.micro
+ami_id: ami-0de7daa7385332688
+subnet_id: subnet-728dda0
+iam_role_name: intregartion_test_aws_ssm
+iam_policy_name: intregartiontestawsssmssms3fullaccess
+region_name: us-east-2
