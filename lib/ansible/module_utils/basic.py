@@ -47,25 +47,27 @@ PASS_BOOLS = ('no_log', 'debug', 'diff')
 
 import __main__
 import atexit
-import locale
-import os
-import re
-import shlex
-import signal
-import subprocess
-import sys
-import types
-import time
-import select
-import shutil
-import stat
-import tempfile
-import traceback
-import grp
-import pwd
-import platform
 import errno
 import datetime
+import grp
+import fcntl
+import locale
+import os
+import pwd
+import platform
+import re
+import select
+import shlex
+import shutil
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+import types
+
 from collections import deque
 from itertools import chain, repeat
 
@@ -2584,7 +2586,7 @@ class AnsibleModule(object):
     def _read_from_pipes(self, rpipes, rfds, file_descriptor):
         data = b('')
         if file_descriptor in rfds:
-            data = os.read(file_descriptor.fileno(), 9000)
+            data = os.read(file_descriptor.fileno(), self.get_buffer_size(file_descriptor))
             if data == b(''):
                 rpipes.remove(file_descriptor)
 
@@ -2904,6 +2906,20 @@ class AnsibleModule(object):
 
     # In 2.0, moved from inside the module to the toplevel
     is_executable = is_executable
+
+    @staticmethod
+    def get_buffer_size(fd):
+        try:
+            # 1032 == FZ_GETPIPE_SZ
+            buffer_size = fcntl.fcntl(fd, 1032)
+         except Exception:
+            try:
+                # not as exact as above, but should be good enough for most platforms that fail the previous call
+                buffer_size = select.PIPE_BUF
+            except Exception:
+                buffer_size = 9000  # use sane default JIC
+
+        return buffer_size
 
 
 def get_module_path():
