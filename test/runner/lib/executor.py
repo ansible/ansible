@@ -829,124 +829,126 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
 
     current_environment = None  # type: EnvironmentDescription | None
 
-    for target in targets_iter:
-        if args.start_at and not found:
-            found = target.name == args.start_at
+    try:
+        for target in targets_iter:
+            if args.start_at and not found:
+                found = target.name == args.start_at
 
-            if not found:
+                if not found:
+                    continue
+
+            if args.list_targets:
+                print(target.name)
                 continue
 
-        if args.list_targets:
-            print(target.name)
-            continue
+            tries = 2 if args.retry_on_error else 1
+            verbosity = args.verbosity
 
-        tries = 2 if args.retry_on_error else 1
-        verbosity = args.verbosity
+            cloud_environment = get_cloud_environment(args, target)
 
-        cloud_environment = get_cloud_environment(args, target)
+            original_environment = current_environment if current_environment else EnvironmentDescription(args)
+            current_environment = None
 
-        original_environment = current_environment if current_environment else EnvironmentDescription(args)
-        current_environment = None
+            display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
 
-        display.info('>>> Environment Description\n%s' % original_environment, verbosity=3)
-
-        try:
-            while tries:
-                tries -= 1
-
-                try:
-                    if cloud_environment:
-                        cloud_environment.setup_once()
-
-                    run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, inventory_path, False)
-
-                    start_time = time.time()
-
-                    run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, True)
-
-                    if not args.explain:
-                        # create a fresh test directory for each test target
-                        remove_tree(test_dir)
-                        make_dirs(test_dir)
-
-                    if pre_target:
-                        pre_target(target)
+            try:
+                while tries:
+                    tries -= 1
 
                     try:
-                        if target.script_path:
-                            command_integration_script(args, target, test_dir, inventory_path)
-                        else:
-                            command_integration_role(args, target, start_at_task, test_dir, inventory_path)
-                            start_at_task = None
-                    finally:
-                        if post_target:
-                            post_target(target)
+                        if cloud_environment:
+                            cloud_environment.setup_once()
 
-                    end_time = time.time()
+                        run_setup_targets(args, test_dir, target.setup_once, all_targets_dict, setup_targets_executed, inventory_path, False)
 
-                    results[target.name] = dict(
-                        name=target.name,
-                        type=target.type,
-                        aliases=target.aliases,
-                        modules=target.modules,
-                        run_time_seconds=int(end_time - start_time),
-                        setup_once=target.setup_once,
-                        setup_always=target.setup_always,
-                        coverage=args.coverage,
-                        coverage_label=args.coverage_label,
-                        python_version=args.python_version,
-                    )
+                        start_time = time.time()
 
-                    break
-                except SubprocessError:
-                    if cloud_environment:
-                        cloud_environment.on_failure(target, tries)
+                        run_setup_targets(args, test_dir, target.setup_always, all_targets_dict, setup_targets_executed, inventory_path, True)
 
-                    if not original_environment.validate(target.name, throw=False):
-                        raise
+                        if not args.explain:
+                            # create a fresh test directory for each test target
+                            remove_tree(test_dir)
+                            make_dirs(test_dir)
 
-                    if not tries:
-                        raise
+                        if pre_target:
+                            pre_target(target)
 
-                    display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
-                    display.verbosity = args.verbosity = 6
+                        try:
+                            if target.script_path:
+                                command_integration_script(args, target, test_dir, inventory_path)
+                            else:
+                                command_integration_role(args, target, start_at_task, test_dir, inventory_path)
+                                start_at_task = None
+                        finally:
+                            if post_target:
+                                post_target(target)
 
-            start_time = time.time()
-            current_environment = EnvironmentDescription(args)
-            end_time = time.time()
+                        end_time = time.time()
 
-            EnvironmentDescription.check(original_environment, current_environment, target.name, throw=True)
+                        results[target.name] = dict(
+                            name=target.name,
+                            type=target.type,
+                            aliases=target.aliases,
+                            modules=target.modules,
+                            run_time_seconds=int(end_time - start_time),
+                            setup_once=target.setup_once,
+                            setup_always=target.setup_always,
+                            coverage=args.coverage,
+                            coverage_label=args.coverage_label,
+                            python_version=args.python_version,
+                        )
 
-            results[target.name]['validation_seconds'] = int(end_time - start_time)
+                        break
+                    except SubprocessError:
+                        if cloud_environment:
+                            cloud_environment.on_failure(target, tries)
 
-            passed.append(target)
-        except Exception as ex:
-            failed.append(target)
+                        if not original_environment.validate(target.name, throw=False):
+                            raise
 
-            if args.continue_on_error:
-                display.error(ex)
-                continue
+                        if not tries:
+                            raise
 
-            display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
+                        display.warning('Retrying test target "%s" with maximum verbosity.' % target.name)
+                        display.verbosity = args.verbosity = 6
 
-            next_target = next(targets_iter, None)
+                start_time = time.time()
+                current_environment = EnvironmentDescription(args)
+                end_time = time.time()
 
-            if next_target:
-                display.notice('To resume after this test target, use the option: --start-at %s' % next_target.name)
+                EnvironmentDescription.check(original_environment, current_environment, target.name, throw=True)
 
-            raise
-        finally:
-            display.verbosity = args.verbosity = verbosity
+                results[target.name]['validation_seconds'] = int(end_time - start_time)
 
-    if not args.explain:
-        results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+                passed.append(target)
+            except Exception as ex:
+                failed.append(target)
 
-        data = dict(
-            targets=results,
-        )
+                if args.continue_on_error:
+                    display.error(ex)
+                    continue
 
-        with open(results_path, 'w') as results_fd:
-            results_fd.write(json.dumps(data, sort_keys=True, indent=4))
+                display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
+
+                next_target = next(targets_iter, None)
+
+                if next_target:
+                    display.notice('To resume after this test target, use the option: --start-at %s' % next_target.name)
+
+                raise
+            finally:
+                display.verbosity = args.verbosity = verbosity
+
+    finally:
+        if not args.explain:
+            results_path = 'test/results/data/%s-%s.json' % (args.command, re.sub(r'[^0-9]', '-', str(datetime.datetime.utcnow().replace(microsecond=0))))
+
+            data = dict(
+                targets=results,
+            )
+
+            with open(results_path, 'w') as results_fd:
+                results_fd.write(json.dumps(data, sort_keys=True, indent=4))
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
