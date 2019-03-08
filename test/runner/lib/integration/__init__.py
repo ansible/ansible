@@ -27,6 +27,9 @@ from lib.util import (
     named_temporary_file,
     COVERAGE_CONFIG_PATH,
     COVERAGE_OUTPUT_PATH,
+    MODE_DIRECTORY,
+    MODE_DIRECTORY_WRITE,
+    MODE_FILE,
 )
 
 from lib.cache import (
@@ -36,20 +39,6 @@ from lib.cache import (
 from lib.cloud import (
     CloudEnvironmentConfig,
 )
-
-# Modes are set to allow all users the same level of access.
-# This permits files to be used in tests that change users.
-# The only exception is write access to directories for the user creating them.
-# This avoids having to modify the directory permissions a second time.
-
-MODE = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-
-MODE_FILE = MODE
-MODE_FILE_EXECUTE = MODE_FILE | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
-
-MODE_DIRECTORY = MODE | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
 
 def setup_common_temp_dir(args, path):
