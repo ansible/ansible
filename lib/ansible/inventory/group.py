@@ -39,8 +39,9 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.warning('Replacing ' + msg)
-            elif C.TRANSFORM_INVALID_GROUP_CHARS != 'ignore':
-                display.deprecated('Ignoring ' + msg, version='2.12')
+            elif C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
+                # change this to warning once we change the default in 2.10
+                display.deprecated('Ignoring %s. This is still allowed by default, but that will change at deprecation.' % msg, version='2.10')
 
     return name
 
