@@ -23,7 +23,7 @@ class Test_AnsibleModule_Construct_Url_Exceptions(object):
             'state': 'query'
         }
 
-    @pytest.fixture()
+    @pytest.fixture
     def setup(self):
 
         argument_spec = aci_argument_spec()
