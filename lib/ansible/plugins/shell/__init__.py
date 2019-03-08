@@ -221,3 +221,7 @@ class ShellBase(AnsiblePlugin):
     def wrap_for_exec(self, cmd):
         """wrap script execution with any necessary decoration (eg '&' for quoted powershell script paths)"""
         return cmd
+
+    def quote(self, cmd):
+        """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
+        return shlex_quote(cmd)
