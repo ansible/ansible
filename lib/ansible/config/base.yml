@@ -1467,7 +1467,7 @@ INTERPRETER_PYTHON_FALLBACK:
   version_added: "2.8"
 TRANSFORM_INVALID_GROUP_CHARS:
   name: Transform invalid characters in group names
-  default: 'always'
+  default: 'never'
   description:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
