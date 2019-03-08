@@ -364,7 +364,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _get_instances_by_region(self, regions, filters, strict_permissions):
         '''
            :param regions: a list of regions in which to describe instances
-           :param filters: a list of boto3 filter dicionaries
+           :param filters: a list of boto3 filter dictionaries
            :param strict_permissions: a boolean determining whether to fail or ignore 403 error codes
            :return A list of instance dictionaries
         '''
