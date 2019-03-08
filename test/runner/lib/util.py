@@ -54,13 +54,13 @@ COVERAGE_OUTPUT_PATH = 'coverage'
 # The only exception is write access to directories for the user creating them.
 # This avoids having to modify the directory permissions a second time.
 
-MODE = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+MODE_READ = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
 
-MODE_FILE = MODE
+MODE_FILE = MODE_READ
 MODE_FILE_EXECUTE = MODE_FILE | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
-MODE_DIRECTORY = MODE | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
 
