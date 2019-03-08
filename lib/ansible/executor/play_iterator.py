@@ -160,7 +160,7 @@ class PlayIterator:
         # the others.
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
-        setup_task.action = 'setup'
+        setup_task.action = 'gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.args = {
             'gather_subset': gather_subset,
@@ -287,7 +287,7 @@ class PlayIterator:
 
                     if (gathering == 'implicit' and implied) or \
                        (gathering == 'explicit' and boolean(self._play.gather_facts, strict=False)) or \
-                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('module_setup', False))):
+                       (gathering == 'smart' and implied and not (self._variable_manager._fact_cache.get(host.name, {}).get('_ansible_facts_gathered', False))):
                         # The setup block is always self._blocks[0], as we inject it
                         # during the play compilation in __init__ above.
                         setup_block = self._blocks[0]
