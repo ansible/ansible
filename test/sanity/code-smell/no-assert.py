@@ -5,7 +5,7 @@ import os
 import re
 import sys
 
-ASSERT_RE = re.compile(r'.*(?<![-:a-zA-Z#][ -])\bassert\b(?!:).*')
+ASSERT_RE = re.compile(r'^\s*assert[^a-z0-9_:]')
 
 
 def main():
