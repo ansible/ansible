@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#
+
 # Copyright: (c) 2019, Rob Huelga (@RobW3LGA)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -8,65 +8,6 @@ import pytest
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.aci.aci import ACIModule, aci_argument_spec
-
-
-@pytest.fixture()
-def setup():
-
-    argument_spec = aci_argument_spec()
-    argument_spec.update(
-        state=dict(
-            type='str', default='present', choices=['absent', 'present', 'query']
-        ),
-    )
-
-    module = AnsibleModule(
-        argument_spec=argument_spec
-    )
-
-    module._debug = True
-    module.mock.headers = {"Set-Cookie": "FakeCookie0123456789ABCDEF"}
-    module.params['host'] = 'local.host.local'
-    module.params['port'] = 443
-    module.params['private_key'] = None
-
-    module.mock.items['login'] = {
-
-        'responseStatus': 200,
-        'responseMessage': None,
-        'responseBody': '{"totalCount":"1","imdata":[{"aaaLogin":{"attributes":{"token":"uNIFAALdespypzBHuvzM9A==","version":"4.0(3d)"}}}]}'
-    }
-
-    module.mock.items['get_existing'] = {
-
-        'responseStatus': 200,
-        'responseMessage': None,
-        'responseBody': '{"totalCount":"0","imdata":[]}'
-    }
-
-    module.mock.items['post_config'] = {
-
-        'responseStatus': 200,
-        'responseMessage': None,
-        'responseBody': '{"totalCount":"0","imdata":[]}'
-    }
-
-    module.mock.items['delete_config'] = {
-
-        'responseStatus': 200,
-        'responseMessage': None,
-        'responseBody': '{"totalCount":"0","imdata":[]}'
-    }
-
-    module.mock.items['exit_json'] = {
-
-        'responseStatus': 200,
-        'responseMessage': None,
-        'responseBody': '{"totalCount":"0","imdata":[]}',
-        'calledFromExit_Json': False
-    }
-
-    return module
 
 
 @pytest.mark.usefixtures('setup')
@@ -80,6 +21,64 @@ class Test_AnsibleModule_Construct_Url_Exceptions(object):
             'descr': None,
             'state': 'query'
         }
+
+    @pytest.fixture()
+    def setup(self):
+
+        argument_spec = aci_argument_spec()
+        argument_spec.update(
+            state=dict(
+                type='str', default='present', choices=['absent', 'present', 'query']
+            ),
+        )
+
+        module = AnsibleModule(
+            argument_spec=argument_spec
+        )
+
+        module._debug = True
+        module.mock.headers = {"Set-Cookie": "FakeCookie0123456789ABCDEF"}
+        module.params['host'] = 'local.host.local'
+        module.params['port'] = 443
+        module.params['private_key'] = None
+
+        module.mock.items['login'] = {
+
+            'responseStatus': 200,
+            'responseMessage': None,
+            'responseBody': '{"totalCount":"1","imdata":[{"aaaLogin":{"attributes":{"token":"uNIFAALdespypzBHuvzM9A==","version":"4.0(3d)"}}}]}'
+        }
+
+        module.mock.items['get_existing'] = {
+
+            'responseStatus': 200,
+            'responseMessage': None,
+            'responseBody': '{"totalCount":"0","imdata":[]}'
+        }
+
+        module.mock.items['post_config'] = {
+
+            'responseStatus': 200,
+            'responseMessage': None,
+            'responseBody': '{"totalCount":"0","imdata":[]}'
+        }
+
+        module.mock.items['delete_config'] = {
+
+            'responseStatus': 200,
+            'responseMessage': None,
+            'responseBody': '{"totalCount":"0","imdata":[]}'
+        }
+
+        module.mock.items['exit_json'] = {
+
+            'responseStatus': 200,
+            'responseMessage': None,
+            'responseBody': '{"totalCount":"0","imdata":[]}',
+            'calledFromExit_Json': False
+        }
+
+        return module
 
     def testExceptionE01(self, setup, params):
 
