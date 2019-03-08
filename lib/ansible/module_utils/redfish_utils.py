@@ -966,7 +966,7 @@ class RedfishUtils(object):
         # Get these entries, but does not fail if not found
         properties = ['Status', 'HostName', 'PowerState', 'Model', 'Manufacturer',
                       'PartNumber', 'SystemType', 'AssetTag', 'ServiceTag',
-                      'SerialNumber', 'BiosVersion', 'MemorySummary',
+                      'SerialNumber', 'SKU', 'BiosVersion', 'MemorySummary',
                       'ProcessorSummary', 'TrustedModules']
 
         response = self.get_request(self.root_uri + self.systems_uri)
