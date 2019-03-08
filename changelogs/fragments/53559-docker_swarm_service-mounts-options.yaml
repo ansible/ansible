@@ -1,0 +1,2 @@
+bugfixes:
+  - "docker_swarm_service - Extended ``mounts`` options. It now also accepts ``labels``, ``propagation``, ``no_copy``, ``driver_config``, ``tmpfs_size``, ``tmpfs_mode``."
