@@ -3,6 +3,7 @@
     is_rhel6: "{{ is_rhel and ansible_distribution_major_version == '6' }}"
     is_rhel7: "{{ is_rhel and ansible_distribution_major_version == '7' }}"
     is_rhel8: "{{ is_rhel and ansible_distribution_major_version == '8' }}"
+    is_ubuntu14: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_major_version == '14' }}"
   block:
     - include_tasks: "{{ lookup('first_found', params) }}"
       vars:
@@ -15,7 +16,10 @@
 
     - name: Install Python requirements
       vars:
-        extra_packages: "{{ '' if not is_rhel7 else ',requests==2.6.0' }}"
+        # Inttalling requests >=2.12.0 on Ubuntu 14.04 breaks certificate validation. We restrict to an older version
+        # to ensure out get_url tests work out fine. This is only an issue if pyOpenSSL is also installed.
+        # Not sure why RHEL7 needs this specific version
+        extra_packages: "{{ '' if not (is_rhel7 or is_ubuntu14) else ',requests==2.6.0' }}"
       pip:
         state: present
         name: 'docker{{ extra_packages }}'
