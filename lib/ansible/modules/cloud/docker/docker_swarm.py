@@ -395,6 +395,7 @@ class SwarmManager(DockerBaseClass):
 
         self.state = client.module.params['state']
         self.force = client.module.params['force']
+        self.node_id = client.module.params['node_id']
 
         self.differences = DifferenceTracker()
         self.parameters = TaskParameters.from_ansible_params(client)
@@ -512,7 +513,7 @@ class SwarmManager(DockerBaseClass):
             self.client.fail("This node is not a manager.")
 
         try:
-            status_down = self.client.check_if_swarm_node_is_down(repeat_check=5)
+            status_down = self.client.check_if_swarm_node_is_down(node_id=self.node_id, repeat_check=5)
         except APIError:
             return
 
@@ -521,7 +522,7 @@ class SwarmManager(DockerBaseClass):
 
         if not self.check_mode:
             try:
-                self.client.remove_node(node_id=self.parameters.node_id, force=self.force)
+                self.client.remove_node(node_id=self.node_id, force=self.force)
             except APIError as exc:
                 self.client.fail("Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node is removed from swarm cluster.")
