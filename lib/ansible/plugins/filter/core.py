@@ -34,7 +34,7 @@ import time
 import uuid
 import yaml
 
-from collections import MutableMapping
+from collections import Mapping, MutableMapping
 import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle, random
@@ -498,7 +498,7 @@ def dict_to_list_of_dict_key_value_elements(mydict):
     ''' takes a dictionary and transforms it into a list of dictionaries,
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
-    if not isinstance(mydict, MutableMapping):
+    if not isinstance(mydict, Mapping):
         raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
