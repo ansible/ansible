@@ -777,6 +777,9 @@
 # Test postgresql_tablespace module
 - include: postgresql_tablespace.yml
 
+# Test postgresql_privs
+- include: postgresql_privs.yml
+
 # dump/restore tests per format
 # ============================================================
 - include: state_dump_restore.yml test_fixture=user file=dbdata.sql
