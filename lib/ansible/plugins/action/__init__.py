@@ -461,7 +461,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._get_remote_user()
 
-        if self._connection._shell.SHELL_FAMILY == 'powershell':
+        if getattr(self._connection._shell, "_IS_WINDOWS", False):
             # This won't work on Powershell as-is, so we'll just completely skip until
             # we have a need for it, at which point we'll have to do something different.
             return remote_paths
