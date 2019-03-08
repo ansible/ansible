@@ -1324,6 +1324,32 @@ ERROR_ON_MISSING_HANDLER:
   ini:
   - {key: error_on_missing_handler, section: defaults}
   type: boolean
+CONNECTION_FACTS_MODULES:
+  name: Map of connections to fact modules
+  default:
+    eos: eos_facts
+    frr: frr_facts
+    ios: ios_facts
+    iosxr: iosxr_facts
+    junos: junos_facts
+    nxos: nxos_facts
+    vyos: vyos_facts
+  description: "Which modules to run during a play's fact gathering stage based on connection"
+  env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
+  ini:
+    - {key: connection_facts_modules, section: defaults}
+  type: dict
+FACTS_MODULES:
+  name: Gather Facts Modules
+  default:
+    - smart
+  description: "Which modules to run during a play's fact gathering stage, using the default of 'smart' will try to figure it out based on connection type."
+  env: [{name: ANSIBLE_FACTS_MODULES}]
+  ini:
+    - {key: facts_modules, section: defaults}
+  type: list
+  vars:
+    - name: ansible_facts_modules
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
   default: False
