@@ -6,8 +6,8 @@ Ansible for VMware Scenarios
 
 These scenarios teach you how to accomplish common VMware tasks using Ansible. To get started, please select the task you want to accomplish.
 
-.. contents::
-   :local:
+.. toctree::
+   :maxdepth: 1
 
    vmware_scenarios/vmware_intro
    vmware_scenarios/scenario_clone_template
