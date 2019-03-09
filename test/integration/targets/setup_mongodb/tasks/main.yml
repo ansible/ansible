@@ -19,7 +19,7 @@
 # ============================================================
 
 - meta: end_play
-  when: ansible_distribution != 'Ubuntu'
+  when: ansible_distribution != 'Ubuntu' or ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04')
 
 - name: Import MongoDB public GPG Key xenial
   apt_key:
