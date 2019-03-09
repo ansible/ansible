@@ -23,6 +23,11 @@ description:
       L(ECC,https://en.wikipedia.org/wiki/Elliptic-curve_cryptography)
       private keys.
     - Keys are generated in PEM format.
+    - "Please note that the module regenerates private keys if they don't match
+      the module's options. In particular, if you provide another passphrase
+      (or specify none), change the keysize, etc., the private key will be
+      regenerated. If you are concerned of this overwriting your private key,
+      please consider using the I(backup) option."
     - The module can use the cryptography Python library, or the pyOpenSSL Python
       library. By default, it tries to detect which one is available. This can be
       overridden with the I(select_crypto_backend) option."
@@ -111,6 +116,13 @@ options:
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: "2.8"
+    backup:
+        description:
+            - Create a backup file including the timestamp information so you can get
+              the original private key back if you somehow clobbered it incorrectly.
+        type: bool
+        default: no
+        version_added: "2.8"
 extends_documentation_fragment:
 - files
 seealso:
@@ -182,6 +194,11 @@ fingerprint:
       sha256: "41:ab:c7:cb:d5:5f:30:60:46:99:ac:d4:00:70:cf:a1:76:4f:24:5d:10:24:57:5d:51:6e:09:97:df:2f:de:c7"
       sha384: "85:39:50:4e:de:d9:19:33:40:70:ae:10:ab:59:24:19:51:c3:a2:e4:0b:1c:b1:6e:dd:b3:0c:d9:9e:6a:46:af:da:18:f8:ef:ae:2e:c0:9a:75:2c:9b:b3:0f:3a:5f:3d"
       sha512: "fd:ed:5e:39:48:5f:9f:fe:7f:25:06:3f:79:08:cd:ee:a5:e7:b3:3d:13:82:87:1f:84:e1:f5:c7:28:77:53:94:86:56:38:69:f0:d9:35:22:01:1e:a6:60:...:0f:9b"
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/privatekey.pem.2019-03-09@11:22~
 '''
 
 import abc
@@ -255,6 +272,9 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         self.privatekey = None
         self.fingerprint = {}
 
+        self.backup = module.params['backup']
+        self.backup_path = None
+
         self.mode = module.params.get('mode', None)
         if self.mode is None:
             self.mode = 0o600
@@ -271,6 +291,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         """Generate a keypair."""
 
         if not self.check(module, perms_required=False) or self.force:
+            if self.backup:
+                self.backup_file = self.module.backup_local(self.path)
             privatekey_data = self._generate_private_key_data()
             try:
                 privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
@@ -297,6 +319,11 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         file_args = module.load_file_common_arguments(module.params)
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
+
+    def remove(self):
+        if self.backup:
+            self.backup_file = self.module.backup_local(self.path)
+        super(PrivateKeyBase, self).remove()
 
     @abc.abstractmethod
     def _check_passphrase(self):
@@ -325,6 +352,8 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
             'changed': self.changed,
             'fingerprint': self.fingerprint,
         }
+        if self.backup_path:
+            result['backup_path'] = self.backup_path
 
         return result
 
@@ -583,6 +612,7 @@ def main():
             path=dict(type='path', required=True),
             passphrase=dict(type='str', no_log=True),
             cipher=dict(type='str'),
+            backup=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', choices=['auto', 'pyopenssl', 'cryptography'], default='auto'),
         ),
         supports_check_mode=True,
