@@ -1,6 +1,6 @@
 - name: Registering service name
   set_fact:
-    service_name: "{{ name_prefix ~ '-logging' }}"
+    service_name: "{{ name_prefix ~ '-mounts' }}"
     volume_name_1: "{{ name_prefix ~ '-volume-1' }}"
     volume_name_2: "{{ name_prefix ~ '-volume-2' }}"
 
