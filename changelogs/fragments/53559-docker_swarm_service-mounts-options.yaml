@@ -1,2 +1,3 @@
 bugfixes:
   - "docker_swarm_service - Extended ``mounts`` options. It now also accepts ``labels``, ``propagation``, ``no_copy``, ``driver_config``, ``tmpfs_size``, ``tmpfs_mode``."
+  - "docker_swarm_service - The module return value for ``mounts`` previously returned a key named ``readonly``. It's now known as ``read_only``."
