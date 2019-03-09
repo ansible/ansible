@@ -1744,6 +1744,8 @@ class DockerService(DockerBaseClass):
         return self.image != old_image, old_image
 
     def has_rollback_config_changed(self, old_rollback_config):
+        if old_rollback_config is None and self.rollback_config:
+            return True
         defined_options = dict(
             (option, value) for option, value in self.rollback_config.items()
             if value is not None
