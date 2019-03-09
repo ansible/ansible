@@ -7,8 +7,6 @@
     network_name_2: "{{ name_prefix ~ '-network-2' }}"
     config_name_1: "{{ name_prefix ~ '-configs-1' }}"
     config_name_2: "{{ name_prefix ~ '-configs-2' }}"
-    volume_name_1: "{{ name_prefix ~ '-volume-1' }}"
-    volume_name_2: "{{ name_prefix ~ '-volume-2' }}"
     secret_name_1: "{{ name_prefix ~ '-secret-1' }}"
     secret_name_2: "{{ name_prefix ~ '-secret-2' }}"
 
@@ -17,7 +15,6 @@
     service_names: "{{ service_names }} + [service_name]"
     network_names: "{{ network_names }} + [network_name_1, network_name_2]"
     config_names: "{{ config_names }} + [config_name_1, config_name_2]"
-    volume_names: "{{ volume_names }} + [volume_name_1, volume_name_2]"
     secret_names: "{{ secret_names }} + [secret_name_1, secret_name_2]"
 
 - docker_config:
@@ -57,15 +54,6 @@
     - "{{ network_name_2 }}"
   loop_control:
     loop_var: network_name
-
-- docker_volume:
-    name: "{{ volume_name }}"
-    state: present
-  loop:
-    - "{{ volume_name_1 }}"
-    - "{{ volume_name_2 }}"
-  loop_control:
-    loop_var: volume_name
 
 ####################################################################
 ## args ############################################################
@@ -1407,81 +1395,6 @@
       - mode_1 is changed
       - mode_2 is not changed
       - mode_3 is changed
-
-####################################################################
-## mounts ##########################################################
-####################################################################
-
-- name: mounts
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    mounts:
-      - source: "{{ volume_name_1 }}"
-        target: "/tmp/{{ volume_name_1 }}"
-        type: "volume"
-  register: mounts_1
-
-- name: mounts (idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    mounts:
-      - source: "{{ volume_name_1 }}"
-        target: "/tmp/{{ volume_name_1 }}"
-        type: "volume"
-  register: mounts_2
-
-- name: mounts (add)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    mounts:
-      - source: "{{ volume_name_1 }}"
-        target: "/tmp/{{ volume_name_1 }}"
-        type: "volume"
-      - source: "{{ volume_name_2 }}"
-        target: "/tmp/{{ volume_name_2 }}"
-        type: "volume"
-  register: mounts_3
-
-- name: mounts (empty)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    mounts: []
-  register: mounts_4
-
-- name: mounts (empty idempotency)
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    image: alpine:3.8
-    resolve_image: no
-    command: '/bin/sh -v -c "sleep 10m"'
-    mounts: []
-  register: mounts_5
-
-- name: cleanup
-  docker_swarm_service:
-    name: "{{ service_name }}"
-    state: absent
-  diff: no
-
-- assert:
-    that:
-      - mounts_1 is changed
-      - mounts_2 is not changed
-      - mounts_3 is changed
-      - mounts_4 is changed
-      - mounts_5 is not changed
 
 ####################################################################
 ## networks ########################################################
