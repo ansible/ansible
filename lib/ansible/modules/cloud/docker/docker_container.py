@@ -2234,7 +2234,7 @@ class AnsibleDockerClientContainer(AnsibleDockerClient):
         self.comparisons = comparisons
 
     def __init__(self, **kwargs):
-        def detect_ipvX_address_usage():
+        def detect_ipvX_address_usage(client):
             '''
             Helper function to detect whether any specified network uses ipv4_address or ipv6_address
             '''
