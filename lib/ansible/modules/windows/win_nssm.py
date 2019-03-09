@@ -49,15 +49,18 @@ options:
   description:
     description:
       - The description to set for the service.
+    type: str
     version_added: "2.8.0"
   display_name:
     description:
       - The display name to set for the service.
+    type: str
     version_added: "2.8.0"
   working_directory:
     version_added: "2.8.0"
     description:
       - The working directory to run the service executable from (defaults to the directory containing the application binary)
+    type: path
     aliases: [ app_directory, chdir ]
   stdout_file:
     description:
@@ -130,7 +133,7 @@ EXAMPLES = r'''
 # Install and start the consul service with a list of parameters
 # This will yield the following command: C:\windows\foo.exe bar "true"
 - win_nssm:
-    name: consul
+    name: Install the Consul service
     application: C:\consul\consul.exe
     arguments:
       - agent
@@ -138,7 +141,7 @@ EXAMPLES = r'''
 
 # Install and start the consul service with an arbitrary string of parameters
 # This is strictly equivalent to the previous example
-- name: Make sure the Consul service runs
+- name: Install the Consul service (alternative)
   win_nssm:
     name: consul
     application: C:\consul\consul.exe
