@@ -109,6 +109,12 @@ EXAMPLES = r'''
     lc_ctype: de_DE.UTF-8
     template: template0
 
+# Note: Default limit for the number of concurrent connections to a specific database is "-1", which means "unlimited"
+- name: Create a new database with name "acme" which has a limit of 100 concurrent connections
+  postgresql_db:
+    name: acme
+    conn_limit: "100"
+
 - name: Dump an existing database to a file
   postgresql_db:
     name: acme
