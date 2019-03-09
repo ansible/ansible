@@ -383,7 +383,7 @@ class DnfModule(YumDnf):
         ]
 
         rpm_arch_re = re.compile(r'(.*)\.(.*)')
-        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.]*)')
+        rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
         try:
             arch = None
             rpm_arch_match = rpm_arch_re.match(packagename)

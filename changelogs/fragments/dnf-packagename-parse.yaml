@@ -1,0 +1,4 @@
+---
+- bugfixes:
+  - 'dnf - fix package parsing to handle git snapshot nevra'
+  - 'dnf - enable package name specification for absent'
