@@ -105,8 +105,8 @@ EXAMPLES = '''
     url_username: "ansible"
     url_password: "a_secret"
     state: present
-    name: "{{ ansible_fqdn }}"
-    ip: "{{ ansible_default_ipv4.address }}"
+    name: "{{ ansible_facts['fqdn'] }}"
+    ip: "{{ ansible_facts['default_ipv4']['address'] }}"
   delegate_to: 127.0.0.1
 '''
 

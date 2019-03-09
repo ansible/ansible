@@ -108,7 +108,7 @@ EXAMPLES = '''
     name: user.email
     repo: /etc
     scope: local
-    value: 'root@{{ ansible_fqdn }}'
+    value: "root@{{ ansible_facts['fqdn'] }}"
 
 # Read individual values from git config
 - git_config:

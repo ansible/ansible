@@ -14,7 +14,7 @@ How can I set the PATH or any other environment variable for a task or entire pl
 Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play::
 
     environment:
-      PATH: "{{ ansible_env.PATH }}:/thingy/bin"
+      PATH: "{{ ansible_facts['env']['PATH'] }}:/thingy/bin"
       SOME: value
 
 .. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
@@ -352,7 +352,7 @@ Then you can use the facts inside your template, like this:
 .. code-block:: jinja
 
     {% for host in groups['db_servers'] %}
-       {{ hostvars[host]['ansible_eth0']['ipv4']['address'] }}
+       {{ hostvars[host]['ansible_facts']['eth0']['ipv4']['address'] }}
     {% endfor %}
 
 .. _programatic_access_to_a_variable:
@@ -397,16 +397,16 @@ Anyway, here's the trick:
 
 .. code-block:: jinja
 
-    {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
+    {{ hostvars[groups['webservers'][0]]['ansible_facts']['eth0']['ipv4']['address'] }}
 
 Notice how we're pulling out the hostname of the first machine of the webservers group.  If you are doing this in a template, you
 could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact::
 
-    - set_fact: headnode={{ groups[['webservers'][0]] }}
+    - set_fact:
+        headnode: "{{ groups[['webservers'][0]] }}"
 
-    - debug: msg={{ hostvars[headnode].ansible_eth0.ipv4.address }}
-
-Notice how we interchanged the bracket syntax for dots -- that can be done anywhere.
+    - debug:
+        msg: "{{ hostvars[headnode]['ansible_facts']['eth0']['ipv4']['address'] }}"
 
 .. _file_recursion:
 
@@ -433,7 +433,7 @@ For environment variables on the TARGET machines, they are available via facts i
 
 .. code-block:: jinja
 
-   {{ ansible_env.SOME_VARIABLE }}
+   {{ ansible_facts['env']['SOME_VARIABLE'] }}
 
 If you need to set environment variables for TASK execution, see :ref:`playbooks_environment` in the :ref:`Advanced Playbooks <playbooks_special_topics>` section.
 There are several ways to set environment variables on your target machines. You can use the :ref:`template <template_module>`, :ref:`replace <replace_module>`, or :ref:`lineinfile <lineinfile_module>` modules to introduce environment variables into files.

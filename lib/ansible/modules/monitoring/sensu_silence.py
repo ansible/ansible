@@ -66,7 +66,7 @@ EXAMPLES = '''
 - name: Silence server1.example.dev
   sensu_silence:
     subscription: client:server1.example.dev
-    creator: "{{ ansible_user_id }}"
+    creator: "{{ ansible_facts['user_id'] }}"
     reason: Performing maintenance
 
 # Silence specific check for a client
@@ -74,7 +74,7 @@ EXAMPLES = '''
   sensu_silence:
     subscription: client:server1.example.dev
     check: CPU_Usage
-    creator: "{{ ansible_user_id }}"
+    creator: "{{ ansible_facts['user_id'] }}"
     reason: Investigation alert issue
 
 # Silence multiple clients from a dict
@@ -86,9 +86,9 @@ EXAMPLES = '''
 
 - name: Silence several clients from a dict
   sensu_silence:
-    subscription: "client:{{ item.key }}"
-    reason: "{{ item.value.reason }}"
-    creator: "{{ ansible_user_id }}"
+    subscription: "client:{{ item['key'] }}"
+    reason: "{{ item['value']['reason'] }}"
+    creator: "{{ ansible_facts['user_id'] }}"
   with_dict: "{{ silence }}"
 '''
 

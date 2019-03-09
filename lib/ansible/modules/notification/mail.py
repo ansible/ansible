@@ -137,7 +137,7 @@ options:
 EXAMPLES = r'''
 - name: Example playbook sending mail to root
   mail:
-    subject: System {{ ansible_hostname }} has been successfully provisioned.
+    subject: System {{ ansible_facts['hostname'] }} has been successfully provisioned.
   delegate_to: localhost
 
 - name: Sending an e-mail using Gmail SMTP servers
@@ -148,7 +148,7 @@ EXAMPLES = r'''
     password: mysecret
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: System {{ ansible_hostname }} has been successfully provisioned.
+    body: System {{ ansible_facts['hostname'] }} has been successfully provisioned.
   delegate_to: localhost
 
 - name: Send e-mail to a bunch of users, attaching files
@@ -177,7 +177,7 @@ EXAMPLES = r'''
     port: 25
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: System {{ ansible_hostname }} has been successfully provisioned.
+    body: System {{ ansible_facts['hostname'] }} has been successfully provisioned.
 
 - name: Sending an e-mail using Legacy SSL to the remote machine
   mail:
@@ -185,7 +185,7 @@ EXAMPLES = r'''
     port: 25
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: System {{ ansible_hostname }} has been successfully provisioned.
+    body: System {{ ansible_facts['hostname'] }} has been successfully provisioned.
     secure: always
 
 - name: Sending an e-mail using StartTLS to the remote machine
@@ -194,7 +194,7 @@ EXAMPLES = r'''
     port: 25
     to: John Smith <john.smith@example.com>
     subject: Ansible-report
-    body: System {{ ansible_hostname }} has been successfully provisioned.
+    body: System {{ ansible_facts['hostname'] }} has been successfully provisioned.
     secure: starttls
 '''
 

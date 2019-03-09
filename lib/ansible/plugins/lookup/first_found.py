@@ -73,7 +73,7 @@ EXAMPLES = """
     dest: "/etc/foo.conf"
   vars:
     findme:
-      - "{{ ansible_virtualization_type }}_foo.conf"
+      - "{{ ansible_facts['virtualization_type'] }}_foo.conf"
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
@@ -81,8 +81,8 @@ EXAMPLES = """
   vars:
     params:
       files:
-        - '{{ansible_os_distribution}}.yml'
-        - '{{ansible_os_family}}.yml'
+        - "{{ ansible_facts['distribution'] }}.yml"
+        - "{{ ansible_facts['os_family'] }}.yml"
         - default.yml
       paths:
         - 'vars'

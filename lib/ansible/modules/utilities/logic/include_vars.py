@@ -103,8 +103,8 @@ EXAMPLES = r'''
   include_vars: "{{ lookup('first_found', possible_files) }}"
   vars:
     possible_files:
-      - "{{ ansible_distribution }}.yaml"
-      - "{{ ansible_os_family }}.yaml"
+      - "{{ ansible_facts['distribution'] }}.yaml"
+      - "{{ ansible_facts['os_family'] }}.yaml"
       - default.yaml
 
 - name: Bare include (free-form)

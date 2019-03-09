@@ -245,7 +245,7 @@ when a term comes up on the mailing list.
     Local Action
         A local_action directive in a :term:`playbook <playbooks>` targeting
         remote machines means that the given step will actually occur on the
-        local machine, but that the variable ``{{ ansible_hostname }}`` can be
+        local machine, but that the variable ``{{ ansible_facts['hostname'] }}`` can be
         passed in to reference the remote hostname being referred to in that
         step.  This can be used to trigger, for example, an rsync operation.
 

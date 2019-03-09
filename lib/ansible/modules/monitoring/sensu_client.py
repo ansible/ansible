@@ -95,8 +95,8 @@ EXAMPLES = '''
 # With customization
 - name: Configure Sensu client
   sensu_client:
-    name: "{{ ansible_fqdn }}"
-    address: "{{ ansible_default_ipv4['address'] }}"
+    name: "{{ ansible_facts['fqdn'] }}"
+    address: "{{ ansible_facts['default_ipv4']['address'] }}"
     subscriptions:
       - default
       - webserver

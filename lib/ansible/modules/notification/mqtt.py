@@ -99,8 +99,8 @@ author: "Jan-Piet Mens (@jpmens)"
 
 EXAMPLES = '''
 - mqtt:
-    topic: 'service/ansible/{{ ansible_hostname }}'
-    payload: 'Hello at {{ ansible_date_time.iso8601 }}'
+    topic: "service/ansible/{{ ansible_facts['hostname'] }}"
+    payload: "Hello at {{ ansible_facts['date_time']['iso8601'] }}"
     qos: 0
     retain: False
     client_id: ans001

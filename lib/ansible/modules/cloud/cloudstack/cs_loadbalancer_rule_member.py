@@ -94,7 +94,7 @@ EXAMPLES = '''
     - name: Remove from load balancer
       cs_loadbalancer_rule_member:
         name: balance_http
-        vm: "{{ ansible_hostname }}"
+        vm: "{{ ansible_facts['hostname'] }}"
         state: absent
       delegate_to: localhost
   tasks:
@@ -103,7 +103,7 @@ EXAMPLES = '''
     - name: Add to load balancer
       cs_loadbalancer_rule_member:
         name: balance_http
-        vm: "{{ ansible_hostname }}"
+        vm: "{{ ansible_facts['hostname'] }}"
         state: present
       delegate_to: localhost
 '''

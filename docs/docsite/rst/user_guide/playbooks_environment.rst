@@ -85,7 +85,7 @@ Some language-specific version managers (such as rbenv and nvm) require environm
 
       environment:
         NVM_DIR: /var/local/nvm
-        PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_env.PATH }}
+        PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_facts['env']['PATH'] }}
 
       tasks:
       - name: check for package.json
@@ -117,7 +117,7 @@ You might also want to simply specify the environment for a single task::
       environment:
         CONFIGURE_OPTS: '--disable-install-doc'
         RBENV_ROOT: '{{ rbenv_root }}'
-        PATH: '{{ rbenv_root }}/bin:{{ rbenv_root }}/shims:{{ rbenv_plugins }}/ruby-build/bin:{{ ansible_env.PATH }}'
+        PATH: '{{ rbenv_root }}/bin:{{ rbenv_root }}/shims:{{ rbenv_plugins }}/ruby-build/bin:{{ ansible_facts['env']['PATH'] }}'
 
 .. note::
    ``environment:`` does not affect Ansible itself, ONLY the context of the specific task action and this does not include Ansible's own configuration settings.

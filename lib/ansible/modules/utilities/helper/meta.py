@@ -96,6 +96,6 @@ EXAMPLES = r'''
 - name: End the play for hosts that run CentOS 6
   meta: end_host
   when:
-  - ansible_distribution == 'CentOS'
-  - ansible_distribution_major_version == '6'
+  - ansible_facts['distribution'] == 'CentOS'
+  - ansible_facts['distribution_major_version'] == '6'
 '''

@@ -55,7 +55,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- assert: { that: "ansible_os_family != 'RedHat'" }
+- assert: { that: "ansible_facts['os_family'] != 'RedHat'" }
 
 - assert:
     that:

@@ -86,7 +86,7 @@ For more fine grained skipping, use conditionals in integration test playbooks, 
 
 .. code-block:: yaml
 
-   when: ansible_distribution in ('Ubuntu')
+   when: ansible_facts['distribution'] in ('Ubuntu')
 
 
 Miscellaneous

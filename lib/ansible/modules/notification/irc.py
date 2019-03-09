@@ -106,7 +106,7 @@ EXAMPLES = '''
     port: 6669
     server: irc.example.net
     channel: #t1
-    msg: 'All finished at {{ ansible_date_time.iso8601 }}'
+    msg: "All finished at {{ ansible_facts['date_time']['iso8601'] }}"
     color: red
     nick: ansibleIRC
 
@@ -118,7 +118,7 @@ EXAMPLES = '''
     nick_to:
       - nick1
       - nick2
-    msg: 'All finished at {{ ansible_date_time.iso8601 }}'
+    msg: "All finished at {{ ansible_facts['date_time']['iso8601'] }}"
     color: red
     nick: ansibleIRC
 '''

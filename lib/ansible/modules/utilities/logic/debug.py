@@ -57,8 +57,8 @@ EXAMPLES = r'''
     msg: System {{ inventory_hostname }} has uuid {{ ansible_product_uuid }}
 
 - debug:
-    msg: System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}
-  when: ansible_default_ipv4.gateway is defined
+    msg: "System {{ inventory_hostname }} has gateway {{ ansible_facts['default_ipv4']['gateway'] }}"
+  when: ansible_facts['default_ipv4']['gateway'] is defined
 
 # Example that prints return information from the previous task
 - shell: /usr/bin/uptime

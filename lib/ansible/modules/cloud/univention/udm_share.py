@@ -41,7 +41,7 @@ options:
         required: false
         description:
             - Host FQDN (server which provides the share), e.g. C({{
-              ansible_fqdn }}). Required if C(state=present).
+              ansible_facts['fqdn'] }}). Required if C(state=present).
     path:
         required: false
         description:

@@ -1214,7 +1214,7 @@ doesn't know it is a boolean value::
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
-    {{ ansible_mounts | map(attribute='mount') | join(',') }}
+    {{ ansible_facts['mounts'] | map(attribute='mount') | join(',') }}
 
 To get date object from string use the `to_datetime` filter, (new in version in 2.2)::
 
@@ -1239,7 +1239,7 @@ To format a date using a string (like with the shell date command), use the "str
     {{ '%H:%M:%S' | strftime }}
 
     # Use ansible_date_time.epoch fact
-    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_date_time.epoch) }}
+    {{ '%Y-%m-%d %H:%M:%S' | strftime(ansible_facts['date_time']['epoch']) }}
 
     # Use arbitrary epoch value
     {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01

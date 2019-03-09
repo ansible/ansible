@@ -53,7 +53,7 @@ options:
         choices: [normal, low]
     host:
         description: ["Host name to associate with the event."]
-        default: "{{ ansible_hostname }}"
+        default: "{{ ansible_facts['hostname'] }}"
         version_added: "2.4"
     tags:
         description: ["Comma separated list of tags to apply to the event."]

@@ -204,7 +204,7 @@ EXAMPLES = '''
 
 - name: Create a template from a stopped virtual machine's volume
   cs_template:
-    name: Debian 9 (64-bit) 20GB ({{ ansible_date_time.date }})
+    name: "Debian 9 (64-bit) 20GB ({{ ansible_facts['date_time']['date'] }})"
     vm: debian-9-base-vm
     os_type: Debian GNU/Linux 9 (64-bit)
     zone: tokio-ix
@@ -216,7 +216,7 @@ EXAMPLES = '''
 - name: Create a template from a stopped virtual machine's volume
   cs_template:
     name: Debian 9 (64-bit)
-    display_text: Debian 9 (64-bit) 20GB ({{ ansible_date_time.date }})
+    display_text: "Debian 9 (64-bit) 20GB ({{ ansible_facts['date_time']['date'] }})"
     template_find_option: display_text
     vm: debian-9-base-vm
     os_type: Debian GNU/Linux 9 (64-bit)

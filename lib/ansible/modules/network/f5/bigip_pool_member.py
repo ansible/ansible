@@ -213,7 +213,7 @@ EXAMPLES = '''
   bigip_pool_member:
     pool: my-pool
     partition: Common
-    host: "{{ ansible_default_ipv4['address'] }}"
+    host: "{{ ansible_facts['default_ipv4']['address'] }}"
     port: 80
     description: web server
     connection_limit: 100
@@ -229,7 +229,7 @@ EXAMPLES = '''
   bigip_pool_member:
     pool: my-pool
     partition: Common
-    host: "{{ ansible_default_ipv4['address'] }}"
+    host: "{{ ansible_facts['default_ipv4']['address'] }}"
     port: 80
     ratio: 1
     description: nginx server
@@ -244,7 +244,7 @@ EXAMPLES = '''
     state: absent
     pool: my-pool
     partition: Common
-    host: "{{ ansible_default_ipv4['address'] }}"
+    host: "{{ ansible_facts['default_ipv4']['address'] }}"
     port: 80
     provider:
       server: lb.mydomain.com
@@ -257,7 +257,7 @@ EXAMPLES = '''
     state: forced_offline
     pool: my-pool
     partition: Common
-    host: "{{ ansible_default_ipv4['address'] }}"
+    host: "{{ ansible_facts['default_ipv4']['address'] }}"
     port: 80
     provider:
       server: lb.mydomain.com

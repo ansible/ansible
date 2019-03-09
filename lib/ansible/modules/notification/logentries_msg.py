@@ -46,7 +46,7 @@ RETURN = '''# '''
 EXAMPLES = '''
 - logentries_msg:
     token=00000000-0000-0000-0000-000000000000
-    msg="{{ ansible_hostname }}"
+    msg="{{ ansible_facts['hostname'] }}"
 '''
 
 import socket

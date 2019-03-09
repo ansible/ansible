@@ -130,8 +130,8 @@ EXAMPLES = r'''
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
     block: |
-      <h1>Welcome to {{ ansible_hostname }}</h1>
-      <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
+      <h1>Welcome to {{ ansible_facts['hostname'] }}</h1>
+      <p>Last updated on {{ ansible_facts['date_time']['iso8601'] }}</p>
 
 - name: Remove HTML as well as surrounding markers
   blockinfile:

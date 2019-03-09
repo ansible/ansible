@@ -48,7 +48,7 @@ options:
   start_time:
     description:
      - Date the policy becomes active
-    default: ansible_date_time.iso8601
+    default: ansible_facts['date_time']['iso8601']
   delivery_packet_count:
     description:
      - Run policy until delivery_packet_count packets are delivered.

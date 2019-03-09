@@ -45,14 +45,14 @@ EXAMPLES = r'''
           tags:
             host: server01
             region: us-west
-          time: "{{ ansible_date_time.iso8601 }}"
+          time: "{{ ansible_facts['date_time']['iso8601'] }}"
           fields:
             value: 2000
         - measurement: connections
           tags:
             host: server02
             region: us-east
-          time: "{{ ansible_date_time.iso8601 }}"
+          time: "{{ ansible_facts['date_time']['iso8601'] }}"
           fields:
             value: 3000
 '''
