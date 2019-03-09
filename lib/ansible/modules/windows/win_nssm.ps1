@@ -59,7 +59,6 @@ function Invoke-NssmCommand {
     $command = Argv-ToString -arguments (@($executable) + $arguments)
     $result = Run-Command -command $command
 
-    #TODO Add this to CommandUtil.psm1 ?
     $result.arguments = $command
 
     return $result
@@ -321,7 +320,7 @@ if ($null -ne $appParameters) {
 if ($state -in @("started","stopped","restarted")) {
     Add-DeprecationWarning -obj $result -message "The values 'started', 'stopped', and 'restarted' for 'state' will be removed soon, use the win_service module to start or stop the service instead" -version 2.12
 }
-if ($null -ne $startMode) {
+if ($params.ContainsKey('start_mode')) {
     Add-DeprecationWarning -obj $result -message "The parameter 'start_mode' will be removed soon, use the win_service module instead" -version 2.12
 }
 if ($null -ne $dependencies) {
