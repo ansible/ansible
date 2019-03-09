@@ -397,6 +397,8 @@ def main():
                 response = meraki.request(path, method='PUT', payload=json.dumps(payload))
                 meraki.result['changed'] = True
                 meraki.result['data'] = response
+            else:
+                meraki.result['data'] = original
     elif meraki.params['state'] == 'absent':
         if is_vlan_valid(meraki, net_id, meraki.params['vlan_id']):
             path = meraki.construct_path('delete', net_id=net_id) + str(meraki.params['vlan_id'])
