@@ -1,5 +1,6 @@
 cloud/azure
 destructive
 shippable/azure/group2
+disabled
 azure_rm_devtestlabvirtualnetwork
 azure_rm_devtestlab_facts
