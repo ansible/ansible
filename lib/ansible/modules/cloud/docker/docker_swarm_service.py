@@ -969,6 +969,17 @@ EXAMPLES = '''
       delay: 10s
       order: stop-first
 
+- name: Set rollback config
+  docker_swarm_service:
+    name: myservice
+    image: alpine
+    update_config:
+      failure_action: rollback
+    rollback_config:
+      parallelism: 2
+      delay: 10s
+      order: stop-first
+
 - name: Set placement preferences
   docker_swarm_service:
     name: myservice
