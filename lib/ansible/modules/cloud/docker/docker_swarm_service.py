@@ -1344,6 +1344,8 @@ class DockerService(DockerBaseClass):
 
     @staticmethod
     def get_rollback_config_from_ansible_params(params):
+        if params['rollback_config'] is None:
+            return None
         rollback_config = params['rollback_config'] or {}
         delay = get_nanoseconds_from_raw_option(
             'rollback_config.delay',
@@ -1666,7 +1668,7 @@ class DockerService(DockerBaseClass):
             differences.add('restart_policy_delay', parameter=self.restart_policy_delay, active=os.restart_policy_delay)
         if self.restart_policy_window is not None and self.restart_policy_window != os.restart_policy_window:
             differences.add('restart_policy_window', parameter=self.restart_policy_window, active=os.restart_policy_window)
-        if self.has_rollback_config_changed(os.rollback_config):
+        if self.rollback_config is not None and self.has_rollback_config_changed(os.rollback_config):
             differences.add('rollback_config', parameter=self.rollback_config, active=os.rollback_config)
         if self.update_delay is not None and self.update_delay != os.update_delay:
             differences.add('update_delay', parameter=self.update_delay, active=os.update_delay)
