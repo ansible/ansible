@@ -259,7 +259,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
     def get_variable_manager(self):
         return self._variable_manager
 
-    def _validate_debugger(self, attr, name, value):
+    def _post_validate_debugger(self, attr, value, templar):
+        if templar.is_template(value):
+            value = templar.template(value, fail_on_undefined=True)
+        else:
+            value = value
         valid_values = frozenset(('always', 'on_failed', 'on_unreachable', 'on_skipped', 'never'))
         if value and isinstance(value, string_types) and value not in valid_values:
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
