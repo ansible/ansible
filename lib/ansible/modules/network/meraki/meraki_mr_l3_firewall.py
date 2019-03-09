@@ -241,12 +241,8 @@ def main():
         for org in orgs:
             if org['name'] == meraki.params['org_name']:
                 org_id = org['id']
-    net_id = meraki.params['net_id']
-    if net_id is None:
-        if orgs is None:
-            orgs = meraki.get_orgs()
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'],
-                                   data=meraki.get_nets(org_id=org_id))
+    net_id = meraki.assign_net_id(org_id)
+
     number = meraki.params['number']
     if meraki.params['ssid_name']:
         number = get_ssid_number(meraki.params['ssid_name'], get_ssids(meraki, net_id))

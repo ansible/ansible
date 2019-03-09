@@ -228,11 +228,7 @@ def main():
     org_id = meraki.params['org_id']
     if meraki.params['org_name']:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    net_id = meraki.params['net_id']
-    nets = meraki.get_nets(org_id=org_id)
-    if meraki.params['net_name']:
-        net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
-
+    net_id = meraki.assign_net_id(org_id)
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_config_templates(meraki, org_id)
     elif meraki.params['state'] == 'present':

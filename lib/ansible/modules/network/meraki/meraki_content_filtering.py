@@ -172,11 +172,7 @@ def main():
     org_id = meraki.params['org_id']
     if not org_id:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    net_id = None
-    if net_id is None:
-        nets = meraki.get_nets(org_id=org_id)
-        net_id = meraki.get_net_id(org_id, meraki.params['net_name'], data=nets)
-
+    net_id = meraki.assign_net_id(org_id)
     if module.params['state'] == 'present':
         payload = dict()
         if meraki.params['allowed_urls']:
