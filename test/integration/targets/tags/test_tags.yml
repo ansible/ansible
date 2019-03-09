@@ -32,3 +32,10 @@
     - name: Task_with_templated_tags
       debug: msg=templated
       tags: "{{ the_tags }}"
+    - name: Task_as_int
+      debug: msg=int_tag
+      tags: 1
+    - name: Task_as_int_list
+      debug: msg=tags_int_list
+      tags:
+      - 2
