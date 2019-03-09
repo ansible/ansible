@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_text
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 
@@ -33,6 +34,8 @@ class Taggable:
     def _load_tags(self, attr, ds):
         if isinstance(ds, list):
             return ds
+        if isinstance(ds, int):
+            return [ds]
         elif isinstance(ds, string_types):
             value = ds.split(',')
             if isinstance(value, list):
@@ -54,7 +57,7 @@ class Taggable:
                 if isinstance(tag, list):
                     _temp_tags.update(tag)
                 else:
-                    _temp_tags.add(tag)
+                    _temp_tags.add(to_text(tag))
             tags = _temp_tags
             self.tags = list(tags)
         else:
