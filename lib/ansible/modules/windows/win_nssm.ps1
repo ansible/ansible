@@ -3,7 +3,7 @@
 # Copyright: (c) 2015, George Frank <george@georgefrank.net>
 # Copyright: (c) 2015, Adam Keech <akeech@chathamfinancial.com>
 # Copyright: (c) 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
-# Copyright: (c) 2018, Kevin Subileau (@ksubileau)
+# Copyright: (c) 2019, Kevin Subileau (@ksubileau)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 #Requires -Module Ansible.ModuleUtils.Legacy
@@ -21,6 +21,7 @@ $start_modes_map = @{
 
 $params = Parse-Args -arguments $args -supports_check_mode $true
 $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
+$diff_mode = Get-AnsibleParam -obj $params -name "_ansible_diff" -type "bool" -default $false
 
 $name = Get-AnsibleParam -obj $params -name "name" -type "str" -failifempty $true
 $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "present" -validateset "present","absent","started","stopped","restarted" -resultobj $result
@@ -46,6 +47,7 @@ $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $result = @{
     changed = $false
 }
+$global:diff_text = $null
 
 function Invoke-NssmCommand {
     [CmdletBinding()]
@@ -182,6 +184,7 @@ function Update-NssmServiceParameter {
             }
         }
 
+        $global:diff_text += "-$parameter = $($current_values -join ', ')`n+$parameter = $($arguments -join ', ')`n"
         $result.changed_by = $parameter
         $result.changed = $true
     }
@@ -293,7 +296,7 @@ if (($null -ne $appParameters) -and ($null -ne $appArguments)) {
 
 # Backward compatibility for old parameters style. Remove the block bellow in 2.12
 if ($null -ne $appParameters) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'app_parameters' will be removed soon, use 'arguments' instead." -version 2.12
+    Add-DeprecationWarning -obj $result -message "The parameter 'app_parameters' will be removed soon, use 'arguments' instead" -version 2.12
 
     if ($appParameters -isnot [string]) {
         Fail-Json -obj $result -message "The app_parameters parameter must be a string representing a dictionary."
@@ -316,19 +319,19 @@ if ($null -ne $appParameters) {
 }
 
 if ($state -in @("started","stopped","restarted")) {
-    Add-DeprecationWarning -obj $result -message "The values 'started', 'stopped', and 'restarted' for 'state' will be removed soon, use the win_service module to start or stop the service instead." -version 2.12
+    Add-DeprecationWarning -obj $result -message "The values 'started', 'stopped', and 'restarted' for 'state' will be removed soon, use the win_service module to start or stop the service instead" -version 2.12
 }
 if ($null -ne $startMode) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'start_mode' will be removed soon, use the win_service module instead." -version 2.12
+    Add-DeprecationWarning -obj $result -message "The parameter 'start_mode' will be removed soon, use the win_service module instead" -version 2.12
 }
 if ($null -ne $dependencies) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'dependencies' will be removed soon, use the win_service module instead." -version 2.12
+    Add-DeprecationWarning -obj $result -message "The parameter 'dependencies' will be removed soon, use the win_service module instead" -version 2.12
 }
 if ($null -ne $user) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'user' will be removed soon, use the win_service module instead." -version 2.12
+    Add-DeprecationWarning -obj $result -message "The parameter 'user' will be removed soon, use the win_service module instead" -version 2.12
 }
 if ($null -ne $password) {
-    Add-DeprecationWarning -obj $result -message "The parameter 'password' will be removed soon, use the win_service module instead." -version 2.12
+    Add-DeprecationWarning -obj $result -message "The parameter 'password' will be removed soon, use the win_service module instead" -version 2.12
 }
 
 if ($state -ne 'absent') {
@@ -368,10 +371,12 @@ if ($state -eq 'absent') {
             }
         }
 
+        $diff_text += "-[$name]"
         $result.changed_by = "remove_service"
         $result.changed = $true
     }
 } else {
+    $diff_text_added_prefix = ''
     if (-not $service_exists) {
         if(-not $check_mode) {
             $nssm_result = Invoke-NssmCommand -arguments @("install", $name, $application)
@@ -384,9 +389,12 @@ if ($state -eq 'absent') {
             $service_exists = $true
         }
 
+        $diff_text_added_prefix = '+'
         $result.changed_by = "install_service"
         $result.changed = $true
     }
+
+    $diff_text += "$diff_text_added_prefix[$name]`n"
 
     # We cannot configure a service that was created above in check mode as it won't actually exist
     if ($service_exists) {
@@ -464,6 +472,12 @@ if ($state -eq 'absent') {
         }
         ########################################################################
 
+    }
+}
+
+if ($diff_mode -and $result.changed -eq $true) {
+    $result.diff = @{
+        prepared = $diff_text
     }
 }
 
