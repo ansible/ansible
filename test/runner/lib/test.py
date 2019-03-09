@@ -174,7 +174,11 @@ class TestTimeout(TestResult):
         :type args: TestConfig
         """
         message = 'Tests were aborted after exceeding the %d minute time limit.' % self.timeout_duration
-        output = '''One or more of the following situations may be responsible:
+
+        # Include a leading newline to improve readability on Shippable "Tests" tab.
+        # Without this, the first line becomes indented.
+        output = '''
+One or more of the following situations may be responsible:
 
 - Code changes have resulted in tests that hang or run for an excessive amount of time.
 - Tests have been added which exceed the time limit when combined with existing tests.
