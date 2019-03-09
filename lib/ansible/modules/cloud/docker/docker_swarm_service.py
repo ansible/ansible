@@ -2274,9 +2274,9 @@ def _detect_mount_tmpfs_usage(client):
     for mount in client.module.params['mounts'] or []:
         if mount.get('type') == 'tmpfs':
             return True
-        if mount.get('tmpfs_size'):
+        if mount.get('tmpfs_size') is not None:
             return True
-        if mount.get('tmpfs_mode'):
+        if mount.get('tmpfs_mode') is not None:
             return True
     return False
 
