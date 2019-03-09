@@ -537,6 +537,58 @@ options:
       - Corresponds to the C(--restart-window) option of C(docker service create).
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(restart_config.window) instead.
     type: raw
+  rollback_config:
+    description:
+      - Configures how the service should be rolled back in case of a failing update.
+    suboptions:
+      parallelism:
+        description:
+          - The number of containers to rollback at a time. If set to 0, all containers rollback simultaneously.
+          - Corresponds to the C(--rollback-parallelism) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: int
+      delay:
+        description:
+          - Delay between task rollbacks.
+          - "Accepts a string in a format that look like:
+            C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+          - Corresponds to the C(--rollback-delay) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: str
+      failure_action:
+        description:
+          - Action to take in case of rollback failure.
+          - Corresponds to the C(--rollback-failure-action) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: str
+        choices:
+          - continue
+          - pause
+      monitor:
+        description:
+          - Duration after each task rollback to monitor for failure.
+          - "Accepts a string in a format that look like:
+            C(5h34m56s), C(1m30s) etc. The supported units are C(us), C(ms), C(s), C(m) and C(h)."
+          - Corresponds to the C(--rollback-monitor) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: str
+      max_failure_ratio:
+        description:
+          - Fraction of tasks that may fail during a rollback.
+          - Corresponds to the C(--rollback-max-failure-ratio) option of C(docker service create).
+          - Requires API version >= 1.28.
+        type: float
+      order:
+        description:
+          - Specifies the order of operations during rollbacks.
+          - Corresponds to the C(--rollback-order) option of C(docker service create).
+          - Requires API version >= 1.29.
+        type: str
+        choices:
+          - stop-first
+          - start-first
+    type: dict
+    version_added: "2.8"
   secrets:
     description:
       - List of dictionaries describing the service secrets.
@@ -622,10 +674,12 @@ options:
         description:
           - Action to take in case of container failure.
           - Corresponds to the C(--update-failure-action) option of C(docker service create).
+          - Usage of I(rollback) requires API version >= 1.29.
         type: str
         choices:
           - continue
           - pause
+          - rollback
       monitor:
         description:
           - Time to monitor updated tasks for failures.
@@ -671,11 +725,13 @@ options:
     description:
       - Action to take in case of container failure.
       - Corresponds to the C(--update-failure-action) option of C(docker service create).
+      - Usage of I(rollback) requires API version >= 1.29.
       - Deprecated in 2.8, will be removed in 2.12. Use parameter C(update_config.failure_action) instead.
     type: str
     choices:
       - continue
       - pause
+      - rollback
   update_monitor:
     description:
       - Time to monitor updated tasks for failures.
@@ -1125,6 +1181,7 @@ class DockerService(DockerBaseClass):
         self.restart_policy_attempts = None
         self.restart_policy_delay = None
         self.restart_policy_window = None
+        self.rollback_config = None
         self.update_delay = None
         self.update_parallelism = None
         self.update_failure_action = None
@@ -1175,6 +1232,7 @@ class DockerService(DockerBaseClass):
             'restart_policy_delay': self.restart_policy_delay,
             'restart_policy_attempts': self.restart_policy_attempts,
             'restart_policy_window': self.restart_policy_window,
+            'rollback_config': self.rollback_config,
             'update_delay': self.update_delay,
             'update_parallelism': self.update_parallelism,
             'update_failure_action': self.update_failure_action,
@@ -1271,6 +1329,27 @@ class DockerService(DockerBaseClass):
             'update_monitor': monitor,
             'update_max_failure_ratio': max_failure_ratio,
             'update_order': order
+        }
+
+    @staticmethod
+    def get_rollback_config_from_ansible_params(params):
+        rollback_config = params['rollback_config'] or {}
+        delay = get_nanoseconds_from_raw_option(
+            'rollback_config.delay',
+            rollback_config.get('delay')
+        )
+        monitor = get_nanoseconds_from_raw_option(
+            'rollback_config.monitor',
+            rollback_config.get('monitor')
+        )
+        return {
+            'parallelism': rollback_config.get('parallelism'),
+            'delay': delay,
+            'failure_action': rollback_config.get('failure_action'),
+            'monitor': monitor,
+            'max_failure_ratio': rollback_config.get('max_failure_ratio'),
+            'order': rollback_config.get('order'),
+
         }
 
     @staticmethod
@@ -1406,6 +1485,7 @@ class DockerService(DockerBaseClass):
             )
 
         s.env = get_docker_environment(ap['env'], ap['env_files'])
+        s.rollback_config = cls.get_rollback_config_from_ansible_params(ap)
 
         update_config = cls.get_update_config_from_ansible_params(ap)
         for key, value in update_config.items():
@@ -1575,6 +1655,8 @@ class DockerService(DockerBaseClass):
             differences.add('restart_policy_delay', parameter=self.restart_policy_delay, active=os.restart_policy_delay)
         if self.restart_policy_window is not None and self.restart_policy_window != os.restart_policy_window:
             differences.add('restart_policy_window', parameter=self.restart_policy_window, active=os.restart_policy_window)
+        if self.has_rollback_config_changed(os.rollback_config):
+            differences.add('rollback_config', parameter=self.rollback_config, active=os.rollback_config)
         if self.update_delay is not None and self.update_delay != os.update_delay:
             differences.add('update_delay', parameter=self.update_delay, active=os.update_delay)
         if self.update_parallelism is not None and self.update_parallelism != os.update_parallelism:
@@ -1647,6 +1729,16 @@ class DockerService(DockerBaseClass):
         if '@' not in self.image:
             old_image = old_image.split('@')[0]
         return self.image != old_image, old_image
+
+    def has_rollback_config_changed(self, old_rollback_config):
+        defined_options = dict(
+            (option, value) for option, value in self.rollback_config.items()
+            if value is not None
+        )
+        for option, value in defined_options.items():
+            if value != old_rollback_config.get(option):
+                return True
+        return False
 
     def __str__(self):
         return str({
@@ -1812,6 +1904,24 @@ class DockerService(DockerBaseClass):
             restart_policy_args['window'] = self.restart_policy_window
         return types.RestartPolicy(**restart_policy_args) if restart_policy_args else None
 
+    def build_rollback_config(self):
+        if self.rollback_config is None:
+            return None
+        rollback_config_options = [
+            'parallelism',
+            'delay',
+            'failure_action',
+            'monitor',
+            'max_failure_ratio',
+            'order',
+        ]
+        rollback_config_args = {}
+        for option in rollback_config_options:
+            value = self.rollback_config.get(option)
+            if value is not None:
+                rollback_config_args[option] = value
+        return types.RollbackConfig(**rollback_config_args) if rollback_config_args else None
+
     def build_resources(self):
         resources_args = {}
         if self.limit_cpu is not None:
@@ -1892,6 +2002,7 @@ class DockerService(DockerBaseClass):
         task_template = self.build_task_template(container_spec, placement)
 
         update_config = self.build_update_config()
+        rollback_config = self.build_rollback_config()
         service_mode = self.build_service_mode()
         networks = self.build_networks(docker_networks)
         endpoint_spec = self.build_endpoint_spec()
@@ -1899,6 +2010,8 @@ class DockerService(DockerBaseClass):
         service = {'task_template': task_template, 'mode': service_mode}
         if update_config:
             service['update_config'] = update_config
+        if rollback_config:
+            service['rollback_config'] = rollback_config
         if networks:
             service['networks'] = networks
         if endpoint_spec:
@@ -1954,6 +2067,17 @@ class DockerServiceManager(object):
             ds.update_monitor = update_config_data.get('Monitor')
             ds.update_max_failure_ratio = update_config_data.get('MaxFailureRatio')
             ds.update_order = update_config_data.get('Order')
+
+        rollback_config_data = raw_data['Spec'].get('RollbackConfig')
+        if rollback_config_data:
+            ds.rollback_config = {
+                'parallelism': rollback_config_data.get('Parallelism'),
+                'delay': rollback_config_data.get('Delay'),
+                'failure_action': rollback_config_data.get('FailureAction'),
+                'monitor': rollback_config_data.get('Monitor'),
+                'max_failure_ratio': rollback_config_data.get('MaxFailureRatio'),
+                'order': rollback_config_data.get('Order'),
+            }
 
         dns_config = task_template_data['ContainerSpec'].get('DNSConfig')
         if dns_config:
@@ -2281,6 +2405,15 @@ def _detect_mount_tmpfs_usage(client):
     return False
 
 
+def _detect_update_config_failure_action_rollback(client):
+    rollback_config_failure_action = (
+        (client.module.params['update_config'] or {}).get('failure_action')
+    )
+    update_failure_action = client.module.params['update_failure_action']
+    failure_action = rollback_config_failure_action or update_failure_action
+    return failure_action == 'rollback'
+
+
 def main():
     argument_spec = dict(
         name=dict(type='str', required=True),
@@ -2407,10 +2540,24 @@ def main():
         restart_policy_delay=dict(type='raw', removed_in_version='2.12'),
         restart_policy_attempts=dict(type='int', removed_in_version='2.12'),
         restart_policy_window=dict(type='raw', removed_in_version='2.12'),
+        rollback_config=dict(type='dict', options=dict(
+            parallelism=dict(type='int'),
+            delay=dict(type='str'),
+            failure_action=dict(
+                type='str',
+                choices=['continue', 'pause']
+            ),
+            monitor=dict(type='str'),
+            max_failure_ratio=dict(type='float'),
+            order=dict(type='str'),
+        )),
         update_config=dict(type='dict', options=dict(
             parallelism=dict(type='int'),
             delay=dict(type='str'),
-            failure_action=dict(type='str', choices=['continue', 'pause']),
+            failure_action=dict(
+                type='str',
+                choices=['continue', 'pause', 'rollback']
+            ),
             monitor=dict(type='str'),
             max_failure_ratio=dict(type='float'),
             order=dict(type='str'),
@@ -2419,7 +2566,7 @@ def main():
         update_parallelism=dict(type='int', removed_in_version='2.12'),
         update_failure_action=dict(
             type='str',
-            choices=['continue', 'pause'],
+            choices=['continue', 'pause', 'rollback'],
             removed_in_version='2.12'
         ),
         update_monitor=dict(type='raw', removed_in_version='2.12'),
@@ -2453,6 +2600,7 @@ def main():
         stop_signal=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
         publish=dict(docker_py_version='3.0.0', docker_api_version='1.25'),
         read_only=dict(docker_py_version='2.6.0', docker_api_version='1.28'),
+        rollback_config=dict(docker_py_version='3.5.0', docker_api_version='1.28'),
         # specials
         publish_mode=dict(
             docker_py_version='3.0.0',
@@ -2473,6 +2621,12 @@ def main():
                 'max_failure_ratio'
             ) is not None,
             usage_msg='set update_config.max_failure_ratio'
+        ),
+        update_config_failure_action=dict(
+            docker_py_version='3.5.0',
+            docker_api_version='1.28',
+            detect_usage=_detect_update_config_failure_action_rollback,
+            usage_msg='set update_config.failure_action.rollback'
         ),
         update_config_monitor=dict(
             docker_py_version='2.1.0',
@@ -2509,6 +2663,13 @@ def main():
             docker_py_version='2.6.0',
             detect_usage=_detect_mount_tmpfs_usage,
             usage_msg='set mounts.tmpfs'
+        ),
+        rollback_config_order=dict(
+            docker_api_version='1.29',
+            detect_usage=lambda c: (c.module.params['rollback_config'] or {}).get(
+                'order'
+            ) is not None,
+            usage_msg='set rollback_config.order'
         ),
     )
 
