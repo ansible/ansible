@@ -48,12 +48,21 @@ export LC_ALL=en_US.UTF-8
 [ "$("${COMMAND[@]}" --tags tag3 | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_templated_tags TAGS: [tag3]" ]
 
+## Run tags as int
+#[ "$("${COMMAND[@]}" --tags 1 | grep -F Task_with | xargs)" = \
+#"Task_with_always_tag TAGS: [always] Task_as_int TAGS: [1]" ]
+
+## Run tags as list of int
+#[ "$("${COMMAND[@]}" --tags 2 | grep -F Task_with | xargs)" = \
+#"Task_with_always_tag TAGS: [always] Task_as_int_list TAGS: [2]" ]
+
 # Tests expected to fail
 OUT=$(ansible-playbook -i ../../inventory test_unexpected_dict_tags.yml -v --list-tasks 2>&1 | grep 'ERROR! tags must be specified as a int or string')
 if [[ -z "$OUT" ]]; then
     echo "Failed unexpected for tags as dict"
     exit 1
 fi
+
 OUT=$(ansible-playbook -i ../../inventory test_unexpected_list_tags.yml -v --list-tasks 2>&1 | grep 'ERROR! tags must be specified as a int or string')
 if [[ -z "$OUT" ]]; then
     echo "Failed unexpected for tags as list"
