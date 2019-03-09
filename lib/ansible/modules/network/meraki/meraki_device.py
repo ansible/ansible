@@ -302,12 +302,7 @@ def main():
     org_id = meraki.params['org_id']
     if org_id is None:
         org_id = meraki.get_org_id(meraki.params['org_name'])
-    nets = meraki.get_nets(org_id=org_id)
-    net_id = None
-    if meraki.params['net_id'] or meraki.params['net_name']:
-        net_id = meraki.params['net_id']
-        if net_id is None:
-            net_id = meraki.get_net_id(net_name=meraki.params['net_name'], data=nets)
+    net_id = meraki.assign_net_id(org_id)
 
     if meraki.params['state'] == 'query':
         if meraki.params['net_name'] or meraki.params['net_id']:
