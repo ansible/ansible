@@ -41,7 +41,13 @@ service_expected_output:
   restart_policy_attempts: null
   restart_policy_delay: null
   restart_policy_window: null
-  rollback_config: null
+  rollback_config:
+    delay: null
+    failure_action: null
+    max_failure_ratio: null
+    monitor: null
+    order: null
+    parallelism: null
   tty: null
   update_delay: null
   update_failure_action: null
