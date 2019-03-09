@@ -73,13 +73,13 @@ DOCUMENTATION = '''
           description:
             - By default this plugin is using a general group name sanitization to create safe and usable group names for use in Ansible.
               This option allows you to override that, in efforts to allow migration from the old ec2.py and matches the sanitization
-              of groups when the script's ``replace_dash_in_groups`` option is set to ``False``.
-              To replicate behavior of ``replace_dash_in_groups = True`` with constructed groups,
-              you will need to replace hyphens with underscores via the regex_replace filter for those entries.
+              of groups when the script's ``replace_dash_in_groups`` option is set to ``True``. To turn ``replace_dash_in_groups``
+              behavior off, use the ``legacy_script_replace_dash_in_groups`` option.
             - For this to work you should also turn off the TRANSFORM_INVALID_GROUP_CHARS setting,
               otherwise the core engine will just use the standard sanitization on top.
             - This is not the default as such names break certain functionality as not all characters are valid Python identifiers
               which group names end up being used as.
+            - This will be removed in 2.12.
           type: bool
           default: False
         legacy_script_replace_dash_in_groups:
@@ -90,7 +90,7 @@ DOCUMENTATION = '''
         legacy_script_variables:
           description:
             - A toggle to use in conjunction with use_legacy_script_group_name_sanitization. This setting will create host vars
-              returned to the script. This will be removed in 2.12.
+              (in the format ec2_hostvar) returned to the script. This will be removed in 2.12.
           type: bool
           default: True
 '''
