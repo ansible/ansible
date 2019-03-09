@@ -52,6 +52,7 @@ options:
       - Set to C(join), to join an existing cluster.
       - Set to C(absent), to leave an existing cluster.
       - Set to C(remove), to remove an absent node from the cluster.
+        Note that removing requires docker-py >= 2.4.0.
       - Set to C(inspect) to display swarm informations.
     type: str
     required: yes
@@ -530,6 +531,10 @@ class SwarmManager(DockerBaseClass):
         self.results['changed'] = True
 
 
+def _detect_remove_operation(client):
+    return client.module.params['state'] == 'remove'
+
+
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
@@ -569,6 +574,11 @@ def main():
         ca_force_rotate=dict(docker_py_version='2.6.0', docker_api_version='1.30'),
         autolock_managers=dict(docker_py_version='2.6.0'),
         log_driver=dict(docker_py_version='2.6.0'),
+        remove_operation=dict(
+            docker_py_version='2.4.0',
+            detect_usage=_detect_remove_operation,
+            usage_msg='remove swarm nodes'
+        ),
     )
 
     client = AnsibleDockerSwarmClient(
