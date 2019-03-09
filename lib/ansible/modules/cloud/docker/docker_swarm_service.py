@@ -792,7 +792,7 @@ swarm_service:
     "mode": "replicated",
     "mounts": [
       {
-        "read_only": false,
+        "readonly": false,
         "source": "/tmp/",
         "target": "/remote_tmp/",
         "type": "bind",
@@ -1464,7 +1464,7 @@ class DockerService(DockerBaseClass):
             s.mounts = []
             for param_m in ap['mounts']:
                 service_m = {}
-                service_m['read_only'] = param_m['readonly']
+                service_m['readonly'] = param_m['readonly']
                 service_m['type'] = param_m['type']
                 service_m['source'] = param_m['source']
                 service_m['target'] = param_m['target']
@@ -1665,23 +1665,23 @@ class DockerService(DockerBaseClass):
         if self.mounts is not None:
             mounts = []
             for mount_config in self.mounts:
-                mount_options = [
-                    'target',
-                    'source',
-                    'type',
-                    'read_only',
-                    'propagation',
-                    'labels',
-                    'no_copy',
-                    'driver_config',
-                    'tmpfs_size',
-                    'tmpfs_mode'
-                ]
+                mount_options = {
+                    'target': 'target',
+                    'source': 'source',
+                    'type': 'type',
+                    'readonly': 'read_only',
+                    'propagation': 'propagation',
+                    'labels': 'labels',
+                    'no_copy': 'no_copy',
+                    'driver_config': 'driver_config',
+                    'tmpfs_size': 'tmpfs_size',
+                    'tmpfs_mode': 'tmpfs_mode'
+                }
                 mount_args = {}
-                for option in mount_options:
+                for option, mount_arg in mount_options.items():
                     value = mount_config.get(option)
                     if value is not None:
-                        mount_args[option] = value
+                        mount_args[mount_arg] = value
 
                 mounts.append(types.Mount(**mount_args))
 
@@ -2057,7 +2057,7 @@ class DockerServiceManager(object):
                     'source': mount_data['Source'],
                     'type': mount_data['Type'],
                     'target': mount_data['Target'],
-                    'read_only': mount_data.get('ReadOnly'),
+                    'readonly': mount_data.get('ReadOnly'),
                     'propagation': bind_options.get('Propagation'),
                     'no_copy': volume_options.get('NoCopy'),
                     'labels': volume_options.get('Labels'),
