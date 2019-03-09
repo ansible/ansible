@@ -47,7 +47,7 @@ $password = Get-AnsibleParam -obj $params -name "password" -type "str"
 $result = @{
     changed = $false
 }
-$global:diff_text = $null
+$diff_text = $null
 
 function Invoke-NssmCommand {
     [CmdletBinding()]
@@ -183,7 +183,7 @@ function Update-NssmServiceParameter {
             }
         }
 
-        $global:diff_text += "-$parameter = $($current_values -join ', ')`n+$parameter = $($arguments -join ', ')`n"
+        $script:diff_text += "-$parameter = $($current_values -join ', ')`n+$parameter = $($arguments -join ', ')`n"
         $result.changed_by = $parameter
         $result.changed = $true
     }
