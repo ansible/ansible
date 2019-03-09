@@ -82,6 +82,17 @@ DOCUMENTATION = '''
               which group names end up being used as.
           type: bool
           default: False
+        legacy_script_replace_dash_in_groups:
+          description:
+            - A toggle to use in conjunction with use_legacy_script_group_name_sanitization. This will be removed in 2.12.
+          type: bool
+          default: True
+        legacy_script_variables:
+          description:
+            - A toggle to use in conjunction with use_legacy_script_group_name_sanitization. This setting will create host vars
+              returned to the script. This will be removed in 2.12.
+          type: bool
+          default: True
 '''
 
 EXAMPLES = '''
@@ -273,6 +284,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.aws_access_key_id = None
         self.aws_security_token = None
 
+        self.legacy_replace_hyphen = []
+        self.get_legacy_variables = False
+
     def _compile_values(self, obj, attr):
         '''
             :param obj: A list or dict of instance attributes
@@ -394,6 +408,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 instances = []
                 for r in reservations:
                     instances.extend(r.get('Instances'))
+                    for instance in instances:
+                        instance.update(self._get_reservation_details(r))
+                        if self.get_legacy_variables:
+                            instance.update(
+                                self._get_event_set_and_persistence(connection, instance['InstanceId'], instance.get('SpotInstanceRequestId'))
+                            )
             except botocore.exceptions.ClientError as e:
                 if e.response['ResponseMetadata']['HTTPStatusCode'] == 403 and not strict_permissions:
                     instances = []
@@ -405,6 +425,30 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             all_instances.extend(instances)
 
         return sorted(all_instances, key=lambda x: x['InstanceId'])
+
+    def _get_reservation_details(self, reservation):
+        return {
+            'OwnerId': reservation['OwnerId'],
+            'RequesterId': reservation.get('RequesterId', ''),
+            'ReservationId': reservation['ReservationId']
+        }
+
+    def _get_event_set_and_persistence(self, connection, instance_id, spot_instance):
+        legacy_opts = {'Events': '', 'Persistent': False}
+        try:
+            kwargs = {'InstanceIds': [instance_id]}
+            legacy_opts['Events'] = connection.describe_instance_status(**kwargs)['InstanceStatuses'][0].get('Events', '')
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+            pass
+        if spot_instance:
+            try:
+                kwargs = {'SpotInstanceRequestIds': [spot_instance]}
+                legacy_opts['Persistent'] = bool(
+                    connection.describe_spot_instance_requests(**kwargs)['SpotInstanceRequests'][0].get('Type') == 'persistent'
+                )
+            except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError):
+                pass
+        return legacy_opts
 
     def _get_tag_hostname(self, preference, instance):
         tag_hostnames = preference.split('tag:', 1)[1]
@@ -470,6 +514,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param group: the name of the group to which the hosts belong
             :param hostnames: a list of hostname destination variables in order of preference
         '''
+        replace_dash = []
+        keep_dash = []
+        if self.legacy_replace_hyphen:
+            display.deprecated('The aws_ec2 inventory option "legacy_script_replace_dash_in_groups" is deprecated', version='2.12')
+            # Separate keyed_groups into two groups
+            for keyed_group in self.get_option('keyed_groups'):
+                if keyed_group.get('key') in self.legacy_replace_hyphen:
+                    replace_dash.append(keyed_group)
+                else:
+                    keep_dash.append(keyed_group)
+        else:
+            keep_dash = self.get_option('keyed_groups')
+
         for host in hosts:
             hostname = self._get_hostname(host, hostnames)
 
@@ -482,6 +539,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             if not hostname:
                 continue
             self.inventory.add_host(hostname, group=group)
+
+            if self.get_legacy_variables:
+                self._set_legacy_vars(host, hostname)
+
             for hostvar, hostval in host.items():
                 self.inventory.set_variable(hostname, hostvar, hostval)
 
@@ -496,7 +557,87 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._add_host_to_composed_groups(self.get_option('groups'), host, hostname, strict=strict)
 
             # Create groups based on variable values and add the corresponding hosts to it
-            self._add_host_to_keyed_groups(self.get_option('keyed_groups'), host, hostname, strict=strict)
+            if replace_dash:
+                self._sanitize_group_name = self._legacy_script_compatible_group_sanitization_replace_dash
+                self._add_host_to_keyed_groups(replace_dash, host, hostname, strict=strict)
+                # Reset self._sanitize_group_name to the default for legacy sanitization after using
+                self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+            if keep_dash:
+                self._add_host_to_keyed_groups(keep_dash, host, hostname, strict=strict)
+
+    def _set_legacy_vars(self, host, hostname):
+        display.deprecated('The aws_ec2 inventory option "legacy_script_variables" is deprecated', version='2.12')
+
+        legacy_host_vars = {
+            'ec2_item': '',
+            'ec2_monitoring': '',
+            'ec2_previous_state': '',
+            'ec2_previous_state_code': 0,
+            'ec2__in_monitoring_element': False,
+        }
+
+        need_ec2_prefix = [
+            'architecture',
+            'client_token',
+            'ebs_optimized',
+            'hypervisor',
+            'image_id',
+            'instance_type',
+            'key_name',
+            'platform',
+            'private_dns_name',
+            'private_ip_address',
+            'public_dns_name',
+            'root_device_name',
+            'root_device_type',
+            'spot_instance_request_id',
+            'subnet_id',
+            'virtualization_type',
+            'vpc_id'
+        ]
+
+        for key in need_ec2_prefix:
+            legacy_host_vars['ec2_' + key] = host.get(key, '')
+
+        legacy_host_vars['ec2_persistent'] = host['persistent']
+        legacy_host_vars['ec2_eventsSet'] = host['events']
+        legacy_host_vars['ec2_account_id'] = host['owner_id']
+        legacy_host_vars['ec2_requester_id'] = host['requester_id']
+        legacy_host_vars['ami_launch_index'] = to_text(host['ami_launch_index'])
+        legacy_host_vars['ec2_dns_name'] = host['public_dns_name']
+        legacy_host_vars['ec2_group_name'] = host['placement']['group_name']
+        legacy_host_vars['ec2_region'] = host['placement']['region']
+        legacy_host_vars['ec2_id'] = host['instance_id']
+        legacy_host_vars['ec2_instance_profile'] = host.get('iam_instance_profile', '')
+        legacy_host_vars['ec2_ip_address'] = host['public_ip_address']
+        legacy_host_vars['ec2_kernel'] = host.get('kernel_id', '')
+        legacy_host_vars['ec2_monitored'] = bool(host['monitoring']['state'] in ['enabled', 'pending'])
+        legacy_host_vars['ec2_monitoring_state'] = host['monitoring']['state']
+        legacy_host_vars['ec2_placement'] = host['placement']['availability_zone']
+        legacy_host_vars['ec2_ramdisk'] = host.get('ramdisk_id', '')
+        legacy_host_vars['ec2_reason'] = host['state_transition_reason']
+        legacy_host_vars['ec2_security_group_ids'] = ','.join([sg['group_id'] for sg in host['security_groups']])
+        legacy_host_vars['ec2_security_group_names'] = ','.join([sg['group_name'] for sg in host['security_groups']])
+        legacy_host_vars['ec2_state'] = host['state']['name']
+        legacy_host_vars['ec2_state_code'] = host['state']['code']
+        legacy_host_vars['ec2_state_reason'] = host.get('state_reason', {}).get('message', '')
+        legacy_host_vars['ec2_sourceDestCheck'] = to_text(host['source_dest_check']).lower()
+        legacy_host_vars['ec2_launch_time'] = host['launch_time'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+        legacy_host_vars['ec2_block_devices'] = dict(
+            (bd['device_name'].split('/')[-1], bd['ebs']['volume_id']) for bd in host['block_device_mappings']
+        )
+
+        for tag_key, tag_value in host.get('tags', {}).items():
+            if self.get_option('legacy_script_replace_dash_in_groups'):
+                regex = re.compile(r"[^A-Za-z0-9\_]")
+            else:
+                regex = re.compile(r"[^A-Za-z0-9\_-]")
+            updated_tag_key = regex.sub('_', tag_key)
+            legacy_host_vars['ec2_tag_' + updated_tag_key] = tag_value
+
+        for hostvar, hostval in legacy_host_vars.items():
+            self.inventory.set_variable(hostname, hostvar, hostval)
+
 
     def _set_credentials(self):
         '''
@@ -531,14 +672,27 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         display.debug("aws_ec2 inventory filename must end with 'aws_ec2.yml' or 'aws_ec2.yaml'")
         return False
 
+    def _set_legacy_options(self):
+        if self.get_option('use_legacy_script_group_name_sanitization'):
+            if self.get_option('legacy_script_replace_dash_in_groups'):
+                replace_hyphen_keys = [
+                    'image_id', 'instance_type', 'state', 'platform', 'key_name', 'vpc_id', 'security_groups', 'tags'
+                ]
+                self.legacy_replace_hyphen = [
+                    group['key'] for group in self.get_option('keyed_groups') if
+                    [group for key in replace_hyphen_keys if key in group['key']]
+                ]
+            if self.get_option('legacy_script_variables'):
+                self.get_legacy_variables = True
+            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+
     def parse(self, inventory, loader, path, cache=True):
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
         config_data = self._read_config_data(path)
 
-        if self.get_option('use_legacy_script_group_name_sanitization'):
-            self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+        self._set_legacy_options()
 
         self._set_credentials()
 
@@ -572,6 +726,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, results)
+
+
+    @staticmethod
+    def _legacy_script_compatible_group_sanitization_replace_dash(name):
+
+        # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
+        regex = re.compile(r"[^A-Za-z0-9\_]")
+
+        return regex.sub('_', name)
 
     @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
