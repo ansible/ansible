@@ -292,7 +292,7 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
 
         if not self.check(module, perms_required=False) or self.force:
             if self.backup:
-                self.backup_file = self.module.backup_local(self.path)
+                self.backup_file = module.backup_local(self.path)
             privatekey_data = self._generate_private_key_data()
             try:
                 privatekey_file = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
@@ -320,10 +320,10 @@ class PrivateKeyBase(crypto_utils.OpenSSLObject):
         if module.set_fs_attributes_if_different(file_args, False):
             self.changed = True
 
-    def remove(self):
+    def remove(self, module):
         if self.backup:
-            self.backup_file = self.module.backup_local(self.path)
-        super(PrivateKeyBase, self).remove()
+            self.backup_file = module.backup_local(self.path)
+        super(PrivateKeyBase, self).remove(module)
 
     @abc.abstractmethod
     def _check_passphrase(self):
@@ -686,7 +686,7 @@ def main():
             module.exit_json(**result)
 
         try:
-            private_key.remove()
+            private_key.remove(module)
         except PrivateKeyError as exc:
             module.fail_json(msg=to_native(exc))
 

@@ -230,7 +230,7 @@ class OpenSSLObject(object):
 
         pass
 
-    def remove(self):
+    def remove(self, module):
         """Remove the resource from the filesystem."""
 
         try:
