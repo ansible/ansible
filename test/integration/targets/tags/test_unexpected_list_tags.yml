@@ -1,0 +1,10 @@
+---
+- name: verify unexpected tags fail as expected
+  hosts: localhost
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: Task_with_unexpected_list_tags
+      debug: msg=unexpected_list_tags
+      tags:
+        - [ one, two, three ]
