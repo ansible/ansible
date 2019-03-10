@@ -295,6 +295,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             ignore_selinux_state=dict(type='bool', default=False),
+            # name=dict(type='str', required=True),
             name=dict(type='list', required=True),
             persistent=dict(type='bool', default=False),
             state=dict(type='bool', required=True),
@@ -345,10 +346,10 @@ def main():
                     changed = set_boolean_value(module, name, state)
                     if not changed:
                         module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
-                        try:
-                            selinux.security_commit_booleans()
-                        except Exception:
-                            module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+                    try:
+                        selinux.security_commit_booleans()
+                    except Exception:
+                        module.fail_json(msg="Failed to commit pending boolean %s value" % name)
 
     result['changed'] = changed
 
