@@ -52,7 +52,7 @@
   command: mongo admin --eval "rs.status()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -99,7 +99,7 @@
      - "localhost:3003"
   register: mongodb_replicaset
 
-- name: Asset replicaset name has not changed
+- name: Assert replicaset name has not changed
   assert:
     that: mongodb_replicaset.changed == False
 
@@ -134,7 +134,7 @@
   command: mongo admin --eval "rs.status()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -174,7 +174,7 @@
   command: mongo admin --eval "rs.status()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -215,7 +215,7 @@
   command: mongo admin --eval "rs.status()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -260,7 +260,7 @@
   command: mongo admin --eval "rs.conf()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -306,7 +306,7 @@
   command: mongo admin --eval "rs.conf()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -352,7 +352,7 @@
   command: mongo admin --eval "rs.conf()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output
+- name: Assert replicaset name is in mongo_output
   assert:
     that:
       - "mongo_output.changed == true"
@@ -415,7 +415,7 @@
   command: mongo admin --eval "rs.conf()" --port 3001
   register: mongo_output
 
-- name: Asset replicaset name is in mongo_output MongoDB 3.0+
+- name: Assert replicaset name is in mongo_output MongoDB 3.0+
   assert:
     that:
       - "mongo_output.changed == true"
@@ -426,7 +426,7 @@
       - "'heartbeatTimeoutSecs\" : 9,' in mongo_output.stdout"
   when: mongodb_version.startswith('3') == True
 
-- name: Asset replicaset name is in mongo_output MongoDB 4.0+
+- name: Assert replicaset name is in mongo_output MongoDB 4.0+
   assert:
     that:
       - "mongo_output.changed == true"
