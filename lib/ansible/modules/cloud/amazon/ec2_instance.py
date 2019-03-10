@@ -99,13 +99,14 @@ options:
     aliases: ['subnet_id']
   network:
     description:
-      - Either a dictionary containing the key 'interfaces' corresponding to a list of network interface IDs or
-        containing specifications for a single network interface.
-      - If specifications for a single network are given, accepted keys are assign_public_ip (bool),
-        private_ip_address (str), ipv6_addresses (list), source_dest_check (bool), description (str),
-        delete_on_termination (bool), device_index (int), groups (list of security group IDs),
-        private_ip_addresses (list), subnet_id (str).
-      - I(network.interfaces) should be a list of ENI IDs (strings) or a list of objects containing the key I(id).
+      - A dictionary containing either the key 'interfaces' corresponding to a list of network interface specifications or
+        directly containing specifications for a single network interface. Additionally it can contain source_dest_check (bool) which is not recognised
+        by ec2_instance as parameter for a distinct network inteface.
+      - Specifications for a network interface accept keys assign_public_ip (bool) (only allowed if a single interface with default id 0 is specified),
+        private_ip_address (str), ipv6_addresses (list), description (str), delete_on_termination (bool), device_index (int),
+        groups (list of security group IDs), private_ip_addresses (list), subnet_id (str).
+      - I(network.interfaces) should be a list of ENI IDs (strings) or a list of objects containing the key I(id) (where the othe keys of that object are
+        ignored) or can contain network interface specification objects which are currently ignored for existing instances.
       - Use the ec2_eni to create ENIs with special settings.
   volumes:
     description:
@@ -1660,6 +1661,8 @@ def main():
                         filters['network-interface.network-interface-id'] = []
                         for i in ints:
                             if isinstance(i, dict):
+                                if 'id' in i:
+                                    continue
                                 i = i['id']
                             filters['network-interface.network-interface-id'].append(i)
                 else:
