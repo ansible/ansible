@@ -17,5 +17,6 @@
         owner: root
         group: root
         mode: 0644
+      notify: remove temporary flatpak link
 
   become: true
