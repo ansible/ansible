@@ -53,6 +53,25 @@ EXAMPLES = '''
     name: httpd_can_network_connect
     state: yes
     persistent: yes
+
+# set multiple selinux booleans in one shot
+- name: set persistent samba_share_nfs, samba_export_all_ro, samba_export_all_rw
+  seboolean:
+    name: [samba_share_nfs, samba_export_all_ro, samba_export_all_rw]
+    state: yes
+    persistent: yes
+
+# set multiple selinux booleans in one shot, items syntax
+- name: set persistent samba_share_nfs, samba_export_all_ro, samba_export_all_rw
+  seboolean:
+    name: "{{ item }}"
+    state: yes
+    persistent: yes
+  with_items:
+    - samba_share_nfs
+    - samba_export_all_ro
+    - samba_export_all_rw
+
 '''
 
 import os
@@ -276,7 +295,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             ignore_selinux_state=dict(type='bool', default=False),
-            name=dict(type='str', required=True),
+            name=dict(type='list', required=True),
             persistent=dict(type='bool', default=False),
             state=dict(type='bool', required=True),
         ),
@@ -294,39 +313,42 @@ def main():
     if not get_runtime_status(ignore_selinux_state):
         module.fail_json(msg="SELinux is disabled on this host.")
 
-    name = module.params['name']
+    names = module.params['name']
     persistent = module.params['persistent']
     state = module.params['state']
 
     result = dict(
-        name=name,
+        name=names,
         persistent=persistent,
         state=state
     )
     changed = False
 
-    if hasattr(selinux, 'selinux_boolean_sub'):
-        # selinux_boolean_sub allows sites to rename a boolean and alias the old name
-        # Feature only available in selinux library since 2012.
-        name = selinux.selinux_boolean_sub(name)
+    for pos, name in enumerate(names) :
+        if hasattr(selinux, 'selinux_boolean_sub'):
+            # selinux_boolean_sub allows sites to rename a boolean and alias the old name
+            # Feature only available in selinux library since 2012.
+            names[pos] = selinux.selinux_boolean_sub(name)
 
-    if not has_boolean_value(module, name):
-        module.fail_json(msg="SELinux boolean %s does not exist." % name)
+    for name in names :
+        if not has_boolean_value(module, name):
+            module.fail_json(msg="SELinux boolean %s does not exist." % name)
 
-    if persistent:
-        changed = semanage_boolean_value(module, name, state)
-    else:
-        cur_value = get_boolean_value(module, name)
-        if cur_value != state:
-            changed = True
-            if not module.check_mode:
-                changed = set_boolean_value(module, name, state)
-                if not changed:
-                    module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
-                try:
-                    selinux.security_commit_booleans()
-                except Exception:
-                    module.fail_json(msg="Failed to commit pending boolean %s value" % name)
+    for name in names :
+        if persistent:
+            changed = semanage_boolean_value(module, name, state)
+        else:
+            cur_value = get_boolean_value(module, name)
+            if cur_value != state:
+                changed = True
+                if not module.check_mode:
+                    changed = set_boolean_value(module, name, state)
+                    if not changed:
+                        module.fail_json(msg="Failed to set boolean %s to %s" % (name, state))
+                        try:
+                            selinux.security_commit_booleans()
+                        except Exception:
+                            module.fail_json(msg="Failed to commit pending boolean %s value" % name)
 
     result['changed'] = changed
 
