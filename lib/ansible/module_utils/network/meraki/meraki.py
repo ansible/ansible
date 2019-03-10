@@ -234,7 +234,7 @@ class MerakiModule(object):
         if net_id is None and self.params['net_name']:
             if nets is not None:
                 net_id = self.get_net_id(net_name=self.params['net_name'], data=nets)
-            else:            
+            else:
                 net_id = self.get_net_id(net_name=self.params['net_name'], data=self.get_nets(org_id=org_id))
         return net_id
 
