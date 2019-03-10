@@ -399,7 +399,11 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         return True
                     if not append_privs:
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
-                    privileges_grant(cursor, user, host, db_table, new_priv[db_table])
+                    priv = "".join(new_priv[db_table])
+                    if "REQUIRE" in priv:
+                        privileges_alter(cursor, user, host, db_table, new_priv[db_table] , module)
+                    else:
+                        privileges_grant(cursor, user, host, db_table, new_priv[db_table] , module) 
                     changed = True
 
     return changed
@@ -539,17 +543,23 @@ def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
     cursor.execute(query, (user, host))
 
 
+def privileges_alter(cursor, user, host, db_table, priv , module):
+    db_table = db_table.replace('%', '%%')
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
+    query = "alter user %s@%s "
+    if 'REQUIRESSL' in priv:
+        query = query + "REQUIRE SSL"
+    if 'REQUIRENONE' in priv:
+        query = query + "REQUIRE NONE"
+    cursor.execute(query, (user, host))
+
 def privileges_grant(cursor, user, host, db_table, priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
+    priv_string = ",".join([p for p in priv if p not in ('GRANT')])
     query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
-    if 'REQUIRESSL' in priv:
-        query.append("REQUIRE SSL")
-    if 'REQUIRENONE' in priv:
-        query.append("REQUIRE NONE")
     if 'GRANT' in priv:
         query.append("WITH GRANT OPTION")
     query = ' '.join(query)
