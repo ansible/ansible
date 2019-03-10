@@ -2482,7 +2482,7 @@ class ContainerManager(DockerBaseClass):
                 new_container = self.client.create_container(image, **create_parameters)
                 if new_container and new_container.get('Warnings'):
                     for warning in new_container.get('Warnings'):
-                        self.client.module.warn(warning)
+                        self.client.module.warn('Docker warning: {0}'.format(warning))
             except Exception as exc:
                 self.fail("Error creating container: %s" % str(exc))
             return self._get_container(new_container['Id'])
@@ -2578,7 +2578,7 @@ class ContainerManager(DockerBaseClass):
                     result = self.client.update_container(container_id, **update_parameters)
                     if result and result.get('Warnings'):
                         for warning in result.get('Warnings'):
-                            self.client.module.warn(warning)
+                            self.client.module.warn('Docker warning: {0}'.format(warning))
                 except Exception as exc:
                     self.fail("Error updating container %s: %s" % (container_id, str(exc)))
         return self._get_container(container_id)
