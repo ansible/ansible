@@ -894,55 +894,34 @@ def build_network_spec(params, ec2=None):
     if ec2 is None:
         ec2 = module.client('ec2')
 
+    default_subnet = None
     interfaces = []
     network = params.get('network') or {}
     if not network.get('interfaces'):
         # they only specified one interface
-        spec = {
-            'DeviceIndex': 0,
-        }
-        if network.get('assign_public_ip') is not None:
-            spec['AssociatePublicIpAddress'] = network['assign_public_ip']
-
-        if params.get('vpc_subnet_id'):
-            spec['SubnetId'] = params['vpc_subnet_id']
-        else:
-            default_vpc = get_default_vpc(ec2)
-            if default_vpc is None:
-                raise module.fail_json(
-                    msg="No default subnet could be found - you must include a VPC subnet ID (vpc_subnet_id parameter) to create an instance")
+        # put into normal data structure so we don't dupe code
+        if not network.get('groups'):
+            if params.get('security_group'):
+                network['groups'] = [params.get('security_group')]
             else:
-                sub = get_default_subnet(ec2, default_vpc)
-                spec['SubnetId'] = sub['SubnetId']
-
-        if network.get('private_ip_address'):
-            spec['PrivateIpAddress'] = network['private_ip_address']
-
-        if params.get('security_group') or params.get('security_groups'):
-            groups = discover_security_groups(
-                group=params.get('security_group'),
-                groups=params.get('security_groups'),
-                subnet_id=spec['SubnetId'],
-                ec2=ec2
-            )
-            spec['Groups'] = [g['GroupId'] for g in groups]
-        if network.get('description') is not None:
-            spec['Description'] = network['description']
-        # TODO more special snowflake network things
-
-        return [spec]
+                network['groups'] = params.get('security_groups')
+        interfaces_params = [network]
+    else:
+        interfaces_params = network.get('interfaces', [])
 
     # handle list of `network.interfaces` options
-    for idx, interface_params in enumerate(network.get('interfaces', [])):
-        spec = {
-            'DeviceIndex': idx,
-        }
-
+    for idx, interface_params in enumerate(interfaces_params):
         if isinstance(interface_params, string_types):
             # naive case where user gave
             # network_interfaces: [eni-1234, eni-4567, ....]
             # put into normal data structure so we don't dupe code
             interface_params = {'id': interface_params}
+
+        if interface_params.get('device_index') is not None:
+            idx = interface_params.get('device_index')
+        spec = {
+            'DeviceIndex': idx,
+        }
 
         if interface_params.get('id') is not None:
             # if an ID is provided, we don't want to set any other parameters.
@@ -951,6 +930,13 @@ def build_network_spec(params, ec2=None):
             continue
 
         spec['DeleteOnTermination'] = interface_params.get('delete_on_termination', True)
+
+        if interface_params.get('assign_public_ip') is not None:
+            if len(interfaces_params) == 1 and idx == 0:
+                spec['AssociatePublicIpAddress'] = network['assign_public_ip']
+            else:
+                raise module.fail_json(
+                    msg="Not allowed to specify assign_public_ip while setting up instance with network interfaces different to eth0")
 
         if interface_params.get('ipv6_addresses'):
             spec['Ipv6Addresses'] = [{'Ipv6Address': a} for a in interface_params.get('ipv6_addresses', [])]
@@ -963,9 +949,25 @@ def build_network_spec(params, ec2=None):
 
         if interface_params.get('subnet_id', params.get('vpc_subnet_id')):
             spec['SubnetId'] = interface_params.get('subnet_id', params.get('vpc_subnet_id'))
-        elif not spec.get('SubnetId') and not interface_params['id']:
-            # TODO grab a subnet from default VPC
-            raise ValueError('Failed to assign subnet to interface {0}'.format(interface_params))
+        else:
+            if default_subnet is None:
+                default_vpc = get_default_vpc(ec2)
+                if default_vpc is None:
+                    raise module.fail_json(
+                        msg="No default subnet could be found - you must include a VPC subnet ID (vpc_subnet_id parameter) "
+                            "or subnet_id for the network interfaces to create an instance")
+                else:
+                    default_subnet = get_default_subnet(ec2, default_vpc)
+            spec['SubnetId'] = default_subnet['SubnetId']
+
+        if interface_params.get('groups'):
+            groups = discover_security_groups(
+                group=None,
+                groups=interface_params.get('groups'),
+                subnet_id=spec['SubnetId'],
+                ec2=ec2
+            )
+            spec['Groups'] = [g['GroupId'] for g in groups]
 
         interfaces.append(spec)
     return interfaces
