@@ -42,7 +42,7 @@
 - name: Add rec keys for MongoDB 4.0
   apt_key:
     id: 68818C72E52529D4
-    url: hkp://keyserver.ubuntu.com:80
+    url: http://keyserver.ubuntu.com:80
   when: mongodb_version == "4.0"
 
 - name: Add MongoDB repository into sources list bionic
