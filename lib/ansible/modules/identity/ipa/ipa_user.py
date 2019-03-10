@@ -24,9 +24,10 @@ options:
   update_password:
     description:
     - Set password for a user.
+    type: str
     default: 'always'
-    version_added: 2.8
     choices: [ always, on_create ]
+    version_added: 2.8
   givenname:
     description: First name
   krbpasswordexpiration:
@@ -286,7 +287,7 @@ def ensure(module, client):
             if not module.check_mode:
                 ipa_user = client.user_add(name=name, item=module_user)
         else:
-            if update_password == "on_create":
+            if update_password == 'on_create':
                 module_user.pop('userpassword', None)
             diff = get_user_diff(client, ipa_user, module_user)
             if len(diff) > 0:
