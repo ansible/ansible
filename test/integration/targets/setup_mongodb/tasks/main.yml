@@ -47,6 +47,7 @@
 
 - name: Update apt keys
   shell: apt-key update && apt-get update
+  when: mongodb_version != "4.0"
 
 # Need to handle various platforms here. Package name will not always be the same
 - name: Ensure mongod package is installed
