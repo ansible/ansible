@@ -176,6 +176,8 @@ except ImportError:
 
 display = Display()
 
+preserve_dash = True
+
 # The mappings give an array of keys to get from the filter name to the value
 # returned by boto3's EC2 describe_instances method.
 
@@ -514,6 +516,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             :param group: the name of the group to which the hosts belong
             :param hostnames: a list of hostname destination variables in order of preference
         '''
+        global preserve_dash
         replace_dash = []
         keep_dash = []
         if self.legacy_replace_hyphen:
@@ -558,10 +561,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Create groups based on variable values and add the corresponding hosts to it
             if replace_dash:
-                self._sanitize_group_name = self._legacy_script_compatible_group_sanitization_replace_dash
+                preserve_dash = False
                 self._add_host_to_keyed_groups(replace_dash, host, hostname, strict=strict)
-                # Reset self._sanitize_group_name to the default for legacy sanitization after using
-                self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
+                # Reset normal legacy sanitization
+                preserve_dash = True
             if keep_dash:
                 self._add_host_to_keyed_groups(keep_dash, host, hostname, strict=strict)
 
@@ -569,11 +572,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         display.deprecated('The aws_ec2 inventory option "legacy_script_variables" is deprecated', version='2.12')
 
         legacy_host_vars = {
+            'ec2__in_monitoring_element': False,
             'ec2_item': '',
             'ec2_monitoring': '',
             'ec2_previous_state': '',
             'ec2_previous_state_code': 0,
-            'ec2__in_monitoring_element': False,
         }
 
         need_ec2_prefix = [
@@ -599,41 +602,42 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for key in need_ec2_prefix:
             legacy_host_vars['ec2_' + key] = host.get(key, '')
 
-        legacy_host_vars['ec2_persistent'] = host['persistent']
-        legacy_host_vars['ec2_eventsSet'] = host['events']
-        legacy_host_vars['ec2_account_id'] = host['owner_id']
-        legacy_host_vars['ec2_requester_id'] = host['requester_id']
         legacy_host_vars['ami_launch_index'] = to_text(host['ami_launch_index'])
+        legacy_host_vars['ec2_account_id'] = host['owner_id']
+        legacy_host_vars['ec2_block_devices'] = dict(
+            (bd['device_name'].split('/')[-1], bd['ebs']['volume_id']) for bd in host['block_device_mappings']
+        )
         legacy_host_vars['ec2_dns_name'] = host['public_dns_name']
+        legacy_host_vars['ec2_eventsSet'] = host['events']
         legacy_host_vars['ec2_group_name'] = host['placement']['group_name']
-        legacy_host_vars['ec2_region'] = host['placement']['region']
         legacy_host_vars['ec2_id'] = host['instance_id']
         legacy_host_vars['ec2_instance_profile'] = host.get('iam_instance_profile', '')
         legacy_host_vars['ec2_ip_address'] = host['public_ip_address']
         legacy_host_vars['ec2_kernel'] = host.get('kernel_id', '')
+        legacy_host_vars['ec2_launch_time'] = host['launch_time'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
         legacy_host_vars['ec2_monitored'] = bool(host['monitoring']['state'] in ['enabled', 'pending'])
         legacy_host_vars['ec2_monitoring_state'] = host['monitoring']['state']
+        legacy_host_vars['ec2_persistent'] = host['persistent']
         legacy_host_vars['ec2_placement'] = host['placement']['availability_zone']
         legacy_host_vars['ec2_ramdisk'] = host.get('ramdisk_id', '')
         legacy_host_vars['ec2_reason'] = host['state_transition_reason']
+        legacy_host_vars['ec2_region'] = host['placement']['region']
+        legacy_host_vars['ec2_requester_id'] = host['requester_id']
         legacy_host_vars['ec2_security_group_ids'] = ','.join([sg['group_id'] for sg in host['security_groups']])
         legacy_host_vars['ec2_security_group_names'] = ','.join([sg['group_name'] for sg in host['security_groups']])
+        legacy_host_vars['ec2_sourceDestCheck'] = to_text(host['source_dest_check']).lower()
         legacy_host_vars['ec2_state'] = host['state']['name']
         legacy_host_vars['ec2_state_code'] = host['state']['code']
         legacy_host_vars['ec2_state_reason'] = host.get('state_reason', {}).get('message', '')
-        legacy_host_vars['ec2_sourceDestCheck'] = to_text(host['source_dest_check']).lower()
-        legacy_host_vars['ec2_launch_time'] = host['launch_time'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
-        legacy_host_vars['ec2_block_devices'] = dict(
-            (bd['device_name'].split('/')[-1], bd['ebs']['volume_id']) for bd in host['block_device_mappings']
-        )
 
+        global preserve_dash
         for tag_key, tag_value in host.get('tags', {}).items():
             if self.get_option('legacy_script_replace_dash_in_groups'):
-                regex = re.compile(r"[^A-Za-z0-9\_]")
-            else:
-                regex = re.compile(r"[^A-Za-z0-9\_-]")
-            updated_tag_key = regex.sub('_', tag_key)
+                preserve_dash = False
+            updated_tag_key = self._legacy_script_compatible_group_sanitization(tag_key)
             legacy_host_vars['ec2_tag_' + updated_tag_key] = tag_value
+        # Reset normal legacy sanitization
+        preserve_dash = True
 
         for hostvar, hostval in legacy_host_vars.items():
             self.inventory.set_variable(hostname, hostvar, hostval)
@@ -729,17 +733,12 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
 
     @staticmethod
-    def _legacy_script_compatible_group_sanitization_replace_dash(name):
-
-        # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
-        regex = re.compile(r"[^A-Za-z0-9\_]")
-
-        return regex.sub('_', name)
-
-    @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
 
         # note that while this mirrors what the script used to do, it has many issues with unicode and usability in python
-        regex = re.compile(r"[^A-Za-z0-9\_\-]")
+        if preserve_dash:
+            regex = re.compile(r"[^A-Za-z0-9\_\-]")
+        else:
+            regex = re.compile(r"[^A-Za-z0-9\_]")
 
         return regex.sub('_', name)
