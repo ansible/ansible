@@ -228,12 +228,15 @@ class MerakiModule(object):
                 return n
         return False
 
-    def assign_net_id(self, org_id):
-    	"""Discover net_id information for playbook execution."""
-    	net_id = self.params['net_id']
-    	if net_id is None and self.params['net_name']:
-    		net_id = self.get_net_id(net_name=self.params['net_name'], data=self.get_nets(org_id=org_id))
-    	return net_id
+    def assign_net_id(self, org_id, nets=None):
+        """Discover net_id information for playbook execution."""
+        net_id = self.params['net_id']
+        if net_id is None and self.params['net_name']:
+            if nets is not None:
+                net_id = self.get_net_id(net_name=self.params['net_name'], data=nets)
+            else:            
+                net_id = self.get_net_id(net_name=self.params['net_name'], data=self.get_nets(org_id=org_id))
+        return net_id
 
     def get_net_id(self, org_name=None, net_name=None, data=None):
         """Return network id from lookup or existing data."""
