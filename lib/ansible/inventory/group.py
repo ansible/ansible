@@ -35,12 +35,14 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
         invalid_chars = C.INVALID_VARIABLE_NAMES.findall(name)
         if invalid_chars:
             msg = 'invalid character(s) "%s" in group name (%s)' % (to_text(set(invalid_chars)), to_text(name))
-            if C.TRANSFORM_INVALID_GROUP_CHARS in ('always', 'silently') or force:
+            if C.TRANSFORM_INVALID_GROUP_CHARS not in ('never', 'ignore') or force:
                 name = C.INVALID_VARIABLE_NAMES.sub(replacer, name)
                 if not (silent or C.TRANSFORM_INVALID_GROUP_CHARS == 'silently'):
                     display.warning('Replacing ' + msg)
-            elif C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
-                display.warn('Ignoring %s' % msg)
+            else:
+                if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
+                    display.warn('Not replacing %s' % msg)
+
                 # remove this message after 2.10 AND changing the default to 'always'
                 display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
                                    ' this will change, but still be user configurable on deprecation.', version='2.10')
