@@ -1,0 +1,2 @@
+minor_changes:
+- win_psmodule - The ``url`` parameter is deprecated and will be removed in Ansible 2.12. Use the ``win_psrepository`` module to manage repositories instead
