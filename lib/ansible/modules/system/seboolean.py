@@ -318,7 +318,7 @@ def main():
     state = module.params['state']
 
     result = dict(
-        name=names,
+        name=names[0] if len(names) == 1 else names,
         persistent=persistent,
         state=state
     )
