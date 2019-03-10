@@ -183,12 +183,17 @@ def preflight_validation(bin_path, project_path, variables_args=None, plan_file=
         module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
 
-def _state_args(state_file):
-    if state_file and os.path.exists(state_file):
+def _state_args(state_file, project_path, must_exists=True):
+    if state_file:
+        if os.path.isabs(state_file):
+            check_path = state_file
+        if not os.path.isabs(state_file):
+            check_path = project_path + "/" + state_file
+        if must_exists and not os.path.exists(check_path):
+            module.fail_json(msg='Could not find state_file "{0}", check the path and try again.'.format(check_path))
         return ['-state', state_file]
-    if state_file and not os.path.exists(state_file):
-        module.fail_json(msg='Could not find state_file "{0}", check the path and try again.'.format(state_file))
-    return []
+    else:
+        return []
 
 
 def init_plugins(bin_path, project_path, backend_config):
@@ -250,7 +255,7 @@ def build_plan(command, project_path, variables_args, state_file, targets, state
     for t in (module.params.get('targets') or []):
         plan_command.extend(['-target', t])
 
-    plan_command.extend(_state_args(state_file))
+    plan_command.extend(_state_args(state_file, project_path, False))
 
     rc, out, err = module.run_command(plan_command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
@@ -319,8 +324,13 @@ def main():
 
     if state == 'present':
         command.extend(APPLY_ARGS)
+        if state_file:
+            command.extend(['-state-out', state_file])
     elif state == 'absent':
         command.extend(DESTROY_ARGS)
+
+        if state_file:
+            command.extend(_state_args(state_file, project_path))
 
     variables_args = []
     for k, v in variables.items():
@@ -350,7 +360,13 @@ def main():
     if state == 'absent':
         command.extend(variables_args)
     elif state == 'present' and plan_file:
-        if os.path.exists(project_path + "/" + plan_file):
+        plan_file_present = ""
+        if os.path.isabs(plan_file):
+            plan_file_present = plan_file
+        else:
+            plan_file_present = project_path + "/" + plan_file
+
+        if os.path.exists(plan_file_present):
             command.append(plan_file)
         else:
             module.fail_json(msg='Could not find plan_file "{0}", check the path and try again.'.format(plan_file))
@@ -370,7 +386,7 @@ def main():
                 command=' '.join(command)
             )
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file)
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file, project_path, False)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
         module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {0}\nstderr: {1}".format(outputs_text, outputs_err))
