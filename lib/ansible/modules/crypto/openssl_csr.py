@@ -683,9 +683,6 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
                 return cryptography.x509.RFC822Name(to_text(name[6:]))
             if name.startswith('URI:'):
                 return cryptography.x509.UniformResourceIdentifier(to_text(name[4:]))
-            if name.startswith('DirName:'):
-                # Won't work
-                return cryptography.x509.DirectoryName(to_text(name[8:]))
         except Exception as e:
             raise CertificateSigningRequestError('Cannot parse Subject Alternative Name "{0}": {1}'.format(name, e))
         if ':' not in name:
