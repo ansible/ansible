@@ -23,7 +23,7 @@ requirements: [ hostname ]
 description:
     - Set system's hostname, supports most OSs/Distributions, including those using systemd.
     - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
-    - Windows, HP-UX and AIX are not currently supported.
+    - Windows, Oracle Linux, HP-UX and AIX are not currently supported.
 options:
     name:
         description:
