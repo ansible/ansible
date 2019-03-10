@@ -302,7 +302,10 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         cursor.execute("CREATE USER %s@%s", (user, host))
     if new_priv is not None:
         for db_table, priv in iteritems(new_priv):
-            privileges_grant(cursor, user, host, db_table, priv)
+            if "REQUIRE" in "".join(new_priv[db_table]):
+                privileges_alter(cursor, user, host, db_table, new_priv[db_table])
+            else:
+                privileges_grant(cursor, user, host, db_table, new_priv[db_table])
     return True
 
 
@@ -386,7 +389,10 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
-                    privileges_grant(cursor, user, host, db_table, priv)
+                    if "REQUIRE" in "".join(new_priv[db_table]):
+                        privileges_alter(cursor, user, host, db_table, new_priv[db_table])
+                    else:
+                        privileges_grant(cursor, user, host, db_table, new_priv[db_table])
                     changed = True
 
             # If the db.table specification exists in both the user's current privileges
@@ -401,9 +407,9 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
                     priv = "".join(new_priv[db_table])
                     if "REQUIRE" in priv:
-                        privileges_alter(cursor, user, host, db_table, new_priv[db_table] , module)
+                        privileges_alter(cursor, user, host, db_table, new_priv[db_table])
                     else:
-                        privileges_grant(cursor, user, host, db_table, new_priv[db_table] , module) 
+                        privileges_grant(cursor, user, host, db_table, new_priv[db_table])
                     changed = True
 
     return changed
@@ -543,7 +549,7 @@ def privileges_revoke(cursor, user, host, db_table, priv, grant_option):
     cursor.execute(query, (user, host))
 
 
-def privileges_alter(cursor, user, host, db_table, priv , module):
+def privileges_alter(cursor, user, host, db_table, priv):
     db_table = db_table.replace('%', '%%')
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL', 'REQUIRENONE')])
     query = "alter user %s@%s "
@@ -557,7 +563,7 @@ def privileges_grant(cursor, user, host, db_table, priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join([p for p in priv if p not in ('GRANT')])
+    priv_string = ",".join([p for p in priv if p not in 'GRANT'])
     query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
     if 'GRANT' in priv:
