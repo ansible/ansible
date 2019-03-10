@@ -1,0 +1,97 @@
+{
+    "cdrom": {
+        "type": "none"
+    },
+    "customization_agent": "custom",
+    "disks": [
+        {
+            "name": "ansible-test-vm-4-root",
+            "name_desc": "/",
+            "os_device": "xvda",
+            "size": 10737418240,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "0"
+        },
+        {
+            "name": "ansible-test-vm-4-mysql",
+            "name_desc": "/var/lib/mysql",
+            "os_device": "xvdb",
+            "size": 10737418240,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "1"
+        },
+        {
+            "name": "ansible-test-vm-4-redis",
+            "name_desc": "/var/lib/redis",
+            "os_device": "xvdc",
+            "size": 10737418240,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "2"
+        },
+        {
+            "name": "ansible-test-vm-4-mongo",
+            "name_desc": "/var/lib/mongo",
+            "os_device": "xvdd",
+            "size": 10737418240,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "3"
+        }
+    ],
+    "domid": "-1",
+    "folder": "/Ansible/Test/New",
+    "hardware": {
+        "memory_mb": 4096,
+        "num_cpu_cores_per_socket": 1,
+        "num_cpus": 4
+    },
+    "home_server": "ansible-test-host-2",
+    "is_template": false,
+    "name": "ansible-test-vm-4-new",
+    "name_desc": "Created by Ansible New",
+    "networks": [
+        {
+            "gateway": "",
+            "gateway6": "",
+            "ip": "",
+            "ip6": [
+                "fe80:0000:0000:0000:0200:00ff:fe00:0000"
+            ],
+            "mac": "00:00:00:00:00:00",
+            "mtu": "1500",
+            "name": "Host internal management network",
+            "netmask": "",
+            "prefix": "",
+            "prefix6": "",
+            "vif_device": "0"
+        }
+    ],
+    "other_config": {
+        "base_template_name": "Other install media",
+        "folder": "/Ansible/Test/New",
+        "import_task": "OpaqueRef:NULL",
+        "install-methods": "cdrom",
+        "mac_seed": "5dfbd932-c2f2-34b9-50ae-91d364efab04"
+    },
+    "platform": {
+        "acpi": "1",
+        "apic": "true",
+        "hpet": "true",
+        "nx": "true",
+        "pae": "true",
+        "timeoffset": "0",
+        "viridian": "true"
+    },
+    "state": "poweredoff",
+    "uuid": "92181f0c-4a6b-ca53-25dc-6fda6a9f6835",
+    "xenstore_data": {
+        "vm-data": "",
+        "vm-data/networks": "",
+        "vm-data/networks/0": "",
+        "vm-data/networks/0/mac": "00:00:00:00:00:00",
+        "vm-data/networks/0/name": "Host internal management network"
+    }
+}

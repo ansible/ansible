@@ -1,0 +1,40 @@
+{
+    "cdrom": {
+        "type": "none"
+    },
+    "customization_agent": "custom",
+    "disks": [],
+    "domid": "-1",
+    "folder": "",
+    "hardware": {
+        "memory_mb": 8192,
+        "num_cpu_cores_per_socket": 4,
+        "num_cpus": 8
+    },
+    "home_server": "",
+    "is_template": false,
+    "name": "ansible-test-vm-4",
+    "name_desc": "",
+    "networks": [],
+    "other_config": {
+        "base_template_name": "Other install media",
+        "import_task": "OpaqueRef:NULL",
+        "install-methods": "cdrom",
+        "mac_seed": "5dfbd932-c2f2-34b9-50ae-91d364efab04"
+    },
+    "platform": {
+        "acpi": "1",
+        "apic": "true",
+        "cores-per-socket": "4",
+        "hpet": "true",
+        "nx": "true",
+        "pae": "true",
+        "timeoffset": "0",
+        "viridian": "true"
+    },
+    "state": "poweredoff",
+    "uuid": "92181f0c-4a6b-ca53-25dc-6fda6a9f6835",
+    "xenstore_data": {
+        "vm-data": ""
+    }
+}

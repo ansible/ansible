@@ -10,230 +10,168 @@ __metaclass__ = type
 import json
 import pytest
 
-from .common import fake_xenapi_ref
+from .FakeAnsibleModule import FailJsonException
+from .common import xenserver_guest_powerstate_expand_params
+from .testcases.xenserver_guest_common import (testcase_vm_not_found,
+                                               testcase_vm_found)
+from .testcases.xenserver_guest_powerstate_common import (testcase_powerstate_change,
+                                                          testcase_powerstate_change_check_mode,
+                                                          testcase_powerstate_change_wait_for_ip_address,
+                                                          testcase_no_powerstate_change_wait_for_ip_address)
+from .testcases.xenserver_guest_powerstate.main import testcase_powerstate
 
 
-testcase_set_powerstate = {
-    "params": [
-        (False, "someoldstate"),
-        (True, "somenewstate"),
-    ],
-    "ids": [
-        "state-same",
-        "state-changed",
-    ],
-}
-
-testcase_module_params_state_present = {
-    "params": [
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "present",
-        },
-    ],
-    "ids": [
-        "present-implicit",
-        "present-explicit",
-    ],
-}
-
-testcase_module_params_state_other = {
-    "params": [
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "powered-on",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "powered-off",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "restarted",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "shutdown-guest",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "reboot-guest",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "suspended",
-        },
-    ],
-    "ids": [
-        "powered-on",
-        "powered-off",
-        "restarted",
-        "shutdown-guest",
-        "reboot-guest",
-        "suspended",
-    ],
-}
-
-testcase_module_params_wait = {
-    "params": [
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "present",
-            "wait_for_ip_address": "yes",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "state": "powered-on",
-            "wait_for_ip_address": "yes",
-        },
-    ],
-    "ids": [
-        "wait-present",
-        "wait-other",
-    ],
-}
+pytestmark = pytest.mark.usefixtures("fake_xenapi_db_vm")
 
 
-@pytest.mark.parametrize('power_state', testcase_set_powerstate['params'], ids=testcase_set_powerstate['ids'])
-def test_xenserver_guest_powerstate_set_power_state(mocker, fake_ansible_module, XenAPI, xenserver_guest_powerstate, power_state):
-    """Tests power state change handling."""
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.get_object_ref', return_value=fake_xenapi_ref('VM'))
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_params', return_value={"power_state": "Someoldstate"})
-    mocked_set_vm_power_state = mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.set_vm_power_state',
-                                             return_value=power_state)
+@pytest.mark.parametrize('fake_ansible_module',
+                         testcase_vm_not_found['params'],
+                         ids=testcase_vm_not_found['ids'],
+                         indirect=True)
+def test_xenserver_guest_powerstate_xenservervm_misc_failures(fake_ansible_module, xenserver_guest_powerstate):
+    """Tests failures of XenServerVM.__init__()."""
+    xenserver_guest_powerstate_expand_params(fake_ansible_module.params)
 
-    mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
+    with pytest.raises(FailJsonException) as exc_info:
+        xenserver_guest_powerstate.XenServerVM(fake_ansible_module)
 
-    mocked_returns = {
-        "pool.get_all.return_value": [fake_xenapi_ref('pool')],
-        "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
-    }
+    assert "not found" in exc_info.value.kwargs['msg']
 
-    mocked_xenapi.configure_mock(**mocked_returns)
 
-    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
-
-    fake_ansible_module.params.update({
-        "name": "somename",
-        "uuid": "someuuid",
-        "state_change_timeout": 1,
-    })
+@pytest.mark.parametrize('fake_ansible_module,fake_vm_facts',
+                         testcase_vm_found['params'],
+                         ids=testcase_vm_found['ids'],
+                         indirect=True)
+def test_xenserver_guest_powerstate_xenservervm_misc_success(fake_ansible_module, fake_vm_facts, xenserver_guest_powerstate):
+    """Tests successful run of XenServerVM.__init__() and misc methods."""
+    xenserver_guest_powerstate_expand_params(fake_ansible_module.params)
 
     vm = xenserver_guest_powerstate.XenServerVM(fake_ansible_module)
-    state_changed = vm.set_power_state(None)
 
-    mocked_set_vm_power_state.assert_called_once_with(fake_ansible_module, fake_xenapi_ref('VM'), None, 1)
-    assert state_changed == power_state[0]
-    assert vm.vm_params['power_state'] == power_state[1].capitalize()
+    assert vm.gather_facts() == fake_vm_facts
 
 
-@pytest.mark.parametrize('patch_ansible_module',
-                         testcase_module_params_state_present['params'],
-                         ids=testcase_module_params_state_present['ids'],
-                         indirect=True)
-def test_xenserver_guest_powerstate_present(mocker, patch_ansible_module, capfd, XenAPI, xenserver_guest_powerstate):
-    """
-    Tests regular module invocation including parsing and propagation of
-    module params and module output when state is set to present.
-    """
-    fake_vm_facts = {"fake-vm-fact": True}
-
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.get_object_ref', return_value=fake_xenapi_ref('VM'))
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_params', return_value={})
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_facts', return_value=fake_vm_facts)
+@pytest.mark.parametrize('fake_ansible_module,fake_vm_facts,expect_powerstate_changed',
+                         testcase_powerstate_change['params'],
+                         ids=testcase_powerstate_change['ids'],
+                         indirect=['fake_ansible_module', 'fake_vm_facts'])
+def test_xenserver_guest_powerstate_xenservervm_set_power_state(mocker,
+                                                                fake_ansible_module,
+                                                                fake_vm_facts,
+                                                                expect_powerstate_changed,
+                                                                xenserver_guest_powerstate):
+    """Tests XenServerVM.set_power_state()."""
     mocked_set_vm_power_state = mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.set_vm_power_state',
-                                             return_value=(True, "somenewstate"))
+                                             wraps=xenserver_guest_powerstate.set_vm_power_state)
+    mocker.patch('ansible.module_utils.xenserver.time.sleep')
+
+    xenserver_guest_powerstate_expand_params(fake_ansible_module.params)
+
+    state = fake_ansible_module.params['state']
+    state_change_timeout = fake_ansible_module.params['state_change_timeout']
+
+    vm = xenserver_guest_powerstate.XenServerVM(fake_ansible_module)
+    powerstate_changed = vm.set_power_state(state)
+
+    mocked_set_vm_power_state.assert_called_once_with(fake_ansible_module, vm.vm_ref, state, state_change_timeout)
+    assert powerstate_changed == expect_powerstate_changed
+    assert vm.gather_facts() == fake_vm_facts
+
+
+@pytest.mark.parametrize('fake_ansible_module,fake_vm_facts,expect_powerstate_changed',
+                         testcase_powerstate_change_check_mode['params'],
+                         ids=testcase_powerstate_change_check_mode['ids'],
+                         indirect=['fake_ansible_module', 'fake_vm_facts'])
+def test_xenserver_guest_powerstate_xenservervm_set_power_state_check_mode(mocker,
+                                                                           fake_ansible_module,
+                                                                           fake_vm_facts,
+                                                                           expect_powerstate_changed,
+                                                                           xenserver_guest_powerstate):
+    """Tests XenServerVM.set_power_state() in check mode."""
+    mocked_set_vm_power_state = mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.set_vm_power_state',
+                                             wraps=xenserver_guest_powerstate.set_vm_power_state)
+    mocker.patch('ansible.module_utils.xenserver.time.sleep')
+
+    xenserver_guest_powerstate_expand_params(fake_ansible_module.params)
+    fake_ansible_module.check_mode = True
+
+    state = fake_ansible_module.params['state']
+    state_change_timeout = fake_ansible_module.params['state_change_timeout']
+
+    vm = xenserver_guest_powerstate.XenServerVM(fake_ansible_module)
+    powerstate_changed = vm.set_power_state(state)
+
+    mocked_set_vm_power_state.assert_called_once_with(fake_ansible_module, vm.vm_ref, state, state_change_timeout)
+    assert powerstate_changed == expect_powerstate_changed
+
+    # Workaround for set_power_state() side effect.
+    vm_facts = vm.gather_facts()
+    fake_vm_facts['state'] = vm_facts['state']
+
+    assert vm_facts == fake_vm_facts
+
+
+@pytest.mark.parametrize('fake_ansible_module,fake_vm_facts,expect_powerstate_changed',
+                         testcase_no_powerstate_change_wait_for_ip_address['params'],
+                         ids=testcase_no_powerstate_change_wait_for_ip_address['ids'],
+                         indirect=['fake_ansible_module', 'fake_vm_facts'])
+def test_xenserver_guest_powerstate_xenservervm_wait_for_ip_address(mocker,
+                                                                    fake_ansible_module,
+                                                                    fake_vm_facts,
+                                                                    expect_powerstate_changed,
+                                                                    xenserver_guest_powerstate):
+    """Tests XenServerVM.wait_for_ip_address()."""
     mocked_wait_for_vm_ip_address = mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.wait_for_vm_ip_address',
-                                                 return_value={})
+                                                 wraps=xenserver_guest_powerstate.wait_for_vm_ip_address)
+    mocker.patch('ansible.module_utils.xenserver.time.sleep')
 
-    mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
+    xenserver_guest_powerstate_expand_params(fake_ansible_module.params)
 
-    mocked_returns = {
-        "pool.get_all.return_value": [fake_xenapi_ref('pool')],
-        "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
-    }
+    state_change_timeout = fake_ansible_module.params['state_change_timeout']
 
-    mocked_xenapi.configure_mock(**mocked_returns)
+    vm = xenserver_guest_powerstate.XenServerVM(fake_ansible_module)
+    vm.wait_for_ip_address()
 
-    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
-
-    with pytest.raises(SystemExit):
-        xenserver_guest_powerstate.main()
-
-    out, err = capfd.readouterr()
-    result = json.loads(out)
-
-    mocked_set_vm_power_state.assert_not_called()
-    mocked_wait_for_vm_ip_address.assert_not_called()
-    assert result['changed'] is False
-    assert result['instance'] == fake_vm_facts
+    mocked_wait_for_vm_ip_address.assert_called_once_with(fake_ansible_module, vm.vm_ref, state_change_timeout)
+    assert vm.gather_facts() == fake_vm_facts
 
 
 @pytest.mark.parametrize('patch_ansible_module',
-                         testcase_module_params_state_other['params'],
-                         ids=testcase_module_params_state_other['ids'],
+                         testcase_vm_not_found['params'],
+                         ids=testcase_vm_not_found['ids'],
                          indirect=True)
-def test_xenserver_guest_powerstate_other(mocker, patch_ansible_module, capfd, XenAPI, xenserver_guest_powerstate):
+def test_xenserver_guest_powerstate_main_failures(capfd, patch_ansible_module, xenserver_guest_powerstate):
     """
-    Tests regular module invocation including parsing and propagation of
-    module params and module output when state is set to other value than
-    present.
+    Tests module failures with parsing and propagation of module parameters
+    and correctness of module output.
     """
-    fake_vm_facts = {"fake-vm-fact": True}
+    with pytest.raises(SystemExit):
+        xenserver_guest_powerstate.main()
 
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.get_object_ref', return_value=fake_xenapi_ref('VM'))
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_params', return_value={})
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_facts', return_value=fake_vm_facts)
-    mocked_set_vm_power_state = mocker.patch(
-        'ansible.modules.cloud.xenserver.xenserver_guest_powerstate.set_vm_power_state',
-        return_value=(True, "somenewstate"))
-    mocked_wait_for_vm_ip_address = mocker.patch(
-        'ansible.modules.cloud.xenserver.xenserver_guest_powerstate.wait_for_vm_ip_address',
-        return_value={})
+    out, err = capfd.readouterr()
+    result = json.loads(out)
 
-    mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
+    assert result['failed'] is True
+    assert "not found" in result['msg']
+    assert "changed" not in result
+    assert "instance" not in result
 
-    mocked_returns = {
-        "pool.get_all.return_value": [fake_xenapi_ref('pool')],
-        "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
-    }
 
-    mocked_xenapi.configure_mock(**mocked_returns)
-
-    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
+@pytest.mark.parametrize('patch_ansible_module,fake_vm_facts,expect_powerstate_changed',
+                         testcase_powerstate['params'],
+                         ids=testcase_powerstate['ids'],
+                         indirect=['patch_ansible_module', 'fake_vm_facts'])
+def test_xenserver_guest_powerstate_main_success(mocker,
+                                                 capfd,
+                                                 patch_ansible_module,
+                                                 fake_vm_facts,
+                                                 expect_powerstate_changed,
+                                                 xenserver_guest_powerstate):
+    """
+    Tests successful module invocation with parsing and propagation of
+    module parameters and correctness of module output when no change is made.
+    """
+    mocker.patch('ansible.module_utils.xenserver.time.sleep')
 
     with pytest.raises(SystemExit):
         xenserver_guest_powerstate.main()
@@ -241,49 +179,9 @@ def test_xenserver_guest_powerstate_other(mocker, patch_ansible_module, capfd, X
     out, err = capfd.readouterr()
     result = json.loads(out)
 
-    mocked_set_vm_power_state.assert_called_once()
-    mocked_wait_for_vm_ip_address.assert_not_called()
-    assert result['changed'] is True
-    assert result['instance'] == fake_vm_facts
+    # if result['failed']:
+    #     print(result['msg'])
 
-
-@pytest.mark.parametrize('patch_ansible_module',
-                         testcase_module_params_wait['params'],
-                         ids=testcase_module_params_wait['ids'],
-                         indirect=True)
-def test_xenserver_guest_powerstate_wait(mocker, patch_ansible_module, capfd, XenAPI, xenserver_guest_powerstate):
-    """
-    Tests regular module invocation including parsing and propagation of
-    module params and module output when wait_for_ip_address option is used.
-    """
-    fake_vm_facts = {"fake-vm-fact": True}
-
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.get_object_ref', return_value=fake_xenapi_ref('VM'))
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_params', return_value={})
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_powerstate.gather_vm_facts', return_value=fake_vm_facts)
-    mocked_set_vm_power_state = mocker.patch(
-        'ansible.modules.cloud.xenserver.xenserver_guest_powerstate.set_vm_power_state',
-        return_value=(True, "somenewstate"))
-    mocked_wait_for_vm_ip_address = mocker.patch(
-        'ansible.modules.cloud.xenserver.xenserver_guest_powerstate.wait_for_vm_ip_address',
-        return_value={})
-
-    mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
-
-    mocked_returns = {
-        "pool.get_all.return_value": [fake_xenapi_ref('pool')],
-        "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
-    }
-
-    mocked_xenapi.configure_mock(**mocked_returns)
-
-    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
-
-    with pytest.raises(SystemExit):
-        xenserver_guest_powerstate.main()
-
-    out, err = capfd.readouterr()
-    result = json.loads(out)
-
-    mocked_wait_for_vm_ip_address.assert_called_once()
+    assert result['failed'] is False
+    assert result['changed'] is expect_powerstate_changed
     assert result['instance'] == fake_vm_facts

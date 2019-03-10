@@ -1,0 +1,36 @@
+{
+    "cdrom": {},
+    "customization_agent": "custom",
+    "disks": [],
+    "domid": "-1",
+    "folder": "",
+    "hardware": {
+        "memory_mb": 256,
+        "num_cpu_cores_per_socket": 1,
+        "num_cpus": 1
+    },
+    "home_server": "",
+    "is_template": false,
+    "name": "some-vm-name",
+    "name_desc": "",
+    "networks": [],
+    "other_config": {
+        "default_template": "true",
+        "import_task": "OpaqueRef:NULL",
+        "install-methods": "cdrom",
+        "mac_seed": "4086531f-ca00-40ed-a215-c93b091c25d9"
+    },
+    "platform": {
+        "acpi": "1",
+        "apic": "true",
+        "hpet": "true",
+        "nx": "true",
+        "pae": "true",
+        "viridian": "true"
+    },
+    "state": "poweredon",
+    "uuid": "unknown",
+    "xenstore_data": {
+        "vm-data": ""
+    }
+}

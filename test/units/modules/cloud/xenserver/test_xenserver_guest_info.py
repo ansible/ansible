@@ -10,68 +10,81 @@ __metaclass__ = type
 import json
 import pytest
 
-from .common import fake_xenapi_ref
-
-pytestmark = pytest.mark.usefixtures('patch_ansible_module')
-
-
-testcase_module_params = {
-    "params": [
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "uuid": "somevmuuid",
-        },
-        {
-            "hostname": "somehost",
-            "username": "someuser",
-            "password": "somepwd",
-            "name": "somevmname",
-            "uuid": "somevmuuid",
-        },
-    ],
-    "ids": [
-        "name",
-        "uuid",
-        "name+uuid",
-    ],
-}
+from .FakeAnsibleModule import FailJsonException
+from .common import xenserver_guest_info_expand_params
+from .testcases.xenserver_guest_common import (testcase_vm_not_found,
+                                               testcase_vm_found)
 
 
-@pytest.mark.parametrize('patch_ansible_module', testcase_module_params['params'], ids=testcase_module_params['ids'], indirect=True)
-def test_xenserver_guest_info(mocker, capfd, XenAPI, xenserver_guest_info):
+pytestmark = pytest.mark.usefixtures("fake_xenapi_db_vm")
+
+
+@pytest.mark.parametrize('fake_ansible_module',
+                         testcase_vm_not_found['params'],
+                         ids=testcase_vm_not_found['ids'],
+                         indirect=True)
+def test_xenserver_guest_info_xenservervm_misc_failures(fake_ansible_module, xenserver_guest_info):
+    """Tests failures of XenServerVM.__init__()."""
+    xenserver_guest_info_expand_params(fake_ansible_module.params)
+
+    with pytest.raises(FailJsonException) as exc_info:
+        xenserver_guest_info.XenServerVM(fake_ansible_module)
+
+    assert "not found" in exc_info.value.kwargs['msg']
+
+
+@pytest.mark.parametrize('fake_ansible_module,fake_vm_facts',
+                         testcase_vm_found['params'],
+                         ids=testcase_vm_found['ids'],
+                         indirect=True)
+def test_xenserver_guest_info_xenservervm_misc_success(fake_ansible_module, fake_vm_facts, xenserver_guest_info):
+    """Tests successful run of XenServerVM.__init__() and misc methods."""
+    xenserver_guest_info_expand_params(fake_ansible_module.params)
+
+    vm = xenserver_guest_info.XenServerVM(fake_ansible_module)
+
+    assert vm.gather_facts() == fake_vm_facts
+
+
+@pytest.mark.parametrize('patch_ansible_module',
+                         testcase_vm_not_found['params'],
+                         ids=testcase_vm_not_found['ids'],
+                         indirect=True)
+def test_xenserver_guest_info_main_failures(capfd, patch_ansible_module, xenserver_guest_info):
     """
-    Tests regular module invocation including parsing and propagation of
-    module params and module output.
+    Tests module failures with parsing and propagation of module parameters
+    and correctness of module output.
     """
-    fake_vm_facts = {"fake-vm-fact": True}
-
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_info.get_object_ref', return_value=None)
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_info.gather_vm_params', return_value=None)
-    mocker.patch('ansible.modules.cloud.xenserver.xenserver_guest_info.gather_vm_facts', return_value=fake_vm_facts)
-
-    mocked_xenapi = mocker.patch.object(XenAPI.Session, 'xenapi', create=True)
-
-    mocked_returns = {
-        "pool.get_all.return_value": [fake_xenapi_ref('pool')],
-        "pool.get_default_SR.return_value": fake_xenapi_ref('SR'),
-    }
-
-    mocked_xenapi.configure_mock(**mocked_returns)
-
-    mocker.patch('ansible.module_utils.xenserver.get_xenserver_version', return_value=[7, 2, 0])
-
     with pytest.raises(SystemExit):
         xenserver_guest_info.main()
 
     out, err = capfd.readouterr()
     result = json.loads(out)
 
+    assert result['failed'] is True
+    assert "not found" in result['msg']
+    assert "changed" not in result
+    assert "instance" not in result
+
+
+@pytest.mark.parametrize('patch_ansible_module,fake_vm_facts',
+                         testcase_vm_found['params'],
+                         ids=testcase_vm_found['ids'],
+                         indirect=True)
+def test_xenserver_guest_info_main_success(capfd, patch_ansible_module, fake_vm_facts, xenserver_guest_info):
+    """
+    Tests successful module invocation with parsing and propagation of
+    module parameters and correctness of module output.
+    """
+    with pytest.raises(SystemExit):
+        xenserver_guest_info.main()
+
+    out, err = capfd.readouterr()
+    result = json.loads(out)
+
+    # if result['failed']:
+    #     print(result['msg'])
+
+    assert result['failed'] is False
+    assert result['changed'] is False
     assert result['instance'] == fake_vm_facts

@@ -1,0 +1,75 @@
+[
+    "name",
+    "name_desc",
+    "folder",
+    "home_server",
+    {
+        "hardware": [
+            "num_cpus",
+            "num_cpu_cores_per_socket",
+            "memory_mb"
+        ]
+    },
+    {
+        "disks_changed": [
+            [
+                "name",
+                "name_desc",
+                "size"
+            ]
+        ]
+    },
+    {
+        "disks_new": [
+            [
+                1,
+                "1"
+            ]
+        ]
+    },
+    {
+        "cdrom": [
+            "type"
+        ]
+    },
+    {
+        "networks_changed": [
+            [
+                "name",
+                "mac",
+                "type",
+                "ip",
+                "prefix",
+                "netmask",
+                "gateway",
+                "type6",
+                "ip6",
+                "prefix6",
+                "gateway6"
+            ],
+            [
+                "name",
+                "mac",
+                "type",
+                "type6"
+            ]
+        ]
+    },
+    {
+        "networks_new": [
+            [
+                2,
+                "2"
+            ],
+            [
+                3,
+                "3"
+            ],
+            [
+                4,
+                "4"
+            ]
+        ]
+    },
+    "need_poweredoff"
+]

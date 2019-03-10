@@ -1,0 +1,89 @@
+{
+    "cdrom": {
+        "type": "none"
+    },
+    "customization_agent": "native",
+    "disks": [
+        {
+            "name": "ansible-test-vm-1-C",
+            "name_desc": "C:\\",
+            "os_device": "xvda",
+            "size": 42949672960,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "0"
+        }
+    ],
+    "domid": "143",
+    "folder": "/Ansible/Test",
+    "hardware": {
+        "memory_mb": 2048,
+        "num_cpu_cores_per_socket": 2,
+        "num_cpus": 2
+    },
+    "home_server": "",
+    "is_template": false,
+    "name": "ansible-test-vm-1",
+    "name_desc": "Created by Ansible",
+    "networks": [
+        {
+            "gateway": "192.168.0.1",
+            "gateway6": "fc00::1",
+            "ip": "192.168.0.11",
+            "ip6": [
+                "fe80:0000:0000:0000:78a6:48ff:fe1e:3146",
+                "fc00:0000:0000:0000:0000:0000:0000:000b"
+            ],
+            "mac": "7a:a6:48:1e:31:46",
+            "mtu": "9000",
+            "name": "Pool-wide network associated with eth0",
+            "netmask": "255.255.255.0",
+            "prefix": "24",
+            "prefix6": "48",
+            "vif_device": "0"
+        },
+        {
+            "gateway": "",
+            "gateway6": "",
+            "ip": "",
+            "ip6": [
+                "fe80:0000:0000:0000:08ae:29ff:fe2f:1c65"
+            ],
+            "mac": "0a:ae:29:2f:1c:65",
+            "mtu": "9000",
+            "name": "Pool-wide network associated with eth0",
+            "netmask": "",
+            "prefix": "",
+            "prefix6": "",
+            "vif_device": "1"
+        }
+    ],
+    "other_config": {
+        "base_template_name": "Windows Server 2016 (64-bit)",
+        "folder": "/Ansible/Test",
+        "import_task": "OpaqueRef:NULL",
+        "install-methods": "cdrom",
+        "instant": "true",
+        "mac_seed": "366fe8e0-878b-4320-8731-90d1ed3c0b93"
+    },
+    "platform": {
+        "acpi": "1",
+        "apic": "true",
+        "cores-per-socket": "2",
+        "device_id": "0002",
+        "hpet": "true",
+        "nx": "true",
+        "pae": "true",
+        "timeoffset": "-28800",
+        "vga": "std",
+        "videoram": "8",
+        "viridian": "true",
+        "viridian_reference_tsc": "true",
+        "viridian_time_ref_count": "true"
+    },
+    "state": "poweredon",
+    "uuid": "81c373d7-a407-322f-911b-31386eb5215d",
+    "xenstore_data": {
+        "vm-data": ""
+    }
+}

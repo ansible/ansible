@@ -1,0 +1,198 @@
+{
+    "cdrom": {
+        "type": "none"
+    },
+    "customization_agent": "custom",
+    "disks": [
+        {
+            "name": "ansible-test-vm-2-root-new",
+            "name_desc": "",
+            "os_device": "xvda",
+            "size": 21474836480,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "0"
+        },
+        {
+            "name": "ansible-test-vm-2-mysql-new",
+            "name_desc": "",
+            "os_device": "xvdc",
+            "size": 2147483648,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "2"
+        },
+        {
+            "name": "ansible-test-vm-2-mongo",
+            "name_desc": "",
+            "os_device": "xvde",
+            "size": 10737418240,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "4"
+        }
+    ],
+    "domid": "1",
+    "folder": "",
+    "hardware": {
+        "memory_mb": 2048,
+        "num_cpu_cores_per_socket": 2,
+        "num_cpus": 2
+    },
+    "home_server": "",
+    "is_template": false,
+    "name": "ansible-test-vm-2-new",
+    "name_desc": "",
+    "networks": [
+        {
+            "gateway": "192.168.1.1",
+            "gateway6": "fc00::1:1",
+            "ip": "192.168.1.12",
+            "ip6": [
+                "fe80:0000:0000:0000:1487:31ff:fe70:d632",
+                "fc00:0000:0000:0000:0000:0000:0001:000c"
+            ],
+            "mac": "16:87:31:70:d6:32",
+            "mtu": "9000",
+            "name": "Pool-wide network associated with eth0",
+            "netmask": "255.255.255.128",
+            "prefix": "25",
+            "prefix6": "64",
+            "vif_device": "0"
+        },
+        {
+            "gateway": "192.168.0.1",
+            "gateway6": "fc00::1",
+            "ip": "192.168.0.22",
+            "ip6": [
+                "fe80:0000:0000:0000:88f2:3eff:fea2:e4e7",
+                "fc00:0000:0000:0000:0000:0000:0000:0016"
+            ],
+            "mac": "8a:f2:3e:a2:e4:e7",
+            "mtu": "9000",
+            "name": "Pool-wide network associated with eth0",
+            "netmask": "255.255.255.0",
+            "prefix": "24",
+            "prefix6": "48",
+            "vif_device": "2"
+        },
+        {
+            "gateway": "192.168.0.1",
+            "gateway6": "fc00::1",
+            "ip": "192.168.0.32",
+            "ip6": [
+                "fe80:0000:0000:0000:0200:00ff:fe00:0000",
+                "fc00:0000:0000:0000:0000:0000:0000:0020"
+            ],
+            "mac": "00:00:00:00:00:00",
+            "mtu": "9000",
+            "name": "Pool-wide network associated with eth0",
+            "netmask": "255.255.255.0",
+            "prefix": "24",
+            "prefix6": "48",
+            "vif_device": "3"
+        },
+        {
+            "gateway": "",
+            "gateway6": "",
+            "ip": "169.254.255.1",
+            "ip6": [
+                "fe80:0000:0000:0000:0200:00ff:fe00:0000"
+            ],
+            "mac": "00:00:00:00:00:00",
+            "mtu": "1500",
+            "name": "Host internal management network",
+            "netmask": "",
+            "prefix": "",
+            "prefix6": "",
+            "vif_device": "4"
+        },
+        {
+            "gateway": "",
+            "gateway6": "",
+            "ip": "",
+            "ip6": [
+                "fe80:0000:0000:0000:0200:00ff:fe00:0000"
+            ],
+            "mac": "00:00:00:00:00:00",
+            "mtu": "1500",
+            "name": "Host internal management network",
+            "netmask": "",
+            "prefix": "",
+            "prefix6": "",
+            "vif_device": "5"
+        }
+    ],
+    "other_config": {
+        "base_template_name": "CentOS 7",
+        "import_task": "OpaqueRef:NULL",
+        "install-methods": "cdrom,nfs,http,ftp",
+        "instant": "true",
+        "linux_template": "true",
+        "mac_seed": "0ab46664-f519-5383-166e-e4ea485ede7d"
+    },
+    "platform": {
+        "acpi": "1",
+        "apic": "true",
+        "cores-per-socket": "2",
+        "device_id": "0001",
+        "nx": "true",
+        "pae": "true",
+        "timeoffset": "0",
+        "vga": "std",
+        "videoram": "8",
+        "viridian": "false"
+    },
+    "state": "poweredon",
+    "uuid": "0a05d5ad-3e4b-f0dc-6101-8c56623958bc",
+    "xenstore_data": {
+        "vm-data": "",
+        "vm-data/networks": "",
+        "vm-data/networks/0": "",
+        "vm-data/networks/0/gateway": "192.168.1.1",
+        "vm-data/networks/0/gateway6": "fc00::1:1",
+        "vm-data/networks/0/ip": "192.168.1.12",
+        "vm-data/networks/0/ip6": "fc00::1:c",
+        "vm-data/networks/0/mac": "16:87:31:70:d6:32",
+        "vm-data/networks/0/name": "Pool-wide network associated with eth0",
+        "vm-data/networks/0/netmask": "255.255.255.128",
+        "vm-data/networks/0/prefix": "25",
+        "vm-data/networks/0/prefix6": "64",
+        "vm-data/networks/0/type": "static",
+        "vm-data/networks/0/type6": "static",
+        "vm-data/networks/2": "",
+        "vm-data/networks/2/gateway": "192.168.0.1",
+        "vm-data/networks/2/gateway6": "fc00::1",
+        "vm-data/networks/2/ip": "192.168.0.22",
+        "vm-data/networks/2/ip6": "fc00::16",
+        "vm-data/networks/2/mac": "8a:f2:3e:a2:e4:e7",
+        "vm-data/networks/2/name": "Pool-wide network associated with eth0",
+        "vm-data/networks/2/netmask": "255.255.255.0",
+        "vm-data/networks/2/prefix": "24",
+        "vm-data/networks/2/prefix6": "48",
+        "vm-data/networks/2/type": "static",
+        "vm-data/networks/2/type6": "static",
+        "vm-data/networks/3": "",
+        "vm-data/networks/3/gateway": "192.168.0.1",
+        "vm-data/networks/3/gateway6": "fc00::1",
+        "vm-data/networks/3/ip": "192.168.0.32",
+        "vm-data/networks/3/ip6": "fc00::20",
+        "vm-data/networks/3/mac": "00:00:00:00:00:00",
+        "vm-data/networks/3/name": "Pool-wide network associated with eth0",
+        "vm-data/networks/3/netmask": "255.255.255.0",
+        "vm-data/networks/3/prefix": "24",
+        "vm-data/networks/3/prefix6": "48",
+        "vm-data/networks/3/type": "static",
+        "vm-data/networks/3/type6": "static",
+        "vm-data/networks/4": "",
+        "vm-data/networks/4/mac": "00:00:00:00:00:00",
+        "vm-data/networks/4/name": "Host internal management network",
+        "vm-data/networks/4/type": "dhcp",
+        "vm-data/networks/4/type6": "dhcp",
+        "vm-data/networks/5": "",
+        "vm-data/networks/5/mac": "00:00:00:00:00:00",
+        "vm-data/networks/5/name": "Host internal management network",
+        "vm-data/networks/5/type": "none",
+        "vm-data/networks/5/type6": "none"
+    }
+}

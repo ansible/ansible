@@ -1,0 +1,115 @@
+{
+    "cdrom": {
+        "type": "iso",
+        "iso_name": "guest-tools.iso"
+    },
+    "customization_agent": "custom",
+    "disks": [
+        {
+            "name": "ansible-test-vm-2-root",
+            "name_desc": "/",
+            "os_device": "xvda",
+            "size": 10737418240,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "0"
+        },
+        {
+            "name": "ansible-test-vm-2-mysql",
+            "name_desc": "/var/lib/mysql",
+            "os_device": "xvdc",
+            "size": 1073741824,
+            "sr": "Ansible Test Storage 1",
+            "sr_uuid": "767b30e4-f8db-a83d-8ba7-f5e6e732e06f",
+            "vbd_userdevice": "2"
+        }
+    ],
+    "domid": "140",
+    "folder": "/Ansible/Test",
+    "hardware": {
+        "memory_mb": 1024,
+        "num_cpu_cores_per_socket": 1,
+        "num_cpus": 1
+    },
+    "home_server": "ansible-test-host-2",
+    "is_template": false,
+    "name": "ansible-test-vm-2",
+    "name_desc": "Created by Ansible",
+    "networks": [
+        {
+            "gateway": "192.168.0.1",
+            "gateway6": "fc00::1",
+            "ip": "192.168.0.12",
+            "ip6": [
+                "fe80:0000:0000:0000:1487:31ff:fe70:d631",
+                "fc00:0000:0000:0000:0000:0000:0000:000c"
+            ],
+            "mac": "16:87:31:70:d6:31",
+            "mtu": "1500",
+            "name": "Host internal management network",
+            "netmask": "255.255.255.0",
+            "prefix": "24",
+            "prefix6": "48",
+            "vif_device": "0"
+        },
+        {
+            "gateway": "",
+            "gateway6": "",
+            "ip": "169.254.0.3",
+            "ip6": [
+                "fe80:0000:0000:0000:88f2:3eff:fea2:e4e6"
+            ],
+            "mac": "8a:f2:3e:a2:e4:e6",
+            "mtu": "1500",
+            "name": "Host internal management network",
+            "netmask": "",
+            "prefix": "",
+            "prefix6": "",
+            "vif_device": "2"
+        }
+    ],
+    "other_config": {
+        "base_template_name": "CentOS 7",
+        "folder": "/Ansible/Test",
+        "import_task": "OpaqueRef:NULL",
+        "install-methods": "cdrom,nfs,http,ftp",
+        "instant": "true",
+        "linux_template": "true",
+        "mac_seed": "0ab46664-f519-5383-166e-e4ea485ede7d"
+    },
+    "platform": {
+        "acpi": "1",
+        "apic": "true",
+        "cores-per-socket": "1",
+        "device_id": "0001",
+        "nx": "true",
+        "pae": "true",
+        "timeoffset": "0",
+        "vga": "std",
+        "videoram": "8",
+        "viridian": "false"
+    },
+    "state": "poweredon",
+    "uuid": "0a05d5ad-3e4b-f0dc-6101-8c56623958bc",
+    "xenstore_data": {
+        "vm-data": "",
+        "vm-data/networks": "",
+        "vm-data/networks/0": "",
+        "vm-data/networks/0/gateway": "192.168.0.1",
+        "vm-data/networks/0/gateway6": "fc00::1",
+        "vm-data/networks/0/ip": "192.168.0.12",
+        "vm-data/networks/0/ip6": "fc00::c",
+        "vm-data/networks/0/mac": "16:87:31:70:d6:31",
+        "vm-data/networks/0/name": "Host internal management network",
+        "vm-data/networks/0/netmask": "255.255.255.0",
+        "vm-data/networks/0/prefix": "24",
+        "vm-data/networks/0/prefix6": "48",
+        "vm-data/networks/0/type": "static",
+        "vm-data/networks/0/type6": "static",
+        "vm-data/networks/2": "",
+        "vm-data/networks/2/mac": "8a:f2:3e:a2:e4:e6",
+        "vm-data/networks/2/name": "Host internal management network",
+        "vm-data/networks/2/type": "dhcp",
+        "vm-data/networks/2/type6": "dhcp"
+    }
+}

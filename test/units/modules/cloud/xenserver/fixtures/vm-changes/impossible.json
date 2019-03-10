@@ -1,0 +1,38 @@
+[
+    [],
+    {
+        "hardware": [
+            "impossible"
+        ]
+    },
+    {
+        "disks_changed": [
+            [
+                "impossible"
+            ]
+        ]
+    },
+    {
+        "cdrom": [
+            "impossible"
+        ]
+    },
+    {
+        "networks_changed": [
+            [
+                "impossible"
+            ]
+        ]
+    },
+    {
+        "networks_new": [
+            [
+                2,
+                "2"
+            ]
+        ]
+    },
+    {
+        "impossible": []
+    }
+]
