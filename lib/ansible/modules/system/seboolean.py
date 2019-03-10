@@ -324,17 +324,17 @@ def main():
     )
     changed = False
 
-    for pos, name in enumerate(names) :
+    for pos, name in enumerate(names):
         if hasattr(selinux, 'selinux_boolean_sub'):
             # selinux_boolean_sub allows sites to rename a boolean and alias the old name
             # Feature only available in selinux library since 2012.
             names[pos] = selinux.selinux_boolean_sub(name)
 
-    for name in names :
+    for name in names:
         if not has_boolean_value(module, name):
             module.fail_json(msg="SELinux boolean %s does not exist." % name)
 
-    for name in names :
+    for name in names:
         if persistent:
             changed = semanage_boolean_value(module, name, state)
         else:
