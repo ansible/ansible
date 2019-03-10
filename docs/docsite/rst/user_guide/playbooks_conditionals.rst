@@ -397,7 +397,7 @@ Possible values (sample, not complete list)::
     Suse
     Windows
 
-.. See `OS_FAMILY_MAP` and python platform module.
+.. Ansible checks `OS_FAMILY_MAP`; if there's no match, it returns the value of `platform.system()`.
 
 .. seealso::
 
