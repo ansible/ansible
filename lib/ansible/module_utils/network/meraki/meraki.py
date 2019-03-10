@@ -228,6 +228,12 @@ class MerakiModule(object):
                 return n
         return False
 
+    def assign_org_id(self):
+        org_id = self.params['org_id']
+        if org_id is None and self.params['org_name']:
+            org_id = self.get_org_id(self.params['org_name'])
+        return org_id
+
     def assign_net_id(self, org_id, nets=None):
         """Discover net_id information for playbook execution."""
         net_id = self.params['net_id']

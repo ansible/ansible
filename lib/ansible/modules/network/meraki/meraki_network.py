@@ -271,9 +271,7 @@ def main():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
-    org_id = meraki.params['org_id']
-    if not org_id:
-        org_id = meraki.get_org_id(meraki.params['org_name'])
+    org_id = meraki.assign_org_id()
     nets = meraki.get_nets(org_id=org_id)
 
     # check if network is created

@@ -273,9 +273,7 @@ def main():
     if not meraki.params['org_name'] and not meraki.params['org_id']:
         meraki.fail_json(msg='org_name or org_id is required')
 
-    org_id = meraki.params['org_id']
-    if org_id is None:
-        org_id = meraki.get_org_id(meraki.params['org_name'])
+    org_id = meraki.assign_org_id()
 
     if meraki.params['state'] == 'query':
         meraki.result['data'] = get_snmp(meraki, org_id)

@@ -277,13 +277,7 @@ def main():
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
-    org_id = meraki.params['org_id']
-    orgs = None
-    if org_id is None:
-        orgs = meraki.get_orgs()
-        for org in orgs:
-            if org['name'] == meraki.params['org_name']:
-                org_id = org['id']
+    org_id = meraki.assign_org_id()
     net_id = meraki.assign_net_id(org_id)
 
     if meraki.params['state'] == 'query':
