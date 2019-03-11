@@ -83,7 +83,7 @@ options:
     suboptions:
       enabled:
         description:
-          - If set to True, then it has its own IP settings. 
+          - If set to True, then it has its own IP settings.
         type: bool
       network_setting:
         description:
