@@ -423,6 +423,10 @@ class Constructable(object):
                             self.inventory.add_child(gname, host)
 
                             if raw_parent_name:
+                                try:
+                                    raw_parent_name = self._compose(raw_parent_name, variables)
+                                except Exception as e:
+                                    pass
                                 parent_name = to_safe_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
                                 self.inventory.add_child(parent_name, gname)
