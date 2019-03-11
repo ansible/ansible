@@ -19,7 +19,7 @@
   tags: setup_infra
 
 - pause:
-    seconds: 30
+    seconds: 10
   tags: setup_infra
 
 - name: Create ec2 instance
@@ -31,7 +31,7 @@
     region: us-east-2
     instance_profile_name: "{{iam_role_name}}"
     instance_tags:
-      name: krishna
+      name: aws_ssm_integration_test
     state: present
   register: output
   tags: setup_infra
@@ -55,7 +55,6 @@
     src: inventory.aws_ssm.j2
   tags: setup_infra
   
-
 - name: create bucket with instance id and rolename
   s3_bucket:
     name: "{{ bucket_name }}"
@@ -103,4 +102,3 @@
     state: absent
   register: iam_role_deletion_status
   tags: delete_infra
-
