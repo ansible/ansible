@@ -476,6 +476,12 @@ settings:
       returned: if supported
       type: int
       sample: 2147483647
+    pretty_val:
+      description:
+      - Value presented in the pretty form.
+      returned: always
+      type: str
+      sample: 2MB
 '''
 
 from fnmatch import fnmatch
@@ -742,7 +748,10 @@ class PgClusterFacts(object):
             if val_in_bytes is not None and val_in_bytes < 0:
                 val_in_bytes = 0
 
-            set_dict[i[0]] = dict(
+            setting_name = i[0]
+            pretty_val = self.__get_pretty_val(setting_name)
+
+            set_dict[setting_name] = dict(
                 setting=setting,
                 unit=unit,
                 context=i[3],
@@ -751,9 +760,10 @@ class PgClusterFacts(object):
                 min_val=i[6] if i[6] else '',
                 max_val=i[7] if i[7] else '',
                 sourcefile=i[8] if i[8] else '',
+                pretty_val=pretty_val,
             )
             if val_in_bytes is not None:
-                set_dict[i[0]]['val_in_bytes'] = val_in_bytes
+                set_dict[setting_name]['val_in_bytes'] = val_in_bytes
 
         self.pg_facts["settings"] = set_dict
 
@@ -873,6 +883,9 @@ class PgClusterFacts(object):
             db_dict[datname]['languages'] = self.get_lang_info()
 
         self.pg_facts["databases"] = db_dict
+
+    def __get_pretty_val(self, setting):
+        return self.__exec_sql("SHOW %s" % setting)[0][0]
 
     def __exec_sql(self, query):
         try:
