@@ -46,7 +46,7 @@ elif [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]]; then
     export COVERAGE="--coverage"
 else
     # on-demand coverage reporting disabled (default behavior, always-on coverage reporting remains enabled)
-    export COVERAGE=""
+    export COVERAGE="--coverage-check"
 fi
 
 if [ -n "${COMPLETE:-}" ]; then
@@ -75,7 +75,7 @@ function cleanup
 {
     if find test/results/coverage/ -mindepth 1 -name '.*' -prune -o -print -quit | grep -q .; then
         # for complete on-demand coverage generate a report for all files with no coverage on the "other" job so we only have one copy
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
+        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ] && [ "${test}" == "sanity/1" ]; then
             stub="--stub"
         else
             stub=""
@@ -86,7 +86,7 @@ function cleanup
         cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
 
         # upload coverage report to codecov.io only when using complete on-demand coverage
-        if [ "${COVERAGE}" ] && [ "${CHANGED}" == "" ]; then
+        if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then
             for file in test/results/reports/coverage=*.xml; do
                 flags="${file##*/coverage=}"
                 flags="${flags%.xml}"
@@ -116,7 +116,7 @@ function cleanup
 
 trap cleanup EXIT
 
-if [[ "${COVERAGE:-}" ]]; then
+if [[ "${COVERAGE:-}" == "--coverage" ]]; then
     timeout=60
 else
     timeout=45

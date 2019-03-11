@@ -29,6 +29,11 @@ def pytest_configure():
         if not coverage_config:
             return
 
+        coverage_output = os.environ.get('_ANSIBLE_COVERAGE_OUTPUT')
+
+        if not coverage_output:
+            return
+
         cov = coverage.Coverage(config_file=coverage_config)
         coverage_instances.append(cov)
     else:
