@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - now returns warnings from docker daemon on container creation and updating."

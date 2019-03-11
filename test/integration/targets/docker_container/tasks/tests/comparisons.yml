@@ -121,8 +121,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1010
-    - 1011
+    - "1010"
+    - "1011"
   register: set_1
 
 - name: set (change, ignore)
@@ -132,9 +132,9 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1010
-    - 1011
-    - 1012
+    - "1010"
+    - "1011"
+    - "1012"
     force_kill: yes
     comparisons:
       groups: ignore
@@ -147,9 +147,9 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1010
-    - 1011
-    - 1012
+    - "1010"
+    - "1011"
+    - "1012"
     force_kill: yes
     comparisons:
       groups: allow_more_present
@@ -162,8 +162,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1010
-    - 1012
+    - "1010"
+    - "1012"
     force_kill: yes
     comparisons:
       groups: allow_more_present
@@ -176,8 +176,8 @@
     name: "{{ cname }}"
     state: started
     groups:
-    - 1010
-    - 1012
+    - "1010"
+    - "1012"
     force_kill: yes
     comparisons:
       groups: strict

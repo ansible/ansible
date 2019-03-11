@@ -14,8 +14,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
     - all
     force_kill: yes
@@ -28,8 +28,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
     - all
     force_kill: yes
@@ -42,11 +42,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     force_kill: yes
   register: published_ports_3
 
@@ -57,11 +57,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     force_kill: yes
   register: published_ports_4
 
@@ -72,8 +72,8 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 8081
+    - "8080"
+    - "8081"
     published_ports:
     - all
     force_kill: yes
@@ -105,11 +105,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 5000-5040
+    - "8080"
+    - "5000-5040"
     published_ports:
-    - 8080:8080
-    - 5000-5040:5000-5040
+    - "8080:8080"
+    - "5000-5040:5000-5040"
     force_kill: yes
   register: published_ports_1
 
@@ -120,11 +120,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 5000-5040
+    - "8080"
+    - "5000-5040"
     published_ports:
-    - 8080:8080
-    - 5000-5040:5000-5040
+    - "8080:8080"
+    - "5000-5040:5000-5040"
     force_kill: yes
   register: published_ports_2
 
@@ -135,11 +135,11 @@
     name: "{{ cname }}"
     state: started
     exposed_ports:
-    - 8080
-    - 5000-5040
+    - "8080"
+    - "5000-5040"
     published_ports:
-    - 8080:8080
-    - 5010-5050:5010-5050
+    - "8080:8080"
+    - "5010-5050:5010-5050"
     force_kill: yes
   register: published_ports_3
 
@@ -189,7 +189,7 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - 127.0.0.1:8080:8080
+    - "127.0.0.1:8080:8080"
     force_kill: yes
   register: published_ports_3
 
@@ -200,7 +200,7 @@
     name: "{{ cname }}"
     state: started
     published_ports:
-    - localhost:8080:8080
+    - "localhost:8080:8080"
     force_kill: yes
   register: published_ports_4
   ignore_errors: yes
