@@ -1,16 +1,16 @@
 ---
-- name: Generate privatekey
+- name: (Assertonly) - Generate privatekey
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey.pem'
 
-- name: Generate privatekey with password
+- name: (Assertonly) - Generate privatekey with password
   openssl_privatekey:
     path: '{{ output_dir }}/privatekeypw.pem'
     passphrase: hunter2
     cipher: auto
     select_crypto_backend: cryptography
 
-- name: Generate CSR (no extensions)
+- name: (Assertonly) - Generate CSR (no extensions)
   openssl_csr:
     path: '{{ output_dir }}/csr_noext.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
@@ -18,7 +18,7 @@
       commonName: www.example.com
     useCommonNameForSAN: no
 
-- name: Generate selfsigned certificate (no extensions)
+- name: (Assertonly) - Generate selfsigned certificate (no extensions)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     csr_path: '{{ output_dir }}/csr_noext.csr'
@@ -26,25 +26,27 @@
     provider: selfsigned
     selfsigned_digest: sha256
 
-- name: Assert that subject_alt_name is there (should fail)
+- name: (Assertonly) - Assert that subject_alt_name is there (should fail)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     provider: assertonly
     subject_alt_name:
       - "DNS:example.com"
+    select_crypto_backend: cryptography
   ignore_errors: yes
   register: extension_missing_san
 
-- name: Assert that key_usage is there (should fail)
+- name: (Assertonly) - Assert that key_usage is there (should fail)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     provider: assertonly
     key_usage:
       - digitalSignature
+    select_crypto_backend: cryptography
   ignore_errors: yes
   register: extension_missing_ku
 
-- name: Assert that extended_key_usage is there (should fail)
+- name: (Assertonly) - Assert that extended_key_usage is there (should fail)
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     provider: assertonly
@@ -62,7 +64,7 @@
       - extension_missing_eku is failed
       - "'Found no extendedKeyUsage extension' in extension_missing_eku.msg"
 
-- name: Check private key passphrase fail 1
+- name: (Assertonly) - Check private key passphrase fail 1
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
@@ -71,7 +73,7 @@
   ignore_errors: yes
   register: passphrase_error_1
 
-- name: Check private key passphrase fail 2
+- name: (Assertonly) - Check private key passphrase fail 2
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
@@ -80,7 +82,7 @@
   ignore_errors: yes
   register: passphrase_error_2
 
-- name: Check private key passphrase fail 3
+- name: (Assertonly) - Check private key passphrase fail 3
   openssl_certificate:
     path: '{{ output_dir }}/cert_noext.pem'
     privatekey_path: '{{ output_dir }}/privatekeypw.pem'
@@ -88,7 +90,7 @@
   ignore_errors: yes
   register: passphrase_error_3
 
-- name:
+- name: (Assertonly) -
   assert:
     that:
       - passphrase_error_1 is failed

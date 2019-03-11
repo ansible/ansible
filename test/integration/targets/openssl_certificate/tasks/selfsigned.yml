@@ -24,15 +24,17 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: cryptography
   register: selfsigned_certificate
 
-- name: Generate selfsigned certificate
+- name: Generate selfsigned certificate - idempotency
   openssl_certificate:
     path: '{{ output_dir }}/cert.pem'
     csr_path: '{{ output_dir }}/csr.csr'
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: cryptography
   register: selfsigned_certificate_idempotence
 
 - name: Generate selfsigned certificate (check mode)
@@ -42,6 +44,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: selfsigned
     selfsigned_digest: sha256
+    select_crypto_backend: cryptography
   check_mode: yes
 
 - name: Check selfsigned certificate
@@ -50,6 +53,7 @@
     privatekey_path: '{{ output_dir }}/privatekey.pem'
     provider: assertonly
     has_expired: False
+    select_crypto_backend: pyopenssl
     version: 3
     signature_algorithms:
       - sha256WithRSAEncryption
@@ -104,6 +108,7 @@
     provider: assertonly
     has_expired: False
     version: 3
+    select_crypto_backend: pyopenssl
     signature_algorithms:
       - sha256WithRSAEncryption
       - sha256WithECDSAEncryption
@@ -132,7 +137,7 @@
       CN: www.example.com
     privatekey_path: "{{ output_dir }}/privatekey3.pem"
     path: "{{ output_dir }}/csr3.pem"
-        
+
 - name: Create certificate3 with notBefore and notAfter
   openssl_certificate:
     provider: selfsigned
