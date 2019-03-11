@@ -31,6 +31,7 @@ class OperationField:
     MODEL_NAME = 'modelName'
     DESCRIPTION = 'description'
     RETURN_MULTIPLE_ITEMS = 'returnMultipleItems'
+    TAGS = "tags"
 
 
 class SpecProp:
@@ -105,14 +106,16 @@ class FdmSwaggerParser:
         This method simplifies a swagger format, resolves a model name for each operation, and adds documentation for
         each operation and model if it is provided.
 
-        :param spec: An API specification in the swagger format, see <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>
+        :param spec: An API specification in the swagger format, see
+            <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md>
         :type spec: dict
         :param spec: A documentation map containing descriptions for models, operations and operation parameters.
         :type docs: dict
         :rtype: dict
         :return:
         Ex.
-            The models field contains model definition from swagger see <#https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#definitions>
+            The models field contains model definition from swagger see
+            <#https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#definitions>
             {
                 'models':{
                     'model_name':{...},
@@ -170,6 +173,10 @@ class FdmSwaggerParser:
             SpecProp.MODEL_OPERATIONS: self._get_model_operations(operations)
         }
 
+    @property
+    def base_path(self):
+        return self._base_path
+
     def _get_model_operations(self, operations):
         model_operations = {}
         for operations_name, params in iteritems(operations):
@@ -186,7 +193,8 @@ class FdmSwaggerParser:
                     OperationField.METHOD: method,
                     OperationField.URL: self._base_path + url,
                     OperationField.MODEL_NAME: self._get_model_name(method, params),
-                    OperationField.RETURN_MULTIPLE_ITEMS: self._return_multiple_items(params)
+                    OperationField.RETURN_MULTIPLE_ITEMS: self._return_multiple_items(params),
+                    OperationField.TAGS: params.get(OperationField.TAGS, [])
                 }
                 if OperationField.PARAMETERS in params:
                     operation[OperationField.PARAMETERS] = self._get_rest_params(params[OperationField.PARAMETERS])
@@ -205,8 +213,10 @@ class FdmSwaggerParser:
             operation[OperationField.DESCRIPTION] = operation_docs.get(PropName.DESCRIPTION, '')
 
             if OperationField.PARAMETERS in operation:
-                param_descriptions = dict((p[PropName.NAME], p[PropName.DESCRIPTION])
-                                          for p in operation_docs.get(OperationField.PARAMETERS, {}))
+                param_descriptions = dict((
+                    (p[PropName.NAME], p[PropName.DESCRIPTION])
+                    for p in operation_docs.get(OperationField.PARAMETERS, {})
+                ))
 
                 for param_name, params_spec in operation[OperationField.PARAMETERS][OperationParams.PATH].items():
                     params_spec[OperationField.DESCRIPTION] = param_descriptions.get(param_name, '')
@@ -493,7 +503,7 @@ class FdmSwaggerValidator:
             if prop_name in params:
                 expected_type = prop[PropName.TYPE]
                 value = params[prop_name]
-                if prop_name in params and not self._is_correct_simple_types(expected_type, value):
+                if prop_name in params and not self._is_correct_simple_types(expected_type, value, allow_null=False):
                     self._add_invalid_type_report(status, '', prop_name, expected_type, value)
 
     def _validate_object(self, status, model, data, path):
@@ -506,7 +516,7 @@ class FdmSwaggerValidator:
         return self._is_string_type(model) and PropName.ENUM in model
 
     def _check_enum(self, status, model, value, path):
-        if value not in model[PropName.ENUM]:
+        if value is not None and value not in model[PropName.ENUM]:
             self._add_invalid_type_report(status, path, '', PropName.ENUM, value)
 
     def _add_invalid_type_report(self, status, path, prop_name, expected_type, actually_value):
@@ -517,6 +527,9 @@ class FdmSwaggerValidator:
         })
 
     def _check_object(self, status, model, data, path):
+        if data is None:
+            return
+
         if not isinstance(data, dict):
             self._add_invalid_type_report(status, path, '', PropType.OBJECT, data)
             return None
@@ -550,12 +563,14 @@ class FdmSwaggerValidator:
 
     def _check_required_fields(self, status, required_fields, data, path):
         missed_required_fields = [self._create_path_to_field(path, field) for field in
-                                  required_fields if field not in data.keys()]
+                                  required_fields if field not in data.keys() or data[field] is None]
         if len(missed_required_fields) > 0:
             status[PropName.REQUIRED] += missed_required_fields
 
     def _check_array(self, status, model, data, path):
-        if not isinstance(data, list):
+        if data is None:
+            return
+        elif not isinstance(data, list):
             self._add_invalid_type_report(status, path, '', PropType.ARRAY, data)
         else:
             item_model = model[PropName.ITEMS]
@@ -564,7 +579,7 @@ class FdmSwaggerValidator:
                                   '')
 
     @staticmethod
-    def _is_correct_simple_types(expected_type, value):
+    def _is_correct_simple_types(expected_type, value, allow_null=True):
         def is_numeric_string(s):
             try:
                 float(s)
@@ -572,7 +587,9 @@ class FdmSwaggerValidator:
             except ValueError:
                 return False
 
-        if expected_type == PropType.STRING:
+        if value is None and allow_null:
+            return True
+        elif expected_type == PropType.STRING:
             return isinstance(value, string_types)
         elif expected_type == PropType.BOOLEAN:
             return isinstance(value, bool)

@@ -31,9 +31,19 @@ INVALID_UUID_ERROR_MESSAGE = "Validation failed due to an invalid UUID"
 DUPLICATE_NAME_ERROR_MESSAGE = "Validation failed due to a duplicate name"
 
 MULTIPLE_DUPLICATES_FOUND_ERROR = (
-    "Cannot add a new object. An object(s) with the same attributes exists."
-    "Multiple objects returned according to filters being specified. "
-    "Please specify more specific filters which can find exact object that caused duplication error")
+    "Multiple objects matching specified filters are found. "
+    "Please, define filters more precisely to match one object exactly."
+)
+DUPLICATE_ERROR = (
+    "Cannot add a new object. "
+    "An object with the same name but different parameters already exists."
+)
+ADD_OPERATION_NOT_SUPPORTED_ERROR = (
+    "Cannot add a new object while executing an upsert request. "
+    "Creation of objects with this type is not supported."
+)
+
+PATH_PARAMS_FOR_DEFAULT_OBJ = {'objId': 'default'}
 
 
 class OperationNamePrefix:
@@ -183,15 +193,10 @@ class OperationChecker(object):
         :return: True if all criteria required to provide requested called operation are satisfied, otherwise False
         :rtype: bool
         """
-        amount_operations_need_for_upsert_operation = 3
-        amount_supported_operations = 0
-        for operation_name, operation_spec in operations.items():
-            if cls.is_add_operation(operation_name, operation_spec) \
-                    or cls.is_edit_operation(operation_name, operation_spec) \
-                    or cls.is_get_list_operation(operation_name, operation_spec):
-                amount_supported_operations += 1
-
-        return amount_supported_operations == amount_operations_need_for_upsert_operation
+        has_edit_op = next((name for name, spec in iteritems(operations) if cls.is_edit_operation(name, spec)), None)
+        has_get_list_op = next((name for name, spec in iteritems(operations)
+                                if cls.is_get_list_operation(name, spec)), None)
+        return has_edit_op and has_get_list_op
 
 
 class BaseConfigurationResource(object):
@@ -262,8 +267,6 @@ class BaseConfigurationResource(object):
         return self._models_operations_specs_cache[model_name]
 
     def get_objects_by_filter(self, operation_name, params):
-        def transform_filters_to_query_param(filter_params):
-            return ';'.join(['%s:%s' % (key, val) for key, val in sorted(iteritems(filter_params))])
 
         def match_filters(filter_params, obj):
             for k, v in iteritems(filter_params):
@@ -271,16 +274,17 @@ class BaseConfigurationResource(object):
                     return False
             return True
 
-        dummy, query_params, path_params = _get_user_params(params)
+        _, query_params, path_params = _get_user_params(params)
         # copy required params to avoid mutation of passed `params` dict
-        get_list_params = {ParamName.QUERY_PARAMS: dict(query_params), ParamName.PATH_PARAMS: dict(path_params)}
+        url_params = {ParamName.QUERY_PARAMS: dict(query_params), ParamName.PATH_PARAMS: dict(path_params)}
 
         filters = params.get(ParamName.FILTERS) or {}
-        if filters:
-            get_list_params[ParamName.QUERY_PARAMS][QueryParams.FILTER] = transform_filters_to_query_param(filters)
+        if QueryParams.FILTER not in url_params[ParamName.QUERY_PARAMS] and 'name' in filters:
+            # most endpoints only support filtering by name, so remaining `filters` are applied on returned objects
+            url_params[ParamName.QUERY_PARAMS][QueryParams.FILTER] = 'name:%s' % filters['name']
 
         item_generator = iterate_over_pageable_resource(
-            partial(self.send_general_request, operation_name=operation_name), get_list_params
+            partial(self.send_general_request, operation_name=operation_name), url_params
         )
         return (i for i in item_generator if match_filters(filters, i))
 
@@ -292,44 +296,50 @@ class BaseConfigurationResource(object):
             return self.send_general_request(operation_name, params)
         except FtdServerError as e:
             if is_duplicate_name_error(e):
-                return self._check_if_the_same_object(operation_name, params, e)
+                return self._check_equality_with_existing_object(operation_name, params, e)
             else:
                 raise e
 
-    def _check_if_the_same_object(self, operation_name, params, e):
+    def _check_equality_with_existing_object(self, operation_name, params, e):
         """
-        Special check used in the scope of 'add_object' operation, which can be requested as a standalone operation or
-        in the scope of 'upsert_object' operation. This method executed in case 'add_object' failed and should try to
-        find the object that caused "object duplicate" error. In case single object found and it's equal to one we are
-        trying to create - the existing object will be returned (attempt to have kind of idempotency for add action).
-        In the case when we got more than one object returned as a result of the request to API - it will be hard to
-        find exact duplicate so the exception will be raised.
+        Looks for an existing object that caused "object duplicate" error and
+        checks whether it corresponds to the one specified in `params`.
+
+        In case a single object is found and it is equal to one we are trying
+        to create, the existing object is returned.
+
+        When the existing object is not equal to the object being created or
+        several objects are returned, an exception is raised.
         """
         model_name = self.get_operation_spec(operation_name)[OperationField.MODEL_NAME]
-        get_list_operation = self._find_get_list_operation(model_name)
-        if get_list_operation:
-            data = params[ParamName.DATA]
-            if not params.get(ParamName.FILTERS):
-                params[ParamName.FILTERS] = {'name': data['name']}
+        existing_obj = self._find_object_matching_params(model_name, params)
 
-            existing_obj = None
-            existing_objs = self.get_objects_by_filter(get_list_operation, params)
-
-            for i, obj in enumerate(existing_objs):
-                if i > 0:
-                    raise FtdConfigurationError(MULTIPLE_DUPLICATES_FOUND_ERROR)
-                existing_obj = obj
-
-            if existing_obj is not None:
-                if equal_objects(existing_obj, data):
-                    return existing_obj
-                else:
-                    raise FtdConfigurationError(
-                        'Cannot add new object. '
-                        'An object with the same name but different parameters already exists.',
-                        existing_obj)
+        if existing_obj is not None:
+            if equal_objects(existing_obj, params[ParamName.DATA]):
+                return existing_obj
+            else:
+                raise FtdConfigurationError(DUPLICATE_ERROR, existing_obj)
 
         raise e
+
+    def _find_object_matching_params(self, model_name, params):
+        get_list_operation = self._find_get_list_operation(model_name)
+        if not get_list_operation:
+            return None
+
+        data = params[ParamName.DATA]
+        if not params.get(ParamName.FILTERS):
+            params[ParamName.FILTERS] = {'name': data['name']}
+
+        obj = None
+        filtered_objs = self.get_objects_by_filter(get_list_operation, params)
+
+        for i, obj in enumerate(filtered_objs):
+            if i > 0:
+                raise FtdConfigurationError(MULTIPLE_DUPLICATES_FOUND_ERROR)
+            obj = obj
+
+        return obj
 
     def _find_get_list_operation(self, model_name):
         operations = self.get_operation_specs_by_model_name(model_name) or {}
@@ -356,7 +366,7 @@ class BaseConfigurationResource(object):
                 raise e
 
     def edit_object(self, operation_name, params):
-        data, dummy, path_params = _get_user_params(params)
+        data, _, path_params = _get_user_params(params)
 
         model_name = self.get_operation_spec(operation_name)[OperationField.MODEL_NAME]
         get_operation = self._find_get_operation(model_name)
@@ -371,9 +381,12 @@ class BaseConfigurationResource(object):
         return self.send_general_request(operation_name, params)
 
     def send_general_request(self, operation_name, params):
+        def stop_if_check_mode():
+            if self._check_mode:
+                raise CheckModeException()
+
         self.validate_params(operation_name, params)
-        if self._check_mode:
-            raise CheckModeException()
+        stop_if_check_mode()
 
         data, query_params, path_params = _get_user_params(params)
         op_spec = self.get_operation_spec(operation_name)
@@ -416,28 +429,14 @@ class BaseConfigurationResource(object):
         if report:
             raise ValidationError(report)
 
-    def is_upsert_operation_supported(self, op_name):
-        """
-        Checks if all operations required for upsert object operation are defined in 'operations'.
-
-        :param op_name: upsert operation name
-        :type op_name: str
-        :return: True if all criteria required to provide requested called operation are satisfied, otherwise False
-        :rtype: bool
-        """
-        model_name = _extract_model_from_upsert_operation(op_name)
-        operations = self.get_operation_specs_by_model_name(model_name)
-        return self._operation_checker.is_upsert_operation_supported(operations)
-
     @staticmethod
     def _get_operation_name(checker, operations):
-        for operation_name, op_spec in operations.items():
-            if checker(operation_name, op_spec):
-                return operation_name
-        raise FtdConfigurationError("Operation is not supported")
+        return next((op_name for op_name, op_spec in iteritems(operations) if checker(op_name, op_spec)), None)
 
     def _add_upserted_object(self, model_operations, params):
         add_op_name = self._get_operation_name(self._operation_checker.is_add_operation, model_operations)
+        if not add_op_name:
+            raise FtdConfigurationError(ADD_OPERATION_NOT_SUPPORTED_ERROR)
         return self.add_object(add_op_name, params)
 
     def _edit_upserted_object(self, model_operations, existing_object, params):
@@ -451,9 +450,9 @@ class BaseConfigurationResource(object):
 
     def upsert_object(self, op_name, params):
         """
-        The wrapper on top of add object operation, get a list of objects and edit object operations that implement
-        upsert object operation. As a result, the object will be created if the object does not exist, if a single
-        object exists with requested 'params' this object will be updated otherwise, Exception will be raised.
+        Updates an object if it already exists, or tries to create a new one if there is no
+        such object. If multiple objects match filter criteria, or add operation is not supported,
+        the exception is raised.
 
         :param op_name: upsert operation name
         :type op_name: str
@@ -462,18 +461,26 @@ class BaseConfigurationResource(object):
         :return: upserted object representation
         :rtype: dict
         """
-        if not self.is_upsert_operation_supported(op_name):
-            raise FtdInvalidOperationNameError(op_name)
 
-        model_name = _extract_model_from_upsert_operation(op_name)
+        def extract_and_validate_model():
+            model = op_name[len(OperationNamePrefix.UPSERT):]
+            if not self._conn.get_model_spec(model):
+                raise FtdInvalidOperationNameError(op_name)
+            return model
+
+        model_name = extract_and_validate_model()
         model_operations = self.get_operation_specs_by_model_name(model_name)
 
-        try:
+        if not self._operation_checker.is_upsert_operation_supported(model_operations):
+            raise FtdInvalidOperationNameError(op_name)
+
+        existing_obj = self._find_object_matching_params(model_name, params)
+        if existing_obj:
+            equal_to_existing_obj = equal_objects(existing_obj, params[ParamName.DATA])
+            return existing_obj if equal_to_existing_obj \
+                else self._edit_upserted_object(model_operations, existing_obj, params)
+        else:
             return self._add_upserted_object(model_operations, params)
-        except FtdConfigurationError as e:
-            if e.obj:
-                return self._edit_upserted_object(model_operations, e.obj, params)
-            raise e
 
 
 def _set_default(params, field_name, value):
@@ -487,10 +494,6 @@ def is_post_request(operation_spec):
 
 def is_put_request(operation_spec):
     return operation_spec[OperationField.METHOD] == HTTPMethod.PUT
-
-
-def _extract_model_from_upsert_operation(op_name):
-    return op_name[len(OperationNamePrefix.UPSERT):]
 
 
 def _get_user_params(params):
@@ -525,8 +528,8 @@ def iterate_over_pageable_resource(resource_func, params):
 
         raise FtdUnexpectedResponse(
             "Get List of Objects Response from the server contains more objects than requested. "
-            "There are {0} item(s) in the response while {1} was(ere) requested".format(items_in_response,
-                                                                                        items_expected)
+            "There are {0} item(s) in the response while {1} was(ere) requested".format(
+                items_in_response, items_expected)
         )
 
     while True:
