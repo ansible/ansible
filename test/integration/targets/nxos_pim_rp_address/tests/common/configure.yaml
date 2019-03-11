@@ -4,13 +4,16 @@
   when: ansible_connection == "local"
 
 - block:
-  # N3L does not support bidir
+  # platforms do not support bidir
   - set_fact: bidir_true="true"
   - set_fact: bidir_false="false"
-  # N3L can only remove rpa, cannot remove rpa+prefixlist or rpa+routemap
+  when: platform is not search('N3L')
+
+- block:
+  # platforms can only remove rpa, cannot remove rpa+prefixlist or rpa+routemap
   - set_fact: pim_prefix_list="pim_prefix_list"
   - set_fact: pim_route_map="pim_route_map"
-  when: platform is not match("N3L")
+  when: platform is not search('N3L|N7K')
 
 - block:
   - name: "Disable feature PIM"
