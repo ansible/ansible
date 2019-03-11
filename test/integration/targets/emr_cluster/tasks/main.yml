@@ -1,0 +1,192 @@
+---
+- module_defaults:
+  block:
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: install aws cli
+      command: pip install awscli
+
+    - name: create default iam roles
+      command: aws emr create-default-roles
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+
+    - name: create cluster using instance_fleets with custom applications
+      emr_cluster:
+        name: test_instance_fleets_with_custom_applications
+        release_label: "{{ release_label }}"
+        wait: true
+        configurations: "{{ configurations }}"
+        applications: "{{ applications }}"
+        instances:
+          keep_job_flow_alive_when_no_steps: true
+          instance_fleets:
+            - name: master
+              instance_fleet_type: MASTER
+              target_spot_capacity: 1
+              instance_type_configs:
+                - instance_type: m4.large
+                  bid_price_as_percentage_of_on_demand_price: 100
+        visible_to_all_users: true
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert that changed is True
+      assert:
+        that: result.changed
+
+    - name: assert that status is WAITING
+      assert:
+        that: >
+          result.status.state == 'WAITING'
+
+    - name: try create the same cluster
+      emr_cluster:
+        name: test_instance_fleets_with_custom_applications
+        release_label: "{{ release_label }}"
+        wait: true
+        configurations: "{{ configurations }}"
+        applications: "{{ applications }}"
+        instances:
+          keep_job_flow_alive_when_no_steps: true
+          instance_fleets:
+            - name: master
+              instance_fleet_type: MASTER
+              target_spot_capacity: 1
+              instance_type_configs:
+                - instance_type: m4.large
+                  bid_price_as_percentage_of_on_demand_price: 100
+        visible_to_all_users: true
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert that no changes would be made
+      assert:
+        that: not result.changed
+
+    - name: assert that applications was set up
+      assert:
+        that: >
+          result.applications | map(attribute='name') | list
+          ==
+          applications | map(attribute='name') | list
+
+    - name: defines classification list
+      set_fact:
+        classification: "{{ classification | default([]) | union([item.key]) }}"
+      loop: "{{ configurations | dict2items }}"
+
+    - name: assert that custom configurations was set up
+      assert:
+        that: >
+          result.configurations | map(attribute='classification') | list
+          ==
+          classification
+
+    - name: assert that instance_fleets was set up
+      assert:
+        that: >
+          result.instance_collection_type == 'INSTANCE_FLEET'
+
+    - name: cluster_id facts
+      set_fact:
+        cluster_ids: "{{ cluster_ids | default([]) | union([result.id]) }}"
+
+    - name: create cluster using instance_groups and job steps
+      emr_cluster:
+        name: test_instance_groups_with_steps
+        release_label: "{{ release_label }}"
+        wait: true
+        steps:
+          - name: s3-dist-cp
+            action_on_failure: TERMINATE_CLUSTER
+            hadoop_jar_step:
+              jar: command-runner.jar
+              args:
+                - s3-dist-cp
+                - --src=s3://{{ aws_region }}.elasticmapreduce/thirdparty/mapr/scripts/
+                - --dest=hdfs:///scripts
+        instances:
+          keep_job_flow_alive_when_no_steps: true
+          instance_groups:
+            - name: master
+              instance_role: MASTER
+              instance_count: 1
+              instance_type: m4.large
+              market: ON_DEMAND
+        visible_to_all_users: true
+        <<: *aws_connection_info
+      check_mode: true
+      register: result
+
+    - name: assert that changed is True
+      assert:
+        that: result.changed
+
+    - name: assert that status is RUNNING
+      assert:
+        that: >
+          result.status.state == 'RUNNING'
+
+    - name: assert that instance_group was set up
+      assert:
+        that: >
+          result.instance_collection_type == 'INSTANCE_GROUP'
+
+    - name: cluster_id facts
+      set_fact:
+        cluster_ids: "{{ cluster_ids | union([result.id]) }}"
+
+    - name: terminate clusters
+      emr_cluster:
+        cluster_id: "{{ item }}"
+        state: absent
+        wait: true
+        <<: *aws_connection_info
+      register: result
+      loop: "{{ cluster_ids }}"
+
+    - name: assert that changed is True
+      assert:
+        that: result.changed
+
+    - name: try terminate again
+      emr_cluster:
+        cluster_id: "{{ item }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      loop: "{{ cluster_ids }}"
+
+    - name: assert that no changes would be made
+      assert:
+        that: not result.changed
+
+  always:
+    - name: get active clusters
+      command: aws emr list-clusters --active
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+      register: result
+
+    - name: tear down clusters
+      emr_cluster:
+        cluster_id: "{{ item }}"
+        state: absent
+        <<: *aws_connection_info
+      loop: "{{ result.stdout | from_json | json_query('Clusters[*].Id') }}"

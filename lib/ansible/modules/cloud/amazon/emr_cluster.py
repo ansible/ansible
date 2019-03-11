@@ -250,6 +250,7 @@ options:
   scale_down_behavior:
     description:
       - Specifies the way that individual Amazon EC2 instances terminate.
+    choices: ['TERMINATE_AT_INSTANCE_HOUR', 'TERMINATE_AT_TASK_COMPLETION']
     required: false
   custom_ami_id:
     description:
@@ -264,6 +265,7 @@ options:
     description:
       - Applies only when CustomAmiID is used. Specifies which updates from the Amazon Linux
         AMI package repositories to apply automatically when the instance boots using the AMI.
+    choices: ['SECURITY', 'NONE']
     required: false
   kerberos_attributes:
     description:
@@ -317,7 +319,7 @@ options:
         description:
           - The volume size in Gigabytes.
       iops:
-        description;
+        description:
           - The number of I/O operations that the volume supports.
       device:
         description:
@@ -423,9 +425,11 @@ applications:
       type: str
     args:
       description: Arguments for EMR pass to application.
+      returned: when supported
       type: str
     additional_info:
       description: Meta information about third party applications.
+      returned: when supported
       type: str
 auto_terminate:
   description: Specifies if the cluter should be terminate after completing all steps.
@@ -442,10 +446,12 @@ configurations:
   contains:
     classification:
       description: The classification whithin a configuration. See U(https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html)
+      returned: when supported
       type: str
       sample: mapred-site
     properties:
       description: A dict with all settings applied to classification.
+      returned: when supported
       type: dict
       sample:
         mapred.tasktracker.map.tasks.maximum: 2
@@ -458,113 +464,139 @@ ec2_instance_attributes:
     contains:
       ec2_key_name:
         description: The EC2 key pair use to connect to hadoop user.
+        returned: when supported
         type: str
         sample: emr-key-name
       ec2_subnet_id:
         description: The Amazon VPC subnet
+        returned: when supported
         type: str
         sample: subnet-925a31cd
       requested_ec2_subnet_ids:
         description: Specifies one or more EC2 subnets. Applies only with instance_fleets.
+        returned: when supported
         type: list
         sample:
           - "subnet-923affd"
       ec2_availability_zone:
         description: The availability zone in which cluster runs.
+        returned: when supported
         type: str
         sample: us-east-1a
       requested_ec2_availability_zones:
         description: Specified one or more availability zones. Applies only with instance_fleets.
+        returned: when supported
         type: list
         sample:
           - "us-east-1a"
           - "us-east-1b"
       iam_instance_profile:
         description: The IAM role that was specified when cluster was launched.
+        returned: when supported
         type: str
         sample: EMR_EC2_DefaultRole
       emr_managed_master_security_group:
         description: The indentifier of EC2 security group for the master node.
+        returned: when supported
         type: str
         sample: sg-a9cd833a
       emr_managed_slave_security_group:
         description: The indentifier of EC2 security group for the core and task nodes.
+        returned: when supported
         type: str
         sample: sg-a9cd833a
       service_access_security_group:
         description: The identifier of EC2 security group for the EMR service.
+        returned: when supported
         type: str
         sample: sg-dab1ffab
       additional_master_security_groups:
         description: A list of additional EC2 security group for the master node.
+        returned: when supported
         type: list
         sample:
           - "sg-a9cd990a"
           - "sg-dab1ffab"
       additional_slave_security_groups:
         description: A list of additional EC2 security group for the core and task node.
+        returned: when supported
         type: list
         sample:
           - "sg-a9cd990a"
           - "sg-dab1ffab"
 id:
   description: The unique id for the cluster.
+  returned: always
   type: str
   sample: j-3130XEPLZZOH4
 instance_collection_type:
   description: Then instance group configuration.
+  returned: when supported
   type: str
   sample: INSTANCE_GROUP
 log_uri:
   description: The path to S3 location where logs are stored.
+  returned: when supported
   type: str
   sample: s3://path/to/s3/logs
 master_public_dns_name:
   description: The DNS record point to master node.
+  returned: always
   type: str
   sample: ip-172-16-0-81.ec2.internal
 name:
   description: Friendly name to the cluster.
+  returned: always
   type: str
   sample: emr-job
 normalized_instance_hours:
   description: An approximation of the cost of the cluster, represented in m1.small/hours.
+  returned: always
   type: int
   sample: 12
 release_label:
   description: The EMR release label, which determines the version of applications.
+  returned: always
   type: str
   sample: emr-5.15.0
 scale_down_behavior:
   description: The way that individual EC2 instance terminate when automatic scale-in.
+  returned: when supported
   type: str
   sample: TERMINATE_AT_TASK_COMPLETION
 service_role:
   description: The IAM role that will be assumed by EMR Service.
+  returned: always
   type: str
   sample: EMR_DefaultRole
 status:
   description: The current status of the cluster.
+  returned: always
   type: str
   sample: RUNNING
 tags:
   description: EC2 tags used by cluster when was launched.
+  returned: when supported
   type: complex
   contains:
     key:
       description: The name of key.
+      returned: always
       type: str
     value:
       description: The value of the key.
+      returned: always
       type: str
   sample:
     - key: Name
       value: emr-cluster
 termination_protected:
   description: Specifies if termination protection is enable.
+  returned: always
   type: bool
 visible_to_all_users:
   description: Specified if the cluster will be visible for all users.
+  returned: always
   type: bool
 '''
 
@@ -593,18 +625,39 @@ def remove_none_object(obj):
         return obj
 
 
+def get_pages(paginator, params, collection_key):
+    response_iterator = paginator.paginate(**params)
+
+    for resp in response_iterator:
+        data = resp[collection_key]
+
+        if 'Marker' in resp:
+            params.update({
+                'PaginationConfig': {
+                    'StartingToken': resp['Marker']
+                }
+            })
+            data += get_pages(paginator, params, collection_key)
+
+        return data
+
+
 def check_emr_cluster(client, module):
     name = module.params.get('name')
+    paginator = client.get_paginator('list_clusters')
 
     try:
-        emr_clusters = client.list_clusters(ClusterStates=['STARTING',
-                                                           'BOOTSTRAPPING',
-                                                           'RUNNING',
-                                                           'WAITING'])
+        params = {'ClusterStates': ['STARTING',
+                                    'BOOTSTRAPPING',
+                                    'RUNNING',
+                                    'WAITING']}
+
+        emr_clusters = get_pages(paginator, params, 'Clusters')
+
     except (ClientError, BotoCoreError) as e:
         module.fail_json_aws(e)
 
-    response = [emr for emr in emr_clusters['Clusters']
+    response = [emr for emr in emr_clusters
                 if re.compile(name).match(emr['Name'])]
 
     if response:
@@ -612,7 +665,7 @@ def check_emr_cluster(client, module):
 
         if len(response) > 1:
             module.warn(
-                warning='More than one Cluster match with name {0} just only the first will be describe'.format(emr['Name']))
+                warning='More than one Cluster match with name {0} just only the first will be describe'.format(name))
 
         try:
             resource = client.describe_cluster(
@@ -685,7 +738,7 @@ def create_emr_cluster(client, module):
 
         for key in configurations.keys():
             properties = {}
-            for k, v in configurations[key].iteritems():
+            for k, v in configurations[key].items():
                 if isinstance(v, bool):
                     properties[k] = str(v).lower()
                 else:

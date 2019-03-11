@@ -1,0 +1,9 @@
+release_label: emr-5.21.0
+configurations:
+  core-site:
+    fs.s3a.attempts.maximum: 20
+  spark:
+    maximizeResourceAllocation: true
+applications:
+  - name: Hadoop
+  - name: Spark
