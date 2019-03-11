@@ -210,19 +210,19 @@ def main():
 
             for command in command_list:
                 if command == "GetSystemInventory":
-                    result["system"] = rf_utils.get_system_inventory()
+                    result["system"] = rf_utils.get_multi_system_inventory()
                 elif command == "GetCpuInventory":
-                    result["cpu"] = rf_utils.get_cpu_inventory()
+                    result["cpu"] = rf_utils.get_multi_cpu_inventory()
                 elif command == "GetNicInventory":
-                    result["nic"] = rf_utils.get_nic_inventory(category)
+                    result["nic"] = rf_utils.get_multi_nic_inventory(category)
                 elif command == "GetStorageControllerInventory":
-                    result["storage_controller"] = rf_utils.get_storage_controller_inventory()
+                    result["storage_controller"] = rf_utils.get_multi_storage_controller_inventory()
                 elif command == "GetDiskInventory":
-                    result["disk"] = rf_utils.get_disk_inventory()
+                    result["disk"] = rf_utils.get_multi_disk_inventory()
                 elif command == "GetBiosAttributes":
-                    result["bios_attribute"] = rf_utils.get_bios_attributes()
+                    result["bios_attribute"] = rf_utils.get_multi_bios_attributes()
                 elif command == "GetBootOrder":
-                    result["boot_order"] = rf_utils.get_boot_order()
+                    result["boot_order"] = rf_utils.get_multi_boot_order()
 
         elif category == "Chassis":
             # execute only if we find Chassis resource
@@ -264,7 +264,7 @@ def main():
 
             for command in command_list:
                 if command == "GetManagerNicInventory":
-                    result["manager_nics"] = rf_utils.get_nic_inventory(resource_type=category)
+                    result["manager_nics"] = rf_utils.get_multi_nic_inventory(resource_type=category)
                 elif command == "GetLogs":
                     result["log"] = rf_utils.get_logs()
 
