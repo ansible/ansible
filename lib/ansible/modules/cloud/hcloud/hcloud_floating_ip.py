@@ -111,7 +111,7 @@ hcloud_floating_ip:
     returned: Always
     type: complex
     contains:
-         id:
+        id:
             description: ID of the Floating IP
             type: int
             returned: Always
