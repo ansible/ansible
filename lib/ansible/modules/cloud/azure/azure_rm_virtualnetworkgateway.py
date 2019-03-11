@@ -289,21 +289,21 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 self.log("CHANGED: VPN Gateway {0} does not exist but requested state is 'present'".format(self.name))
                 changed = True
 
-        if vgw:
-            results = vgw_to_dict(vgw)
-            if self.state == 'present':
-                update_tags, results['tags'] = self.update_tags(results['tags'])
-                if update_tags:
-                    changed = True
-                sku = dict(name=self.sku, tier=self.sku)
-                if sku != results['sku']:
-                    changed = True
-                if self.enable_bgp != results['enable_bgp']:
-                    changed = True
-                if self.bgp_settings and self.bgp_settings['asn'] != results['bgp_settings']['asn']:
-                    changed = True
-                if self.active_active != results['active_active']:
-                    changed = True
+        #if vgw:
+        #    results = vgw_to_dict(vgw)
+        #    if self.state == 'present':
+        #        update_tags, results['tags'] = self.update_tags(results['tags'])
+        #        if update_tags:
+        #            changed = True
+        #        sku = dict(name=self.sku, tier=self.sku)
+        #        if sku != results['sku']:
+        #            changed = True
+        #        if self.enable_bgp != results['enable_bgp']:
+        #            changed = True
+        #        if self.bgp_settings and self.bgp_settings['asn'] != results['bgp_settings']['asn']:
+        #            changed = True
+        #        if self.active_active != results['active_active']:
+        #            changed = True
 
         self.results['changed'] = changed
         self.results['state'] = results
