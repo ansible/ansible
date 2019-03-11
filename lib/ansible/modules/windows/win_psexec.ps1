@@ -27,7 +27,7 @@ $spec = @{
         session = @{ type='int' }
         priority = @{ type='str'; choices=@( 'background', 'low', 'belownormal', 'abovenormal', 'high', 'realtime' ) }
         timeout = @{ type='int' }
-        extra_opts = @{ type='list' }
+        extra_opts = @{ type='list'; removed_in_version = '2.10' }
     }
 }
 
