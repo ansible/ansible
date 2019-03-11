@@ -57,9 +57,9 @@ class TestNiosMemberModule(TestNiosModule):
         return wapi
 
     def test_nios_member_create(self):
-        self.module.params = {'provider': None, 'state': 'present', 'host_name': 'test_member', 
-							  'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'}, 
-							  'config_addr_type': 'IPV4', 'platform': 'VNIOS', 'comment': None, 'extattrs': None}
+        self.module.params = {'provider': None, 'state': 'present', 'host_name': 'test_member',
+                              'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'},
+                              'config_addr_type': 'IPV4', 'platform': 'VNIOS', 'comment': None, 'extattrs': None}
 
         test_object = None
         test_spec = {
@@ -75,32 +75,34 @@ class TestNiosMemberModule(TestNiosModule):
         res = wapi.run('testobject', test_spec)
 
         self.assertTrue(res['changed'])
-        wapi.create_object.assert_called_once_with('testobject', {'host_name': 'test_member', 
-		                                           'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'}, 
-												   'config_addr_type': 'IPV4', 'platform': 'VNIOS'})
+        wapi.create_object.assert_called_once_with('testobject', {'host_name': 'test_member',
+                                                                  'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'},
+                                                                  'config_addr_type': 'IPV4', 'platform': 'VNIOS'})
 
-	def test_nios_member_update(self):
-        self.module.params = {'provider': None, 'state': 'present', 'host_name': 'test_member', 
-		                      'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'}, 
-							  'config_addr_type': 'IPV4', 'platform': 'VNIOS', 'comment': 'updated comment', 'extattrs': None}
+    def test_nios_member_update(self):
+        self.module.params = {'provider': None, 'state': 'present', 'host_name': 'test_member',
+                              'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'},
+                              'config_addr_type': 'IPV4', 'platform': 'VNIOS', 'comment': 'updated comment', 'extattrs': None}
 
-        test_object = [{
-		"comment": "Created with Ansible",
-		"_ref": "member/b25lLnZpcnR1YWxfbm9kZSQ3:member01.ansible-dev.com",
-		"config_addr_type": "IPV4",
-		"host_name": "member01.ansible-dev.com",
-		"platform": "VNIOS",
-		"service_type_configuration": "ALL_V4",
-		"vip_setting": 
-		{
-			"address": "192.168.1.100",
-			"dscp": 0,
-			"gateway": "192.168.1.1",
-			"primary": true,
-			"subnet_mask": "255.255.255.0",
-			"use_dscp": false
-		}
-		}]
+        test_object = [
+            {
+                "comment": "Created with Ansible",
+                "_ref": "member/b25lLnZpcnR1YWxfbm9kZSQ3:member01.ansible-dev.com",
+                "config_addr_type": "IPV4",
+                "host_name": "member01.ansible-dev.com",
+                "platform": "VNIOS",
+                "service_type_configuration": "ALL_V4",
+                "vip_setting":
+                    {
+                        "address": "192.168.1.100",
+                        "dscp": 0,
+                        "gateway": "192.168.1.1",
+                        "primary": true,
+                        "subnet_mask": "255.255.255.0",
+                        "use_dscp": false
+                    }
+            }
+        ]
 
         test_spec = {
             "host_name": {"ib_req": True},
@@ -117,29 +119,31 @@ class TestNiosMemberModule(TestNiosModule):
         self.assertTrue(res['changed'])
 
     def test_nios_member_remove(self):
-        self.module.params = {'provider': None, 'state': 'absent', 'host_name': 'test_member', 
-		                      'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'}, 
-							  'config_addr_type': 'IPV4', 'platform': 'VNIOS', 'comment': 'updated comment', 'extattrs': None}
+        self.module.params = {'provider': None, 'state': 'absent', 'host_name': 'test_member',
+                              'vip_setting': {'address': '192.168.1.110', 'subnet_mask': '255.255.255.0', 'gateway': '192.168.1.1'},
+                              'config_addr_type': 'IPV4', 'platform': 'VNIOS', 'comment': 'updated comment', 'extattrs': None}
 
         ref = "member/b25lLnZpcnR1YWxfbm9kZSQ3:member01.ansible-dev.com"
 
-        test_object = [{
-		"comment": "Created with Ansible",
-		"_ref": "member/b25lLnZpcnR1YWxfbm9kZSQ3:member01.ansible-dev.com",
-		"config_addr_type": "IPV4",
-		"host_name": "member01.ansible-dev.com",
-		"platform": "VNIOS",
-		"service_type_configuration": "ALL_V4"
-		"vip_setting": 
-		{
-			"address": "192.168.1.100",
-			"dscp": 0,
-			"gateway": "192.168.1.1",
-			"primary": true,
-			"subnet_mask": "255.255.255.0",
-			"use_dscp": false
-		}
-        }]
+        test_object = [
+            {
+                "comment": "Created with Ansible",
+                "_ref": "member/b25lLnZpcnR1YWxfbm9kZSQ3:member01.ansible-dev.com",
+                "config_addr_type": "IPV4",
+                "host_name": "member01.ansible-dev.com",
+                "platform": "VNIOS",
+                "service_type_configuration": "ALL_V4"
+                "vip_setting":
+                    {
+                        "address": "192.168.1.100",
+                        "dscp": 0,
+                        "gateway": "192.168.1.1",
+                        "primary": true,
+                        "subnet_mask": "255.255.255.0",
+                        "use_dscp": false
+                    }
+            }
+        ]
 
         test_spec = {
             "host_name": {"ib_req": True},
