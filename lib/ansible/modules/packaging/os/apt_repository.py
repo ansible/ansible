@@ -543,7 +543,8 @@ def main():
             sourceslist.save()
             if update_cache:
                 cache = apt.Cache()
-                cache.update()
+                if module.params['state'] == 'present':
+                    cache.update(sources_list='/etc/apt/sources.list.d/' + module.params['filename'] + '.list')
         except OSError as err:
             module.fail_json(msg=to_native(err))
 
