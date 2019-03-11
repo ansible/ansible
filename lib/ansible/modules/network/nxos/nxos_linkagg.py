@@ -135,7 +135,7 @@ from ansible.module_utils.network.common.utils import remove_default_spec
 
 def search_obj_in_list(group, lst):
     for o in lst:
-        if o['group'] == group:
+        if str(o['group']) == str(group):
             return o
 
 
