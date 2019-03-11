@@ -376,11 +376,13 @@ def main():
     try:
         client['admin'].command('listDatabases', 1.0)  # if this throws an error we need to authenticate
     except Exception as excep:
-        if "not authorized on" not in str(excep) and "command listDatabases requires authentication" not in str(excep):
+        if "not authorized on" in str(excep) or "command listDatabases requires authentication" in str(excep):
+            if login_user is not None and login_password is not None:
+                client.admin.authenticate(login_user, login_password, source=login_database)
+            else:
+                raise excep
+        else:
             raise excep
-        if login_user is None or login_password is None:
-            raise excep
-        client.admin.authenticate(login_user, login_password, source=login_database)
 
     if len(replica_set) == 0:
         module.fail_json(msg="Parameter 'replica_set' must not be an empty string")
