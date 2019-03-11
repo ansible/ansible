@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: nios_member
-version_added: "2.9"
+version_added: "2.8"
 author: "Krishna Vasudevan (@krisvasudevan)"
 short_description: Configure Infoblox NIOS members
 description:
@@ -282,7 +282,9 @@ options:
               - Hardware type.
       licenses:
         description:
-          - An array of license types the pre-provisioned member should have in order to join the Grid, or the licenses that must be allocated to the member when it joins the Grid.
+          - An array of license types the pre-provisioned member should have
+          in order to join the Grid, or the licenses that must be allocated
+          to the member when it joins the Grid.
   state:
     description:
       - Configures the intended state of the instance of the object on
