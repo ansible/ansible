@@ -2616,6 +2616,9 @@ def main():
             if not tmp_result["failed"]:
                 result["failed"] = False
             result['instance'] = tmp_result['instance']
+            if tmp_result["failed"]:
+                result["failed"] = True
+                result["msg"] = tmp_result["msg"]
         else:
             # This should not happen
             raise AssertionError()
