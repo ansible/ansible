@@ -49,7 +49,7 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
 
                 # remove this message after 2.10 AND changing the default to 'always'
                 display.deprecated('The TRANSFORM_INVALID_GROUP_CHARS settings is set to allow bad characters in group names by default,'
-                                   ' this will change, but still be user configurable on deprecation.', version='2.10')
+                                   ' this will change, but still be user configurable on deprecation', version='2.10')
 
     if warn:
         display.warning(warn)
