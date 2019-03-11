@@ -48,7 +48,7 @@ EXAMPLES = r'''
 - name: Asynchronous yum task
   yum:
     name: docker-io
-    state: installed
+    state: present
   async: 1000
   poll: 0
   register: yum_sleeper
