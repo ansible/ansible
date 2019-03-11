@@ -460,3 +460,4 @@ class WapiModule(WapiBase):
             update = ib_spec[key].get('update', True)
             if not update:
                 keys.add(key)
+        return dict([(k, v) for k, v in iteritems(proposed_object) if k not in keys])
