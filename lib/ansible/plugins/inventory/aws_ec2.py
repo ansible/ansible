@@ -642,7 +642,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         for hostvar, hostval in legacy_host_vars.items():
             self.inventory.set_variable(hostname, hostvar, hostval)
 
-
     def _set_credentials(self):
         '''
             :param config_data: contents of the inventory config file
@@ -730,7 +729,6 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         # when the user is using caching, update the cached inventory
         if cache_needs_update or (not cache and self.get_option('cache')):
             self.cache.set(cache_key, results)
-
 
     @staticmethod
     def _legacy_script_compatible_group_sanitization(name):
