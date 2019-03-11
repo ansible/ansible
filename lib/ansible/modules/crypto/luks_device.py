@@ -90,7 +90,7 @@ options:
         type: path
     allow_to_remove_last_key:
         description:
-            - "If set to C(yes), allows to remove the last key from a container."
+            - "If set to C(yes), allows removing the last key from a container."
             - "BEWARE that when the last key has been removed from a container,
               the container can no longer be opened!"
         type: bool
