@@ -409,6 +409,12 @@ roles:
       returned: always
       type: str
       sample: "9999-12-31T23:59:59.999999+00:00"
+pending_restart_settings:
+  description:
+  - List of settings that are pending restart to be set.
+  returned: always
+  type: list
+  sample: [ "shared_buffers" ]
 settings:
   description:
   - Information about run-time server parameters
@@ -482,6 +488,13 @@ settings:
       returned: always
       type: str
       sample: 2MB
+    pending_restart:
+      description:
+      - True if the value has been changed in the configuration file but needs a restart; or false otherwise.
+      - Returns only if C(settings) is passed.
+      returned: always
+      type: bool
+      sample: false
 '''
 
 from fnmatch import fnmatch
@@ -543,6 +556,7 @@ class PgClusterFacts(object):
             "repl_slots": {},
             "settings": {},
             "roles": {},
+            "pending_restart_settings": [],
         }
 
     def collect(self, val_list=False):
@@ -605,6 +619,7 @@ class PgClusterFacts(object):
                               "FROM information_schema.columns "
                               "WHERE table_name = 'pg_tablespace' "
                               "AND column_name = 'spcoptions'")
+
         if not opt:
             query = ("SELECT s.spcname, a.rolname, s.spcacl "
                      "FROM pg_tablespace AS s "
@@ -722,9 +737,19 @@ class PgClusterFacts(object):
         """
         Get server settings.
         """
-        query = ("SELECT name, setting, unit, context, vartype, "
-                 "boot_val, min_val, max_val, sourcefile "
-                 "FROM pg_settings")
+        # Check pending restart column exists:
+        pend_rest_col_exists = self.__exec_sql("SELECT 1 FROM information_schema.columns "
+                                               "WHERE table_name = 'pg_settings' "
+                                               "AND column_name = 'pending_restart'")
+        if not pend_rest_col_exists:
+            query = ("SELECT name, setting, unit, context, vartype, "
+                     "boot_val, min_val, max_val, sourcefile "
+                     "FROM pg_settings")
+        else:
+            query = ("SELECT name, setting, unit, context, vartype, "
+                     "boot_val, min_val, max_val, sourcefile, pending_restart "
+                     "FROM pg_settings")
+
         res = self.__exec_sql(query)
 
         set_dict = {}
@@ -751,6 +776,10 @@ class PgClusterFacts(object):
             setting_name = i[0]
             pretty_val = self.__get_pretty_val(setting_name)
 
+            pending_restart = None
+            if pend_rest_col_exists:
+                pending_restart = i[9]
+
             set_dict[setting_name] = dict(
                 setting=setting,
                 unit=unit,
@@ -764,6 +793,11 @@ class PgClusterFacts(object):
             )
             if val_in_bytes is not None:
                 set_dict[setting_name]['val_in_bytes'] = val_in_bytes
+
+            if pending_restart is not None:
+                set_dict[setting_name]['pending_restart'] = pending_restart
+                if pending_restart:
+                    self.pg_facts["pending_restart_settings"].append(setting_name)
 
         self.pg_facts["settings"] = set_dict
 
