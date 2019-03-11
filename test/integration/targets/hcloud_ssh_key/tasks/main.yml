@@ -86,6 +86,7 @@
 - name: test update ssh key with same labels
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
+    name: "changed-ssh-key-name"
     labels:
       key: value
   register: result
@@ -97,6 +98,7 @@
 - name: test update ssh key with other labels
   hcloud_ssh_key:
     id: "{{ sshKey.hcloud_ssh_key.id }}"
+    name: "changed-ssh-key-name"
     labels:
       key: value
       test: 123

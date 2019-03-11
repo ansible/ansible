@@ -69,6 +69,15 @@ EXAMPLES = """
     public_key: "ssh-rsa AAAjjk76kgf...Xt"
     state: present
 
+- name: Create a ssh_key with labels
+  hcloud_ssh_key:
+    name: my-ssh_key
+    public_key: "ssh-rsa AAAjjk76kgf...Xt"
+    labels:
+        key: value
+        mylabel: 123
+    state: present
+
 - name: Ensure the ssh_key is absent (remove if needed)
   hcloud_ssh_key:
     name: my-ssh_key
@@ -79,14 +88,35 @@ RETURN = """
 hcloud_ssh_key:
     description: The ssh_key instance
     returned: Always
-    type: dict
-    sample: {
-        "id": 1937415,
-        "name": "mein-ssh_key",
-        "fingerprint": "b7:2f:30:a0:2f:6c:58:6c:21:04:58:61:ba:06:3b:2f",
-        "public_key": "ssh-rsa AAAjjk76kgf...Xt",
-        "labels":{}
-    }
+    type: complex
+    contains:
+        id:
+            description: ID of the ssh_key
+            type: int
+            returned: Always
+            sample: 12345
+        name:
+            description: Name of the ssh_key
+            type: string
+            returned: Always
+            sample: my-ssh-key
+        fingerprint:
+            description: Fingerprint of the ssh_key
+            type: string
+            returned: Always
+            sample: b7:2f:30:a0:2f:6c:58:6c:21:04:58:61:ba:06:3b:2f
+        public_key:
+            description: Public key of the ssh_key
+            type: string
+            returned: Always
+            sample: "ssh-rsa AAAjjk76kgf...Xt"
+        labels:
+            description: User-defined labels (key-value pairs)
+            type: dict
+            returned: Always
+            sample:
+                key: value
+                mylabel: 123
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -122,13 +152,13 @@ class AnsibleHcloudSSHKey(Hcloud):
                 self.hcloud_ssh_key = self.client.ssh_keys.get_by_id(
                     self.module.params.get("id")
                 )
-            elif self.module.params.get("name") is not None:
-                self.hcloud_ssh_key = self.client.ssh_keys.get_by_name(
-                    self.module.params.get("name")
-                )
             elif self.module.params.get("fingerprint") is not None:
                 self.hcloud_ssh_key = self.client.ssh_keys.get_by_fingerprint(
                     self.module.params.get("fingerprint")
+                )
+            elif self.module.params.get("name") is not None:
+                self.hcloud_ssh_key = self.client.ssh_keys.get_by_name(
+                    self.module.params.get("name")
                 )
 
         except APIException as e:
@@ -198,6 +228,7 @@ class AnsibleHcloudSSHKey(Hcloud):
                 **Hcloud.base_module_arguments()
             ),
             required_one_of=[['id', 'name', 'fingerprint']],
+            required_if=[['state', 'present', ['name']]],
             supports_check_mode=True,
         )
 
