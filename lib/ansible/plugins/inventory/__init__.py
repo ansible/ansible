@@ -33,6 +33,7 @@ from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -294,6 +295,7 @@ class Constructable(object):
         ''' helper to create complex groups for plugins based on jinja2 conditionals, hosts that meet the conditional are added to group'''
         # process each 'group entry'
         if groups and isinstance(groups, dict):
+            variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
             self.templar.set_available_variables(variables)
             for group_name in groups:
                 conditional = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % groups[group_name]
@@ -317,6 +319,7 @@ class Constructable(object):
             for keyed in keys:
                 if keyed and isinstance(keyed, dict):
 
+                    variables = combine_vars(variables, self.inventory.get_host(host).get_vars())
                     try:
                         key = self._compose(keyed.get('key'), variables)
                     except Exception as e:
