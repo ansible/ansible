@@ -170,7 +170,7 @@ APPLY_ARGS = ('apply', '-no-color', '-input=false', '-auto-approve=true')
 module = None
 
 
-def preflight_validation(bin_path, project_path, variables_args=None, plan_file=None):
+def preflight_validation(bin_path, project_path, variables_args=None, plan_file=None, variables_check=True):
     if project_path in [None, ''] or '/' not in project_path:
         module.fail_json(msg="Path for Terraform project can not be None or ''.")
     if not os.path.exists(bin_path):
@@ -178,19 +178,65 @@ def preflight_validation(bin_path, project_path, variables_args=None, plan_file=
     if not os.path.isdir(project_path):
         module.fail_json(msg="Path for Terraform project '{0}' doesn't exist on this host - check the path and try again please.".format(project_path))
 
-    rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
-    if rc != 0:
-        module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
+    if variables_check:
+      rc, out, err = module.run_command([bin_path, 'validate'] + variables_args, cwd=project_path, use_unsafe_shell=True)
+      if rc != 0:
+          module.fail_json(msg="Failed to validate Terraform configuration files:\r\n{0}".format(err))
 
 
-def _state_args(state_file, must_exists=True):
+def _state_args(state_file, project_path, must_exists=True):
     if state_file:
-        if must_exists and not os.path.exists(state_file):
-            module.fail_json(msg='Could not find state_file "{0}", check the path and try again.'.format(state_file))
+        check_path = convertOsLookupPath(state_file, project_path)
+        if must_exists and not os.path.exists(check_path):
+            module.fail_json(msg='Could not find state_file "{0}", check the path and try again.'.format(check_path))
         return ['-state', state_file]
     else:
         return []
 
+def _variables_args(variables,variables_file=[]):
+    variables_args = []
+    for k, v in variables.items():
+        variables_args.extend([
+            '-var',
+            '{0}={1}'.format(k, convertPythonVarValueToTerraformVarCommandlineParameter(v))
+        ])
+    if variables_file:
+        variables_args.extend(['-var-file', variables_file])
+
+    return variables_args
+
+def convertOsLookupPath(path , project_path):
+     if os.path.isabs(path):
+         return path
+     else:
+         return os.path.join(project_path, path)
+
+def convertPythonVarValueToTerraformVarCommandlineParameter(varValue):
+    if(isinstance(varValue, list)):
+        varstring = ""
+        listVars = []
+        for index,val in enumerate(varValue):
+            varstring = varstring + formatSimpleValue(val)
+
+            if index < (len(varValue) -1):
+                varstring = varstring + ","
+
+        return "["+varstring+"]"
+    elif(isinstance(varValue, dict)):
+        varstring = ""
+        i = 0
+        for k, v in varValue.items():
+            varstring = varstring +  k + " = " + formatSimpleValue(v)
+            if i < (len(varValue) -1):
+                varstring = varstring + ", "
+            i = i + 1
+
+        return "{ "+varstring+" }"
+    else:
+        return formatSimpleValue(varValue)
+
+def formatSimpleValue(singleValue):
+    return '\"'+str(singleValue)+'\"'
 
 def init_plugins(bin_path, project_path, backend_config):
     command = [bin_path, 'init', '-input=false']
@@ -251,7 +297,7 @@ def build_plan(command, project_path, variables_args, state_file, targets, state
     for t in (module.params.get('targets') or []):
         plan_command.extend(['-target', t])
 
-    plan_command.extend(_state_args(state_file, False))
+    plan_command.extend(_state_args(state_file, project_path, False))
 
     rc, out, err = module.run_command(plan_command + variables_args, cwd=project_path, use_unsafe_shell=True)
 
@@ -321,22 +367,25 @@ def main():
     if state == 'present':
         command.extend(APPLY_ARGS)
         if state_file:
-            command.extend(['-state-out', state_file])
+            state_file_local_path = convertOsLookupPath(state_file, project_path)
+            if os.path.exists(state_file_local_path) and not plan_file:
+                command.extend(['-state', state_file])
+            else:
+                command.extend(['-state-out', state_file])
     elif state == 'absent':
         command.extend(DESTROY_ARGS)
-
         if state_file:
-            command.extend(_state_args(state_file))
-    variables_args = []
-    for k, v in variables.items():
-        variables_args.extend([
-            '-var',
-            '{0}={1}'.format(k, v)
-        ])
-    if variables_file:
-        variables_args.extend(['-var-file', variables_file])
+            command.extend(_state_args(state_file, project_path))
 
-    preflight_validation(command[0], project_path, variables_args)
+    if (state != 'present') or (state == 'present' and not plan_file) :
+        variables_args = _variables_args(variables, variables_file)
+        variables_check = True
+    else:
+        # all needet vars contains in the plan_file
+        variables_args = []
+        variables_check = False
+
+    preflight_validation(command[0], project_path, variables_args, variables_check=variables_check)
 
     if module.params.get('lock') is not None:
         if module.params.get('lock'):
@@ -355,12 +404,7 @@ def main():
     if state == 'absent':
         command.extend(variables_args)
     elif state == 'present' and plan_file:
-        plan_file_present = ""
-        if os.path.isabs(plan_file):
-            plan_file_present = plan_file
-        else:
-            plan_file_present = project_path + "/" + plan_file
-
+        plan_file_present = convertOsLookupPath(plan_file, project_path)
         if os.path.exists(plan_file_present):
             command.append(plan_file)
         else:
@@ -382,7 +426,7 @@ def main():
                 command=' '.join(command)
             )
 
-    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file, False)
+    outputs_command = [command[0], 'output', '-no-color', '-json'] + _state_args(state_file, project_path, False)
     rc, outputs_text, outputs_err = module.run_command(outputs_command, cwd=project_path)
     if rc == 1:
         module.warn("Could not get Terraform outputs. This usually means none have been defined.\nstdout: {0}\nstderr: {1}".format(outputs_text, outputs_err))
