@@ -24,12 +24,6 @@
     that:
       - vol is failed
 
-- name: Delete duplicate volumes by UUID
-  cloudscale_volume:
-    uuid: '{{ item.json.uuid }}'
-    state: 'absent'
-  with_items: '{{ duplicate.results }}'
-
 - name: Fail volume creation with UUID
   cloudscale_volume:
     uuid: ea3b39a3-77a8-4d0b-881d-0bb00a1e7f48
@@ -57,7 +51,3 @@
   assert:
     that:
       - vol is failed
-- name: 'Delete volume'
-  cloudscale_volume:
-    name: '{{ cloudscale_resource_prefix }}-name-UUID'
-    state: 'absent'
