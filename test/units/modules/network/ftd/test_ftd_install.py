@@ -19,7 +19,7 @@
 from __future__ import absolute_import
 
 import pytest
-from ansible.compat.tests.mock import PropertyMock
+from units.compat.mock import PropertyMock
 from ansible.module_utils import basic
 from units.modules.utils import set_module_args, exit_json, fail_json, AnsibleFailJson, AnsibleExitJson
 
