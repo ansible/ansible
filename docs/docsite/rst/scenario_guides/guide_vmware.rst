@@ -26,3 +26,5 @@ To get started, please select one of the following topics.
 .. vmware_scenarios/vmware_getting_started
 .. module index page not ready
 .. vmware_scenarios/vmware_module_reference
+.. always exclude the template file
+.. vmware_scenarios/vmware_scenario_1
