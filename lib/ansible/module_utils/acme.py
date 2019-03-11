@@ -822,21 +822,56 @@ class ACMEAccount(object):
         return True, account_data
 
 
-def cryptography_get_csr_domains(module, csr_filename):
+def openssl_get_csr_identifiers(openssl_binary, module, csr_filename):
     '''
-    Return a set of requested domains (CN and SANs) for the CSR.
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
     '''
-    domains = set([])
+    openssl_csr_cmd = [openssl_binary, "req", "-in", csr_filename, "-noout", "-text"]
+    dummy, out, dummy = module.run_command(openssl_csr_cmd, check_rc=True)
+
+    identifiers = set([])
+    common_name = re.search(r"Subject:.* CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
+    if common_name is not None:
+        identifiers.add(('dns', common_name.group(1)))
+    subject_alt_names = re.search(
+        r"X509v3 Subject Alternative Name: (?:critical)?\n +([^\n]+)\n",
+        to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
+    if subject_alt_names is not None:
+        for san in subject_alt_names.group(1).split(", "):
+            if san.lower().startswith("dns:"):
+                identifiers.add(('dns', san[4:]))
+            elif san.lower().startswith("ip:"):
+                identifiers.add(('ip', san[3:]))
+            elif san.lower().startswith("ip address:"):
+                identifiers.add(('ip', san[11:]))
+            else:
+                raise ModuleFailException('Found unsupported SAN identifier "{0}"'.format(san))
+    return identifiers
+
+
+def cryptography_get_csr_identifiers(module, csr_filename):
+    '''
+    Return a set of requested identifiers (CN and SANs) for the CSR.
+    Each identifier is a pair (type, identifier), where type is either
+    'dns' or 'ip'.
+    '''
+    identifiers = set([])
     csr = cryptography.x509.load_pem_x509_csr(read_file(csr_filename), _cryptography_backend)
     for sub in csr.subject:
         if sub.oid == cryptography.x509.oid.NameOID.COMMON_NAME:
-            domains.add(sub.value)
+            identifiers.add(('dns', sub.value))
     for extension in csr.extensions:
         if extension.oid == cryptography.x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME:
             for name in extension.value:
                 if isinstance(name, cryptography.x509.DNSName):
-                    domains.add(name.value)
-    return domains
+                    identifiers.add(('dns', name.value))
+                elif isinstance(name, cryptography.x509.IPAddress):
+                    identifiers.add(('ip', str(name.value)))
+                else:
+                    raise ModuleFailException('Found unsupported SAN identifier {0}'.format(name))
+    return identifiers
 
 
 def cryptography_get_cert_days(module, cert_file, now=None):

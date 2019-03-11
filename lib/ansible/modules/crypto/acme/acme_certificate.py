@@ -39,6 +39,8 @@ description:
       L(the main ACME specification,https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8)
       and the L(TLS-ALPN-01 specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3).
       Also, consider the examples provided for this module."
+   - "The module includes experimental support for IP identifiers according to
+      the L(current ACME IP draft,https://tools.ietf.org/html/draft-ietf-acme-ip-05)."
 notes:
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
    - "This module includes basic account management functionality.
@@ -298,19 +300,27 @@ EXAMPLES = r'''
 
 RETURN = '''
 cert_days:
-  description: the number of days the certificate remains valid.
+  description: The number of days the certificate remains valid.
   returned: success
   type: int
 challenge_data:
-  description: per domain / challenge type challenge data
+  description: Per identifier / challenge type challenge data.
   returned: changed
   type: complex
   contains:
     resource:
-      description: the challenge resource that must be created for validation
+      description: The challenge resource that must be created for validation.
       returned: changed
       type: str
       sample: .well-known/acme-challenge/evaGxfADs6pSRb2LAv9IZf17Dt3juxGJ-PCt92wr-oA
+    resource_original:
+      description:
+        - The original challenge resource including type identifier for C(tls-alpn-01)
+          challenges.
+      returned: changed and challenge is C(tls-alpn-01)
+      type: str
+      sample: DNS:example.com
+      version_added: "2.8"
     resource_value:
       description:
         - The value the resource has to produce for the validation.
@@ -325,13 +335,13 @@ challenge_data:
       type: str
       sample: IlirfxKKXA...17Dt3juxGJ-PCt92wr-oA
     record:
-      description: the full DNS record's name for the challenge
+      description: The full DNS record's name for the challenge.
       returned: changed and challenge is C(dns-01)
       type: str
       sample: _acme-challenge.example.com
       version_added: "2.5"
 challenge_data_dns:
-  description: list of TXT values per DNS record, in case challenge is C(dns-01)
+  description: List of TXT values per DNS record, in case challenge is C(dns-01).
   returned: changed
   type: dict
   version_added: "2.5"
@@ -362,8 +372,13 @@ account_uri:
 '''
 
 from ansible.module_utils.acme import (
-    ModuleFailException, write_file, nopad_b64, pem_to_der, ACMEAccount,
-    HAS_CURRENT_CRYPTOGRAPHY, cryptography_get_csr_domains, cryptography_get_cert_days,
+    ModuleFailException,
+    write_file, nopad_b64, pem_to_der,
+    ACMEAccount,
+    HAS_CURRENT_CRYPTOGRAPHY,
+    cryptography_get_csr_identifiers,
+    openssl_get_csr_identifiers,
+    cryptography_get_cert_days,
     set_crypto_backend,
 )
 
@@ -454,49 +469,37 @@ class ACMEClient(object):
             # signed ACME request.
             pass
 
-        # Extract list of domains from CSR
         if not os.path.exists(self.csr):
             raise ModuleFailException("CSR %s not found" % (self.csr))
 
         self._openssl_bin = module.get_bin_path('openssl', True)
-        self.domains = self._get_csr_domains()
 
-    def _get_csr_domains(self):
+        # Extract list of identifiers from CSR
+        self.identifiers = self._get_csr_identifiers()
+
+    def _get_csr_identifiers(self):
         '''
-        Parse the CSR and return the list of requested domains
+        Parse the CSR and return the list of requested identifiers
         '''
         if HAS_CURRENT_CRYPTOGRAPHY:
-            return cryptography_get_csr_domains(self.module, self.csr)
-        openssl_csr_cmd = [self._openssl_bin, "req", "-in", self.csr, "-noout", "-text"]
-        dummy, out, dummy = self.module.run_command(openssl_csr_cmd, check_rc=True)
+            return cryptography_get_csr_identifiers(self.module, self.csr)
+        else:
+            return openssl_get_csr_identifiers(self._openssl_bin, self.module, self.csr)
 
-        domains = set([])
-        common_name = re.search(r"Subject:.*? CN\s?=\s?([^\s,;/]+)", to_text(out, errors='surrogate_or_strict'))
-        if common_name is not None:
-            domains.add(common_name.group(1))
-        subject_alt_names = re.search(
-            r"X509v3 Subject Alternative Name: (?:critical)?\n +([^\n]+)\n",
-            to_text(out, errors='surrogate_or_strict'), re.MULTILINE | re.DOTALL)
-        if subject_alt_names is not None:
-            for san in subject_alt_names.group(1).split(", "):
-                if san.startswith("DNS:"):
-                    domains.add(san[4:])
-        return domains
-
-    def _add_or_update_auth(self, domain, auth):
+    def _add_or_update_auth(self, type, identifier, auth):
         '''
         Add or update the given authroization in the global authorizations list.
         Return True if the auth was updated/added and False if no change was
         necessary.
         '''
-        if self.authorizations.get(domain) == auth:
+        if self.authorizations.get(type + ':' + identifier) == auth:
             return False
-        self.authorizations[domain] = auth
+        self.authorizations[type + ':' + identifier] = auth
         return True
 
-    def _new_authz_v1(self, domain):
+    def _new_authz_v1(self, type, identifier):
         '''
-        Create a new authorization for the given domain.
+        Create a new authorization for the given identifier.
         Return the authorization object of the new authorization
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.4
         '''
@@ -505,7 +508,7 @@ class ACMEClient(object):
 
         new_authz = {
             "resource": "new-authz",
-            "identifier": {"type": "dns", "value": domain},
+            "identifier": {"type": type, "value": identifier},
         }
 
         result, info = self.account.send_signed_request(self.directory['new-authz'], new_authz)
@@ -515,7 +518,7 @@ class ACMEClient(object):
             result['uri'] = info['location']
             return result
 
-    def _get_challenge_data(self, auth, domain):
+    def _get_challenge_data(self, auth, type, identifier):
         '''
         Returns a dict with the data for all proposed (and supported) challenges
         of the given authorization.
@@ -526,31 +529,55 @@ class ACMEClient(object):
         # is not responsible for fulfilling the challenges. Calculate
         # and return the required information for each challenge.
         for challenge in auth['challenges']:
-            type = challenge['type']
+            challenge_type = challenge['type']
             token = re.sub(r"[^A-Za-z0-9_\-]", "_", challenge['token'])
             keyauthorization = self.account.get_keyauthorization(token)
 
-            if type == 'http-01':
+            if challenge_type == 'http-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.3
                 resource = '.well-known/acme-challenge/' + token
-                data[type] = {'resource': resource, 'resource_value': keyauthorization}
-            elif type == 'dns-01':
+                data[challenge_type] = {'resource': resource, 'resource_value': keyauthorization}
+            elif challenge_type == 'dns-01':
+                if type != 'dns':
+                    continue
                 # https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-8.4
                 resource = '_acme-challenge'
                 value = nopad_b64(hashlib.sha256(to_bytes(keyauthorization)).digest())
-                record = (resource + domain[1:]) if domain.startswith('*.') else (resource + '.' + domain)
-                data[type] = {'resource': resource, 'resource_value': value, 'record': record}
-            elif type == 'tls-alpn-01':
+                record = (resource + identifier[1:]) if identifier.startswith('*.') else (resource + '.' + identifier)
+                data[challenge_type] = {'resource': resource, 'resource_value': value, 'record': record}
+            elif challenge_type == 'tls-alpn-01':
                 # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3
-                resource = domain
+                if type == 'ip':
+                    if ':' in identifier:
+                        # IPv6 address: use reverse IP6.ARPA mapping (RFC3596)
+                        i = identifier.find('::')
+                        if i >= 0:
+                            nibbles = [nibble for nibble in identifier[:i].split(':') if nibble]
+                            suffix = [nibble for nibble in identifier[i + 1:].split(':') if nibble]
+                            if len(nibbles) + len(suffix) < 8:
+                                nibbles.extend(['0'] * (8 - len(nibbles) - len(suffix)))
+                            nibbles.extend(suffix)
+                        else:
+                            nibbles = identifier.split(':')
+                        resource = []
+                        for nibble in reversed(nibbles):
+                            nibble = '0' * (4 - len(nibble)) + nibble.lower()
+                            for octet in reversed(nibble):
+                                resource.append(octet)
+                        resource = '.'.join(resource) + '.ip6.arpa.'
+                    else:
+                        # IPv4 address: use reverse IN-ADDR.ARPA mapping (RFC1034)
+                        resource = '.'.join(reversed(identifier.split('.'))) + '.in-addr.arpa.'
+                else:
+                    resource = identifier
                 value = base64.b64encode(hashlib.sha256(to_bytes(keyauthorization)).digest())
-                data[type] = {'resource': resource, 'resource_value': value}
+                data[challenge_type] = {'resource': resource, 'resource_original': type + ':' + identifier, 'resource_value': value}
             else:
                 continue
 
         return data
 
-    def _fail_challenge(self, domain, auth, error):
+    def _fail_challenge(self, type, identifier, auth, error):
         '''
         Aborts with a specific error for a challenge.
         '''
@@ -564,9 +591,9 @@ class ACMEClient(object):
                     error_details += ' DETAILS: {0};'.format(challenge['error']['detail'])
                 else:
                     error_details += ';'
-        raise ModuleFailException("{0}: {1}".format(error.format(domain), error_details))
+        raise ModuleFailException("{0}: {1}".format(error.format(type + ':' + identifier), error_details))
 
-    def _validate_challenges(self, domain, auth):
+    def _validate_challenges(self, type, identifier, auth):
         '''
         Validate the authorization provided in the auth dict. Returns True
         when the validation was successful and False when it was not.
@@ -592,7 +619,7 @@ class ACMEClient(object):
         while status not in ['valid', 'invalid', 'revoked']:
             result, dummy = self.account.get_request(auth['uri'])
             result['uri'] = auth['uri']
-            if self._add_or_update_auth(domain, result):
+            if self._add_or_update_auth(type, identifier, result):
                 self.changed = True
             # https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.1.2
             # "status (required, string): ...
@@ -604,7 +631,7 @@ class ACMEClient(object):
             time.sleep(2)
 
         if status == 'invalid':
-            self._fail_challenge(domain, result, 'Authorization for {0} returned invalid')
+            self._fail_challenge(type, identifier, result, 'Authorization for {0} returned invalid')
 
         return status == 'valid'
 
@@ -717,10 +744,10 @@ class ACMEClient(object):
         https://tools.ietf.org/html/draft-ietf-acme-acme-18#section-7.4
         '''
         identifiers = []
-        for domain in self.domains:
+        for type, identifier in self.identifiers:
             identifiers.append({
-                'type': 'dns',
-                'value': domain,
+                'type': type,
+                'value': identifier,
             })
         new_order = {
             "identifiers": identifiers
@@ -733,10 +760,11 @@ class ACMEClient(object):
         for auth_uri in result['authorizations']:
             auth_data, dummy = self.account.get_request(auth_uri)
             auth_data['uri'] = auth_uri
-            domain = auth_data['identifier']['value']
+            type = auth_data['identifier']['type']
+            identifier = auth_data['identifier']['value']
             if auth_data.get('wildcard', False):
-                domain = '*.{0}'.format(domain)
-            self.authorizations[domain] = auth_data
+                identifier = '*.{0}'.format(identifier)
+            self.authorizations[type + ':' + identifier] = auth_data
 
         self.order_uri = info['location']
         self.finalize_uri = result['finalize']
@@ -758,14 +786,17 @@ class ACMEClient(object):
 
     def start_challenges(self):
         '''
-        Create new authorizations for all domains of the CSR,
+        Create new authorizations for all identifiers of the CSR,
         respectively start a new order for ACME v2.
         '''
         self.authorizations = {}
         if self.version == 1:
-            for domain in self.domains:
-                new_auth = self._new_authz_v1(domain)
-                self._add_or_update_auth(domain, new_auth)
+            for type, identifier in self.identifiers:
+                if type != 'dns':
+                    raise ModuleFailException('ACME v1 only supports DNS identifiers!')
+            for type, identifier in self.identifiers:
+                new_auth = self._new_authz_v1(identifier)
+                self._add_or_update_auth(identifier, new_auth)
         else:
             self._new_order_v2()
         self.changed = True
@@ -777,12 +808,14 @@ class ACMEClient(object):
         '''
         # Get general challenge data
         data = {}
-        for domain, auth in self.authorizations.items():
-            data[domain] = self._get_challenge_data(self.authorizations[domain], domain)
+        for type_identifier, auth in self.authorizations.items():
+            type, identifier = type_identifier.split(':', 1)
+            # We drop the type from the key to preserve backwards compatibility
+            data[identifier] = self._get_challenge_data(self.authorizations[type_identifier], type, identifier)
         # Get DNS challenge data
         data_dns = {}
         if self.challenge == 'dns-01':
-            for domain, challenges in data.items():
+            for identifier, challenges in data.items():
                 if self.challenge in challenges:
                     values = data_dns.get(challenges[self.challenge]['record'])
                     if values is None:
@@ -793,7 +826,7 @@ class ACMEClient(object):
 
     def finish_challenges(self):
         '''
-        Verify challenges for all domains of the CSR.
+        Verify challenges for all identifiers of the CSR.
         '''
         self.authorizations = {}
 
@@ -801,9 +834,9 @@ class ACMEClient(object):
         if self.version == 1:
             # For ACME v1, we attempt to create new authzs. Existing ones
             # will be returned instead.
-            for domain in self.domains:
-                new_auth = self._new_authz_v1(domain)
-                self._add_or_update_auth(domain, new_auth)
+            for type, identifier in self.identifiers:
+                new_auth = self._new_authz_v1(identifier)
+                self._add_or_update_auth(identifier, new_auth)
         else:
             # For ACME v2, we obtain the order object by fetching the
             # order URI, and extract the information from there.
@@ -818,17 +851,19 @@ class ACMEClient(object):
             for auth_uri in result['authorizations']:
                 auth_data, dummy = self.account.get_request(auth_uri)
                 auth_data['uri'] = auth_uri
-                domain = auth_data['identifier']['value']
+                type = auth_data['identifier']['type']
+                identifier = auth_data['identifier']['value']
                 if auth_data.get('wildcard', False):
-                    domain = '*.{0}'.format(domain)
-                self.authorizations[domain] = auth_data
+                    identifier = '*.{0}'.format(identifier)
+                self.authorizations[type + ':' + identifier] = auth_data
 
             self.finalize_uri = result['finalize']
 
         # Step 2: validate challenges
-        for domain, auth in self.authorizations.items():
+        for type_identifier, auth in self.authorizations.items():
             if auth['status'] == 'pending':
-                self._validate_challenges(domain, auth)
+                type, identifier = type_identifier.split(':', 1)
+                self._validate_challenges(type, identifier, auth)
 
     def get_certificate(self):
         '''
@@ -836,14 +871,14 @@ class ACMEClient(object):
         First verifies whether all authorizations are valid; if not, aborts
         with an error.
         '''
-        for domain in self.domains:
-            auth = self.authorizations.get(domain)
+        for type, identifier in self.identifiers:
+            auth = self.authorizations.get(type + ':' + identifier)
             if auth is None:
-                raise ModuleFailException('Found no authorization information for "{0}"!'.format(domain))
+                raise ModuleFailException('Found no authorization information for "{0}"!'.format(type + ':' + identifier))
             if 'status' not in auth:
-                self._fail_challenge(domain, auth, 'Authorization for {0} returned no status')
+                self._fail_challenge(type, identifier, auth, 'Authorization for {0} returned no status')
             if auth['status'] != 'valid':
-                self._fail_challenge(domain, auth, 'Authorization for {0} returned status ' + str(auth['status']))
+                self._fail_challenge(type, identifier, auth, 'Authorization for {0} returned status ' + str(auth['status']))
 
         if self.version == 1:
             cert = self._new_cert_v1()
@@ -879,8 +914,8 @@ class ACMEClient(object):
         if self.version == 1:
             authz_deactivate['resource'] = 'authz'
         if self.authorizations:
-            for domain in self.domains:
-                auth = self.authorizations.get(domain)
+            for type, identifier in self.identifiers:
+                auth = self.authorizations.get(type + ':' + identifier)
                 if auth is None or auth.get('status') != 'valid':
                     continue
                 try:
