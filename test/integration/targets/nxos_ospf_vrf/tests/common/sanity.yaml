@@ -3,6 +3,13 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
+- name: "Setup: disable feature OSPF for initial cleanup"
+  nxos_feature:
+    feature: ospf
+    provider: "{{ connection }}"
+    state: disabled
+  ignore_errors: yes
+
 - name: "Enable feature OSPF"
   nxos_feature:
     feature: ospf
@@ -44,6 +51,7 @@
       ospf: 2
       auto_cost: 5000
       timer_throttle_spf_hold: 1100
+      timer_throttle_lsa_hold: 2220
       timer_throttle_lsa_max: 2222
       default_metric: 1000
       log_adjacency: log
