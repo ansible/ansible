@@ -51,21 +51,19 @@ def test_play_context(mocker, parser, reset_cli_args):
     play = Play.load({})
     play_context = PlayContext(play=play)
 
-    # Note: **Must** test the value from _attributes here because play_context.connection will end
-    # up calling PlayContext._get_attr_connection() which changes the 'smart' connection type into
-    # the best guessed type (and since C.DEFAULT_TRANSPORT starts off as smart, we would then never
-    # match)
-    assert play_context._attributes['connection'] == C.DEFAULT_TRANSPORT
     assert play_context.remote_addr is None
     assert play_context.remote_user is None
     assert play_context.password == ''
-    assert play_context.port is None
     assert play_context.private_key_file == C.DEFAULT_PRIVATE_KEY_FILE
     assert play_context.timeout == C.DEFAULT_TIMEOUT
-    assert play_context.shell is None
     assert play_context.verbosity == 2
     assert play_context.check_mode is True
-    assert play_context.no_log is None
+
+    mock_play = mocker.MagicMock()
+    mock_play.force_handlers = True
+
+    play_context = PlayContext(play=mock_play)
+    assert play_context.force_handlers is True
 
     mock_task = mocker.MagicMock()
     mock_task.connection = 'mocktask'
@@ -91,12 +89,7 @@ def test_play_context(mocker, parser, reset_cli_args):
 
     assert play_context.connection == 'mock_inventory'
     assert play_context.remote_user == 'mocktask'
-    assert play_context.port == 4321
     assert play_context.no_log is True
-    assert play_context.become is True
-    assert play_context.become_method == "mocktask"
-    assert play_context.become_user == "mocktaskroot"
-    assert play_context.become_pass == "mocktaskpass"
 
     mock_task.no_log = False
     play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
