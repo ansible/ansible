@@ -142,7 +142,7 @@ EXAMPLES = '''
             private_ip_allocation_method: Dynamic
             public_ip_address_name: testipaddr
         enable_bgp: yes
-        virtual_network: testvnet
+        virtual_network: myVirtualNetwork
         bgp_settings:
           asn: 65515
           bgp_peering_address: "169.254.54.209"
@@ -217,8 +217,7 @@ def vgw_to_dict(vgw):
             bgp_peering_address=vgw.bgp_settings.bgp_peering_address,
             peer_weight=vgw.bgp_settings.peer_weight
         ) if vgw.bgp_settings else None,
-        etag=vgw.etag,
-        active_active=vgw.active_active
+        etag=vgw.etag
     )
     return results
 
@@ -249,11 +248,8 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
         self.gateway_type = None
         self.vpn_type = None
         self.enable_bgp = None
-        self.gateway_default_site = None
         self.sku = None
-        self.vpn_client_configuration = None
         self.bgp_settings = None
-        self.active_active = None
 
         self.results = dict(
             changed=False,
@@ -304,7 +300,7 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                     changed = True
 
         self.results['changed'] = changed
-        self.results['state'] = results
+        self.results['id'] = results.get('id')
 
         if self.check_mode:
             return self.results
@@ -354,9 +350,13 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 )
                 if self.tags:
                     vgw.tags = self.tags
-                self.results['state'] = self.create_or_update_vgw(vgw)
+                results = self.create_or_update_vgw(vgw)
+
             else:
-                self.results['state'] = self.delete_vgw()
+                results = self.delete_vgw()
+
+        if self.state == 'present':            
+            self.results['id'] = results.get('id')
         return self.results
 
     def create_or_update_vgw(self, vgw):
