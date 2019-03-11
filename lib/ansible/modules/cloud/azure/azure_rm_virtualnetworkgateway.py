@@ -285,7 +285,6 @@ class AzureRMVirtualNetworkGateway(AzureRMModuleBase):
                 update_tags, results['tags'] = self.update_tags(results['tags'])
                 if update_tags:
                     changed = True
-                    fh.write('changed in tags\n')
                 sku = dict(name=self.sku, tier=self.sku)
                 if sku != results['sku']:
                     changed = True
