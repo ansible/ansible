@@ -38,10 +38,23 @@ class TestIosxrFacts(TestIosxrModule):
             'ansible.modules.network.iosxr.iosxr_facts.run_commands')
         self.run_commands = self.mock_run_commands.start()
 
+        self.mock_get_capabilities = patch('ansible.modules.network.iosxr.iosxr_facts.get_capabilities')
+        self.get_capabilities = self.mock_get_capabilities.start()
+        self.get_capabilities.return_value = {
+            'device_info': {
+                'network_os': 'iosxr',
+                'network_os_hostname': 'iosxr01',
+                'network_os_image': 'bootflash:disk0/xrvr-os-mbi-6.1.3/mbixrvr-rp.vm',
+                'network_os_version': '6.1.3[Default]'
+            },
+            'network_api': 'cliconf'
+        }
+
     def tearDown(self):
         super(TestIosxrFacts, self).tearDown()
 
         self.mock_run_commands.stop()
+        self.mock_get_capabilities.stop()
 
     def load_fixtures(self, commands=None):
 
