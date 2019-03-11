@@ -18,12 +18,15 @@
 
 import imp
 import json
+import os
 import subprocess
 import sys
 
 from contextlib import contextmanager
 
 from ansible.module_utils.six import reraise
+
+from utils import find_executable
 
 
 class AnsibleModuleCallError(RuntimeError):
@@ -80,9 +83,12 @@ def setup_env(filename):
 def get_ps_argument_spec(filename):
     # This uses a very small skeleton of Ansible.Basic.AnsibleModule to return the argspec defined by the module. This
     # is pretty rudimentary and will probably require something better going forward.
-    cmd = ['test/sanity/validate-modules/ps_argspec.ps1', filename]
+    pwsh = find_executable('pwsh')
+    if not pwsh:
+        raise FileNotFoundError('Required program for PowerShell arg spec inspection "pwsh" not found.')
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
+    proc = subprocess.Popen([script_path, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     stdout, stderr = proc.communicate()
 
     if proc.returncode != 0:
