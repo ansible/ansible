@@ -1,3 +1,3 @@
 bugfixes:
-    - change function to in place replacement, compose with module_args_cpoy for 'new clean copy'
+    - change function to in place replacement, compose with module_args_copy for 'new clean copy'
     - avoid making multiple 'sub copies' when traversing already 'clean copy' of dict
