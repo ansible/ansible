@@ -38,7 +38,6 @@ options:
       - If the requested voice is not available the default voice will be used.
         Example voice names from Windows 10 are C(Microsoft Zira Desktop) and C(Microsoft Hazel Desktop).
     type: str
-    default: system default voice
   speech_speed:
     description:
       - How fast or slow to speak the text.
