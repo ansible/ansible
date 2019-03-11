@@ -245,12 +245,15 @@ class InvalidPrivsError(Exception):
 # ===========================================
 # MySQL module specific support methods.
 #
+
+
 def is_mysql(cursor):
-    cursor.execute("SHOW VARIABLES like \"%version_comment%\";");
+    cursor.execute("SHOW VARIABLES like \"%version_comment%\";")
     for record in cursor:
         if "mysql" not in record[1].lower():
             return 0
     return 1
+
 
 # User Authentication Management was change in MySQL 5.7
 # This is a generic check for if the server version is less than version 5.7
