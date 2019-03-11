@@ -173,6 +173,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase, CIDR_PATTERN
+from ansible.module_utils.common.dict_transformations import _snake_to_camel
 
 
 AZURE_VPN_GATEWAY_OBJECT_CLASS = 'VirtualNetworkGateway'
@@ -202,8 +203,8 @@ def vgw_to_dict(vgw):
         id=vgw.id,
         name=vgw.name,
         location=vgw.location,
-        gateway_type=vgw.gateway_type,
-        vpn_type=vgw.vpn_type,
+        gateway_type=_snake_to_camel(vgw.gateway_type, True),
+        vpn_type=_snake_to_camel(vgw.vpn_type, True),
         enable_bgp=vgw.enable_bgp,
         tags=vgw.tags,
         provisioning_state=vgw.provisioning_state,
