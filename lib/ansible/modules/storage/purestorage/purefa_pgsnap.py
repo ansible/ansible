@@ -225,10 +225,10 @@ def main():
     array = get_system(module)
     pgroup = get_pgroup(module, array)
     if pgroup is None:
-        module.fail_json(msg="Protection Group {0} does not exist".format(module.params('pgroup')))
+        module.fail_json(msg="Protection Group {0} does not exist".format(module.params['name']))
     pgsnap = get_pgsnapshot(module, array)
     if pgsnap is None:
-        module.fail_json(msg="Selected volume {0} does not exist in the Protection Group".format(module.params('name')))
+        module.fail_json(msg="Selected volume {0} does not exist in the Protection Group".format(module.params['name']))
     if ":" in module.params['name']:
         rvolume = get_rpgsnapshot(module, array)
     else:
