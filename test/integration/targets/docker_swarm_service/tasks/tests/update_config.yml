@@ -107,6 +107,27 @@
       failure_action: "continue"
   register: update_failure_action_3
 
+- name: update_config.failure_action (rollback)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_config:
+      failure_action: "rollback"
+  register: update_failure_action_4
+  ignore_errors: yes
+
+- name: update_config.failure_action (rollback idempotency)
+  docker_swarm_service:
+    name: "{{ service_name }}"
+    image: alpine:3.8
+    resolve_image: no
+    command: '/bin/sh -v -c "sleep 10m"'
+    update_failure_action: "rollback"
+  register: update_failure_action_5
+  ignore_errors: yes
+
 - name: cleanup
   docker_swarm_service:
     name: "{{ service_name }}"
@@ -119,6 +140,18 @@
       - update_failure_action_2 is not changed
       - update_failure_action_2b is not changed
       - update_failure_action_3 is changed
+
+- assert:
+    that:
+      - update_failure_action_4 is changed
+      - update_failure_action_5 is not changed
+  when: docker_api_version is version('1.28', '>=') and docker_py_version is version('3.5.0', '>=')
+
+- assert:
+    that:
+      - update_failure_action_4 is failed
+      - "'Minimum version required' in update_failure_action_4.msg"
+  when: docker_api_version is version('1.28', '<') or docker_py_version is version('3.5.0', '<')
 
 ###################################################################
 ## update_config.max_failure_ratio ################################
