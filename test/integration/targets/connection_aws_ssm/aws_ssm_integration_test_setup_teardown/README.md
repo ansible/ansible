@@ -1,38 +1,37 @@
-Role Name
+aws_ssm_integration_test_setup_teardown
 =========
 
-A brief description of the role goes here.
+This role will create infrastructure for aws_ssm connection plugin, after integration test will get completed it will tear down infrastructure.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Ansible machine shoould AWS permission for all the resources used for aws_ssm connection plugin intrgration testing.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+instance_type: Instace type which will created for testing
+ami_id: AMI Id for the instance
+iam_role_name: IAM role name, which will be atteched to the instance
+iam_policy_name: IAM policy name, which is will be atteched to the role
+region_name: AWS region id for resource creation
+instance_id: It will created after EC2 instance is created.
+bucket_name: Bucket name will be based on instance ID.
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+   - hosts: localhost
+     roles:
+       - aws_ssm_integration_test_setup_teardown
 
-License
--------
-
-BSD
 
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+krishna nand choudhary
+Nikhil Araga
