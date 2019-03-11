@@ -27,7 +27,7 @@ Python shebang
 ==============
 
 Every Ansible module must begin with ``#!/usr/bin/python`` - this "shebang" allows ``ansible_python_interpreter`` to work.
-This is immediatelly followed by ``# -*- coding: utf-8 -*-`` to ensure that it is clear that the file is UTF-8 encoded.
+This is immediately followed by ``# -*- coding: utf-8 -*-`` to clarify that the file is UTF-8 encoded.
 
 .. _copyright:
 
