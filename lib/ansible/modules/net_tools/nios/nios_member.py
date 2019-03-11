@@ -282,9 +282,7 @@ options:
               - Hardware type.
       licenses:
         description:
-          - An array of license types the pre-provisioned member should have
-          in order to join the Grid, or the licenses that must be allocated
-          to the member when it joins the Grid.
+          - An array of license types 
   state:
     description:
       - Configures the intended state of the instance of the object on
