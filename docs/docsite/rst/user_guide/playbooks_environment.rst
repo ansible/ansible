@@ -16,7 +16,10 @@ Ansible makes it easy for you to configure the remote execution environment by u
 
       tasks:
 
-        - apt: name=cobbler state=installed
+        - name: Install cobbler
+          package:
+            name: cobbler
+            state: present
           environment:
             http_proxy: http://proxy.example.com:8080
 
@@ -32,7 +35,10 @@ The environment can also be stored in a variable, and accessed like so::
 
       tasks:
 
-        - apt: name=cobbler state=installed
+        - name: Install cobbler
+          package:
+            name: cobbler
+            state: present
           environment: "{{proxy_env}}"
 
 You can also use it at a play level::

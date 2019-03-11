@@ -371,7 +371,7 @@ EXAMPLES = r'''
         - nm-connection-editor
         - libsemanage-python
         - policycoreutils-python
-      state: installed
+      state: present
 
 ##### Working with all cloud nodes - Teaming
   - name: Try nmcli add team - conn_name only & ip4 gw4
