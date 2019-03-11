@@ -111,7 +111,6 @@ def get_file_arg_spec():
 class LockTimeout(Exception):
     pass
 
-
 # NOTE: Using the open_locked() context manager it is absolutely mandatory
 #       to not open or close the same file within the existing context.
 #       It is essential to reuse the returned file descriptor only.
@@ -130,8 +129,6 @@ def open_locked(path, lock_timeout=15):
     '''
     fd = lock(path, lock_timeout)
     yield fd
-    fd.close()
-
 
 def lock(path, lock_timeout=15):
     '''
@@ -150,18 +147,16 @@ def lock(path, lock_timeout=15):
     :returns: file descriptor
     '''
     b_path = to_bytes(path, errors='surrogate_or_strict')
-    wait = 0.1
+    wait = 0.5
 
     lock_exception = IOError
     if PY3:
         lock_exception = OSError
 
-    if not os.path.exists(b_path):
-        raise IOError('{0} does not exist'.format(path))
-
     if lock_timeout is None or lock_timeout < 0:
         fd = open(b_path, 'ab+')
         filelock(fd, fcntl.LOCK_EX)
+        fd.seek(0)
         return fd
 
     if lock_timeout >= 0:
@@ -170,6 +165,7 @@ def lock(path, lock_timeout=15):
             fd = open(b_path, 'ab+')
             try:
                 filelock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fd.seek(0)
                 return fd
             except lock_exception:
                 time.sleep(wait)
