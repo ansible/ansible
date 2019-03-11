@@ -242,7 +242,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
 
         self._read_config_data(path)
 
-        if self.get_option('use_contrib_script_compatible_sanitization:'):
+        if self.get_option('use_contrib_script_compatible_sanitization'):
             self._sanitize_group_name = self._legacy_script_compatible_group_sanitization
 
         self._batch_fetch = self.get_option('batch_fetch')
