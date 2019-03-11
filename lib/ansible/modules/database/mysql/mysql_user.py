@@ -238,7 +238,6 @@ VALID_PRIVS = frozenset(('CREATE', 'DROP', 'GRANT', 'GRANT OPTION',
                          'SESSION VARIABLES ADMIN', 'SYSTEM VARIABLES ADMIN',
                          'VERSION TOKEN ADMIN', 'XA RECOVER ADMIN'))
 
-isMysql = 1
 
 class InvalidPrivsError(Exception):
     pass
@@ -246,7 +245,12 @@ class InvalidPrivsError(Exception):
 # ===========================================
 # MySQL module specific support methods.
 #
-
+def is_mysql(cursor):
+    cursor.execute("SHOW VARIABLES like \"%version_comment%\";");
+    for record in cursor:
+        if "mysql" not in record[1].lower():
+            return 0
+    return 1
 
 # User Authentication Management was change in MySQL 5.7
 # This is a generic check for if the server version is less than version 5.7
@@ -303,7 +307,7 @@ def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_
         cursor.execute("CREATE USER %s@%s", (user, host))
     if new_priv is not None:
         for db_table, priv in iteritems(new_priv):
-            if isMysql and "REQUIRE" in "".join(new_priv[db_table]):
+            if is_mysql(cursor) and "REQUIRE" in "".join(new_priv[db_table]):
                 privileges_alter(cursor, user, host, db_table, new_priv[db_table])
             else:
                 privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -390,7 +394,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                 if db_table not in curr_priv:
                     if module.check_mode:
                         return True
-                    if isMysql and "REQUIRE" in "".join(new_priv[db_table]):
+                    if is_mysql(cursor) and "REQUIRE" in "".join(new_priv[db_table]):
                         privileges_alter(cursor, user, host, db_table, new_priv[db_table])
                     else:
                         privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -407,7 +411,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                     if not append_privs:
                         privileges_revoke(cursor, user, host, db_table, curr_priv[db_table], grant_option)
                     priv = "".join(new_priv[db_table])
-                    if isMysql and "REQUIRE" in priv:
+                    if is_mysql(cursor) and "REQUIRE" in priv:
                         privileges_alter(cursor, user, host, db_table, new_priv[db_table])
                     else:
                         privileges_grant(cursor, user, host, db_table, new_priv[db_table])
@@ -648,11 +652,6 @@ def main():
     except Exception as e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. "
                              "Exception message: %s" % (config_file, to_native(e)))
-    #check if mysql or mariadb
-    cursor.execute("SHOW VARIABLES like \"%version_comment%\";");
-    for record in cursor:
-        if "mysql" not in record[1].lower():
-            isMysql = 0
     if not sql_log_bin:
         cursor.execute("SET SQL_LOG_BIN=0;")
 
