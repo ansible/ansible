@@ -104,7 +104,7 @@ class TestConfig(EnvironmentConfig):
 
         self.coverage = args.coverage  # type: bool
         self.coverage_label = args.coverage_label  # type: str
-        self.coverage_dry_run = args.coverage_dry_run  # type: bool
+        self.coverage_check = args.coverage_check  # type: bool
         self.include = args.include or []  # type: list [str]
         self.exclude = args.exclude or []  # type: list [str]
         self.require = args.require or []  # type: list [str]
@@ -125,7 +125,7 @@ class TestConfig(EnvironmentConfig):
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
         self.metadata_path = None
 
-        if self.coverage_dry_run:
+        if self.coverage_check:
             self.coverage = True
 
 

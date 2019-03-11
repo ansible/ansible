@@ -352,7 +352,7 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         cov.start()
 '''
 
-ANSIBALLZ_COVERAGE_DRY_RUN_TEMPLATE = '''
+ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
         imp.find_module('coverage')
 '''
 
@@ -845,7 +845,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             else:
                 # Verify coverage is available without importing it.
                 # This will detect when a module would fail with coverage enabled with minimal overhead.
-                coverage = ANSIBALLZ_COVERAGE_DRY_RUN_TEMPLATE
+                coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
         else:
             coverage = ''
 

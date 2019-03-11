@@ -209,7 +209,7 @@ def parse_args():
                       default='',
                       help='label to include in coverage output file names')
 
-    test.add_argument('--coverage-dry-run',
+    test.add_argument('--coverage-check',
                       action='store_true',
                       help='only verify code coverage can be enabled')
 

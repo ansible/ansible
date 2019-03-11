@@ -46,7 +46,7 @@ elif [[ "${COMMIT_MESSAGE}" =~ ci_coverage ]]; then
     export COVERAGE="--coverage"
 else
     # on-demand coverage reporting disabled (default behavior, always-on coverage reporting remains enabled)
-    export COVERAGE="--coverage-dry-run"
+    export COVERAGE="--coverage-check"
 fi
 
 if [ -n "${COMPLETE:-}" ]; then
