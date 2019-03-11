@@ -1,6 +1,14 @@
 ---
 # tasks file for ec2
 
+- name: Install Session Manager Plugin for debian
+  include_tasks: debian.yml
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Install Session Manager Plugin for RedHat
+  include_tasks: redhat.yml
+  when: ansible_distribution == "CentOS" or ansible_distribution == "Red Hat Enterprise Linux"
+
 - name: Create IAM role
   iam:
     iam_type: role
