@@ -8,11 +8,13 @@
 
 - name: Pull images
   docker_image:
-    name: "{{ item }}"
+    name: "{{ image }}"
     pull: true
   loop:
     - "hello-world:latest"
     - "alpine:3.8"
+  loop_control:
+    loop_var: image
 
 - name: Get image ID of hello-world and alpine images
   docker_image_facts:
