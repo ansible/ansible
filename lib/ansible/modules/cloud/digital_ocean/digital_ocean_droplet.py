@@ -186,6 +186,17 @@ data:
   returned: success and present
   type: complex
   contains:
+    msg:
+      description: Delete success message
+      type: str
+      returned: absent and success
+      sample: Droplet 'mydroplet.example.com' deleted.
+    host_ids:
+      description: List of deleted host ids for purging known_hosts.
+      type: list
+      returned: absent and success
+      sample: |-
+        ['mydroplet.example.com', '139.59.144.10', '10.135.133.25', '2A03:B0C0:0003:00D0:0000:0000:0424:0001']
     ip_address:
       description: public IPv4 address
       type: str
@@ -333,7 +344,7 @@ class DODroplet(object):
         self.module = module
         self._id = self.module.params['id']
         self._name = self.module.params['name']
-        self._droplet = None  # == _id if found by _id
+        self._droplet = None  # == _id if found by _id, _name otherwise. For diagnostic messages.
         self.rest = DigitalOceanHelper(module)
         # pop all the parameters which we never POST as data
         self.rebuild = self.module.params.pop('rebuild')
@@ -356,12 +367,16 @@ class DODroplet(object):
         response = self.rest.get('droplets/{0}'.format(droplet_id))
         if response.status_code == 200:
             self._droplet = droplet_id
+            if 'name' in response.json:
+                self._name = response.json['name']
             return response.json
         return None
 
     def find_by_name(self, droplet_name):
         if not droplet_name:
             return None
+        if not self._droplet:
+            self._droplet = droplet_name
         page = 1
         while page is not None:
             response = self.rest.get('droplets?page={0}'.format(page))
@@ -369,7 +384,7 @@ class DODroplet(object):
             if response.status_code == 200:
                 for droplet in json_data['droplets']:
                     if droplet['name'] == droplet_name:
-                        self._droplet = droplet_name
+                        self._id = droplet['id']
                         return {'droplet': droplet}
                 if 'links' in json_data and 'pages' in json_data['links'] and 'next' in json_data['links']['pages']:
                     page += 1
@@ -456,13 +471,13 @@ class DODroplet(object):
         Find the droplet (either by id or name), rebuild if requested so, build if not found.
         """
         json_data = self.find_droplet()
-        if json_data and not self.same_dc(json_data, self.module.params['region']):
+        if json_data and self.module.params['region'] and not self.same_dc(json_data, self.module.params['region']):
             self.module.warn("Droplet found but 'region' differs!")
-        if json_data and not self.same_size(json_data, self.module.params['size']):
-            self.module.warn("Droplet found but 'size' differs!")
-        if json_data and not self.same_image(json_data, self.module.params['image']) and not self.rebuild:
+        if json_data and self.module.params['size'] and not self.same_size(json_data, self.module.params['size']):
+            self.module.warn("Droplet found but size is not '{0}'.".format(self.module.params['size']))
+        if not self.rebuild and json_data and not self.same_image(json_data, self.module.params['image']):
             self.module.warn("Droplet found but 'image' differs! To re-image the droplet add 'rebuild=yes'")
-        if json_data and not self.same_tags(json_data, self.module.params['tags']):
+        if json_data and self.module.params['tags'] and not self.same_tags(json_data, self.module.params['tags']):
             self.module.warn("Droplet found but 'tags' differ!")
 
         if json_data and not self.rebuild:
@@ -480,7 +495,7 @@ class DODroplet(object):
         _region = self.module.params['region']
         # we are going to build a new droplet now. Final checks.
         if self._id:
-            self.module.warn("Trying to build {0}. Parameter id is found, it makes no sense here!".format(self._name))
+            self.module.warn("Trying to build {0}. Parameter id found, it makes no sense here!".format(self._name))
         if not _size:
             _default_size = 's-1vcpu-1gb'
             self.module.warn("Missing 'size' parameter. Using size={0}".format(_default_size))
@@ -508,7 +523,7 @@ class DODroplet(object):
         self.module.exit_json(changed=True, data=self.expose_addresses(jr))
 
     def _rebuild(self, json_data):
-        if self._id and self._name:
+        if self._droplet is self._id and self._name:
             self.module.warn("Trying to rebuild droplet id={0}. Parameter name is found too,"
                              " it makes no sense here!".format(self._id))
         if self.module.check_mode:
@@ -525,6 +540,15 @@ class DODroplet(object):
             changed=True, data=self.expose_addresses(
                 self.ready(droplet_id, action="rebuild", build=True)))
 
+    @staticmethod
+    def ids(name, networks):
+        ip_list = [name]
+        for k, v in networks.items():
+            for net in v:
+                if "ip_address" in net:
+                    ip_list.append(net["ip_address"])
+        return ip_list
+
     def delete(self):
         json_data = self.find_droplet()
         if json_data:
@@ -532,7 +556,8 @@ class DODroplet(object):
                 self.module.exit_json(changed=True)
             response = self.rest.delete('droplets/{0}'.format(json_data['droplet']['id']))
             if response.status_code == 204:
-                self.module.exit_json(changed=True, msg='Droplet deleted')
+                host_ids = self.ids(self._name, json_data['droplet']['networks'])
+                self.module.exit_json(changed=True, msg="Droplet '{0}' deleted.".format(self._droplet), host_ids=host_ids)
             self.module.fail_json(changed=False, msg='Failed to delete droplet {0}'.format(self._droplet))
         else:
             self.module.exit_json(changed=False, msg='Droplet {0} not found'.format(self._droplet))
@@ -551,12 +576,12 @@ class DODroplet(object):
             if self.ops:
                 rj = response.json
                 if 'droplet' in rj and 'locked' in rj['droplet']:
-                    if 'v4' in rj['droplet']['networks'] and len(response.json['droplet']['networks']['v4']):
-                        net = response.json['droplet']['networks']['v4'][0]
+                    if 'v4' in rj['droplet']['networks'] and len(rj['droplet']['networks']['v4']):
+                        net = rj['droplet']['networks']['v4'][0]
                     else:
                         net = rj['droplet']['networks']
-                    lck = response.json['droplet']['locked']
-                    sta = response.json['droplet']['status']
+                    lck = rj['droplet']['locked']
+                    sta = rj['droplet']['status']
                 self.ops.append("{0} status {1} locked {2} net {3}".format(time.time(), sta, lck, net))
             locked = response.json['droplet']['locked']
             has_net = len(response.json['droplet']['networks']['v4'])
