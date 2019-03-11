@@ -6,7 +6,7 @@ set -o pipefail -eux
 ansible-test network-integration --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} 2>&1 \
     | { grep ' network-integration: .* (targeted)$' || true; } > /tmp/network.txt
 
-if [ "${COVERAGE}" ]; then
+if [ "${COVERAGE}" == "--coverage" ]; then
     # when on-demand coverage is enabled, force tests to run for all network platforms
     echo "coverage" > /tmp/network.txt
 fi

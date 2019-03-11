@@ -339,7 +339,12 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         os.environ['COVERAGE_FILE'] = '%(coverage_output)s'
 
         import atexit
-        import coverage
+
+        try:
+            import coverage
+        except ImportError:
+            print('{"msg": "Could not import `coverage` module.", "failed": true}')
+            sys.exit(1)
 
         cov = coverage.Coverage(config_file='%(coverage_config)s')
 
@@ -350,6 +355,14 @@ ANSIBALLZ_COVERAGE_TEMPLATE = '''
         atexit.register(atexit_coverage)
 
         cov.start()
+'''
+
+ANSIBALLZ_COVERAGE_CHECK_TEMPLATE = '''
+        try:
+            imp.find_module('coverage')
+        except ImportError:
+            print('{"msg": "Could not find `coverage` module.", "failed": true}')
+            sys.exit(1)
 '''
 
 ANSIBALLZ_RLIMIT_TEMPLATE = '''
@@ -829,12 +842,19 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         coverage_config = os.environ.get('_ANSIBLE_COVERAGE_CONFIG')
 
         if coverage_config:
-            # Enable code coverage analysis of the module.
-            # This feature is for internal testing and may change without notice.
-            coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
-                coverage_config=coverage_config,
-                coverage_output=os.environ['_ANSIBLE_COVERAGE_OUTPUT']
-            )
+            coverage_output = os.environ['_ANSIBLE_COVERAGE_OUTPUT']
+
+            if coverage_output:
+                # Enable code coverage analysis of the module.
+                # This feature is for internal testing and may change without notice.
+                coverage = ANSIBALLZ_COVERAGE_TEMPLATE % dict(
+                    coverage_config=coverage_config,
+                    coverage_output=coverage_output,
+                )
+            else:
+                # Verify coverage is available without importing it.
+                # This will detect when a module would fail with coverage enabled with minimal overhead.
+                coverage = ANSIBALLZ_COVERAGE_CHECK_TEMPLATE
         else:
             coverage = ''
 
