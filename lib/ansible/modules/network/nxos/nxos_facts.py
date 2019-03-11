@@ -95,6 +95,18 @@ ansible_net_image:
   description: The image file the device is running
   returned: always
   type: str
+ansible_net_api:
+  description: The name of the transport
+  returned: always
+  type: str
+ansible_net_license_hostid:
+  description: The License host id of the device
+  returned: always
+  type: str
+ansible_net_python_version:
+  description: The Python version Ansible controller is using
+  returned: always
+  type: str
 
 # hardware
 ansible_net_filesystems:
@@ -170,6 +182,8 @@ vlan_list:
   returned: when legacy is configured
   type: list
 """
+
+import platform
 import re
 
 from ansible.module_utils.network.nxos.nxos import run_commands, get_config
@@ -190,6 +204,7 @@ class FactsBase(object):
         self.module = module
         self.warnings = list()
         self.facts = dict()
+        self.capabilities = get_capabilities(self.module)
 
     def populate(self):
         pass
@@ -227,39 +242,12 @@ class FactsBase(object):
 
 class Default(FactsBase):
 
-    VERSION_MAP_7K = frozenset([
-        ('sys_ver_str', 'version'),
-        ('proc_board_id', 'serialnum'),
-        ('chassis_id', 'model'),
-        ('isan_file_name', 'image'),
-        ('host_name', 'hostname')
-    ])
-
-    VERSION_MAP = frozenset([
-        ('kickstart_ver_str', 'version'),
-        ('proc_board_id', 'serialnum'),
-        ('chassis_id', 'model'),
-        ('kick_file_name', 'image'),
-        ('host_name', 'hostname')
-    ])
-
     def populate(self):
         data = None
-
-        data = self.run('show version', output='json')
+        data = self.run('show version')
 
         if data:
-            if isinstance(data, dict):
-                if data.get('sys_ver_str'):
-                    self.facts.update(self.transform_dict(data, self.VERSION_MAP_7K))
-                else:
-                    self.facts.update(self.transform_dict(data, self.VERSION_MAP))
-            else:
-                self.facts['version'] = self.parse_version(data)
-                self.facts['serialnum'] = self.parse_serialnum(data)
-                self.facts['model'] = self.parse_model(data)
-                self.facts['image'] = self.parse_image(data)
-                self.facts['hostname'] = self.parse_hostname(data)
+            self.facts['serialnum'] = self.parse_serialnum(data)
 
         data = self.run('show license host-id')
         if data:
@@ -279,24 +267,28 @@ class Default(FactsBase):
         if match:
             return match.group(1)
 
-    def parse_model(self, data):
-        match = re.search(r'Hardware\n\s+cisco\s*(\S+\s+\S+)', data, re.M)
+    def parse_license_hostid(self, data):
+        match = re.search(r'License hostid: VDH=(.+)$', data, re.M)
         if match:
             return match.group(1)
 
-    def parse_image(self, data):
-        match = re.search(r'\s+system image file is:\s*(\S+)', data, re.M)
-        if match:
-            return match.group(1)
-        else:
-            match = re.search(r'\s+kickstart image file is:\s*(\S+)', data, re.M)
-            if match:
-                return match.group(1)
+    def platform_facts(self):
+        platform_facts = {}
 
-    def parse_hostname(self, data):
-        match = re.search(r'\s+Device name:\s*(\S+)', data, re.M)
-        if match:
-            return match.group(1)
+        resp = self.capabilities
+        device_info = resp['device_info']
+
+        platform_facts['system'] = device_info['network_os']
+
+        for item in ('model', 'image', 'version', 'platform', 'hostname'):
+            val = device_info.get('network_os_%s' % item)
+            if val:
+                platform_facts[item] = val
+
+        platform_facts['api'] = resp['network_api']
+        platform_facts['python_version'] = platform.python_version()
+
+        return platform_facts
 
     def parse_license_hostid(self, data):
         match = re.search(r'License hostid: VDH=(.+)$', data, re.M)
@@ -398,7 +390,7 @@ class Interfaces(FactsBase):
     ])
 
     def ipv6_structure_op_supported(self):
-        data = get_capabilities(self.module)
+        data = self.capabilities
         if data:
             nxos_os_version = data['device_info']['network_os_version']
             unsupported_versions = ['I2', 'F1', 'A8']

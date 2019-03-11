@@ -216,6 +216,10 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_hostname'] = match.group(1)
 
+        match = re.search(r'image file is "(.+)"', data)
+        if match:
+            device_info['network_os_image'] = match.group(1)
+
         return device_info
 
     def get_device_operations(self):
