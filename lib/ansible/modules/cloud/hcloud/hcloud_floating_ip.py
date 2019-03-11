@@ -22,7 +22,7 @@ short_description: Create and manage Floating IPs on the Hetzner Cloud
 version_added: "2.8"
 
 description:
-    - "Create, update and manage Floating IPss on the Hetzner Cloud."
+    - "Create, update and manage Floating IPs on the Hetzner Cloud."
 
 author:
     - Lukas Kaemmerling (@LKaemmerling)
@@ -109,16 +109,45 @@ RETURN = """
 hcloud_floating_ip:
     description: The Floating IP instance
     returned: Always
-    type: dict
-    sample: {
-        "id": 1937415,
-        "description": "mein-server-2",
-        "ip": "116.203.104.109",
-        "type": "ipv4",
-        "labels": {},
-        "home_location": "fsn",
-        "server": "my-server"
-    }
+    type: complex
+    contains:
+         id:
+            description: ID of the Floating IP
+            type: int
+            returned: Always
+            sample: 12345
+        description:
+            description: Name of the Floating IP
+            type: string
+            returned: Always
+            sample: my-floating-ip
+        ip:
+            description: IP Address of the Floating IP
+            type: string
+            returned: Always
+            sample: 116.203.104.109
+        type:
+            description: Type of the Floating IP
+            type: string
+            returned: Always
+            sample: ipv4
+        home_location:
+            description: Name of the home location of the Floating IP
+            type: string
+            returned: Always
+            sample: fsn1
+        server:
+            description: Name of the server the Floating IP is assigned to.
+            type: string
+            returned: Always
+            sample: "my-server"
+        labels:
+            description: User-defined labels (key-value pairs)
+            type: dict
+            returned: Always
+            sample:
+                key: value
+                mylabel: 123
 """
 
 from ansible.module_utils.basic import AnsibleModule
